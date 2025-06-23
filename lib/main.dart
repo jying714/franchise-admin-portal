@@ -10,6 +10,7 @@ import 'package:franchise_admin_portal/admin/sign_in/sign_in_screen.dart';
 import 'core/services/firestore_service.dart';
 import 'core/models/user.dart';
 import 'admin/dashboard/admin_dashboard_screen.dart';
+import 'package:franchise_admin_portal/home_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,7 +62,7 @@ class FranchiseAdminPortalApp extends StatelessWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
-        home: const SignInScreen(),
+        home: const HomeWrapper(),
       ),
     );
   }
