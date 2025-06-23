@@ -12,8 +12,90 @@ import 'package:franchise_admin_portal/admin/promo/promo_management_screen.dart'
 import 'package:franchise_admin_portal/admin/staff/staff_access_screen.dart';
 import 'package:franchise_admin_portal/admin/features/feature_settings_screen.dart';
 
+// Placeholder widgets (implement as needed)
+class FranchiseDropdown extends StatelessWidget {
+  const FranchiseDropdown({super.key});
+  @override
+  Widget build(BuildContext context) => DropdownButton<String>(
+        value: "Default Franchise",
+        onChanged: (_) {},
+        items: const [
+          DropdownMenuItem(
+              value: "Default Franchise", child: Text("Default Franchise")),
+          DropdownMenuItem(value: "Franchise 2", child: Text("Franchise 2")),
+        ],
+      );
+}
+
+class HelpButton extends StatelessWidget {
+  const HelpButton({super.key});
+  @override
+  Widget build(BuildContext context) => IconButton(
+        icon: const Icon(Icons.help_outline),
+        tooltip: 'Help & Support',
+        onPressed: () {
+          // Show help/support dialog
+        },
+      );
+}
+
+class SettingsButton extends StatelessWidget {
+  const SettingsButton({super.key});
+  @override
+  Widget build(BuildContext context) => IconButton(
+        icon: const Icon(Icons.settings),
+        tooltip: 'Settings',
+        onPressed: () {
+          // Show settings dialog
+        },
+      );
+}
+
+class ProfileMenu extends StatelessWidget {
+  const ProfileMenu({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      icon: const CircleAvatar(
+        radius: 16,
+        backgroundImage: AssetImage(
+            'assets/images/avatar_placeholder.png'), // Replace with actual profile image logic
+      ),
+      onSelected: (value) {
+        if (value == 'profile') {
+          // Open profile screen
+        } else if (value == 'settings') {
+          // Open settings screen
+        } else if (value == 'signout') {
+          // Actually sign out
+          // You might want to use a provider/service here
+          // For now, just show a snackbar as a placeholder
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Signing out...')),
+          );
+          // TODO: Call AuthService/Provider's signOut here
+        }
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem(value: 'profile', child: Text('Profile')),
+        const PopupMenuItem(value: 'settings', child: Text('Settings')),
+        const PopupMenuDivider(),
+        const PopupMenuItem(value: 'signout', child: Text('Sign Out')),
+      ],
+    );
+  }
+}
+
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
+
+  int _getColumnCount(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width > 1200) return 4;
+    if (width > 900) return 3;
+    if (width > 600) return 2;
+    return 1;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,19 +162,41 @@ class AdminDashboardScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc.adminDashboardTitle),
+        titleSpacing: 0,
         backgroundColor: BrandingConfig.brandRed,
-      ),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: adminTiles.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2, // 2 columns
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: 1.1,
+        title: Row(
+          children: [
+            const SizedBox(width: 16),
+            Text(
+              loc.adminDashboardTitle,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            ),
+            const SizedBox(width: 28),
+            // Franchise selector placeholder
+            const FranchiseDropdown(),
+          ],
         ),
-        itemBuilder: (context, i) => adminTiles[i],
+        actions: const [
+          HelpButton(),
+          SettingsButton(),
+          ProfileMenu(), // Includes sign-out
+        ],
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final crossAxisCount = _getColumnCount(context);
+          return GridView.builder(
+            padding: const EdgeInsets.all(20),
+            itemCount: adminTiles.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: 18,
+              crossAxisSpacing: 18,
+              childAspectRatio: 1.18,
+            ),
+            itemBuilder: (context, i) => adminTiles[i],
+          );
+        },
       ),
     );
   }
@@ -114,27 +218,28 @@ class _AdminTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: color.withAlpha((0.10 * 255).toInt()),
-      borderRadius: BorderRadius.circular(16),
+      color: color.withAlpha((0.08 * 255).toInt()),
+      elevation: 2,
+      borderRadius: BorderRadius.circular(18),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => screen),
           );
         },
         child: Padding(
-          padding: const EdgeInsets.all(18.0),
+          padding: const EdgeInsets.symmetric(vertical: 32.0, horizontal: 8.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: color, size: 42),
+              Icon(icon, color: color, size: 40),
               const SizedBox(height: 18),
               Text(
                 label,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: 15,
                   color: color,
                 ),
                 textAlign: TextAlign.center,
