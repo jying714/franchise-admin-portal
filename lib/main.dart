@@ -1,3 +1,4 @@
+import 'package:franchise_admin_portal/core/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
@@ -25,6 +26,8 @@ class FranchiseAdminPortalApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        Provider<AuthService>(
+            create: (_) => AuthService()), // <-- ADD THIS LINE
         Provider<FirestoreService>(create: (_) => FirestoreService()),
         StreamProvider<User?>(
           create: (_) => FirestoreService().currentUserStream(),
