@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -75,26 +76,39 @@ class AuthService {
   }
 
   /// GOOGLE SIGN-IN (optional for web)
+
   Future<User?> signInWithGoogle() async {
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn();
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      if (googleUser == null) {
-        LogUtils.w('Google sign-in canceled.');
-        return null;
+      if (kIsWeb) {
+        // Flutter Web: use signInWithPopup, not google_sign_in
+        GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        final userCredential = await _auth.signInWithPopup(googleProvider);
+        final user = userCredential.user;
+        if (user != null) await ensureUserProfile(user);
+        LogUtils.i(
+            'Google sign-in successful (web): ${user?.email ?? 'No email'}');
+        return user;
+      } else {
+        // Mobile/Desktop fallback: use google_sign_in as before
+        final GoogleSignIn googleSignIn = GoogleSignIn();
+        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+        if (googleUser == null) {
+          LogUtils.w('Google sign-in canceled.');
+          return null;
+        }
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+        final AuthCredential credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+        final UserCredential authResult =
+            await _auth.signInWithCredential(credential);
+        final user = authResult.user;
+        if (user != null) await ensureUserProfile(user);
+        LogUtils.i('Google sign-in successful: ${user?.email ?? 'No email'}');
+        return user;
       }
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      final UserCredential authResult =
-          await _auth.signInWithCredential(credential);
-      final user = authResult.user;
-      if (user != null) await ensureUserProfile(user);
-      LogUtils.i('Google sign-in successful: ${user?.email ?? 'No email'}');
-      return user;
     } catch (e, stack) {
       LogUtils.e('Google sign-in error', e, stack);
       return null;
