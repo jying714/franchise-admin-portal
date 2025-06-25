@@ -1,10 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/services/auth_service.dart';
-import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/admin/chat/chat_management_screen.dart';
-// Import your admin features/screens here
+import 'package:franchise_admin_portal/admin/sign_in/sign_in_screen.dart';
 import 'package:franchise_admin_portal/admin/menu/menu_editor_screen.dart';
 import 'package:franchise_admin_portal/admin/categories/category_management_screen.dart';
 import 'package:franchise_admin_portal/admin/inventory/inventory_screen.dart';
@@ -13,11 +12,11 @@ import 'package:franchise_admin_portal/admin/feedback/feedback_management_screen
 import 'package:franchise_admin_portal/admin/promo/promo_management_screen.dart';
 import 'package:franchise_admin_portal/admin/staff/staff_access_screen.dart';
 import 'package:franchise_admin_portal/admin/features/feature_settings_screen.dart';
-import 'package:franchise_admin_portal/admin/sign_in/sign_in_screen.dart';
+import 'package:franchise_admin_portal/admin/chat/chat_management_screen.dart';
 
-// Placeholder widgets (implement as needed)
 class FranchiseDropdown extends StatelessWidget {
-  const FranchiseDropdown({super.key});
+  const FranchiseDropdown({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) => DropdownButton<String>(
         value: "Default Franchise",
@@ -31,13 +30,13 @@ class FranchiseDropdown extends StatelessWidget {
 }
 
 class HelpButton extends StatelessWidget {
-  const HelpButton({super.key});
+  const HelpButton({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) => IconButton(
         icon: const Icon(Icons.help_outline),
         tooltip: 'Help & Support',
         onPressed: () {
-          // TODO: Show help/support dialog
           showDialog(
             context: context,
             builder: (_) => AlertDialog(
@@ -56,13 +55,13 @@ class HelpButton extends StatelessWidget {
 }
 
 class SettingsButton extends StatelessWidget {
-  const SettingsButton({super.key});
+  const SettingsButton({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) => IconButton(
         icon: const Icon(Icons.settings),
         tooltip: 'Settings',
         onPressed: () {
-          // TODO: Show settings dialog
           showDialog(
             context: context,
             builder: (_) => AlertDialog(
@@ -81,7 +80,8 @@ class SettingsButton extends StatelessWidget {
 }
 
 class ProfileMenu extends StatelessWidget {
-  const ProfileMenu({super.key});
+  const ProfileMenu({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context, listen: false);
@@ -98,128 +98,205 @@ class ProfileMenu extends StatelessWidget {
             (route) => false,
           );
         }
-        // Implement 'profile' or other actions as needed
       },
-      itemBuilder: (context) => [
-        const PopupMenuItem(value: 'profile', child: Text('Profile')),
-        const PopupMenuDivider(),
-        const PopupMenuItem(value: 'signout', child: Text('Sign Out')),
+      itemBuilder: (context) => const [
+        PopupMenuItem(value: 'profile', child: Text('Profile')),
+        PopupMenuDivider(),
+        PopupMenuItem(value: 'signout', child: Text('Sign Out')),
       ],
     );
   }
 }
 
-class AdminDashboardScreen extends StatelessWidget {
-  const AdminDashboardScreen({super.key});
+class AdminDashboardScreen extends StatefulWidget {
+  const AdminDashboardScreen({Key? key}) : super(key: key);
 
-  int _getColumnCount(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    if (width > 1200) return 4;
-    if (width > 900) return 3;
-    if (width > 600) return 2;
-    return 1;
-  }
+  @override
+  _AdminDashboardScreenState createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  String _selectedSection = 'Menus';
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
 
-    // List of admin tiles for the dashboard
-    final adminTiles = [
-      _AdminTile(
-        icon: Icons.restaurant_menu,
-        color: BrandingConfig.brandRed,
-        label: loc.menuEditorTitle,
-        screen: const MenuEditorScreen(),
-      ),
-      _AdminTile(
-        icon: Icons.category,
-        color: Colors.deepOrange,
-        label: loc.categoryManagementTitle,
-        screen: const CategoryManagementScreen(),
-      ),
-      _AdminTile(
-        icon: Icons.inventory,
-        color: Colors.indigo,
-        label: loc.inventoryManagementTitle,
-        screen: const InventoryScreen(),
-      ),
-      _AdminTile(
-        icon: Icons.analytics,
-        color: Colors.teal,
-        label: loc.orderAnalyticsTitle,
-        screen: const AnalyticsScreen(),
-      ),
-      _AdminTile(
-        icon: Icons.feedback,
-        color: Colors.amber,
-        label: loc.feedbackManagementTitle,
-        screen: const FeedbackManagementScreen(),
-      ),
-      _AdminTile(
-        icon: Icons.local_offer,
-        color: Colors.green,
-        label: loc.promoManagementTitle,
-        screen: const PromoManagementScreen(),
-      ),
-      _AdminTile(
-        icon: Icons.people,
-        color: Colors.blueGrey,
-        label: loc.staffAccessTitle,
-        screen: const StaffAccessScreen(),
-      ),
-      _AdminTile(
-        icon: Icons.settings,
-        color: Colors.purple,
-        label: loc.featureSettingsTitle,
-        screen: const FeatureSettingsScreen(),
-      ),
-      _AdminTile(
-        icon: Icons.chat,
-        color: Colors.deepPurple,
-        label: 'Chat Management',
-        screen: const ChatManagementScreen(),
-      ),
-      // Add more tiles as you add features!
-    ];
+    final sections = <String, List<_AdminTile>>{
+      'Menus': [
+        _AdminTile(
+          icon: Icons.restaurant_menu,
+          color: BrandingConfig.brandRed,
+          label: loc.menuEditorTitle,
+          screen: const MenuEditorScreen(),
+        ),
+        _AdminTile(
+          icon: Icons.category,
+          color: Colors.deepOrange,
+          label: loc.categoryManagementTitle,
+          screen: const CategoryManagementScreen(),
+        ),
+      ],
+      'Inventory': [
+        _AdminTile(
+          icon: Icons.inventory,
+          color: Colors.indigo,
+          label: loc.inventoryManagementTitle,
+          screen: const InventoryScreen(),
+        ),
+      ],
+      'Orders': [
+        _AdminTile(
+          icon: Icons.analytics,
+          color: Colors.teal,
+          label: loc.orderAnalyticsTitle,
+          screen: const AnalyticsScreen(),
+        ),
+      ],
+      'Customers': [
+        _AdminTile(
+          icon: Icons.feedback,
+          color: Colors.amber,
+          label: loc.feedbackManagementTitle,
+          screen: const FeedbackManagementScreen(),
+        ),
+        _AdminTile(
+          icon: Icons.chat,
+          color: Colors.deepPurple,
+          label: 'Chat Management',
+          screen: const ChatManagementScreen(),
+        ),
+      ],
+      'Promotions': [
+        _AdminTile(
+          icon: Icons.local_offer,
+          color: Colors.green,
+          label: loc.promoManagementTitle,
+          screen: const PromoManagementScreen(),
+        ),
+      ],
+      'Staff': [
+        _AdminTile(
+          icon: Icons.people,
+          color: Colors.blueGrey,
+          label: loc.staffAccessTitle,
+          screen: const StaffAccessScreen(),
+        ),
+      ],
+      'Settings': [
+        _AdminTile(
+          icon: Icons.settings,
+          color: Colors.purple,
+          label: loc.featureSettingsTitle,
+          screen: const FeatureSettingsScreen(),
+        ),
+      ],
+    };
+
+    if (!sections.containsKey(_selectedSection)) {
+      _selectedSection = sections.keys.first;
+    }
 
     return Scaffold(
       appBar: AppBar(
-        titleSpacing: 0,
         backgroundColor: BrandingConfig.brandRed,
+        titleSpacing: 0,
         title: Row(
           children: [
             const SizedBox(width: 16),
             Text(
               loc.adminDashboardTitle,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
             ),
-            const SizedBox(width: 28),
-            // Franchise selector placeholder
+            const Spacer(),
             const FranchiseDropdown(),
           ],
         ),
         actions: const [
           HelpButton(),
           SettingsButton(),
-          ProfileMenu(), // Includes sign-out
+          ProfileMenu(),
         ],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final crossAxisCount = _getColumnCount(context);
-          return GridView.builder(
-            padding: const EdgeInsets.all(20),
-            itemCount: adminTiles.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              mainAxisSpacing: 18,
-              crossAxisSpacing: 18,
-              childAspectRatio: 1.18,
+      body: Row(
+        children: [
+          // ─── Sidebar ─────────────────────────────────────
+          Container(
+            width: 240,
+            color: BrandingConfig.brandRed.withOpacity(0.05),
+            child: ListView(
+              children: [
+                for (final section in sections.keys)
+                  ListTile(
+                    title: Text(
+                      section,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: section == _selectedSection
+                            ? BrandingConfig.brandRed
+                            : Colors.grey[700],
+                      ),
+                    ),
+                    selected: section == _selectedSection,
+                    onTap: () => setState(() => _selectedSection = section),
+                  ),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.add),
+                    label: Text(loc.addMenuTab),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: BrandingConfig.brandRed,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      minimumSize: const Size.fromHeight(40),
+                    ),
+                    onPressed: () => setState(() => _selectedSection = 'Menus'),
+                  ),
+                ),
+              ],
             ),
-            itemBuilder: (context, i) => adminTiles[i],
-          );
-        },
+          ),
+
+          // ─── Content ─────────────────────────────────────
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth;
+                  int crossAxisCount;
+                  if (width > 1200)
+                    crossAxisCount = 4;
+                  else if (width > 900)
+                    crossAxisCount = 3;
+                  else if (width > 600)
+                    crossAxisCount = 2;
+                  else
+                    crossAxisCount = 1;
+
+                  final tiles = sections[_selectedSection]!;
+
+                  return GridView.builder(
+                    itemCount: tiles.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: 18,
+                      crossAxisSpacing: 18,
+                      childAspectRatio: 1.18,
+                    ),
+                    itemBuilder: (_, i) => tiles[i],
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -232,11 +309,12 @@ class _AdminTile extends StatelessWidget {
   final Widget screen;
 
   const _AdminTile({
+    Key? key,
     required this.icon,
     required this.color,
     required this.label,
     required this.screen,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
