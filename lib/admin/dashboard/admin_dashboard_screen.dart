@@ -116,83 +116,26 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  String _selectedSection = 'Menus';
+  String _selectedSection = '';
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
 
-    final sections = <String, List<_AdminTile>>{
-      'Menus': [
-        _AdminTile(
-          icon: Icons.restaurant_menu,
-          color: BrandingConfig.brandRed,
-          label: loc.menuEditorTitle,
-          screen: const MenuEditorScreen(),
-        ),
-        _AdminTile(
-          icon: Icons.category,
-          color: Colors.deepOrange,
-          label: loc.categoryManagementTitle,
-          screen: const CategoryManagementScreen(),
-        ),
-      ],
-      'Inventory': [
-        _AdminTile(
-          icon: Icons.inventory,
-          color: Colors.indigo,
-          label: loc.inventoryManagementTitle,
-          screen: const InventoryScreen(),
-        ),
-      ],
-      'Orders': [
-        _AdminTile(
-          icon: Icons.analytics,
-          color: Colors.teal,
-          label: loc.orderAnalyticsTitle,
-          screen: const AnalyticsScreen(),
-        ),
-      ],
-      'Customers': [
-        _AdminTile(
-          icon: Icons.feedback,
-          color: Colors.amber,
-          label: loc.feedbackManagementTitle,
-          screen: const FeedbackManagementScreen(),
-        ),
-        _AdminTile(
-          icon: Icons.chat,
-          color: Colors.deepPurple,
-          label: 'Chat Management',
-          screen: const ChatManagementScreen(),
-        ),
-      ],
-      'Promotions': [
-        _AdminTile(
-          icon: Icons.local_offer,
-          color: Colors.green,
-          label: loc.promoManagementTitle,
-          screen: const PromoManagementScreen(),
-        ),
-      ],
-      'Staff': [
-        _AdminTile(
-          icon: Icons.people,
-          color: Colors.blueGrey,
-          label: loc.staffAccessTitle,
-          screen: const StaffAccessScreen(),
-        ),
-      ],
-      'Settings': [
-        _AdminTile(
-          icon: Icons.settings,
-          color: Colors.purple,
-          label: loc.featureSettingsTitle,
-          screen: const FeatureSettingsScreen(),
-        ),
-      ],
+    // Map each sidebar entry to its content screen
+    final sections = <String, Widget>{
+      loc.menuEditorTitle: const MenuEditorScreen(),
+      loc.categoryManagementTitle: const CategoryManagementScreen(),
+      loc.inventoryManagementTitle: const InventoryScreen(),
+      loc.orderAnalyticsTitle: const AnalyticsScreen(),
+      loc.feedbackManagementTitle: const FeedbackManagementScreen(),
+      loc.promoManagementTitle: const PromoManagementScreen(),
+      loc.staffAccessTitle: const StaffAccessScreen(),
+      loc.featureSettingsTitle: const FeatureSettingsScreen(),
+      'Chat Management': const ChatManagementScreen(),
     };
 
+    // Ensure a valid default selection
     if (!sections.containsKey(_selectedSection)) {
       _selectedSection = sections.keys.first;
     }
@@ -248,7 +191,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.add),
-                    label: Text(loc.addMenuTab),
+                    label: Text(loc.menuEditorTitle),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: BrandingConfig.brandRed,
                       shape: RoundedRectangleBorder(
@@ -256,7 +199,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                       minimumSize: const Size.fromHeight(40),
                     ),
-                    onPressed: () => setState(() => _selectedSection = 'Menus'),
+                    onPressed: () => setState(
+                      () => _selectedSection = loc.menuEditorTitle,
+                    ),
                   ),
                 ),
               ],
@@ -267,87 +212,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(20),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final width = constraints.maxWidth;
-                  int crossAxisCount;
-                  if (width > 1200)
-                    crossAxisCount = 4;
-                  else if (width > 900)
-                    crossAxisCount = 3;
-                  else if (width > 600)
-                    crossAxisCount = 2;
-                  else
-                    crossAxisCount = 1;
-
-                  final tiles = sections[_selectedSection]!;
-
-                  return GridView.builder(
-                    itemCount: tiles.length,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount,
-                      mainAxisSpacing: 18,
-                      crossAxisSpacing: 18,
-                      childAspectRatio: 1.18,
-                    ),
-                    itemBuilder: (_, i) => tiles[i],
-                  );
-                },
-              ),
+              child: sections[_selectedSection],
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _AdminTile extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String label;
-  final Widget screen;
-
-  const _AdminTile({
-    Key? key,
-    required this.icon,
-    required this.color,
-    required this.label,
-    required this.screen,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: color.withAlpha((0.08 * 255).toInt()),
-      elevation: 2,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => screen),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 32.0, horizontal: 8.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: color, size: 40),
-              const SizedBox(height: 18),
-              Text(
-                label,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: color,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
