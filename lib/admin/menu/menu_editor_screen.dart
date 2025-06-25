@@ -65,7 +65,13 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
     'dietary',
   ];
   final int _maxVisibleColumns = 5;
-  List<String> _visibleColumnKeys = ['image', 'name', 'price'];
+  late List<String> _visibleColumnKeys;
+
+  @override
+  void initState() {
+    super.initState();
+    _visibleColumnKeys = List<String>.from(_allColumnKeys);
+  }
 
   @override
   void dispose() {
@@ -551,76 +557,125 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
                     ),
                   ),
                   Expanded(
-                    child: ValueListenableBuilder<String>(
-                      valueListenable: _searchQuery,
-                      builder: (context, search, _) {
-                        var filteredItems = items;
-                        if (search.isNotEmpty) {
-                          filteredItems = items
-                              .where((i) =>
-                                  i.name
-                                      .toLowerCase()
-                                      .contains(search.toLowerCase()) ||
-                                  (i.sku
-                                          ?.toLowerCase()
-                                          .contains(search.toLowerCase()) ??
-                                      false))
-                              .toList();
-                        }
-                        return AdminSortableGrid<MenuItem>(
-                          items: filteredItems,
-                          columns: columns,
-                          sortKeys: sortKeys,
-                          columnKeys: _visibleColumnKeys,
-                          sortKey: _sortKey,
-                          ascending: _sortAsc,
-                          onSort: _onSortChanged,
-                          itemBuilder: (ctx, item) {
-                            return ValueListenableBuilder<List<String>>(
-                              valueListenable: _selectedIds,
-                              builder: (context, selectedIds, _) {
-                                final isSelected =
-                                    selectedIds.contains(item.id);
-                                return AdminMenuItemRow(
-                                  visibleColumns: _visibleColumnKeys,
-                                  item: item,
-                                  isSelected: isSelected,
-                                  categories: categories,
-                                  user: user,
-                                  canEdit: canEdit,
-                                  canDeleteOrExport: canDeleteOrExport,
-                                  onSelect: () {
-                                    final current =
-                                        List<String>.from(selectedIds);
-                                    if (isSelected) {
-                                      current.remove(item.id);
-                                    } else {
-                                      current.add(item.id);
-                                    }
-                                    _selectedIds.value = current;
-                                  },
-                                  onEdit: () => _addOrEditMenuItem(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: MediaQuery.of(context).size.width,
+                        ),
+                        child: ValueListenableBuilder<String>(
+                          valueListenable: _searchQuery,
+                          builder: (context, search, _) {
+                            // 1) start from all items
+                            var filteredItems = items;
+
+                            // 2) apply category filter
+                            if (_categoryFilter != null &&
+                                _categoryFilter!.isNotEmpty) {
+                              filteredItems = filteredItems
+                                  .where((i) => i.category == _categoryFilter)
+                                  .toList();
+                            }
+
+                            // 3) apply search text
+                            if (search.isNotEmpty) {
+                              filteredItems = filteredItems.where((i) {
+                                final q = search.toLowerCase();
+                                return i.name.toLowerCase().contains(q) ||
+                                    (i.sku?.toLowerCase().contains(q) ?? false);
+                              }).toList();
+                            }
+
+                            // 4) apply sorting
+                            if (_sortKey != null) {
+                              filteredItems.sort((a, b) {
+                                int cmp;
+                                switch (_sortKey) {
+                                  case 'name':
+                                    cmp = a.name.compareTo(b.name);
+                                    break;
+                                  case 'category':
+                                    cmp = a.category.compareTo(b.category);
+                                    break;
+                                  case 'price':
+                                    cmp = a.price.compareTo(b.price);
+                                    break;
+                                  default:
+                                    cmp = 0;
+                                }
+                                return _sortAsc ? cmp : -cmp;
+                              });
+                            }
+
+                            return AdminSortableGrid<MenuItem>(
+                              items: filteredItems,
+                              columns: columns,
+                              sortKeys: sortKeys,
+                              columnKeys: _visibleColumnKeys,
+                              sortKey: _sortKey,
+                              ascending: _sortAsc,
+                              onSort: _onSortChanged,
+                              itemBuilder: (ctx, item) {
+                                return GestureDetector(
+                                  // primary click → edit
+                                  onTap: () => _addOrEditMenuItem(
                                     context,
                                     item: item,
                                     categories: categories,
                                     user: user,
                                   ),
-                                  onCustomize: () => _openCustomizations(
+                                  // right-click → customizations
+                                  onSecondaryTap: () => _openCustomizations(
                                     context,
                                     item,
                                     user,
                                   ),
-                                  onDelete: () => _deleteMenuItems(
-                                    context,
-                                    [item],
-                                    user,
+                                  child: ValueListenableBuilder<List<String>>(
+                                    valueListenable: _selectedIds,
+                                    builder: (context, selectedIds, _) {
+                                      final isSelected =
+                                          selectedIds.contains(item.id);
+                                      return AdminMenuItemRow(
+                                        visibleColumns: _visibleColumnKeys,
+                                        item: item,
+                                        isSelected: isSelected,
+                                        categories: categories,
+                                        user: user,
+                                        canEdit: canEdit,
+                                        canDeleteOrExport: canDeleteOrExport,
+                                        onSelect: () {
+                                          final cur =
+                                              List<String>.from(selectedIds);
+                                          isSelected
+                                              ? cur.remove(item.id)
+                                              : cur.add(item.id);
+                                          _selectedIds.value = cur;
+                                        },
+                                        onEdit: () => _addOrEditMenuItem(
+                                          context,
+                                          item: item,
+                                          categories: categories,
+                                          user: user,
+                                        ),
+                                        onCustomize: () => _openCustomizations(
+                                          context,
+                                          item,
+                                          user,
+                                        ),
+                                        onDelete: () => _deleteMenuItems(
+                                          context,
+                                          [item],
+                                          user,
+                                        ),
+                                      );
+                                    },
                                   ),
                                 );
                               },
                             );
                           },
-                        );
-                      },
+                        ),
+                      ),
                     ),
                   ),
                   ValueListenableBuilder<List<String>>(
