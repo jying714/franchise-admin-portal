@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/models/user.dart';
+import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/admin/sign_in/sign_in_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -13,7 +13,8 @@ class HomeWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final firebaseUser = Provider.of<fb_auth.User?>(context);
-    final appUser = Provider.of<User?>(context);
+    final appUser = Provider.of<admin_user.User?>(context);
+
     final loc = AppLocalizations.of(context)!;
 
     if (firebaseUser == null) {
