@@ -1,3 +1,5 @@
+import 'package:provider/provider.dart';
+import 'package:franchise_admin_portal/core/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -11,6 +13,7 @@ import 'package:franchise_admin_portal/admin/feedback/feedback_management_screen
 import 'package:franchise_admin_portal/admin/promo/promo_management_screen.dart';
 import 'package:franchise_admin_portal/admin/staff/staff_access_screen.dart';
 import 'package:franchise_admin_portal/admin/features/feature_settings_screen.dart';
+import 'package:franchise_admin_portal/admin/sign_in/sign_in_screen.dart';
 
 // Placeholder widgets (implement as needed)
 class FranchiseDropdown extends StatelessWidget {
@@ -34,7 +37,20 @@ class HelpButton extends StatelessWidget {
         icon: const Icon(Icons.help_outline),
         tooltip: 'Help & Support',
         onPressed: () {
-          // Show help/support dialog
+          // TODO: Show help/support dialog
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('Help & Support'),
+              content: const Text('Help and support info goes here.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Close'),
+                ),
+              ],
+            ),
+          );
         },
       );
 }
@@ -46,7 +62,20 @@ class SettingsButton extends StatelessWidget {
         icon: const Icon(Icons.settings),
         tooltip: 'Settings',
         onPressed: () {
-          // Show settings dialog
+          // TODO: Show settings dialog
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('Settings'),
+              content: const Text('Settings panel goes here.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Close'),
+                ),
+              ],
+            ),
+          );
         },
       );
 }
@@ -55,30 +84,24 @@ class ProfileMenu extends StatelessWidget {
   const ProfileMenu({super.key});
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context, listen: false);
     return PopupMenuButton<String>(
       icon: const CircleAvatar(
         radius: 16,
-        backgroundImage: AssetImage(
-            'assets/images/avatar_placeholder.png'), // Replace with actual profile image logic
+        backgroundImage: AssetImage('assets/images/avatar_placeholder.png'),
       ),
-      onSelected: (value) {
-        if (value == 'profile') {
-          // Open profile screen
-        } else if (value == 'settings') {
-          // Open settings screen
-        } else if (value == 'signout') {
-          // Actually sign out
-          // You might want to use a provider/service here
-          // For now, just show a snackbar as a placeholder
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Signing out...')),
+      onSelected: (value) async {
+        if (value == 'signout') {
+          await authService.signOut();
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const SignInScreen()),
+            (route) => false,
           );
-          // TODO: Call AuthService/Provider's signOut here
         }
+        // Implement 'profile' or other actions as needed
       },
       itemBuilder: (context) => [
         const PopupMenuItem(value: 'profile', child: Text('Profile')),
-        const PopupMenuItem(value: 'settings', child: Text('Settings')),
         const PopupMenuDivider(),
         const PopupMenuItem(value: 'signout', child: Text('Sign Out')),
       ],
