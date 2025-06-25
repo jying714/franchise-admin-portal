@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:franchise_admin_portal/core/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -30,6 +31,10 @@ class FranchiseAdminPortalApp extends StatelessWidget {
         Provider<AuthService>(
             create: (_) => AuthService()), // <-- ADD THIS LINE
         Provider<FirestoreService>(create: (_) => FirestoreService()),
+        StreamProvider<fb_auth.User?>(
+          create: (_) => fb_auth.FirebaseAuth.instance.authStateChanges(),
+          initialData: null,
+        ),
         StreamProvider<User?>(
           create: (_) => FirestoreService().currentUserStream(),
           initialData: null,

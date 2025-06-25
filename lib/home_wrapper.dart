@@ -4,21 +4,32 @@ import 'package:franchise_admin_portal/core/models/user.dart';
 import 'package:franchise_admin_portal/admin/sign_in/sign_in_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 
 class HomeWrapper extends StatelessWidget {
   const HomeWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<User?>(context);
+    final firebaseUser = Provider.of<fb_auth.User?>(context);
+    final appUser = Provider.of<User?>(context);
     final loc = AppLocalizations.of(context)!;
 
-    if (user == null) {
+    if (firebaseUser == null) {
       // Not signed in: show sign in
       return const SignInScreen();
     }
 
-    if (!(user.isOwner || user.isAdmin || user.isManager)) {
+    // If Firestore user not loaded yet, show loading
+    if (appUser == null) {
+      // Optionally, you can trigger loading user profile here if needed
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (!(appUser.isOwner || appUser.isAdmin || appUser.isManager)) {
       // Signed in, but not authorized
       return Scaffold(
         appBar: AppBar(title: Text(loc.adminDashboardTitle)),
