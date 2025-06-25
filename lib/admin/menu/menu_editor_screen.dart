@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/admin/menu/dynamic_menu_item_editor_screen.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_menu_editor_popup_menu.dart';
 import 'package:franchise_admin_portal/widgets/header/franchise_app_bar.dart';
-import 'package:franchise_admin_portal/widgets/admin/admin_menu_item_actions_row.dart';
 import 'package:franchise_admin_portal/admin/menu/export_menu_dialog.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_bulk_selection_toolbar.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_menu_item_row.dart';
@@ -11,12 +10,10 @@ import 'package:franchise_admin_portal/widgets/status_chip.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_delete_confirm_dialog.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/widgets/data_export_button.dart';
 import 'package:franchise_admin_portal/core/models/menu_item.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
 import 'package:franchise_admin_portal/core/models/category.dart';
 import 'package:franchise_admin_portal/widgets/dietary_allergen_chips_row.dart';
-import 'package:franchise_admin_portal/core/models/customization.dart';
 import 'package:franchise_admin_portal/core/models/user.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
@@ -24,15 +21,12 @@ import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_sortable_grid.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_search_bar.dart';
-import 'package:franchise_admin_portal/widgets/network_image_widget.dart';
-import 'package:franchise_admin_portal/admin/menu/menu_item_form_dialog.dart';
+import 'package:franchise_admin_portal/widgets/filter_dropdown.dart';
 import 'package:franchise_admin_portal/admin/menu/bulk_menu_upload_dialog.dart';
 import 'package:franchise_admin_portal/admin/menu/menu_item_customizations_dialog.dart';
 import 'package:franchise_admin_portal/admin/menu/customization_types.dart'
     as ct;
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/widgets/filter_dropdown.dart';
 
 class MenuEditorScreen extends StatefulWidget {
   const MenuEditorScreen({super.key});
@@ -64,8 +58,11 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
     'sku',
     'dietary',
   ];
-  final int _maxVisibleColumns = 5;
   late List<String> _visibleColumnKeys;
+
+  // Panel state for add/edit
+  MenuItem? _editingMenuItem;
+  bool _showEditorPanel = false;
 
   @override
   void initState() {
@@ -79,15 +76,6 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
     _selectedIds.dispose();
     _searchController.dispose();
     super.dispose();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final isTablet = MediaQuery.of(context).size.width > 600;
-    if (isTablet && _visibleColumnKeys.length < 5) {
-      _visibleColumnKeys = ['image', 'name', 'category', 'price', 'available'];
-    }
   }
 
   void _onSearchChanged(String value) => setState(() => _search = value);
@@ -104,63 +92,18 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
   bool _canDeleteOrExport(User? user) =>
       user != null && (user.isOwner || user.isAdmin);
 
-  Future<void> _addOrEditMenuItem(BuildContext context,
-      {MenuItem? item,
-      required List<Category> categories,
-      required User user}) async {
-    print(
-        'Launching MenuItemFormDialog with item: $item, categories: $categories, user: $user');
-    final firestore = Provider.of<FirestoreService>(context, listen: false);
+  Future<void> _addOrEditMenuItemPanel({MenuItem? item}) async {
+    setState(() {
+      _editingMenuItem = item;
+      _showEditorPanel = true;
+    });
+  }
 
-    if (!_canEdit(user)) {
-      await _logUnauthorizedAttempt(user, 'edit_menu_item', item?.id);
-      _showUnauthorizedDialog();
-      return;
-    }
-    final result = await showDialog<MenuItem>(
-      context: context,
-      builder: (_) => MenuItemFormDialog(
-        initialItem: item,
-        categories: categories,
-        onSave: (savedItem) async {
-          if (item == null) {
-            await firestore.addMenuItem(savedItem, userId: user.id);
-            await AuditLogService().addLog(
-              userId: user.id,
-              action: 'add_menu_item',
-              targetType: 'menu_item',
-              targetId: savedItem.id,
-              details: {'name': savedItem.name},
-            );
-          } else {
-            await firestore.updateMenuItem(savedItem, userId: user.id);
-            await AuditLogService().addLog(
-              userId: user.id,
-              action: 'update_menu_item',
-              targetType: 'menu_item',
-              targetId: savedItem.id,
-              details: {'name': savedItem.name},
-            );
-          }
-        },
-      ),
-    );
-    print('Dialog result: $result');
-    if (result != null) {
-      try {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(item == null
-                ? AppLocalizations.of(context)!.itemAdded
-                : AppLocalizations.of(context)!.itemUpdated),
-          ),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${AppLocalizations.of(context)!.error}: $e')),
-        );
-      }
-    }
+  Future<void> _saveOrCloseEditor() async {
+    setState(() {
+      _showEditorPanel = false;
+      _editingMenuItem = null;
+    });
   }
 
   String _columnDisplayName(String key) {
@@ -186,60 +129,8 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
   }
 
   void _showChooseColumnsDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            final availableColumns = _allColumnKeys;
-            return AlertDialog(
-              title: Text("Select Columns"),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: availableColumns.map((col) {
-                    final isChecked = _visibleColumnKeys.contains(col);
-                    final disabled = !isChecked &&
-                        _visibleColumnKeys.length >= _maxVisibleColumns;
-                    return CheckboxListTile(
-                      title: Text(_columnDisplayName(col)),
-                      value: isChecked,
-                      onChanged: disabled
-                          ? null
-                          : (checked) {
-                              setDialogState(() {
-                                if (checked == true) {
-                                  if (_visibleColumnKeys.length <
-                                      _maxVisibleColumns) {
-                                    _visibleColumnKeys.add(col);
-                                  }
-                                } else {
-                                  _visibleColumnKeys.remove(col);
-                                }
-                              });
-                            },
-                    );
-                  }).toList(),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  child: Text('Cancel'),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                TextButton(
-                  child: Text('Apply'),
-                  onPressed: () {
-                    setState(() {});
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
+    // You may want to remove this dialog for the web/tablet experience,
+    // or simply let all columns be visible.
   }
 
   Future<void> _bulkUpload(
@@ -439,11 +330,10 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
                 builder: (_) => const ExportMenuDialog(),
               );
             },
-            columnsLabel:
-                loc.colColumns, // Use your .arb keys here as appropriate
-            importCSVLabel: loc.importCSV, // Add to .arb if missing
-            showDeletedLabel: loc.showDeleted, // Add to .arb if missing
-            exportCSVLabel: loc.exportCSV, // Add to .arb if missing
+            columnsLabel: loc.colColumns,
+            importCSVLabel: loc.importCSV,
+            showDeletedLabel: loc.showDeleted,
+            exportCSVLabel: loc.exportCSV,
           ),
         ],
       ),
@@ -491,7 +381,6 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
                             false))
                     .toList();
               }
-              // Sorting logic
               if (_sortKey != null) {
                 items.sort((a, b) {
                   int cmp = 0;
@@ -523,228 +412,264 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
                     return '';
                 }
               }).toList();
-              //print('[DEBUG] MenuEditorScreen: items.length = ${items.length}');
-              // for (var i = 0; i < items.length; i++) {
-              //   print('[DEBUG] MenuEditorScreen: item[$i] = ${items[i].name}');
-              // }
-              return Column(
+
+              // ────────────── SPLIT PANEL LAYOUT ──────────────
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  AdminSearchBar(
-                    controller: _searchController,
-                    hintText: AppLocalizations.of(context)!.adminSearchHint,
-                    onChanged: (q) => _searchQuery.value = q,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8.0, vertical: 4.0),
-                    child: FilterDropdown<String>(
-                      label: AppLocalizations.of(context)!.colCategory,
-                      options: [''] + categories.map((cat) => cat.id).toList(),
-                      value: _categoryFilter ?? '',
-                      onChanged: (value) {
-                        setState(() {
-                          _categoryFilter = (value != null && value.isNotEmpty)
-                              ? value
-                              : null;
-                        });
-                      },
-                      getLabel: (catId) {
-                        if (catId == '')
-                          return AppLocalizations.of(context)!.all;
-                        final match = categories.where((c) => c.id == catId);
-                        return match.isNotEmpty ? match.first.name : catId;
-                      },
-                    ),
-                  ),
+                  // Left: Menu List + Filters
                   Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minWidth: MediaQuery.of(context).size.width,
+                    flex: 2,
+                    child: Column(
+                      children: [
+                        AdminSearchBar(
+                          controller: _searchController,
+                          hintText:
+                              AppLocalizations.of(context)!.adminSearchHint,
+                          onChanged: (q) => _searchQuery.value = q,
                         ),
-                        child: ValueListenableBuilder<String>(
-                          valueListenable: _searchQuery,
-                          builder: (context, search, _) {
-                            // 1) start from all items
-                            var filteredItems = items;
-
-                            // 2) apply category filter
-                            if (_categoryFilter != null &&
-                                _categoryFilter!.isNotEmpty) {
-                              filteredItems = filteredItems
-                                  .where((i) => i.category == _categoryFilter)
-                                  .toList();
-                            }
-
-                            // 3) apply search text
-                            if (search.isNotEmpty) {
-                              filteredItems = filteredItems.where((i) {
-                                final q = search.toLowerCase();
-                                return i.name.toLowerCase().contains(q) ||
-                                    (i.sku?.toLowerCase().contains(q) ?? false);
-                              }).toList();
-                            }
-
-                            // 4) apply sorting
-                            if (_sortKey != null) {
-                              filteredItems.sort((a, b) {
-                                int cmp;
-                                switch (_sortKey) {
-                                  case 'name':
-                                    cmp = a.name.compareTo(b.name);
-                                    break;
-                                  case 'category':
-                                    cmp = a.category.compareTo(b.category);
-                                    break;
-                                  case 'price':
-                                    cmp = a.price.compareTo(b.price);
-                                    break;
-                                  default:
-                                    cmp = 0;
-                                }
-                                return _sortAsc ? cmp : -cmp;
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0, vertical: 4.0),
+                          child: FilterDropdown<String>(
+                            label: AppLocalizations.of(context)!.colCategory,
+                            options:
+                                [''] + categories.map((cat) => cat.id).toList(),
+                            value: _categoryFilter ?? '',
+                            onChanged: (value) {
+                              setState(() {
+                                _categoryFilter =
+                                    (value != null && value.isNotEmpty)
+                                        ? value
+                                        : null;
                               });
-                            }
-
-                            return AdminSortableGrid<MenuItem>(
-                              items: filteredItems,
-                              columns: columns,
-                              sortKeys: sortKeys,
-                              columnKeys: _visibleColumnKeys,
-                              sortKey: _sortKey,
-                              ascending: _sortAsc,
-                              onSort: _onSortChanged,
-                              itemBuilder: (ctx, item) {
-                                return GestureDetector(
-                                  // primary click → edit
-                                  onTap: () => _addOrEditMenuItem(
-                                    context,
-                                    item: item,
-                                    categories: categories,
-                                    user: user,
-                                  ),
-                                  // right-click → customizations
-                                  onSecondaryTap: () => _openCustomizations(
-                                    context,
-                                    item,
-                                    user,
-                                  ),
-                                  child: ValueListenableBuilder<List<String>>(
-                                    valueListenable: _selectedIds,
-                                    builder: (context, selectedIds, _) {
-                                      final isSelected =
-                                          selectedIds.contains(item.id);
-                                      return AdminMenuItemRow(
-                                        visibleColumns: _visibleColumnKeys,
-                                        item: item,
-                                        isSelected: isSelected,
-                                        categories: categories,
-                                        user: user,
-                                        canEdit: canEdit,
-                                        canDeleteOrExport: canDeleteOrExport,
-                                        onSelect: () {
-                                          final cur =
-                                              List<String>.from(selectedIds);
-                                          isSelected
-                                              ? cur.remove(item.id)
-                                              : cur.add(item.id);
-                                          _selectedIds.value = cur;
+                            },
+                            getLabel: (catId) {
+                              if (catId == '')
+                                return AppLocalizations.of(context)!.all;
+                              final match =
+                                  categories.where((c) => c.id == catId);
+                              return match.isNotEmpty
+                                  ? match.first.name
+                                  : catId;
+                            },
+                          ),
+                        ),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minWidth: MediaQuery.of(context).size.width,
+                              ),
+                              child: ValueListenableBuilder<String>(
+                                valueListenable: _searchQuery,
+                                builder: (context, search, _) {
+                                  var filteredItems = items;
+                                  if (_categoryFilter != null &&
+                                      _categoryFilter!.isNotEmpty) {
+                                    filteredItems = filteredItems
+                                        .where((i) =>
+                                            i.category == _categoryFilter)
+                                        .toList();
+                                  }
+                                  if (search.isNotEmpty) {
+                                    filteredItems = filteredItems.where((i) {
+                                      final q = search.toLowerCase();
+                                      return i.name.toLowerCase().contains(q) ||
+                                          (i.sku?.toLowerCase().contains(q) ??
+                                              false);
+                                    }).toList();
+                                  }
+                                  if (_sortKey != null) {
+                                    filteredItems.sort((a, b) {
+                                      int cmp;
+                                      switch (_sortKey) {
+                                        case 'name':
+                                          cmp = a.name.compareTo(b.name);
+                                          break;
+                                        case 'category':
+                                          cmp =
+                                              a.category.compareTo(b.category);
+                                          break;
+                                        case 'price':
+                                          cmp = a.price.compareTo(b.price);
+                                          break;
+                                        default:
+                                          cmp = 0;
+                                      }
+                                      return _sortAsc ? cmp : -cmp;
+                                    });
+                                  }
+                                  return AdminSortableGrid<MenuItem>(
+                                    items: filteredItems,
+                                    columns: columns,
+                                    sortKeys: sortKeys,
+                                    columnKeys: _visibleColumnKeys,
+                                    sortKey: _sortKey,
+                                    ascending: _sortAsc,
+                                    onSort: _onSortChanged,
+                                    itemBuilder: (ctx, item) {
+                                      return ValueListenableBuilder<
+                                          List<String>>(
+                                        valueListenable: _selectedIds,
+                                        builder: (context, selectedIds, _) {
+                                          final isSelected =
+                                              selectedIds.contains(item.id);
+                                          return AdminMenuItemRow(
+                                            visibleColumns: _visibleColumnKeys,
+                                            item: item,
+                                            isSelected: isSelected,
+                                            categories: categories,
+                                            user: user,
+                                            canEdit: canEdit,
+                                            canDeleteOrExport:
+                                                canDeleteOrExport,
+                                            onSelect: () {
+                                              final cur = List<String>.from(
+                                                  selectedIds);
+                                              isSelected
+                                                  ? cur.remove(item.id)
+                                                  : cur.add(item.id);
+                                              _selectedIds.value = cur;
+                                            },
+                                            onEdit: () =>
+                                                _addOrEditMenuItemPanel(
+                                                    item: item),
+                                            onCustomize: () =>
+                                                _openCustomizations(
+                                              context,
+                                              item,
+                                              user,
+                                            ),
+                                            onDelete: () => _deleteMenuItems(
+                                              context,
+                                              [item],
+                                              user,
+                                            ),
+                                          );
                                         },
-                                        onEdit: () => _addOrEditMenuItem(
-                                          context,
-                                          item: item,
-                                          categories: categories,
-                                          user: user,
-                                        ),
-                                        onCustomize: () => _openCustomizations(
-                                          context,
-                                          item,
-                                          user,
-                                        ),
-                                        onDelete: () => _deleteMenuItems(
-                                          context,
-                                          [item],
-                                          user,
-                                        ),
                                       );
                                     },
-                                  ),
-                                );
-                              },
-                            );
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                        ValueListenableBuilder<List<String>>(
+                          valueListenable: _selectedIds,
+                          builder: (context, selectedIds, _) {
+                            return (selectedIds.isNotEmpty && canDeleteOrExport)
+                                ? SafeArea(
+                                    minimum: const EdgeInsets.only(bottom: 8),
+                                    child: Padding(
+                                      padding: EdgeInsets.only(
+                                        bottom: MediaQuery.of(context)
+                                            .viewPadding
+                                            .bottom,
+                                      ),
+                                      child: AdminBulkSelectionToolbar(
+                                        selectedCount: selectedIds.length,
+                                        onDelete: () {
+                                          final selectedItems = items
+                                              .where((i) =>
+                                                  selectedIds.contains(i.id))
+                                              .toList();
+                                          _deleteMenuItems(
+                                              context, selectedItems, user);
+                                        },
+                                        onClearSelection: _clearSelection,
+                                        deleteLabel:
+                                            AppLocalizations.of(context)!
+                                                .bulkDelete,
+                                        clearSelectionTooltip:
+                                            AppLocalizations.of(context)!
+                                                .clearSelection,
+                                        selectedLabel:
+                                            AppLocalizations.of(context)!
+                                                .bulkActionsSelected(
+                                                    selectedIds.length),
+                                      ),
+                                    ),
+                                  )
+                                : const SizedBox.shrink();
                           },
                         ),
-                      ),
+                        if (canEdit)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                right: 16, bottom: 16, top: 8),
+                            child: Align(
+                              alignment: Alignment.bottomRight,
+                              child: FloatingActionButton.extended(
+                                icon: const Icon(Icons.add),
+                                label:
+                                    Text(AppLocalizations.of(context)!.addItem),
+                                onPressed: () =>
+                                    _addOrEditMenuItemPanel(item: null),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                  ValueListenableBuilder<List<String>>(
-                    valueListenable: _selectedIds,
-                    builder: (context, selectedIds, _) {
-                      return (selectedIds.isNotEmpty && canDeleteOrExport)
-                          ? SafeArea(
-                              minimum: const EdgeInsets.only(bottom: 8),
-                              child: Padding(
-                                padding: EdgeInsets.only(
-                                  bottom:
-                                      MediaQuery.of(context).viewPadding.bottom,
-                                ),
-                                child: AdminBulkSelectionToolbar(
-                                  selectedCount: selectedIds.length,
-                                  onDelete: () {
-                                    final selectedItems = items
-                                        .where(
-                                            (i) => selectedIds.contains(i.id))
-                                        .toList();
-                                    _deleteMenuItems(
-                                        context, selectedItems, user);
-                                  },
-                                  onClearSelection: _clearSelection,
-                                  deleteLabel:
-                                      AppLocalizations.of(context)!.bulkDelete,
-                                  clearSelectionTooltip:
-                                      AppLocalizations.of(context)!
-                                          .clearSelection,
-                                  selectedLabel: AppLocalizations.of(context)!
-                                      .bulkActionsSelected(selectedIds.length),
-                                ),
+                  // Right: Persistent Panel for Add/Edit
+                  if (_showEditorPanel)
+                    Container(
+                      width: 520,
+                      color: Colors.white,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Panel header
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 18),
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(color: Colors.grey.shade200),
                               ),
-                            )
-                          : const SizedBox.shrink();
-                    },
-                  ),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  _editingMenuItem == null
+                                      ? AppLocalizations.of(context)!.addItem
+                                      : AppLocalizations.of(context)!.editItem,
+                                  style:
+                                      Theme.of(context).textTheme.titleMedium,
+                                ),
+                                const Spacer(),
+                                IconButton(
+                                  icon: const Icon(Icons.close),
+                                  tooltip: 'Close',
+                                  onPressed: () => _saveOrCloseEditor(),
+                                )
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                              child: DynamicMenuItemEditorScreen(
+                            initialCategoryId: _editingMenuItem?.category,
+                          )),
+                        ],
+                      ),
+                    ),
                 ],
               );
             },
           );
         },
       ),
-      floatingActionButton: canEdit
-          ? FloatingActionButton.extended(
-              icon: const Icon(Icons.add),
-              label: Text(AppLocalizations.of(context)!.addItem),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const DynamicMenuItemEditorScreen(),
-                  ),
-                );
-              },
-            )
-          : null,
     );
   }
-
-  Widget _cellSpacer() => const SizedBox(width: 8);
 
   Widget _unauthorizedScaffold() {
     return AdminUnauthorizedWidget(
       title: AppLocalizations.of(context)!.menuEditorTitle,
-      message: AppLocalizations.of(context)!
-          .unauthorizedMessage, // Add this to your .arb for best practice!
-      buttonText: AppLocalizations.of(context)!
-          .returnHome, // Add to .arb if not present
+      message: AppLocalizations.of(context)!.unauthorizedMessage,
+      buttonText: AppLocalizations.of(context)!.returnHome,
     );
   }
 }

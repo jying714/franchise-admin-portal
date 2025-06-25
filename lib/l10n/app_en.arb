@@ -803,6 +803,7 @@
   "adminSignInTitle": "Admin Sign-In",
   "adminSignInDescription": "Sign in to manage orders, staff, and restaurant data.",
   "adminOnlyNotice": "This portal is for authorized restaurant administrators only.",
-  "addMenuTab": "Add Menus"
+  "addMenuTab": "Add Menus",
+  "editItem": "Edit Item"
 
   }
