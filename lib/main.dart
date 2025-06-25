@@ -9,9 +9,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/admin/sign_in/sign_in_screen.dart';
 import 'core/services/firestore_service.dart';
-import 'core/models/user.dart';
-import 'admin/dashboard/admin_dashboard_screen.dart';
 import 'package:franchise_admin_portal/home_wrapper.dart';
+import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,15 +27,18 @@ class FranchiseAdminPortalApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<AuthService>(
-            create: (_) => AuthService()), // <-- ADD THIS LINE
+        Provider<AuthService>(create: (_) => AuthService()),
         Provider<FirestoreService>(create: (_) => FirestoreService()),
-        StreamProvider<fb_auth.User?>(
-          create: (_) => fb_auth.FirebaseAuth.instance.authStateChanges(),
+
+        // 1️⃣ Listen to FirebaseAuth state
+        StreamProvider<fb_auth.User?>.value(
+          value: fb_auth.FirebaseAuth.instance.authStateChanges(),
           initialData: null,
         ),
-        StreamProvider<User?>(
-          create: (_) => FirestoreService().currentUserStream(),
+
+        // 2️⃣ Listen to your app-user document via the new appUserStream()
+        StreamProvider<admin_user.User?>(
+          create: (context) => context.read<FirestoreService>().appUserStream(),
           initialData: null,
         ),
       ],

@@ -3,7 +3,7 @@ import 'package:franchise_admin_portal/core/models/address.dart';
 import 'dart:collection';
 import 'package:franchise_admin_portal/core/models/customization.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:franchise_admin_portal/core/models/message.dart';
 import 'package:franchise_admin_portal/core/models/category.dart';
@@ -24,7 +24,7 @@ import 'package:franchise_admin_portal/core/models/order.dart';
 
 class FirestoreService {
   final firestore.FirebaseFirestore _db = firestore.FirebaseFirestore.instance;
-  final FirebaseAuth auth = FirebaseAuth.instance;
+  final fb_auth.FirebaseAuth auth = fb_auth.FirebaseAuth.instance;
 
   // --- [NEW]: Ingredient Metadata Caching ---
   List<IngredientMetadata>? _cachedIngredientMetadata;
@@ -1094,6 +1094,18 @@ class FirestoreService {
       } else {
         return null;
       }
+    });
+  }
+
+  Stream<admin_user.User?> appUserStream() {
+    return fb_auth.FirebaseAuth.instance
+        .authStateChanges()
+        .asyncExpand((fbUser) {
+      if (fbUser == null) return Stream.value(null);
+      return _db.collection('users').doc(fbUser.uid).snapshots().map((snap) =>
+          snap.exists
+              ? admin_user.User.fromFirestore(snap.data()!, snap.id)
+              : null);
     });
   }
 }
