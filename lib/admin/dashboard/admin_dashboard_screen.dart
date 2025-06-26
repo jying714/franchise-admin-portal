@@ -116,29 +116,52 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  String _selectedSection = '';
+  late final List<String> _sectionKeys;
+  late final List<Widget> _sectionWidgets;
+  int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Build widgets only once, preserve state across switches
+    _sectionKeys = [
+      'menuEditor',
+      'categoryManagement',
+      'inventoryManagement',
+      'orderAnalytics',
+      'feedbackManagement',
+      'promoManagement',
+      'staffAccess',
+      'featureSettings',
+      'chatManagement',
+    ];
+    _sectionWidgets = const [
+      MenuEditorScreen(),
+      CategoryManagementScreen(),
+      InventoryScreen(),
+      AnalyticsScreen(),
+      FeedbackManagementScreen(),
+      PromoManagementScreen(),
+      StaffAccessScreen(),
+      FeatureSettingsScreen(),
+      ChatManagementScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-
-    // Map each sidebar entry to its content screen
-    final sections = <String, Widget>{
-      loc.menuEditorTitle: const MenuEditorScreen(),
-      loc.categoryManagementTitle: const CategoryManagementScreen(),
-      loc.inventoryManagementTitle: const InventoryScreen(),
-      loc.orderAnalyticsTitle: const AnalyticsScreen(),
-      loc.feedbackManagementTitle: const FeedbackManagementScreen(),
-      loc.promoManagementTitle: const PromoManagementScreen(),
-      loc.staffAccessTitle: const StaffAccessScreen(),
-      loc.featureSettingsTitle: const FeatureSettingsScreen(),
-      'Chat Management': const ChatManagementScreen(),
-    };
-
-    // Ensure a valid default selection
-    if (!sections.containsKey(_selectedSection)) {
-      _selectedSection = sections.keys.first;
-    }
+    final sidebarTitles = [
+      loc.menuEditorTitle,
+      loc.categoryManagementTitle,
+      loc.inventoryManagementTitle,
+      loc.orderAnalyticsTitle,
+      loc.feedbackManagementTitle,
+      loc.promoManagementTitle,
+      loc.staffAccessTitle,
+      loc.featureSettingsTitle,
+      'Chat Management',
+    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -166,25 +189,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       ),
       body: Row(
         children: [
-          // ─── Sidebar ─────────────────────────────────────
+          // Sidebar
           Container(
             width: 240,
             color: BrandingConfig.brandRed.withOpacity(0.05),
             child: ListView(
               children: [
-                for (final section in sections.keys)
+                for (int i = 0; i < sidebarTitles.length; i++)
                   ListTile(
                     title: Text(
-                      section,
+                      sidebarTitles[i],
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: section == _selectedSection
+                        color: i == _selectedIndex
                             ? BrandingConfig.brandRed
                             : Colors.grey[700],
                       ),
                     ),
-                    selected: section == _selectedSection,
-                    onTap: () => setState(() => _selectedSection = section),
+                    selected: i == _selectedIndex,
+                    onTap: () => setState(() => _selectedIndex = i),
                   ),
                 const SizedBox(height: 24),
                 Padding(
@@ -199,20 +222,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                       minimumSize: const Size.fromHeight(40),
                     ),
-                    onPressed: () => setState(
-                      () => _selectedSection = loc.menuEditorTitle,
-                    ),
+                    onPressed: () => setState(() => _selectedIndex = 0),
                   ),
                 ),
               ],
             ),
           ),
 
-          // ─── Content ─────────────────────────────────────
+          // Persistent Content Area
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: sections[_selectedSection],
+            child: IndexedStack(
+              index: _selectedIndex,
+              children: _sectionWidgets,
             ),
           ),
         ],

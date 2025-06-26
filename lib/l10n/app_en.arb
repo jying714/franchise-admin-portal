@@ -804,6 +804,7 @@
   "adminSignInDescription": "Sign in to manage orders, staff, and restaurant data.",
   "adminOnlyNotice": "This portal is for authorized restaurant administrators only.",
   "addMenuTab": "Add Menus",
-  "editItem": "Edit Item"
+  "editItem": "Edit Item",
+  "selectItemToEdit": "Select item to edit"
 
   }

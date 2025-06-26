@@ -9,6 +9,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/admin/sign_in/sign_in_screen.dart';
 import 'core/services/firestore_service.dart';
+import 'package:franchise_admin_portal/core/services/analytics_service.dart'; // <-- example extra service
+// import other shared services as needed
+
 import 'package:franchise_admin_portal/home_wrapper.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 
@@ -29,6 +32,9 @@ class FranchiseAdminPortalApp extends StatelessWidget {
       providers: [
         Provider<AuthService>(create: (_) => AuthService()),
         Provider<FirestoreService>(create: (_) => FirestoreService()),
+
+        /// ⬇️ Add any other global services for your dashboard (analytics, inventory, etc)
+        Provider<AnalyticsService>(create: (_) => AnalyticsService()),
 
         // 1️⃣ Listen to FirebaseAuth state
         StreamProvider<fb_auth.User?>.value(

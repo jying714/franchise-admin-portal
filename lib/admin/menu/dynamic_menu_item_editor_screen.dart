@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/widgets/header/franchise_app_bar.dart';
@@ -24,6 +22,7 @@ class _DynamicMenuItemEditorScreenState
     extends State<DynamicMenuItemEditorScreen> {
   String? _selectedCategoryId;
   Map<String, dynamic>? _schema;
+  final ScrollController _scrollController = ScrollController(); // ADD
 
   @override
   void initState() {
@@ -32,6 +31,12 @@ class _DynamicMenuItemEditorScreenState
     if (_selectedCategoryId != null) {
       _loadSchema(_selectedCategoryId!);
     }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose(); // ADD
+    super.dispose();
   }
 
   Future<void> _loadSchema(String categoryId) async {
@@ -145,7 +150,9 @@ class _DynamicMenuItemEditorScreenState
 
           return Scrollbar(
             thumbVisibility: true,
+            controller: _scrollController, // ADD
             child: SingleChildScrollView(
+              controller: _scrollController, // ADD
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

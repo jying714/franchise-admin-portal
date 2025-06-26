@@ -1,3 +1,4 @@
+import 'package:franchise_admin_portal/admin/menu/menu_item_editor_panel.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/admin/menu/dynamic_menu_item_editor_screen.dart';
@@ -129,8 +130,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
   }
 
   void _showChooseColumnsDialog() {
-    // You may want to remove this dialog for the web/tablet experience,
-    // or simply let all columns be visible.
+    // For future: column visibility settings.
   }
 
   Future<void> _bulkUpload(
@@ -310,118 +310,140 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: FranchiseAppBar(
-        title: AppLocalizations.of(context)!.menuEditorTitle,
-        actions: [
-          AdminMenuEditorPopupMenu(
-            showDeleted: _showDeleted,
-            canDeleteOrExport: canDeleteOrExport,
-            onShowColumns: _showChooseColumnsDialog,
-            onBulkUpload: () async {
-              final cats = await firestore.getCategories().first;
-              _bulkUpload(context, cats, user);
-            },
-            onToggleShowDeleted: () {
-              setState(() => _showDeleted = !_showDeleted);
-            },
-            onExportCSV: () {
-              showDialog(
-                context: context,
-                builder: (_) => const ExportMenuDialog(),
-              );
-            },
-            columnsLabel: loc.colColumns,
-            importCSVLabel: loc.importCSV,
-            showDeletedLabel: loc.showDeleted,
-            exportCSVLabel: loc.exportCSV,
-          ),
-        ],
-      ),
-      body: StreamBuilder<List<Category>>(
-        stream: firestore.getCategories(),
-        builder: (context, catSnapshot) {
-          if (catSnapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingShimmerWidget();
-          }
-          if (catSnapshot.hasError) {
-            return EmptyStateWidget(
-              title: AppLocalizations.of(context)!.errorLoadingCategories,
-              message: catSnapshot.error.toString(),
-            );
-          }
-          final categories = catSnapshot.data ?? [];
-          if (categories.isEmpty) {
-            return EmptyStateWidget(
-              title: AppLocalizations.of(context)!.noCategories,
-              message: AppLocalizations.of(context)!.noCategoriesMsg,
-            );
-          }
-          return StreamBuilder<List<MenuItem>>(
-            stream: firestore.getMenuItems(),
-            builder: (context, itemSnapshot) {
-              if (itemSnapshot.connectionState == ConnectionState.waiting) {
-                return const LoadingShimmerWidget();
-              }
-              if (itemSnapshot.hasError) {
-                return EmptyStateWidget(
-                  title: AppLocalizations.of(context)!.errorLoadingMenu,
-                  message: itemSnapshot.error.toString(),
-                );
-              }
-              var items = itemSnapshot.data ?? [];
-              if (_categoryFilter != null && _categoryFilter!.isNotEmpty) {
-                items =
-                    items.where((i) => i.category == _categoryFilter).toList();
-              }
-              if (_search.isNotEmpty) {
-                items = items
-                    .where((i) =>
-                        i.name.toLowerCase().contains(_search.toLowerCase()) ||
-                        (i.sku?.toLowerCase().contains(_search.toLowerCase()) ??
-                            false))
-                    .toList();
-              }
-              if (_sortKey != null) {
-                items.sort((a, b) {
-                  int cmp = 0;
-                  switch (_sortKey) {
-                    case 'name':
-                      cmp = a.name.compareTo(b.name);
-                      break;
-                    case 'category':
-                      cmp = a.category.compareTo(b.category);
-                      break;
-                    case 'price':
-                      cmp = a.price.compareTo(b.price);
-                      break;
-                    default:
-                      cmp = 0;
-                  }
-                  return _sortAsc ? cmp : -cmp;
-                });
-              }
-              final columns =
-                  _visibleColumnKeys.map(_columnDisplayName).toList();
-              final sortKeys = _visibleColumnKeys.map((key) {
-                switch (key) {
-                  case 'name':
-                  case 'category':
-                  case 'price':
-                    return key;
-                  default:
-                    return '';
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 11, // ≈ 55%
+            child: StreamBuilder<List<Category>>(
+              stream: firestore.getCategories(),
+              builder: (context, catSnapshot) {
+                if (catSnapshot.connectionState == ConnectionState.waiting) {
+                  return const LoadingShimmerWidget();
                 }
-              }).toList();
+                if (catSnapshot.hasError) {
+                  return EmptyStateWidget(
+                    title: AppLocalizations.of(context)!.errorLoadingCategories,
+                    message: catSnapshot.error.toString(),
+                  );
+                }
+                final categories = catSnapshot.data ?? [];
+                if (categories.isEmpty) {
+                  return EmptyStateWidget(
+                    title: AppLocalizations.of(context)!.noCategories,
+                    message: AppLocalizations.of(context)!.noCategoriesMsg,
+                  );
+                }
+                return StreamBuilder<List<MenuItem>>(
+                  stream: firestore.getMenuItems(),
+                  builder: (context, itemSnapshot) {
+                    if (itemSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return const LoadingShimmerWidget();
+                    }
+                    if (itemSnapshot.hasError) {
+                      return EmptyStateWidget(
+                        title: AppLocalizations.of(context)!.errorLoadingMenu,
+                        message: itemSnapshot.error.toString(),
+                      );
+                    }
+                    var items = itemSnapshot.data ?? [];
+                    if (_categoryFilter != null &&
+                        _categoryFilter!.isNotEmpty) {
+                      items = items
+                          .where((i) => i.category == _categoryFilter)
+                          .toList();
+                    }
+                    if (_search.isNotEmpty) {
+                      items = items
+                          .where((i) =>
+                              i.name
+                                  .toLowerCase()
+                                  .contains(_search.toLowerCase()) ||
+                              (i.sku
+                                      ?.toLowerCase()
+                                      .contains(_search.toLowerCase()) ??
+                                  false))
+                          .toList();
+                    }
+                    if (_sortKey != null) {
+                      items.sort((a, b) {
+                        int cmp = 0;
+                        switch (_sortKey) {
+                          case 'name':
+                            cmp = a.name.compareTo(b.name);
+                            break;
+                          case 'category':
+                            cmp = a.category.compareTo(b.category);
+                            break;
+                          case 'price':
+                            cmp = a.price.compareTo(b.price);
+                            break;
+                          default:
+                            cmp = 0;
+                        }
+                        return _sortAsc ? cmp : -cmp;
+                      });
+                    }
+                    final columns =
+                        _visibleColumnKeys.map(_columnDisplayName).toList();
+                    final sortKeys = _visibleColumnKeys.map((key) {
+                      switch (key) {
+                        case 'name':
+                        case 'category':
+                        case 'price':
+                          return key;
+                        default:
+                          return '';
+                      }
+                    }).toList();
 
-              // ────────────── SPLIT PANEL LAYOUT ──────────────
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Left: Menu List + Filters
-                  Expanded(
-                    flex: 2,
-                    child: Column(
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        // Unified header row for the left panel
+                        Container(
+                          color: BrandingConfig.brandRed,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 18),
+                          child: Row(
+                            children: [
+                              Text(
+                                AppLocalizations.of(context)!.menuEditorTitle,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 22,
+                                ),
+                              ),
+                              const Spacer(),
+                              AdminMenuEditorPopupMenu(
+                                showDeleted: _showDeleted,
+                                canDeleteOrExport: canDeleteOrExport,
+                                onShowColumns: _showChooseColumnsDialog,
+                                onBulkUpload: () async {
+                                  final cats =
+                                      await firestore.getCategories().first;
+                                  _bulkUpload(context, cats, user);
+                                },
+                                onToggleShowDeleted: () {
+                                  setState(() => _showDeleted = !_showDeleted);
+                                },
+                                onExportCSV: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) => const ExportMenuDialog(),
+                                  );
+                                },
+                                columnsLabel: loc.colColumns,
+                                importCSVLabel: loc.importCSV,
+                                showDeletedLabel: loc.showDeleted,
+                                exportCSVLabel: loc.exportCSV,
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Main content
                         AdminSearchBar(
                           controller: _searchController,
                           hintText:
@@ -456,105 +478,91 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
                           ),
                         ),
                         Expanded(
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                minWidth: MediaQuery.of(context).size.width,
-                              ),
-                              child: ValueListenableBuilder<String>(
-                                valueListenable: _searchQuery,
-                                builder: (context, search, _) {
-                                  var filteredItems = items;
-                                  if (_categoryFilter != null &&
-                                      _categoryFilter!.isNotEmpty) {
-                                    filteredItems = filteredItems
-                                        .where((i) =>
-                                            i.category == _categoryFilter)
-                                        .toList();
+                          child: ValueListenableBuilder<String>(
+                            valueListenable: _searchQuery,
+                            builder: (context, search, _) {
+                              var filteredItems = items;
+                              if (_categoryFilter != null &&
+                                  _categoryFilter!.isNotEmpty) {
+                                filteredItems = filteredItems
+                                    .where((i) => i.category == _categoryFilter)
+                                    .toList();
+                              }
+                              if (search.isNotEmpty) {
+                                filteredItems = filteredItems.where((i) {
+                                  final q = search.toLowerCase();
+                                  return i.name.toLowerCase().contains(q) ||
+                                      (i.sku?.toLowerCase().contains(q) ??
+                                          false);
+                                }).toList();
+                              }
+                              if (_sortKey != null) {
+                                filteredItems.sort((a, b) {
+                                  int cmp;
+                                  switch (_sortKey) {
+                                    case 'name':
+                                      cmp = a.name.compareTo(b.name);
+                                      break;
+                                    case 'category':
+                                      cmp = a.category.compareTo(b.category);
+                                      break;
+                                    case 'price':
+                                      cmp = a.price.compareTo(b.price);
+                                      break;
+                                    default:
+                                      cmp = 0;
                                   }
-                                  if (search.isNotEmpty) {
-                                    filteredItems = filteredItems.where((i) {
-                                      final q = search.toLowerCase();
-                                      return i.name.toLowerCase().contains(q) ||
-                                          (i.sku?.toLowerCase().contains(q) ??
-                                              false);
-                                    }).toList();
-                                  }
-                                  if (_sortKey != null) {
-                                    filteredItems.sort((a, b) {
-                                      int cmp;
-                                      switch (_sortKey) {
-                                        case 'name':
-                                          cmp = a.name.compareTo(b.name);
-                                          break;
-                                        case 'category':
-                                          cmp =
-                                              a.category.compareTo(b.category);
-                                          break;
-                                        case 'price':
-                                          cmp = a.price.compareTo(b.price);
-                                          break;
-                                        default:
-                                          cmp = 0;
-                                      }
-                                      return _sortAsc ? cmp : -cmp;
-                                    });
-                                  }
-                                  return AdminSortableGrid<MenuItem>(
-                                    items: filteredItems,
-                                    columns: columns,
-                                    sortKeys: sortKeys,
-                                    columnKeys: _visibleColumnKeys,
-                                    sortKey: _sortKey,
-                                    ascending: _sortAsc,
-                                    onSort: _onSortChanged,
-                                    itemBuilder: (ctx, item) {
-                                      return ValueListenableBuilder<
-                                          List<String>>(
-                                        valueListenable: _selectedIds,
-                                        builder: (context, selectedIds, _) {
-                                          final isSelected =
-                                              selectedIds.contains(item.id);
-                                          return AdminMenuItemRow(
-                                            visibleColumns: _visibleColumnKeys,
-                                            item: item,
-                                            isSelected: isSelected,
-                                            categories: categories,
-                                            user: user,
-                                            canEdit: canEdit,
-                                            canDeleteOrExport:
-                                                canDeleteOrExport,
-                                            onSelect: () {
-                                              final cur = List<String>.from(
-                                                  selectedIds);
-                                              isSelected
-                                                  ? cur.remove(item.id)
-                                                  : cur.add(item.id);
-                                              _selectedIds.value = cur;
-                                            },
-                                            onEdit: () =>
-                                                _addOrEditMenuItemPanel(
-                                                    item: item),
-                                            onCustomize: () =>
-                                                _openCustomizations(
-                                              context,
-                                              item,
-                                              user,
-                                            ),
-                                            onDelete: () => _deleteMenuItems(
-                                              context,
-                                              [item],
-                                              user,
-                                            ),
-                                          );
+                                  return _sortAsc ? cmp : -cmp;
+                                });
+                              }
+                              return AdminSortableGrid<MenuItem>(
+                                items: filteredItems,
+                                columns: columns,
+                                sortKeys: sortKeys,
+                                columnKeys: _visibleColumnKeys,
+                                sortKey: _sortKey,
+                                ascending: _sortAsc,
+                                onSort: _onSortChanged,
+                                itemBuilder: (ctx, item) {
+                                  return ValueListenableBuilder<List<String>>(
+                                    valueListenable: _selectedIds,
+                                    builder: (context, selectedIds, _) {
+                                      final isSelected =
+                                          selectedIds.contains(item.id);
+                                      return AdminMenuItemRow(
+                                        visibleColumns: _visibleColumnKeys,
+                                        item: item,
+                                        isSelected: isSelected,
+                                        categories: categories,
+                                        user: user,
+                                        canEdit: canEdit,
+                                        canDeleteOrExport: canDeleteOrExport,
+                                        onSelect: () {
+                                          final cur =
+                                              List<String>.from(selectedIds);
+                                          isSelected
+                                              ? cur.remove(item.id)
+                                              : cur.add(item.id);
+                                          _selectedIds.value = cur;
                                         },
+                                        onEdit: () =>
+                                            _addOrEditMenuItemPanel(item: item),
+                                        onCustomize: () => _openCustomizations(
+                                          context,
+                                          item,
+                                          user,
+                                        ),
+                                        onDelete: () => _deleteMenuItems(
+                                          context,
+                                          [item],
+                                          user,
+                                        ),
                                       );
                                     },
                                   );
                                 },
-                              ),
-                            ),
+                              );
+                            },
                           ),
                         ),
                         ValueListenableBuilder<List<String>>(
@@ -612,55 +620,21 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
                             ),
                           ),
                       ],
-                    ),
-                  ),
-                  // Right: Persistent Panel for Add/Edit
-                  if (_showEditorPanel)
-                    Container(
-                      width: 520,
-                      color: Colors.white,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Panel header
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 24, vertical: 18),
-                            decoration: BoxDecoration(
-                              border: Border(
-                                bottom: BorderSide(color: Colors.grey.shade200),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  _editingMenuItem == null
-                                      ? AppLocalizations.of(context)!.addItem
-                                      : AppLocalizations.of(context)!.editItem,
-                                  style:
-                                      Theme.of(context).textTheme.titleMedium,
-                                ),
-                                const Spacer(),
-                                IconButton(
-                                  icon: const Icon(Icons.close),
-                                  tooltip: 'Close',
-                                  onPressed: () => _saveOrCloseEditor(),
-                                )
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                              child: DynamicMenuItemEditorScreen(
-                            initialCategoryId: _editingMenuItem?.category,
-                          )),
-                        ],
-                      ),
-                    ),
-                ],
-              );
-            },
-          );
-        },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          Expanded(
+            flex: 9,
+            child: MenuItemEditorPanel(
+              isOpen: _showEditorPanel,
+              initialCategoryId: _editingMenuItem?.category,
+              onClose: _saveOrCloseEditor,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -55,6 +55,7 @@ flutter:
     - assets/images/logo_large.png
     - assets/images/banner_placeholder.png
     - assets/icons/
+    - assets/images/avatar_placeholder.png
   generate: true
 
 flutter_icons:
