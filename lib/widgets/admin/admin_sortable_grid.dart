@@ -32,18 +32,6 @@ class _AdminSortableGridState<T> extends State<AdminSortableGrid<T>> {
   late String? _sortKey;
   late bool _ascending;
 
-  // Match these widths with AdminMenuItemRow
-  static const _colWidths = [
-    60.0, // Image
-    120.0, // Name
-    90.0, // Category
-    60.0, // Price
-    90.0, // Available
-    90.0, // SKU
-    180.0, // Dietary/Allergens
-    100.0, // Actions
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -69,10 +57,9 @@ class _AdminSortableGridState<T> extends State<AdminSortableGrid<T>> {
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 600;
-    print(
-        '[DEBUG] AdminSortableGrid: widget.items.length = ${widget.items.length}');
+
     if (isMobile) {
-      // Mobile: No horizontal scroll, flexible layout, use Expanded for each column
+      // Mobile: List-based, columns stack vertically.
       return Column(
         children: [
           Row(
@@ -87,22 +74,16 @@ class _AdminSortableGridState<T> extends State<AdminSortableGrid<T>> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (colKey == 'available')
-                        const SizedBox(
-                          width: 10,
-                          height: 10,
-                        )
-                      else
-                        Text(
-                          widget.columns[idx],
-                          style: TextStyle(
-                            fontWeight:
-                                isActive ? FontWeight.bold : FontWeight.normal,
-                            color: isActive
-                                ? Theme.of(context).primaryColor
-                                : Colors.black87,
-                          ),
+                      Text(
+                        widget.columns[idx],
+                        style: TextStyle(
+                          fontWeight:
+                              isActive ? FontWeight.bold : FontWeight.normal,
+                          color: isActive
+                              ? Theme.of(context).primaryColor
+                              : Colors.black87,
                         ),
+                      ),
                       if (isActive)
                         Icon(
                           _ascending
@@ -134,69 +115,75 @@ class _AdminSortableGridState<T> extends State<AdminSortableGrid<T>> {
         ],
       );
     } else {
-      // Tablet/Desktop: Preserve horizontal scroll and column widths
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: SizedBox(
-          width: _colWidths.length >= widget.columns.length
-              ? _colWidths.take(widget.columns.length).reduce((a, b) => a + b)
-              : null,
-          child: Column(
-            children: [
-              Row(
-                children: List.generate(widget.columns.length, (idx) {
-                  final isActive = widget.sortKeys[idx] == _sortKey;
-                  return SizedBox(
-                    width: _colWidths[idx],
-                    child: InkWell(
-                      onTap: widget.sortKeys[idx].isNotEmpty
-                          ? () => _handleSort(widget.sortKeys[idx])
-                          : null,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            widget.columns[idx],
-                            style: TextStyle(
-                              fontWeight: isActive
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                              color: isActive
-                                  ? Theme.of(context).primaryColor
-                                  : Colors.black87,
+      // Tablet/Desktop: grid row/column, no overflow, always readable.
+      // By default, all columns except the last are Expanded; last is for actions and can be SizedBox.
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Row(
+              children: [
+                for (int idx = 0; idx < widget.columns.length; idx++)
+                  if (idx == widget.columns.length - 1)
+                    SizedBox(
+                      width: 100,
+                      child: Center(
+                        child: Text(widget.columns[idx],
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    )
+                  else
+                    Expanded(
+                      flex: 3,
+                      child: InkWell(
+                        onTap: widget.sortKeys[idx].isNotEmpty
+                            ? () => _handleSort(widget.sortKeys[idx])
+                            : null,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              widget.columns[idx],
+                              style: TextStyle(
+                                fontWeight: widget.sortKeys[idx] == _sortKey
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: widget.sortKeys[idx] == _sortKey
+                                    ? Theme.of(context).primaryColor
+                                    : Colors.black87,
+                              ),
                             ),
-                          ),
-                          if (isActive)
-                            Icon(
-                              _ascending
-                                  ? Icons.arrow_upward
-                                  : Icons.arrow_downward,
-                              size: 16,
-                            ),
-                        ],
+                            if (widget.sortKeys[idx] == _sortKey)
+                              Icon(
+                                _ascending
+                                    ? Icons.arrow_upward
+                                    : Icons.arrow_downward,
+                                size: 16,
+                              ),
+                          ],
+                        ),
                       ),
                     ),
-                  );
-                }),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: widget.items.isEmpty
-                    ? Center(
-                        child: Text(
-                          "No items found.",
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: widget.items.length,
-                        itemBuilder: (ctx, idx) =>
-                            widget.itemBuilder(ctx, widget.items[idx]),
-                      ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          const Divider(height: 1),
+          Expanded(
+            child: widget.items.isEmpty
+                ? Center(
+                    child: Text(
+                      "No items found.",
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: widget.items.length,
+                    itemBuilder: (ctx, idx) =>
+                        widget.itemBuilder(ctx, widget.items[idx]),
+                  ),
+          ),
+        ],
       );
     }
   }

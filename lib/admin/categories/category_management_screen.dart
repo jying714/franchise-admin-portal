@@ -5,13 +5,18 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
-import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
-import 'package:franchise_admin_portal/widgets/admin/admin_sortable_grid.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'category_form_dialog.dart';
 import 'bulk_upload_dialog.dart';
 import 'category_search_bar.dart';
+
+const categoryColumns = [
+  {"key": "image", "width": 56.0, "header": ""},
+  {"key": "name", "flex": 3, "header": "Category Name"},
+  {"key": "description", "flex": 5, "header": "Description (optional)"},
+  {"key": "actions", "width": 96.0, "header": ""},
+];
 
 class CategoryManagementScreen extends StatefulWidget {
   const CategoryManagementScreen({super.key});
@@ -26,7 +31,6 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   List<Category> _allCategories = [];
   List<Category> _filteredCategories = [];
   String _searchQuery = '';
-
   bool _isLoading = false;
 
   @override
@@ -117,7 +121,6 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     });
   }
 
-  // AdminGridSortCallback signature: (String key, bool ascending)
   void _onSort(String key, bool ascending) {
     setState(() {
       _filteredCategories.sort((a, b) {
@@ -137,129 +140,253 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     });
   }
 
+  Widget buildCategoryHeaderRow(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: categoryColumns.map((col) {
+          if (col.containsKey("width")) {
+            return SizedBox(
+              width: col["width"] as double,
+              child: Center(
+                child: Text(
+                  col["header"] as String? ?? "",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          } else {
+            return Expanded(
+              flex: col["flex"] as int,
+              child: Text(
+                col["header"] as String? ?? "",
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            );
+          }
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget buildCategoryDataRow(BuildContext context, Category category) {
+    return Row(
+      children: categoryColumns.map((col) {
+        switch (col["key"]) {
+          case "image":
+            return SizedBox(
+              width: col["width"] as double,
+              child: Center(
+                child: (category.image != null && category.image!.isNotEmpty)
+                    ? CircleAvatar(
+                        backgroundImage: NetworkImage(category.image!),
+                        radius: 20,
+                      )
+                    : CircleAvatar(
+                        backgroundImage:
+                            AssetImage(BrandingConfig.defaultCategoryIcon),
+                        radius: 20,
+                      ),
+              ),
+            );
+          case "name":
+            return Expanded(
+              flex: col["flex"] as int,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 14.0, horizontal: 8.0),
+                child: Text(category.name),
+              ),
+            );
+          case "description":
+            return Expanded(
+              flex: col["flex"] as int,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 14.0, horizontal: 8.0),
+                child: Text(category.description ?? ''),
+              ),
+            );
+          case "actions":
+            return SizedBox(
+              width: col["width"] as double,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.blueGrey),
+                    tooltip: AppLocalizations.of(context)!.edit,
+                    onPressed: () => _openCategoryDialog(category: category),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    tooltip: AppLocalizations.of(context)!.delete,
+                    onPressed: () => _deleteCategory(category),
+                  ),
+                ],
+              ),
+            );
+          default:
+            return const SizedBox.shrink();
+        }
+      }).toList(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+    final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(loc.adminCategoryManagement),
-        backgroundColor: DesignTokens.primaryColor,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.upload_file, color: DesignTokens.foregroundColor),
-            tooltip: loc.bulkUploadCategories,
-            onPressed: _showBulkUploadDialog,
-          ),
-          IconButton(
-            icon: Icon(Icons.add, color: DesignTokens.foregroundColor),
-            tooltip: loc.addCategory,
-            onPressed: () => _openCategoryDialog(),
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const LoadingShimmerWidget()
-          : Padding(
-              padding: DesignTokens.gridPadding,
-              child: Column(
+      backgroundColor: Colors.white,
+      body: Padding(
+        padding: const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header: section title & actions (like Menu Editor)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // ---- SEARCH BAR ----
-                  CategorySearchBar(
-                    onChanged: _onSearch,
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: StreamBuilder<List<Category>>(
-                      stream: firestoreService.getCategories(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const LoadingShimmerWidget();
-                        }
-                        if (snapshot.hasError) {
-                          return EmptyStateWidget(
-                            title: loc.errorLoadingCategories,
-                            message: loc.pleaseTryAgain,
-                            imageAsset: BrandingConfig.bannerPlaceholder,
-                            onRetry: () => setState(() {}),
-                            buttonText: loc.retry,
-                          );
-                        }
-
-                        _allCategories = snapshot.data ?? [];
-                        _filteredCategories = _searchQuery.isEmpty
-                            ? _allCategories
-                            : _allCategories
-                                .where((c) => c.name
-                                    .toLowerCase()
-                                    .contains(_searchQuery.toLowerCase()))
-                                .toList();
-
-                        if (_filteredCategories.isEmpty) {
-                          return EmptyStateWidget(
-                            title: loc.noCategoriesFound,
-                            message: loc.noCategoriesMessage,
-                            imageAsset: BrandingConfig.bannerPlaceholder,
-                          );
-                        }
-
-                        return AdminSortableGrid<Category>(
-                          items: _filteredCategories,
-                          columns: [
-                            loc.categoryName,
-                            loc.categoryDescription,
-                          ],
-                          columnKeys: [
-                            'name',
-                            'description'
-                          ], // <-- ADD THIS LINE
-                          sortKeys: ['name', 'description'],
-                          itemBuilder: (ctx, category) => ListTile(
-                            leading: (category.image != null &&
-                                    category.image!.isNotEmpty)
-                                ? CircleAvatar(
-                                    backgroundImage:
-                                        NetworkImage(category.image!),
-                                    radius: 24,
-                                  )
-                                : CircleAvatar(
-                                    backgroundImage: AssetImage(
-                                        BrandingConfig.defaultCategoryIcon),
-                                    radius: 24,
-                                  ),
-                            title: Text(category.name),
-                            subtitle: (category.description != null &&
-                                    category.description!.isNotEmpty)
-                                ? Text(category.description!)
-                                : null,
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit,
-                                      color: Colors.blueGrey),
-                                  tooltip: loc.edit,
-                                  onPressed: () =>
-                                      _openCategoryDialog(category: category),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete,
-                                      color: Colors.red),
-                                  tooltip: loc.delete,
-                                  onPressed: () => _deleteCategory(category),
-                                ),
-                              ],
-                            ),
-                          ),
-                          onSort: _onSort,
-                        );
-                      },
+                  Text(
+                    loc.adminCategoryManagement,
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
                     ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.upload_file, color: Colors.black87),
+                    tooltip: loc.bulkUploadCategories,
+                    onPressed: _showBulkUploadDialog,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add, color: Colors.black87),
+                    tooltip: loc.addCategory,
+                    onPressed: () => _openCategoryDialog(),
                   ),
                 ],
               ),
             ),
+            // Search bar
+            CategorySearchBar(
+              onChanged: _onSearch,
+            ),
+            const SizedBox(height: 12),
+            // Grid/List area
+            Expanded(
+              child: StreamBuilder<List<Category>>(
+                stream: firestoreService.getCategories(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return EmptyStateWidget(
+                      title: loc.errorLoadingCategories,
+                      message: loc.pleaseTryAgain,
+                      imageAsset: BrandingConfig.bannerPlaceholder,
+                      onRetry: () => setState(() {}),
+                      buttonText: loc.retry,
+                    );
+                  }
+
+                  _allCategories = snapshot.data ?? [];
+                  _filteredCategories = _searchQuery.isEmpty
+                      ? _allCategories
+                      : _allCategories
+                          .where((c) => c.name
+                              .toLowerCase()
+                              .contains(_searchQuery.toLowerCase()))
+                          .toList();
+
+                  if (_filteredCategories.isEmpty) {
+                    return EmptyStateWidget(
+                      title: loc.noCategoriesFound,
+                      message: loc.noCategoriesMessage,
+                      imageAsset: BrandingConfig.bannerPlaceholder,
+                    );
+                  }
+
+                  // MOBILE VERSION (column based)
+                  if (isMobile) {
+                    return ListView.separated(
+                      itemCount: _filteredCategories.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (ctx, idx) {
+                        final category = _filteredCategories[idx];
+                        return ListTile(
+                          leading: (category.image != null &&
+                                  category.image!.isNotEmpty)
+                              ? CircleAvatar(
+                                  backgroundImage:
+                                      NetworkImage(category.image!),
+                                  radius: 24,
+                                )
+                              : CircleAvatar(
+                                  backgroundImage: AssetImage(
+                                      BrandingConfig.defaultCategoryIcon),
+                                  radius: 24,
+                                ),
+                          title: Text(category.name),
+                          subtitle: (category.description != null &&
+                                  category.description!.isNotEmpty)
+                              ? Text(category.description!)
+                              : null,
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit,
+                                    color: Colors.blueGrey),
+                                tooltip: loc.edit,
+                                onPressed: () =>
+                                    _openCategoryDialog(category: category),
+                              ),
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
+                                tooltip: loc.delete,
+                                onPressed: () => _deleteCategory(category),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  }
+
+                  // DESKTOP/TABLET VERSION (row based, aligned columns)
+                  return Column(
+                    children: [
+                      buildCategoryHeaderRow(context),
+                      const Divider(height: 1),
+                      Expanded(
+                        child: ListView.separated(
+                          itemCount: _filteredCategories.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (ctx, idx) => buildCategoryDataRow(
+                              ctx, _filteredCategories[idx]),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        icon: const Icon(Icons.add),
+        label: Text(AppLocalizations.of(context)!.addCategory),
+        backgroundColor: DesignTokens.primaryColor,
+        foregroundColor: Colors.white,
+        onPressed: () => _openCategoryDialog(),
+      ),
     );
   }
 }

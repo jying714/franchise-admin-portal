@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-//import 'package:franchise_admin_portal/core/models/menu_item.dart';
 import 'package:franchise_admin_portal/widgets/dynamic_form/dynamic_menu_item_form.dart';
-import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
+import 'package:franchise_admin_portal/widgets/delayed_loading_shimmer.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class DynamicMenuItemEditorScreen extends StatefulWidget {
@@ -22,7 +21,9 @@ class _DynamicMenuItemEditorScreenState
     extends State<DynamicMenuItemEditorScreen> {
   String? _selectedCategoryId;
   Map<String, dynamic>? _schema;
-  final ScrollController _scrollController = ScrollController(); // ADD
+  final Map<String, Map<String, dynamic>?> _schemaCache = {};
+
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -35,12 +36,21 @@ class _DynamicMenuItemEditorScreenState
 
   @override
   void dispose() {
-    _scrollController.dispose(); // ADD
+    _scrollController.dispose();
     super.dispose();
   }
 
   Future<void> _loadSchema(String categoryId) async {
+    if (_schemaCache.containsKey(categoryId)) {
+      setState(() {
+        _selectedCategoryId = categoryId;
+        _schema = _schemaCache[categoryId];
+      });
+      return;
+    }
+
     setState(() {
+      _selectedCategoryId = categoryId;
       _schema = null;
     });
 
@@ -63,6 +73,7 @@ class _DynamicMenuItemEditorScreenState
       }
 
       setState(() {
+        _schemaCache[categoryId] = schema;
         _schema = schema;
         _selectedCategoryId = categoryId;
       });
@@ -72,6 +83,7 @@ class _DynamicMenuItemEditorScreenState
       try {
         final fallbackSchema = await firestore.getCategorySchema('default');
         setState(() {
+          _schemaCache[categoryId] = fallbackSchema;
           _schema = fallbackSchema;
           _selectedCategoryId = categoryId;
         });
@@ -127,92 +139,100 @@ class _DynamicMenuItemEditorScreenState
     final loc = AppLocalizations.of(context)!;
     final firestore = Provider.of<FirestoreService>(context, listen: false);
 
-    return Scaffold(
-      appBar: FranchiseAppBar(title: loc.addMenuItem),
-      body: FutureBuilder<List<String>>(
-        future: firestore.getAllCategorySchemaIds(),
-        // Must return List<Map<String, dynamic>>
+    return FutureBuilder<List<String>>(
+      future: firestore.getAllCategorySchemaIds(),
+      builder: (context, catSnapshot) {
+        return DelayedLoadingShimmer(
+          loading: catSnapshot.connectionState == ConnectionState.waiting,
+          child: Builder(
+            builder: (context) {
+              if (catSnapshot.hasError || catSnapshot.data == null) {
+                return Center(
+                  child: EmptyStateWidget(
+                    title: loc.error,
+                    message: catSnapshot.error?.toString() ??
+                        loc.errorLoadingCategories,
+                  ),
+                );
+              }
 
-        builder: (context, catSnapshot) {
-          if (catSnapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingShimmerWidget();
-          }
+              final allCategoryIds = catSnapshot.data!;
 
-          if (catSnapshot.hasError || catSnapshot.data == null) {
-            return EmptyStateWidget(
-              title: loc.error,
-              message:
-                  catSnapshot.error?.toString() ?? loc.errorLoadingCategories,
-            );
-          }
-
-          final allCategoryIds = catSnapshot.data!;
-
-          return Scrollbar(
-            thumbVisibility: true,
-            controller: _scrollController, // ADD
-            child: SingleChildScrollView(
-              controller: _scrollController, // ADD
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (_selectedCategoryId == null) ...[
-                    DropdownButtonFormField<String>(
-                      value: null,
-                      decoration: InputDecoration(
-                        labelText: loc.colCategory,
-                        border: const OutlineInputBorder(),
+              return SingleChildScrollView(
+                controller: _scrollController,
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 24),
+                      child: Text(
+                        loc.addMenuItem,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      items: allCategoryIds.map((id) {
-                        return DropdownMenuItem<String>(
-                          value: id,
-                          child: Text(id.isNotEmpty
-                              ? id[0].toUpperCase() + id.substring(1)
-                              : ''),
-                        );
-                      }).toList(),
-                      onChanged: (v) {
-                        if (v != null) {
-                          _loadSchema(v);
-                        }
-                      },
-                      validator: (v) => v == null ? loc.requiredField : null,
                     ),
-                    const SizedBox(height: 30),
+                    if (_selectedCategoryId == null) ...[
+                      DropdownButtonFormField<String>(
+                        value: null,
+                        decoration: InputDecoration(
+                          labelText: loc.colCategory,
+                          border: const OutlineInputBorder(),
+                        ),
+                        items: allCategoryIds.map((id) {
+                          return DropdownMenuItem<String>(
+                            value: id,
+                            child: Text(
+                              id.isNotEmpty
+                                  ? id[0].toUpperCase() + id.substring(1)
+                                  : '',
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (v) {
+                          if (v != null) {
+                            _loadSchema(v);
+                          }
+                        },
+                        validator: (v) => v == null ? loc.requiredField : null,
+                      ),
+                      const SizedBox(height: 30),
+                    ],
+                    if (_schema != null)
+                      DynamicMenuItemForm(
+                        schema: _schema!,
+                        initialItem: null,
+                        onSave: (menuItem) async {
+                          try {
+                            await firestore.addMenuItem(menuItem);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(loc.itemAdded)),
+                            );
+                            Navigator.pop(context);
+                          } catch (e, stack) {
+                            print('[ERROR] Failed to save item: $e');
+                            print(stack);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('${loc.error}: $e')),
+                            );
+                          }
+                        },
+                        onCancel: () => Navigator.pop(context),
+                      ),
+                    if (_selectedCategoryId != null && _schema == null)
+                      DelayedLoadingShimmer(
+                        loading: true,
+                        child: const SizedBox.shrink(),
+                      ),
                   ],
-                  if (_selectedCategoryId != null && _schema == null)
-                    const Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: LoadingShimmerWidget(),
-                    ),
-                  if (_schema != null)
-                    DynamicMenuItemForm(
-                      schema: _schema!,
-                      initialItem: null,
-                      onSave: (menuItem) async {
-                        try {
-                          await firestore.addMenuItem(menuItem);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(loc.itemAdded)),
-                          );
-                          Navigator.pop(context);
-                        } catch (e, stack) {
-                          print('[ERROR] Failed to save item: $e');
-                          print(stack);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('${loc.error}: $e')),
-                          );
-                        }
-                      },
-                      onCancel: () => Navigator.pop(context),
-                    ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

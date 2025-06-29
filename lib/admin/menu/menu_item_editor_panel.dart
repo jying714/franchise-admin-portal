@@ -41,52 +41,57 @@ class _MenuItemEditorPanelState extends State<MenuItemEditorPanel> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
 
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 180),
-      child: widget.isOpen
-          ? Column(
-              key: ValueKey('editor-open-$_reloadToken'),
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  color: BrandingConfig.brandRed,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                  child: Row(
-                    children: [
-                      Text(
-                        loc.addItem,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 22,
-                        ),
+    // Always build the panel's content, even if not visible.
+    return Container(
+      color: Colors.white,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Panel header (fixed height, not full app bar)
+              Container(
+                color: Colors.transparent,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                child: Row(
+                  children: [
+                    Text(
+                      loc.addItem,
+                      style: TextStyle(
+                        color: BrandingConfig.brandRed,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
                       ),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white),
-                        tooltip: 'Close',
-                        onPressed: widget.onClose,
-                      ),
-                    ],
-                  ),
-                ),
-                // No Expanded here, just the widget:
-                DynamicMenuItemEditorScreen(
-                  initialCategoryId: _categoryId,
-                ),
-              ],
-            )
-          : Container(
-              key: const ValueKey('editor-closed'),
-              color: Colors.white,
-              child: Center(
-                child: Text(
-                  loc.selectItemToEdit,
-                  style: TextStyle(color: Colors.grey[500], fontSize: 18),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.black87),
+                      tooltip: 'Close',
+                      onPressed: widget.onClose,
+                    ),
+                  ],
                 ),
               ),
-            ),
+              // Scrollable content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight - 60,
+                    ),
+                    child: DynamicMenuItemEditorScreen(
+                      initialCategoryId: _categoryId,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

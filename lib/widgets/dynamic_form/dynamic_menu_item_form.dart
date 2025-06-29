@@ -159,74 +159,72 @@ class _DynamicMenuItemFormState extends State<DynamicMenuItemForm> {
   Widget build(BuildContext context) {
     final fields = widget.schema['fields'] as Map<String, dynamic>? ?? {};
     final sortedFields = fields.entries
-        .where((entry) => entry.key != 'categoryId') // <-- Exclude categoryId
+        .where((entry) => entry.key != 'categoryId')
         .toList()
       ..sort((a, b) => a.key.compareTo(b.key));
 
     return Form(
       key: _formKey,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            ...sortedFields.map((entry) {
-              final key = entry.key;
-              final config = entry.value as Map<String, dynamic>;
-              final value = _fieldValues[key];
-              final error = _fieldErrors[key];
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ...sortedFields.map((entry) {
+            final key = entry.key;
+            final config = entry.value as Map<String, dynamic>;
+            final value = _fieldValues[key];
+            final error = _fieldErrors[key];
 
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: DynamicFieldInput(
-                  fieldKey: key,
-                  config: config,
-                  value: value,
-                  errorText: error,
-                  onChanged: (val) {
-                    setState(() => _fieldValues[key] = val);
-                  },
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: DynamicFieldInput(
+                fieldKey: key,
+                config: config,
+                value: value,
+                errorText: error,
+                onChanged: (val) {
+                  setState(() => _fieldValues[key] = val);
+                },
+              ),
+            );
+          }),
+          const Divider(thickness: 1.2),
+          DynamicArrayEditor(
+            title: 'Included Ingredients',
+            arrayKey: 'includedIngredients',
+            items: _includedIngredients,
+            template: widget.schema['includedIngredientsTemplate'] ?? {},
+            onChanged: (updated) =>
+                setState(() => _includedIngredients = updated),
+          ),
+          const SizedBox(height: 16),
+          DynamicArrayEditor(
+            title: 'Optional Add-Ons',
+            arrayKey: 'optionalAddOns',
+            items: _optionalAddOns,
+            template: widget.schema['optionalAddOnsTemplate'] ?? {},
+            onChanged: (updated) => setState(() => _optionalAddOns = updated),
+          ),
+          const SizedBox(height: 16),
+          CustomizationGroupEditor(
+            customizations: _customizations,
+            onChanged: (updated) => setState(() => _customizations = updated),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (widget.onCancel != null)
+                TextButton(
+                  onPressed: widget.onCancel,
+                  child: const Text('Cancel'),
                 ),
-              );
-            }),
-            const Divider(thickness: 1.2),
-            DynamicArrayEditor(
-              title: 'Included Ingredients',
-              arrayKey: 'includedIngredients',
-              items: _includedIngredients,
-              template: widget.schema['includedIngredientsTemplate'] ?? {},
-              onChanged: (updated) =>
-                  setState(() => _includedIngredients = updated),
-            ),
-            const SizedBox(height: 16),
-            DynamicArrayEditor(
-              title: 'Optional Add-Ons',
-              arrayKey: 'optionalAddOns',
-              items: _optionalAddOns,
-              template: widget.schema['optionalAddOnsTemplate'] ?? {},
-              onChanged: (updated) => setState(() => _optionalAddOns = updated),
-            ),
-            const SizedBox(height: 16),
-            CustomizationGroupEditor(
-              customizations: _customizations,
-              onChanged: (updated) => setState(() => _customizations = updated),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (widget.onCancel != null)
-                  TextButton(
-                    onPressed: widget.onCancel,
-                    child: const Text('Cancel'),
-                  ),
-                ElevatedButton(
-                  onPressed: _onSavePressed,
-                  child: const Text('Save'),
-                ),
-              ],
-            )
-          ],
-        ),
+              ElevatedButton(
+                onPressed: _onSavePressed,
+                child: const Text('Save'),
+              ),
+            ],
+          )
+        ],
       ),
     );
   }
