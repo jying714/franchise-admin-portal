@@ -30,398 +30,468 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         Provider.of<FirestoreService>(context, listen: false);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Analytics Dashboard"),
-        backgroundColor: DesignTokens.adminPrimaryColor,
-        actions: [
-          Builder(
-            builder: (context) {
-              return IconButton(
-                icon: const Icon(Icons.download_rounded),
-                tooltip: "Export Current Summary (CSV)",
-                onPressed: () async {
-                  if (_selectedPeriod == null) return;
-                  final summaries =
-                      await analyticsService.getAnalyticsSummaries();
-                  final current = summaries.firstWhere(
-                    (s) => s.period == _selectedPeriod,
-                    orElse: () => summaries.first,
-                  );
-
-                  if (current == null) return;
-                  showDialog(
-                    context: context,
-                    builder: (_) => ExportAnalyticsDialogSingleSummary(
-                      summary: current,
-                    ),
-                  );
-                },
-              );
-            },
-          )
-        ],
-      ),
-      body: SafeArea(
-        bottom: true,
-        child: StreamBuilder<List<AnalyticsSummary>>(
-          stream: analyticsService.getSummaryMetrics(),
-          builder: (context, snapshot) {
-            // --- 1. Loading state ---
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const LoadingShimmerWidget();
-            }
-
-            // --- 2. Error fetching data ---
-            if (snapshot.hasError) {
-              firestoreService.logError(
-                message: 'Error loading analytics data',
-                source: 'analytics_dashboard',
-                screen: 'AnalyticsScreen',
-                stackTrace: snapshot.error?.toString(),
-                severity: 'error',
-              );
-              return Center(
-                  child: Text(
-                      'Error loading analytics data. Please try again later.'));
-            }
-
-            final summaries = snapshot.data ?? [];
-
-            // --- 3. No analytics data at all ---
-            if (summaries.isEmpty) {
-              firestoreService.logError(
-                message: 'No analytics data found for any period',
-                source: 'analytics_dashboard',
-                screen: 'AnalyticsScreen',
-                severity: 'warning',
-              );
-              return const Center(
-                  child: Text('No analytics data available for this period.'));
-            }
-
-            // --- 4. Prepare selected period and summary ---
-            final sorted = List<AnalyticsSummary>.from(summaries)
-              ..sort((a, b) => b.period.compareTo(a.period));
-            final periods = sorted.map((s) => s.period).toSet().toList();
-            final selected =
-                _selectedPeriod ?? (periods.isNotEmpty ? periods.first : null);
-            AnalyticsSummary summary;
-            try {
-              summary = sorted.firstWhere((s) => s.period == selected,
-                  orElse: () => sorted.first);
-            } catch (e, stack) {
-              firestoreService.logError(
-                message: 'Failed to find analytics summary for selected period',
-                source: 'analytics_dashboard',
-                screen: 'AnalyticsScreen',
-                severity: 'error',
-                stackTrace: stack.toString(),
-                contextData: {'selectedPeriod': selected},
-              );
-              return const Center(
-                  child: Text('Unable to load analytics for this period.'));
-            }
-
-            // --- 5. Check for missing feedback data ---
-            final hasFeedback = summary.feedbackStats != null;
-            if (!hasFeedback) {
-              firestoreService.logError(
-                message: 'Missing feedbackStats in analytics summary',
-                source: 'feedback_stats_parse',
-                screen: 'AnalyticsScreen',
-                severity: 'warning',
-                contextData: {'period': summary.period},
-              );
-            }
-
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
+      backgroundColor: Colors.white,
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Main content column
+          Expanded(
+            flex: 11,
+            child: Padding(
+              padding:
+                  const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- Period Dropdown ---
-                  Row(
-                    children: [
-                      const Text(
-                        "Period:",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      DropdownButton<String>(
-                        value: selected,
-                        items: periods
-                            .map((p) => DropdownMenuItem<String>(
-                                  value: p,
-                                  child: Text(p),
-                                ))
-                            .toList(),
-                        onChanged: (val) {
-                          setState(() {
-                            _selectedPeriod = val;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // --- SECTION HEADER: Order & Sales Analytics ---
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Icon(Icons.bar_chart_rounded,
-                          color: DesignTokens.primaryColor, size: 28),
-                      const SizedBox(width: 10),
-                      Text(
-                        "Order & Sales Analytics",
-                        style: TextStyle(
-                          color: DesignTokens.primaryColor,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 20,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                    ],
-                  ),
+                  // Header row
                   Padding(
-                    padding: const EdgeInsets.only(top: 4.0, bottom: 12),
-                    child: Divider(
-                      color: DesignTokens.primaryColor.withOpacity(0.18),
-                      thickness: 2,
-                      height: 2,
-                    ),
-                  ),
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "Analytics Dashboard",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                          ),
+                        ),
+                        const Spacer(),
+                        Builder(
+                          builder: (context) {
+                            return IconButton(
+                              icon: const Icon(Icons.download_rounded,
+                                  color: Colors.black87),
+                              tooltip: "Export Current Summary (CSV)",
+                              onPressed: () async {
+                                if (_selectedPeriod == null) return;
+                                final summaries = await analyticsService
+                                    .getAnalyticsSummaries();
+                                final current = summaries.firstWhere(
+                                  (s) => s.period == _selectedPeriod,
+                                  orElse: () => summaries.first,
+                                );
 
-                  // --- METRICS LIST ---
-                  Expanded(
-                    child: ListView(
-                      children: (() {
-                        // -------- Robustness Logic for Metrics --------
-                        final requiredFields = {
-                          'totalOrders': summary.totalOrders,
-                          'totalRevenue': summary.totalRevenue,
-                          'averageOrderValue': summary.averageOrderValue,
-                          'mostPopularItem': summary.mostPopularItem,
-                          'retentionRate': summary.retentionRate,
-                          'uniqueCustomers': summary.uniqueCustomers,
-                          'cancelledOrders': summary.cancelledOrders,
-                          'updatedAt': summary.updatedAt,
-                        };
-
-                        final missingMetrics = <String>[];
-                        requiredFields.forEach((key, value) {
-                          if (value == null) {
-                            missingMetrics.add(key);
-                            firestoreService.logError(
-                              message: 'Missing $key in analytics summary',
-                              source: 'analytics_dashboard',
-                              screen: 'AnalyticsScreen',
-                              severity: 'warning',
-                              contextData: {
-                                'period': summary.period,
-                                'field': key
+                                if (current == null) return;
+                                showDialog(
+                                  context: context,
+                                  builder: (_) =>
+                                      ExportAnalyticsDialogSingleSummary(
+                                    summary: current,
+                                  ),
+                                );
                               },
                             );
-                          }
-                        });
-
-                        // If all metrics are missing/null, show a single card and return early.
-                        if (missingMetrics.length == requiredFields.length) {
-                          return [
-                            Card(
-                              color: Colors.white,
-                              elevation: 2,
-                              margin: const EdgeInsets.symmetric(vertical: 6),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(32.0),
-                                child: Center(
-                                  child: Text(
-                                    'Order & Sales Analytics not available for this period.',
-                                    style: TextStyle(
-                                        color: Colors.grey[700], fontSize: 16),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 30),
-                            // --- SECTION HEADER: Customer Feedback ---
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Icon(Icons.reviews_rounded,
-                                    color: Colors.amber[800], size: 28),
-                                const SizedBox(width: 10),
-                                const Text(
-                                  "Customer Feedback",
-                                  style: TextStyle(
-                                    color: Colors.black87,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 20,
-                                    letterSpacing: 0.2,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(top: 4.0, bottom: 12),
-                              child: Divider(
-                                color: Colors.amber[700]!.withOpacity(0.15),
-                                thickness: 2,
-                                height: 2,
-                              ),
-                            ),
-                            if (hasFeedback)
-                              _buildFeedbackCard(summary)
-                            else
-                              Card(
-                                color: Colors.white,
-                                elevation: 2,
-                                margin: const EdgeInsets.symmetric(vertical: 6),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(32.0),
-                                  child: Center(
-                                    child: Text(
-                                      'No customer feedback available for this period.',
-                                      style: TextStyle(
-                                          color: Colors.grey[700],
-                                          fontSize: 16),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ];
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Analytics Content
+                  Expanded(
+                    child: StreamBuilder<List<AnalyticsSummary>>(
+                      stream: analyticsService.getSummaryMetrics(),
+                      builder: (context, snapshot) {
+                        // --- 1. Loading state ---
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const LoadingShimmerWidget();
                         }
 
-                        // ----------- Main branch: show metrics tiles as normal -----------
-                        return [
-                          _buildMetricTile(
-                            "Total Orders",
-                            summary.totalOrders ?? "-",
-                            isMissing: missingMetrics.contains('totalOrders'),
-                          ),
-                          _buildMetricTile(
-                            "Total Revenue",
-                            summary.totalRevenue != null
-                                ? "\$${summary.totalRevenue.toStringAsFixed(2)}"
-                                : "-",
-                            isMissing: missingMetrics.contains('totalRevenue'),
-                          ),
-                          _buildMetricTile(
-                            "Average Order Value",
-                            summary.averageOrderValue != null
-                                ? "\$${summary.averageOrderValue.toStringAsFixed(2)}"
-                                : "-",
-                            isMissing:
-                                missingMetrics.contains('averageOrderValue'),
-                          ),
-                          _buildMetricTile(
-                            "Most Popular Item",
-                            summary.mostPopularItem ?? "-",
-                            isMissing:
-                                missingMetrics.contains('mostPopularItem'),
-                          ),
-                          _buildMetricTile(
-                            "Retention Rate",
-                            summary.retentionRate != null
-                                ? "${(summary.retentionRate * 100).toStringAsFixed(1)}%"
-                                : "-",
-                            isMissing: missingMetrics.contains('retentionRate'),
-                          ),
-                          _buildMetricTile(
-                            "Unique Customers",
-                            summary.uniqueCustomers ?? "-",
-                            isMissing:
-                                missingMetrics.contains('uniqueCustomers'),
-                          ),
-                          _buildMetricTile(
-                            "Cancelled Orders",
-                            summary.cancelledOrders ?? "-",
-                            isMissing:
-                                missingMetrics.contains('cancelledOrders'),
-                          ),
-                          _buildMetricTile(
-                            "Last Updated",
-                            summary.updatedAt?.toString() ?? "-",
-                            isMissing: missingMetrics.contains('updatedAt'),
-                          ),
-                          // --- Spacer between Analytics & Feedback
-                          const SizedBox(height: 30),
-                          // --- SECTION HEADER: Customer Feedback ---
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                        // --- 2. Error fetching data ---
+                        if (snapshot.hasError) {
+                          firestoreService.logError(
+                            message: 'Error loading analytics data',
+                            source: 'analytics_dashboard',
+                            screen: 'AnalyticsScreen',
+                            stackTrace: snapshot.error?.toString(),
+                            severity: 'error',
+                          );
+                          return Center(
+                              child: Text(
+                                  'Error loading analytics data. Please try again later.'));
+                        }
+
+                        final summaries = snapshot.data ?? [];
+
+                        // --- 3. No analytics data at all ---
+                        if (summaries.isEmpty) {
+                          firestoreService.logError(
+                            message: 'No analytics data found for any period',
+                            source: 'analytics_dashboard',
+                            screen: 'AnalyticsScreen',
+                            severity: 'warning',
+                          );
+                          return const Center(
+                              child: Text(
+                                  'No analytics data available for this period.'));
+                        }
+
+                        // --- 4. Prepare selected period and summary ---
+                        final sorted = List<AnalyticsSummary>.from(summaries)
+                          ..sort((a, b) => b.period.compareTo(a.period));
+                        final periods =
+                            sorted.map((s) => s.period).toSet().toList();
+                        final selected = _selectedPeriod ??
+                            (periods.isNotEmpty ? periods.first : null);
+                        AnalyticsSummary summary;
+                        try {
+                          summary = sorted.firstWhere(
+                              (s) => s.period == selected,
+                              orElse: () => sorted.first);
+                        } catch (e, stack) {
+                          firestoreService.logError(
+                            message:
+                                'Failed to find analytics summary for selected period',
+                            source: 'analytics_dashboard',
+                            screen: 'AnalyticsScreen',
+                            severity: 'error',
+                            stackTrace: stack.toString(),
+                            contextData: {'selectedPeriod': selected},
+                          );
+                          return const Center(
+                              child: Text(
+                                  'Unable to load analytics for this period.'));
+                        }
+
+                        // --- 5. Check for missing feedback data ---
+                        final hasFeedback = summary.feedbackStats != null;
+                        if (!hasFeedback) {
+                          firestoreService.logError(
+                            message:
+                                'Missing feedbackStats in analytics summary',
+                            source: 'feedback_stats_parse',
+                            screen: 'AnalyticsScreen',
+                            severity: 'warning',
+                            contextData: {'period': summary.period},
+                          );
+                        }
+
+                        return Padding(
+                          padding: const EdgeInsets.all(0),
+                          child: Column(
                             children: [
-                              Icon(Icons.reviews_rounded,
-                                  color: Colors.amber[800], size: 28),
-                              const SizedBox(width: 10),
-                              const Text(
-                                "Customer Feedback",
-                                style: TextStyle(
-                                  color: Colors.black87,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 20,
-                                  letterSpacing: 0.2,
+                              // --- Period Dropdown ---
+                              Row(
+                                children: [
+                                  const Text(
+                                    "Period:",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  DropdownButton<String>(
+                                    value: selected,
+                                    items: periods
+                                        .map((p) => DropdownMenuItem<String>(
+                                              value: p,
+                                              child: Text(p),
+                                            ))
+                                        .toList(),
+                                    onChanged: (val) {
+                                      setState(() {
+                                        _selectedPeriod = val;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 24),
+
+                              // --- SECTION HEADER: Order & Sales Analytics ---
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.bar_chart_rounded,
+                                      color: DesignTokens.primaryColor,
+                                      size: 28),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    "Order & Sales Analytics",
+                                    style: TextStyle(
+                                      color: DesignTokens.primaryColor,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 20,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.only(top: 4.0, bottom: 12),
+                                child: Divider(
+                                  color: DesignTokens.primaryColor
+                                      .withOpacity(0.18),
+                                  thickness: 2,
+                                  height: 2,
+                                ),
+                              ),
+
+                              // --- METRICS LIST ---
+                              Expanded(
+                                child: ListView(
+                                  children: (() {
+                                    // -------- Robustness Logic for Metrics --------
+                                    final requiredFields = {
+                                      'totalOrders': summary.totalOrders,
+                                      'totalRevenue': summary.totalRevenue,
+                                      'averageOrderValue':
+                                          summary.averageOrderValue,
+                                      'mostPopularItem':
+                                          summary.mostPopularItem,
+                                      'retentionRate': summary.retentionRate,
+                                      'uniqueCustomers':
+                                          summary.uniqueCustomers,
+                                      'cancelledOrders':
+                                          summary.cancelledOrders,
+                                      'updatedAt': summary.updatedAt,
+                                    };
+
+                                    final missingMetrics = <String>[];
+                                    requiredFields.forEach((key, value) {
+                                      if (value == null) {
+                                        missingMetrics.add(key);
+                                        firestoreService.logError(
+                                          message:
+                                              'Missing $key in analytics summary',
+                                          source: 'analytics_dashboard',
+                                          screen: 'AnalyticsScreen',
+                                          severity: 'warning',
+                                          contextData: {
+                                            'period': summary.period,
+                                            'field': key
+                                          },
+                                        );
+                                      }
+                                    });
+
+                                    // If all metrics are missing/null, show a single card and return early.
+                                    if (missingMetrics.length ==
+                                        requiredFields.length) {
+                                      return [
+                                        Card(
+                                          color: Colors.white,
+                                          elevation: 2,
+                                          margin: const EdgeInsets.symmetric(
+                                              vertical: 6),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(14),
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(32.0),
+                                            child: Center(
+                                              child: Text(
+                                                'Order & Sales Analytics not available for this period.',
+                                                style: TextStyle(
+                                                    color: Colors.grey[700],
+                                                    fontSize: 16),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 30),
+                                        // --- SECTION HEADER: Customer Feedback ---
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.reviews_rounded,
+                                                color: Colors.amber[800],
+                                                size: 28),
+                                            const SizedBox(width: 10),
+                                            const Text(
+                                              "Customer Feedback",
+                                              style: TextStyle(
+                                                color: Colors.black87,
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 20,
+                                                letterSpacing: 0.2,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              top: 4.0, bottom: 12),
+                                          child: Divider(
+                                            color: Colors.amber[700]!
+                                                .withOpacity(0.15),
+                                            thickness: 2,
+                                            height: 2,
+                                          ),
+                                        ),
+                                        if (hasFeedback)
+                                          _buildFeedbackCard(summary)
+                                        else
+                                          Card(
+                                            color: Colors.white,
+                                            elevation: 2,
+                                            margin: const EdgeInsets.symmetric(
+                                                vertical: 6),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                            ),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(32.0),
+                                              child: Center(
+                                                child: Text(
+                                                  'No customer feedback available for this period.',
+                                                  style: TextStyle(
+                                                      color: Colors.grey[700],
+                                                      fontSize: 16),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ];
+                                    }
+
+                                    // ----------- Main branch: show metrics tiles as normal -----------
+                                    return [
+                                      _buildMetricTile(
+                                        "Total Orders",
+                                        summary.totalOrders ?? "-",
+                                        isMissing: missingMetrics
+                                            .contains('totalOrders'),
+                                      ),
+                                      _buildMetricTile(
+                                        "Total Revenue",
+                                        summary.totalRevenue != null
+                                            ? "\$${summary.totalRevenue.toStringAsFixed(2)}"
+                                            : "-",
+                                        isMissing: missingMetrics
+                                            .contains('totalRevenue'),
+                                      ),
+                                      _buildMetricTile(
+                                        "Average Order Value",
+                                        summary.averageOrderValue != null
+                                            ? "\$${summary.averageOrderValue.toStringAsFixed(2)}"
+                                            : "-",
+                                        isMissing: missingMetrics
+                                            .contains('averageOrderValue'),
+                                      ),
+                                      _buildMetricTile(
+                                        "Most Popular Item",
+                                        summary.mostPopularItem ?? "-",
+                                        isMissing: missingMetrics
+                                            .contains('mostPopularItem'),
+                                      ),
+                                      _buildMetricTile(
+                                        "Retention Rate",
+                                        summary.retentionRate != null
+                                            ? "${(summary.retentionRate * 100).toStringAsFixed(1)}%"
+                                            : "-",
+                                        isMissing: missingMetrics
+                                            .contains('retentionRate'),
+                                      ),
+                                      _buildMetricTile(
+                                        "Unique Customers",
+                                        summary.uniqueCustomers ?? "-",
+                                        isMissing: missingMetrics
+                                            .contains('uniqueCustomers'),
+                                      ),
+                                      _buildMetricTile(
+                                        "Cancelled Orders",
+                                        summary.cancelledOrders ?? "-",
+                                        isMissing: missingMetrics
+                                            .contains('cancelledOrders'),
+                                      ),
+                                      _buildMetricTile(
+                                        "Last Updated",
+                                        summary.updatedAt?.toString() ?? "-",
+                                        isMissing: missingMetrics
+                                            .contains('updatedAt'),
+                                      ),
+                                      // --- Spacer between Analytics & Feedback
+                                      const SizedBox(height: 30),
+                                      // --- SECTION HEADER: Customer Feedback ---
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.reviews_rounded,
+                                              color: Colors.amber[800],
+                                              size: 28),
+                                          const SizedBox(width: 10),
+                                          const Text(
+                                            "Customer Feedback",
+                                            style: TextStyle(
+                                              color: Colors.black87,
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 20,
+                                              letterSpacing: 0.2,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            top: 4.0, bottom: 12),
+                                        child: Divider(
+                                          color: Colors.amber[700]!
+                                              .withOpacity(0.15),
+                                          thickness: 2,
+                                          height: 2,
+                                        ),
+                                      ),
+                                      if (hasFeedback)
+                                        _buildFeedbackCard(summary)
+                                      else
+                                        Card(
+                                          color: Colors.white,
+                                          elevation: 2,
+                                          margin: const EdgeInsets.symmetric(
+                                              vertical: 6),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(14),
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(32.0),
+                                            child: Center(
+                                              child: Text(
+                                                'No customer feedback available for this period.',
+                                                style: TextStyle(
+                                                    color: Colors.grey[700],
+                                                    fontSize: 16),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ];
+                                  })(),
+                                ),
+                              ),
+                              // --- Export Button (visible on bottom for UX) ---
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  icon: const Icon(Icons.download_rounded),
+                                  label: const Text('Export This Period (CSV)'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: DesignTokens.primaryColor,
+                                    foregroundColor:
+                                        DesignTokens.foregroundColor,
+                                  ),
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (_) =>
+                                          ExportAnalyticsDialogSingleSummary(
+                                        summary: summary,
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
                             ],
-                          ),
-                          Padding(
-                            padding:
-                                const EdgeInsets.only(top: 4.0, bottom: 12),
-                            child: Divider(
-                              color: Colors.amber[700]!.withOpacity(0.15),
-                              thickness: 2,
-                              height: 2,
-                            ),
-                          ),
-                          if (hasFeedback)
-                            _buildFeedbackCard(summary)
-                          else
-                            Card(
-                              color: Colors.white,
-                              elevation: 2,
-                              margin: const EdgeInsets.symmetric(vertical: 6),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(32.0),
-                                child: Center(
-                                  child: Text(
-                                    'No customer feedback available for this period.',
-                                    style: TextStyle(
-                                        color: Colors.grey[700], fontSize: 16),
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ];
-                      })(),
-                    ),
-                  ),
-                  // --- Export Button (visible on bottom for UX) ---
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.download_rounded),
-                      label: const Text('Export This Period (CSV)'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: DesignTokens.primaryColor,
-                        foregroundColor: DesignTokens.foregroundColor,
-                      ),
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (_) => ExportAnalyticsDialogSingleSummary(
-                            summary: summary,
                           ),
                         );
                       },
@@ -429,9 +499,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   ),
                 ],
               ),
-            );
-          },
-        ),
+            ),
+          ),
+          // Right panel placeholder
+          Expanded(
+            flex: 9,
+            child: Container(),
+          ),
+        ],
       ),
     );
   }

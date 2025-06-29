@@ -28,301 +28,346 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
     final loc = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          loc.feedbackManagement,
-          style: TextStyle(
-            color: DesignTokens.foregroundColor,
-            fontSize: DesignTokens.titleFontSize,
-            fontFamily: DesignTokens.fontFamily,
-            fontWeight: DesignTokens.titleFontWeight,
-          ),
-        ),
-        backgroundColor: DesignTokens.primaryColor,
-        iconTheme: const IconThemeData(color: DesignTokens.foregroundColor),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => setState(() {}),
-            tooltip: loc.refresh,
-          ),
-        ],
-      ),
       backgroundColor: DesignTokens.backgroundColor,
-      body: Column(
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- Filter & Sort Controls ---
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                // Filter by type
-                DropdownButton<String>(
-                  value: _filterType,
-                  onChanged: (val) => setState(() => _filterType = val!),
-                  items: [
-                    DropdownMenuItem(value: 'all', child: Text(loc.allTypes)),
-                    DropdownMenuItem(
-                        value: 'ordering', child: Text(loc.filterAppFeedback)),
-                    DropdownMenuItem(
-                        value: 'orderExperience',
-                        child: Text(loc.filterOrderFeedback)),
-                  ],
-                  underline: SizedBox(),
-                  style: TextStyle(color: DesignTokens.textColor),
-                ),
-                const SizedBox(width: 12),
-                // Sort order
-                DropdownButton<String>(
-                  value: _sortOrder,
-                  onChanged: (val) => setState(() => _sortOrder = val!),
-                  items: [
-                    DropdownMenuItem(
-                        value: 'recent', child: Text(loc.sortRecent)),
-                    DropdownMenuItem(
-                        value: 'oldest', child: Text(loc.sortOldest)),
-                    DropdownMenuItem(
-                        value: 'lowest', child: Text(loc.sortLowest)),
-                    DropdownMenuItem(
-                        value: 'highest', child: Text(loc.sortHighest)),
-                  ],
-                  underline: SizedBox(),
-                  style: TextStyle(color: DesignTokens.textColor),
-                ),
-                const SizedBox(width: 12),
-                // Search bar
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: loc.searchFeedback,
-                      prefixIcon: const Icon(Icons.search, size: 18),
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 0, horizontal: 12),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide:
-                            BorderSide(width: 0.5, color: Colors.grey.shade400),
-                      ),
-                      isDense: true,
-                    ),
-                    style: TextStyle(fontSize: 14),
-                    onChanged: (v) => setState(() => _search = v),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // --- Feedback List ---
+          // Main content column
           Expanded(
-            child: StreamBuilder<List<feedback_model.FeedbackEntry>>(
-              stream: firestoreService.getFeedbackEntries(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(
-                    child: Text(
-                      loc.noFeedbackSubmitted,
-                      style: TextStyle(
-                        color: DesignTokens.secondaryTextColor,
-                        fontSize: DesignTokens.bodyFontSize,
-                        fontFamily: DesignTokens.fontFamily,
-                      ),
+            flex: 11,
+            child: Padding(
+              padding:
+                  const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header row
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          loc.feedbackManagement,
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: DesignTokens.titleFontSize,
+                            fontFamily: DesignTokens.fontFamily,
+                            fontWeight: DesignTokens.titleFontWeight,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          icon:
+                              const Icon(Icons.refresh, color: Colors.black87),
+                          onPressed: () => setState(() {}),
+                          tooltip: loc.refresh,
+                        ),
+                      ],
                     ),
-                  );
-                }
-
-                // --- Filtering & Sorting ---
-                List<feedback_model.FeedbackEntry> feedbacks = snapshot.data!;
-                if (_filterType != 'all') {
-                  feedbacks = feedbacks
-                      .where((f) => f.feedbackMode == _filterType)
-                      .toList();
-                }
-                if (_search.trim().isNotEmpty) {
-                  final s = _search.toLowerCase();
-                  feedbacks = feedbacks
-                      .where((f) =>
-                          (f.comment?.toLowerCase().contains(s) ?? false) ||
-                          (f.categories
-                              .any((c) => c.toLowerCase().contains(s))) ||
-                          f.orderId.toLowerCase().contains(s) ||
-                          f.userId.toLowerCase().contains(s))
-                      .toList();
-                }
-                switch (_sortOrder) {
-                  case 'recent':
-                    feedbacks
-                        .sort((a, b) => b.timestamp.compareTo(a.timestamp));
-                    break;
-                  case 'oldest':
-                    feedbacks
-                        .sort((a, b) => a.timestamp.compareTo(b.timestamp));
-                    break;
-                  case 'lowest':
-                    feedbacks.sort((a, b) => a.rating.compareTo(b.rating));
-                    break;
-                  case 'highest':
-                    feedbacks.sort((a, b) => b.rating.compareTo(a.rating));
-                    break;
-                }
-
-                return ListView.separated(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  itemCount: feedbacks.length,
-                  separatorBuilder: (_, __) =>
-                      Divider(height: 1, thickness: 0.5),
-                  itemBuilder: (context, i) {
-                    final feedback = feedbacks[i];
-                    final isOrderFeedback =
-                        feedback.feedbackMode == 'orderExperience';
-
-                    return ListTile(
-                      leading: _TypeIcon(feedback: feedback),
-                      title: Row(
-                        children: [
-                          Text(
-                            isOrderFeedback
-                                ? loc.filterOrderFeedback
-                                : loc.filterAppFeedback,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: isOrderFeedback
-                                  ? DesignTokens.primaryColor
-                                  : DesignTokens.secondaryColor,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Row(
-                            children: List.generate(
-                                5,
-                                (idx) => Icon(
-                                      idx < feedback.rating
-                                          ? Icons.star
-                                          : Icons.star_border,
-                                      color: idx < feedback.rating
-                                          ? Colors.amber
-                                          : Colors.grey.shade400,
-                                      size: 18,
-                                    )),
-                          ),
-                          if (feedback.anonymous) ...[
-                            const SizedBox(width: 8),
-                            Tooltip(
-                              message: loc.feedbackAnonymous,
-                              child: const Icon(Icons.visibility_off,
-                                  color: Colors.grey, size: 16),
-                            ),
+                  ),
+                  // --- Filter & Sort Controls ---
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                    child: Row(
+                      children: [
+                        // Filter by type
+                        DropdownButton<String>(
+                          value: _filterType,
+                          onChanged: (val) =>
+                              setState(() => _filterType = val!),
+                          items: [
+                            DropdownMenuItem(
+                                value: 'all', child: Text(loc.allTypes)),
+                            DropdownMenuItem(
+                                value: 'ordering',
+                                child: Text(loc.filterAppFeedback)),
+                            DropdownMenuItem(
+                                value: 'orderExperience',
+                                child: Text(loc.filterOrderFeedback)),
                           ],
-                        ],
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (feedback.orderId.isNotEmpty)
-                            Text('${loc.orderIdLabel}: ${feedback.orderId}',
-                                style: TextStyle(fontSize: 12)),
-                          if (feedback.categories.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: feedback.categories.map((catScore) {
-                                  final parts = catScore.split(':');
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 4),
-                                    child: Chip(
-                                      label: Text(
-                                        parts.length > 1
-                                            ? '${parts[0].trim()}: ${parts[1].trim()}'
-                                            : catScore,
-                                        style: const TextStyle(fontSize: 13),
-                                      ),
-                                      backgroundColor:
-                                          DesignTokens.surfaceColor,
-                                      side: BorderSide.none,
-                                      visualDensity: VisualDensity.compact,
-                                    ),
-                                  );
-                                }).toList(),
+                          underline: SizedBox(),
+                          style: TextStyle(color: DesignTokens.textColor),
+                        ),
+                        const SizedBox(width: 12),
+                        // Sort order
+                        DropdownButton<String>(
+                          value: _sortOrder,
+                          onChanged: (val) => setState(() => _sortOrder = val!),
+                          items: [
+                            DropdownMenuItem(
+                                value: 'recent', child: Text(loc.sortRecent)),
+                            DropdownMenuItem(
+                                value: 'oldest', child: Text(loc.sortOldest)),
+                            DropdownMenuItem(
+                                value: 'lowest', child: Text(loc.sortLowest)),
+                            DropdownMenuItem(
+                                value: 'highest', child: Text(loc.sortHighest)),
+                          ],
+                          underline: SizedBox(),
+                          style: TextStyle(color: DesignTokens.textColor),
+                        ),
+                        const SizedBox(width: 12),
+                        // Search bar
+                        Expanded(
+                          child: TextField(
+                            decoration: InputDecoration(
+                              hintText: loc.searchFeedback,
+                              prefixIcon: const Icon(Icons.search, size: 18),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 0, horizontal: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: BorderSide(
+                                    width: 0.5, color: Colors.grey.shade400),
+                              ),
+                              isDense: true,
+                            ),
+                            style: TextStyle(fontSize: 14),
+                            onChanged: (v) => setState(() => _search = v),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // --- Feedback List ---
+                  Expanded(
+                    child: StreamBuilder<List<feedback_model.FeedbackEntry>>(
+                      stream: firestoreService.getFeedbackEntries(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return Center(
+                            child: Text(
+                              loc.noFeedbackSubmitted,
+                              style: TextStyle(
+                                color: DesignTokens.secondaryTextColor,
+                                fontSize: DesignTokens.bodyFontSize,
+                                fontFamily: DesignTokens.fontFamily,
                               ),
                             ),
-                          if ((feedback.comment?.isNotEmpty ?? false) ||
-                              feedback.message.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4, bottom: 2),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                          );
+                        }
+
+                        // --- Filtering & Sorting ---
+                        List<feedback_model.FeedbackEntry> feedbacks =
+                            snapshot.data!;
+                        if (_filterType != 'all') {
+                          feedbacks = feedbacks
+                              .where((f) => f.feedbackMode == _filterType)
+                              .toList();
+                        }
+                        if (_search.trim().isNotEmpty) {
+                          final s = _search.toLowerCase();
+                          feedbacks = feedbacks
+                              .where((f) =>
+                                  (f.comment?.toLowerCase().contains(s) ??
+                                      false) ||
+                                  (f.categories.any(
+                                      (c) => c.toLowerCase().contains(s))) ||
+                                  f.orderId.toLowerCase().contains(s) ||
+                                  f.userId.toLowerCase().contains(s))
+                              .toList();
+                        }
+                        switch (_sortOrder) {
+                          case 'recent':
+                            feedbacks.sort(
+                                (a, b) => b.timestamp.compareTo(a.timestamp));
+                            break;
+                          case 'oldest':
+                            feedbacks.sort(
+                                (a, b) => a.timestamp.compareTo(b.timestamp));
+                            break;
+                          case 'lowest':
+                            feedbacks
+                                .sort((a, b) => a.rating.compareTo(b.rating));
+                            break;
+                          case 'highest':
+                            feedbacks
+                                .sort((a, b) => b.rating.compareTo(a.rating));
+                            break;
+                        }
+
+                        return ListView.separated(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          itemCount: feedbacks.length,
+                          separatorBuilder: (_, __) =>
+                              Divider(height: 1, thickness: 0.5),
+                          itemBuilder: (context, i) {
+                            final feedback = feedbacks[i];
+                            final isOrderFeedback =
+                                feedback.feedbackMode == 'orderExperience';
+
+                            return ListTile(
+                              leading: _TypeIcon(feedback: feedback),
+                              title: Row(
                                 children: [
                                   Text(
-                                    '${loc.notesLabel ?? 'Notes:'} ',
+                                    isOrderFeedback
+                                        ? loc.filterOrderFeedback
+                                        : loc.filterAppFeedback,
                                     style: TextStyle(
-                                      color: DesignTokens.secondaryTextColor,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 13,
+                                      fontSize: 16,
+                                      color: isOrderFeedback
+                                          ? DesignTokens.primaryColor
+                                          : DesignTokens.secondaryColor,
                                     ),
                                   ),
-                                  Expanded(
-                                    child: Text(
-                                      feedback.comment?.isNotEmpty == true
-                                          ? feedback.comment!
-                                          : (feedback.message.isNotEmpty
-                                              ? feedback.message
-                                              : loc.noMessage),
-                                      style: TextStyle(
-                                        color: DesignTokens.secondaryTextColor,
-                                        fontSize: 13,
+                                  const SizedBox(width: 6),
+                                  Row(
+                                    children: List.generate(
+                                        5,
+                                        (idx) => Icon(
+                                              idx < feedback.rating
+                                                  ? Icons.star
+                                                  : Icons.star_border,
+                                              color: idx < feedback.rating
+                                                  ? Colors.amber
+                                                  : Colors.grey.shade400,
+                                              size: 18,
+                                            )),
+                                  ),
+                                  if (feedback.anonymous) ...[
+                                    const SizedBox(width: 8),
+                                    Tooltip(
+                                      message: loc.feedbackAnonymous,
+                                      child: const Icon(Icons.visibility_off,
+                                          color: Colors.grey, size: 16),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (feedback.orderId.isNotEmpty)
+                                    Text(
+                                        '${loc.orderIdLabel}: ${feedback.orderId}',
+                                        style: TextStyle(fontSize: 12)),
+                                  if (feedback.categories.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 2.0),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children:
+                                            feedback.categories.map((catScore) {
+                                          final parts = catScore.split(':');
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                                bottom: 4),
+                                            child: Chip(
+                                              label: Text(
+                                                parts.length > 1
+                                                    ? '${parts[0].trim()}: ${parts[1].trim()}'
+                                                    : catScore,
+                                                style: const TextStyle(
+                                                    fontSize: 13),
+                                              ),
+                                              backgroundColor:
+                                                  DesignTokens.surfaceColor,
+                                              side: BorderSide.none,
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                            ),
+                                          );
+                                        }).toList(),
                                       ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  if ((feedback.comment?.isNotEmpty ?? false) ||
+                                      feedback.message.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 4, bottom: 2),
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '${loc.notesLabel ?? 'Notes:'} ',
+                                            style: TextStyle(
+                                              color: DesignTokens
+                                                  .secondaryTextColor,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                              feedback.comment?.isNotEmpty ==
+                                                      true
+                                                  ? feedback.comment!
+                                                  : (feedback.message.isNotEmpty
+                                                      ? feedback.message
+                                                      : loc.noMessage),
+                                              style: TextStyle(
+                                                color: DesignTokens
+                                                    .secondaryTextColor,
+                                                fontSize: 13,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2.0),
+                                    child: Text(
+                                      DateFormat('yyyy-MM-dd – HH:mm')
+                                          .format(feedback.timestamp),
+                                      style: const TextStyle(
+                                          fontSize: 11, color: Colors.grey),
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2.0),
-                            child: Text(
-                              DateFormat('yyyy-MM-dd – HH:mm')
-                                  .format(feedback.timestamp),
-                              style: const TextStyle(
-                                  fontSize: 11, color: Colors.grey),
-                            ),
-                          ),
-                        ],
-                      ),
-                      trailing: PopupMenuButton<String>(
-                        icon: const Icon(Icons.more_vert),
-                        itemBuilder: (context) => [
-                          PopupMenuItem(
-                            value: 'delete',
-                            child: Row(
-                              children: [
-                                Icon(Icons.delete, color: Colors.red, size: 18),
-                                const SizedBox(width: 6),
-                                Text(loc.delete),
-                              ],
-                            ),
-                          ),
-                        ],
-                        onSelected: (val) {
-                          if (val == 'delete')
-                            _confirmDelete(
-                                context, firestoreService, feedback.id);
-                        },
-                      ),
-                      onTap: () =>
-                          _showFeedbackDetailDialog(context, feedback, loc),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 6),
-                    );
-                  },
-                );
-              },
+                              trailing: PopupMenuButton<String>(
+                                icon: const Icon(Icons.more_vert),
+                                itemBuilder: (context) => [
+                                  PopupMenuItem(
+                                    value: 'delete',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.delete,
+                                            color: Colors.red, size: 18),
+                                        const SizedBox(width: 6),
+                                        Text(loc.delete),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                                onSelected: (val) {
+                                  if (val == 'delete')
+                                    _confirmDelete(
+                                        context, firestoreService, feedback.id);
+                                },
+                              ),
+                              onTap: () => _showFeedbackDetailDialog(
+                                  context, feedback, loc),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 6),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
+          ),
+          // Right panel placeholder
+          Expanded(
+            flex: 9,
+            child: Container(),
           ),
         ],
       ),

@@ -241,144 +241,163 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Padding(
-        padding: const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header: section title & actions (like Menu Editor)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Main content column, matches MenuEditorScreen (flex: 11)
+          Expanded(
+            flex: 11,
+            child: Padding(
+              padding:
+                  const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    loc.adminCategoryManagement,
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22,
+                  // Header: section title & actions (like Menu Editor)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          loc.adminCategoryManagement,
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.upload_file,
+                              color: Colors.black87),
+                          tooltip: loc.bulkUploadCategories,
+                          onPressed: _showBulkUploadDialog,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add, color: Colors.black87),
+                          tooltip: loc.addCategory,
+                          onPressed: () => _openCategoryDialog(),
+                        ),
+                      ],
                     ),
                   ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.upload_file, color: Colors.black87),
-                    tooltip: loc.bulkUploadCategories,
-                    onPressed: _showBulkUploadDialog,
+                  // Search bar
+                  CategorySearchBar(
+                    onChanged: _onSearch,
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.add, color: Colors.black87),
-                    tooltip: loc.addCategory,
-                    onPressed: () => _openCategoryDialog(),
+                  const SizedBox(height: 12),
+                  // Grid/List area
+                  Expanded(
+                    child: StreamBuilder<List<Category>>(
+                      stream: firestoreService.getCategories(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasError) {
+                          return EmptyStateWidget(
+                            title: loc.errorLoadingCategories,
+                            message: loc.pleaseTryAgain,
+                            imageAsset: BrandingConfig.bannerPlaceholder,
+                            onRetry: () => setState(() {}),
+                            buttonText: loc.retry,
+                          );
+                        }
+
+                        _allCategories = snapshot.data ?? [];
+                        _filteredCategories = _searchQuery.isEmpty
+                            ? _allCategories
+                            : _allCategories
+                                .where((c) => c.name
+                                    .toLowerCase()
+                                    .contains(_searchQuery.toLowerCase()))
+                                .toList();
+
+                        if (_filteredCategories.isEmpty) {
+                          return EmptyStateWidget(
+                            title: loc.noCategoriesFound,
+                            message: loc.noCategoriesMessage,
+                            imageAsset: BrandingConfig.bannerPlaceholder,
+                          );
+                        }
+
+                        // MOBILE VERSION (column based)
+                        if (isMobile) {
+                          return ListView.separated(
+                            itemCount: _filteredCategories.length,
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1),
+                            itemBuilder: (ctx, idx) {
+                              final category = _filteredCategories[idx];
+                              return ListTile(
+                                leading: (category.image != null &&
+                                        category.image!.isNotEmpty)
+                                    ? CircleAvatar(
+                                        backgroundImage:
+                                            NetworkImage(category.image!),
+                                        radius: 24,
+                                      )
+                                    : CircleAvatar(
+                                        backgroundImage: AssetImage(
+                                            BrandingConfig.defaultCategoryIcon),
+                                        radius: 24,
+                                      ),
+                                title: Text(category.name),
+                                subtitle: (category.description != null &&
+                                        category.description!.isNotEmpty)
+                                    ? Text(category.description!)
+                                    : null,
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit,
+                                          color: Colors.blueGrey),
+                                      tooltip: loc.edit,
+                                      onPressed: () => _openCategoryDialog(
+                                          category: category),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red),
+                                      tooltip: loc.delete,
+                                      onPressed: () =>
+                                          _deleteCategory(category),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        }
+
+                        // DESKTOP/TABLET VERSION (row based, aligned columns)
+                        return Column(
+                          children: [
+                            buildCategoryHeaderRow(context),
+                            const Divider(height: 1),
+                            Expanded(
+                              child: ListView.separated(
+                                itemCount: _filteredCategories.length,
+                                separatorBuilder: (_, __) =>
+                                    const Divider(height: 1),
+                                itemBuilder: (ctx, idx) => buildCategoryDataRow(
+                                    ctx, _filteredCategories[idx]),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
             ),
-            // Search bar
-            CategorySearchBar(
-              onChanged: _onSearch,
-            ),
-            const SizedBox(height: 12),
-            // Grid/List area
-            Expanded(
-              child: StreamBuilder<List<Category>>(
-                stream: firestoreService.getCategories(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return EmptyStateWidget(
-                      title: loc.errorLoadingCategories,
-                      message: loc.pleaseTryAgain,
-                      imageAsset: BrandingConfig.bannerPlaceholder,
-                      onRetry: () => setState(() {}),
-                      buttonText: loc.retry,
-                    );
-                  }
-
-                  _allCategories = snapshot.data ?? [];
-                  _filteredCategories = _searchQuery.isEmpty
-                      ? _allCategories
-                      : _allCategories
-                          .where((c) => c.name
-                              .toLowerCase()
-                              .contains(_searchQuery.toLowerCase()))
-                          .toList();
-
-                  if (_filteredCategories.isEmpty) {
-                    return EmptyStateWidget(
-                      title: loc.noCategoriesFound,
-                      message: loc.noCategoriesMessage,
-                      imageAsset: BrandingConfig.bannerPlaceholder,
-                    );
-                  }
-
-                  // MOBILE VERSION (column based)
-                  if (isMobile) {
-                    return ListView.separated(
-                      itemCount: _filteredCategories.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (ctx, idx) {
-                        final category = _filteredCategories[idx];
-                        return ListTile(
-                          leading: (category.image != null &&
-                                  category.image!.isNotEmpty)
-                              ? CircleAvatar(
-                                  backgroundImage:
-                                      NetworkImage(category.image!),
-                                  radius: 24,
-                                )
-                              : CircleAvatar(
-                                  backgroundImage: AssetImage(
-                                      BrandingConfig.defaultCategoryIcon),
-                                  radius: 24,
-                                ),
-                          title: Text(category.name),
-                          subtitle: (category.description != null &&
-                                  category.description!.isNotEmpty)
-                              ? Text(category.description!)
-                              : null,
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit,
-                                    color: Colors.blueGrey),
-                                tooltip: loc.edit,
-                                onPressed: () =>
-                                    _openCategoryDialog(category: category),
-                              ),
-                              IconButton(
-                                icon:
-                                    const Icon(Icons.delete, color: Colors.red),
-                                tooltip: loc.delete,
-                                onPressed: () => _deleteCategory(category),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  }
-
-                  // DESKTOP/TABLET VERSION (row based, aligned columns)
-                  return Column(
-                    children: [
-                      buildCategoryHeaderRow(context),
-                      const Divider(height: 1),
-                      Expanded(
-                        child: ListView.separated(
-                          itemCount: _filteredCategories.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1),
-                          itemBuilder: (ctx, idx) => buildCategoryDataRow(
-                              ctx, _filteredCategories[idx]),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+          ),
+          // Right panel placeholder, matches MenuEditorScreen (flex: 9)
+          Expanded(
+            flex: 9,
+            child: Container(), // Future right panel
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),

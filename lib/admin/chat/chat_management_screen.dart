@@ -33,79 +33,131 @@ class ChatManagementScreen extends StatelessWidget {
         );
       });
       return Scaffold(
-        appBar: AppBar(
-          title: const Text("Chat Management"),
-          backgroundColor: DesignTokens.adminPrimaryColor,
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.lock_outline, size: 54, color: Colors.redAccent),
-              const SizedBox(height: 16),
-              const Text(
-                "Unauthorized — You do not have permission to access this page.",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                textAlign: TextAlign.center,
+        backgroundColor: DesignTokens.backgroundColor,
+        body: Row(
+          children: [
+            Expanded(
+              flex: 11,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.lock_outline,
+                        size: 54, color: Colors.redAccent),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Unauthorized — You do not have permission to access this page.",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 18),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.home),
+                      label: const Text("Return to Home"),
+                      onPressed: () {
+                        Navigator.of(context)
+                            .popUntil((route) => route.isFirst);
+                      },
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 18),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.home),
-                label: const Text("Return to Home"),
-                onPressed: () {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-              ),
-            ],
-          ),
+            ),
+            Expanded(flex: 9, child: Container()),
+          ],
         ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Chat Management"),
-        backgroundColor: DesignTokens.adminPrimaryColor,
-      ),
-      body: StreamBuilder<List<Chat>>(
-        stream: firestoreService.getSupportChats(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingShimmerWidget();
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const EmptyStateWidget(
-              title: "No Chats",
-              message: "No support chats yet.",
-              imageAsset: 'assets/images/admin_empty.png',
-            );
-          }
-          final chats = snapshot.data!;
-          return ListView.separated(
-            itemCount: chats.length,
-            separatorBuilder: (_, __) => const Divider(),
-            itemBuilder: (context, i) {
-              final chat = chats[i];
-              return ListTile(
-                title: Text(chat.userName ?? 'Unknown User'),
-                subtitle: Text(chat.lastMessage),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () =>
-                      _confirmDelete(context, firestoreService, chat.id, user),
-                ),
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => AdminChatDetailDialog(
-                        chatId: chat.id,
-                        userName: chat.userName ?? 'Unknown User'),
-                  );
-                },
-              );
-            },
-          );
-        },
+      backgroundColor: DesignTokens.backgroundColor,
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Main content column
+          Expanded(
+            flex: 11,
+            child: Padding(
+              padding:
+                  const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header row
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: const [
+                        Text(
+                          "Chat Management",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                          ),
+                        ),
+                        Spacer(),
+                      ],
+                    ),
+                  ),
+                  // Chat list
+                  Expanded(
+                    child: StreamBuilder<List<Chat>>(
+                      stream: firestoreService.getSupportChats(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const LoadingShimmerWidget();
+                        }
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const EmptyStateWidget(
+                            title: "No Chats",
+                            message: "No support chats yet.",
+                            imageAsset: 'assets/images/admin_empty.png',
+                          );
+                        }
+                        final chats = snapshot.data!;
+                        return ListView.separated(
+                          itemCount: chats.length,
+                          separatorBuilder: (_, __) => const Divider(),
+                          itemBuilder: (context, i) {
+                            final chat = chats[i];
+                            return ListTile(
+                              title: Text(chat.userName ?? 'Unknown User'),
+                              subtitle: Text(chat.lastMessage),
+                              trailing: IconButton(
+                                icon:
+                                    const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () => _confirmDelete(
+                                    context, firestoreService, chat.id, user!),
+                              ),
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => AdminChatDetailDialog(
+                                      chatId: chat.id,
+                                      userName:
+                                          chat.userName ?? 'Unknown User'),
+                                );
+                              },
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Right panel placeholder
+          Expanded(
+            flex: 9,
+            child: Container(),
+          ),
+        ],
       ),
     );
   }

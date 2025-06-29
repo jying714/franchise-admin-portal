@@ -173,117 +173,160 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final canEdit = _canEdit(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(loc.inventory),
-        backgroundColor: BrandingConfig.brandRed,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: loc.addInventory,
-            onPressed: canEdit ? () => _addOrEditInventory(context) : null,
-          ),
-        ],
-      ),
-      body: Column(
+      backgroundColor: Colors.white,
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: loc.inventorySearchHint,
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                isDense: true,
+          // Main content column
+          Expanded(
+            flex: 11,
+            child: Padding(
+              padding:
+                  const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header row (matches Menu Editor & Category Management)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          loc.inventory,
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.add, color: Colors.black87),
+                          tooltip: loc.addInventory,
+                          onPressed: canEdit
+                              ? () => _addOrEditInventory(context)
+                              : null,
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Search bar
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: loc.inventorySearchHint,
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        isDense: true,
+                      ),
+                      onChanged: _onSearchChanged,
+                    ),
+                  ),
+                  // Inventory list
+                  Expanded(
+                    child: StreamBuilder<List<Inventory>>(
+                      stream: firestore.getInventory(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const LoadingShimmerWidget();
+                        }
+                        if (snapshot.hasError) {
+                          return EmptyStateWidget(
+                            title: loc.errorLoadingInventory,
+                            message: snapshot.error.toString(),
+                          );
+                        }
+                        var items = snapshot.data ?? [];
+                        if (_search.isNotEmpty) {
+                          items = items
+                              .where((inv) =>
+                                  inv.name
+                                      .toLowerCase()
+                                      .contains(_search.toLowerCase()) ||
+                                  (inv.sku
+                                      .toLowerCase()
+                                      .contains(_search.toLowerCase())))
+                              .toList();
+                        }
+                        if (items.isEmpty) {
+                          return EmptyStateWidget(
+                            title: loc.noInventory,
+                            message: loc.noInventoryMsg,
+                          );
+                        }
+                        return ListView.separated(
+                          padding: const EdgeInsets.all(8),
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemCount: items.length,
+                          itemBuilder: (context, idx) {
+                            final item = items[idx];
+                            return Card(
+                              elevation: 2,
+                              margin: const EdgeInsets.symmetric(vertical: 4),
+                              child: ListTile(
+                                leading: Icon(
+                                  item.available
+                                      ? Icons.check_circle
+                                      : Icons.cancel,
+                                  color: item.available
+                                      ? Colors.green
+                                      : Colors.red,
+                                ),
+                                title: Text(item.name,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold)),
+                                subtitle: Text(
+                                  '${loc.sku}: ${item.sku}\n'
+                                  '${loc.stock}: ${item.stock}\n'
+                                  '${loc.threshold}: ${item.threshold}\n'
+                                  '${loc.unitType}: ${item.unitType}',
+                                ),
+                                trailing: canEdit
+                                    ? Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(Icons.edit),
+                                            tooltip: loc.edit,
+                                            onPressed: () =>
+                                                _addOrEditInventory(context,
+                                                    item: item),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete,
+                                                color: Colors.red),
+                                            tooltip: loc.delete,
+                                            onPressed: () =>
+                                                _deleteInventory(context, item),
+                                          ),
+                                        ],
+                                      )
+                                    : null,
+                                onTap: canEdit
+                                    ? () =>
+                                        _addOrEditInventory(context, item: item)
+                                    : null,
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
-              onChanged: _onSearchChanged,
             ),
           ),
+          // Right panel placeholder
           Expanded(
-            child: StreamBuilder<List<Inventory>>(
-              stream: firestore.getInventory(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const LoadingShimmerWidget();
-                }
-                if (snapshot.hasError) {
-                  return EmptyStateWidget(
-                    title: loc.errorLoadingInventory,
-                    message: snapshot.error.toString(),
-                  );
-                }
-                var items = snapshot.data ?? [];
-                if (_search.isNotEmpty) {
-                  items = items
-                      .where((inv) =>
-                          inv.name
-                              .toLowerCase()
-                              .contains(_search.toLowerCase()) ||
-                          (inv.sku
-                              .toLowerCase()
-                              .contains(_search.toLowerCase())))
-                      .toList();
-                }
-                if (items.isEmpty) {
-                  return EmptyStateWidget(
-                    title: loc.noInventory,
-                    message: loc.noInventoryMsg,
-                  );
-                }
-                return ListView.separated(
-                  padding: const EdgeInsets.all(8),
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemCount: items.length,
-                  itemBuilder: (context, idx) {
-                    final item = items[idx];
-                    return Card(
-                      elevation: 2,
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      child: ListTile(
-                        leading: Icon(
-                          item.available ? Icons.check_circle : Icons.cancel,
-                          color: item.available ? Colors.green : Colors.red,
-                        ),
-                        title: Text(item.name,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text(
-                          '${loc.sku}: ${item.sku}\n'
-                          '${loc.stock}: ${item.stock}\n'
-                          '${loc.threshold}: ${item.threshold}\n'
-                          '${loc.unitType}: ${item.unitType}',
-                        ),
-                        trailing: canEdit
-                            ? Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit),
-                                    tooltip: loc.edit,
-                                    onPressed: () => _addOrEditInventory(
-                                        context,
-                                        item: item),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete,
-                                        color: Colors.red),
-                                    tooltip: loc.delete,
-                                    onPressed: () =>
-                                        _deleteInventory(context, item),
-                                  ),
-                                ],
-                              )
-                            : null,
-                        onTap: canEdit
-                            ? () => _addOrEditInventory(context, item: item)
-                            : null,
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+            flex: 9,
+            child: Container(),
           ),
         ],
       ),

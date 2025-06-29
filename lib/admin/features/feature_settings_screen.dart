@@ -79,16 +79,23 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
     final loc = AppLocalizations.of(context)!;
     final user = Provider.of<User?>(context);
 
+    // Not logged in
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(loc.featureSettingsTitle),
-          backgroundColor: DesignTokens.adminPrimaryColor,
+        backgroundColor: DesignTokens.backgroundColor,
+        body: Row(
+          children: [
+            Expanded(
+              flex: 11,
+              child: Center(child: Text(loc.unauthorizedPleaseLogin)),
+            ),
+            Expanded(flex: 9, child: Container()),
+          ],
         ),
-        body: Center(child: Text(loc.unauthorizedPleaseLogin)),
       );
     }
 
+    // Not allowed
     if (!user.isOwner) {
       if (!_unauthorizedLogged) {
         _unauthorizedLogged = true;
@@ -106,61 +113,110 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
         });
       }
       return Scaffold(
-        appBar: AppBar(
-          title: Text(loc.featureSettingsTitle),
-          backgroundColor: DesignTokens.adminPrimaryColor,
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.lock_outline, size: 54, color: Colors.redAccent),
-              const SizedBox(height: 16),
-              Text(
-                loc.unauthorizedNoPermission,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                textAlign: TextAlign.center,
+        backgroundColor: DesignTokens.backgroundColor,
+        body: Row(
+          children: [
+            Expanded(
+              flex: 11,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.lock_outline,
+                        size: 54, color: Colors.redAccent),
+                    const SizedBox(height: 16),
+                    Text(
+                      loc.unauthorizedNoPermission,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 18),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 18),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.home),
+                      label: Text(loc.returnToHome),
+                      onPressed: () {
+                        Navigator.of(context)
+                            .popUntil((route) => route.isFirst);
+                      },
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 18),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.home),
-                label: Text(loc.returnToHome),
-                onPressed: () {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-              ),
-            ],
-          ),
+            ),
+            Expanded(flex: 9, child: Container()),
+          ],
         ),
       );
     }
 
+    // Allowed (owner)
     return Scaffold(
-      appBar: AppBar(
-        title: Text(loc.featureSettingsTitle),
-        backgroundColor: DesignTokens.adminPrimaryColor,
-      ),
-      body: FutureBuilder<Map<String, bool>>(
-        future: _featureToggles,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const LoadingShimmerWidget();
-          }
-          final toggles = snapshot.data!;
-          if (toggles.isEmpty) {
-            return Center(child: Text(loc.noFeaturesFound));
-          }
-          return ListView(
-            children: toggles.keys.map((key) {
-              return SwitchListTile(
-                title: Text(loc.featureDisplayName(key)),
-                value: toggles[key] ?? false,
-                onChanged: (val) => _updateFeature(key, val, user),
-              );
-            }).toList(),
-          );
-        },
+      backgroundColor: DesignTokens.backgroundColor,
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Main content column
+          Expanded(
+            flex: 11,
+            child: Padding(
+              padding:
+                  const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header row
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          loc.featureSettingsTitle,
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Feature toggles
+                  Expanded(
+                    child: FutureBuilder<Map<String, bool>>(
+                      future: _featureToggles,
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const LoadingShimmerWidget();
+                        }
+                        final toggles = snapshot.data!;
+                        if (toggles.isEmpty) {
+                          return Center(child: Text(loc.noFeaturesFound));
+                        }
+                        return ListView(
+                          children: toggles.keys.map((key) {
+                            return SwitchListTile(
+                              title: Text(loc.featureDisplayName(key)),
+                              value: toggles[key] ?? false,
+                              onChanged: (val) =>
+                                  _updateFeature(key, val, user),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Right panel placeholder
+          Expanded(
+            flex: 9,
+            child: Container(),
+          ),
+        ],
       ),
     );
   }

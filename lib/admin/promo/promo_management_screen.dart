@@ -27,93 +27,137 @@ class PromoManagementScreen extends StatelessWidget {
     final canEdit = user.isOwner || user.isAdmin || user.isManager;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Promo Management"),
-        backgroundColor: DesignTokens.adminPrimaryColor,
-        actions: [
-          if (canEdit)
-            IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (_) => PromoFormDialog(
-                    onSave: (promo) async {
-                      await firestoreService.addPromo(promo);
-                      await AuditLogService().addLog(
-                        userId: user.id,
-                        action: 'add_promo',
-                        targetType: 'promo',
-                        targetId: promo.id,
-                        details: {'name': promo.name},
-                      );
-                    },
+      backgroundColor: DesignTokens.backgroundColor,
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Main content column
+          Expanded(
+            flex: 11,
+            child: Padding(
+              padding:
+                  const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header row
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "Promo Management",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (canEdit)
+                          IconButton(
+                            icon: const Icon(Icons.add, color: Colors.black87),
+                            tooltip: "Add Promotion",
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (_) => PromoFormDialog(
+                                  onSave: (promo) async {
+                                    await firestoreService.addPromo(promo);
+                                    await AuditLogService().addLog(
+                                      userId: user.id,
+                                      action: 'add_promo',
+                                      targetType: 'promo',
+                                      targetId: promo.id,
+                                      details: {'name': promo.name},
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                      ],
+                    ),
                   ),
-                );
-              },
-            ),
-        ],
-      ),
-      body: StreamBuilder<List<Promo>>(
-        stream: firestoreService.getPromotions(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingShimmerWidget();
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const EmptyStateWidget(
-              title: "No Promotions",
-              message: "No promotions yet.",
-              // imageAsset: 'assets/images/admin_empty.png',
-            );
-          }
-          final promos = snapshot.data!;
-          return ListView.separated(
-            itemCount: promos.length,
-            separatorBuilder: (_, __) => const Divider(),
-            itemBuilder: (context, i) {
-              final promo = promos[i];
-              return ListTile(
-                title:
-                    Text(promo.name.isNotEmpty ? promo.name : 'Untitled Promo'),
-                subtitle: Text(promo.description),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (canEdit)
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (_) => PromoFormDialog(
-                              promo: promo,
-                              onSave: (updated) async {
-                                await firestoreService.updatePromo(updated);
-                                await AuditLogService().addLog(
-                                  userId: user.id,
-                                  action: 'update_promo',
-                                  targetType: 'promo',
-                                  targetId: updated.id,
-                                  details: {'name': updated.name},
-                                );
-                              },
-                            ),
+                  // Promo list
+                  Expanded(
+                    child: StreamBuilder<List<Promo>>(
+                      stream: firestoreService.getPromotions(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const LoadingShimmerWidget();
+                        }
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const EmptyStateWidget(
+                            title: "No Promotions",
+                            message: "No promotions yet.",
                           );
-                        },
-                      ),
-                    if (canEdit)
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _confirmDelete(
-                            context, firestoreService, promo.id, user),
-                      ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
+                        }
+                        final promos = snapshot.data!;
+                        return ListView.separated(
+                          itemCount: promos.length,
+                          separatorBuilder: (_, __) => const Divider(),
+                          itemBuilder: (context, i) {
+                            final promo = promos[i];
+                            return ListTile(
+                              title: Text(promo.name.isNotEmpty
+                                  ? promo.name
+                                  : 'Untitled Promo'),
+                              subtitle: Text(promo.description),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (canEdit)
+                                    IconButton(
+                                      icon: const Icon(Icons.edit,
+                                          color: Colors.blue),
+                                      onPressed: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (_) => PromoFormDialog(
+                                            promo: promo,
+                                            onSave: (updated) async {
+                                              await firestoreService
+                                                  .updatePromo(updated);
+                                              await AuditLogService().addLog(
+                                                userId: user.id,
+                                                action: 'update_promo',
+                                                targetType: 'promo',
+                                                targetId: updated.id,
+                                                details: {'name': updated.name},
+                                              );
+                                            },
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  if (canEdit)
+                                    IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red),
+                                      onPressed: () => _confirmDelete(context,
+                                          firestoreService, promo.id, user),
+                                    ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Right panel placeholder
+          Expanded(
+            flex: 9,
+            child: Container(),
+          ),
+        ],
       ),
     );
   }
@@ -152,9 +196,7 @@ class PromoManagementScreen extends StatelessWidget {
 
   Widget _unauthorizedScaffold(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Promo Management"),
-      ),
+      backgroundColor: DesignTokens.backgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
