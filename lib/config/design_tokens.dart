@@ -35,6 +35,24 @@ class DesignTokens {
   static const Color surfaceColorDark = Color(0xFF242526);
   static const Color backgroundColorDark = Color(0xFF18191A);
 
+  // ----------- Dark AppBar and Foreground for Hybrid Approach -----------
+  static const Color appBarBackgroundColorDark =
+      Color(0xFF18191A); // Match background or a dark surface
+  static const Color appBarForegroundColorDark =
+      Color(0xFFE4E6EB); // Light text for dark app bar
+
+// ----------- Optional: Muted Brand Red for Action in Dark (if you want softer buttons) -----------
+  static const Color primaryColorDark =
+      Color(0xFF9A2412); // Optional: a darker or muted version of brand red
+
+// ----------- Divider for dark mode -----------
+  static const Color dividerColorDark =
+      Colors.white12; // Or your preferred divider color
+
+// ----------- Update to hintTextColor -----------
+  static const Color hintTextColorDark =
+      Color(0xFFB0B3B8); // For input hints in dark mode
+
   // ----------- Social Icon Colors -----------
   static const Color googleColor = Color(0xFF4285F4);
   static const Color facebookColor = Color(0xFF1877F3);

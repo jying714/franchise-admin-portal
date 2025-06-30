@@ -124,27 +124,25 @@ class _DynamicArrayEditorState extends State<DynamicArrayEditor> {
       children: [
         Row(
           children: [
-            Text(widget.title,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(
+              widget.title,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
             const Spacer(),
             IconButton(
               icon: const Icon(Icons.add),
               tooltip: "Add item",
               onPressed: _addItem,
-            )
+            ),
           ],
         ),
         const SizedBox(height: 6),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _items.length,
-          itemBuilder: (context, index) {
+        // The following column is safe: it does not cause scroll overflow.
+        Column(
+          children: List.generate(_items.length, (index) {
             final item = _items[index];
             final isInvalid = _isInvalid(item);
             final isExpanded = index == _expandedIndex;
-
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
               shape: RoundedRectangleBorder(
@@ -204,11 +202,7 @@ class _DynamicArrayEditorState extends State<DynamicArrayEditor> {
                               final found = _findIngredientByName(selected);
                               setState(() {
                                 item['name'] = selected;
-                                print(
-                                    '[DEBUG] Ingredient name selected: $selected');
                                 if (found != null) {
-                                  print(
-                                      '[DEBUG] Ingredient lookup result: $found');
                                   item['ingredientId'] = found['id'];
                                   item['type'] = found['type'];
                                   item['typeLocked'] = true;
@@ -232,9 +226,6 @@ class _DynamicArrayEditorState extends State<DynamicArrayEditor> {
                                     labelText: 'Ingredient Name'),
                                 onChanged: (val) {
                                   final found = _findIngredientByName(val);
-                                  print('[DEBUG] Ingredient name typed: $val');
-                                  print(
-                                      '[DEBUG] Ingredient lookup result: $found');
                                   setState(() {
                                     item['name'] = val;
                                     if (found != null) {
@@ -270,7 +261,6 @@ class _DynamicArrayEditorState extends State<DynamicArrayEditor> {
                             },
                           ),
                         ),
-
                         // Removable Checkbox (if present in template)
                         if (widget.template.containsKey('removable'))
                           Padding(
@@ -296,7 +286,7 @@ class _DynamicArrayEditorState extends State<DynamicArrayEditor> {
                 ],
               ),
             );
-          },
+          }),
         ),
       ],
     );

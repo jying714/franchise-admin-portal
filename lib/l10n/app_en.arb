@@ -805,6 +805,15 @@
   "adminOnlyNotice": "This portal is for authorized restaurant administrators only.",
   "addMenuTab": "Add Menus",
   "editItem": "Edit Item",
-  "selectItemToEdit": "Select item to edit"
+  "selectItemToEdit": "Select item to edit",
+  "helpDialogContent": "Help and support info goes here.",
+  "themeModeLabel": "Dark Mode",
+  "languageLabel": "Language",
+  "languageSettingNote": "Select your preferred language.",
+  "profileLabel": "Profile",
+  "signOut": "Sign Out",
+  "chatManagementTitle": "Chat Management",
+  "settings": "Settings",
+  "unavailable": "Unavailable"
 
   }

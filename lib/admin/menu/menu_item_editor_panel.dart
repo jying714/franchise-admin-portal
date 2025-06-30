@@ -41,7 +41,6 @@ class _MenuItemEditorPanelState extends State<MenuItemEditorPanel> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
 
-    // Always build the panel's content, even if not visible.
     return Container(
       color: Colors.white,
       child: LayoutBuilder(
@@ -79,8 +78,8 @@ class _MenuItemEditorPanelState extends State<MenuItemEditorPanel> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight - 60,
+                    constraints: const BoxConstraints(
+                      maxWidth: 600,
                     ),
                     child: DynamicMenuItemEditorScreen(
                       initialCategoryId: _categoryId,

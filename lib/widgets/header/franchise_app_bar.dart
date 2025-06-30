@@ -14,7 +14,7 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? leading;
   final Color? backgroundColor;
   final Color? foregroundColor;
-  final double elevation;
+  final double? elevation;
   final bool showBottomDivider;
   final PreferredSizeWidget? bottom;
 
@@ -31,7 +31,7 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.leading,
     this.backgroundColor,
     this.foregroundColor,
-    this.elevation = 0,
+    this.elevation,
     this.showBottomDivider = false,
     this.bottom,
   }) : super(key: key);
@@ -42,9 +42,20 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final bool displayLogo =
         showLogo && logoAsset != null && logoAsset!.isNotEmpty;
-    final color = backgroundColor ?? DesignTokens.primaryColor;
+
+    final Color appBarBg = backgroundColor ??
+        theme.appBarTheme.backgroundColor ??
+        colorScheme.primary;
+    final Color appBarFg = foregroundColor ??
+        theme.appBarTheme.foregroundColor ??
+        colorScheme.onPrimary;
+    final double appBarElevation =
+        elevation ?? theme.appBarTheme.elevation ?? 0;
+
     final titleWidget = displayLogo
         ? Row(
             mainAxisSize: MainAxisSize.min,
@@ -64,7 +75,7 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
                         fontSize: DesignTokens.titleFontSize,
                         fontWeight: DesignTokens.titleFontWeight,
                         fontFamily: DesignTokens.fontFamily,
-                        color: foregroundColor ?? DesignTokens.foregroundColor,
+                        color: appBarFg,
                       ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -79,18 +90,21 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
                   fontSize: DesignTokens.titleFontSize,
                   fontWeight: DesignTokens.titleFontWeight,
                   fontFamily: DesignTokens.fontFamily,
-                  color: foregroundColor ?? DesignTokens.foregroundColor,
+                  color: appBarFg,
                 ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           );
 
+    // Divider: Use dividerColor from theme
+    final dividerColor = Theme.of(context).dividerColor;
+
     return AppBar(
-      backgroundColor: color,
-      elevation: elevation,
-      centerTitle: displayLogo ? false : centerTitle, // PATCH HERE
+      backgroundColor: appBarBg,
+      elevation: appBarElevation,
+      centerTitle: displayLogo ? false : centerTitle,
       iconTheme: IconThemeData(
-        color: foregroundColor ?? DesignTokens.foregroundColor,
+        color: appBarFg,
       ),
       leading: leading,
       title: titleWidget,
@@ -99,7 +113,7 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
           ? PreferredSize(
               preferredSize: const Size.fromHeight(1.0),
               child: Container(
-                color: Colors.grey.shade300,
+                color: dividerColor,
                 height: 1.0,
               ),
             )

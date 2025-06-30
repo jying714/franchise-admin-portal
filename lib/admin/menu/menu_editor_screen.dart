@@ -270,6 +270,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
 
   Widget buildMenuHeaderRow(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+    final textColor = Theme.of(context).colorScheme.onSurface;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
       child: Row(
@@ -280,7 +281,8 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
               child: Center(
                 child: Text(
                   loc.tryString(col["header"] as String? ?? ""),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style:
+                      TextStyle(fontWeight: FontWeight.bold, color: textColor),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -290,7 +292,10 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
               flex: col["flex"] as int,
               child: Text(
                 loc.tryString(col["header"] as String? ?? ""),
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
               ),
             );
           }
@@ -310,6 +315,8 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
   ) {
     final cat = categories.firstWhere((c) => c.id == item.category,
         orElse: () => Category(id: item.category, name: item.category));
+    final colorScheme = Theme.of(context).colorScheme;
+    final bool available = item.availability;
     return InkWell(
       onTap: () {
         final cur = List<String>.from(_selectedIds.value);
@@ -317,7 +324,9 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
         _selectedIds.value = cur;
       },
       child: Container(
-        color: isSelected ? Colors.grey[100] : null,
+        color: isSelected
+            ? colorScheme.primary.withOpacity(0.08)
+            : colorScheme.background,
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
         child: Row(
           children: menuItemColumns.map((col) {
@@ -350,17 +359,26 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
               case "name":
                 return Expanded(
                   flex: col["flex"] as int,
-                  child: Text(item.name),
+                  child: Text(
+                    item.name,
+                    style: TextStyle(color: colorScheme.onSurface),
+                  ),
                 );
               case "category":
                 return Expanded(
                   flex: col["flex"] as int,
-                  child: Text(cat.name),
+                  child: Text(
+                    cat.name,
+                    style: TextStyle(color: colorScheme.onSurface),
+                  ),
                 );
               case "price":
                 return Expanded(
                   flex: col["flex"] as int,
-                  child: Text("\$${item.price.toStringAsFixed(2)}"),
+                  child: Text(
+                    "\$${item.price.toStringAsFixed(2)}",
+                    style: TextStyle(color: colorScheme.onSurface),
+                  ),
                 );
               case "available":
                 return Expanded(
@@ -371,15 +389,21 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
                         width: 12,
                         height: 12,
                         decoration: BoxDecoration(
-                          color: item.availability ? Colors.green : Colors.red,
+                          color: available
+                              ? Colors.green
+                              : Theme.of(context).colorScheme.error,
                           shape: BoxShape.circle,
                         ),
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        item.availability ? "Available" : "Unavailable",
+                        available
+                            ? AppLocalizations.of(context)!.available
+                            : AppLocalizations.of(context)!.unavailable,
                         style: TextStyle(
-                          color: item.availability ? Colors.green : Colors.red,
+                          color: available
+                              ? Colors.green
+                              : Theme.of(context).colorScheme.error,
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
                         ),
@@ -390,7 +414,10 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
               case "sku":
                 return Expanded(
                   flex: col["flex"] as int,
-                  child: Text(item.sku ?? ''),
+                  child: Text(
+                    item.sku ?? '',
+                    style: TextStyle(color: colorScheme.onSurface),
+                  ),
                 );
               case "dietary":
                 return Expanded(
@@ -432,7 +459,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
                     if (canEdit)
                       PopupMenuItem(
                         value: 'customize',
-                        child: Text("Customizations"),
+                        child: Text(AppLocalizations.of(context)!.customize),
                       ),
                     if (canDeleteOrExport)
                       PopupMenuItem(
@@ -453,6 +480,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
     final firestore = Provider.of<FirestoreService>(context, listen: false);
     final user = Provider.of<User?>(context);
     final loc = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
 
     if (user == null) return _unauthorizedScaffold();
     if (!(user.isOwner || user.isAdmin || user.isManager))
@@ -462,7 +490,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
     final canDeleteOrExport = _canDeleteOrExport(user);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.background,
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -558,8 +586,8 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
                                         Text(
                                           AppLocalizations.of(context)!
                                               .menuEditorTitle,
-                                          style: const TextStyle(
-                                            color: Colors.black,
+                                          style: TextStyle(
+                                            color: colorScheme.onBackground,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 22,
                                           ),
@@ -616,11 +644,14 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
                                                 borderSide: BorderSide.none,
                                               ),
                                               filled: true,
-                                              fillColor: Colors.grey[100],
+                                              fillColor: colorScheme.surface,
                                               contentPadding:
                                                   const EdgeInsets.symmetric(
                                                       horizontal: 16,
                                                       vertical: 0),
+                                            ),
+                                            style: TextStyle(
+                                              color: colorScheme.onSurface,
                                             ),
                                             onChanged: (q) {
                                               setState(() {
@@ -682,8 +713,10 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
                                         }
                                         return ListView.separated(
                                           itemCount: items.length,
-                                          separatorBuilder: (_, __) =>
-                                              const Divider(height: 1),
+                                          separatorBuilder: (_, __) => Divider(
+                                              height: 1,
+                                              color: colorScheme.surface
+                                                  .withOpacity(0.6)),
                                           itemBuilder: (ctx, idx) {
                                             final item = items[idx];
                                             final isSelected =

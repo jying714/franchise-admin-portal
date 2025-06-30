@@ -6,6 +6,7 @@ import 'package:franchise_admin_portal/widgets/dynamic_form/dynamic_menu_item_fo
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/delayed_loading_shimmer.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class DynamicMenuItemEditorScreen extends StatefulWidget {
   final String? initialCategoryId;
@@ -22,7 +23,6 @@ class _DynamicMenuItemEditorScreenState
   String? _selectedCategoryId;
   Map<String, dynamic>? _schema;
   final Map<String, Map<String, dynamic>?> _schemaCache = {};
-
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -59,7 +59,6 @@ class _DynamicMenuItemEditorScreenState
     try {
       final schema = await firestore.getCategorySchema(categoryId);
 
-      // Resolve customizations if templateRef is used
       if (schema != null && schema['customizations'] is List) {
         schema['customizations'] =
             await _resolveCustomizations(schema['customizations']);
@@ -77,9 +76,7 @@ class _DynamicMenuItemEditorScreenState
         _schema = schema;
         _selectedCategoryId = categoryId;
       });
-      print('[DEBUG] Final resolved schema: ${schema?.keys}');
     } catch (e) {
-      print('[WARN] Failed to load category schema for "$categoryId": $e');
       try {
         final fallbackSchema = await firestore.getCategorySchema('default');
         setState(() {
@@ -89,9 +86,10 @@ class _DynamicMenuItemEditorScreenState
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Using default fallback schema.'),
-            backgroundColor: Colors.orangeAccent,
+            backgroundColor:
+                Theme.of(context).colorScheme.secondary.withOpacity(0.8),
           ),
         );
       } catch (fallbackError) {
@@ -99,7 +97,7 @@ class _DynamicMenuItemEditorScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to load schema: $fallbackError'),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -130,7 +128,6 @@ class _DynamicMenuItemEditorScreenState
         resolved.add(entry);
       }
     }
-
     return resolved;
   }
 
@@ -138,98 +135,83 @@ class _DynamicMenuItemEditorScreenState
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final firestore = Provider.of<FirestoreService>(context, listen: false);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return FutureBuilder<List<String>>(
       future: firestore.getAllCategorySchemaIds(),
       builder: (context, catSnapshot) {
-        return DelayedLoadingShimmer(
-          loading: catSnapshot.connectionState == ConnectionState.waiting,
-          child: Builder(
-            builder: (context) {
-              if (catSnapshot.hasError || catSnapshot.data == null) {
-                return Center(
-                  child: EmptyStateWidget(
-                    title: loc.error,
-                    message: catSnapshot.error?.toString() ??
-                        loc.errorLoadingCategories,
+        if (catSnapshot.hasError || catSnapshot.data == null) {
+          return Center(
+            child: EmptyStateWidget(
+              title: loc.error,
+              message:
+                  catSnapshot.error?.toString() ?? loc.errorLoadingCategories,
+            ),
+          );
+        }
+
+        final allCategoryIds = catSnapshot.data!;
+
+        return ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: 600,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min, // Prevents infinite height!
+            children: [
+              if (_selectedCategoryId == null)
+                DropdownButtonFormField<String>(
+                  value: null,
+                  decoration: InputDecoration(
+                    labelText: loc.colCategory,
+                    border: const OutlineInputBorder(),
                   ),
-                );
-              }
-
-              final allCategoryIds = catSnapshot.data!;
-
-              return SingleChildScrollView(
-                controller: _scrollController,
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 24),
+                  items: allCategoryIds.map((id) {
+                    return DropdownMenuItem<String>(
+                      value: id,
                       child: Text(
-                        loc.addMenuItem,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        id.isNotEmpty
+                            ? id[0].toUpperCase() + id.substring(1)
+                            : '',
                       ),
-                    ),
-                    if (_selectedCategoryId == null) ...[
-                      DropdownButtonFormField<String>(
-                        value: null,
-                        decoration: InputDecoration(
-                          labelText: loc.colCategory,
-                          border: const OutlineInputBorder(),
-                        ),
-                        items: allCategoryIds.map((id) {
-                          return DropdownMenuItem<String>(
-                            value: id,
-                            child: Text(
-                              id.isNotEmpty
-                                  ? id[0].toUpperCase() + id.substring(1)
-                                  : '',
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (v) {
-                          if (v != null) {
-                            _loadSchema(v);
-                          }
-                        },
-                        validator: (v) => v == null ? loc.requiredField : null,
-                      ),
-                      const SizedBox(height: 30),
-                    ],
-                    if (_schema != null)
-                      DynamicMenuItemForm(
-                        schema: _schema!,
-                        initialItem: null,
-                        onSave: (menuItem) async {
-                          try {
-                            await firestore.addMenuItem(menuItem);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(loc.itemAdded)),
-                            );
-                            Navigator.pop(context);
-                          } catch (e, stack) {
-                            print('[ERROR] Failed to save item: $e');
-                            print(stack);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('${loc.error}: $e')),
-                            );
-                          }
-                        },
-                        onCancel: () => Navigator.pop(context),
-                      ),
-                    if (_selectedCategoryId != null && _schema == null)
-                      DelayedLoadingShimmer(
-                        loading: true,
-                        child: const SizedBox.shrink(),
-                      ),
-                  ],
+                    );
+                  }).toList(),
+                  onChanged: (v) {
+                    if (v != null) {
+                      _loadSchema(v);
+                    }
+                  },
+                  validator: (v) => v == null ? loc.requiredField : null,
                 ),
-              );
-            },
+              if (_selectedCategoryId == null) const SizedBox(height: 30),
+              if (_schema != null)
+                DynamicMenuItemForm(
+                  schema: _schema!,
+                  initialItem: null,
+                  onSave: (menuItem) async {
+                    try {
+                      await firestore.addMenuItem(menuItem);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(loc.itemAdded)),
+                      );
+                      Navigator.pop(context);
+                    } catch (e, stack) {
+                      print('[ERROR] Failed to save item: $e');
+                      print(stack);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('${loc.error}: $e')),
+                      );
+                    }
+                  },
+                  onCancel: () => Navigator.pop(context),
+                ),
+              if (_selectedCategoryId != null && _schema == null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 32),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+            ],
           ),
         );
       },

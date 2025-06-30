@@ -168,16 +168,6 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
 
   @override
   Widget build(BuildContext context) {
-    print(
-        '[DEBUG][UI] _ingredientMetadataList contains ${_ingredientMetadataList.length} entries');
-    for (final meta in _ingredientMetadataList) {
-      print('[DEBUG][UI] Ingredient: id=${meta['id']}, name=${meta['name']}');
-    }
-    print(
-        '[DEBUG] Building CustomizationGroupEditor: ${_groups.length} groups');
-    for (int i = 0; i < _groups.length; i++) {
-      print('[DEBUG] Group $i: ${_groups[i]}');
-    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -205,7 +195,6 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
           ),
         ...List.generate(_groups.length, (groupIndex) {
           final group = _groups[groupIndex];
-
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Card(
@@ -258,31 +247,27 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Render updated ingredientIds each build
+                      // List each ingredient in the group with remove button
                       ...(() {
-                        final ingredientIds = List<String>.from(
-                            _groups[groupIndex]['ingredientIds'] ?? []);
-                        print(
-                            '[DEBUG][UI] Rendering ingredients for group $groupIndex: $ingredientIds');
+                        final ingredientIds =
+                            List<String>.from(group['ingredientIds'] ?? []);
                         return List.generate(ingredientIds.length,
                             (ingredientIdx) {
                           final ingredientId = ingredientIds[ingredientIdx];
-                          return Container(
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                      _getIngredientNameById(ingredientId)),
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.delete,
-                                      color: Colors.redAccent),
-                                  tooltip: 'Remove',
-                                  onPressed: () => _removeIngredientFromGroup(
-                                      groupIndex, ingredientIdx),
-                                ),
-                              ],
-                            ),
+                          return Row(
+                            children: [
+                              Expanded(
+                                child:
+                                    Text(_getIngredientNameById(ingredientId)),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete,
+                                    color: Colors.redAccent),
+                                tooltip: 'Remove',
+                                onPressed: () => _removeIngredientFromGroup(
+                                    groupIndex, ingredientIdx),
+                              ),
+                            ],
                           );
                         });
                       })(),
@@ -314,8 +299,6 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
                           },
                         ),
                       ),
-                      // Group settings (example: min/max selections)
-                      // Add additional group-level settings here as needed.
                     ],
                   ),
                 ],
