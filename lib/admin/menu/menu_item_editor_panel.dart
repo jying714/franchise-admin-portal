@@ -7,12 +7,16 @@ class MenuItemEditorPanel extends StatefulWidget {
   final bool isOpen;
   final String? initialCategoryId;
   final VoidCallback onClose;
+  final VoidCallback? onCategoryCleared;
+  final ValueChanged<String>? onCategorySelected; // <-- Add this
 
   const MenuItemEditorPanel({
     Key? key,
     required this.isOpen,
     this.initialCategoryId,
     required this.onClose,
+    this.onCategoryCleared,
+    this.onCategorySelected, // <-- Add this
   }) : super(key: key);
 
   @override
@@ -21,44 +25,68 @@ class MenuItemEditorPanel extends StatefulWidget {
 
 class _MenuItemEditorPanelState extends State<MenuItemEditorPanel> {
   String? _categoryId;
-  int _reloadToken = 0; // Used to force reload form if needed
 
   @override
   void didUpdateWidget(MenuItemEditorPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.initialCategoryId != oldWidget.initialCategoryId) {
-      _categoryId = widget.initialCategoryId;
-      // To reload the form (optional, if schema is tied to category)
-      _reloadToken++;
+      setState(() {
+        _categoryId = widget.initialCategoryId;
+      });
     }
     if (!widget.isOpen) {
-      // Optionally clear state if closed
-      _categoryId = null;
+      setState(() {
+        _categoryId = null;
+      });
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _categoryId = widget.initialCategoryId;
   }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-
+    final theme = Theme.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
-      color: Colors.white,
+      color: theme.colorScheme.surface,
       child: LayoutBuilder(
         builder: (context, constraints) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Panel header (fixed height, not full app bar)
+              // Panel header with back button and close button
               Container(
                 color: Colors.transparent,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
                 child: Row(
                   children: [
+                    if (_categoryId != null)
+                      IconButton(
+                        icon:
+                            const Icon(Icons.arrow_back, color: Colors.black87),
+                        tooltip: 'Back',
+                        onPressed: () {
+                          setState(() {
+                            _categoryId = null; // Back to category picker
+                          });
+                          if (widget.onCategoryCleared != null) {
+                            widget.onCategoryCleared!();
+                          }
+                        },
+                      )
+                    else
+                      const SizedBox(width: 48), // maintain alignment
+
                     Text(
                       loc.addItem,
                       style: TextStyle(
-                        color: BrandingConfig.brandRed,
+                        color: colorScheme.primary, // use theme primary color
                         fontWeight: FontWeight.bold,
                         fontSize: 22,
                       ),
@@ -72,17 +100,37 @@ class _MenuItemEditorPanelState extends State<MenuItemEditorPanel> {
                   ],
                 ),
               ),
-              // Scrollable content
+
+              // Content area
               Expanded(
                 child: SingleChildScrollView(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: 600,
-                    ),
+                    constraints: const BoxConstraints(maxWidth: 600),
                     child: DynamicMenuItemEditorScreen(
+                      key: ValueKey(_categoryId),
                       initialCategoryId: _categoryId,
+                      onCategorySelected: (selectedCategory) {
+                        setState(() {
+                          _categoryId = selectedCategory;
+                        });
+                        if (widget.onCategorySelected != null) {
+                          widget.onCategorySelected!(selectedCategory);
+                        }
+                      },
+                      onCancel: () {
+                        if (_categoryId != null) {
+                          setState(() {
+                            _categoryId = null; // Back to category picker
+                          });
+                          if (widget.onCategoryCleared != null) {
+                            widget.onCategoryCleared!();
+                          }
+                        } else {
+                          widget.onClose();
+                        }
+                      },
                     ),
                   ),
                 ),

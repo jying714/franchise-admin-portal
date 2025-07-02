@@ -58,7 +58,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
 
   final ValueNotifier<String> _searchQuery = ValueNotifier<String>('');
   final TextEditingController _searchController = TextEditingController();
-
+  String? _selectedCategoryForEditor;
   // Panel state for add/edit
   MenuItem? _editingMenuItem;
   bool _showEditorPanel = false;
@@ -74,6 +74,21 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
     _selectedIds.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onCategoryCleared() {
+    setState(() {
+      _editingMenuItem = null; // Clear editing item to reset categoryId
+      _showEditorPanel = true; // Keep panel open to show category picker
+    });
+  }
+
+  void _onCategorySelected(String categoryId) {
+    setState(() {
+      _selectedCategoryForEditor = categoryId;
+      _editingMenuItem = null; // Clear editing item to show new category form
+      _showEditorPanel = true; // Keep editor panel open
+    });
   }
 
   void _onSearchChanged(String value) => setState(() => _search = value);
@@ -821,8 +836,18 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
               offstage: !_showEditorPanel,
               child: MenuItemEditorPanel(
                 isOpen: _showEditorPanel,
-                initialCategoryId: _editingMenuItem?.category,
+                initialCategoryId: _selectedCategoryForEditor,
                 onClose: _saveOrCloseEditor,
+                onCategoryCleared: _onCategoryCleared,
+                onCategorySelected: (category) {
+                  setState(() {
+                    _editingMenuItem =
+                        null; // Clear editing item to show category picker
+                    _selectedCategoryForEditor =
+                        category; // Track selected category
+                    _showEditorPanel = true; // Keep panel open
+                  });
+                },
               ),
             ),
           ),

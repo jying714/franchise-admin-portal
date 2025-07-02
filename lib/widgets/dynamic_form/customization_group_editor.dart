@@ -168,6 +168,7 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -310,8 +311,14 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
           alignment: Alignment.centerLeft,
           child: OutlinedButton.icon(
             onPressed: _addGroup,
-            icon: const Icon(Icons.add),
-            label: const Text("Add Customization Group"),
+            icon: Icon(Icons.add, color: colorScheme.primary),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: colorScheme.primary),
+            ),
+            label: Text(
+              "Add Customization Group",
+              style: TextStyle(color: colorScheme.primary),
+            ),
           ),
         ),
         const SizedBox(height: 16),

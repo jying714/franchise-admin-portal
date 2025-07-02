@@ -10,8 +10,14 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class DynamicMenuItemEditorScreen extends StatefulWidget {
   final String? initialCategoryId;
+  final VoidCallback? onCancel;
+  final ValueChanged<String>? onCategorySelected; // <-- Add this line
 
-  const DynamicMenuItemEditorScreen({super.key, this.initialCategoryId});
+  const DynamicMenuItemEditorScreen(
+      {super.key,
+      this.initialCategoryId,
+      this.onCancel,
+      this.onCategorySelected});
 
   @override
   State<DynamicMenuItemEditorScreen> createState() =>
@@ -42,6 +48,7 @@ class _DynamicMenuItemEditorScreenState
 
   Future<void> _loadSchema(String categoryId) async {
     if (_schemaCache.containsKey(categoryId)) {
+      if (!mounted) return;
       setState(() {
         _selectedCategoryId = categoryId;
         _schema = _schemaCache[categoryId];
@@ -49,6 +56,7 @@ class _DynamicMenuItemEditorScreenState
       return;
     }
 
+    if (!mounted) return;
     setState(() {
       _selectedCategoryId = categoryId;
       _schema = null;
@@ -71,6 +79,7 @@ class _DynamicMenuItemEditorScreenState
         );
       }
 
+      if (!mounted) return;
       setState(() {
         _schemaCache[categoryId] = schema;
         _schema = schema;
@@ -79,6 +88,7 @@ class _DynamicMenuItemEditorScreenState
     } catch (e) {
       try {
         final fallbackSchema = await firestore.getCategorySchema('default');
+        if (!mounted) return;
         setState(() {
           _schemaCache[categoryId] = fallbackSchema;
           _schema = fallbackSchema;
@@ -87,12 +97,13 @@ class _DynamicMenuItemEditorScreenState
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Using default fallback schema.'),
+            content: const Text('Using default fallback schema.'),
             backgroundColor:
                 Theme.of(context).colorScheme.secondary.withOpacity(0.8),
           ),
         );
       } catch (fallbackError) {
+        if (!mounted) return;
         setState(() => _schema = null);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -167,6 +178,9 @@ class _DynamicMenuItemEditorScreenState
                     labelText: loc.colCategory,
                     border: const OutlineInputBorder(),
                   ),
+                  style: TextStyle(
+                      color: colorScheme
+                          .onSurface), // <-- text color for selected value
                   items: allCategoryIds.map((id) {
                     return DropdownMenuItem<String>(
                       value: id,
@@ -174,11 +188,16 @@ class _DynamicMenuItemEditorScreenState
                         id.isNotEmpty
                             ? id[0].toUpperCase() + id.substring(1)
                             : '',
+                        style: TextStyle(
+                            color: colorScheme
+                                .onSurface), // <-- text color for dropdown items
                       ),
                     );
                   }).toList(),
                   onChanged: (v) {
                     if (v != null) {
+                      print('Category selected: $v');
+                      widget.onCategorySelected?.call(v);
                       _loadSchema(v);
                     }
                   },
@@ -204,7 +223,11 @@ class _DynamicMenuItemEditorScreenState
                       );
                     }
                   },
-                  onCancel: () => Navigator.pop(context),
+                  onCancel: () {
+                    if (widget.onCancel != null) {
+                      widget.onCancel!();
+                    }
+                  },
                 ),
               if (_selectedCategoryId != null && _schema == null)
                 Padding(
