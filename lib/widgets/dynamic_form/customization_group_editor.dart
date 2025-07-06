@@ -311,13 +311,24 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
           alignment: Alignment.centerLeft,
           child: OutlinedButton.icon(
             onPressed: _addGroup,
-            icon: Icon(Icons.add, color: colorScheme.primary),
+            icon: Icon(Icons.add,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : colorScheme.primary),
             style: OutlinedButton.styleFrom(
-              side: BorderSide(color: colorScheme.primary),
+              side: BorderSide(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : colorScheme.primary,
+              ),
             ),
             label: Text(
               "Add Customization Group",
-              style: TextStyle(color: colorScheme.primary),
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : colorScheme.primary,
+              ),
             ),
           ),
         ),

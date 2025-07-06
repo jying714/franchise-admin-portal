@@ -5,7 +5,7 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/user.dart';
+import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
 import 'package:franchise_admin_portal/core/models/chat.dart';
 
@@ -16,7 +16,7 @@ class ChatManagementScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
-    final user = Provider.of<User?>(context);
+    final user = Provider.of<admin_user.User?>(context);
 
     // --- Role enforcement (owner/admin/manager only) ---
     if (user == null || !(user.isOwner || user.isAdmin || user.isManager)) {
@@ -163,7 +163,7 @@ class ChatManagementScreen extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context, FirestoreService service,
-      String chatId, User user) {
+      String chatId, admin_user.User user) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(

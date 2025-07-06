@@ -188,6 +188,24 @@ class FirestoreService {
     });
   }
 
+  Future<int> getTotalOrdersTodayCount({String? franchiseId}) async {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final endOfDay = startOfDay.add(Duration(days: 1));
+
+    var query = firestore.FirebaseFirestore.instance
+        .collection('orders')
+        .where('timestamp', isGreaterThanOrEqualTo: startOfDay)
+        .where('timestamp', isLessThan: endOfDay);
+
+    if (franchiseId != null) {
+      query = query.where('franchiseId', isEqualTo: franchiseId);
+    }
+
+    final snapshot = await query.get();
+    return snapshot.docs.length;
+  }
+
   // --- MENU ITEMS ---
   Future<void> addMenuItem(MenuItem item, {String? userId}) async {
     assert(item.categoryId.isNotEmpty, 'categoryId must not be empty');
@@ -1102,10 +1120,113 @@ class FirestoreService {
         .authStateChanges()
         .asyncExpand((fbUser) {
       if (fbUser == null) return Stream.value(null);
-      return _db.collection('users').doc(fbUser.uid).snapshots().map((snap) =>
-          snap.exists
-              ? admin_user.User.fromFirestore(snap.data()!, snap.id)
-              : null);
+      print('Auth user detected: ${fbUser.uid}');
+      return _db.collection('users').doc(fbUser.uid).snapshots().map((snap) {
+        print('Firestore doc for ${fbUser.uid}: exists=${snap.exists}');
+        if (snap.exists && snap.data() != null) {
+          print('User data: ${snap.data()}');
+          return admin_user.User.fromFirestore(snap.data()!, snap.id);
+        } else {
+          print('No user doc found');
+          return null;
+        }
+      });
     });
+  }
+
+  Stream<admin_user.User?> userStream(String uid) {
+    print('[FirestoreService] userStream($uid) CALLED');
+    return _db.collection('users').doc(uid).snapshots().map((doc) {
+      print('Firestore doc for $uid: exists=${doc.exists} data=${doc.data()}');
+      final data = doc.data();
+      if (doc.exists && data != null) {
+        try {
+          final user = admin_user.User.fromFirestore(data, doc.id);
+          print('userStream returning: $user');
+          Future.delayed(Duration(milliseconds: 500))
+              .then((_) => print('userStream tick $user'));
+          return user;
+        } catch (e, stack) {
+          print('userStream mapping error: $e\n$stack');
+          return null;
+        }
+      } else {
+        print('Returning null for $uid');
+        return null;
+      }
+    });
+  }
+
+  /// Returns total revenue for today
+  Future<double> getTotalRevenueToday() async {
+    final now = DateTime.now().toUtc();
+    final start = DateTime.utc(now.year, now.month, now.day);
+    final end = start.add(const Duration(days: 1));
+
+    final snapshot = await _db
+        .collection('orders')
+        .where('timestamp',
+            isGreaterThanOrEqualTo: firestore.Timestamp.fromDate(start))
+        .where('timestamp', isLessThan: firestore.Timestamp.fromDate(end))
+        .get();
+
+    double total = 0.0;
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      final double amount = (data['total'] is int)
+          ? (data['total'] as int).toDouble()
+          : (data['total'] ?? 0.0) as double;
+      total += amount;
+    }
+    return total;
+  }
+
+  /// Returns total revenue for a given period: 'week' or 'month'
+  Future<double> getTotalRevenueForPeriod(String period) async {
+    final now = DateTime.now().toUtc();
+    late DateTime start, end;
+
+    if (period == 'week') {
+      // Start of week (Monday)
+      start = now.subtract(Duration(days: now.weekday - 1));
+      start = DateTime.utc(start.year, start.month, start.day);
+      end = start.add(const Duration(days: 7));
+    } else if (period == 'month') {
+      // Start of month
+      start = DateTime.utc(now.year, now.month, 1);
+      end = (now.month < 12)
+          ? DateTime.utc(now.year, now.month + 1, 1)
+          : DateTime.utc(now.year + 1, 1, 1);
+    } else {
+      throw ArgumentError('Invalid period: $period');
+    }
+
+    final snapshot = await _db
+        .collection('orders')
+        .where('timestamp',
+            isGreaterThanOrEqualTo: firestore.Timestamp.fromDate(start))
+        .where('timestamp', isLessThan: firestore.Timestamp.fromDate(end))
+        .get();
+
+    double total = 0.0;
+    for (var doc in snapshot.docs) {
+      final data = doc.data();
+      final double amount = (data['total'] is int)
+          ? (data['total'] as int).toDouble()
+          : (data['total'] ?? 0.0) as double;
+      total += amount;
+    }
+    return total;
+  }
+}
+
+Stream<admin_user.User?> delayedUserStream(
+    FirestoreService firestoreService, String uid) async* {
+  print('[delayedUserStream] waiting 1s for Firestore token...');
+  await Future.delayed(const Duration(seconds: 1));
+  print('[delayedUserStream] subscribing to userStream($uid)...');
+  await for (final value in firestoreService.userStream(uid)) {
+    print('[delayedUserStream] yielded value: $value');
+    yield value;
   }
 }

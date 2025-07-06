@@ -4,7 +4,7 @@ import 'package:franchise_admin_portal/config/feature_config.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/user.dart';
+import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -25,7 +25,8 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
     _featureToggles = FeatureConfig.instance.load();
   }
 
-  Future<void> _updateFeature(String key, bool value, User user) async {
+  Future<void> _updateFeature(
+      String key, bool value, admin_user.User user) async {
     final loc = AppLocalizations.of(context)!;
 
     if (!user.isOwner) {
@@ -77,7 +78,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final user = Provider.of<User?>(context);
+    final user = Provider.of<admin_user.User?>(context);
 
     // Not logged in
     if (user == null) {

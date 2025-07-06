@@ -1,15 +1,18 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:franchise_admin_portal/core/utils/log_utils.dart';
+import 'package:franchise_admin_portal/core/models/user.dart' as app;
 
-class AuthService {
+class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
+  app.User? _profileUser; // Note: avoid name clash with Firebase User
   User? get currentUser => _auth.currentUser;
   Stream<User?> get authStateChanges => _auth.authStateChanges();
+  app.User? get profileUser => _profileUser;
 
   /// Ensures user profile exists with a default role (for admin UI usage)
   Future<void> ensureUserProfile(User firebaseUser) async {
@@ -36,7 +39,11 @@ class AuthService {
         password: password,
       );
       final user = result.user;
-      if (user != null) await ensureUserProfile(user);
+      if (user != null) {
+        await ensureUserProfile(user);
+        await loadProfileUser();
+        notifyListeners();
+      }
       LogUtils.i('Admin signed in with email: $email');
       return user;
     } catch (e, stack) {
@@ -55,7 +62,11 @@ class AuthService {
       );
       await result.user?.updateDisplayName(name);
       final user = result.user;
-      if (user != null) await ensureUserProfile(user);
+      if (user != null) {
+        await ensureUserProfile(user);
+        await loadProfileUser();
+        notifyListeners();
+      }
       LogUtils.i('Admin registered with email: $email');
       return user;
     } catch (e, stack) {
@@ -84,7 +95,11 @@ class AuthService {
         GoogleAuthProvider googleProvider = GoogleAuthProvider();
         final userCredential = await _auth.signInWithPopup(googleProvider);
         final user = userCredential.user;
-        if (user != null) await ensureUserProfile(user);
+        if (user != null) {
+          await ensureUserProfile(user);
+          await loadProfileUser();
+          notifyListeners();
+        }
         LogUtils.i(
             'Google sign-in successful (web): ${user?.email ?? 'No email'}');
         return user;
@@ -105,7 +120,11 @@ class AuthService {
         final UserCredential authResult =
             await _auth.signInWithCredential(credential);
         final user = authResult.user;
-        if (user != null) await ensureUserProfile(user);
+        if (user != null) {
+          await ensureUserProfile(user);
+          await loadProfileUser();
+          notifyListeners();
+        }
         LogUtils.i('Google sign-in successful: ${user?.email ?? 'No email'}');
         return user;
       }
@@ -163,5 +182,21 @@ class AuthService {
     );
     final result = await FirebaseAuth.instance.signInWithCredential(credential);
     return result.user;
+  }
+
+  Future<void> loadProfileUser() async {
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser == null) {
+      _profileUser = null;
+      return;
+    }
+    final doc =
+        await _firestore.collection('users').doc(firebaseUser.uid).get();
+    if (doc.exists && doc.data() != null) {
+      _profileUser =
+          app.User.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
+    } else {
+      _profileUser = null;
+    }
   }
 }

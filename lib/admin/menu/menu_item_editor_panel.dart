@@ -86,11 +86,14 @@ class _MenuItemEditorPanelState extends State<MenuItemEditorPanel> {
                     Text(
                       loc.addItem,
                       style: TextStyle(
-                        color: colorScheme.primary, // use theme primary color
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : colorScheme.onSurface,
                         fontWeight: FontWeight.bold,
                         fontSize: 22,
                       ),
                     ),
+
                     const Spacer(),
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.black87),

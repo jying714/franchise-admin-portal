@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/models/inventory.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:franchise_admin_portal/core/models/user.dart';
+import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -22,7 +22,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   void _onSearchChanged(String val) => setState(() => _search = val);
 
   bool _canEdit(BuildContext context) {
-    final user = Provider.of<User?>(context, listen: false);
+    final user = Provider.of<admin_user.User?>(context, listen: false);
     return user?.role == 'owner' || user?.role == 'manager';
   }
 

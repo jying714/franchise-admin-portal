@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_menu_item_actions_row.dart';
 import 'package:franchise_admin_portal/core/models/menu_item.dart';
 import 'package:franchise_admin_portal/core/models/category.dart';
-import 'package:franchise_admin_portal/core/models/user.dart';
+import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/network_image_widget.dart';
 import 'package:franchise_admin_portal/widgets/dietary_allergen_chips_row.dart';
@@ -13,7 +13,7 @@ class AdminMenuItemRow extends StatelessWidget {
   final MenuItem item;
   final bool isSelected;
   final List<Category> categories;
-  final User user;
+  final admin_user.User user;
   final bool canEdit;
   final bool canDeleteOrExport;
   final VoidCallback onSelect;

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/models/order.dart' as order_model;
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/models/user.dart';
+import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
@@ -23,7 +23,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
   List<order_model.Order> _lastOrders = [];
 
   Future<void> _updateOrderStatus(
-      order_model.Order order, String newStatus, User user) async {
+      order_model.Order order, String newStatus, admin_user.User user) async {
     if (!(user.isOwner || user.isManager)) {
       await AuditLogService().addLog(
         userId: user.id,
@@ -47,7 +47,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
   }
 
   Future<void> _processRefund(
-      order_model.Order order, double amount, User user) async {
+      order_model.Order order, double amount, admin_user.User user) async {
     if (!user.isOwner && !user.isManager) {
       await AuditLogService().addLog(
         userId: user.id,
@@ -88,7 +88,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     );
   }
 
-  void _showRefundDialog(order_model.Order order, User user) {
+  void _showRefundDialog(order_model.Order order, admin_user.User user) {
     final controller =
         TextEditingController(text: order.total.toStringAsFixed(2));
     showDialog(
@@ -120,7 +120,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     );
   }
 
-  void _showStatusDialog(order_model.Order order, User user) {
+  void _showStatusDialog(order_model.Order order, admin_user.User user) {
     final List<String> allowedStatuses = [
       'Placed',
       'Preparing',
@@ -165,7 +165,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
   }
 
   List<order_model.Order> _filterOrders(
-      List<order_model.Order> orders, User user) {
+      List<order_model.Order> orders, admin_user.User user) {
     return orders.where((o) {
       if (!_showRefunded && o.status == 'Refunded') return false;
       if (_filterStatus != null && o.status != _filterStatus) return false;
@@ -184,7 +184,8 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     }).toList();
   }
 
-  void _showExportDialog(List<order_model.Order> orders, User user) async {
+  void _showExportDialog(
+      List<order_model.Order> orders, admin_user.User user) async {
     await AuditLogService().addLog(
       userId: user.id,
       action: 'export_orders',
@@ -198,7 +199,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<User?>(context);
+    final user = Provider.of<admin_user.User?>(context);
 
     if (user == null) {
       return Scaffold(

@@ -215,12 +215,35 @@ class _DynamicMenuItemFormState extends State<DynamicMenuItemForm> {
             children: [
               if (widget.onCancel != null)
                 TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Theme.of(context).colorScheme.primary,
+                  ),
                   onPressed: widget.onCancel,
-                  child: const Text('Cancel'),
+                  child: Text('Cancel'),
                 ),
               ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.primary,
+                  foregroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? Colors.black
+                          : Theme.of(context).colorScheme.onPrimary,
+                ),
                 onPressed: _onSavePressed,
-                child: const Text('Save'),
+                child: Text(
+                  'Save',
+                  style: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.black
+                        : Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
               ),
             ],
           )

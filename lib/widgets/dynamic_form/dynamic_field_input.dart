@@ -103,6 +103,9 @@ class DynamicFieldInput extends StatelessWidget {
           title: Text(label),
           value: sanitizedValue == 'true' || sanitizedValue == true,
           onChanged: onChanged,
+          activeColor: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : Theme.of(context).colorScheme.primary,
         );
         break;
 

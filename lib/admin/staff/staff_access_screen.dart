@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/models/user.dart';
+import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
@@ -22,7 +22,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
   String _role = 'staff'; // default
 
   bool _canEditStaff(BuildContext context) {
-    final user = Provider.of<User?>(context, listen: false);
+    final user = Provider.of<admin_user.User?>(context, listen: false);
     return user != null && (user.role == 'owner' || user.role == 'manager');
   }
 
@@ -117,7 +117,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                   ),
                   // Staff List
                   Expanded(
-                    child: StreamBuilder<List<User>>(
+                    child: StreamBuilder<List<admin_user.User>>(
                       stream: firestoreService.getStaffUsers(),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
@@ -264,7 +264,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
   }
 
   void _confirmRemoveStaff(BuildContext context, FirestoreService service,
-      User user, AppLocalizations loc) {
+      admin_user.User user, AppLocalizations loc) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(

@@ -34,10 +34,11 @@ class User {
   }) : addresses = addresses ?? [];
 
   static User fromFirestore(Map<String, dynamic> data, String id) {
+    print('User.fromFirestore called for $id with data: $data');
     final rawRole = data['role'];
     final String effectiveRole =
         (rawRole is String && rawRole.isNotEmpty) ? rawRole : roleCustomer;
-
+    print('User.fromFirestore: about to return User(...) for $id');
     return User(
       id: id,
       name: data['name'] ?? '',

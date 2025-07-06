@@ -2,6 +2,7 @@ import 'package:franchise_admin_portal/admin/menu/menu_item_editor_panel.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_dialog.dart';
 import 'package:franchise_admin_portal/widgets/delayed_loading_shimmer.dart';
 import 'package:flutter/material.dart';
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/admin/menu/dynamic_menu_item_editor_screen.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_menu_editor_popup_menu.dart';
 import 'package:franchise_admin_portal/widgets/header/franchise_app_bar.dart';
@@ -15,7 +16,7 @@ import 'package:franchise_admin_portal/core/models/menu_item.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
 import 'package:franchise_admin_portal/core/models/category.dart';
 import 'package:franchise_admin_portal/widgets/dietary_allergen_chips_row.dart';
-import 'package:franchise_admin_portal/core/models/user.dart';
+import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
@@ -100,9 +101,10 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
     _selectedIds.value = [];
   }
 
-  bool _canEdit(User? user) =>
+  bool _canEdit(admin_user.User? user) =>
       user != null && (user.isOwner || user.isAdmin || user.isManager);
-  bool _canDeleteOrExport(User? user) =>
+
+  bool _canDeleteOrExport(admin_user.User? user) =>
       user != null && (user.isOwner || user.isAdmin);
 
   Future<void> _addOrEditMenuItemPanel({MenuItem? item}) async {
@@ -123,8 +125,8 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
     // For future: column visibility settings.
   }
 
-  Future<void> _bulkUpload(
-      BuildContext context, List<Category> categories, User user) async {
+  Future<void> _bulkUpload(BuildContext context, List<Category> categories,
+      admin_user.User user) async {
     if (!_canDeleteOrExport(user)) {
       await _logUnauthorizedAttempt(user, 'bulk_upload_menu_items');
       _showUnauthorizedDialog();
@@ -153,7 +155,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
   }
 
   Future<void> _deleteMenuItems(
-      BuildContext context, List<MenuItem> items, User user) async {
+      BuildContext context, List<MenuItem> items, admin_user.User user) async {
     final firestore = Provider.of<FirestoreService>(context, listen: false);
     if (!_canDeleteOrExport(user)) {
       await _logUnauthorizedAttempt(user, 'delete_menu_items');
@@ -205,7 +207,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
   }
 
   Future<void> _openCustomizations(
-      BuildContext context, MenuItem item, User user) async {
+      BuildContext context, MenuItem item, admin_user.User user) async {
     if (!_canEdit(user)) {
       await _logUnauthorizedAttempt(user, 'edit_customizations', item.id);
       _showUnauthorizedDialog();
@@ -246,7 +248,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
   }
 
   Future<void> _exportToCSV(
-      BuildContext context, List<MenuItem> items, User user) async {
+      BuildContext context, List<MenuItem> items, admin_user.User user) async {
     if (!_canDeleteOrExport(user)) {
       await _logUnauthorizedAttempt(user, 'export_menu_csv');
       _showUnauthorizedDialog();
@@ -265,7 +267,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
     );
   }
 
-  Future<void> _logUnauthorizedAttempt(User user, String action,
+  Future<void> _logUnauthorizedAttempt(admin_user.User user, String action,
       [String? targetId]) async {
     await AuditLogService().addLog(
       userId: user.id,
@@ -323,7 +325,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
     BuildContext context,
     MenuItem item,
     List<Category> categories,
-    User user,
+    admin_user.User user,
     bool isSelected,
     bool canEdit,
     bool canDeleteOrExport,
@@ -493,7 +495,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
   @override
   Widget build(BuildContext context) {
     final firestore = Provider.of<FirestoreService>(context, listen: false);
-    final user = Provider.of<User?>(context);
+    final user = Provider.of<UserProfileNotifier>(context).user;
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -806,10 +808,28 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
                                       child: Align(
                                         alignment: Alignment.bottomRight,
                                         child: FloatingActionButton.extended(
-                                          icon: const Icon(Icons.add),
+                                          backgroundColor:
+                                              Theme.of(context).brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.white
+                                                  : colorScheme.primary,
+                                          foregroundColor:
+                                              Theme.of(context).brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.black
+                                                  : colorScheme.onPrimary,
+                                          icon: Icon(Icons.add),
                                           label: Text(
-                                              AppLocalizations.of(context)!
-                                                  .addItem),
+                                            AppLocalizations.of(context)!
+                                                .addItem,
+                                            style: TextStyle(
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.black
+                                                  : colorScheme.onPrimary,
+                                            ),
+                                          ),
                                           onPressed: () =>
                                               _addOrEditMenuItemPanel(
                                                   item: null),

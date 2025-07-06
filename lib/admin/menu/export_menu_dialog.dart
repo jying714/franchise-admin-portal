@@ -1,14 +1,16 @@
-import 'dart:io';
 import 'dart:convert';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:file_saver/file_saver.dart';
+import 'dart:io'; // Will be ignored on web due to kIsWeb checks
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/models/menu_item.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+// Web-only import:
+import 'dart:html' as html;
 
 class ExportMenuDialog extends StatefulWidget {
   const ExportMenuDialog({Key? key}) : super(key: key);
@@ -95,8 +97,25 @@ class _ExportMenuDialogState extends State<ExportMenuDialog> {
     final localizations = AppLocalizations.of(context)!;
     final fileName = "menu_export_${DateTime.now().millisecondsSinceEpoch}.csv";
 
+    if (kIsWeb) {
+      // --- WEB: Download via browser ---
+      final bytes = utf8.encode(csvData);
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute("download", fileName)
+        ..click();
+      html.Url.revokeObjectUrl(url);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text('Download started. Check your browser\'s downloads.')),
+      );
+      return;
+    }
+
+    // --- MOBILE / DESKTOP ---
     try {
-      // Ask for permission on Android
       if (Platform.isAndroid) {
         var status = await Permission.storage.request();
         if (!status.isGranted) {
@@ -137,6 +156,14 @@ class _ExportMenuDialogState extends State<ExportMenuDialog> {
 
   Future<void> _shareCsv(BuildContext context) async {
     if (_csvData == null) return;
+    if (kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                'Sharing is not supported on web. Please download the file.')),
+      );
+      return;
+    }
     try {
       final tempDir = await getTemporaryDirectory();
       final path =
@@ -199,9 +226,19 @@ class _ExportMenuDialogState extends State<ExportMenuDialog> {
                     Row(
                       children: [
                         ElevatedButton.icon(
+                          icon: const Icon(Icons.download),
+                          label: Text(localizations.download),
+                          onPressed: _csvData == null
+                              ? null
+                              : () => _downloadCsv(context, _csvData!),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
                           icon: const Icon(Icons.share),
                           label: Text(localizations.share),
-                          onPressed: () => _shareCsv(context),
+                          onPressed: _csvData == null
+                              ? null
+                              : () => _shareCsv(context),
                         ),
                         const Spacer(),
                         ElevatedButton.icon(
@@ -209,9 +246,8 @@ class _ExportMenuDialogState extends State<ExportMenuDialog> {
                           label: Text(localizations.close),
                           onPressed: () => Navigator.pop(context),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context)
-                                .colorScheme
-                                .primary, // Optional: make Close visually distinct
+                            backgroundColor:
+                                Theme.of(context).colorScheme.primary,
                             foregroundColor: Colors.white,
                           ),
                         ),

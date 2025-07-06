@@ -171,6 +171,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   }
 
   Widget buildCategoryDataRow(BuildContext context, Category category) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: categoryColumns.map((col) {
         switch (col["key"]) {
@@ -215,12 +216,12 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.blueGrey),
+                    icon: Icon(Icons.edit, color: colorScheme.secondary),
                     tooltip: AppLocalizations.of(context)!.edit,
                     onPressed: () => _openCategoryDialog(category: category),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
+                    icon: Icon(Icons.delete, color: colorScheme.error),
                     tooltip: AppLocalizations.of(context)!.delete,
                     onPressed: () => _deleteCategory(category),
                   ),
@@ -238,9 +239,9 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final isMobile = MediaQuery.of(context).size.width < 600;
-
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.background,
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -261,21 +262,22 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                       children: [
                         Text(
                           loc.adminCategoryManagement,
-                          style: const TextStyle(
-                            color: Colors.black,
+                          style: TextStyle(
+                            color: colorScheme.onBackground,
                             fontWeight: FontWeight.bold,
                             fontSize: 22,
                           ),
                         ),
                         const Spacer(),
                         IconButton(
-                          icon: const Icon(Icons.upload_file,
-                              color: Colors.black87),
+                          icon: Icon(Icons.upload_file,
+                              color: colorScheme.onBackground),
                           tooltip: loc.bulkUploadCategories,
                           onPressed: _showBulkUploadDialog,
                         ),
                         IconButton(
-                          icon: const Icon(Icons.add, color: Colors.black87),
+                          icon:
+                              Icon(Icons.add, color: colorScheme.onBackground),
                           tooltip: loc.addCategory,
                           onPressed: () => _openCategoryDialog(),
                         ),
@@ -349,15 +351,15 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
-                                      icon: const Icon(Icons.edit,
-                                          color: Colors.blueGrey),
+                                      icon: Icon(Icons.edit,
+                                          color: colorScheme.secondary),
                                       tooltip: loc.edit,
                                       onPressed: () => _openCategoryDialog(
                                           category: category),
                                     ),
                                     IconButton(
-                                      icon: const Icon(Icons.delete,
-                                          color: Colors.red),
+                                      icon: Icon(Icons.delete,
+                                          color: colorScheme.error),
                                       tooltip: loc.delete,
                                       onPressed: () =>
                                           _deleteCategory(category),
@@ -400,10 +402,26 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        icon: const Icon(Icons.add),
-        label: Text(AppLocalizations.of(context)!.addCategory),
-        backgroundColor: DesignTokens.primaryColor,
-        foregroundColor: Colors.white,
+        icon: Icon(
+          Icons.add,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.black
+              : Theme.of(context).colorScheme.onPrimary,
+        ),
+        label: Text(
+          AppLocalizations.of(context)!.addCategory,
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black
+                : Theme.of(context).colorScheme.onPrimary,
+          ),
+        ),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white
+            : Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.black
+            : Theme.of(context).colorScheme.onPrimary,
         onPressed: () => _openCategoryDialog(),
       ),
     );
