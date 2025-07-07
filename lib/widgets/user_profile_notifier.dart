@@ -17,6 +17,7 @@ class UserProfileNotifier extends ChangeNotifier {
   Object? get lastError => _lastError;
 
   void listenToUser(FirestoreService firestoreService, String? uid) {
+    print('[UserProfileNotifier] listenToUser called for uid=$uid');
     _sub?.cancel();
     _loading = true;
     _lastError = null;
@@ -31,12 +32,14 @@ class UserProfileNotifier extends ChangeNotifier {
 
     _sub = delayedUserStream(firestoreService, uid).listen(
       (u) {
+        print('[UserProfileNotifier] Received user: ${u?.email}');
         _user = u;
         _loading = false;
         _lastError = null;
         notifyListeners();
       },
       onError: (err, stack) async {
+        print('[UserProfileNotifier] ERROR: $err\nStack: $stack');
         _loading = false;
         _lastError = err;
         notifyListeners();
@@ -61,6 +64,7 @@ class UserProfileNotifier extends ChangeNotifier {
   }
 
   void clear() {
+    print('[UserProfileNotifier] clear() called');
     _sub?.cancel();
     _user = null;
     _loading = false;
@@ -70,6 +74,7 @@ class UserProfileNotifier extends ChangeNotifier {
 
   @override
   void dispose() {
+    print('[UserProfileNotifier] dispose() called');
     _sub?.cancel();
     super.dispose();
   }

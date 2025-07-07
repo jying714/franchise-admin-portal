@@ -11,6 +11,7 @@ import 'package:franchise_admin_portal/admin/promo/promo_management_screen.dart'
 import 'package:franchise_admin_portal/admin/staff/staff_access_screen.dart';
 import 'package:franchise_admin_portal/admin/features/feature_settings_screen.dart';
 import 'package:franchise_admin_portal/admin/chat/chat_management_screen.dart';
+import 'package:franchise_admin_portal/admin/error_logs/error_logs_screen.dart';
 
 // Any new (plugin/module) screens can be imported and registered here
 
@@ -112,7 +113,14 @@ final List<DashboardSection> sectionRegistry = [
     builder: (_) => const ChatManagementScreen(),
     sidebarOrder: 10,
   ),
-
+  DashboardSection(
+    key: 'errorLogs',
+    title: 'Error Logs',
+    icon: Icons.bug_report,
+    builder: (_) => const ErrorLogsScreen(),
+    sidebarOrder: 11,
+    showInSidebar: true,
+  ),
   // ---- Plugin or Franchise-specific Section Example ----
   // DashboardSection(
   //   key: 'customPluginSection',

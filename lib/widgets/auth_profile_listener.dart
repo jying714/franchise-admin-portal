@@ -19,6 +19,8 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final firebaseUser = Provider.of<fb_auth.User?>(context);
+    print(
+        '[AuthProfileListener] didChangeDependencies, firebaseUser.email = ${firebaseUser?.email}');
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final notifier = Provider.of<UserProfileNotifier>(context, listen: false);
@@ -35,6 +37,8 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     super.didUpdateWidget(oldWidget);
     // Ensure we check for errors when the widget updates (rare, but safe).
     final firebaseUser = Provider.of<fb_auth.User?>(context, listen: false);
+    print(
+        '[AuthProfileListener] didUpdateWidget, firebaseUser.email = ${firebaseUser?.email}');
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final notifier = Provider.of<UserProfileNotifier>(context, listen: false);
@@ -49,7 +53,8 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final notifier = Provider.of<UserProfileNotifier>(context, listen: false);
-
+    print(
+        '[AuthProfileListener] build, firebaseUser.email = ${firebaseUser?.email}, notifier.user.email = ${notifier.user?.email}');
     // If error is present and not logged, log it
     _maybeLogProfileError(notifier, firebaseUser, firestoreService);
 
@@ -58,6 +63,8 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
 
   void _maybeLogProfileError(UserProfileNotifier notifier, fb_auth.User? user,
       FirestoreService firestoreService) {
+    print(
+        '[AuthProfileListener] _maybeLogProfileError called. notifier.lastError: ${notifier.lastError}, user.email: ${user?.email}');
     if (notifier.lastError != null && notifier.lastError != _lastLoggedError) {
       _lastLoggedError = notifier.lastError;
       // Schedule in post-frame to avoid build timing issues

@@ -7,7 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-
+import 'package:franchise_admin_portal/admin/error_logs/error_logs_screen.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/firebase_options.dart';
 import 'package:franchise_admin_portal/core/services/auth_service.dart';
@@ -61,6 +61,7 @@ void main() async {
         ],
         child: Builder(builder: (context) {
           final firebaseUser = Provider.of<fb_auth.User?>(context);
+          print('main.dart: firebaseUser?.email = ${firebaseUser?.email}');
           return AuthProfileListener(
             child: KeyedSubtree(
               key: ValueKey(firebaseUser?.uid ?? 'nouid'),

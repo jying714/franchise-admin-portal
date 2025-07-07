@@ -21,6 +21,44 @@ import 'package:franchise_admin_portal/core/models/analytics_summary.dart';
 import 'package:async/async.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/models/order.dart';
+import 'package:franchise_admin_portal/core/models/error_log.dart';
+
+extension ErrorLogsService on FirestoreService {
+  /// Fetches paginated, filterable error logs from Firestore.
+  Stream<List<ErrorLog>> streamErrorLogs({
+    int limit = 50,
+    String? severity,
+    String? source,
+    String? screen,
+    DateTime? start,
+    DateTime? end,
+    String? search,
+  }) {
+    firestore.Query query = _db.collection('error_logs');
+
+    if (severity != null && severity.isNotEmpty) {
+      query = query.where('severity', isEqualTo: severity);
+    }
+    if (source != null && source.isNotEmpty) {
+      query = query.where('source', isEqualTo: source);
+    }
+    if (screen != null && screen.isNotEmpty) {
+      query = query.where('screen', isEqualTo: screen);
+    }
+    if (start != null) {
+      query = query.where('timestamp',
+          isGreaterThanOrEqualTo: firestore.Timestamp.fromDate(start));
+    }
+    if (end != null) {
+      query = query.where('timestamp',
+          isLessThan: firestore.Timestamp.fromDate(end));
+    }
+    query = query.orderBy('timestamp', descending: true).limit(limit);
+
+    return query.snapshots().map(
+        (snap) => snap.docs.map((doc) => ErrorLog.fromFirestore(doc)).toList());
+  }
+}
 
 class FirestoreService {
   final firestore.FirebaseFirestore _db = firestore.FirebaseFirestore.instance;
@@ -1159,17 +1197,16 @@ class FirestoreService {
 
   /// Returns total revenue for today
   Future<double> getTotalRevenueToday() async {
-    final now = DateTime.now().toUtc();
-    final start = DateTime.utc(now.year, now.month, now.day);
-    final end = start.add(const Duration(days: 1));
-
+    final now = DateTime.now(); // local
+    final localMidnight = DateTime(now.year, now.month, now.day);
+    final utcStart = localMidnight.toUtc();
+    final utcEnd = utcStart.add(const Duration(days: 1));
     final snapshot = await _db
         .collection('orders')
         .where('timestamp',
-            isGreaterThanOrEqualTo: firestore.Timestamp.fromDate(start))
-        .where('timestamp', isLessThan: firestore.Timestamp.fromDate(end))
+            isGreaterThanOrEqualTo: firestore.Timestamp.fromDate(utcStart))
+        .where('timestamp', isLessThan: firestore.Timestamp.fromDate(utcEnd))
         .get();
-
     double total = 0.0;
     for (var doc in snapshot.docs) {
       final data = doc.data();
@@ -1183,29 +1220,33 @@ class FirestoreService {
 
   /// Returns total revenue for a given period: 'week' or 'month'
   Future<double> getTotalRevenueForPeriod(String period) async {
-    final now = DateTime.now().toUtc();
+    final now = DateTime.now(); // local time (not UTC!)
     late DateTime start, end;
 
     if (period == 'week') {
-      // Start of week (Monday)
+      // Start of week (Monday) in local time
       start = now.subtract(Duration(days: now.weekday - 1));
-      start = DateTime.utc(start.year, start.month, start.day);
+      start = DateTime(start.year, start.month, start.day);
       end = start.add(const Duration(days: 7));
     } else if (period == 'month') {
-      // Start of month
-      start = DateTime.utc(now.year, now.month, 1);
+      // Start of month in local time
+      start = DateTime(now.year, now.month, 1);
       end = (now.month < 12)
-          ? DateTime.utc(now.year, now.month + 1, 1)
-          : DateTime.utc(now.year + 1, 1, 1);
+          ? DateTime(now.year, now.month + 1, 1)
+          : DateTime(now.year + 1, 1, 1);
     } else {
       throw ArgumentError('Invalid period: $period');
     }
 
+    // Convert local period boundaries to UTC for the Firestore query
+    final utcStart = start.toUtc();
+    final utcEnd = end.toUtc();
+
     final snapshot = await _db
         .collection('orders')
         .where('timestamp',
-            isGreaterThanOrEqualTo: firestore.Timestamp.fromDate(start))
-        .where('timestamp', isLessThan: firestore.Timestamp.fromDate(end))
+            isGreaterThanOrEqualTo: firestore.Timestamp.fromDate(utcStart))
+        .where('timestamp', isLessThan: firestore.Timestamp.fromDate(utcEnd))
         .get();
 
     double total = 0.0;

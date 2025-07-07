@@ -14,6 +14,7 @@ import 'package:franchise_admin_portal/core/models/user.dart' as app;
 import 'package:franchise_admin_portal/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_admin_portal/widgets/header/profile_icon_button.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({Key? key}) : super(key: key);
@@ -211,6 +212,17 @@ class AdminSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final userNotifier = Provider.of<UserProfileNotifier>(context);
+    final appUser = userNotifier.user;
+    const ownerEmail = 'j.ying714@gmail.com';
+
+    print(
+        'AdminSidebar: appUser.email = ${appUser?.email} (expecting $ownerEmail)');
+    if (appUser == null) {
+      print('AdminSidebar: Waiting for user profile to load...');
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return ListView(
       children: [
         for (int i = 0; i < sections.length; i++)
@@ -273,6 +285,9 @@ class AdminBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final appUser = Provider.of<app.User?>(context, listen: false);
+    const ownerEmail =
+        'J.Ying714@gmail.com'; // <-- REPLACE with your real email
     return BottomNavigationBar(
       currentIndex: selectedIndex,
       onTap: onTap,
