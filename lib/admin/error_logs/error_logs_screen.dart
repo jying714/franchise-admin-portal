@@ -22,22 +22,24 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
   DateTime? _end;
   String? _search;
 
+  static const _allowedRoles = ['owner', 'developer', 'admin', 'manager'];
+
   @override
   Widget build(BuildContext context) {
+    print(
+        'ErrorLogsScreen build - _severity=$_severity, _source=$_source, _screen=$_screen, _start=$_start, _end=$_end, _search=$_search');
     final userNotifier = Provider.of<UserProfileNotifier>(context);
     final appUser = userNotifier.user;
+
     if (appUser == null) {
-      print('ErrorLogsScreen: Waiting for user profile to load...');
+      // Loading state
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
-    const ownerEmail = 'j.ying714@gmail.com';
-    print(
-        'ErrorLogsScreen: appUser?.email = ${appUser.email} (expecting $ownerEmail)');
-    if (appUser.email != ownerEmail) {
-      print(
-          'ErrorLogsScreen: User is not owner. Showing unauthorized message.');
+
+    // --- Role-based access control ---
+    if (!_allowedRoles.contains(appUser.role)) {
       return const Scaffold(
         body: Center(
           child: Text(
@@ -47,7 +49,6 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
         ),
       );
     }
-    print('ErrorLogsScreen: Owner verified, building error logs UI.');
 
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -59,7 +60,6 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          // Use a Column with Expanded for main content, and SingleChildScrollView to prevent overflow.
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -91,6 +91,8 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
                       DateTime? end,
                       String? search,
                     }) {
+                      print(
+                          'Filter callback: severity=$severity, source=$source, screen=$screen, start=$start, end=$end, search=$search');
                       setState(() {
                         _severity = severity;
                         _source = source;
@@ -130,11 +132,16 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
                         );
                       }
                       final logs = snapshot.data ?? [];
+                      print(
+                          'Filter: severity=$_severity, source=$_source, screen=$_screen, start=$_start, end=$_end, search=$_search');
+                      print(
+                          'Severities in Firestore: ${logs.map((l) => l.severity).toSet()}');
+                      print('ErrorLogTable log count: ${logs.length}');
                       return ErrorLogTable(logs: logs);
                     },
                   ),
                 ),
-              ),
+              )
             ],
           );
         },

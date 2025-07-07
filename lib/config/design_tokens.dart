@@ -188,6 +188,19 @@ class DesignTokens {
   static const double dialogBorderRadius = 16.0;
   static const double inputBorderRadius = 12.0;
   static const double buttonBorderRadius = 12.0;
+
+  // ----------- Error Log/Chip Severity Tokens -----------
+  static const Color errorChipColor = Color(0xFFFDEAEA);
+  static const Color errorChipTextColor = Color(0xFFD23215);
+
+  static const Color warningChipColor = Color(0xFFFFF8E1);
+  static const Color warningChipTextColor = Color(0xFFF9A825);
+
+  static const Color infoChipColor = Color(0xFFE3F2FD);
+  static const Color infoChipTextColor = Color(0xFF1976D2);
+
+  static const Color neutralChipColor = Color(0xFFF4F4F4);
+  static const Color neutralChipTextColor = Color(0xFF606060);
   // ======================
   // === FUTURE TOKENS ====
   // ======================

@@ -40,6 +40,7 @@ dependencies:
   google_sign_in: ^6.2.1
   image_picker: ^1.1.2
   shared_preferences: ^2.5.3
+  csv: ^5.0.2
 
 dev_dependencies:
   flutter_test:

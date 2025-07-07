@@ -34,11 +34,14 @@ extension ErrorLogsService on FirestoreService {
     DateTime? end,
     String? search,
   }) {
+    print(
+        'FirestoreService.streamErrorLogs called with: severity=$severity, source=$source, screen=$screen, start=$start, end=$end, search=$search');
     firestore.Query query = _db.collection('error_logs');
 
     if (severity != null && severity.isNotEmpty) {
       query = query.where('severity', isEqualTo: severity);
     }
+    print('Firestore query: severity="$severity"');
     if (source != null && source.isNotEmpty) {
       query = query.where('source', isEqualTo: source);
     }
@@ -55,8 +58,23 @@ extension ErrorLogsService on FirestoreService {
     }
     query = query.orderBy('timestamp', descending: true).limit(limit);
 
-    return query.snapshots().map(
-        (snap) => snap.docs.map((doc) => ErrorLog.fromFirestore(doc)).toList());
+    return query.snapshots().map((snap) {
+      final logs = snap.docs
+          .map((doc) {
+            try {
+              return ErrorLog.fromFirestore(doc);
+            } catch (e, st) {
+              print('Error parsing log ${doc.id}: $e\n$st');
+              return null;
+            }
+          })
+          .whereType<ErrorLog>()
+          .toList();
+      // PRINT ALL SEVERITIES YOU GET
+      final uniqueSeverities = logs.map((e) => e.severity).toSet();
+      print('Severities in Firestore: $uniqueSeverities');
+      return logs;
+    });
   }
 }
 
@@ -419,6 +437,7 @@ class FirestoreService {
     String? severity,
     Map<String, dynamic>? contextData,
     Map<String, dynamic>? deviceInfo,
+    String? assignedTo,
   }) async {
     try {
       final data = <String, dynamic>{
@@ -433,7 +452,11 @@ class FirestoreService {
           'contextData': contextData,
         if (deviceInfo != null && deviceInfo.isNotEmpty)
           'deviceInfo': deviceInfo,
+        if (assignedTo != null) 'assignedTo': assignedTo,
         'timestamp': firestore.FieldValue.serverTimestamp(),
+        'resolved': false,
+        'archived': false,
+        'comments': <Map<String, dynamic>>[],
       };
       await firestore.FirebaseFirestore.instance
           .collection('error_logs')
@@ -441,6 +464,35 @@ class FirestoreService {
     } catch (e, stack) {
       print('[ERROR LOGGING FAILURE] $e\n$stack');
     }
+  }
+
+  // Update a log (e.g., mark as resolved, archive, or add a comment)
+  Future<void> updateErrorLog(
+      String logId, Map<String, dynamic> updates) async {
+    await _db.collection('error_logs').doc(logId).update(updates);
+  }
+
+// Add a comment to an error log
+  Future<void> addCommentToErrorLog(
+      String logId, Map<String, dynamic> comment) async {
+    await _db.collection('error_logs').doc(logId).update({
+      'comments': firestore.FieldValue.arrayUnion([comment]),
+      'updatedAt': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+// Mark an error log as resolved or archived
+  Future<void> setErrorLogStatus(String logId,
+      {bool? resolved, bool? archived}) async {
+    final updates = <String, dynamic>{};
+    if (resolved != null) updates['resolved'] = resolved;
+    if (archived != null) updates['archived'] = archived;
+    updates['updatedAt'] = firestore.FieldValue.serverTimestamp();
+    await _db.collection('error_logs').doc(logId).update(updates);
+  }
+
+  Future<void> deleteErrorLog(String logId) async {
+    await _db.collection('error_logs').doc(logId).delete();
   }
 
   Future<MenuItem?> getMenuItemById(String id) async {

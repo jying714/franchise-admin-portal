@@ -5,9 +5,10 @@ class AuditLogService {
   final CollectionReference auditLogsRef =
       FirebaseFirestore.instance.collection('audit_logs');
 
-  // Generic flexible addLog for admin and other use-cases
+  /// Adds a generic, flexible audit log entry.
   Future<void> addLog({
     required String userId,
+    String? userEmail,
     required String action,
     String? targetType,
     String? targetId,
@@ -16,6 +17,7 @@ class AuditLogService {
     final log = AuditLog(
       id: '',
       userId: userId,
+      userEmail: userEmail ?? '',
       action: action,
       targetType: targetType ?? '',
       targetId: targetId ?? '',
@@ -25,12 +27,28 @@ class AuditLogService {
     await auditLogsRef.add(log.toFirestore());
   }
 
+  /// Shortcut for logging when an error log is viewed.
+  Future<void> logViewedErrorLog({
+    required String errorLogId,
+    required String userId,
+    String? userEmail,
+  }) async {
+    await addLog(
+      userId: userId,
+      userEmail: userEmail,
+      action: 'view_error_log',
+      targetType: 'error_log',
+      targetId: errorLogId,
+    );
+  }
+
+  /// Streams audit logs (filterable by targetType or userId).
   Stream<List<AuditLog>> getLogs({String? targetType, String? userId}) {
     Query query = auditLogsRef.orderBy('timestamp', descending: true);
-    if (targetType != null) {
+    if (targetType != null && targetType.isNotEmpty) {
       query = query.where('targetType', isEqualTo: targetType);
     }
-    if (userId != null) {
+    if (userId != null && userId.isNotEmpty) {
       query = query.where('userId', isEqualTo: userId);
     }
     return query.snapshots().map((snap) => snap.docs
@@ -39,13 +57,14 @@ class AuditLogService {
         .toList());
   }
 
+  /// Gets audit logs once (filterable by targetType or userId).
   Future<List<AuditLog>> getLogsOnce(
       {String? targetType, String? userId}) async {
     Query query = auditLogsRef.orderBy('timestamp', descending: true);
-    if (targetType != null) {
+    if (targetType != null && targetType.isNotEmpty) {
       query = query.where('targetType', isEqualTo: targetType);
     }
-    if (userId != null) {
+    if (userId != null && userId.isNotEmpty) {
       query = query.where('userId', isEqualTo: userId);
     }
     final snap = await query.get();

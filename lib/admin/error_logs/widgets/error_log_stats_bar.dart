@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/models/error_log.dart';
+import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class ErrorLogStatsBar extends StatelessWidget {
   final String? severity;
@@ -12,6 +13,13 @@ class ErrorLogStatsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    Color _chipBg(Color? token, Color fallback) =>
+        token ?? fallback.withOpacity(0.12);
+
+    Color _chipText(Color? token, Color fallback) => token ?? fallback;
+
     return StreamBuilder<List<ErrorLog>>(
       stream: context.read<FirestoreService>().streamErrorLogs(
             severity: severity,
@@ -39,25 +47,42 @@ class ErrorLogStatsBar extends StatelessWidget {
             children: [
               Chip(
                 label: Text('Total: $total'),
-                backgroundColor: Colors.grey.shade300,
+                backgroundColor: _chipBg(
+                    DesignTokens.neutralChipColor, colorScheme.surfaceVariant),
+                labelStyle: TextStyle(
+                  color: _chipText(DesignTokens.neutralChipTextColor,
+                      colorScheme.onSurfaceVariant),
+                ),
               ),
               const SizedBox(width: 8),
               Chip(
                 label: Text('Critical: $critical'),
-                backgroundColor: Colors.red.shade100,
-                labelStyle: const TextStyle(color: Colors.red),
+                backgroundColor:
+                    _chipBg(DesignTokens.errorChipColor, colorScheme.error),
+                labelStyle: TextStyle(
+                  color: _chipText(
+                      DesignTokens.errorChipTextColor, colorScheme.onError),
+                ),
               ),
               const SizedBox(width: 8),
               Chip(
                 label: Text('Warnings: $warning'),
-                backgroundColor: Colors.amber.shade100,
-                labelStyle: const TextStyle(color: Colors.amber),
+                backgroundColor: _chipBg(
+                    DesignTokens.warningChipColor, colorScheme.tertiary),
+                labelStyle: TextStyle(
+                  color: _chipText(DesignTokens.warningChipTextColor,
+                      colorScheme.onTertiary),
+                ),
               ),
               const SizedBox(width: 8),
               Chip(
                 label: Text('Info: $info'),
-                backgroundColor: Colors.blue.shade100,
-                labelStyle: const TextStyle(color: Colors.blue),
+                backgroundColor:
+                    _chipBg(DesignTokens.infoChipColor, colorScheme.secondary),
+                labelStyle: TextStyle(
+                  color: _chipText(
+                      DesignTokens.infoChipTextColor, colorScheme.onSecondary),
+                ),
               ),
             ],
           ),

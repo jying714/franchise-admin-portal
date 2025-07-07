@@ -4,9 +4,10 @@ class AuditLog {
   final String id;
   final String action;
   final String userId;
-  final String targetType; // e.g., 'menu_item', 'category'
+  final String? userEmail; // <-- Add this
+  final String targetType;
   final String targetId;
-  final String? details; // JSON, summary, or extended context
+  final String? details;
   final DateTime timestamp;
   final String? ipAddress;
 
@@ -14,6 +15,7 @@ class AuditLog {
     required this.id,
     required this.action,
     required this.userId,
+    this.userEmail, // <-- Add this
     required this.targetType,
     required this.targetId,
     this.details,
@@ -26,6 +28,7 @@ class AuditLog {
       id: id,
       action: data['action'] ?? '',
       userId: data['userId'] ?? '',
+      userEmail: data['userEmail'], // <-- Add this
       targetType: data['targetType'] ?? '',
       targetId: data['targetId'] ?? '',
       details: data['details'],
@@ -38,6 +41,7 @@ class AuditLog {
     return {
       'action': action,
       'userId': userId,
+      'userEmail': userEmail, // <-- Add this
       'targetType': targetType,
       'targetId': targetId,
       'details': details,
