@@ -310,54 +310,77 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
                 enabled: !_isCommenting,
               ),
               const SizedBox(height: 18),
-              Row(
-                children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.copy),
-                    label: const Text('Copy JSON'),
-                    onPressed: () {
-                      final errorJson = log.toJson();
-                      Clipboard.setData(ClipboardData(
-                          text: const JsonEncoder.withIndent('  ')
-                              .convert(errorJson)));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Copied error JSON!')));
-                    },
-                  ),
-                  const SizedBox(width: 18),
-                  ElevatedButton.icon(
-                    icon: Icon(log.resolved
-                        ? Icons.radio_button_unchecked
-                        : Icons.check_circle),
-                    label: Text(
-                        log.resolved ? "Mark Unresolved" : "Mark Resolved"),
-                    onPressed: _isResolving ? null : _toggleResolved,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: log.resolved
-                          ? colorScheme.secondaryContainer
-                          : colorScheme.primaryContainer,
+              IntrinsicWidth(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.copy),
+                        label: const Text('Copy'),
+                        onPressed: () {
+                          final errorJson = log.toJson();
+                          Clipboard.setData(ClipboardData(
+                              text: const JsonEncoder.withIndent('  ')
+                                  .convert(errorJson)));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Copied error JSON!')));
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colorScheme.primary,
+                          foregroundColor: colorScheme.onPrimary,
+                          minimumSize:
+                              const Size(96, 44), // 96 is a good web min width
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 18),
-                  ElevatedButton.icon(
-                    icon: Icon(log.archived
-                        ? Icons.unarchive
-                        : Icons.archive_outlined),
-                    label: Text(log.archived ? "Unarchive" : "Archive"),
-                    onPressed: _isArchiving ? null : _toggleArchived,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.surfaceVariant,
+                    const SizedBox(width: 12),
+                    Flexible(
+                      child: ElevatedButton.icon(
+                        icon: Icon(log.resolved
+                            ? Icons.radio_button_unchecked
+                            : Icons.check_circle),
+                        label: Text(log.resolved ? "Unresolve" : "Resolve"),
+                        onPressed: _isResolving ? null : _toggleResolved,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colorScheme.secondary,
+                          foregroundColor: colorScheme.onSecondary,
+                          minimumSize: const Size(96, 44),
+                        ),
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: colorScheme.primaryContainer),
-                    child: const Text('Close'),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 12),
+                    Flexible(
+                      child: ElevatedButton.icon(
+                        icon: Icon(log.archived
+                            ? Icons.unarchive
+                            : Icons.archive_outlined),
+                        label: Text(log.archived ? "Unarchive" : "Archive"),
+                        onPressed: _isArchiving ? null : _toggleArchived,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colorScheme.tertiary,
+                          foregroundColor: colorScheme.onTertiary,
+                          minimumSize: const Size(96, 44),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Flexible(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.close),
+                        label: const Text('Close'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colorScheme.primary,
+                          foregroundColor: colorScheme.onPrimary,
+                          minimumSize: const Size(96, 44),
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ),
+                  ],
+                ),
+              )
             ],
           ),
         ),

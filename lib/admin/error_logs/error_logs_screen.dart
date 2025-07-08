@@ -15,30 +15,46 @@ class ErrorLogsScreen extends StatefulWidget {
 }
 
 class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
-  String? _severity;
+  String? _severity = 'all';
   String? _source;
   String? _screen;
   DateTime? _start;
   DateTime? _end;
   String? _search;
-
+  bool _showArchived = false;
+  bool? _showResolved =
+      false; // false = only unresolved, true = only resolved, null = all
   static const _allowedRoles = ['owner', 'developer', 'admin', 'manager'];
+
+  void _updateFilters({
+    String? severity,
+    String? source,
+    String? screen,
+    DateTime? start,
+    DateTime? end,
+    String? search,
+  }) {
+    setState(() {
+      _severity = (severity == null || severity == 'null') ? 'all' : severity;
+      _source = source;
+      _screen = screen;
+      _start = start;
+      _end = end;
+      _search = search;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    print(
-        'ErrorLogsScreen build - _severity=$_severity, _source=$_source, _screen=$_screen, _start=$_start, _end=$_end, _search=$_search');
     final userNotifier = Provider.of<UserProfileNotifier>(context);
     final appUser = userNotifier.user;
 
     if (appUser == null) {
-      // Loading state
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    // --- Role-based access control ---
     if (!_allowedRoles.contains(appUser.role)) {
       return const Scaffold(
         body: Center(
@@ -52,10 +68,16 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
 
     final colorScheme = Theme.of(context).colorScheme;
 
+    // Map 'all' to null for Firestore query
+    final String? querySeverity =
+        (_severity == 'all' || _severity == 'null') ? null : _severity;
+
     return Scaffold(
-      backgroundColor: colorScheme.background,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Error Logs'),
+        toolbarHeight:
+            0, // <-- Hide default AppBar UI, but keep elevation if needed
+        elevation: 0,
         backgroundColor: colorScheme.surface,
       ),
       body: LayoutBuilder(
@@ -63,6 +85,19 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // -------- SCREEN LABEL START --------
+              Padding(
+                padding: const EdgeInsets.fromLTRB(28, 32, 28, 0),
+                child: Text(
+                  'Error Log Management',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                        letterSpacing: 0.2,
+                      ),
+                ),
+              ),
+              // -------- SCREEN LABEL END --------
               Material(
                 elevation: 1,
                 color: colorScheme.surface,
@@ -70,7 +105,7 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
                   padding:
                       const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
                   child: ErrorLogStatsBar(
-                    severity: _severity,
+                    severity: querySeverity,
                     start: _start,
                     end: _end,
                   ),
@@ -83,41 +118,77 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
                   padding:
                       const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
                   child: ErrorLogFilterBar(
-                    onFilterChanged: ({
-                      String? severity,
-                      String? source,
-                      String? screen,
-                      DateTime? start,
-                      DateTime? end,
-                      String? search,
-                    }) {
-                      print(
-                          'Filter callback: severity=$severity, source=$source, screen=$screen, start=$start, end=$end, search=$search');
-                      setState(() {
-                        _severity = severity;
-                        _source = source;
-                        _screen = screen;
-                        _start = start;
-                        _end = end;
-                        _search = search;
-                      });
-                    },
+                    severity: _severity,
+                    source: _source,
+                    screen: _screen,
+                    start: _start,
+                    end: _end,
+                    search: _search,
+                    onFilterChanged: _updateFilters,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Hide Archived Toggle
+                        Row(
+                          children: [
+                            Switch(
+                              value: _showArchived,
+                              onChanged: (val) =>
+                                  setState(() => _showArchived = val),
+                            ),
+                            Text(
+                              _showArchived
+                                  ? "Showing Archived"
+                                  : "Hide Archived",
+                              style: Theme.of(context).textTheme.labelLarge,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 20),
+                        // Resolved Filter Dropdown
+                        Row(
+                          children: [
+                            const Text("Resolved:  "),
+                            DropdownButton<bool?>(
+                              value: _showResolved,
+                              items: const [
+                                DropdownMenuItem(
+                                  value: null,
+                                  child: Text("All"),
+                                ),
+                                DropdownMenuItem(
+                                  value: false,
+                                  child: Text("Unresolved Only"),
+                                ),
+                                DropdownMenuItem(
+                                  value: true,
+                                  child: Text("Resolved Only"),
+                                ),
+                              ],
+                              onChanged: (val) =>
+                                  setState(() => _showResolved = val),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: 4),
-              // Main logs table fills remaining space
               Expanded(
                 child: Container(
                   color: colorScheme.background,
                   child: StreamBuilder<List<ErrorLog>>(
                     stream: context.read<FirestoreService>().streamErrorLogs(
-                          severity: _severity,
+                          severity: querySeverity,
                           source: _source,
                           screen: _screen,
                           start: _start,
                           end: _end,
                           search: _search,
+                          archived: _showArchived,
+                          showResolved: _showResolved,
                         ),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -132,11 +203,6 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
                         );
                       }
                       final logs = snapshot.data ?? [];
-                      print(
-                          'Filter: severity=$_severity, source=$_source, screen=$_screen, start=$_start, end=$_end, search=$_search');
-                      print(
-                          'Severities in Firestore: ${logs.map((l) => l.severity).toSet()}');
-                      print('ErrorLogTable log count: ${logs.length}');
                       return ErrorLogTable(logs: logs);
                     },
                   ),

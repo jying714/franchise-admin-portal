@@ -269,123 +269,109 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
     );
   }
 
-  Widget _buildBulkActionsBar() {
+  // --- Combined Action Bar ---
+  Widget _buildActionBar() {
     final colorScheme = Theme.of(context).colorScheme;
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 220),
-      child: _selectedIds.isNotEmpty
-          ? Card(
-              elevation: 2,
-              margin: const EdgeInsets.only(bottom: 8, left: 12, right: 12),
-              color: colorScheme.surfaceVariant,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                child: Row(
-                  children: [
-                    Checkbox(
-                      value: _selectedIds.length == _sortedLogs.length &&
-                          _sortedLogs.isNotEmpty,
-                      tristate: true,
-                      onChanged: (v) => _toggleSelectAll(v),
-                    ),
-                    Text('${_selectedIds.length} selected',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.primary)),
-                    const SizedBox(width: 20),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.check_circle),
-                      label: const Text("Mark Resolved"),
-                      onPressed: _selectedIds.isNotEmpty
-                          ? () => _bulkResolve(true)
-                          : null,
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.radio_button_unchecked),
-                      label: const Text("Mark Unresolved"),
-                      onPressed: _selectedIds.isNotEmpty
-                          ? () => _bulkResolve(false)
-                          : null,
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.archive),
-                      label: const Text("Archive"),
-                      onPressed: _selectedIds.isNotEmpty
-                          ? () => _bulkArchive(true)
-                          : null,
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.unarchive),
-                      label: const Text("Unarchive"),
-                      onPressed: _selectedIds.isNotEmpty
-                          ? () => _bulkArchive(false)
-                          : null,
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.delete_forever),
-                      label: const Text("Delete"),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: colorScheme.error,
-                      ),
-                      onPressed: _selectedIds.isNotEmpty ? _bulkDelete : null,
-                    ),
-                    const SizedBox(width: 12),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.file_download),
-                      label: const Text("Export (CSV)"),
-                      onPressed: _selectedIds.isNotEmpty
-                          ? () => _exportCsv(onlySelected: true)
-                          : null,
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.code),
-                      label: const Text("Export (JSON)"),
-                      onPressed: _selectedIds.isNotEmpty
-                          ? () => _exportJson(onlySelected: true)
-                          : null,
-                    ),
-                  ],
-                ),
-              ),
-            )
-          : const SizedBox.shrink(),
-    );
-  }
+    final isBulk = _selectedIds.isNotEmpty;
 
-  Widget _buildTopActionsBar() {
-    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
-      child: Row(
-        children: [
-          const Spacer(),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.file_download),
-            label: const Text("Export All CSV"),
-            onPressed: _sortedLogs.isNotEmpty ? _exportCsv : null,
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.code),
-            label: const Text("Export All JSON"),
-            onPressed: _sortedLogs.isNotEmpty ? _exportJson : null,
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            tooltip: _condensed ? "Expanded View" : "Condensed View",
-            icon: Icon(_condensed ? Icons.zoom_out : Icons.zoom_in),
-            onPressed: _toggleCondensed,
-          ),
-        ],
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 200),
+        child: isBulk
+            ? Card(
+                elevation: 2,
+                margin: EdgeInsets.zero,
+                color: colorScheme.surfaceVariant,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                  child: Row(
+                    children: [
+                      Checkbox(
+                        value: _selectedIds.length == _sortedLogs.length &&
+                            _sortedLogs.isNotEmpty,
+                        tristate: true,
+                        onChanged: (v) => _toggleSelectAll(v),
+                      ),
+                      Text('${_selectedIds.length} selected',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.primary)),
+                      const SizedBox(width: 20),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.check_circle),
+                        label: const Text("Mark Resolved"),
+                        onPressed: () => _bulkResolve(true),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.radio_button_unchecked),
+                        label: const Text("Mark Unresolved"),
+                        onPressed: () => _bulkResolve(false),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.archive),
+                        label: const Text("Archive"),
+                        onPressed: () => _bulkArchive(true),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.unarchive),
+                        label: const Text("Unarchive"),
+                        onPressed: () => _bulkArchive(false),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.delete_forever),
+                        label: const Text("Delete"),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: colorScheme.error,
+                        ),
+                        onPressed: _bulkDelete,
+                      ),
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.file_download),
+                        label: const Text("Export (CSV)"),
+                        onPressed: () => _exportCsv(onlySelected: true),
+                      ),
+                      const SizedBox(width: 8),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.code),
+                        label: const Text("Export (JSON)"),
+                        onPressed: () => _exportJson(onlySelected: true),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : Row(
+                children: [
+                  const Spacer(),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.file_download),
+                    label: const Text("Export All CSV"),
+                    onPressed: _sortedLogs.isNotEmpty ? _exportCsv : null,
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.code),
+                    label: const Text("Export All JSON"),
+                    onPressed: _sortedLogs.isNotEmpty ? _exportJson : null,
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    tooltip: _condensed ? "Expanded View" : "Condensed View",
+                    icon: Icon(_condensed ? Icons.zoom_out : Icons.zoom_in),
+                    onPressed: _toggleCondensed,
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -405,8 +391,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildBulkActionsBar(),
-            _buildTopActionsBar(),
+            _buildActionBar(),
             const Divider(height: 1),
             // --- Data Table ---
             Expanded(
@@ -454,14 +439,24 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
                           const DataColumn(label: Text('Actions')),
                         ],
                         rows: _sortedLogs.map((log) {
+                          // Defensive: Provide default values for any possibly null field
+                          final severity = log.severity ?? '';
+                          final source = log.source ?? '';
+                          final screen = log.screen ?? '';
+                          final message = log.message ?? '';
+                          final resolved = log.resolved ?? false;
+                          final archived = log.archived ?? false;
+                          final userId = log.userId ?? '';
+
                           final isCritical =
-                              (log.severity.toLowerCase() == 'fatal' ||
-                                  log.severity.toLowerCase() == 'critical');
+                              (severity.toLowerCase() == 'fatal' ||
+                                  severity.toLowerCase() == 'critical');
+
                           return DataRow(
                             selected: _selectedIds.contains(log.id),
                             color: isCritical
                                 ? WidgetStateProperty.all(
-                                    _severityColor(context, log.severity)
+                                    _severityColor(context, severity)
                                         .withOpacity(0.12))
                                 : null,
                             cells: [
@@ -488,19 +483,21 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
                                   child: Row(
                                     children: [
                                       Icon(
-                                        log.severity.toLowerCase() == 'fatal'
+                                        severity.toLowerCase() == 'fatal'
                                             ? Icons.error
                                             : Icons.warning,
-                                        color: _severityColor(
-                                            context, log.severity),
+                                        color:
+                                            _severityColor(context, severity),
                                         size: 18,
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        log.severity,
+                                        severity.isNotEmpty
+                                            ? severity
+                                            : 'unknown',
                                         style: TextStyle(
-                                          color: _severityColor(
-                                              context, log.severity),
+                                          color:
+                                              _severityColor(context, severity),
                                           fontWeight: FontWeight.bold,
                                           fontSize: _condensed ? 12 : 14,
                                         ),
@@ -509,11 +506,11 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
                                   ),
                                 ),
                               ),
-                              DataCell(Text(log.source,
+                              DataCell(Text(source,
                                   style: _condensed
                                       ? const TextStyle(fontSize: 12)
                                       : null)),
-                              DataCell(Text(log.screen,
+                              DataCell(Text(screen,
                                   style: _condensed
                                       ? const TextStyle(fontSize: 12)
                                       : null)),
@@ -522,9 +519,9 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
                                   constraints: BoxConstraints(
                                       maxWidth: _condensed ? 120 : 280),
                                   child: Text(
-                                    log.message.length > (_condensed ? 24 : 48)
-                                        ? '${log.message.substring(0, _condensed ? 24 : 48)}…'
-                                        : log.message,
+                                    message.length > (_condensed ? 24 : 48)
+                                        ? '${message.substring(0, _condensed ? 24 : 48)}…'
+                                        : message,
                                     overflow: TextOverflow.ellipsis,
                                     softWrap: false,
                                     style: _condensed
@@ -536,44 +533,40 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
                               DataCell(
                                 IconButton(
                                   icon: Icon(
-                                    log.resolved == true
+                                    resolved
                                         ? Icons.check_circle
                                         : Icons.radio_button_unchecked,
-                                    color: log.resolved == true
+                                    color: resolved
                                         ? colorScheme.secondary
                                         : colorScheme.outline,
                                     size: 20,
                                   ),
-                                  tooltip: log.resolved == true
+                                  tooltip: resolved
                                       ? "Mark Unresolved"
                                       : "Mark Resolved",
                                   onPressed: () => context
                                       .read<FirestoreService>()
                                       .setErrorLogStatus(
                                         log.id,
-                                        resolved: !(log.resolved),
+                                        resolved: !resolved,
                                       ),
                                 ),
                               ),
                               DataCell(
                                 IconButton(
                                   icon: Icon(
-                                    log.archived == true
-                                        ? Icons.archive
-                                        : Icons.unarchive,
-                                    color: log.archived == true
+                                    archived ? Icons.archive : Icons.unarchive,
+                                    color: archived
                                         ? colorScheme.secondary
                                         : colorScheme.outline,
                                     size: 20,
                                   ),
-                                  tooltip: log.archived == true
-                                      ? "Unarchive"
-                                      : "Archive",
+                                  tooltip: archived ? "Unarchive" : "Archive",
                                   onPressed: () => context
                                       .read<FirestoreService>()
                                       .setErrorLogStatus(
                                         log.id,
-                                        archived: !(log.archived),
+                                        archived: !archived,
                                       ),
                                 ),
                               ),

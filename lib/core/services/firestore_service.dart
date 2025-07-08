@@ -33,21 +33,35 @@ extension ErrorLogsService on FirestoreService {
     DateTime? start,
     DateTime? end,
     String? search,
+    bool archived = false, // Show archived logs (default: false)
+    bool?
+        showResolved, // <-- Accepts null (all), false (unresolved), true (resolved)
   }) {
     print(
-        'FirestoreService.streamErrorLogs called with: severity=$severity, source=$source, screen=$screen, start=$start, end=$end, search=$search');
+        'FirestoreService.streamErrorLogs called with: severity=$severity, source=$source, screen=$screen, start=$start, end=$end, search=$search, archived=$archived, showResolved=$showResolved');
     firestore.Query query = _db.collection('error_logs');
 
-    if (severity != null && severity.isNotEmpty) {
+    if (severity != null &&
+        severity.isNotEmpty &&
+        severity != 'null' &&
+        severity != 'all') {
       query = query.where('severity', isEqualTo: severity);
     }
-    print('Firestore query: severity="$severity"');
     if (source != null && source.isNotEmpty) {
       query = query.where('source', isEqualTo: source);
     }
     if (screen != null && screen.isNotEmpty) {
       query = query.where('screen', isEqualTo: screen);
     }
+
+    // Filter by archived status
+    query = query.where('archived', isEqualTo: archived);
+
+    // Only filter by resolved if showResolved is NOT null
+    if (showResolved != null) {
+      query = query.where('resolved', isEqualTo: showResolved);
+    }
+
     if (start != null) {
       query = query.where('timestamp',
           isGreaterThanOrEqualTo: firestore.Timestamp.fromDate(start));
@@ -60,17 +74,9 @@ extension ErrorLogsService on FirestoreService {
 
     return query.snapshots().map((snap) {
       final logs = snap.docs
-          .map((doc) {
-            try {
-              return ErrorLog.fromFirestore(doc);
-            } catch (e, st) {
-              print('Error parsing log ${doc.id}: $e\n$st');
-              return null;
-            }
-          })
+          .map((doc) => ErrorLog.tryParse(doc))
           .whereType<ErrorLog>()
           .toList();
-      // PRINT ALL SEVERITIES YOU GET
       final uniqueSeverities = logs.map((e) => e.severity).toSet();
       print('Severities in Firestore: $uniqueSeverities');
       return logs;
