@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/models/error_log.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ErrorLogStatsBar extends StatelessWidget {
   final String? severity;
@@ -14,6 +15,7 @@ class ErrorLogStatsBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context)!;
 
     Color _chipBg(Color? token, Color fallback) =>
         token ?? fallback.withOpacity(0.12);
@@ -45,43 +47,55 @@ class ErrorLogStatsBar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           child: Row(
             children: [
-              Chip(
-                label: Text('Total: $total'),
-                backgroundColor: _chipBg(
-                    DesignTokens.neutralChipColor, colorScheme.surfaceVariant),
-                labelStyle: TextStyle(
-                  color: _chipText(DesignTokens.neutralChipTextColor,
-                      colorScheme.onSurfaceVariant),
+              Tooltip(
+                message: loc.totalErrorsTooltip(total),
+                child: Chip(
+                  label: Text('${loc.total}: $total'),
+                  backgroundColor: _chipBg(DesignTokens.neutralChipColor,
+                      colorScheme.surfaceVariant),
+                  labelStyle: TextStyle(
+                    color: _chipText(DesignTokens.neutralChipTextColor,
+                        colorScheme.onSurfaceVariant),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
-              Chip(
-                label: Text('Critical: $critical'),
-                backgroundColor:
-                    _chipBg(DesignTokens.errorChipColor, colorScheme.error),
-                labelStyle: TextStyle(
-                  color: _chipText(
-                      DesignTokens.errorChipTextColor, colorScheme.onError),
+              Tooltip(
+                message: loc.criticalErrorsTooltip(critical),
+                child: Chip(
+                  label: Text('${loc.critical}: $critical'),
+                  backgroundColor:
+                      _chipBg(DesignTokens.errorChipColor, colorScheme.error),
+                  labelStyle: TextStyle(
+                    color: _chipText(
+                        DesignTokens.errorChipTextColor, colorScheme.onError),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
-              Chip(
-                label: Text('Warnings: $warning'),
-                backgroundColor: _chipBg(
-                    DesignTokens.warningChipColor, colorScheme.tertiary),
-                labelStyle: TextStyle(
-                  color: _chipText(DesignTokens.warningChipTextColor,
-                      colorScheme.onTertiary),
+              Tooltip(
+                message: loc.warningErrorsTooltip(warning),
+                child: Chip(
+                  label: Text('${loc.warnings}: $warning'),
+                  backgroundColor: _chipBg(
+                      DesignTokens.warningChipColor, colorScheme.tertiary),
+                  labelStyle: TextStyle(
+                    color: _chipText(DesignTokens.warningChipTextColor,
+                        colorScheme.onTertiary),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
-              Chip(
-                label: Text('Info: $info'),
-                backgroundColor:
-                    _chipBg(DesignTokens.infoChipColor, colorScheme.secondary),
-                labelStyle: TextStyle(
-                  color: _chipText(
-                      DesignTokens.infoChipTextColor, colorScheme.onSecondary),
+              Tooltip(
+                message: loc.infoErrorsTooltip(info),
+                child: Chip(
+                  label: Text('${loc.info}: $info'),
+                  backgroundColor: _chipBg(
+                      DesignTokens.infoChipColor, colorScheme.secondary),
+                  labelStyle: TextStyle(
+                    color: _chipText(DesignTokens.infoChipTextColor,
+                        colorScheme.onSecondary),
+                  ),
                 ),
               ),
             ],

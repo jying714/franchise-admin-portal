@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ErrorLogFilterBar extends StatelessWidget {
   final String? severity;
@@ -33,6 +34,8 @@ class ErrorLogFilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context)!;
+
     final searchController = TextEditingController(text: search ?? '');
     final sourceController = TextEditingController(text: source ?? '');
     final screenController = TextEditingController(text: screen ?? '');
@@ -42,45 +45,29 @@ class ErrorLogFilterBar extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Main filter controls using Wrap for responsiveness:
           Expanded(
             child: Wrap(
               spacing: 16,
               runSpacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                DropdownButton<String>(
-                  value: severity ?? 'all',
-                  hint: const Text('Severity'),
-                  items: const [
-                    DropdownMenuItem(value: 'all', child: Text('All')),
-                    DropdownMenuItem(value: 'fatal', child: Text('Fatal')),
-                    DropdownMenuItem(value: 'warning', child: Text('Warning')),
-                    DropdownMenuItem(value: 'info', child: Text('Info')),
-                  ],
-                  onChanged: (val) => onFilterChanged(
-                    severity: (val == null || val == 'all' || val == 'null')
-                        ? null
-                        : val,
-                    source: source,
-                    screen: screen,
-                    start: start,
-                    end: end,
-                    search: search,
-                  ),
-                ),
-                SizedBox(
-                  width: 130,
-                  child: TextField(
-                    controller: sourceController,
-                    decoration: const InputDecoration(
-                      labelText: 'Source',
-                      prefixIcon: Icon(Icons.scatter_plot, size: 18),
-                      isDense: true,
-                    ),
+                Tooltip(
+                  message: loc.severityTooltip,
+                  child: DropdownButton<String>(
+                    value: severity ?? 'all',
+                    hint: Text(loc.severity),
+                    items: [
+                      DropdownMenuItem(value: 'all', child: Text(loc.all)),
+                      DropdownMenuItem(value: 'fatal', child: Text(loc.fatal)),
+                      DropdownMenuItem(
+                          value: 'warning', child: Text(loc.warning)),
+                      DropdownMenuItem(value: 'info', child: Text(loc.info)),
+                    ],
                     onChanged: (val) => onFilterChanged(
-                      severity: severity,
-                      source: val.trim().isEmpty ? null : val.trim(),
+                      severity: (val == null || val == 'all' || val == 'null')
+                          ? null
+                          : val,
+                      source: source,
                       screen: screen,
                       start: start,
                       end: end,
@@ -90,96 +77,130 @@ class ErrorLogFilterBar extends StatelessWidget {
                 ),
                 SizedBox(
                   width: 130,
-                  child: TextField(
-                    controller: screenController,
-                    decoration: const InputDecoration(
-                      labelText: 'Screen',
-                      prefixIcon: Icon(Icons.smartphone, size: 18),
-                      isDense: true,
+                  child: Tooltip(
+                    message: loc.sourceTooltip,
+                    child: TextField(
+                      controller: sourceController,
+                      decoration: InputDecoration(
+                        labelText: loc.source,
+                        prefixIcon: const Icon(Icons.scatter_plot, size: 18),
+                        isDense: true,
+                      ),
+                      onChanged: (val) => onFilterChanged(
+                        severity: severity,
+                        source: val.trim().isEmpty ? null : val.trim(),
+                        screen: screen,
+                        start: start,
+                        end: end,
+                        search: search,
+                      ),
                     ),
-                    onChanged: (val) => onFilterChanged(
-                      severity: severity,
-                      source: source,
-                      screen: val.trim().isEmpty ? null : val.trim(),
-                      start: start,
-                      end: end,
-                      search: search,
+                  ),
+                ),
+                SizedBox(
+                  width: 130,
+                  child: Tooltip(
+                    message: loc.screenTooltip,
+                    child: TextField(
+                      controller: screenController,
+                      decoration: InputDecoration(
+                        labelText: loc.screen,
+                        prefixIcon: const Icon(Icons.smartphone, size: 18),
+                        isDense: true,
+                      ),
+                      onChanged: (val) => onFilterChanged(
+                        severity: severity,
+                        source: source,
+                        screen: val.trim().isEmpty ? null : val.trim(),
+                        start: start,
+                        end: end,
+                        search: search,
+                      ),
                     ),
                   ),
                 ),
                 SizedBox(
                   width: 160,
-                  child: TextField(
-                    controller: searchController,
-                    decoration: const InputDecoration(
-                      labelText: 'Search',
-                      prefixIcon: Icon(Icons.search),
-                      isDense: true,
-                    ),
-                    onChanged: (val) => onFilterChanged(
-                      severity: severity,
-                      source: source,
-                      screen: screen,
-                      start: start,
-                      end: end,
-                      search: val.trim().isEmpty ? null : val.trim(),
-                    ),
-                  ),
-                ),
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.date_range),
-                  label: Text(
-                    start != null && end != null
-                        ? '${DateFormat('yyyy-MM-dd').format(start!)} - ${DateFormat('yyyy-MM-dd').format(end!)}'
-                        : 'Date Range',
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: colorScheme.primary,
-                    side: BorderSide(
-                        color: colorScheme.primary.withOpacity(0.45)),
-                  ),
-                  onPressed: () async {
-                    final now = DateTime.now();
-                    final picked = await showDateRangePicker(
-                      context: context,
-                      firstDate: DateTime(now.year - 2),
-                      lastDate: now.add(const Duration(days: 1)),
-                      initialDateRange: (start != null && end != null)
-                          ? DateTimeRange(start: start!, end: end!)
-                          : null,
-                      builder: (context, child) => Theme(
-                        data: Theme.of(context).copyWith(
-                          colorScheme: colorScheme,
-                        ),
-                        child: child!,
+                  child: Tooltip(
+                    message: loc.searchTooltip,
+                    child: TextField(
+                      controller: searchController,
+                      decoration: InputDecoration(
+                        labelText: loc.search,
+                        prefixIcon: const Icon(Icons.search),
+                        isDense: true,
                       ),
-                    );
-                    if (picked != null) {
-                      onFilterChanged(
+                      onChanged: (val) => onFilterChanged(
                         severity: severity,
                         source: source,
                         screen: screen,
-                        start: picked.start,
-                        end: picked.end,
-                        search: search,
+                        start: start,
+                        end: end,
+                        search: val.trim().isEmpty ? null : val.trim(),
+                      ),
+                    ),
+                  ),
+                ),
+                Tooltip(
+                  message: loc.dateRangeTooltip,
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.date_range),
+                    label: Text(
+                      start != null && end != null
+                          ? '${DateFormat('yyyy-MM-dd').format(start!)} - ${DateFormat('yyyy-MM-dd').format(end!)}'
+                          : loc.dateRange,
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: colorScheme.primary,
+                      side: BorderSide(
+                          color: colorScheme.primary.withOpacity(0.45)),
+                    ),
+                    onPressed: () async {
+                      final now = DateTime.now();
+                      final picked = await showDateRangePicker(
+                        context: context,
+                        firstDate: DateTime(now.year - 2),
+                        lastDate: now.add(const Duration(days: 1)),
+                        initialDateRange: (start != null && end != null)
+                            ? DateTimeRange(start: start!, end: end!)
+                            : null,
+                        builder: (context, child) => Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: colorScheme,
+                          ),
+                          child: child!,
+                        ),
                       );
-                    }
-                  },
+                      if (picked != null) {
+                        onFilterChanged(
+                          severity: severity,
+                          source: source,
+                          screen: screen,
+                          start: picked.start,
+                          end: picked.end,
+                          search: search,
+                        );
+                      }
+                    },
+                  ),
                 ),
                 if (start != null || end != null)
-                  IconButton(
-                    tooltip: "Clear date filter",
-                    icon: Icon(Icons.clear, color: colorScheme.outline),
-                    onPressed: () {
-                      onFilterChanged(
-                        severity: severity,
-                        source: source,
-                        screen: screen,
-                        start: null,
-                        end: null,
-                        search: search,
-                      );
-                    },
+                  Tooltip(
+                    message: loc.clearDateFilter,
+                    child: IconButton(
+                      tooltip: loc.clearDateFilter,
+                      icon: Icon(Icons.clear, color: colorScheme.outline),
+                      onPressed: () {
+                        onFilterChanged(
+                          severity: severity,
+                          source: source,
+                          screen: screen,
+                          start: null,
+                          end: null,
+                          search: search,
+                        );
+                      },
+                    ),
                   ),
               ],
             ),

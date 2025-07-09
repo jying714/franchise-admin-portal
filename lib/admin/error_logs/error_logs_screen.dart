@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/models/error_log.dart';
-import 'widgets/error_log_table.dart';
+import 'widgets/paginated_error_log_table.dart';
 import 'widgets/error_log_filter_bar.dart';
 import 'widgets/error_log_stats_bar.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/widgets/clear_filters_button.dart';
+import 'package:franchise_admin_portal/widgets/admin/admin_empty_state_widget.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ErrorLogsScreen extends StatefulWidget {
   const ErrorLogsScreen({super.key});
@@ -22,8 +25,7 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
   DateTime? _end;
   String? _search;
   bool _showArchived = false;
-  bool? _showResolved =
-      false; // false = only unresolved, true = only resolved, null = all
+  bool? _showResolved = false;
   static const _allowedRoles = ['owner', 'developer', 'admin', 'manager'];
 
   void _updateFilters({
@@ -44,8 +46,21 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
     });
   }
 
+  void _clearFilters() {
+    setState(() {
+      _severity = 'all';
+      _source = null;
+      _screen = null;
+      _start = null;
+      _end = null;
+      _search = null;
+      // Optionally: _showArchived = false; _showResolved = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final userNotifier = Provider.of<UserProfileNotifier>(context);
     final appUser = userNotifier.user;
 
@@ -56,161 +71,176 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
     }
 
     if (!_allowedRoles.contains(appUser.role)) {
-      return const Scaffold(
-        body: Center(
-          child: Text(
-            'You are not authorized to view this page.',
-            style: TextStyle(fontSize: 18, color: Colors.red),
-          ),
+      return Scaffold(
+        body: AdminEmptyStateWidget(
+          title: loc.unauthorizedAccessTitle,
+          message: loc.unauthorizedAccessMessage,
+          icon: Icons.lock_outline,
+          actionLabel: loc.returnHome,
+          onAction: () =>
+              Navigator.of(context).popUntil((route) => route.isFirst),
         ),
       );
     }
 
     final colorScheme = Theme.of(context).colorScheme;
-
-    // Map 'all' to null for Firestore query
     final String? querySeverity =
         (_severity == 'all' || _severity == 'null') ? null : _severity;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        toolbarHeight:
-            0, // <-- Hide default AppBar UI, but keep elevation if needed
+        title: Text(loc.errorLogManagementTitle),
         elevation: 0,
         backgroundColor: colorScheme.surface,
+        centerTitle: false,
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // -------- SCREEN LABEL START --------
-              Padding(
-                padding: const EdgeInsets.fromLTRB(28, 32, 28, 0),
-                child: Text(
-                  'Error Log Management',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurface,
-                        letterSpacing: 0.2,
-                      ),
-                ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Stats bar
+          Material(
+            elevation: 1,
+            color: colorScheme.surface,
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
+              child: ErrorLogStatsBar(
+                severity: querySeverity,
+                start: _start,
+                end: _end,
               ),
-              // -------- SCREEN LABEL END --------
-              Material(
-                elevation: 1,
-                color: colorScheme.surface,
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
-                  child: ErrorLogStatsBar(
-                    severity: querySeverity,
-                    start: _start,
-                    end: _end,
-                  ),
-                ),
-              ),
-              Material(
-                elevation: 1,
-                color: colorScheme.surface,
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
-                  child: ErrorLogFilterBar(
-                    severity: _severity,
-                    source: _source,
-                    screen: _screen,
-                    start: _start,
-                    end: _end,
-                    search: _search,
-                    onFilterChanged: _updateFilters,
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Hide Archived Toggle
-                        Row(
-                          children: [
-                            Switch(
-                              value: _showArchived,
-                              onChanged: (val) =>
-                                  setState(() => _showArchived = val),
-                            ),
-                            Text(
-                              _showArchived
-                                  ? "Showing Archived"
-                                  : "Hide Archived",
-                              style: Theme.of(context).textTheme.labelLarge,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(width: 20),
-                        // Resolved Filter Dropdown
-                        Row(
-                          children: [
-                            const Text("Resolved:  "),
-                            DropdownButton<bool?>(
-                              value: _showResolved,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: null,
-                                  child: Text("All"),
-                                ),
-                                DropdownMenuItem(
-                                  value: false,
-                                  child: Text("Unresolved Only"),
-                                ),
-                                DropdownMenuItem(
-                                  value: true,
-                                  child: Text("Resolved Only"),
-                                ),
-                              ],
-                              onChanged: (val) =>
-                                  setState(() => _showResolved = val),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Expanded(
-                child: Container(
-                  color: colorScheme.background,
-                  child: StreamBuilder<List<ErrorLog>>(
-                    stream: context.read<FirestoreService>().streamErrorLogs(
-                          severity: querySeverity,
-                          source: _source,
-                          screen: _screen,
-                          start: _start,
-                          end: _end,
-                          search: _search,
-                          archived: _showArchived,
-                          showResolved: _showResolved,
-                        ),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError) {
-                        return Center(
-                          child: Text(
-                            'Error loading error logs',
-                            style: TextStyle(color: colorScheme.error),
+            ),
+          ),
+          // Filter bar
+          Material(
+            elevation: 1,
+            color: colorScheme.surface,
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
+              child: ErrorLogFilterBar(
+                severity: _severity,
+                source: _source,
+                screen: _screen,
+                start: _start,
+                end: _end,
+                search: _search,
+                onFilterChanged: _updateFilters,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Tooltip(
+                      message: loc.toggleArchivedTooltip,
+                      child: Row(
+                        children: [
+                          Switch(
+                            value: _showArchived,
+                            onChanged: (val) =>
+                                setState(() => _showArchived = val),
                           ),
-                        );
-                      }
-                      final logs = snapshot.data ?? [];
-                      return ErrorLogTable(logs: logs);
-                    },
-                  ),
+                          Text(
+                            _showArchived
+                                ? loc.showingArchived
+                                : loc.hideArchived,
+                            style: Theme.of(context).textTheme.labelLarge,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Tooltip(
+                      message: loc.resolvedFilterTooltip,
+                      child: Row(
+                        children: [
+                          Text("${loc.resolved}:  "),
+                          DropdownButton<bool?>(
+                            value: _showResolved,
+                            items: [
+                              DropdownMenuItem(
+                                value: null,
+                                child: Text(loc.all),
+                              ),
+                              DropdownMenuItem(
+                                value: false,
+                                child: Text(loc.unresolvedOnly),
+                              ),
+                              DropdownMenuItem(
+                                value: true,
+                                child: Text(loc.resolvedOnly),
+                              ),
+                            ],
+                            onChanged: (val) =>
+                                setState(() => _showResolved = val),
+                            underline: const SizedBox(),
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    ClearFiltersButton(
+                      onClear: _clearFilters,
+                      enabled: _severity != 'all' ||
+                          _source != null ||
+                          _screen != null ||
+                          _start != null ||
+                          _end != null ||
+                          (_search != null && _search!.isNotEmpty),
+                    ),
+                  ],
                 ),
-              )
-            ],
-          );
-        },
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          // Error log paginated table
+          Expanded(
+            child: Container(
+              color: colorScheme.background,
+              child: StreamBuilder<List<ErrorLog>>(
+                stream: context.read<FirestoreService>().streamErrorLogs(
+                      severity: querySeverity,
+                      source: _source,
+                      screen: _screen,
+                      start: _start,
+                      end: _end,
+                      search: _search,
+                      archived: _showArchived,
+                      showResolved: _showResolved,
+                    ),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return AdminEmptyStateWidget(
+                      title: loc.errorLoadingTitle,
+                      message: loc.errorLoadingMessage,
+                      icon: Icons.error_outline,
+                      actionLabel: loc.retry,
+                      onAction: () => setState(() {}),
+                    );
+                  }
+                  final logs = snapshot.data ?? [];
+                  if (logs.isEmpty) {
+                    return AdminEmptyStateWidget(
+                      title: loc.noErrorLogsTitle,
+                      message: loc.noErrorLogsMessage,
+                      icon: Icons.inbox_rounded,
+                    );
+                  }
+                  // Always use paginated table, regardless of count
+                  return PaginatedErrorLogTable(
+                    logs: logs,
+                    rowsPerPage:
+                        5, // Use a small value for best fit, adjust as needed
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
