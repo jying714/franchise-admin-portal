@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/models/category.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+// Optionally for user id:
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 
 class BulkUploadDialog extends StatefulWidget {
   const BulkUploadDialog({super.key});
@@ -15,10 +18,31 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
   bool _isUploading = false;
   String? _uploadResult;
 
+  Future<void> _showErrorDialog(BuildContext context, String message) async {
+    final loc = AppLocalizations.of(context)!;
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(loc.error),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(loc.ok),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final firestoreService = FirestoreService();
+    final firestoreService =
+        Provider.of<FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
+    // Optionally get userId for logging:
+    final userId =
+        Provider.of<UserProfileNotifier?>(context, listen: false)?.user?.id;
 
     return AlertDialog(
       title: Text(loc.bulkUploadCategories),
@@ -36,6 +60,7 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
               hintText:
                   'name,image,description\nPizza,https://...,Delicious...',
             ),
+            enabled: !_isUploading,
           ),
           if (_uploadResult != null)
             Padding(
@@ -43,7 +68,7 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
               child: Text(
                 _uploadResult!,
                 style: TextStyle(
-                  color: _uploadResult!.contains('success')
+                  color: _uploadResult!.toLowerCase().contains('success')
                       ? Colors.green
                       : Colors.red,
                 ),
@@ -65,8 +90,9 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
                     final lines = _controller.text.split('\n');
                     final List<Category> cats = [];
                     for (var line in lines.skip(1)) {
+                      if (line.trim().isEmpty) continue;
                       final cols = line.split(',');
-                      if (cols.length < 1 || cols[0].trim().isEmpty) continue;
+                      if (cols.isEmpty || cols[0].trim().isEmpty) continue;
                       cats.add(Category(
                         id: UniqueKey().toString(),
                         name: cols[0].trim(),
@@ -81,8 +107,24 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
                       _uploadResult =
                           '${cats.length} ${loc.bulkUploadSuccess.toLowerCase()}';
                     });
-                  } catch (e) {
+                  } catch (e, stack) {
+                    // Remote error logging
+                    try {
+                      await firestoreService.logError(
+                        message: e.toString(),
+                        source: 'bulk_upload_dialog',
+                        screen: 'BulkUploadDialog',
+                        userId: userId,
+                        stackTrace: stack.toString(),
+                        errorType: e.runtimeType.toString(),
+                        severity: 'error',
+                        contextData: {
+                          'csvText': _controller.text,
+                        },
+                      );
+                    } catch (_) {}
                     setState(() => _uploadResult = loc.bulkUploadError);
+                    await _showErrorDialog(context, loc.bulkUploadError);
                   } finally {
                     setState(() => _isUploading = false);
                   }

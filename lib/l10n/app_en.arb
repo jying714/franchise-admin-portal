@@ -897,5 +897,16 @@
   "warningErrorsTooltip": "Number of warning-level errors: {count}",
   "infoErrorsTooltip": "Number of info-level errors: {count}",
   "critical": "Critical",
-  "warnings": "Warnings"
+  "warnings": "Warnings",
+  "bulkSelection": "Bulk selection",
+  "selectedCount": "{count, plural, =0{No items selected} one{1 item selected} other{{count} items selected}}",
+  "export": "Export",
+  "failedToSaveCategory": "Failed to save category. Please try again.",
+  "sortByDescription": "Sort by description",
+  "sortAscending": "Sort ascending",
+  "sortDescending": "Sort descending",
+  "reload": "Reload",
+  "failedToSaveCategory": "Failed to save category. Please try again.",
+  "failedToDeleteCategory": "Failed to delete category. Please try again.",
+  "failedToRestoreCategory": "Failed to restore category. Please try again."
   }
