@@ -15,6 +15,7 @@ import 'package:franchise_admin_portal/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_admin_portal/widgets/header/profile_icon_button.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({Key? key}) : super(key: key);
@@ -36,6 +37,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     print('AdminDashboardScreen build called');
 
     final firestoreService =
@@ -49,6 +52,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final sections = _sections;
     if (sections.isEmpty) {
       firestoreService.logError(
+        franchiseId,
         message: "No dashboard sections registered.",
         source: "AdminDashboardScreen",
         screen: "AdminDashboardScreen",
@@ -156,6 +160,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 return section.builder(context);
                               } catch (e, stack) {
                                 firestoreService.logError(
+                                  franchiseId,
                                   message: 'Dashboard section error: $e',
                                   source: 'AdminDashboardScreen',
                                   screen: section.title,

@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 // Web-only import:
 import 'dart:html' as html;
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class ExportMenuDialog extends StatefulWidget {
   const ExportMenuDialog({Key? key}) : super(key: key);
@@ -32,7 +33,9 @@ class _ExportMenuDialogState extends State<ExportMenuDialog> {
   Future<void> _exportMenu() async {
     setState(() => _loading = true);
     final firestore = Provider.of<FirestoreService>(context, listen: false);
-    final List<MenuItem> items = await firestore.getMenuItemsOnce();
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+    final List<MenuItem> items = await firestore.getMenuItemsOnce(franchiseId);
 
     final header = [
       'Category',

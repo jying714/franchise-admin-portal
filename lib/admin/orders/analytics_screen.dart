@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:io';
 import 'package:franchise_admin_portal/core/models/export_utils.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -24,6 +25,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final analyticsService =
         Provider.of<AnalyticsService>(context, listen: false);
     final firestoreService =
@@ -67,7 +70,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                               onPressed: () async {
                                 if (_selectedPeriod == null) return;
                                 final summaries = await analyticsService
-                                    .getAnalyticsSummaries();
+                                    .getAnalyticsSummaries(franchiseId);
                                 final current = summaries.firstWhere(
                                   (s) => s.period == _selectedPeriod,
                                   orElse: () => summaries.first,
@@ -91,7 +94,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   // Analytics Content
                   Expanded(
                     child: StreamBuilder<List<AnalyticsSummary>>(
-                      stream: analyticsService.getSummaryMetrics(),
+                      stream: analyticsService.getSummaryMetrics(franchiseId),
                       builder: (context, snapshot) {
                         // --- 1. Loading state ---
                         if (snapshot.connectionState ==
@@ -102,6 +105,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         // --- 2. Error fetching data ---
                         if (snapshot.hasError) {
                           firestoreService.logError(
+                            franchiseId,
                             message: 'Error loading analytics data',
                             source: 'analytics_dashboard',
                             screen: 'AnalyticsScreen',
@@ -118,6 +122,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         // --- 3. No analytics data at all ---
                         if (summaries.isEmpty) {
                           firestoreService.logError(
+                            franchiseId,
                             message: 'No analytics data found for any period',
                             source: 'analytics_dashboard',
                             screen: 'AnalyticsScreen',
@@ -142,6 +147,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                               orElse: () => sorted.first);
                         } catch (e, stack) {
                           firestoreService.logError(
+                            franchiseId,
                             message:
                                 'Failed to find analytics summary for selected period',
                             source: 'analytics_dashboard',
@@ -159,6 +165,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         final hasFeedback = summary.feedbackStats != null;
                         if (!hasFeedback) {
                           firestoreService.logError(
+                            franchiseId,
                             message:
                                 'Missing feedbackStats in analytics summary',
                             source: 'feedback_stats_parse',
@@ -256,6 +263,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                                       if (value == null) {
                                         missingMetrics.add(key);
                                         firestoreService.logError(
+                                          franchiseId,
                                           message:
                                               'Missing $key in analytics summary',
                                           source: 'analytics_dashboard',

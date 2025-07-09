@@ -7,11 +7,16 @@ class PromoService {
   final Logger _logger = Logger('PromoService');
 
   // Apply a promo to the cart
-  Future<bool> applyPromo(
-      String promoId, String userId, List<dynamic> cartItems) async {
+  Future<bool> applyPromo(String franchiseId, String promoId, String userId,
+      List<dynamic> cartItems) async {
     try {
-      DocumentSnapshot promoDoc =
-          await _db.collection('promotions').doc(promoId).get();
+      DocumentSnapshot promoDoc = await _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('promotions')
+          .doc(promoId)
+          .get();
+
       if (!promoDoc.exists) {
         _logger.warning('Promo $promoId does not exist');
         return false;
@@ -19,6 +24,7 @@ class PromoService {
 
       Promo promo =
           Promo.fromFirestore(promoDoc.data() as Map<String, dynamic>, promoId);
+
       if (!promo.active || promo.endDate.isBefore(DateTime.now())) {
         _logger.warning('Promo $promoId is inactive or expired');
         return false;
@@ -47,6 +53,8 @@ class PromoService {
       if (promo.maxUses > 0) {
         if (promo.maxUsesType == 'total') {
           QuerySnapshot uses = await _db
+              .collection('franchises')
+              .doc(franchiseId)
               .collection('orders')
               .where('promoId', isEqualTo: promoId)
               .get();
@@ -56,6 +64,8 @@ class PromoService {
           }
         } else if (promo.maxUsesType == 'per_user') {
           QuerySnapshot uses = await _db
+              .collection('franchises')
+              .doc(franchiseId)
               .collection('orders')
               .where('userId', isEqualTo: userId)
               .where('promoId', isEqualTo: promoId)
@@ -69,7 +79,6 @@ class PromoService {
       }
 
       // Apply promo to cart (update cart with discount)
-      // Note: Actual cart update requires cart_screen.dart implementation
       _logger.info('Applying promo $promoId to cart for user $userId');
       // TODO: Update cart with promo discount
       return true;
@@ -80,8 +89,10 @@ class PromoService {
   }
 
   // Fetch available promos
-  Stream<List<Promo>> getAvailablePromos() {
+  Stream<List<Promo>> getAvailablePromos(String franchiseId) {
     return _db
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('promotions')
         .where('active', isEqualTo: true)
         .where('endDate', isGreaterThan: Timestamp.now())

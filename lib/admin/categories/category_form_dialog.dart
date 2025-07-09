@@ -4,7 +4,7 @@ import 'package:franchise_admin_portal/core/models/category.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 // Optionally: If your user profile notifier/provider is named differently, update this import.
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 
@@ -63,6 +63,8 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -156,6 +158,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                         await Provider.of<FirestoreService>(context,
                                 listen: false)
                             .logError(
+                          franchiseId,
                           message: e.toString(),
                           source: 'category_form_dialog',
                           screen: 'CategoryFormDialog',

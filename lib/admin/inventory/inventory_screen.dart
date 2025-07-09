@@ -7,6 +7,7 @@ import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -26,7 +27,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     return user?.role == 'owner' || user?.role == 'manager';
   }
 
-  Future<void> _addOrEditInventory(BuildContext context,
+  Future<void> _addOrEditInventory(String franchiseId, BuildContext context,
       {Inventory? item}) async {
     final firestore = Provider.of<FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
@@ -106,13 +107,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
         lastUpdated: DateTime.now(),
       );
       if (item == null) {
-        await firestore.addInventory(inventory.copyWith(id: ''));
+        await firestore.addInventory(franchiseId, inventory.copyWith(id: ''));
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(loc.inventoryAdded)),
         );
       } else {
-        await firestore.updateInventory(inventory.copyWith(id: item.id));
+        await firestore.updateInventory(
+            franchiseId, inventory.copyWith(id: item.id));
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(loc.inventoryUpdated)),
@@ -121,7 +123,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
     }
   }
 
-  Future<void> _deleteInventory(BuildContext context, Inventory item) async {
+  Future<void> _deleteInventory(
+      String franchiseId, BuildContext context, Inventory item) async {
     final firestore = Provider.of<FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
@@ -145,7 +148,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       ),
     );
     if (confirm == true) {
-      await firestore.deleteInventory(item.id);
+      await firestore.deleteInventory(franchiseId, item.id);
       if (!mounted) return;
       setState(() => _lastDeleted = item);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -155,7 +158,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
             label: loc.undo,
             onPressed: () async {
               if (_lastDeleted != null) {
-                await firestore.addInventory(_lastDeleted!.copyWith(id: ''));
+                await firestore.addInventory(
+                    franchiseId, _lastDeleted!.copyWith(id: ''));
                 if (!mounted) return;
                 setState(() => _lastDeleted = null);
               }
@@ -168,6 +172,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final firestore = Provider.of<FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
     final canEdit = _canEdit(context);
@@ -205,7 +211,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           icon: const Icon(Icons.add, color: Colors.black87),
                           tooltip: loc.addInventory,
                           onPressed: canEdit
-                              ? () => _addOrEditInventory(context)
+                              ? () => _addOrEditInventory(franchiseId, context)
                               : null,
                         ),
                       ],
@@ -230,7 +236,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   // Inventory list
                   Expanded(
                     child: StreamBuilder<List<Inventory>>(
-                      stream: firestore.getInventory(),
+                      stream: firestore.getInventory(franchiseId),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
@@ -295,22 +301,24 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                             icon: const Icon(Icons.edit),
                                             tooltip: loc.edit,
                                             onPressed: () =>
-                                                _addOrEditInventory(context,
+                                                _addOrEditInventory(
+                                                    franchiseId, context,
                                                     item: item),
                                           ),
                                           IconButton(
                                             icon: const Icon(Icons.delete,
                                                 color: Colors.red),
                                             tooltip: loc.delete,
-                                            onPressed: () =>
-                                                _deleteInventory(context, item),
+                                            onPressed: () => _deleteInventory(
+                                                franchiseId, context, item),
                                           ),
                                         ],
                                       )
                                     : null,
                                 onTap: canEdit
-                                    ? () =>
-                                        _addOrEditInventory(context, item: item)
+                                    ? () => _addOrEditInventory(
+                                        franchiseId, context,
+                                        item: item)
                                     : null,
                               ),
                             );
@@ -335,7 +343,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               icon: const Icon(Icons.add),
               label: Text(loc.addInventory),
               backgroundColor: BrandingConfig.brandRed,
-              onPressed: () => _addOrEditInventory(context),
+              onPressed: () => _addOrEditInventory(franchiseId, context),
             )
           : null,
     );

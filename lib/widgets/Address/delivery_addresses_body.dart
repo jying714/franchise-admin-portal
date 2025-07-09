@@ -14,6 +14,7 @@ class DeliveryAddressesBody extends StatefulWidget {
   final FirestoreService firestoreService;
   final User user;
   final GlobalKey<FormState> formKey;
+  final String franchiseId;
 
   const DeliveryAddressesBody({
     super.key,
@@ -21,6 +22,7 @@ class DeliveryAddressesBody extends StatefulWidget {
     required this.firestoreService,
     required this.user,
     required this.formKey,
+    required this.franchiseId,
   });
 
   @override
@@ -68,7 +70,7 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                   );
                   if (shouldDelete == true) {
                     await firestoreService.removeAddressForUser(
-                        user.uid, address.id);
+                        widget.franchiseId, user.uid, address.id);
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -105,7 +107,8 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                   );
                   if (shouldAdd == true) {
                     await firestoreService.addAddressForUser(
-                        user.uid, newAddress);
+                        widget.franchiseId, user.uid, newAddress);
+
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(

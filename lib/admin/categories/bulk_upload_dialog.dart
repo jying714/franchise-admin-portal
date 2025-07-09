@@ -5,6 +5,7 @@ import 'package:franchise_admin_portal/core/models/category.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 // Optionally for user id:
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class BulkUploadDialog extends StatefulWidget {
   const BulkUploadDialog({super.key});
@@ -37,6 +38,9 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
@@ -101,7 +105,7 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
                       ));
                     }
                     for (final cat in cats) {
-                      await firestoreService.addCategory(cat);
+                      await firestoreService.addCategory(franchiseId, cat);
                     }
                     setState(() {
                       _uploadResult =
@@ -111,6 +115,7 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
                     // Remote error logging
                     try {
                       await firestoreService.logError(
+                        franchiseId,
                         message: e.toString(),
                         source: 'bulk_upload_dialog',
                         screen: 'BulkUploadDialog',

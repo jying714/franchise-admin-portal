@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 
 class CustomizationGroupEditor extends StatefulWidget {
+  final String franchiseId;
   final List<Map<String, dynamic>> customizations;
   final void Function(List<Map<String, dynamic>>) onChanged;
 
   const CustomizationGroupEditor({
     super.key,
+    required this.franchiseId,
     required this.customizations,
     required this.onChanged,
   });
@@ -29,10 +31,10 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
   void initState() {
     super.initState();
     _groups = List<Map<String, dynamic>>.from(widget.customizations);
-    _loadTemplatesAndIngredients();
+    _loadTemplatesAndIngredients(widget.franchiseId);
   }
 
-  Future<void> _loadTemplatesAndIngredients() async {
+  Future<void> _loadTemplatesAndIngredients(String franchiseId) async {
     setState(() {
       _loadingTemplates = true;
       _loadingIngredients = true;
@@ -42,8 +44,8 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
 
     // Await both futures first
     final results = await Future.wait([
-      fs.fetchCustomizationTemplatesAsMaps(),
-      fs.fetchIngredientMetadataAsMaps(),
+      fs.fetchCustomizationTemplatesAsMaps(franchiseId),
+      fs.fetchIngredientMetadataAsMaps(franchiseId),
     ]);
 
     // Now you can safely print using results[0]

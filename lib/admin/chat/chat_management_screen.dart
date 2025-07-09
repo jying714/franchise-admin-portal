@@ -8,12 +8,15 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
 import 'package:franchise_admin_portal/core/models/chat.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class ChatManagementScreen extends StatelessWidget {
   const ChatManagementScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final user = Provider.of<admin_user.User?>(context);
@@ -22,6 +25,7 @@ class ChatManagementScreen extends StatelessWidget {
     if (user == null || !(user.isOwner || user.isAdmin || user.isManager)) {
       Future.microtask(() {
         AuditLogService().addLog(
+          franchiseId: franchiseId,
           userId: user?.id ?? 'unknown',
           action: 'unauthorized_chat_management_access',
           targetType: 'support_chat',
@@ -105,7 +109,7 @@ class ChatManagementScreen extends StatelessWidget {
                   // Chat list
                   Expanded(
                     child: StreamBuilder<List<Chat>>(
-                      stream: firestoreService.getSupportChats(),
+                      stream: firestoreService.getSupportChats(franchiseId),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
@@ -137,6 +141,7 @@ class ChatManagementScreen extends StatelessWidget {
                                 showDialog(
                                   context: context,
                                   builder: (_) => AdminChatDetailDialog(
+                                      franchiseId: franchiseId,
                                       chatId: chat.id,
                                       userName:
                                           chat.userName ?? 'Unknown User'),
@@ -164,6 +169,8 @@ class ChatManagementScreen extends StatelessWidget {
 
   void _confirmDelete(BuildContext context, FirestoreService service,
       String chatId, admin_user.User user) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -176,8 +183,9 @@ class ChatManagementScreen extends StatelessWidget {
               child: const Text("Cancel")),
           ElevatedButton(
             onPressed: () async {
-              await service.deleteSupportChat(chatId);
+              await service.deleteSupportChat(franchiseId, chatId);
               await AuditLogService().addLog(
+                franchiseId: franchiseId,
                 userId: user.id,
                 action: 'delete_support_chat',
                 targetType: 'support_chat',

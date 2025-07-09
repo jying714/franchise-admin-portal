@@ -16,8 +16,10 @@ class UserProfileNotifier extends ChangeNotifier {
   Object? _lastError;
   Object? get lastError => _lastError;
 
-  void listenToUser(FirestoreService firestoreService, String? uid) {
-    print('[UserProfileNotifier] listenToUser called for uid=$uid');
+  void listenToUser(
+      FirestoreService firestoreService, String? uid, String franchiseId) {
+    print(
+        '[UserProfileNotifier] listenToUser called for uid=$uid, franchiseId=$franchiseId');
     _sub?.cancel();
     _loading = true;
     _lastError = null;
@@ -30,7 +32,7 @@ class UserProfileNotifier extends ChangeNotifier {
       return;
     }
 
-    _sub = delayedUserStream(firestoreService, uid).listen(
+    _sub = delayedUserStream(firestoreService, uid, franchiseId).listen(
       (u) {
         print('[UserProfileNotifier] Received user: ${u?.email}');
         _user = u;
@@ -44,10 +46,10 @@ class UserProfileNotifier extends ChangeNotifier {
         _lastError = err;
         notifyListeners();
 
-        // --- Firestore error caching ---
         final firebaseUser = fb_auth.FirebaseAuth.instance.currentUser;
         await firestoreService.logError(
-          message: err.toString(),
+          franchiseId, // <-- provide actual franchise ID here
+          message: err.toString(), // Pass message as positional argument
           source: 'UserProfileNotifier.listenToUser',
           userId: firebaseUser?.uid,
           screen: 'HomeWrapper',
@@ -57,6 +59,7 @@ class UserProfileNotifier extends ChangeNotifier {
           contextData: {
             'userProfileLoading': true,
             'uid': uid,
+            'franchiseId': franchiseId,
           },
         );
       },

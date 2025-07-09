@@ -7,6 +7,7 @@ import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/delayed_loading_shimmer.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class DynamicMenuItemEditorScreen extends StatefulWidget {
   final String? initialCategoryId;
@@ -32,11 +33,12 @@ class _DynamicMenuItemEditorScreenState
   final ScrollController _scrollController = ScrollController();
 
   @override
-  void initState() {
-    super.initState();
-    _selectedCategoryId = widget.initialCategoryId;
-    if (_selectedCategoryId != null) {
-      _loadSchema(_selectedCategoryId!);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_selectedCategoryId != null && _schema == null) {
+      final franchiseId =
+          Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+      _loadSchema(franchiseId, _selectedCategoryId!);
     }
   }
 
@@ -46,7 +48,7 @@ class _DynamicMenuItemEditorScreenState
     super.dispose();
   }
 
-  Future<void> _loadSchema(String categoryId) async {
+  Future<void> _loadSchema(String franchiseId, String categoryId) async {
     if (_schemaCache.containsKey(categoryId)) {
       if (!mounted) return;
       setState(() {
@@ -65,11 +67,11 @@ class _DynamicMenuItemEditorScreenState
     final firestore = Provider.of<FirestoreService>(context, listen: false);
 
     try {
-      final schema = await firestore.getCategorySchema(categoryId);
+      final schema = await firestore.getCategorySchema(franchiseId, categoryId);
 
       if (schema != null && schema['customizations'] is List) {
         schema['customizations'] =
-            await _resolveCustomizations(schema['customizations']);
+            await _resolveCustomizations(franchiseId, schema['customizations']);
       }
       if (schema != null && schema['customizationGroups'] is List) {
         schema['customizationGroups'] = List<Map<String, dynamic>>.from(
@@ -87,7 +89,8 @@ class _DynamicMenuItemEditorScreenState
       });
     } catch (e) {
       try {
-        final fallbackSchema = await firestore.getCategorySchema('default');
+        final fallbackSchema =
+            await firestore.getCategorySchema(franchiseId, 'default');
         if (!mounted) return;
         setState(() {
           _schemaCache[categoryId] = fallbackSchema;
@@ -116,7 +119,7 @@ class _DynamicMenuItemEditorScreenState
   }
 
   Future<List<Map<String, dynamic>>> _resolveCustomizations(
-      List<dynamic> rawCustomizations) async {
+      String franchiseId, List<dynamic> rawCustomizations) async {
     final firestore = Provider.of<FirestoreService>(context, listen: false);
     final List<Map<String, dynamic>> resolved = [];
 
@@ -124,12 +127,14 @@ class _DynamicMenuItemEditorScreenState
       if (entry is Map<String, dynamic> && entry.containsKey('templateRef')) {
         final templateId = entry['templateRef'];
         try {
-          final template = await firestore.getCustomizationTemplate(templateId);
+          final template =
+              await firestore.getCustomizationTemplate(franchiseId, templateId);
           if (template != null) {
             resolved.add(template);
           }
         } catch (e) {
           await firestore.logSchemaError(
+            franchiseId,
             message: 'Failed to load customization template',
             templateId: templateId,
             stackTrace: e.toString(),
@@ -144,12 +149,14 @@ class _DynamicMenuItemEditorScreenState
 
   @override
   Widget build(BuildContext context) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final loc = AppLocalizations.of(context)!;
     final firestore = Provider.of<FirestoreService>(context, listen: false);
     final colorScheme = Theme.of(context).colorScheme;
 
     return FutureBuilder<List<String>>(
-      future: firestore.getAllCategorySchemaIds(),
+      future: firestore.getAllCategorySchemaIds(franchiseId),
       builder: (context, catSnapshot) {
         if (catSnapshot.hasError || catSnapshot.data == null) {
           return Center(
@@ -198,7 +205,10 @@ class _DynamicMenuItemEditorScreenState
                     if (v != null) {
                       print('Category selected: $v');
                       widget.onCategorySelected?.call(v);
-                      _loadSchema(v);
+                      final franchiseId =
+                          Provider.of<FranchiseProvider>(context, listen: false)
+                              .franchiseId!;
+                      _loadSchema(franchiseId, v);
                     }
                   },
                   validator: (v) => v == null ? loc.requiredField : null,
@@ -206,11 +216,12 @@ class _DynamicMenuItemEditorScreenState
               if (_selectedCategoryId == null) const SizedBox(height: 30),
               if (_schema != null)
                 DynamicMenuItemForm(
+                  franchiseId: franchiseId,
                   schema: _schema!,
                   initialItem: null,
                   onSave: (menuItem) async {
                     try {
-                      await firestore.addMenuItem(menuItem);
+                      await firestore.addMenuItem(franchiseId, menuItem);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text(loc.itemAdded)),
                       );

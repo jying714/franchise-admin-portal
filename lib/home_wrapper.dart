@@ -10,7 +10,9 @@ import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 
 /// This widget gates all admin/dashboard content based on user and profile state.
 class HomeWrapper extends StatelessWidget {
-  const HomeWrapper({super.key});
+  final String franchiseId;
+
+  const HomeWrapper({required this.franchiseId, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +49,7 @@ class HomeWrapper extends StatelessWidget {
               Provider.of<FirestoreService>(context, listen: false);
           final user = Provider.of<fb_auth.User?>(context, listen: false);
           await firestoreService.logError(
+            franchiseId,
             message: 'User profile load error: ${profileNotifier.lastError}',
             source: 'HomeWrapper',
             userId: user?.uid,

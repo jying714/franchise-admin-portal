@@ -7,6 +7,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class FeatureSettingsScreen extends StatefulWidget {
   const FeatureSettingsScreen({super.key});
@@ -18,11 +19,12 @@ class FeatureSettingsScreen extends StatefulWidget {
 class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
   late Future<Map<String, bool>> _featureToggles;
   bool _unauthorizedLogged = false; // Prevent duplicate audit log entries
+  late String franchiseId;
 
   @override
   void initState() {
     super.initState();
-    _featureToggles = FeatureConfig.instance.load();
+    _featureToggles = FeatureConfig.instance.load(franchiseId);
   }
 
   Future<void> _updateFeature(
@@ -31,6 +33,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
 
     if (!user.isOwner) {
       await AuditLogService().addLog(
+        franchiseId: franchiseId,
         userId: user.id,
         action: 'unauthorized_feature_toggle_attempt',
         targetType: 'feature_toggle',
@@ -44,8 +47,9 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
       return;
     }
     await Provider.of<FirestoreService>(context, listen: false)
-        .updateFeatureToggle(key, value);
+        .updateFeatureToggle(franchiseId, key, value);
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       userId: user.id,
       action: 'update_feature_toggle',
       targetType: 'feature_toggle',
@@ -55,7 +59,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
       },
     );
     setState(() {
-      _featureToggles = FeatureConfig.instance.load();
+      _featureToggles = FeatureConfig.instance.load(franchiseId);
     });
   }
 
@@ -77,6 +81,8 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final loc = AppLocalizations.of(context)!;
     final user = Provider.of<admin_user.User?>(context);
 
@@ -102,6 +108,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
         _unauthorizedLogged = true;
         Future.microtask(() {
           AuditLogService().addLog(
+            franchiseId: franchiseId,
             userId: user.id,
             action: 'unauthorized_feature_settings_access',
             targetType: 'feature_settings',

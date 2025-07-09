@@ -7,6 +7,7 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class FeedbackManagementScreen extends StatefulWidget {
   const FeedbackManagementScreen({super.key});
@@ -23,6 +24,8 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
@@ -134,7 +137,7 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
                   // --- Feedback List ---
                   Expanded(
                     child: StreamBuilder<List<feedback_model.FeedbackEntry>>(
-                      stream: firestoreService.getFeedbackEntries(),
+                      stream: firestoreService.getFeedbackEntries(franchiseId),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
@@ -377,6 +380,8 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
   void _confirmDelete(
       BuildContext context, FirestoreService service, String feedbackId) {
     final loc = AppLocalizations.of(context)!;
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -387,7 +392,7 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
               onPressed: () => Navigator.pop(context), child: Text(loc.cancel)),
           ElevatedButton(
             onPressed: () async {
-              await service.deleteFeedbackEntry(feedbackId);
+              await service.deleteFeedbackEntry(franchiseId, feedbackId);
               if (!context.mounted) return;
               Navigator.pop(context);
             },

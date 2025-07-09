@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:provider/provider.dart';
 
 class ChatReplyDialog extends StatefulWidget {
   final String chatId;
@@ -18,7 +20,10 @@ class _ChatReplyDialogState extends State<ChatReplyDialog> {
     final reply = _controller.text.trim();
     if (reply.isEmpty) return;
     setState(() => isSending = true);
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     await FirestoreService().sendMessage(
+      franchiseId,
       chatId: widget.chatId,
       senderId: 'admin', // You may want to use the actual admin/staff ID
       content: reply,

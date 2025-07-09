@@ -5,10 +5,14 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/models/message.dart';
 
 class AdminChatDetailDialog extends StatefulWidget {
+  final String franchiseId;
   final String chatId;
   final String userName;
   const AdminChatDetailDialog(
-      {super.key, required this.chatId, required this.userName});
+      {super.key,
+      required this.franchiseId,
+      required this.chatId,
+      required this.userName});
 
   @override
   State<AdminChatDetailDialog> createState() => _AdminChatDetailDialogState();
@@ -30,10 +34,11 @@ class _AdminChatDetailDialogState extends State<AdminChatDetailDialog> {
     setState(() => _sending = true);
     try {
       final firestore = Provider.of<FirestoreService>(context, listen: false);
-      // You can pass admin/staff UID or a known support UID if you wish
+      final franchiseId = widget.franchiseId;
       await firestore.sendSupportReply(
+        franchiseId: franchiseId,
         chatId: widget.chatId,
-        senderId: "support", // Or use actual admin UID if you want
+        senderId: "support",
         content: text,
       );
       _controller.clear();
@@ -61,7 +66,8 @@ class _AdminChatDetailDialogState extends State<AdminChatDetailDialog> {
             ),
             Expanded(
               child: StreamBuilder<List<Message>>(
-                stream: firestore.streamChatMessages(widget.chatId),
+                stream: firestore.streamChatMessages(
+                    widget.franchiseId, widget.chatId),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());

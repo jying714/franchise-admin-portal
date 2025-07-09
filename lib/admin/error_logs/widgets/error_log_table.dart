@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class ErrorLogTable extends StatefulWidget {
   final List<ErrorLog> logs;
@@ -161,10 +162,12 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
   }
 
   Future<void> _bulkResolve(bool resolved) async {
+    String franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final service = context.read<FirestoreService>();
     final ids = _selectedIds.toList();
     for (final id in ids) {
-      await service.setErrorLogStatus(id, resolved: resolved);
+      await service.setErrorLogStatus(franchiseId, id, resolved: resolved);
     }
     _selectedIds.clear();
     if (mounted) {
@@ -177,10 +180,12 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
   }
 
   Future<void> _bulkArchive(bool archived) async {
+    String franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final service = context.read<FirestoreService>();
     final ids = _selectedIds.toList();
     for (final id in ids) {
-      await service.setErrorLogStatus(id, archived: archived);
+      await service.setErrorLogStatus(franchiseId, id, archived: archived);
     }
     setState(() {
       _selectedIds.clear();
@@ -196,10 +201,12 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
   }
 
   Future<void> _bulkDelete() async {
+    String franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final service = context.read<FirestoreService>();
     final ids = _selectedIds.toList();
     for (final id in ids) {
-      await service.deleteErrorLog(id);
+      await service.deleteErrorLog(franchiseId, id);
     }
     setState(() {
       _sortedLogs.removeWhere((log) => _selectedIds.contains(log.id));
@@ -213,13 +220,17 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
   }
 
   Future<void> _addComment(String logId, String text) async {
+    String franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     if (text.trim().isEmpty) return;
     final comment = {
       'text': text,
       'userId': 'admin', // You may replace with currentUser
       'timestamp': DateTime.now().toIso8601String(),
     };
-    await context.read<FirestoreService>().addCommentToErrorLog(logId, comment);
+    await context
+        .read<FirestoreService>()
+        .addCommentToErrorLog(franchiseId, logId, comment);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Comment added.')),
@@ -378,6 +389,8 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
 
   @override
   Widget build(BuildContext context) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     print('ErrorLogTable received logs: ${widget.logs.length}');
     final colorScheme = Theme.of(context).colorScheme;
     if (widget.logs.isEmpty) return _emptyState();
@@ -547,6 +560,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
                                   onPressed: () => context
                                       .read<FirestoreService>()
                                       .setErrorLogStatus(
+                                        franchiseId,
                                         log.id,
                                         resolved: !resolved,
                                       ),
@@ -565,6 +579,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
                                   onPressed: () => context
                                       .read<FirestoreService>()
                                       .setErrorLogStatus(
+                                        franchiseId,
                                         log.id,
                                         archived: !archived,
                                       ),

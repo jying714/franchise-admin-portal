@@ -13,8 +13,10 @@ class AnalyticsService {
   // --- Analytics Dashboard Methods ---
 
   /// Returns a stream of AnalyticsSummary (dashboard metrics) for admin panels.
-  Stream<List<AnalyticsSummary>> getSummaryMetrics() {
+  Stream<List<AnalyticsSummary>> getSummaryMetrics(String franchiseId) {
     return FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('analytics_summaries')
         .snapshots()
         .map((snapshot) => snapshot.docs
@@ -23,8 +25,11 @@ class AnalyticsService {
   }
 
   /// Returns a Future<List<AnalyticsSummary>> for bulk export or reporting.
-  Future<List<AnalyticsSummary>> getAnalyticsSummaries() async {
+  Future<List<AnalyticsSummary>> getAnalyticsSummaries(
+      String franchiseId) async {
     final snapshot = await FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('analytics_summaries')
         .get();
     return snapshot.docs
@@ -33,8 +38,8 @@ class AnalyticsService {
   }
 
   /// Exports analytics summaries as a CSV string (for admin export dialog).
-  Future<String> exportSummary() async {
-    final summaries = await getAnalyticsSummaries();
+  Future<String> exportSummary(String franchiseId) async {
+    final summaries = await getAnalyticsSummaries(franchiseId);
 
     final buffer = StringBuffer();
     // CSV Header

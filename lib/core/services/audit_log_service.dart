@@ -2,11 +2,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/core/models/audit_log.dart';
 
 class AuditLogService {
-  final CollectionReference auditLogsRef =
-      FirebaseFirestore.instance.collection('audit_logs');
+  CollectionReference auditLogsRef(String franchiseId) =>
+      FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('audit_logs');
 
   /// Adds a generic, flexible audit log entry.
   Future<void> addLog({
+    required String franchiseId,
     required String userId,
     String? userEmail,
     required String action,
@@ -24,16 +28,18 @@ class AuditLogService {
       details: details is Map ? details.toString() : details?.toString(),
       timestamp: DateTime.now(),
     );
-    await auditLogsRef.add(log.toFirestore());
+    await auditLogsRef(franchiseId).add(log.toFirestore());
   }
 
   /// Shortcut for logging when an error log is viewed.
   Future<void> logViewedErrorLog({
+    required String franchiseId,
     required String errorLogId,
     required String userId,
     String? userEmail,
   }) async {
     await addLog(
+      franchiseId: franchiseId,
       userId: userId,
       userEmail: userEmail,
       action: 'view_error_log',
@@ -43,8 +49,13 @@ class AuditLogService {
   }
 
   /// Streams audit logs (filterable by targetType or userId).
-  Stream<List<AuditLog>> getLogs({String? targetType, String? userId}) {
-    Query query = auditLogsRef.orderBy('timestamp', descending: true);
+  Stream<List<AuditLog>> getLogs({
+    required String franchiseId,
+    String? targetType,
+    String? userId,
+  }) {
+    Query query =
+        auditLogsRef(franchiseId).orderBy('timestamp', descending: true);
     if (targetType != null && targetType.isNotEmpty) {
       query = query.where('targetType', isEqualTo: targetType);
     }
@@ -58,9 +69,13 @@ class AuditLogService {
   }
 
   /// Gets audit logs once (filterable by targetType or userId).
-  Future<List<AuditLog>> getLogsOnce(
-      {String? targetType, String? userId}) async {
-    Query query = auditLogsRef.orderBy('timestamp', descending: true);
+  Future<List<AuditLog>> getLogsOnce({
+    required String franchiseId,
+    String? targetType,
+    String? userId,
+  }) async {
+    Query query =
+        auditLogsRef(franchiseId).orderBy('timestamp', descending: true);
     if (targetType != null && targetType.isNotEmpty) {
       query = query.where('targetType', isEqualTo: targetType);
     }

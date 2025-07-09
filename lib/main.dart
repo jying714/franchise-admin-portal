@@ -19,6 +19,7 @@ import 'package:franchise_admin_portal/home_wrapper.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'widgets/user_profile_notifier.dart'; // adjust path if needed
 import 'widgets/auth_profile_listener.dart'; // adjust path if needed
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,11 +30,14 @@ void main() async {
   // Use a shared FirestoreService for error logging at app root
   final firestoreService = FirestoreService();
 
+  const defaultFranchiseId = 'unknown';
+
   runZonedGuarded(() {
     // Global Flutter framework error logging
     FlutterError.onError = (FlutterErrorDetails details) async {
       FlutterError.dumpErrorToConsole(details);
       await firestoreService.logError(
+        defaultFranchiseId,
         message: details.exceptionAsString(),
         source: 'FlutterError',
         stackTrace: details.stack?.toString(),
@@ -49,6 +53,8 @@ void main() async {
     runApp(
       MultiProvider(
         providers: [
+          ChangeNotifierProvider<FranchiseProvider>(
+              create: (_) => FranchiseProvider()),
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           ChangeNotifierProvider(create: (_) => AuthService()),
           Provider<FirestoreService>.value(value: firestoreService),
@@ -61,11 +67,18 @@ void main() async {
         ],
         child: Builder(builder: (context) {
           final firebaseUser = Provider.of<fb_auth.User?>(context);
+          final franchiseProvider = Provider.of<FranchiseProvider>(context);
+          final franchiseId =
+              franchiseProvider.franchiseId ?? 'defaultFranchiseId';
+
           print('main.dart: firebaseUser?.email = ${firebaseUser?.email}');
+          print('main.dart: franchiseId = $franchiseId');
+
           return AuthProfileListener(
+            franchiseId: franchiseId,
             child: KeyedSubtree(
               key: ValueKey(firebaseUser?.uid ?? 'nouid'),
-              child: const FranchiseAdminPortalApp(),
+              child: FranchiseAdminPortalApp(franchiseId: franchiseId),
             ),
           );
         }),
@@ -74,6 +87,7 @@ void main() async {
   }, (Object error, StackTrace stack) async {
     // Global Dart errors outside Flutter framework (async, etc)
     await firestoreService.logError(
+      defaultFranchiseId,
       message: error.toString(),
       source: 'runZonedGuarded',
       stackTrace: stack.toString(),
@@ -85,7 +99,8 @@ void main() async {
 }
 
 class FranchiseAdminPortalApp extends StatelessWidget {
-  const FranchiseAdminPortalApp({super.key});
+  final String franchiseId;
+  const FranchiseAdminPortalApp({super.key, required this.franchiseId});
 
   @override
   Widget build(BuildContext context) {
@@ -309,7 +324,7 @@ class FranchiseAdminPortalApp extends StatelessWidget {
             GlobalCupertinoLocalizations.delegate,
           ],
           supportedLocales: AppLocalizations.supportedLocales,
-          home: const HomeWrapper(),
+          home: HomeWrapper(franchiseId: franchiseId),
         );
       },
     );

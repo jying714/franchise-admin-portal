@@ -15,8 +15,12 @@ class AuthService extends ChangeNotifier {
   app.User? get profileUser => _profileUser;
 
   /// Ensures user profile exists with a default role (for admin UI usage)
-  Future<void> ensureUserProfile(User firebaseUser) async {
-    final docRef = _firestore.collection('users').doc(firebaseUser.uid);
+  Future<void> ensureUserProfile(String franchiseId, User firebaseUser) async {
+    final docRef = _firestore
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('users')
+        .doc(firebaseUser.uid);
     final doc = await docRef.get();
     if (!doc.exists) {
       await docRef.set({
@@ -32,7 +36,8 @@ class AuthService extends ChangeNotifier {
   }
 
   /// EMAIL SIGN-IN (used by admin)
-  Future<User?> signInWithEmail(String email, String password) async {
+  Future<User?> signInWithEmail(
+      String franchiseId, String email, String password) async {
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(
         email: email,
@@ -40,8 +45,8 @@ class AuthService extends ChangeNotifier {
       );
       final user = result.user;
       if (user != null) {
-        await ensureUserProfile(user);
-        await loadProfileUser();
+        await ensureUserProfile(franchiseId, user);
+        await loadProfileUser(franchiseId);
         notifyListeners();
       }
       LogUtils.i('Admin signed in with email: $email');
@@ -54,7 +59,7 @@ class AuthService extends ChangeNotifier {
 
   /// EMAIL REGISTRATION (optional)
   Future<User?> registerWithEmail(
-      String email, String password, String name) async {
+      String franchiseId, String email, String password, String name) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -63,8 +68,8 @@ class AuthService extends ChangeNotifier {
       await result.user?.updateDisplayName(name);
       final user = result.user;
       if (user != null) {
-        await ensureUserProfile(user);
-        await loadProfileUser();
+        await ensureUserProfile(franchiseId, user);
+        await loadProfileUser(franchiseId);
         notifyListeners();
       }
       LogUtils.i('Admin registered with email: $email');
@@ -88,7 +93,7 @@ class AuthService extends ChangeNotifier {
 
   /// GOOGLE SIGN-IN (optional for web)
 
-  Future<User?> signInWithGoogle() async {
+  Future<User?> signInWithGoogle(String franchiseId) async {
     try {
       if (kIsWeb) {
         // Flutter Web: use signInWithPopup, not google_sign_in
@@ -96,8 +101,8 @@ class AuthService extends ChangeNotifier {
         final userCredential = await _auth.signInWithPopup(googleProvider);
         final user = userCredential.user;
         if (user != null) {
-          await ensureUserProfile(user);
-          await loadProfileUser();
+          await ensureUserProfile(franchiseId, user);
+          await loadProfileUser(franchiseId);
           notifyListeners();
         }
         LogUtils.i(
@@ -121,8 +126,8 @@ class AuthService extends ChangeNotifier {
             await _auth.signInWithCredential(credential);
         final user = authResult.user;
         if (user != null) {
-          await ensureUserProfile(user);
-          await loadProfileUser();
+          await ensureUserProfile(franchiseId, user);
+          await loadProfileUser(franchiseId);
           notifyListeners();
         }
         LogUtils.i('Google sign-in successful: ${user?.email ?? 'No email'}');
@@ -184,14 +189,18 @@ class AuthService extends ChangeNotifier {
     return result.user;
   }
 
-  Future<void> loadProfileUser() async {
+  Future<void> loadProfileUser(String franchiseId) async {
     final firebaseUser = _auth.currentUser;
     if (firebaseUser == null) {
       _profileUser = null;
       return;
     }
-    final doc =
-        await _firestore.collection('users').doc(firebaseUser.uid).get();
+    final doc = await _firestore
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('users')
+        .doc(firebaseUser.uid)
+        .get();
     if (doc.exists && doc.data() != null) {
       _profileUser =
           app.User.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);

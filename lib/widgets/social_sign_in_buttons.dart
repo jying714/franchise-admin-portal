@@ -8,6 +8,7 @@ import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 /// SocialSignInButtons (ADMIN VERSION)
 /// Only allows Google and Phone sign-in (no guest or demo modes).
 class SocialSignInButtons extends StatefulWidget {
+  final String franchiseId;
   final void Function(User? user)? onSuccess;
   final void Function(String error)? onError;
   final void Function(bool)? setLoading;
@@ -32,6 +33,7 @@ class SocialSignInButtons extends StatefulWidget {
     this.googleButtonColor,
     this.phoneButtonColor,
     this.ensureUserProfile,
+    required this.franchiseId,
   });
 
   @override
@@ -47,10 +49,10 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
   }
 
   Future<void> _defaultEnsureUserProfile(
-      BuildContext context, User user) async {
+      String franchiseId, BuildContext context, User user) async {
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
-    final existing = await firestoreService.getUser(user.uid);
+    final existing = await firestoreService.getUser(franchiseId, user.uid);
     if (existing == null) {
       final newUser = admin_user.User(
         id: user.uid,
@@ -62,12 +64,12 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
         role: admin_user.User.roleAdmin,
       );
 
-      await firestoreService.addUser(newUser);
+      await firestoreService.addUser(franchiseId, newUser);
     }
   }
 
-  Future<void> _handleSignIn(
-      BuildContext context, Future<User?> Function() signInMethod) async {
+  Future<void> _handleSignIn(String franchiseId, BuildContext context,
+      Future<User?> Function() signInMethod) async {
     _setLoading(true);
     try {
       final user = await signInMethod();
@@ -76,7 +78,7 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
         if (widget.ensureUserProfile != null) {
           await widget.ensureUserProfile!(user);
         } else {
-          await _defaultEnsureUserProfile(context, user);
+          await _defaultEnsureUserProfile(widget.franchiseId, context, user);
         }
         if (!mounted) return;
         widget.onSuccess?.call(user);
@@ -184,7 +186,8 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
                         if (widget.ensureUserProfile != null) {
                           await widget.ensureUserProfile!(user);
                         } else {
-                          await _defaultEnsureUserProfile(context, user);
+                          await _defaultEnsureUserProfile(
+                              widget.franchiseId, context, user);
                         }
                         if (!mounted) return;
                         widget.onSuccess?.call(user);
@@ -226,8 +229,8 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
               label: const Text('Sign in with Google'),
               onPressed: isBusy
                   ? null
-                  : () => _handleSignIn(
-                      context, () => authService.signInWithGoogle()),
+                  : () => _handleSignIn(widget.franchiseId, context,
+                      () => authService.signInWithGoogle(widget.franchiseId)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: widget.googleButtonColor ?? Colors.white,
                 foregroundColor: Colors.black,

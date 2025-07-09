@@ -9,6 +9,7 @@ class DynamicArrayEditor extends StatefulWidget {
   final List<Map<String, dynamic>> items;
   final Map<String, dynamic> template;
   final void Function(List<Map<String, dynamic>> updated) onChanged;
+  final String franchiseId;
 
   const DynamicArrayEditor({
     super.key,
@@ -17,6 +18,7 @@ class DynamicArrayEditor extends StatefulWidget {
     required this.items,
     required this.template,
     required this.onChanged,
+    required this.franchiseId,
   });
 
   @override
@@ -40,7 +42,7 @@ class _DynamicArrayEditorState extends State<DynamicArrayEditor> {
     // Load ingredient metadata if available via Provider or FirestoreService
     Future.microtask(() async {
       final fs = Provider.of<FirestoreService>(context, listen: false);
-      final result = await fs.fetchIngredientMetadataAsMaps();
+      final result = await fs.fetchIngredientMetadataAsMaps(widget.franchiseId);
       if (mounted) {
         setState(() {
           _ingredientMetadataList = result;

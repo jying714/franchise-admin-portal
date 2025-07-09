@@ -7,7 +7,8 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:path_provider/path_provider.dart'
     if (dart.library.io) 'package:path_provider/path_provider.dart';
 import 'dart:io' if (dart.library.io) 'dart:io';
-
+import 'package:provider/provider.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'dart:html' as html; // For web file download
 
 class PromoExportDialog extends StatefulWidget {
@@ -22,8 +23,10 @@ class _PromoExportDialogState extends State<PromoExportDialog> {
   String? downloadPath;
 
   Future<void> _exportPromos() async {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     setState(() => isExporting = true);
-    final promos = await FirestoreService().getPromos().first;
+    final promos = await FirestoreService().getPromos(franchiseId).first;
     final csvHeader = [/* ... */];
     final csvRows = [/* ... */];
     final csvContent = '${csvHeader.join(',')}\n${csvRows.join('\n')}';

@@ -25,7 +25,8 @@ import 'package:franchise_admin_portal/core/models/error_log.dart';
 
 extension ErrorLogsService on FirestoreService {
   /// Fetches paginated, filterable error logs from Firestore.
-  Stream<List<ErrorLog>> streamErrorLogs({
+  Stream<List<ErrorLog>> streamErrorLogs(
+    String franchiseId, {
     int limit = 50,
     String? severity,
     String? source,
@@ -39,7 +40,8 @@ extension ErrorLogsService on FirestoreService {
   }) {
     print(
         'FirestoreService.streamErrorLogs called with: severity=$severity, source=$source, screen=$screen, start=$start, end=$end, search=$search, archived=$archived, showResolved=$showResolved');
-    firestore.Query query = _db.collection('error_logs');
+    firestore.Query query =
+        _db.collection('franchises').doc(franchiseId).collection('error_logs');
 
     if (severity != null &&
         severity.isNotEmpty &&
@@ -111,7 +113,7 @@ class FirestoreService {
   }
 
   /// Get all ingredient metadata, with in-memory caching.
-  Future<List<IngredientMetadata>> getAllIngredientMetadata(
+  Future<List<IngredientMetadata>> getAllIngredientMetadata(String franchiseId,
       {bool forceRefresh = false}) async {
     if (!forceRefresh &&
         _cachedIngredientMetadata != null &&
@@ -120,7 +122,11 @@ class FirestoreService {
             15) {
       return _cachedIngredientMetadata!;
     }
-    final snap = await _db.collection(_ingredientMetadata).get();
+    final snap = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_ingredientMetadata)
+        .get();
     final result = snap.docs
         .map((d) => IngredientMetadata.fromMap(d.data()))
         .toList(growable: false);
@@ -131,10 +137,12 @@ class FirestoreService {
 
   /// Get ingredient metadata by ID.
   Future<List<IngredientMetadata>> getIngredientMetadataByIds(
-      List<String> ids) async {
+      String franchiseId, List<String> ids) async {
     if (ids.isEmpty) return [];
     try {
       final snap = await _db
+          .collection('franchises')
+          .doc(franchiseId)
           .collection(_ingredientMetadata)
           .where(firestore.FieldPath.documentId, whereIn: ids)
           .get();
@@ -149,14 +157,18 @@ class FirestoreService {
 
   /// Get all ingredient metadata as a map for fast lookups.
   Future<Map<String, IngredientMetadata>> getIngredientMetadataMap(
+      String franchiseId,
       {bool forceRefresh = false}) async {
-    final all = await getAllIngredientMetadata(forceRefresh: forceRefresh);
+    final all =
+        await getAllIngredientMetadata(franchiseId, forceRefresh: forceRefresh);
     return {for (final meta in all) meta.id: meta};
   }
 
   Future<List<Map<String, dynamic>>> fetchIngredientMetadataAsMaps(
+      String franchiseId,
       {bool forceRefresh = false}) async {
-    final all = await getAllIngredientMetadata(forceRefresh: forceRefresh);
+    final all =
+        await getAllIngredientMetadata(franchiseId, forceRefresh: forceRefresh);
     return all.map((meta) => meta.toMap()).toList();
   }
 
@@ -166,9 +178,9 @@ class FirestoreService {
 
   /// Given a list of ingredient IDs, return the unique set of allergens present.
   Future<List<String>> getAllergensForIngredientIds(
-      List<String>? ingredientIds) async {
+      String franchiseId, List<String>? ingredientIds) async {
     if (ingredientIds == null || ingredientIds.isEmpty) return [];
-    final metaMap = await getIngredientMetadataMap();
+    final metaMap = await getIngredientMetadataMap(franchiseId);
     final allergens = <String>{};
     for (final rawId in ingredientIds) {
       final id = rawId.trim();
@@ -181,7 +193,7 @@ class FirestoreService {
   }
 
   Future<List<String>> getAllergensForCustomizations(
-      List<Customization> customizations) async {
+      String franchiseId, List<Customization> customizations) async {
     final ingredientIds = <String>[];
     void collectIds(List<Customization> list) {
       for (final c in list) {
@@ -195,12 +207,16 @@ class FirestoreService {
     }
 
     collectIds(customizations);
-    return getAllergensForIngredientIds(ingredientIds);
+    return getAllergensForIngredientIds(franchiseId, ingredientIds);
   }
 
   // --- Orders ---
-  Stream<List<Order>> getAllOrdersStream() {
+  Stream<List<Order>> getAllOrdersStream(
+    String franchiseId,
+  ) {
     return firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('orders')
         .orderBy('timestamp', descending: true)
         .snapshots()
@@ -210,8 +226,11 @@ class FirestoreService {
             }).toList());
   }
 
-  Future<void> updateOrderStatus(String orderId, String newStatus) async {
+  Future<void> updateOrderStatus(
+      String franchiseId, String orderId, String newStatus) async {
     await firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('orders')
         .doc(orderId)
         .update({
@@ -220,9 +239,11 @@ class FirestoreService {
     });
   }
 
-  Future<void> refundOrder(String orderId,
+  Future<void> refundOrder(String franchiseId, String orderId,
       {double? amount, String? refundReason}) async {
     await firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('orders')
         .doc(orderId)
         .update({
@@ -234,13 +255,17 @@ class FirestoreService {
   }
 
   Future<void> submitOrderFeedback({
+    required String franchiseId,
     required String orderId,
     required String userId,
     required String message,
     required int rating,
   }) async {
-    final doc =
-        firestore.FirebaseFirestore.instance.collection('feedback').doc();
+    final doc = firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('feedback')
+        .doc();
     await doc.set({
       'orderId': orderId,
       'userId': userId,
@@ -256,6 +281,8 @@ class FirestoreService {
     final endOfDay = startOfDay.add(Duration(days: 1));
 
     var query = firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('orders')
         .where('timestamp', isGreaterThanOrEqualTo: startOfDay)
         .where('timestamp', isLessThan: endOfDay);
@@ -269,9 +296,14 @@ class FirestoreService {
   }
 
   // --- MENU ITEMS ---
-  Future<void> addMenuItem(MenuItem item, {String? userId}) async {
+  Future<void> addMenuItem(String franchiseId, MenuItem item,
+      {String? userId}) async {
     assert(item.categoryId.isNotEmpty, 'categoryId must not be empty');
-    final doc = _db.collection(_menuItems).doc();
+    final doc = _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_menuItems)
+        .doc();
     final data = item.copyWith(id: doc.id).toFirestore();
     data['customizations'] =
         item.customizations.map((c) => c.toFirestore()).toList();
@@ -279,21 +311,29 @@ class FirestoreService {
     data['optionalAddOns'] = item.optionalAddOns ?? [];
     await doc.set(data);
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       action: 'add_menu_item',
       userId: userId ?? currentUserId ?? 'unknown',
       details: {'menuItemId': doc.id, 'name': item.name},
     );
   }
 
-  Future<void> updateMenuItem(MenuItem item, {String? userId}) async {
+  Future<void> updateMenuItem(String franchiseId, MenuItem item,
+      {String? userId}) async {
     try {
       final data = item.toFirestore();
       if (item.customizations.isNotEmpty) {
         data['customizations'] =
             item.customizations.map((c) => c.toFirestore()).toList();
       }
-      await _db.collection(_menuItems).doc(item.id).update(data);
+      await _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection(_menuItems)
+          .doc(item.id)
+          .update(data);
       await AuditLogService().addLog(
+        franchiseId: franchiseId,
         action: 'update_menu_item',
         userId: userId ?? currentUserId ?? 'unknown',
         details: {'menuItemId': item.id, 'name': item.name},
@@ -304,10 +344,17 @@ class FirestoreService {
     }
   }
 
-  Future<void> deleteMenuItem(String id, {String? userId}) async {
+  Future<void> deleteMenuItem(String franchiseId, String id,
+      {String? userId}) async {
     try {
-      await _db.collection(_menuItems).doc(id).delete();
+      await _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection(_menuItems)
+          .doc(id)
+          .delete();
       await AuditLogService().addLog(
+        franchiseId: franchiseId,
         action: 'delete_menu_item',
         userId: userId ?? currentUserId ?? 'unknown',
         details: {'menuItemId': id},
@@ -318,9 +365,10 @@ class FirestoreService {
     }
   }
 
-  Stream<List<MenuItem>> getMenuItems(
+  Stream<List<MenuItem>> getMenuItems(String franchiseId,
       {String? search, String? sortBy, bool descending = false}) {
-    firestore.Query query = _db.collection(_menuItems);
+    firestore.Query query =
+        _db.collection('franchises').doc(franchiseId).collection(_menuItems);
     if (search != null && search.trim().isNotEmpty) {
       query = query
           .where('name', isGreaterThanOrEqualTo: search)
@@ -335,8 +383,14 @@ class FirestoreService {
         .toList());
   }
 
-  Future<List<MenuItem>> getMenuItemsOnce() async {
-    final snap = await _db.collection(_menuItems).get();
+  Future<List<MenuItem>> getMenuItemsOnce(
+    String franchiseId,
+  ) async {
+    final snap = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_menuItems)
+        .get();
     return snap.docs.map((d) {
       final data = d.data();
       if (data['customizations'] == null || data['customizations'] is! List) {
@@ -347,9 +401,15 @@ class FirestoreService {
   }
 
   /// Get all customization templates from Firestore.
-  Future<Map<String, dynamic>> getCustomizationTemplates() async {
+  Future<Map<String, dynamic>> getCustomizationTemplates(
+    String franchiseId,
+  ) async {
     try {
-      final snap = await _db.collection('customization_templates').get();
+      final snap = await _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('customization_templates')
+          .get();
       final result = <String, dynamic>{};
       for (final doc in snap.docs) {
         result[doc.id] = doc.data();
@@ -361,8 +421,12 @@ class FirestoreService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchCustomizationTemplatesAsMaps() async {
+  Future<List<Map<String, dynamic>>> fetchCustomizationTemplatesAsMaps(
+    String franchiseId,
+  ) async {
     final snapshot = await firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('customization_templates')
         .get();
 
@@ -377,10 +441,14 @@ class FirestoreService {
 
   /// Get a single customization template by its ID.
   Future<Map<String, dynamic>?> getCustomizationTemplate(
-      String templateId) async {
+      String franchiseId, String templateId) async {
     try {
-      final doc =
-          await _db.collection('customization_templates').doc(templateId).get();
+      final doc = await _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('customization_templates')
+          .doc(templateId)
+          .get();
       return doc.exists ? doc.data() : null;
     } catch (e, stack) {
       _logFirestoreError('getCustomizationTemplate', e, stack);
@@ -389,19 +457,21 @@ class FirestoreService {
   }
 
   Future<List<Map<String, dynamic>>> resolveCustomizations(
-      List<dynamic> rawCustomizations) async {
+      String franchiseId, List<dynamic> rawCustomizations) async {
     final List<Map<String, dynamic>> resolved = [];
 
     for (final entry in rawCustomizations) {
       if (entry is Map<String, dynamic> && entry.containsKey('templateRef')) {
         final templateId = entry['templateRef'];
         try {
-          final template = await getCustomizationTemplate(templateId);
+          final template =
+              await getCustomizationTemplate(franchiseId, templateId);
           if (template != null) {
             resolved.add(template);
           }
         } catch (e) {
           await logSchemaError(
+            franchiseId,
             message: 'Failed to load template',
             templateId: templateId,
             stackTrace: e.toString(),
@@ -415,14 +485,21 @@ class FirestoreService {
     return resolved;
   }
 
-  Future<void> logSchemaError({
+  Future<void> logSchemaError(
+    String franchiseId, {
     required String message,
     String? templateId,
     String? menuItemId,
     String? stackTrace,
     String? userId,
   }) async {
-    await firestore.FirebaseFirestore.instance.collection('error_logs').add({
+    await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('error_logs')
+        .add({
       'timestamp': firestore.FieldValue.serverTimestamp(),
       'message': message,
       if (templateId != null) 'templateId': templateId,
@@ -433,7 +510,8 @@ class FirestoreService {
     });
   }
 
-  Future<void> logError({
+  Future<void> logError(
+    String franchiseId, {
     required String message,
     required String source,
     String? userId,
@@ -465,6 +543,8 @@ class FirestoreService {
         'comments': <Map<String, dynamic>>[],
       };
       await firestore.FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(franchiseId)
           .collection('error_logs')
           .add(data);
     } catch (e, stack) {
@@ -474,35 +554,60 @@ class FirestoreService {
 
   // Update a log (e.g., mark as resolved, archive, or add a comment)
   Future<void> updateErrorLog(
-      String logId, Map<String, dynamic> updates) async {
-    await _db.collection('error_logs').doc(logId).update(updates);
+      String franchiseId, String logId, Map<String, dynamic> updates) async {
+    await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('error_logs')
+        .doc(logId)
+        .update(updates);
   }
 
 // Add a comment to an error log
   Future<void> addCommentToErrorLog(
-      String logId, Map<String, dynamic> comment) async {
-    await _db.collection('error_logs').doc(logId).update({
+      String franchiseId, String logId, Map<String, dynamic> comment) async {
+    await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('error_logs')
+        .doc(logId)
+        .update({
       'comments': firestore.FieldValue.arrayUnion([comment]),
       'updatedAt': firestore.FieldValue.serverTimestamp(),
     });
   }
 
 // Mark an error log as resolved or archived
-  Future<void> setErrorLogStatus(String logId,
+  Future<void> setErrorLogStatus(String franchiseId, String logId,
       {bool? resolved, bool? archived}) async {
     final updates = <String, dynamic>{};
     if (resolved != null) updates['resolved'] = resolved;
     if (archived != null) updates['archived'] = archived;
     updates['updatedAt'] = firestore.FieldValue.serverTimestamp();
-    await _db.collection('error_logs').doc(logId).update(updates);
+    await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('error_logs')
+        .doc(logId)
+        .update(updates);
   }
 
-  Future<void> deleteErrorLog(String logId) async {
-    await _db.collection('error_logs').doc(logId).delete();
+  Future<void> deleteErrorLog(String franchiseId, String logId) async {
+    await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('error_logs')
+        .doc(logId)
+        .delete();
   }
 
-  Future<MenuItem?> getMenuItemById(String id) async {
-    final doc = await _db.collection(_menuItems).doc(id).get();
+  Future<MenuItem?> getMenuItemById(String franchiseId, String id) async {
+    final doc = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_menuItems)
+        .doc(id)
+        .get();
 
     if (!doc.exists || doc.data() == null) return null;
     var data = doc.data()!;
@@ -512,11 +617,15 @@ class FirestoreService {
     return MenuItem.fromFirestore(data, doc.id);
   }
 
-  Future<void> bulkUploadMenuItems(List<MenuItem> items,
+  Future<void> bulkUploadMenuItems(String franchiseId, List<MenuItem> items,
       {String? userId}) async {
     final batch = _db.batch();
     for (final item in items) {
-      final docRef = _db.collection(_menuItems).doc();
+      final docRef = _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection(_menuItems)
+          .doc();
       var data = item.copyWith(id: docRef.id).toFirestore();
       if (item.customizations.isNotEmpty) {
         data['customizations'] =
@@ -526,82 +635,143 @@ class FirestoreService {
     }
     await batch.commit();
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       action: 'bulk_upload_menu_items',
       userId: userId ?? currentUserId ?? 'unknown',
       details: {'count': items.length},
     );
   }
 
-  Future<String> exportMenuToCsv() async {
-    final snap = await _db.collection(_menuItems).get();
+  Future<String> exportMenuToCsv(
+    String franchiseId,
+  ) async {
+    final snap = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_menuItems)
+        .get();
     final items =
         snap.docs.map((d) => MenuItem.fromFirestore(d.data(), d.id)).toList();
     return ExportUtils.menuItemsToCsv(items);
   }
 
   // --- PROMOTIONS ---
-  Future<void> addPromo(Promo promo) async =>
-      _db.collection(_promotions).doc(promo.id).set(promo.toFirestore());
+  Future<void> addPromo(String franchiseId, Promo promo) async => _db
+      .collection('franchises')
+      .doc(franchiseId)
+      .collection('feedback')
+      .doc(promo.id)
+      .set(promo.toFirestore());
 
-  Future<void> updatePromo(Promo promo) async =>
-      _db.collection(_promotions).doc(promo.id).update(promo.toFirestore());
+  Future<void> updatePromo(String franchiseId, Promo promo) async => _db
+      .collection('franchises')
+      .doc(franchiseId)
+      .collection('feedback')
+      .doc(promo.id)
+      .update(promo.toFirestore());
 
-  Future<void> deletePromo(String promoId) async =>
-      _db.collection(_promotions).doc(promoId).delete();
+  Future<void> deletePromo(String franchiseId, String promoId) async => _db
+      .collection('franchises')
+      .doc(franchiseId)
+      .collection('feedback')
+      .doc(promoId)
+      .delete();
 
-  Stream<List<Promo>> getPromos() =>
-      _db.collection(_promotions).snapshots().map((snap) =>
-          snap.docs.map((d) => Promo.fromFirestore(d.data(), d.id)).toList());
+  Stream<List<Promo>> getPromos(
+    String franchiseId,
+  ) =>
+      _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('feedback')
+          .snapshots()
+          .map((snap) => snap.docs
+              .map((d) => Promo.fromFirestore(d.data(), d.id))
+              .toList());
 
-  Future<List<Promo>> getPromosOnce() async {
-    final snap = await _db.collection(_promotions).get();
+  Future<List<Promo>> getPromosOnce(
+    String franchiseId,
+  ) async {
+    final snap = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('feedback')
+        .get();
     return snap.docs.map((d) => Promo.fromFirestore(d.data(), d.id)).toList();
   }
 
-  Future<void> bulkUploadPromos(List<Promo> promos, {String? userId}) async {
+  Future<void> bulkUploadPromos(String franchiseId, List<Promo> promos,
+      {String? userId}) async {
     final batch = _db.batch();
     for (final promo in promos) {
-      final docRef = _db.collection(_promotions).doc();
+      final docRef = _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('feedback')
+          .doc();
       batch.set(docRef, promo.copyWith(id: docRef.id).toFirestore());
     }
     await batch.commit();
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       action: 'bulk_upload_promos',
       userId: userId ?? currentUserId ?? 'unknown',
       details: {'count': promos.length},
     );
   }
 
-  Future<String> exportPromosToCsv() async {
-    final promos = await getPromosOnce();
+  Future<String> exportPromosToCsv(String franchiseId) async {
+    final promos = await getPromosOnce(franchiseId);
     return ExportUtils.promosToCsv(promos);
   }
 
-  // --- Promotion Aliases for Admin UI Compatibility ---
-  Stream<List<Promo>> getPromotions() => getPromos();
-  Future<void> deletePromotion(String promoId) => deletePromo(promoId);
+// --- Promotion Aliases for Admin UI Compatibility ---
+  Stream<List<Promo>> getPromotions(String franchiseId) =>
+      getPromos(franchiseId);
+  Future<void> deletePromotion(String franchiseId, String promoId) =>
+      deletePromo(franchiseId, promoId);
 
   // --- INVENTORY (Admin/Inventory Panel) ---
-  Stream<List<Inventory>> getInventory() {
-    return _db.collection(_inventory).snapshots().map((snap) =>
-        snap.docs.map((d) => Inventory.fromFirestore(d.data(), d.id)).toList());
+  Stream<List<Inventory>> getInventory(
+    String franchiseId,
+  ) {
+    return _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_inventory)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => Inventory.fromFirestore(d.data(), d.id))
+            .toList());
   }
 
-  Future<void> addInventory(Inventory inventory) async {
-    final doc = _db.collection(_inventory).doc();
+  Future<void> addInventory(String franchiseId, Inventory inventory) async {
+    final doc = _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_inventory)
+        .doc();
     await doc.set(inventory.copyWith(id: doc.id).toFirestore());
   }
 
-  Future<void> updateInventory(Inventory inventory) async {
+  Future<void> updateInventory(String franchiseId, Inventory inventory) async {
     await _db
+        .collection('franchises')
+        .doc(franchiseId)
         .collection(_inventory)
         .doc(inventory.id)
         .update(inventory.toFirestore());
   }
 
-  Future<void> deleteInventory(String id) async {
-    await _db.collection(_inventory).doc(id).delete();
+  Future<void> deleteInventory(String franchiseId, String id) async {
+    await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_inventory)
+        .doc(id)
+        .delete();
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       action: 'delete_inventory',
       userId: currentUserId ?? 'unknown',
       details: {'inventoryId': id},
@@ -609,23 +779,32 @@ class FirestoreService {
   }
 
   // --- FEATURE SETTINGS / FEATURE TOGGLES (admin/feature_settings/...) ---
-  Future<Map<String, bool>> getFeatureToggles() async {
-    final doc = await _db.collection('feature_toggles').doc('global').get();
+  Future<Map<String, bool>> getFeatureToggles(String franchiseId) async {
+    final doc = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('feature_toggles')
+        .doc('global')
+        .get();
     if (!doc.exists || doc.data() == null) return {};
     return Map<String, bool>.from(doc.data() as Map<String, dynamic>);
   }
 
-  Future<void> updateFeatureToggle(String key, bool enabled) async {
+  Future<void> updateFeatureToggle(
+      String franchiseId, String key, bool enabled) async {
     await _db
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('feature_toggles')
         .doc('global')
         .set({key: enabled}, firestore.SetOptions(merge: true));
   }
 
   // --- CATEGORIES ---
-  Stream<List<Category>> getCategories(
+  Stream<List<Category>> getCategories(String franchiseId,
       {String? search, String? sortBy, bool descending = false}) {
-    firestore.Query query = _db.collection(_categories);
+    firestore.Query query =
+        _db.collection('franchises').doc(franchiseId).collection(_categories);
 
     if (search != null && search.trim().isNotEmpty) {
       query = query
@@ -643,8 +822,13 @@ class FirestoreService {
         .toList());
   }
 
-  Future<void> addCategory(Category category, {String? userId}) async {
-    final doc = _db.collection(_categories).doc();
+  Future<void> addCategory(String franchiseId, Category category,
+      {String? userId}) async {
+    final doc = _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_categories)
+        .doc();
     final categoryWithId = Category(
       id: doc.id,
       name: category.name,
@@ -653,38 +837,55 @@ class FirestoreService {
     );
     await doc.set(categoryWithId.toFirestore());
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       action: 'add_category',
       userId: userId ?? currentUserId ?? 'unknown',
       details: {'categoryId': doc.id, 'name': category.name},
     );
   }
 
-  Future<void> updateCategory(Category category, {String? userId}) async {
+  Future<void> updateCategory(String franchiseId, Category category,
+      {String? userId}) async {
     await _db
+        .collection('franchises')
+        .doc(franchiseId)
         .collection(_categories)
         .doc(category.id)
         .update(category.toFirestore());
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       action: 'update_category',
       userId: userId ?? currentUserId ?? 'unknown',
       details: {'categoryId': category.id, 'name': category.name},
     );
   }
 
-  Future<void> deleteCategory(String id, {String? userId}) async {
-    await _db.collection(_categories).doc(id).delete();
+  Future<void> deleteCategory(String franchiseId, String id,
+      {String? userId}) async {
+    await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_categories)
+        .doc(id)
+        .delete();
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       action: 'delete_category',
       userId: userId ?? currentUserId ?? 'unknown',
       details: {'categoryId': id},
     );
   }
 
-  Future<void> bulkUploadCategories(List<Category> categories,
+  Future<void> bulkUploadCategories(
+      String franchiseId, List<Category> categories,
       {String? userId}) async {
     final batch = _db.batch();
     for (final cat in categories) {
-      final docRef = _db.collection(_categories).doc();
+      final docRef = _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection(_categories)
+          .doc();
       final catWithId = Category(
         id: docRef.id,
         name: cat.name,
@@ -695,6 +896,7 @@ class FirestoreService {
     }
     await batch.commit();
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       action: 'bulk_upload_categories',
       userId: userId ?? currentUserId ?? 'unknown',
       details: {'count': categories.length},
@@ -702,8 +904,12 @@ class FirestoreService {
   }
 
   // --- STAFF USERS MANAGEMENT (Admin/Staff Access Panel) ---
-  Stream<List<admin_user.User>> getStaffUsers() {
+  Stream<List<admin_user.User>> getStaffUsers(
+    String franchiseId,
+  ) {
     return _db
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('users')
         .where('role', whereIn: ['staff', 'manager', 'admin'])
         .snapshots()
@@ -712,13 +918,15 @@ class FirestoreService {
             .toList());
   }
 
-  Future<void> addStaffUser({
+  Future<void> addStaffUser(
+    String franchiseId, {
     required String name,
     required String email,
     String? phone,
     String role = 'staff',
   }) async {
-    final docRef = _db.collection('users').doc();
+    final docRef =
+        _db.collection('franchises').doc(franchiseId).collection('users').doc();
     await docRef.set({
       'id': docRef.id,
       'name': name,
@@ -728,6 +936,7 @@ class FirestoreService {
       'createdAt': firestore.FieldValue.serverTimestamp(),
     });
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       action: 'add_staff_user',
       userId: currentUserId ?? 'unknown',
       details: {
@@ -739,9 +948,15 @@ class FirestoreService {
     );
   }
 
-  Future<void> removeStaffUser(String staffUserId) async {
-    await _db.collection('users').doc(staffUserId).delete();
+  Future<void> removeStaffUser(String franchiseId, String staffUserId) async {
+    await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('users')
+        .doc(staffUserId)
+        .delete();
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       action: 'remove_staff_user',
       userId: currentUserId ?? 'unknown',
       details: {'staffUserId': staffUserId},
@@ -749,9 +964,12 @@ class FirestoreService {
   }
 
   // --- FEEDBACK MANAGEMENT (Admin/Feedback Management Panel) ---
-  Stream<List<feedback_model.FeedbackEntry>> getFeedbackEntries() {
+  Stream<List<feedback_model.FeedbackEntry>> getFeedbackEntries(
+      String franchiseId) {
     return _db
-        .collection(_feedback)
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('feedback')
         .orderBy('timestamp', descending: true)
         .snapshots()
         .map((snap) => snap.docs
@@ -760,24 +978,42 @@ class FirestoreService {
             .toList());
   }
 
-  Future<void> deleteFeedbackEntry(String id) async {
-    await _db.collection(_feedback).doc(id).delete();
+  Future<void> deleteFeedbackEntry(String franchiseId, String id) async {
+    await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('feedback')
+        .doc(id)
+        .delete();
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       action: 'delete_feedback_entry',
       userId: currentUserId ?? 'unknown',
       details: {'feedbackId': id},
     );
   }
 
-  Future<List<feedback_model.FeedbackEntry>> getFeedbackOnce() async {
-    final snap = await _db.collection(_feedback).get();
+  Future<List<feedback_model.FeedbackEntry>> getFeedbackOnce(
+    String franchiseId,
+  ) async {
+    final snap = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('feedback')
+        .get();
     return snap.docs
         .map((d) => feedback_model.FeedbackEntry.fromFirestore(d.data(), d.id))
         .toList();
   }
 
-  Future<feedback_model.FeedbackEntry?> getFeedbackById(String id) async {
-    final doc = await _db.collection(_feedback).doc(id).get();
+  Future<feedback_model.FeedbackEntry?> getFeedbackById(
+      String franchiseId, String id) async {
+    final doc = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('feedback')
+        .doc(id)
+        .get();
     if (!doc.exists || doc.data() == null) return null;
     return feedback_model.FeedbackEntry.fromFirestore(doc.data()!, doc.id);
   }
@@ -785,7 +1021,12 @@ class FirestoreService {
   Future<Map<String, dynamic>?> getFeedbackStatsForPeriod(String period,
       {String? franchiseId}) async {
     final String docId = '${franchiseId ?? "default"}_$period';
-    final doc = await _db.collection('analytics_summaries').doc(docId).get();
+    final doc = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('analytics_summaries')
+        .doc(docId)
+        .get();
     if (!doc.exists) return null;
     final data = doc.data();
     return data?['feedbackStats'] ?? {};
@@ -804,8 +1045,12 @@ class FirestoreService {
       );
 
   // --- CHAT SUPPORT / CHAT MANAGEMENT ---
-  Stream<List<Chat>> getSupportChats() {
+  Stream<List<Chat>> getSupportChats(
+    String franchiseId,
+  ) {
     return _db
+        .collection('franchises')
+        .doc(franchiseId)
         .collection(_supportChats)
         .orderBy('lastMessageAt', descending: true)
         .snapshots()
@@ -813,42 +1058,73 @@ class FirestoreService {
             snap.docs.map((d) => Chat.fromFirestore(d.data(), d.id)).toList());
   }
 
-  Future<void> deleteSupportChat(String chatId) async {
-    await _db.collection(_supportChats).doc(chatId).delete();
+  Future<void> deleteSupportChat(String franchiseId, String chatId) async {
+    await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_supportChats)
+        .doc(chatId)
+        .delete();
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       action: 'delete_support_chat',
       userId: currentUserId ?? 'unknown',
       details: {'chatId': chatId},
     );
   }
 
-  Future<List<Chat>> getAllChats() async {
-    final snap = await _db.collection(_supportChats).get();
+  Future<List<Chat>> getAllChats(
+    String franchiseId,
+  ) async {
+    final snap = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_supportChats)
+        .get();
     return snap.docs.map((d) => Chat.fromFirestore(d.data(), d.id)).toList();
   }
 
-  Stream<List<Chat>> streamAllChats() {
-    return _db.collection(_supportChats).snapshots().map((snap) =>
-        snap.docs.map((d) => Chat.fromFirestore(d.data(), d.id)).toList());
+  Stream<List<Chat>> streamAllChats(
+    String franchiseId,
+  ) {
+    return _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_supportChats)
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((d) => Chat.fromFirestore(d.data(), d.id)).toList());
   }
 
-  Future<void> deleteChat(String chatId) async {
-    await _db.collection(_supportChats).doc(chatId).delete();
+  Future<void> deleteChat(String franchiseId, String chatId) async {
+    await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_supportChats)
+        .doc(chatId)
+        .delete();
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       action: 'delete_chat',
       userId: currentUserId ?? 'unknown',
       details: {'chatId': chatId},
     );
   }
 
-  Future<void> sendMessage({
+  Future<void> sendMessage(
+    String franchiseId, {
     required String chatId,
     required String senderId,
     required String content,
     String role = 'user',
   }) async {
-    final messageRef =
-        _db.collection(_supportChats).doc(chatId).collection('messages').doc();
+    final messageRef = _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_supportChats)
+        .doc(chatId)
+        .collection('messages')
+        .doc();
     await messageRef.set({
       'senderId': senderId,
       'content': content,
@@ -856,7 +1132,12 @@ class FirestoreService {
       'status': 'sent',
       'role': role,
     });
-    await _db.collection(_supportChats).doc(chatId).set({
+    await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_supportChats)
+        .doc(chatId)
+        .set({
       'lastMessage': content,
       'lastMessageAt': firestore.FieldValue.serverTimestamp(),
       'lastSenderId': senderId,
@@ -866,11 +1147,13 @@ class FirestoreService {
   }
 
   Future<void> sendSupportReply({
+    required String franchiseId,
     required String chatId,
     required String senderId,
     required String content,
   }) async {
     await sendMessage(
+      franchiseId,
       chatId: chatId,
       senderId: senderId,
       content: content,
@@ -878,8 +1161,10 @@ class FirestoreService {
     );
   }
 
-  Stream<List<Message>> streamChatMessages(String chatId) {
+  Stream<List<Message>> streamChatMessages(String franchiseId, String chatId) {
     return _db
+        .collection('franchises')
+        .doc(franchiseId)
         .collection(_supportChats)
         .doc(chatId)
         .collection('messages')
@@ -899,8 +1184,10 @@ class FirestoreService {
   }
 
   // --- AUDIT LOGS ---
-  Stream<List<AuditLog>> getAuditLogs({String? userId, String? action}) {
-    firestore.Query query = _db.collection('audit_logs');
+  Stream<List<AuditLog>> getAuditLogs(String franchiseId,
+      {String? userId, String? action}) {
+    firestore.Query query =
+        _db.collection('franchises').doc(franchiseId).collection('audit_logs');
     if (userId != null) {
       query = query.where('userId', isEqualTo: userId);
     }
@@ -916,21 +1203,33 @@ class FirestoreService {
   }
 
   // --- ANALYTICS DASHBOARD / EXPORT ---
-  Future<AnalyticsSummary?> getAnalyticsSummary(
+  Future<AnalyticsSummary?> getAnalyticsSummary(String franchiseId,
       {required String period}) async {
-    final doc = await _db.collection('analytics_summaries').doc(period).get();
+    final doc = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('analytics_summaries')
+        .doc(period)
+        .get();
     if (!doc.exists || doc.data() == null) return null;
     return AnalyticsSummary.fromFirestore(doc.data()!, doc.id);
   }
 
-  Future<String> exportAnalyticsToCsv({required String period}) async {
-    final summary = await getAnalyticsSummary(period: period);
+  Future<String> exportAnalyticsToCsv(String franchiseId,
+      {required String period}) async {
+    final summary = await getAnalyticsSummary(franchiseId, period: period);
     if (summary == null) return '';
     return ExportUtils.analyticsSummaryToCsv(summary);
   }
 
-  Future<String> exportMenuCsv() async {
-    final snap = await _db.collection(_menuItems).get();
+  Future<String> exportMenuCsv(
+    String franchiseId,
+  ) async {
+    final snap = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_menuItems)
+        .get();
     final items =
         snap.docs.map((d) => MenuItem.fromFirestore(d.data(), d.id)).toList();
     return ExportUtils.menuItemsToCsv(items);
@@ -943,10 +1242,15 @@ class FirestoreService {
 
   // ===================== DYNAMIC CATEGORY SCHEMA SUPPORT =====================
 
-  Future<Map<String, dynamic>?> getCategorySchema(String categoryId) async {
+  Future<Map<String, dynamic>?> getCategorySchema(
+      String franchiseId, String categoryId) async {
     try {
-      final doc =
-          await _db.collection('category_schemas').doc(categoryId).get();
+      final doc = await _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('category_schemas')
+          .doc(categoryId)
+          .get();
       return doc.exists ? doc.data() : null;
     } catch (e, stack) {
       _logFirestoreError('getCategorySchema', e, stack);
@@ -954,21 +1258,35 @@ class FirestoreService {
     }
   }
 
-  Future<void> setCategorySchema(
-      String categoryId, Map<String, dynamic> schema) async {
+  Future<void> setCategorySchema(String franchiseId, String categoryId,
+      Map<String, dynamic> schema) async {
     await _db
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('category_schemas')
         .doc(categoryId)
         .set(schema, firestore.SetOptions(merge: true));
   }
 
-  Future<List<String>> getAllCategorySchemaIds() async {
-    final snap = await _db.collection('category_schemas').get();
+  Future<List<String>> getAllCategorySchemaIds(
+    String franchiseId,
+  ) async {
+    final snap = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('category_schemas')
+        .get();
     return snap.docs.map((d) => d.id).toList();
   }
 
-  Future<List<Map<String, dynamic>>> getAllCategorySchemas() async {
-    final snapshot = await _db.collection('category_schemas').get();
+  Future<List<Map<String, dynamic>>> getAllCategorySchemas(
+    String franchiseId,
+  ) async {
+    final snapshot = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('category_schemas')
+        .get();
     return snapshot.docs.map((doc) {
       final data = doc.data();
       data['id'] = doc.id;
@@ -976,9 +1294,14 @@ class FirestoreService {
     }).toList();
   }
 
-  Future<void> updateMenuItemCustomizations(
+  Future<void> updateMenuItemCustomizations(String franchiseId,
       String menuItemId, List<Customization> customizations) async {
-    await _db.collection(_menuItems).doc(menuItemId).update({
+    await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_menuItems)
+        .doc(menuItemId)
+        .update({
       'customizations': customizations.map((c) => c.toFirestore()).toList(),
       'lastModified': firestore.FieldValue.serverTimestamp(),
       'lastModifiedBy': currentUserId ?? 'system',
@@ -986,10 +1309,11 @@ class FirestoreService {
   }
 
   Future<void> updateMenuItemCustomizationsWithAudit(
-      String menuItemId, List<Customization> customizations,
+      String franchiseId, String menuItemId, List<Customization> customizations,
       {String? userId}) async {
-    await updateMenuItemCustomizations(menuItemId, customizations);
+    await updateMenuItemCustomizations(franchiseId, menuItemId, customizations);
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       action: 'update_menu_item_customizations',
       userId: userId ?? currentUserId ?? 'unknown',
       details: {
@@ -1000,8 +1324,13 @@ class FirestoreService {
   }
 
   Future<List<Customization>> getMenuItemCustomizations(
-      String menuItemId) async {
-    final doc = await _db.collection(_menuItems).doc(menuItemId).get();
+      String franchiseId, String menuItemId) async {
+    final doc = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection(_menuItems)
+        .doc(menuItemId)
+        .get();
     if (!doc.exists || doc.data() == null) return [];
     final data = doc.data()!;
     if (data['customizations'] == null) return [];
@@ -1010,10 +1339,13 @@ class FirestoreService {
         .toList();
   }
 
-  Stream<List<MenuItem>> getMenuItemsByIds(List<String> ids) {
+  Stream<List<MenuItem>> getMenuItemsByIds(
+      String franchiseId, List<String> ids) {
     if (ids.isEmpty) return Stream.value([]);
     if (ids.length <= 10) {
       return _db
+          .collection('franchises')
+          .doc(franchiseId)
           .collection(_menuItems)
           .where(firestore.FieldPath.documentId, whereIn: ids)
           .snapshots()
@@ -1026,6 +1358,8 @@ class FirestoreService {
         final batchIds =
             ids.sublist(i, i + 10 > ids.length ? ids.length : i + 10);
         batches.add(_db
+            .collection('franchises')
+            .doc(franchiseId)
             .collection(_menuItems)
             .where(firestore.FieldPath.documentId, whereIn: batchIds)
             .snapshots()
@@ -1099,17 +1433,23 @@ class FirestoreService {
   }
 
   /// --- USER ---
-  Future<void> addAddressForUser(String userId, Address address) async {
-    final userRef =
-        firestore.FirebaseFirestore.instance.collection('users').doc(userId);
+  Future<void> addAddressForUser(
+      String franchiseId, String userId, Address address) async {
+    final userRef = firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('users')
+        .doc(userId);
     await userRef.update({
       'addresses': firestore.FieldValue.arrayUnion([address.toMap()])
     });
   }
 
   Future<void> updateAddressForUser(
-      String userId, Address updatedAddress) async {
+      String franchiseId, String userId, Address updatedAddress) async {
     final userDoc = await firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('users')
         .doc(userId)
         .get();
@@ -1122,14 +1462,19 @@ class FirestoreService {
     if (index != -1) {
       addresses[index] = updatedAddress.toMap();
       await firestore.FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(franchiseId)
           .collection('users')
           .doc(userId)
           .update({'addresses': addresses});
     }
   }
 
-  Future<void> removeAddressForUser(String userId, String addressId) async {
+  Future<void> removeAddressForUser(
+      String franchiseId, String userId, String addressId) async {
     final userDoc = await firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('users')
         .doc(userId)
         .get();
@@ -1140,13 +1485,18 @@ class FirestoreService {
     addresses.removeWhere((a) => a['id'] == addressId);
 
     await firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('users')
         .doc(userId)
         .update({'addresses': addresses});
   }
 
-  Stream<List<MenuItem>> getFavoriteMenuItemsForUser(String userId) {
+  Stream<List<MenuItem>> getFavoriteMenuItemsForUser(
+      String franchiseId, String userId) {
     return _db
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('users')
         .doc(userId)
         .collection('favorites')
@@ -1157,9 +1507,11 @@ class FirestoreService {
             }).toList());
   }
 
-  Future<void> addFavoriteMenuItemForUser(
-      String userId, Map<String, dynamic> favoriteItem) async {
+  Future<void> addFavoriteMenuItemForUser(String franchiseId, String userId,
+      Map<String, dynamic> favoriteItem) async {
     await firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('users')
         .doc(userId)
         .update({
@@ -1168,8 +1520,10 @@ class FirestoreService {
   }
 
   Future<void> removeFavoriteMenuItemForUser(
-      String userId, String menuItemId) async {
+      String franchiseId, String userId, String menuItemId) async {
     final doc = await firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('users')
         .doc(userId)
         .get();
@@ -1180,6 +1534,8 @@ class FirestoreService {
     current.removeWhere((f) => f['menuItemId'] == menuItemId);
 
     await firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('users')
         .doc(userId)
         .update({
@@ -1187,21 +1543,39 @@ class FirestoreService {
     });
   }
 
-  Future<admin_user.User?> getUser(String userId) async {
-    final doc = await _db.collection('users').doc(userId).get();
+  Future<admin_user.User?> getUser(String franchiseId, String userId) async {
+    final doc = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('users')
+        .doc(userId)
+        .get();
     if (!doc.exists) return null;
     return admin_user.User.fromFirestore(doc.data()!, doc.id);
   }
 
-  Future<void> addUser(admin_user.User user) async {
-    await _db.collection('users').doc(user.id).set(user.toFirestore());
+  Future<void> addUser(String franchiseId, admin_user.User user) async {
+    await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('users')
+        .doc(user.id)
+        .set(user.toFirestore());
   }
 
-  Stream<admin_user.User?> currentUserStream() {
+  Stream<admin_user.User?> currentUserStream(
+    String franchiseId,
+  ) {
     final uid = auth.currentUser?.uid;
     if (uid == null) return const Stream.empty();
 
-    return _db.collection('users').doc(uid).snapshots().map((doc) {
+    return _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('users')
+        .doc(uid)
+        .snapshots()
+        .map((doc) {
       final data = doc.data();
       if (data != null) {
         return admin_user.User.fromFirestore(data, doc.id);
@@ -1211,13 +1585,21 @@ class FirestoreService {
     });
   }
 
-  Stream<admin_user.User?> appUserStream() {
+  Stream<admin_user.User?> appUserStream(
+    String franchiseId,
+  ) {
     return fb_auth.FirebaseAuth.instance
         .authStateChanges()
         .asyncExpand((fbUser) {
       if (fbUser == null) return Stream.value(null);
       print('Auth user detected: ${fbUser.uid}');
-      return _db.collection('users').doc(fbUser.uid).snapshots().map((snap) {
+      return _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('users')
+          .doc(fbUser.uid)
+          .snapshots()
+          .map((snap) {
         print('Firestore doc for ${fbUser.uid}: exists=${snap.exists}');
         if (snap.exists && snap.data() != null) {
           print('User data: ${snap.data()}');
@@ -1230,9 +1612,15 @@ class FirestoreService {
     });
   }
 
-  Stream<admin_user.User?> userStream(String uid) {
-    print('[FirestoreService] userStream($uid) CALLED');
-    return _db.collection('users').doc(uid).snapshots().map((doc) {
+  Stream<admin_user.User?> userStream(String uid, String franchiseId) {
+    print('[FirestoreService] userStream($uid, $franchiseId) CALLED');
+    return _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('users')
+        .doc(uid)
+        .snapshots()
+        .map((doc) {
       print('Firestore doc for $uid: exists=${doc.exists} data=${doc.data()}');
       final data = doc.data();
       if (doc.exists && data != null) {
@@ -1254,12 +1642,16 @@ class FirestoreService {
   }
 
   /// Returns total revenue for today
-  Future<double> getTotalRevenueToday() async {
+  Future<double> getTotalRevenueToday(
+    String franchiseId,
+  ) async {
     final now = DateTime.now(); // local
     final localMidnight = DateTime(now.year, now.month, now.day);
     final utcStart = localMidnight.toUtc();
     final utcEnd = utcStart.add(const Duration(days: 1));
     final snapshot = await _db
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('orders')
         .where('timestamp',
             isGreaterThanOrEqualTo: firestore.Timestamp.fromDate(utcStart))
@@ -1277,7 +1669,8 @@ class FirestoreService {
   }
 
   /// Returns total revenue for a given period: 'week' or 'month'
-  Future<double> getTotalRevenueForPeriod(String period) async {
+  Future<double> getTotalRevenueForPeriod(
+      String franchiseId, String period) async {
     final now = DateTime.now(); // local time (not UTC!)
     late DateTime start, end;
 
@@ -1301,6 +1694,8 @@ class FirestoreService {
     final utcEnd = end.toUtc();
 
     final snapshot = await _db
+        .collection('franchises')
+        .doc(franchiseId)
         .collection('orders')
         .where('timestamp',
             isGreaterThanOrEqualTo: firestore.Timestamp.fromDate(utcStart))
@@ -1320,11 +1715,11 @@ class FirestoreService {
 }
 
 Stream<admin_user.User?> delayedUserStream(
-    FirestoreService firestoreService, String uid) async* {
+    FirestoreService firestoreService, String uid, String franchiseId) async* {
   print('[delayedUserStream] waiting 1s for Firestore token...');
   await Future.delayed(const Duration(seconds: 1));
-  print('[delayedUserStream] subscribing to userStream($uid)...');
-  await for (final value in firestoreService.userStream(uid)) {
+  print('[delayedUserStream] subscribing to userStream($uid, $franchiseId)...');
+  await for (final value in firestoreService.userStream(uid, franchiseId)) {
     print('[delayedUserStream] yielded value: $value');
     yield value;
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/core/models/promo.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import 'package:provider/provider.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class PromoFormDialog extends StatefulWidget {
   final Promo? promo;
@@ -45,6 +47,8 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
   }
 
   Future<void> _save() async {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
 
@@ -71,9 +75,9 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
     } else {
       // Fallback: Dialog saves directly if no callback supplied (legacy usage)
       if (widget.promo != null) {
-        await FirestoreService().updatePromo(promo);
+        await FirestoreService().updatePromo(franchiseId, promo);
       } else {
-        await FirestoreService().addPromo(promo);
+        await FirestoreService().addPromo(franchiseId, promo);
       }
     }
     if (mounted) Navigator.of(context).pop();

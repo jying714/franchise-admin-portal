@@ -24,10 +24,12 @@ class MenuItemCard extends StatefulWidget {
   final bool showDescription;
   final bool expanded;
   final EdgeInsets? margin;
+  final String franchiseId;
 
   const MenuItemCard({
     super.key,
     required this.menuItem,
+    required this.franchiseId,
     this.onAddToCart,
     this.showDescription = true,
     this.expanded = false,
@@ -67,11 +69,14 @@ class _MenuItemCardState extends State<MenuItemCard> {
           ? () async {
               if (isFavorited) {
                 await firestoreService.removeFavoriteMenuItemForUser(
-                    _userId!, widget.menuItem.id);
+                    widget.franchiseId, _userId!, widget.menuItem.id);
               } else {
                 await firestoreService.addFavoriteMenuItemForUser(
+                  widget.franchiseId,
                   _userId!,
-                  {'menuItemId': widget.menuItem.id},
+                  {
+                    'menuItemId': widget.menuItem.id
+                  }, // pass as Map<String, dynamic>
                 );
               }
               setState(() {});
@@ -350,8 +355,9 @@ class _MenuItemCardState extends State<MenuItemCard> {
                       _userId == null
                           ? _favoriteHeart(false, false, loc)
                           : StreamBuilder<List<MenuItem>>(
-                              stream: firestoreService
-                                  .getFavoriteMenuItemsForUser(_userId!),
+                              stream:
+                                  firestoreService.getFavoriteMenuItemsForUser(
+                                      widget.franchiseId, _userId!),
                               builder: (context, snapshot) {
                                 if (snapshot.connectionState ==
                                     ConnectionState.waiting) {

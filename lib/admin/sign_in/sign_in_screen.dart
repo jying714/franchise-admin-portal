@@ -7,6 +7,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/social_sign_in_buttons.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -38,6 +39,8 @@ class _SignInScreenState extends State<SignInScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
 
     return Scaffold(
       backgroundColor: DesignTokens.backgroundColor,
@@ -78,6 +81,7 @@ class _SignInScreenState extends State<SignInScreen> {
                   ),
                 ),
               SocialSignInButtons(
+                franchiseId: franchiseId,
                 isLoading: _isLoading,
                 setLoading: _setLoading,
                 onSuccess: _handleSuccess,

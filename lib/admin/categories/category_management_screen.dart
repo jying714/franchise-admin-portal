@@ -6,7 +6,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'category_form_dialog.dart';
 import 'bulk_upload_dialog.dart';
 import 'category_search_bar.dart';
@@ -80,6 +80,8 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   }
 
   Future<void> _openCategoryDialog({Category? category}) async {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     if (!_canManageCategories(context) || _isLoading || _bulkLoading) return;
     await showDialog<Category>(
       context: context,
@@ -93,13 +95,13 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                   ?.id;
           try {
             if (category == null) {
-              await firestoreService.addCategory(saved);
+              await firestoreService.addCategory(franchiseId, saved);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content: Text(AppLocalizations.of(context)!.categoryAdded)),
               );
             } else {
-              await firestoreService.updateCategory(saved);
+              await firestoreService.updateCategory(franchiseId, saved);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content:
@@ -110,6 +112,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
             // Log error to Firestore
             try {
               await firestoreService.logError(
+                franchiseId,
                 message: e.toString(),
                 source: 'category_management_screen',
                 screen: 'CategoryManagementScreen',
@@ -141,6 +144,8 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
 
   Future<void> _deleteCategory(Category category,
       {bool showUndo = true}) async {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     if (!_canManageCategories(context) || _isLoading || _bulkLoading) return;
     final loc = AppLocalizations.of(context)!;
     final userId =
@@ -169,10 +174,11 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     if (confirm == true) {
       setState(() => _isLoading = true);
       try {
-        await firestoreService.deleteCategory(category.id);
+        await firestoreService.deleteCategory(franchiseId, category.id);
       } catch (e, stack) {
         try {
           await firestoreService.logError(
+            franchiseId,
             message: e.toString(),
             source: 'category_management_screen',
             screen: 'CategoryManagementScreen',
@@ -199,10 +205,11 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
           onUndo: () async {
             setState(() => _isLoading = true);
             try {
-              await firestoreService.addCategory(category);
+              await firestoreService.addCategory(franchiseId, category);
             } catch (e, stack) {
               try {
                 await firestoreService.logError(
+                  franchiseId,
                   message: e.toString(),
                   source: 'category_management_screen',
                   screen: 'CategoryManagementScreen',
@@ -233,6 +240,8 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   }
 
   Future<void> _bulkDeleteCategories() async {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     if (!_canManageCategories(context) || _isLoading || _bulkLoading) return;
     final loc = AppLocalizations.of(context)!;
     final userId =
@@ -267,11 +276,12 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
       setState(() => _bulkLoading = true);
       try {
         for (final c in selectedCats) {
-          await firestoreService.deleteCategory(c.id);
+          await firestoreService.deleteCategory(franchiseId, c.id);
         }
       } catch (e, stack) {
         try {
           await firestoreService.logError(
+            franchiseId,
             message: e.toString(),
             source: 'category_management_screen',
             screen: 'CategoryManagementScreen',
@@ -300,11 +310,12 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
           setState(() => _bulkLoading = true);
           try {
             for (final c in selectedCats) {
-              await firestoreService.addCategory(c);
+              await firestoreService.addCategory(franchiseId, c);
             }
           } catch (e, stack) {
             try {
               await firestoreService.logError(
+                franchiseId,
                 message: e.toString(),
                 source: 'category_management_screen',
                 screen: 'CategoryManagementScreen',
@@ -502,6 +513,8 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final loc = AppLocalizations.of(context)!;
     final isMobile = MediaQuery.of(context).size.width < 600;
     final colorScheme = Theme.of(context).colorScheme;
@@ -589,7 +602,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                       // Grid/List area
                       Expanded(
                         child: StreamBuilder<List<Category>>(
-                          stream: firestoreService.getCategories(),
+                          stream: firestoreService.getCategories(franchiseId),
                           builder: (context, snapshot) {
                             if (snapshot.hasError) {
                               return EmptyStateWidget(

@@ -8,12 +8,16 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_stat_card.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/revenue_stat_card.dart';
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class DashboardHomeScreen extends StatelessWidget {
   const DashboardHomeScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final isMobile = MediaQuery.of(context).size.width < 800;
     // Responsive grid: 2 columns mobile, 4 desktop.
     final gridColumns = isMobile ? 1 : 4;
@@ -41,7 +45,7 @@ class DashboardHomeScreen extends StatelessWidget {
                   tooltip: 'Total orders placed today',
                   semanticLabel: 'Total orders placed today',
                 ),
-                RevenueStatCard(),
+                RevenueStatCard(franchiseId: franchiseId),
                 KpiCard(title: "Active Promotions", value: "--", loading: true),
                 NotificationsPanel(),
               ],

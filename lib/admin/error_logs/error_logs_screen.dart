@@ -9,6 +9,7 @@ import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/widgets/clear_filters_button.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_empty_state_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class ErrorLogsScreen extends StatefulWidget {
   const ErrorLogsScreen({super.key});
@@ -60,6 +61,8 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final loc = AppLocalizations.of(context)!;
     final userNotifier = Provider.of<UserProfileNotifier>(context);
     final appUser = userNotifier.user;
@@ -200,6 +203,7 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
               color: colorScheme.background,
               child: StreamBuilder<List<ErrorLog>>(
                 stream: context.read<FirestoreService>().streamErrorLogs(
+                      franchiseId,
                       severity: querySeverity,
                       source: _source,
                       screen: _screen,

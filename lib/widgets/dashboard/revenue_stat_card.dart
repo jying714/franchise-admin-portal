@@ -6,7 +6,9 @@ import 'package:intl/intl.dart';
 enum RevenuePeriod { daily, weekly, monthly }
 
 class RevenueStatCard extends StatefulWidget {
-  const RevenueStatCard({super.key});
+  final String franchiseId;
+  const RevenueStatCard({Key? key, required this.franchiseId})
+      : super(key: key);
 
   @override
   State<RevenueStatCard> createState() => _RevenueStatCardState();
@@ -37,15 +39,17 @@ class _RevenueStatCardState extends State<RevenueStatCard> {
     }
   }
 
-  Future<double> _getValue(BuildContext context) {
+  Future<double> _getValue(BuildContext context, String franchiseId) {
     final firestore = context.read<FirestoreService>();
     switch (_period) {
       case RevenuePeriod.daily:
-        return firestore.getTotalRevenueToday();
+        return firestore.getTotalRevenueToday(franchiseId);
       case RevenuePeriod.weekly:
-        return firestore.getTotalRevenueForPeriod('week');
+        return firestore.getTotalRevenueForPeriod(franchiseId, 'week');
       case RevenuePeriod.monthly:
-        return firestore.getTotalRevenueForPeriod('month');
+        return firestore.getTotalRevenueForPeriod(franchiseId, 'month');
+      default:
+        return Future.value(0);
     }
   }
 
@@ -105,7 +109,7 @@ class _RevenueStatCardState extends State<RevenueStatCard> {
                 padding: const EdgeInsets.all(20),
                 child: Center(
                   child: FutureBuilder<double>(
-                    future: _getValue(context),
+                    future: _getValue(context, widget.franchiseId),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return Column(

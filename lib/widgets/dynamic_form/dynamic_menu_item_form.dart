@@ -16,6 +16,7 @@ class DynamicMenuItemForm extends StatefulWidget {
   final MenuItem? initialItem;
   final void Function(MenuItem menuItem) onSave;
   final VoidCallback? onCancel;
+  final String franchiseId;
 
   const DynamicMenuItemForm({
     super.key,
@@ -23,6 +24,7 @@ class DynamicMenuItemForm extends StatefulWidget {
     this.initialItem,
     required this.onSave,
     this.onCancel,
+    required this.franchiseId,
   });
 
   @override
@@ -195,6 +197,7 @@ class _DynamicMenuItemFormState extends State<DynamicMenuItemForm> {
             template: widget.schema['includedIngredientsTemplate'] ?? {},
             onChanged: (updated) =>
                 setState(() => _includedIngredients = updated),
+            franchiseId: widget.franchiseId,
           ),
           const SizedBox(height: 16),
           DynamicArrayEditor(
@@ -203,11 +206,13 @@ class _DynamicMenuItemFormState extends State<DynamicMenuItemForm> {
             items: _optionalAddOns,
             template: widget.schema['optionalAddOnsTemplate'] ?? {},
             onChanged: (updated) => setState(() => _optionalAddOns = updated),
+            franchiseId: widget.franchiseId,
           ),
           const SizedBox(height: 16),
           CustomizationGroupEditor(
             customizations: _customizations,
             onChanged: (updated) => setState(() => _customizations = updated),
+            franchiseId: widget.franchiseId,
           ),
           const SizedBox(height: 24),
           Row(

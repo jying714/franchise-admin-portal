@@ -7,6 +7,7 @@ import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class OrderManagementScreen extends StatefulWidget {
   const OrderManagementScreen({super.key});
@@ -22,10 +23,11 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
   bool _showRefunded = true;
   List<order_model.Order> _lastOrders = [];
 
-  Future<void> _updateOrderStatus(
-      order_model.Order order, String newStatus, admin_user.User user) async {
+  Future<void> _updateOrderStatus(String franchiseId, order_model.Order order,
+      String newStatus, admin_user.User user) async {
     if (!(user.isOwner || user.isManager)) {
       await AuditLogService().addLog(
+        franchiseId: franchiseId,
         userId: user.id,
         action: 'unauthorized_order_status_change',
         targetType: 'order',
@@ -36,8 +38,9 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
       return;
     }
     await Provider.of<FirestoreService>(context, listen: false)
-        .updateOrderStatus(order.id, newStatus);
+        .updateOrderStatus(franchiseId, order.id, newStatus);
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       userId: user.id,
       action: 'update_order_status',
       targetType: 'order',
@@ -46,10 +49,11 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     );
   }
 
-  Future<void> _processRefund(
-      order_model.Order order, double amount, admin_user.User user) async {
+  Future<void> _processRefund(String franchiseId, order_model.Order order,
+      double amount, admin_user.User user) async {
     if (!user.isOwner && !user.isManager) {
       await AuditLogService().addLog(
+        franchiseId: franchiseId,
         userId: user.id,
         action: 'unauthorized_refund_attempt',
         targetType: 'order',
@@ -60,9 +64,10 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
       return;
     }
     await Provider.of<FirestoreService>(context, listen: false)
-        .refundOrder(order.id, amount: amount);
+        .refundOrder(franchiseId, order.id, amount: amount);
 
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       userId: user.id,
       action: 'refund_order',
       targetType: 'order',
@@ -89,6 +94,8 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
   }
 
   void _showRefundDialog(order_model.Order order, admin_user.User user) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final controller =
         TextEditingController(text: order.total.toStringAsFixed(2));
     showDialog(
@@ -110,7 +117,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
               final amount = double.tryParse(controller.text) ?? 0.0;
               if (amount > 0 && amount <= order.total) {
                 Navigator.of(context).pop();
-                _processRefund(order, amount, user);
+                _processRefund(franchiseId, order, amount, user);
               }
             },
             child: const Text("Refund"),
@@ -121,6 +128,8 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
   }
 
   void _showStatusDialog(order_model.Order order, admin_user.User user) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final List<String> allowedStatuses = [
       'Placed',
       'Preparing',
@@ -153,7 +162,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
               onPressed: () {
                 Navigator.of(context).pop();
                 if (selected != order.status) {
-                  _updateOrderStatus(order, selected, user);
+                  _updateOrderStatus(franchiseId, order, selected, user);
                 }
               },
               child: const Text("Update"),
@@ -184,9 +193,10 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     }).toList();
   }
 
-  void _showExportDialog(
-      List<order_model.Order> orders, admin_user.User user) async {
+  void _showExportDialog(String franchiseId, List<order_model.Order> orders,
+      admin_user.User user) async {
     await AuditLogService().addLog(
+      franchiseId: franchiseId,
       userId: user.id,
       action: 'export_orders',
       targetType: 'order',
@@ -199,6 +209,8 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final user = Provider.of<admin_user.User?>(context);
 
     if (user == null) {
@@ -214,6 +226,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     if (!(user.isOwner || user.isManager)) {
       Future.microtask(() {
         AuditLogService().addLog(
+          franchiseId: franchiseId,
           userId: user.id,
           action: 'unauthorized_order_management_access',
           targetType: 'order_management',
@@ -264,13 +277,13 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
             tooltip: "Export Orders",
             onPressed: () {
               // Export currently filtered orders
-              _showExportDialog(_lastOrders, user);
+              _showExportDialog(franchiseId, _lastOrders, user);
             },
           )
         ],
       ),
       body: StreamBuilder<List<order_model.Order>>(
-        stream: firestoreService.getAllOrdersStream(),
+        stream: firestoreService.getAllOrdersStream(franchiseId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const LoadingShimmerWidget();

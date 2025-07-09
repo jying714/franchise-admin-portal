@@ -7,6 +7,7 @@ import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class StaffAccessScreen extends StatefulWidget {
   const StaffAccessScreen({super.key});
@@ -32,6 +33,8 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
         Provider.of<FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
     final canEdit = _canEditStaff(context);
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
 
     // Security: Only owners/managers can access. Others see branded error.
     if (!canEdit) {
@@ -118,7 +121,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                   // Staff List
                   Expanded(
                     child: StreamBuilder<List<admin_user.User>>(
-                      stream: firestoreService.getStaffUsers(),
+                      stream: firestoreService.getStaffUsers(franchiseId),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
@@ -245,9 +248,13 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                 child: Text(loc.cancelButton)),
             ElevatedButton(
               onPressed: () async {
+                final franchiseId =
+                    Provider.of<FranchiseProvider>(context, listen: false)
+                        .franchiseId!;
                 if (_formKey.currentState!.validate()) {
                   _formKey.currentState!.save();
                   await service.addStaffUser(
+                    franchiseId,
                     name: _name,
                     email: _email,
                     role: _role,
@@ -277,7 +284,10 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
               child: Text(loc.cancelButton)),
           ElevatedButton(
             onPressed: () async {
-              await service.removeStaffUser(user.id);
+              final franchiseId =
+                  Provider.of<FranchiseProvider>(context, listen: false)
+                      .franchiseId!;
+              await service.removeStaffUser(franchiseId, user.id);
               Navigator.of(context).pop();
             },
             child: Text(loc.staffRemoveButton),

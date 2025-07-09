@@ -4,6 +4,7 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/models/error_log.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class ErrorLogStatsBar extends StatelessWidget {
   final String? severity;
@@ -14,6 +15,8 @@ class ErrorLogStatsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final colorScheme = Theme.of(context).colorScheme;
     final loc = AppLocalizations.of(context)!;
 
@@ -24,6 +27,7 @@ class ErrorLogStatsBar extends StatelessWidget {
 
     return StreamBuilder<List<ErrorLog>>(
       stream: context.read<FirestoreService>().streamErrorLogs(
+            franchiseId,
             severity: severity,
             start: start,
             end: end,

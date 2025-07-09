@@ -8,12 +8,15 @@ import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/admin/promo/promo_form_dialog.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class PromoManagementScreen extends StatelessWidget {
   const PromoManagementScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final user = Provider.of<admin_user.User?>(context);
@@ -64,8 +67,10 @@ class PromoManagementScreen extends StatelessWidget {
                                 context: context,
                                 builder: (_) => PromoFormDialog(
                                   onSave: (promo) async {
-                                    await firestoreService.addPromo(promo);
+                                    await firestoreService.addPromo(
+                                        franchiseId, promo);
                                     await AuditLogService().addLog(
+                                      franchiseId: franchiseId,
                                       userId: user.id,
                                       action: 'add_promo',
                                       targetType: 'promo',
@@ -83,7 +88,7 @@ class PromoManagementScreen extends StatelessWidget {
                   // Promo list
                   Expanded(
                     child: StreamBuilder<List<Promo>>(
-                      stream: firestoreService.getPromotions(),
+                      stream: firestoreService.getPromotions(franchiseId),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
@@ -120,8 +125,10 @@ class PromoManagementScreen extends StatelessWidget {
                                             promo: promo,
                                             onSave: (updated) async {
                                               await firestoreService
-                                                  .updatePromo(updated);
+                                                  .updatePromo(
+                                                      franchiseId, updated);
                                               await AuditLogService().addLog(
+                                                franchiseId: franchiseId,
                                                 userId: user.id,
                                                 action: 'update_promo',
                                                 targetType: 'promo',
@@ -176,8 +183,12 @@ class PromoManagementScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () async {
-              await service.deletePromotion(promoId);
+              final franchiseId =
+                  Provider.of<FranchiseProvider>(context, listen: false)
+                      .franchiseId!;
+              await service.deletePromotion(franchiseId, promoId);
               await AuditLogService().addLog(
+                franchiseId: franchiseId,
                 userId: user.id,
                 action: 'delete_promo',
                 targetType: 'promo',

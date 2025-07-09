@@ -5,6 +5,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:franchise_admin_portal/core/models/promo.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/confirmation_dialog.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:provider/provider.dart';
 
 class PromoBulkUploadDialog extends StatefulWidget {
   final VoidCallback? onUploadComplete;
@@ -43,9 +45,12 @@ class _PromoBulkUploadDialogState extends State<PromoBulkUploadDialog> {
   }
 
   Future<void> _uploadAll() async {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+
     setState(() => isLoading = true);
     for (final promo in previewPromos) {
-      await FirestoreService().addPromo(promo);
+      await FirestoreService().addPromo(franchiseId, promo);
     }
     setState(() => isLoading = false);
     if (widget.onUploadComplete != null) widget.onUploadComplete!();

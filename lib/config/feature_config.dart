@@ -44,9 +44,11 @@ class FeatureConfig {
   bool analyticsExportEnabled = true;
 
   /// Loads toggles from Firestore (`config/features` doc).
-  Future<Map<String, bool>> load() async {
+  Future<Map<String, bool>> load(String franchiseId) async {
     try {
       final doc = await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(franchiseId)
           .collection('config')
           .doc('features')
           .get();
