@@ -16,6 +16,8 @@ import 'package:franchise_admin_portal/widgets/header/profile_icon_button.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+// Add this import:
+import 'package:franchise_admin_portal/core/providers/franchise_selector.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({Key? key}) : super(key: key);
@@ -35,8 +37,38 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     _sections = getSidebarSections();
   }
 
+  void _showFranchiseSelectorDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: SizedBox(
+          width: 420,
+          child: FranchiseSelector(
+            onSelected: (franchiseId) {
+              Provider.of<FranchiseProvider>(context, listen: false)
+                  .setFranchiseId(franchiseId);
+              Navigator.of(context).pop();
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Always listen for user profile changes
+    final userNotifier = Provider.of<UserProfileNotifier>(context);
+    final appUser = userNotifier.user;
+
+    if (userNotifier.loading || appUser == null || appUser.role == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    print(
+        'userNotifier.loading: ${userNotifier.loading}, appUser: $appUser, role: ${appUser?.role}');
+
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     print('AdminDashboardScreen build called');
@@ -46,8 +78,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final isMobile = MediaQuery.of(context).size.width < 800;
     final colorScheme = Theme.of(context).colorScheme;
     final loc = AppLocalizations.of(context)!;
-    final appUser = Provider.of<app.User?>(context, listen: false);
-    final String userRole = appUser?.role ?? "admin"; // Uses provider
+    final String userRole = appUser.role ?? "admin";
+    final bool isDeveloper = (appUser.role?.toLowerCase() ?? "") == "developer";
+    print(
+        'ROLE CHECK: appUser.role = ${appUser.role}, isDeveloper = $isDeveloper');
 
     final sections = _sections;
     if (sections.isEmpty) {
@@ -99,6 +133,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
               ),
             const Spacer(),
+            // --- SWITCH FRANCHISE BUTTON (DEVELOPER ONLY) ---
+            if (isDeveloper)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: IconButton(
+                  icon: Icon(Icons.swap_horiz, color: colorScheme.primary),
+                  tooltip: "Switch Franchise",
+                  onPressed: () => _showFranchiseSelectorDialog(context),
+                ),
+              ),
             NotificationsIconButton(),
             const SizedBox(width: 8),
             HelpIconButton(),
@@ -170,7 +214,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                     'sectionIndex': _selectedIndex,
                                     'sectionTitle': section.title,
                                   },
-                                  userId: appUser?.id,
+                                  userId: appUser.id,
                                 );
                                 print('Dashboard section error: $e\n$stack');
                                 return Center(

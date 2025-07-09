@@ -87,8 +87,9 @@ class HomeWrapper extends StatelessWidget {
       );
     }
 
-    // 5. Profile loaded, but not an admin/manager/owner (not authorized)
-    if (!(appUser.isOwner || appUser.isAdmin || appUser.isManager)) {
+    // 5. Profile loaded, but not an admin/manager/owner/developer (not authorized)
+    final allowedRoles = ['owner', 'admin', 'manager', 'developer'];
+    if (!allowedRoles.contains(appUser.role?.toLowerCase())) {
       print('User is not authorized (role: ${appUser.role})');
       return Scaffold(
         appBar: AppBar(title: Text(loc.adminDashboardTitle)),

@@ -22,6 +22,7 @@ import 'package:async/async.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/models/order.dart';
 import 'package:franchise_admin_portal/core/models/error_log.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 extension ErrorLogsService on FirestoreService {
   /// Fetches paginated, filterable error logs from Firestore.
@@ -111,6 +112,9 @@ class FirestoreService {
   static Order fromFirestore(Map<String, dynamic> data, String id) {
     return Order.fromFirestore(data, id);
   }
+
+  // ROLL UP analytics manually
+  final functions = FirebaseFunctions.instance;
 
   /// Get all ingredient metadata, with in-memory caching.
   Future<List<IngredientMetadata>> getAllIngredientMetadata(String franchiseId,
@@ -511,7 +515,7 @@ class FirestoreService {
   }
 
   Future<void> logError(
-    String franchiseId, {
+    String? franchiseId, {
     required String message,
     required String source,
     String? userId,
@@ -523,6 +527,7 @@ class FirestoreService {
     Map<String, dynamic>? deviceInfo,
     String? assignedTo,
   }) async {
+    print('Logging error for franchiseId=$franchiseId, message=$message');
     try {
       final data = <String, dynamic>{
         'message': message,
@@ -725,7 +730,7 @@ class FirestoreService {
     return ExportUtils.promosToCsv(promos);
   }
 
-// --- Promotion Aliases for Admin UI Compatibility ---
+  // --- Promotion Aliases for Admin UI Compatibility ---
   Stream<List<Promo>> getPromotions(String franchiseId) =>
       getPromos(franchiseId);
   Future<void> deletePromotion(String franchiseId, String promoId) =>
@@ -1711,6 +1716,20 @@ class FirestoreService {
       total += amount;
     }
     return total;
+  }
+
+  // ROLL UP analytics manually
+  Future<void> callRollupAnalytics(String franchiseId) async {
+    try {
+      final callable = functions.httpsCallable('rollupAnalyticsOnDemand');
+      final result = await callable.call(<String, dynamic>{
+        'franchiseId': franchiseId,
+      });
+      print('Rollup success: ${result.data}');
+    } on FirebaseFunctionsException catch (e) {
+      print('Rollup error: ${e.message}');
+      rethrow; // or handle in UI
+    }
   }
 }
 

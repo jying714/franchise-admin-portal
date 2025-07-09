@@ -20,19 +20,19 @@ import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'widgets/user_profile_notifier.dart'; // adjust path if needed
 import 'widgets/auth_profile_listener.dart'; // adjust path if needed
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_gate.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+void main() {
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
 
-  // Use a shared FirestoreService for error logging at app root
-  final firestoreService = FirestoreService();
+    // Use a shared FirestoreService for error logging at app root
+    final firestoreService = FirestoreService();
+    const defaultFranchiseId = 'unknown';
 
-  const defaultFranchiseId = 'unknown';
-
-  runZonedGuarded(() {
     // Global Flutter framework error logging
     FlutterError.onError = (FlutterErrorDetails details) async {
       FlutterError.dumpErrorToConsole(details);
@@ -65,27 +65,30 @@ void main() async {
           ),
           ChangeNotifierProvider(create: (_) => UserProfileNotifier()),
         ],
-        child: Builder(builder: (context) {
-          final firebaseUser = Provider.of<fb_auth.User?>(context);
-          final franchiseProvider = Provider.of<FranchiseProvider>(context);
-          final franchiseId =
-              franchiseProvider.franchiseId ?? 'defaultFranchiseId';
-
-          print('main.dart: firebaseUser?.email = ${firebaseUser?.email}');
-          print('main.dart: franchiseId = $franchiseId');
-
-          return AuthProfileListener(
-            franchiseId: franchiseId,
-            child: KeyedSubtree(
-              key: ValueKey(firebaseUser?.uid ?? 'nouid'),
-              child: FranchiseAdminPortalApp(franchiseId: franchiseId),
-            ),
-          );
-        }),
+        child: FranchiseGate(
+          child: Builder(
+            builder: (context) {
+              final firebaseUser = Provider.of<fb_auth.User?>(context);
+              final franchiseId =
+                  Provider.of<FranchiseProvider>(context).franchiseId!;
+              print('main.dart: firebaseUser?.email = ${firebaseUser?.email}');
+              print('main.dart: franchiseId = $franchiseId');
+              return AuthProfileListener(
+                franchiseId: franchiseId,
+                child: KeyedSubtree(
+                  key: ValueKey(firebaseUser?.uid ?? 'nouid'),
+                  child: FranchiseAdminPortalApp(franchiseId: franchiseId),
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }, (Object error, StackTrace stack) async {
     // Global Dart errors outside Flutter framework (async, etc)
+    final firestoreService = FirestoreService();
+    const defaultFranchiseId = 'unknown';
     await firestoreService.logError(
       defaultFranchiseId,
       message: error.toString(),

@@ -1,3 +1,4 @@
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/services/analytics_service.dart';
@@ -25,6 +26,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final userProfileNotifier = Provider.of<UserProfileNotifier>(context);
+    final userRole = userProfileNotifier.user?.role?.toLowerCase() ?? 'guest';
+
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final analyticsService =
@@ -60,9 +64,101 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                             fontSize: 22,
                           ),
                         ),
-                        const Spacer(),
+
+                        // Run Rollup Button (visible only for admin/owner/developer)
                         Builder(
                           builder: (context) {
+                            final firestoreService =
+                                Provider.of<FirestoreService>(context,
+                                    listen: false);
+                            final franchiseId = Provider.of<FranchiseProvider>(
+                                    context,
+                                    listen: false)
+                                .franchiseId!;
+                            final analyticsService =
+                                Provider.of<AnalyticsService>(context,
+                                    listen: false);
+                            final userRole = Provider.of<UserProfileNotifier>(
+                                        context,
+                                        listen: false)
+                                    .user
+                                    ?.role
+                                    ?.toLowerCase() ??
+                                'guest';
+
+                            final allowedRoles = {
+                              'admin',
+                              'owner',
+                              'developer'
+                            };
+                            if (!allowedRoles.contains(userRole)) {
+                              return const SizedBox.shrink();
+                            }
+
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.only(left: 12.0, right: 8.0),
+                              child: ElevatedButton.icon(
+                                icon: const Icon(Icons.refresh, size: 20),
+                                label: const Text("Run Rollup Now"),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: DesignTokens.primaryColor,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  textStyle: const TextStyle(
+                                      fontWeight: FontWeight.w600),
+                                ),
+                                onPressed: () async {
+                                  try {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              "Running analytics rollup...")),
+                                    );
+
+                                    await analyticsService
+                                        .runManualRollup(franchiseId);
+
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              "Analytics rollup complete!")),
+                                    );
+                                  } catch (e) {
+                                    firestoreService.logError(
+                                      franchiseId,
+                                      message:
+                                          'Error running manual rollup: $e',
+                                      source: 'AnalyticsScreen',
+                                      screen: 'ManualRollupButton',
+                                      severity: 'error',
+                                      stackTrace: e.toString(),
+                                    );
+
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                          content: Text("Rollup failed: $e")),
+                                    );
+                                  }
+                                },
+                              ),
+                            );
+                          },
+                        ),
+
+                        const Spacer(),
+
+                        // Export CSV IconButton
+                        Builder(
+                          builder: (context) {
+                            final analyticsService =
+                                Provider.of<AnalyticsService>(context,
+                                    listen: false);
+                            final franchiseId = Provider.of<FranchiseProvider>(
+                                    context,
+                                    listen: false)
+                                .franchiseId!;
                             return IconButton(
                               icon: const Icon(Icons.download_rounded,
                                   color: Colors.black87),
@@ -75,14 +171,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                                   (s) => s.period == _selectedPeriod,
                                   orElse: () => summaries.first,
                                 );
-
                                 if (current == null) return;
                                 showDialog(
                                   context: context,
                                   builder: (_) =>
                                       ExportAnalyticsDialogSingleSummary(
-                                    summary: current,
-                                  ),
+                                          summary: current),
                                 );
                               },
                             );
@@ -91,6 +185,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       ],
                     ),
                   ),
+
                   // Analytics Content
                   Expanded(
                     child: StreamBuilder<List<AnalyticsSummary>>(

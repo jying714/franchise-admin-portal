@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logging/logging.dart';
@@ -206,6 +207,18 @@ class AnalyticsService {
       if (count != null) 'count': count,
       if (userId != null) 'user_id': userId,
     });
+  }
+
+  /// Calls the cloud function 'rollupAnalyticsOnDemand' to trigger a manual rollup.
+  Future<void> runManualRollup(String franchiseId) async {
+    try {
+      final callable =
+          FirebaseFunctions.instance.httpsCallable('rollupAnalyticsOnDemand');
+      await callable.call({'franchiseId': franchiseId});
+    } catch (e) {
+      // Optionally handle/log the error here
+      rethrow; // or just throw to propagate error
+    }
   }
 
   // =======================

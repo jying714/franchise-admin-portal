@@ -1,24 +1,43 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-/// A provider to hold and expose the current user's franchiseId
-/// This should be set after loading the user profile from Firestore.
 class FranchiseProvider extends ChangeNotifier {
   String? _franchiseId;
 
-  /// Returns the currently set franchiseId, or null if not set.
   String? get franchiseId => _franchiseId;
 
-  /// Set the franchiseId and notify listeners if changed.
-  void setFranchiseId(String? id) {
-    if (_franchiseId != id) {
+  FranchiseProvider() {
+    _loadFranchiseId();
+  }
+
+  // Load from local storage on startup
+  Future<void> _loadFranchiseId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getString('selectedFranchiseId');
+    if (id != null && _franchiseId != id) {
       _franchiseId = id;
       notifyListeners();
     }
   }
 
-  /// Clear franchiseId (e.g. on sign out)
-  void clear() {
+  void setFranchiseId(String? id) async {
+    if (_franchiseId != id) {
+      _franchiseId = id;
+      notifyListeners();
+      // Save to local storage
+      final prefs = await SharedPreferences.getInstance();
+      if (id != null) {
+        await prefs.setString('selectedFranchiseId', id);
+      } else {
+        await prefs.remove('selectedFranchiseId');
+      }
+    }
+  }
+
+  void clear() async {
     _franchiseId = null;
     notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('selectedFranchiseId');
   }
 }
