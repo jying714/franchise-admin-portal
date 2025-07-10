@@ -16,7 +16,7 @@ class PromoManagementScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final user = Provider.of<admin_user.User?>(context);
@@ -185,7 +185,7 @@ class PromoManagementScreen extends StatelessWidget {
             onPressed: () async {
               final franchiseId =
                   Provider.of<FranchiseProvider>(context, listen: false)
-                      .franchiseId!;
+                      .franchiseId;
               await service.deletePromotion(franchiseId, promoId);
               await AuditLogService().addLog(
                 franchiseId: franchiseId,

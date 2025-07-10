@@ -2,9 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FranchiseProvider extends ChangeNotifier {
-  String? _franchiseId;
-
-  String? get franchiseId => _franchiseId;
+  String _franchiseId = 'unknown';
+  String get franchiseId => _franchiseId;
 
   FranchiseProvider() {
     _loadFranchiseId();
@@ -20,9 +19,10 @@ class FranchiseProvider extends ChangeNotifier {
     }
   }
 
-  void setFranchiseId(String? id) async {
-    if (_franchiseId != id) {
-      _franchiseId = id;
+  Future<void> setFranchiseId(String? id) async {
+    final value = id ?? 'unknown';
+    if (_franchiseId != value) {
+      _franchiseId = value;
       notifyListeners();
       // Save to local storage
       final prefs = await SharedPreferences.getInstance();
@@ -34,8 +34,8 @@ class FranchiseProvider extends ChangeNotifier {
     }
   }
 
-  void clear() async {
-    _franchiseId = null;
+  Future<void> clear() async {
+    _franchiseId = 'unknown';
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('selectedFranchiseId');

@@ -37,7 +37,7 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
 
   Future<void> _addComment() async {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final text = _commentController.text.trim();
     if (text.isEmpty) return;
     setState(() => _isCommenting = true);
@@ -65,7 +65,7 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
 
   Future<void> _toggleResolved() async {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     setState(() => _isResolving = true);
     try {
       await context
@@ -81,7 +81,7 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
 
   Future<void> _toggleArchived() async {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     setState(() => _isArchiving = true);
     try {
       await context
@@ -109,7 +109,7 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
   @override
   Widget build(BuildContext context) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final colorScheme = Theme.of(context).colorScheme;
     final loc = AppLocalizations.of(context)!;
 

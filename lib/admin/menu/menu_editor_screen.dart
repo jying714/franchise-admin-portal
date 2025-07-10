@@ -508,7 +508,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
   @override
   Widget build(BuildContext context) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final firestore = Provider.of<FirestoreService>(context, listen: false);
     final user = Provider.of<UserProfileNotifier>(context).user;
     final loc = AppLocalizations.of(context)!;

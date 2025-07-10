@@ -173,7 +173,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   @override
   Widget build(BuildContext context) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final firestore = Provider.of<FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
     final canEdit = _canEdit(context);

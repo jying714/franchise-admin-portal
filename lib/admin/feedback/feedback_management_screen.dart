@@ -25,7 +25,7 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
@@ -381,7 +381,7 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
       BuildContext context, FirestoreService service, String feedbackId) {
     final loc = AppLocalizations.of(context)!;
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(

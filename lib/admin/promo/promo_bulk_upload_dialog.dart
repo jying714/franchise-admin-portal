@@ -46,7 +46,7 @@ class _PromoBulkUploadDialogState extends State<PromoBulkUploadDialog> {
 
   Future<void> _uploadAll() async {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
 
     setState(() => isLoading = true);
     for (final promo in previewPromos) {

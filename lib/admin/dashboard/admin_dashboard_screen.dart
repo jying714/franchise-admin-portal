@@ -58,6 +58,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     // Always listen for user profile changes
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+
+    // GUARD: Only proceed if franchiseId is ready
+    if (franchiseId == 'unknown') {
+      // Optionally, show an explicit loading message
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
     final userNotifier = Provider.of<UserProfileNotifier>(context);
     final appUser = userNotifier.user;
 
@@ -69,8 +81,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     print(
         'userNotifier.loading: ${userNotifier.loading}, appUser: $appUser, role: ${appUser?.role}');
 
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     print('AdminDashboardScreen build called');
 
     final firestoreService =

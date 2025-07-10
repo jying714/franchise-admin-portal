@@ -37,7 +37,7 @@ class _DynamicMenuItemEditorScreenState
     super.didChangeDependencies();
     if (_selectedCategoryId != null && _schema == null) {
       final franchiseId =
-          Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+          Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
       _loadSchema(franchiseId, _selectedCategoryId!);
     }
   }
@@ -150,7 +150,7 @@ class _DynamicMenuItemEditorScreenState
   @override
   Widget build(BuildContext context) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final loc = AppLocalizations.of(context)!;
     final firestore = Provider.of<FirestoreService>(context, listen: false);
     final colorScheme = Theme.of(context).colorScheme;
@@ -207,7 +207,7 @@ class _DynamicMenuItemEditorScreenState
                       widget.onCategorySelected?.call(v);
                       final franchiseId =
                           Provider.of<FranchiseProvider>(context, listen: false)
-                              .franchiseId!;
+                              .franchiseId;
                       _loadSchema(franchiseId, v);
                     }
                   },

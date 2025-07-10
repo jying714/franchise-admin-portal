@@ -65,7 +65,7 @@ class DeliveryAddressTile extends StatelessWidget {
                   onSave: (updatedAddress) async {
                     final franchiseId =
                         Provider.of<FranchiseProvider>(context, listen: false)
-                            .franchiseId!;
+                            .franchiseId;
                     await firestoreService.updateAddressForUser(
                         franchiseId, user.uid, updatedAddress);
                     if (!context.mounted) return;

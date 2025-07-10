@@ -30,7 +30,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     final userRole = userProfileNotifier.user?.role?.toLowerCase() ?? 'guest';
 
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final analyticsService =
         Provider.of<AnalyticsService>(context, listen: false);
     final firestoreService =
@@ -74,7 +74,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                             final franchiseId = Provider.of<FranchiseProvider>(
                                     context,
                                     listen: false)
-                                .franchiseId!;
+                                .franchiseId;
                             final analyticsService =
                                 Provider.of<AnalyticsService>(context,
                                     listen: false);
@@ -158,7 +158,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                             final franchiseId = Provider.of<FranchiseProvider>(
                                     context,
                                     listen: false)
-                                .franchiseId!;
+                                .franchiseId;
+                            if (franchiseId == 'unknown') {
+                              return const Scaffold(
+                                  body: Center(
+                                      child: CircularProgressIndicator()));
+                            }
                             return IconButton(
                               icon: const Icon(Icons.download_rounded,
                                   color: Colors.black87),

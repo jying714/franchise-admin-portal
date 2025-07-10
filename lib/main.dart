@@ -70,7 +70,7 @@ void main() {
             builder: (context) {
               final firebaseUser = Provider.of<fb_auth.User?>(context);
               final franchiseId =
-                  Provider.of<FranchiseProvider>(context).franchiseId!;
+                  Provider.of<FranchiseProvider>(context).franchiseId;
               print('main.dart: firebaseUser?.email = ${firebaseUser?.email}');
               print('main.dart: franchiseId = $franchiseId');
               return AuthProfileListener(

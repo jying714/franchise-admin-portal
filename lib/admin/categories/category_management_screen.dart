@@ -81,7 +81,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
 
   Future<void> _openCategoryDialog({Category? category}) async {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     if (!_canManageCategories(context) || _isLoading || _bulkLoading) return;
     await showDialog<Category>(
       context: context,
@@ -145,7 +145,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   Future<void> _deleteCategory(Category category,
       {bool showUndo = true}) async {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     if (!_canManageCategories(context) || _isLoading || _bulkLoading) return;
     final loc = AppLocalizations.of(context)!;
     final userId =
@@ -241,7 +241,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
 
   Future<void> _bulkDeleteCategories() async {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     if (!_canManageCategories(context) || _isLoading || _bulkLoading) return;
     final loc = AppLocalizations.of(context)!;
     final userId =
@@ -514,7 +514,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final loc = AppLocalizations.of(context)!;
     final isMobile = MediaQuery.of(context).size.width < 600;
     final colorScheme = Theme.of(context).colorScheme;

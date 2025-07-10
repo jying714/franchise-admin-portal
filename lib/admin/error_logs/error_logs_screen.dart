@@ -62,7 +62,7 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
   @override
   Widget build(BuildContext context) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final loc = AppLocalizations.of(context)!;
     final userNotifier = Provider.of<UserProfileNotifier>(context);
     final appUser = userNotifier.user;

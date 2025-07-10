@@ -34,7 +34,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
     final loc = AppLocalizations.of(context)!;
     final canEdit = _canEditStaff(context);
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
 
     // Security: Only owners/managers can access. Others see branded error.
     if (!canEdit) {
@@ -250,7 +250,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
               onPressed: () async {
                 final franchiseId =
                     Provider.of<FranchiseProvider>(context, listen: false)
-                        .franchiseId!;
+                        .franchiseId;
                 if (_formKey.currentState!.validate()) {
                   _formKey.currentState!.save();
                   await service.addStaffUser(
@@ -286,7 +286,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
             onPressed: () async {
               final franchiseId =
                   Provider.of<FranchiseProvider>(context, listen: false)
-                      .franchiseId!;
+                      .franchiseId;
               await service.removeStaffUser(franchiseId, user.id);
               Navigator.of(context).pop();
             },

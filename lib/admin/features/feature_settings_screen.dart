@@ -17,19 +17,18 @@ class FeatureSettingsScreen extends StatefulWidget {
 }
 
 class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
-  late Future<Map<String, bool>> _featureToggles;
   bool _unauthorizedLogged = false; // Prevent duplicate audit log entries
-  late String franchiseId;
 
   @override
   void initState() {
     super.initState();
-    _featureToggles = FeatureConfig.instance.load(franchiseId);
   }
 
   Future<void> _updateFeature(
       String key, bool value, admin_user.User user) async {
     final loc = AppLocalizations.of(context)!;
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
 
     if (!user.isOwner) {
       await AuditLogService().addLog(
@@ -58,9 +57,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
         'newValue': value,
       },
     );
-    setState(() {
-      _featureToggles = FeatureConfig.instance.load(franchiseId);
-    });
+    setState(() {});
   }
 
   void _showUnauthorizedDialog(AppLocalizations loc) {
@@ -193,7 +190,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
                   // Feature toggles
                   Expanded(
                     child: FutureBuilder<Map<String, bool>>(
-                      future: _featureToggles,
+                      future: FeatureConfig.instance.load(franchiseId),
                       builder: (context, snapshot) {
                         if (!snapshot.hasData) {
                           return const LoadingShimmerWidget();

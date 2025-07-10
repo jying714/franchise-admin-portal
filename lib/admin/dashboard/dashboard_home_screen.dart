@@ -17,7 +17,7 @@ class DashboardHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final isMobile = MediaQuery.of(context).size.width < 800;
     // Responsive grid: 2 columns mobile, 4 desktop.
     final gridColumns = isMobile ? 1 : 4;

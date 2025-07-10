@@ -34,7 +34,7 @@ class _ExportMenuDialogState extends State<ExportMenuDialog> {
     setState(() => _loading = true);
     final firestore = Provider.of<FirestoreService>(context, listen: false);
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final List<MenuItem> items = await firestore.getMenuItemsOnce(franchiseId);
 
     final header = [

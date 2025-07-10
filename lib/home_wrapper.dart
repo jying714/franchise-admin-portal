@@ -7,6 +7,7 @@ import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.da
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 /// This widget gates all admin/dashboard content based on user and profile state.
 class HomeWrapper extends StatelessWidget {
@@ -16,6 +17,8 @@ class HomeWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final franchiseId =
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final firebaseUser = Provider.of<fb_auth.User?>(context);
     final profileNotifier = Provider.of<UserProfileNotifier>(context);
     final loc = AppLocalizations.of(context)!;
@@ -45,23 +48,31 @@ class HomeWrapper extends StatelessWidget {
       // Log to Firestore once (you can debounce or track state if needed)
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         try {
-          final firestoreService =
-              Provider.of<FirestoreService>(context, listen: false);
-          final user = Provider.of<fb_auth.User?>(context, listen: false);
-          await firestoreService.logError(
-            franchiseId,
-            message: 'User profile load error: ${profileNotifier.lastError}',
-            source: 'HomeWrapper',
-            userId: user?.uid,
-            screen: 'HomeWrapper',
-            stackTrace: profileNotifier.lastError is Error
-                ? (profileNotifier.lastError as Error).stackTrace?.toString()
-                : null,
-            contextData: {
-              'email': user?.email,
-              'profileLoading': profileNotifier.loading,
-            },
-          );
+          final currentFranchiseId =
+              Provider.of<FranchiseProvider>(context, listen: false)
+                  .franchiseId;
+          if (currentFranchiseId != 'unknown') {
+            final firestoreService =
+                Provider.of<FirestoreService>(context, listen: false);
+            final user = Provider.of<fb_auth.User?>(context, listen: false);
+            await firestoreService.logError(
+              currentFranchiseId,
+              message: 'User profile load error: ${profileNotifier.lastError}',
+              source: 'HomeWrapper',
+              userId: user?.uid,
+              screen: 'HomeWrapper',
+              stackTrace: profileNotifier.lastError is Error
+                  ? (profileNotifier.lastError as Error).stackTrace?.toString()
+                  : null,
+              contextData: {
+                'email': user?.email,
+                'profileLoading': profileNotifier.loading,
+              },
+            );
+          } else {
+            print(
+                'Skipping Firestore error logging; franchiseId not yet available.');
+          }
         } catch (e, stack) {
           print('[HomeWrapper] Failed to log error to Firestore: $e\n$stack');
         }

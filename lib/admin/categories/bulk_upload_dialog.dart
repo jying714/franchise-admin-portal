@@ -39,7 +39,7 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
   @override
   Widget build(BuildContext context) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
 
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);

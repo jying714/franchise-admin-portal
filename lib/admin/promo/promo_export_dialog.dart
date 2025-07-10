@@ -24,7 +24,7 @@ class _PromoExportDialogState extends State<PromoExportDialog> {
 
   Future<void> _exportPromos() async {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     setState(() => isExporting = true);
     final promos = await FirestoreService().getPromos(franchiseId).first;
     final csvHeader = [/* ... */];

@@ -16,7 +16,7 @@ class ChatManagementScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final user = Provider.of<admin_user.User?>(context);
@@ -170,7 +170,7 @@ class ChatManagementScreen extends StatelessWidget {
   void _confirmDelete(BuildContext context, FirestoreService service,
       String chatId, admin_user.User user) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(

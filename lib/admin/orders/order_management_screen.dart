@@ -95,7 +95,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
 
   void _showRefundDialog(order_model.Order order, admin_user.User user) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final controller =
         TextEditingController(text: order.total.toStringAsFixed(2));
     showDialog(
@@ -129,7 +129,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
 
   void _showStatusDialog(order_model.Order order, admin_user.User user) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final List<String> allowedStatuses = [
       'Placed',
       'Preparing',
@@ -210,7 +210,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final user = Provider.of<admin_user.User?>(context);
 
     if (user == null) {

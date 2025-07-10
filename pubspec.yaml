@@ -52,6 +52,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
   assets:
     - assets/images/logo.png
     - assets/images/logo_small.png
@@ -59,7 +60,6 @@ flutter:
     - assets/images/banner_placeholder.png
     - assets/icons/
     - assets/images/avatar_placeholder.png
-  generate: true
 
 flutter_icons:
   android: false

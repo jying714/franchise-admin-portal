@@ -163,7 +163,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
 
   Future<void> _bulkResolve(bool resolved) async {
     String franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final service = context.read<FirestoreService>();
     final ids = _selectedIds.toList();
     for (final id in ids) {
@@ -181,7 +181,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
 
   Future<void> _bulkArchive(bool archived) async {
     String franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final service = context.read<FirestoreService>();
     final ids = _selectedIds.toList();
     for (final id in ids) {
@@ -202,7 +202,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
 
   Future<void> _bulkDelete() async {
     String franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final service = context.read<FirestoreService>();
     final ids = _selectedIds.toList();
     for (final id in ids) {
@@ -221,7 +221,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
 
   Future<void> _addComment(String logId, String text) async {
     String franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     if (text.trim().isEmpty) return;
     final comment = {
       'text': text,
@@ -390,7 +390,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
   @override
   Widget build(BuildContext context) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     print('ErrorLogTable received logs: ${widget.logs.length}');
     final colorScheme = Theme.of(context).colorScheme;
     if (widget.logs.isEmpty) return _emptyState();

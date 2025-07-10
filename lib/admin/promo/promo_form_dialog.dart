@@ -48,7 +48,7 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
 
   Future<void> _save() async {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
 

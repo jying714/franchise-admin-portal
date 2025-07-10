@@ -40,7 +40,7 @@ class _SignInScreenState extends State<SignInScreen> {
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
 
     return Scaffold(
       backgroundColor: DesignTokens.backgroundColor,
