@@ -1,6 +1,8 @@
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 
+// *** REQUIRED: initialize the admin app ***
+admin.initializeApp();
 /**
  * Rolls up analytics for a given franchise (weekly summary).
  * @param {string} franchiseId - The franchise ID to roll up analytics for.
