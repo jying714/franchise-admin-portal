@@ -10,8 +10,17 @@ class FranchiseGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final franchiseProvider = Provider.of<FranchiseProvider>(context);
+
+    // --- Show spinner until franchiseId loaded from storage ---
+    if (franchiseProvider.loading) {
+      return const MaterialApp(
+        home: Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
     if (!franchiseProvider.isFranchiseSelected) {
-      // Wrap FranchiseSelector in MaterialApp so Scaffold gets Directionality
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         home: FranchiseSelector(
@@ -19,7 +28,7 @@ class FranchiseGate extends StatelessWidget {
         ),
       );
     }
-    // FranchiseId is set, show the real app (which will itself be a MaterialApp)
+
     return child;
   }
 }

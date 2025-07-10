@@ -3,10 +3,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class FranchiseProvider extends ChangeNotifier {
   String _franchiseId = 'unknown';
-  String get franchiseId => _franchiseId;
+  bool _loading = true; // <--- add this
 
+  String get franchiseId => _franchiseId;
   bool get isFranchiseSelected =>
       _franchiseId != null && _franchiseId != 'unknown';
+  bool get loading => _loading; // <--- and this
+
   FranchiseProvider() {
     _loadFranchiseId();
   }
@@ -17,8 +20,9 @@ class FranchiseProvider extends ChangeNotifier {
     final id = prefs.getString('selectedFranchiseId');
     if (id != null && _franchiseId != id) {
       _franchiseId = id;
-      notifyListeners();
     }
+    _loading = false; // <--- mark done loading
+    notifyListeners();
   }
 
   Future<void> setFranchiseId(String? id) async {
