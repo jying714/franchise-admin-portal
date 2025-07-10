@@ -19,7 +19,7 @@ class Address {
 
   factory Address.fromMap(Map<String, dynamic> data) {
     return Address(
-      id: data['id'] ?? '', // Add this line
+      id: data['id'] ?? '',
       street: data['street'] ?? '',
       city: data['city'] ?? '',
       state: data['state'] ?? '',
@@ -31,7 +31,7 @@ class Address {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id, // Add this line
+      'id': id,
       'street': street,
       'city': city,
       'state': state,
@@ -39,6 +39,15 @@ class Address {
       'label': label,
       if (name != null) 'name': name,
     };
+  }
+
+  /// Firestore integration
+  static Address fromFirestore(Map<String, dynamic> data, String docId) {
+    return Address.fromMap({...data, 'id': docId});
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return toMap();
   }
 
   /// Fallback for name display (for admin usage): name > label

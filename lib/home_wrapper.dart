@@ -1,82 +1,64 @@
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/widgets/branded_loading_screen.dart';
+import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+
 import 'package:franchise_admin_portal/admin/sign_in/sign_in_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/admin/developer/developer_dashboard_screen.dart';
+import 'package:franchise_admin_portal/admin/franchise/franchise_selector_screen.dart';
 
-/// This widget gates all admin/dashboard content based on user and profile state.
 class HomeWrapper extends StatelessWidget {
   final String franchiseId;
-
   const HomeWrapper({required this.franchiseId, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final firebaseUser = Provider.of<fb_auth.User?>(context);
     final profileNotifier = Provider.of<UserProfileNotifier>(context);
+    final franchiseProvider =
+        Provider.of<FranchiseProvider>(context, listen: false);
+    final firestoreService =
+        Provider.of<FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
 
-    print('HomeWrapper build called');
-    print('firebaseUser: $firebaseUser');
-    print('appUser: ${profileNotifier.user}');
-    print('appUser runtimeType: ${profileNotifier.user?.runtimeType}');
-
-    // 1. Not logged in (no Firebase user) => Sign-in
+    // 1. Not logged in
     if (firebaseUser == null) {
-      print('firebaseUser: null (not signed in)');
       return const SignInScreen();
     }
 
-    // 2. Loading Firestore user profile
-    if (profileNotifier.loading) {
-      print('appUser loading...');
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+    // 2. Loading
+    if (profileNotifier.loading || franchiseProvider.loading) {
+      return const BrandedLoadingScreen();
     }
 
-    // 3. Profile loading error
+    // 3. Error loading profile
     if (profileNotifier.lastError != null) {
-      print('Profile load error: ${profileNotifier.lastError}');
-      // Log to Firestore once (you can debounce or track state if needed)
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         try {
-          final currentFranchiseId =
-              Provider.of<FranchiseProvider>(context, listen: false)
-                  .franchiseId;
-          if (currentFranchiseId != 'unknown') {
-            final firestoreService =
-                Provider.of<FirestoreService>(context, listen: false);
-            final user = Provider.of<fb_auth.User?>(context, listen: false);
-            await firestoreService.logError(
-              currentFranchiseId,
-              message: 'User profile load error: ${profileNotifier.lastError}',
-              source: 'HomeWrapper',
-              userId: user?.uid,
-              screen: 'HomeWrapper',
-              stackTrace: profileNotifier.lastError is Error
-                  ? (profileNotifier.lastError as Error).stackTrace?.toString()
-                  : null,
-              contextData: {
-                'email': user?.email,
-                'profileLoading': profileNotifier.loading,
-              },
-            );
-          } else {
-            print(
-                'Skipping Firestore error logging; franchiseId not yet available.');
-          }
+          await firestoreService.logError(
+            franchiseProvider.franchiseId,
+            message: 'User profile load error: ${profileNotifier.lastError}',
+            source: 'HomeWrapper',
+            userId: firebaseUser.uid,
+            screen: 'HomeWrapper',
+            stackTrace: profileNotifier.lastError is Error
+                ? (profileNotifier.lastError as Error).stackTrace?.toString()
+                : null,
+            contextData: {
+              'email': firebaseUser.email,
+              'profileLoading': profileNotifier.loading,
+            },
+          );
         } catch (e, stack) {
-          print('[HomeWrapper] Failed to log error to Firestore: $e\n$stack');
+          print('[HomeWrapper] Failed to log error: $e\n$stack');
         }
       });
+
       return Scaffold(
         appBar: AppBar(title: Text(loc.adminDashboardTitle)),
         body: Center(
@@ -90,18 +72,13 @@ class HomeWrapper extends StatelessWidget {
 
     final appUser = profileNotifier.user;
 
-    // 4. Still null for some reason (shouldn't happen, but fallback)
+    // 4. Fallback check
     if (appUser == null) {
-      print('appUser is null, still loading user profile...');
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const BrandedLoadingScreen();
     }
 
-    // 5. Profile loaded, but not an admin/manager/owner/developer (not authorized)
-    final allowedRoles = ['owner', 'admin', 'manager', 'developer'];
-    if (!allowedRoles.contains(appUser.role?.toLowerCase())) {
-      print('User is not authorized (role: ${appUser.role})');
+    // 5. Status check
+    if (appUser.status?.toLowerCase() != 'active') {
       return Scaffold(
         appBar: AppBar(title: Text(loc.adminDashboardTitle)),
         body: Center(
@@ -113,8 +90,35 @@ class HomeWrapper extends StatelessWidget {
       );
     }
 
-    // 6. All checks pass—show the real dashboard
-    print('User is authorized: ${appUser.role}');
-    return const AdminDashboardScreen();
+    // 6. Developer flow: show franchise selector first
+    if (appUser.isDeveloper) {
+      if (!franchiseProvider.isFranchiseSelected) {
+        return const FranchiseSelectorScreen();
+      }
+      return const DeveloperDashboardScreen();
+    }
+
+    // 7. Admin/Manager/Owner flow: auto-lock to defaultFranchise
+    final lockedFranchise = appUser.defaultFranchise ?? 'unknown';
+    if (franchiseProvider.franchiseId != lockedFranchise) {
+      franchiseProvider.setFranchiseId(lockedFranchise);
+      return const BrandedLoadingScreen();
+    }
+
+    // 8. All good — show Admin Dashboard
+    Widget result = const AdminDashboardScreen();
+
+    // 9. Fallback (should never hit)
+    if (result == null) {
+      print('[HomeWrapper] Fallback reached — unexpected state.');
+      return Scaffold(
+        appBar: AppBar(title: Text(loc.adminDashboardTitle)),
+        body: const Center(
+          child: Text('Unexpected state. Please restart the app.'),
+        ),
+      );
+    }
+
+    return result;
   }
 }

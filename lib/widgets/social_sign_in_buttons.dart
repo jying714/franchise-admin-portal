@@ -62,6 +62,8 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
         addresses: [],
         language: "en",
         role: admin_user.User.roleAdmin,
+        status: "active",
+        defaultFranchise: franchiseId,
       );
 
       await firestoreService.addUser(franchiseId, newUser);

@@ -2,15 +2,15 @@ import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 
 class AuthProfileListener extends StatefulWidget {
-  final String franchiseId; // Added franchiseId here
   final Widget child;
 
   const AuthProfileListener({
     required this.child,
-    required this.franchiseId, // Require franchiseId
     super.key,
   });
 
@@ -20,6 +20,7 @@ class AuthProfileListener extends StatefulWidget {
 
 class _AuthProfileListenerState extends State<AuthProfileListener> {
   Object? _lastLoggedError;
+  bool _navigated = false;
 
   @override
   void didChangeDependencies() {
@@ -28,14 +29,15 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final notifier = Provider.of<UserProfileNotifier>(context, listen: false);
+    final franchiseProvider =
+        Provider.of<FranchiseProvider>(context, listen: false);
 
-    // Subscribe/re-subscribe to user profile on every dependency change.
-    notifier.listenToUser(
-        firestoreService, firebaseUser?.uid, widget.franchiseId);
+    // Subscribe to user profile based on current firebase user
+    notifier.listenToUser(firestoreService, firebaseUser?.uid, '');
 
-    // Immediately check and log any error.
-    _maybeLogProfileError(
-        notifier, firebaseUser, firestoreService, widget.franchiseId);
+    // Log errors and route after profile loads
+    _maybeLogProfileError(notifier, firebaseUser, firestoreService);
+    _handleRouting(notifier, firebaseUser, franchiseProvider);
   }
 
   @override
@@ -46,8 +48,7 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
         Provider.of<FirestoreService>(context, listen: false);
     final notifier = Provider.of<UserProfileNotifier>(context, listen: false);
 
-    _maybeLogProfileError(
-        notifier, firebaseUser, firestoreService, widget.franchiseId);
+    _maybeLogProfileError(notifier, firebaseUser, firestoreService);
   }
 
   @override
@@ -57,21 +58,48 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
         Provider.of<FirestoreService>(context, listen: false);
     final notifier = Provider.of<UserProfileNotifier>(context, listen: false);
 
-    // If error is present and not logged, log it
-    _maybeLogProfileError(
-        notifier, firebaseUser, firestoreService, widget.franchiseId);
-
+    _maybeLogProfileError(notifier, firebaseUser, firestoreService);
     return widget.child;
   }
 
-  void _maybeLogProfileError(UserProfileNotifier notifier, fb_auth.User? user,
-      FirestoreService firestoreService, String franchiseId) {
+  void _handleRouting(
+    UserProfileNotifier notifier,
+    fb_auth.User? firebaseUser,
+    FranchiseProvider franchiseProvider,
+  ) async {
+    final user = notifier.user;
+    if (_navigated || firebaseUser == null || user == null || notifier.loading)
+      return;
+
+    if (user.status != 'active') {
+      _navigated = true;
+      Navigator.of(context).pushReplacementNamed('/unauthorized');
+      return;
+    }
+
+    _navigated = true;
+    franchiseProvider.setAdminUser(user);
+
+    if (user.isDeveloper) {
+      Navigator.of(context).pushReplacementNamed('/developer/dashboard');
+    } else {
+      await franchiseProvider
+          .setInitialFranchiseId(user.defaultFranchise ?? '');
+      Navigator.of(context).pushReplacementNamed('/admin/dashboard');
+    }
+  }
+
+  void _maybeLogProfileError(
+    UserProfileNotifier notifier,
+    fb_auth.User? user,
+    FirestoreService firestoreService,
+  ) {
     if (notifier.lastError != null && notifier.lastError != _lastLoggedError) {
       _lastLoggedError = notifier.lastError;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         try {
           await firestoreService.logError(
-            franchiseId,
+            '', // fallback franchise context unavailable here
             message: 'UserProfileNotifier error: ${notifier.lastError}',
             source: 'AuthProfileListener',
             userId: user?.uid,
@@ -85,8 +113,7 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
             },
           );
         } catch (e, stack) {
-          print(
-              '[AuthProfileListener] Failed to log error to Firestore: $e\n$stack');
+          print('[AuthProfileListener] Failed to log error: $e\n$stack');
         }
       });
     }

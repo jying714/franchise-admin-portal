@@ -1,3 +1,4 @@
+import 'package:franchise_admin_portal/core/models/franchise_info.dart';
 import 'package:franchise_admin_portal/core/models/ingredient_metadata.dart';
 import 'package:franchise_admin_portal/core/models/address.dart';
 import 'dart:collection';
@@ -946,7 +947,7 @@ class FirestoreService {
     );
   }
 
-  // --- STAFF USERS MANAGEMENT (Admin/Staff Access Panel) ---
+  // --- USERS MANAGEMENT (Admin/Staff Access Panel) ---
   Stream<List<admin_user.User>> getStaffUsers(
     String franchiseId,
   ) {
@@ -1004,6 +1005,101 @@ class FirestoreService {
       userId: currentUserId ?? 'unknown',
       details: {'staffUserId': staffUserId},
     );
+  }
+
+  // --- Admin users ---
+  Future<admin_user.User?> getAdminUser(String uid) async {
+    final doc = await _db.collection('admin_users').doc(uid).get();
+    if (!doc.exists) return null;
+    return admin_user.User.fromFirestore(doc.data()!, doc.id);
+  }
+
+  Stream<admin_user.User?> adminUserStream(String uid) {
+    return _db.collection('admin_users').doc(uid).snapshots().map((doc) {
+      final data = doc.data();
+      if (data != null) {
+        return admin_user.User.fromFirestore(data, doc.id);
+      } else {
+        return null;
+      }
+    });
+  }
+
+  Future<void> addOrUpdateAdminUser(admin_user.User user) async {
+    await _db.collection('admin_users').doc(user.id).set(user.toFirestore());
+  }
+
+  Future<void> updateAdminUserDefaultFranchise(
+      String uid, String franchiseId) async {
+    await _db.collection('admin_users').doc(uid).update({
+      'defaultFranchise': franchiseId,
+      'updatedAt': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<List<Address>> getAdminUserAddresses(String uid) async {
+    final snap = await _db
+        .collection('admin_users')
+        .doc(uid)
+        .collection('addresses')
+        .get();
+
+    return snap.docs
+        .map((doc) => Address.fromFirestore(doc.data(), doc.id))
+        .toList();
+  }
+
+  Future<void> addAdminUserAddress(String uid, Address address) async {
+    await _db
+        .collection('admin_users')
+        .doc(uid)
+        .collection('addresses')
+        .doc(address.id)
+        .set(address.toFirestore());
+  }
+
+  // ---  Convert Franchise Staff to Admin View (e.g., centralized role dashboard)
+  Stream<List<admin_user.User>> getAllAdminUsers() {
+    return _db
+        .collection('admin_users')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => admin_user.User.fromFirestore(doc.data(), doc.id))
+            .toList());
+  }
+
+  // --- GET franchise staff ---
+
+  Future<List<admin_user.User>> getFranchiseStaff(String franchiseId) async {
+    try {
+      final querySnapshot = await _db
+          .collection('admin_users')
+          .where('franchiseId', isEqualTo: franchiseId)
+          .get();
+
+      return querySnapshot.docs.map((doc) {
+        return admin_user.User.fromFirestore(doc.data(), doc.id);
+      }).toList();
+    } catch (e, stack) {
+      await logError(
+        franchiseId,
+        message: 'Failed to fetch franchise staff',
+        source: 'FirestoreService',
+        screen: 'StaffDirectoryScreen',
+        errorType: e.runtimeType.toString(),
+        stackTrace: stack.toString(),
+      );
+      rethrow;
+    }
+  }
+
+  Future<List<FranchiseInfo>> fetchFranchiseList() async {
+    final snapshot = await _db.collection('franchises').get();
+
+    return snapshot.docs.map((doc) {
+      return FranchiseInfo.fromFirestore(doc.data(), doc.id);
+    }).toList();
   }
 
   // --- FEEDBACK MANAGEMENT (Admin/Feedback Management Panel) ---

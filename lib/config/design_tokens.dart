@@ -201,6 +201,12 @@ class DesignTokens {
 
   static const Color neutralChipColor = Color(0xFFF4F4F4);
   static const Color neutralChipTextColor = Color(0xFF606060);
+
+  // Border radius
+  static const double radiusSm = 4.0;
+  static const double radiusMd = 8.0;
+  static const double radiusLg = 16.0;
+
   // ======================
   // === FUTURE TOKENS ====
   // ======================

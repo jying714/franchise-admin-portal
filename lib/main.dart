@@ -74,7 +74,6 @@ void main() {
               print('main.dart: firebaseUser?.email = ${firebaseUser?.email}');
               print('main.dart: franchiseId = $franchiseId');
               return AuthProfileListener(
-                franchiseId: franchiseId,
                 child: KeyedSubtree(
                   key: ValueKey(firebaseUser?.uid ?? 'nouid'),
                   child: FranchiseAdminPortalApp(franchiseId: franchiseId),
