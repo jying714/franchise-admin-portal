@@ -218,20 +218,12 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
 
     if (loading) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text("Order Management"),
-          backgroundColor: DesignTokens.adminPrimaryColor,
-        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text("Order Management"),
-          backgroundColor: DesignTokens.adminPrimaryColor,
-        ),
         body: const Center(child: Text("Unauthorized — Please log in.")),
       );
     }
@@ -248,10 +240,6 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
         );
       });
       return Scaffold(
-        appBar: AppBar(
-          title: const Text("Order Management"),
-          backgroundColor: DesignTokens.adminPrimaryColor,
-        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -281,172 +269,209 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
         Provider.of<FirestoreService>(context, listen: false);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Order Management"),
-        backgroundColor: DesignTokens.adminPrimaryColor,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.download),
-            tooltip: "Export Orders",
-            onPressed: () {
-              // Export currently filtered orders
-              _showExportDialog(franchiseId, _lastOrders, user);
-            },
-          )
-        ],
-      ),
-      body: StreamBuilder<List<order_model.Order>>(
-        stream: firestoreService.getAllOrdersStream(franchiseId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingShimmerWidget();
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const EmptyStateWidget(
-              title: "No Orders",
-              message: "No orders found.",
-              iconData: Icons.receipt_long,
-            );
-          }
-          var orders = _filterOrders(snapshot.data!, user);
-          _lastOrders = orders; // cache for export
-
-          return Column(
-            children: [
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        decoration: const InputDecoration(
-                          labelText: "Search by Order ID or Name",
-                          prefixIcon: Icon(Icons.search),
+      backgroundColor: Colors.white,
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Main content column
+          Expanded(
+            flex: 11,
+            child: Padding(
+              padding:
+                  const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // HEADER ROW
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Order Management",
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                          ),
                         ),
-                        onChanged: (val) =>
-                            setState(() => _searchText = val.trim()),
-                      ),
+                        const Spacer(),
+                        IconButton(
+                          icon:
+                              const Icon(Icons.download, color: Colors.black87),
+                          tooltip: "Export Orders",
+                          onPressed: () =>
+                              _showExportDialog(franchiseId, _lastOrders, user),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    DropdownButton<String>(
-                      value: _filterStatus,
-                      hint: const Text("Status"),
-                      items: [
-                        null,
-                        'Placed',
-                        'Preparing',
-                        'Ready',
-                        'Out for Delivery',
-                        'Delivered',
-                        'Picked Up',
-                        'Refunded'
-                      ]
-                          .map(
-                            (s) => DropdownMenuItem<String>(
-                              value: s,
-                              child: Text(s ?? "All"),
+                  ),
+                  // SEARCH BAR & FILTERS
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            decoration: const InputDecoration(
+                              labelText: "Search by Order ID or Name",
+                              prefixIcon: Icon(Icons.search),
                             ),
-                          )
-                          .toList(),
-                      onChanged: (val) => setState(() => _filterStatus = val),
+                            onChanged: (val) =>
+                                setState(() => _searchText = val.trim()),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        DropdownButton<String>(
+                          value: _filterStatus,
+                          hint: const Text("Status"),
+                          items: [
+                            null,
+                            'Placed',
+                            'Preparing',
+                            'Ready',
+                            'Out for Delivery',
+                            'Delivered',
+                            'Picked Up',
+                            'Refunded'
+                          ]
+                              .map(
+                                (s) => DropdownMenuItem<String>(
+                                  value: s,
+                                  child: Text(s ?? "All"),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (val) =>
+                              setState(() => _filterStatus = val),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.calendar_today),
+                          tooltip: "Filter by Date",
+                          onPressed: () async {
+                            final range = await showDateRangePicker(
+                              context: context,
+                              firstDate: DateTime.now()
+                                  .subtract(const Duration(days: 365)),
+                              lastDate:
+                                  DateTime.now().add(const Duration(days: 1)),
+                            );
+                            if (range != null) {
+                              setState(() => _dateRange = range);
+                            }
+                          },
+                        ),
+                        Checkbox(
+                          value: _showRefunded,
+                          onChanged: (val) =>
+                              setState(() => _showRefunded = val ?? true),
+                        ),
+                        const Text("Show Refunded"),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.calendar_today),
-                      tooltip: "Filter by Date",
-                      onPressed: () async {
-                        final range = await showDateRangePicker(
-                          context: context,
-                          firstDate: DateTime.now()
-                              .subtract(const Duration(days: 365)),
-                          lastDate: DateTime.now().add(const Duration(days: 1)),
-                        );
-                        if (range != null) {
-                          setState(() => _dateRange = range);
+                  ),
+                  // ORDERS LIST
+                  Expanded(
+                    child: StreamBuilder<List<order_model.Order>>(
+                      stream: firestoreService.getAllOrdersStream(franchiseId),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const LoadingShimmerWidget();
                         }
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const EmptyStateWidget(
+                            title: "No Orders",
+                            message: "No orders found.",
+                            iconData: Icons.receipt_long,
+                          );
+                        }
+                        var orders = _filterOrders(snapshot.data!, user);
+                        _lastOrders = orders; // cache for export
+                        return ListView.builder(
+                          itemCount: orders.length,
+                          itemBuilder: (ctx, i) {
+                            final order = orders[i];
+                            return Card(
+                              elevation: 2,
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: order.status == 'Refunded'
+                                      ? Colors.redAccent
+                                      : DesignTokens.adminPrimaryColor,
+                                  child: Text(order.userNameDisplay.isNotEmpty
+                                      ? order.userNameDisplay[0].toUpperCase()
+                                      : '#'),
+                                ),
+                                title: Text(
+                                  "${order.id} — ${order.userNameDisplay}",
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                        "Status: ${order.status} | \$${order.total.toStringAsFixed(2)}"),
+                                    Text("Placed: ${order.timestamp}"),
+                                    if (order.refundStatus != null)
+                                      Text("Refund: ${order.refundStatus}"),
+                                  ],
+                                ),
+                                trailing: PopupMenuButton<String>(
+                                  onSelected: (value) {
+                                    if (value == 'status') {
+                                      _showStatusDialog(order, user);
+                                    } else if (value == 'refund') {
+                                      _showRefundDialog(order, user);
+                                    }
+                                  },
+                                  itemBuilder: (context) {
+                                    final items = <PopupMenuEntry<String>>[];
+                                    if (user.isOwner || user.isManager) {
+                                      items.add(const PopupMenuItem<String>(
+                                        value: 'status',
+                                        child: Text("Update Status"),
+                                      ));
+                                      if (order.status != 'Refunded') {
+                                        items.add(const PopupMenuItem<String>(
+                                          value: 'refund',
+                                          child: Text("Process Refund"),
+                                        ));
+                                      }
+                                    }
+                                    return items;
+                                  },
+                                ),
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) =>
+                                        OrderDetailDialog(order: order),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        );
                       },
                     ),
-                    Checkbox(
-                      value: _showRefunded,
-                      onChanged: (val) =>
-                          setState(() => _showRefunded = val ?? true),
-                    ),
-                    const Text("Show Refunded"),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: orders.length,
-                  itemBuilder: (ctx, i) {
-                    final order = orders[i];
-                    return Card(
-                      elevation: 2,
-                      margin: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 6),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: order.status == 'Refunded'
-                              ? Colors.redAccent
-                              : DesignTokens.adminPrimaryColor,
-                          child: Text(order.userNameDisplay.isNotEmpty
-                              ? order.userNameDisplay[0].toUpperCase()
-                              : '#'),
-                        ),
-                        title: Text(
-                          "${order.id} — ${order.userNameDisplay}",
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                                "Status: ${order.status} | \$${order.total.toStringAsFixed(2)}"),
-                            Text("Placed: ${order.timestamp}"),
-                            if (order.refundStatus != null)
-                              Text("Refund: ${order.refundStatus}"),
-                          ],
-                        ),
-                        trailing: PopupMenuButton<String>(
-                          onSelected: (value) {
-                            if (value == 'status') {
-                              _showStatusDialog(order, user);
-                            } else if (value == 'refund') {
-                              _showRefundDialog(order, user);
-                            }
-                          },
-                          itemBuilder: (context) {
-                            final items = <PopupMenuEntry<String>>[];
-                            if (user.isOwner || user.isManager) {
-                              items.add(const PopupMenuItem<String>(
-                                value: 'status',
-                                child: Text("Update Status"),
-                              ));
-                              if (order.status != 'Refunded') {
-                                items.add(const PopupMenuItem<String>(
-                                  value: 'refund',
-                                  child: Text("Process Refund"),
-                                ));
-                              }
-                            }
-                            return items;
-                          },
-                        ),
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (_) => OrderDetailDialog(order: order),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          );
-        },
+            ),
+          ),
+          // Right panel placeholder (for layout consistency)
+          Expanded(
+            flex: 9,
+            child: Container(),
+          ),
+        ],
       ),
     );
   }

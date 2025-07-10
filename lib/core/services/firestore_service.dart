@@ -664,35 +664,34 @@ class FirestoreService {
   Future<void> addPromo(String franchiseId, Promo promo) async => _db
       .collection('franchises')
       .doc(franchiseId)
-      .collection('feedback')
+      .collection('promotions')
       .doc(promo.id)
       .set(promo.toFirestore());
 
   Future<void> updatePromo(String franchiseId, Promo promo) async => _db
       .collection('franchises')
       .doc(franchiseId)
-      .collection('feedback')
+      .collection('promotions')
       .doc(promo.id)
       .update(promo.toFirestore());
 
   Future<void> deletePromo(String franchiseId, String promoId) async => _db
       .collection('franchises')
       .doc(franchiseId)
-      .collection('feedback')
+      .collection('promotions')
       .doc(promoId)
       .delete();
 
-  Stream<List<Promo>> getPromos(
-    String franchiseId,
-  ) =>
-      _db
-          .collection('franchises')
-          .doc(franchiseId)
-          .collection('feedback')
-          .snapshots()
-          .map((snap) => snap.docs
-              .map((d) => Promo.fromFirestore(d.data(), d.id))
-              .toList());
+  Stream<List<Promo>> getPromos(String franchiseId) {
+    print('[FIRESTORE SERVICE] Getting promotions for: $franchiseId');
+    return _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('promotions')
+        .snapshots()
+        .map((snap) =>
+            snap.docs.map((d) => Promo.fromFirestore(d.data(), d.id)).toList());
+  }
 
   Future<List<Promo>> getPromosOnce(
     String franchiseId,
@@ -700,7 +699,7 @@ class FirestoreService {
     final snap = await _db
         .collection('franchises')
         .doc(franchiseId)
-        .collection('feedback')
+        .collection('promotions')
         .get();
     return snap.docs.map((d) => Promo.fromFirestore(d.data(), d.id)).toList();
   }
@@ -712,7 +711,7 @@ class FirestoreService {
       final docRef = _db
           .collection('franchises')
           .doc(franchiseId)
-          .collection('feedback')
+          .collection('promotions')
           .doc();
       batch.set(docRef, promo.copyWith(id: docRef.id).toFirestore());
     }

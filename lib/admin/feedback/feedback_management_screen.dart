@@ -139,6 +139,7 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
                     child: StreamBuilder<List<feedback_model.FeedbackEntry>>(
                       stream: firestoreService.getFeedbackEntries(franchiseId),
                       builder: (context, snapshot) {
+                        print("Feedback snapshot: ${snapshot.data}");
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           return const Center(

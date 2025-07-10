@@ -9,6 +9,7 @@ import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/admin/promo/promo_form_dialog.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 
 class PromoManagementScreen extends StatelessWidget {
   const PromoManagementScreen({super.key});
@@ -19,15 +20,29 @@ class PromoManagementScreen extends StatelessWidget {
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
-    final user = Provider.of<admin_user.User?>(context);
-
-    // Only owner, admin, manager can manage promos. Staff can view.
-    if (user == null ||
-        !(user.isOwner || user.isAdmin || user.isManager || user.isStaff)) {
-      return _unauthorizedScaffold(context);
+    final userNotifier = Provider.of<UserProfileNotifier>(context);
+    final user = userNotifier.user;
+    final loading = userNotifier.loading;
+    print('[PROMO SCREEN] Build called');
+    print(
+        'Current user: $user, role: ${user?.role}, isDeveloper: ${user?.isDeveloper}, loading: $loading');
+    print('[PROMO SCREEN] franchiseId: $franchiseId');
+    // Show loading spinner while loading or user is null
+    if (loading || user == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
-    final canEdit = user.isOwner || user.isAdmin || user.isManager;
+    if (!(user.isOwner ||
+        user.isAdmin ||
+        user.isManager ||
+        user.isStaff ||
+        user.isDeveloper)) {
+      return _unauthorizedScaffold(context);
+    }
+    final canEdit =
+        user.isOwner || user.isAdmin || user.isManager || user.isDeveloper;
 
     return Scaffold(
       backgroundColor: DesignTokens.backgroundColor,
@@ -90,6 +105,8 @@ class PromoManagementScreen extends StatelessWidget {
                     child: StreamBuilder<List<Promo>>(
                       stream: firestoreService.getPromotions(franchiseId),
                       builder: (context, snapshot) {
+                        print(
+                            '[PROMO STREAM] Raw snapshot: ${snapshot.data}, error: ${snapshot.error}');
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           return const LoadingShimmerWidget();
