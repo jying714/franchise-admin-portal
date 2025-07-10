@@ -5,6 +5,8 @@ class FranchiseProvider extends ChangeNotifier {
   String _franchiseId = 'unknown';
   String get franchiseId => _franchiseId;
 
+  bool get isFranchiseSelected =>
+      _franchiseId != null && _franchiseId != 'unknown';
   FranchiseProvider() {
     _loadFranchiseId();
   }

@@ -10,7 +10,7 @@ class FranchiseGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final franchiseProvider = Provider.of<FranchiseProvider>(context);
-    if (franchiseProvider.franchiseId == null) {
+    if (!franchiseProvider.isFranchiseSelected) {
       // Wrap FranchiseSelector in MaterialApp so Scaffold gets Directionality
       return MaterialApp(
         debugShowCheckedModeBanner: false,
