@@ -1,8 +1,7 @@
+import 'package:franchise_admin_portal/widgets/feature_toggle_list.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/config/feature_config.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
@@ -18,15 +17,10 @@ class FeatureSettingsScreen extends StatefulWidget {
 }
 
 class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
-  bool _unauthorizedLogged = false; // Prevent duplicate audit log entries
+  bool _unauthorizedLogged = false;
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  Future<void> _updateFeature(
-      String key, bool value, admin_user.User user) async {
+  Future<void> _updateFeature(String key, bool value, admin_user.User user,
+      Map<String, dynamic> meta) async {
     final loc = AppLocalizations.of(context)!;
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
@@ -59,19 +53,31 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
       _showUnauthorizedDialog(loc);
       return;
     }
-    await Provider.of<FirestoreService>(context, listen: false)
-        .updateFeatureToggle(franchiseId, key, value);
-    await AuditLogService().addLog(
-      franchiseId: franchiseId,
-      userId: user.id,
-      action: 'update_feature_toggle',
-      targetType: 'feature_toggle',
-      targetId: key,
-      details: {
-        'newValue': value,
-      },
-    );
-    setState(() {});
+
+    if (meta['paid_service'] == true && !user.isDeveloper) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.paidFeatureAdminOnly)),
+      );
+      return;
+    }
+
+    try {
+      await Provider.of<FirestoreService>(context, listen: false)
+          .updateFeatureToggle(franchiseId, key, value);
+      await AuditLogService().addLog(
+        franchiseId: franchiseId,
+        userId: user.id,
+        action: 'update_feature_toggle',
+        targetType: 'feature_toggle',
+        targetId: key,
+        details: {'newValue': value},
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.toggleUpdateFailed)),
+      );
+      rethrow;
+    }
   }
 
   void _showUnauthorizedDialog(AppLocalizations loc) {
@@ -181,7 +187,6 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
       );
     }
 
-    // Allowed (owner)
     return Scaffold(
       backgroundColor: DesignTokens.backgroundColor,
       body: Row(
@@ -213,40 +218,20 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
                       ],
                     ),
                   ),
-                  // Feature toggles
+                  // Feature toggles with live updates and sections
                   Expanded(
-                    child: FutureBuilder<Map<String, bool>>(
-                      future: FeatureConfig.instance.load(franchiseId),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) {
-                          return const LoadingShimmerWidget();
-                        }
-                        final toggles = snapshot.data!;
-                        if (toggles.isEmpty) {
-                          return Center(child: Text(loc.noFeaturesFound));
-                        }
-                        return ListView(
-                          children: toggles.keys.map((key) {
-                            return SwitchListTile(
-                              title: Text(loc.featureDisplayName(key)),
-                              value: toggles[key] ?? false,
-                              onChanged: (val) =>
-                                  _updateFeature(key, val, user),
-                            );
-                          }).toList(),
-                        );
-                      },
+                    child: FeatureToggleList(
+                      franchiseId: franchiseId,
+                      user: user,
+                      onUpdateFeature: (key, value, user, meta) =>
+                          _updateFeature(key, value, user, meta),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          // Right panel placeholder
-          Expanded(
-            flex: 9,
-            child: Container(),
-          ),
+          Expanded(flex: 9, child: Container()),
         ],
       ),
     );

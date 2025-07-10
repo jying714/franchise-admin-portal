@@ -908,6 +908,13 @@
   "reload": "Reload",
   "failedToSaveCategory": "Failed to save category. Please try again.",
   "failedToDeleteCategory": "Failed to delete category. Please try again.",
-  "failedToRestoreCategory": "Failed to restore category. Please try again."
+  "failedToRestoreCategory": "Failed to restore category. Please try again.",
+  "paidFeatureAdminOnly": "This is a paid feature and can only be toggled by a developer or platform admin.",
+  "toggleUpdateFailed": "Failed to update feature toggle. Please try again.",
+  "featureToggleLoadError": "Failed to load feature toggles.",
+  "retryButton": "Retry",
+  "ownerTogglesSection": "Features You Can Control",
+  "devOnlyTogglesSection": "Developer/Platform Only Features"
+
 
   }

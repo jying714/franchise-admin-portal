@@ -783,25 +783,64 @@ class FirestoreService {
   }
 
   // --- FEATURE SETTINGS / FEATURE TOGGLES (admin/feature_settings/...) ---
-  Future<Map<String, bool>> getFeatureToggles(String franchiseId) async {
-    final doc = await _db
+  /// Gets the full feature toggles doc (including _meta) for a franchise.
+  Future<Map<String, dynamic>> getFeatureToggles(String franchiseId) async {
+    final docRef = _db
         .collection('franchises')
         .doc(franchiseId)
         .collection('feature_toggles')
-        .doc('global')
-        .get();
-    if (!doc.exists || doc.data() == null) return {};
-    return Map<String, bool>.from(doc.data() as Map<String, dynamic>);
+        .doc('settings');
+    final doc = await docRef.get();
+    if (!doc.exists) {
+      return {}; // or throw, or return a default map
+    }
+    return doc.data()!;
   }
 
-  Future<void> updateFeatureToggle(
-      String franchiseId, String key, bool enabled) async {
-    await _db
+  /// Sets/updates the entire feature toggles doc (useful for bulk onboarding).
+  Future<void> setFeatureToggles(
+      String franchiseId, Map<String, dynamic> toggles) async {
+    final docRef = _db
         .collection('franchises')
         .doc(franchiseId)
         .collection('feature_toggles')
-        .doc('global')
-        .set({key: enabled}, firestore.SetOptions(merge: true));
+        .doc('settings');
+    await docRef.set(toggles,
+        firestore.SetOptions(merge: true)); // merge so partial updates are safe
+  }
+
+  /// Updates a single toggle value in the settings doc.
+  Future<void> updateFeatureToggle(
+      String franchiseId, String key, dynamic value) async {
+    final docRef = _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('feature_toggles')
+        .doc('settings');
+    await docRef.set({key: value}, firestore.SetOptions(merge: true));
+  }
+
+  /// Updates meta for a single feature toggle (optional, for admin/developer use).
+  Future<void> updateFeatureToggleMeta(
+      String franchiseId, String key, Map<String, dynamic> meta) async {
+    final docRef = _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('feature_toggles')
+        .doc('settings');
+    await docRef.set({
+      '_meta': {key: meta}
+    }, firestore.SetOptions(merge: true));
+  }
+
+  /// Streams feature toggles for real-time updates in the admin UI.
+  Stream<Map<String, dynamic>> streamFeatureToggles(String franchiseId) {
+    final docRef = _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('feature_toggles')
+        .doc('settings');
+    return docRef.snapshots().map((doc) => doc.data() ?? {});
   }
 
   // --- CATEGORIES ---
