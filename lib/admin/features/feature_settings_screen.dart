@@ -8,6 +8,7 @@ import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 
 class FeatureSettingsScreen extends StatefulWidget {
   const FeatureSettingsScreen({super.key});
@@ -30,7 +31,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
 
-    if (!user.isOwner) {
+    if (!(user.isOwner || user.isAdmin || user.isDeveloper)) {
       await AuditLogService().addLog(
         franchiseId: franchiseId,
         userId: user.id,
@@ -40,6 +41,19 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
         details: {
           'attemptedValue': value,
           'message': 'User with insufficient role tried to toggle feature.',
+        },
+      );
+      await Provider.of<FirestoreService>(context, listen: false).logError(
+        franchiseId,
+        message: 'Unauthorized feature toggle attempt by ${user.email}',
+        source: 'FeatureSettingsScreen',
+        screen: 'FeatureSettingsScreen',
+        userId: user.id,
+        severity: 'warning',
+        contextData: {
+          'role': user.role,
+          'attemptedKey': key,
+          'attemptedValue': value,
         },
       );
       _showUnauthorizedDialog(loc);
@@ -81,7 +95,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
     final loc = AppLocalizations.of(context)!;
-    final user = Provider.of<admin_user.User?>(context);
+    final user = Provider.of<UserProfileNotifier>(context).user;
 
     // Not logged in
     if (user == null) {
@@ -100,11 +114,11 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
     }
 
     // Not allowed
-    if (!user.isOwner) {
+    if (!(user.isOwner || user.isAdmin || user.isDeveloper)) {
       if (!_unauthorizedLogged) {
         _unauthorizedLogged = true;
-        Future.microtask(() {
-          AuditLogService().addLog(
+        Future.microtask(() async {
+          await AuditLogService().addLog(
             franchiseId: franchiseId,
             userId: user.id,
             action: 'unauthorized_feature_settings_access',
@@ -113,6 +127,18 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
             details: {
               'message':
                   'User with insufficient role tried to access feature settings.',
+            },
+          );
+          await Provider.of<FirestoreService>(context, listen: false).logError(
+            franchiseId,
+            message: 'Unauthorized feature settings access by ${user.email}',
+            source: 'FeatureSettingsScreen',
+            screen: 'FeatureSettingsScreen',
+            userId: user.id,
+            severity: 'warning',
+            contextData: {
+              'role': user.role,
+              'attempt': 'access',
             },
           );
         });

@@ -8,6 +8,7 @@ import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 
 class StaffAccessScreen extends StatefulWidget {
   const StaffAccessScreen({super.key});
@@ -23,8 +24,15 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
   String _role = 'staff'; // default
 
   bool _canEditStaff(BuildContext context) {
-    final user = Provider.of<admin_user.User?>(context, listen: false);
-    return user != null && (user.role == 'owner' || user.role == 'manager');
+    final userNotifier =
+        Provider.of<UserProfileNotifier>(context, listen: false);
+    final appUser = userNotifier.user;
+    print('[StaffAccessScreen] user = $appUser, role = ${appUser?.role}');
+    return appUser != null &&
+        (appUser.role?.toLowerCase() == 'owner' ||
+            appUser.role?.toLowerCase() == 'manager' ||
+            appUser.role?.toLowerCase() == 'admin' ||
+            appUser.role?.toLowerCase() == 'developer');
   }
 
   @override

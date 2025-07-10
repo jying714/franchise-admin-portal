@@ -9,6 +9,7 @@ import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
 import 'package:franchise_admin_portal/core/models/chat.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 
 class ChatManagementScreen extends StatelessWidget {
   const ChatManagementScreen({super.key});
@@ -19,12 +20,13 @@ class ChatManagementScreen extends StatelessWidget {
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
-    final user = Provider.of<admin_user.User?>(context);
+    final user = Provider.of<UserProfileNotifier>(context).user;
 
     // --- Role enforcement (owner/admin/manager only) ---
-    if (user == null || !(user.isOwner || user.isAdmin || user.isManager)) {
-      Future.microtask(() {
-        AuditLogService().addLog(
+    if (user == null ||
+        !(user.isOwner || user.isAdmin || user.isManager || user.isDeveloper)) {
+      Future.microtask(() async {
+        await AuditLogService().addLog(
           franchiseId: franchiseId,
           userId: user?.id ?? 'unknown',
           action: 'unauthorized_chat_management_access',
@@ -33,6 +35,19 @@ class ChatManagementScreen extends StatelessWidget {
           details: {
             'message':
                 'User tried to access chat management without permission.'
+          },
+        );
+        await Provider.of<FirestoreService>(context, listen: false).logError(
+          franchiseId,
+          message:
+              'Unauthorized chat management access by ${user?.email ?? "unknown"}',
+          source: 'ChatManagementScreen',
+          screen: 'ChatManagementScreen',
+          userId: user?.id ?? 'unknown',
+          severity: 'warning',
+          contextData: {
+            'role': user?.role,
+            'attempt': 'access',
           },
         );
       });
