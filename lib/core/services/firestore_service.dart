@@ -743,7 +743,7 @@ class FirestoreService {
     return _db
         .collection('franchises')
         .doc(franchiseId)
-        .collection(_inventory)
+        .collection('inventory_transactions')
         .snapshots()
         .map((snap) => snap.docs
             .map((d) => Inventory.fromFirestore(d.data(), d.id))
@@ -754,7 +754,7 @@ class FirestoreService {
     final doc = _db
         .collection('franchises')
         .doc(franchiseId)
-        .collection(_inventory)
+        .collection('inventory_transactions')
         .doc();
     await doc.set(inventory.copyWith(id: doc.id).toFirestore());
   }
@@ -763,7 +763,7 @@ class FirestoreService {
     await _db
         .collection('franchises')
         .doc(franchiseId)
-        .collection(_inventory)
+        .collection('inventory_transactions')
         .doc(inventory.id)
         .update(inventory.toFirestore());
   }
@@ -772,7 +772,7 @@ class FirestoreService {
     await _db
         .collection('franchises')
         .doc(franchiseId)
-        .collection(_inventory)
+        .collection('inventory_transactions')
         .doc(id)
         .delete();
     await AuditLogService().addLog(

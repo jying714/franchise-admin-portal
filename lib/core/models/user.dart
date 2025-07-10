@@ -7,6 +7,7 @@ class User {
   static const String roleManager = 'manager';
   static const String roleStaff = 'staff';
   static const String roleCustomer = 'customer';
+  static const String roleDeveloper = 'developer';
 
   final String id;
   final String name;
@@ -22,6 +23,7 @@ class User {
   bool get isStaff => role == roleStaff;
   bool get isCustomer =>
       role == roleCustomer || !(isOwner || isAdmin || isManager || isStaff);
+  bool get isDeveloper => role == roleDeveloper;
 
   User({
     required this.id,

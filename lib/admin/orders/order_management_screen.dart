@@ -8,6 +8,7 @@ import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 
 class OrderManagementScreen extends StatefulWidget {
   const OrderManagementScreen({super.key});
@@ -25,7 +26,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
 
   Future<void> _updateOrderStatus(String franchiseId, order_model.Order order,
       String newStatus, admin_user.User user) async {
-    if (!(user.isOwner || user.isManager)) {
+    if (!(user.isOwner || user.isManager || user.isDeveloper || user.isAdmin)) {
       await AuditLogService().addLog(
         franchiseId: franchiseId,
         userId: user.id,
@@ -211,7 +212,19 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
   Widget build(BuildContext context) {
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
-    final user = Provider.of<admin_user.User?>(context);
+    final userNotifier = Provider.of<UserProfileNotifier>(context);
+    final user = userNotifier.user;
+    final loading = userNotifier.loading;
+
+    if (loading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text("Order Management"),
+          backgroundColor: DesignTokens.adminPrimaryColor,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
     if (user == null) {
       return Scaffold(
@@ -223,7 +236,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
       );
     }
 
-    if (!(user.isOwner || user.isManager)) {
+    if (!(user.isOwner || user.isManager || user.isDeveloper || user.isAdmin)) {
       Future.microtask(() {
         AuditLogService().addLog(
           franchiseId: franchiseId,

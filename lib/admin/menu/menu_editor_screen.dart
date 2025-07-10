@@ -103,10 +103,11 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
   }
 
   bool _canEdit(admin_user.User? user) =>
-      user != null && (user.isOwner || user.isAdmin || user.isManager);
+      user != null &&
+      (user.isOwner || user.isAdmin || user.isManager || user.isDeveloper);
 
   bool _canDeleteOrExport(admin_user.User? user) =>
-      user != null && (user.isOwner || user.isAdmin);
+      user != null && (user.isOwner || user.isAdmin || user.isDeveloper);
 
   Future<void> _addOrEditMenuItemPanel({MenuItem? item}) async {
     setState(() {
@@ -515,7 +516,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     if (user == null) return _unauthorizedScaffold();
-    if (!(user.isOwner || user.isAdmin || user.isManager))
+    if (!(user.isOwner || user.isAdmin || user.isManager || user.isDeveloper))
       return _unauthorizedScaffold();
 
     final canEdit = _canEdit(user);
