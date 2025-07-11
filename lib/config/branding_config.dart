@@ -44,6 +44,9 @@ class BrandingConfig {
   static const bool showLogoInAppBar = false; // Default to false
   static const String appBarTitle = 'Menu Categories';
 
+  // Profile Page
+  static const String defaultProfileIcon = 'assets/images/default_profile.png';
+
   // ======================
   // === FUTURE TOKENS ====
   // ======================

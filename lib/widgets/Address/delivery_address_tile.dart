@@ -67,7 +67,9 @@ class DeliveryAddressTile extends StatelessWidget {
                         Provider.of<FranchiseProvider>(context, listen: false)
                             .franchiseId;
                     await firestoreService.updateAddressForUser(
-                        franchiseId, user.uid, updatedAddress);
+                      user.uid,
+                      updatedAddress,
+                    );
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(

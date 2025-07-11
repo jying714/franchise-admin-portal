@@ -70,7 +70,7 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                   );
                   if (shouldDelete == true) {
                     await firestoreService.removeAddressForUser(
-                        widget.franchiseId, user.uid, address.id);
+                        user.uid, address.id);
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -107,7 +107,7 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                   );
                   if (shouldAdd == true) {
                     await firestoreService.addAddressForUser(
-                        widget.franchiseId, user.uid, newAddress);
+                        user.uid, newAddress);
 
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(

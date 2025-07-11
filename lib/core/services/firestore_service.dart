@@ -24,6 +24,10 @@ import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/models/order.dart';
 import 'package:franchise_admin_portal/core/models/error_log.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:franchise_admin_portal/core/models/payout.dart';
+import 'package:franchise_admin_portal/core/models/report.dart';
+import 'package:franchise_admin_portal/core/models/invoice.dart';
+import 'package:franchise_admin_portal/core/models/bank_account.dart';
 
 extension ErrorLogsService on FirestoreService {
   /// Fetches paginated, filterable error logs from Firestore.
@@ -85,6 +89,126 @@ extension ErrorLogsService on FirestoreService {
       print('Severities in Firestore: $uniqueSeverities');
       return logs;
     });
+  }
+}
+
+extension PayoutFirestore on FirestoreService {
+  // Add or update a payout
+  Future<void> addOrUpdatePayout(Payout payout) async {
+    await _db
+        .collection('payouts')
+        .doc(payout.id)
+        .set(payout.toFirestore(), firestore.SetOptions(merge: true));
+  }
+
+  // Get payout by ID
+  Future<Payout?> getPayoutById(String id) async {
+    final doc = await _db.collection('payouts').doc(id).get();
+    if (!doc.exists || doc.data() == null) return null;
+    return Payout.fromFirestore(doc.data()!, doc.id);
+  }
+
+  // Delete payout
+  Future<void> deletePayout(String id) async {
+    await _db.collection('payouts').doc(id).delete();
+  }
+
+  // Stream all payouts (optionally by franchiseRef and/or status)
+  Stream<List<Payout>> payoutsStream({
+    firestore.DocumentReference? franchiseRef,
+    String? status,
+  }) {
+    firestore.Query query = _db.collection('payouts');
+    if (franchiseRef != null) {
+      query = query.where('franchiseId', isEqualTo: franchiseRef);
+    }
+    if (status != null) {
+      query = query.where('status', isEqualTo: status);
+    }
+    return query.snapshots().map((snap) => snap.docs
+        .map((doc) =>
+            Payout.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+        .toList());
+  }
+}
+
+extension ReportFirestore on FirestoreService {
+  // Add or update a report
+  Future<void> addOrUpdateReport(Report report) async {
+    await _db
+        .collection('reports')
+        .doc(report.id)
+        .set(report.toFirestore(), firestore.SetOptions(merge: true));
+  }
+
+  // Get report by ID
+  Future<Report?> getReportById(String id) async {
+    final doc = await _db.collection('reports').doc(id).get();
+    if (!doc.exists || doc.data() == null) return null;
+    return Report.fromFirestore(doc.data()!, doc.id);
+  }
+
+  // Delete report
+  Future<void> deleteReport(String id) async {
+    await _db.collection('reports').doc(id).delete();
+  }
+
+  // Stream all reports (optionally by franchiseRef/type)
+  Stream<List<Report>> reportsStream({
+    firestore.DocumentReference? franchiseRef,
+    String? type,
+  }) {
+    firestore.Query query = _db.collection('reports');
+    if (franchiseRef != null) {
+      query = query.where('franchiseId', isEqualTo: franchiseRef);
+    }
+    if (type != null) {
+      query = query.where('type', isEqualTo: type);
+    }
+    return query.snapshots().map((snap) => snap.docs
+        .map((doc) =>
+            Report.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+        .toList());
+  }
+}
+
+extension InvoiceFirestore on FirestoreService {
+  // Add or update an invoice
+  Future<void> addOrUpdateInvoice(Invoice invoice) async {
+    await _db
+        .collection('invoices')
+        .doc(invoice.id)
+        .set(invoice.toFirestore(), firestore.SetOptions(merge: true));
+  }
+
+  // Get invoice by ID
+  Future<Invoice?> getInvoiceById(String id) async {
+    final doc = await _db.collection('invoices').doc(id).get();
+    if (!doc.exists || doc.data() == null) return null;
+    return Invoice.fromFirestore(doc.data()!, doc.id);
+  }
+
+  // Delete invoice
+  Future<void> deleteInvoice(String id) async {
+    await _db.collection('invoices').doc(id).delete();
+  }
+
+  // Stream all invoices (optionally by franchiseRef/status)
+  Stream<List<Invoice>> invoicesStream({
+    firestore.DocumentReference? franchiseRef,
+    String? status,
+  }) {
+    firestore.Query query = _db.collection('invoices');
+    if (franchiseRef != null) {
+      query = query.where('franchiseId', isEqualTo: franchiseRef);
+    }
+    if (status != null) {
+      query = query.where('status', isEqualTo: status);
+    }
+    return query.snapshots().map((snap) => snap.docs
+        .map((doc) =>
+            Invoice.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+        .toList());
   }
 }
 
@@ -489,6 +613,149 @@ class FirestoreService {
 
     return resolved;
   }
+
+  /// log top level errors
+  Future<void> addErrorLogGlobal(ErrorLog log) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('error_logs')
+        .add(log.toFirestore());
+  }
+
+  Future<void> updateErrorLogGlobal(
+      String logId, Map<String, dynamic> updates) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('error_logs')
+        .doc(logId)
+        .update(updates);
+  }
+
+  Future<ErrorLog?> getErrorLogGlobal(String logId) async {
+    final doc = await firestore.FirebaseFirestore.instance
+        .collection('error_logs')
+        .doc(logId)
+        .get();
+    if (!doc.exists) return null;
+    return ErrorLog.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+  }
+
+  Stream<List<ErrorLog>> errorLogsStreamGlobal({
+    String? franchiseId,
+    String? userId,
+    String? severity,
+    String? status,
+    String? platform,
+  }) {
+    firestore.Query query =
+        firestore.FirebaseFirestore.instance.collection('error_logs');
+    if (franchiseId != null) {
+      query = query.where('franchiseId',
+          isEqualTo: firestore.FirebaseFirestore.instance
+              .collection('franchises')
+              .doc(franchiseId));
+    }
+    if (userId != null) {
+      query = query.where('userId',
+          isEqualTo: firestore.FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId));
+    }
+    if (severity != null) {
+      query = query.where('severity', isEqualTo: severity);
+    }
+    if (status != null) {
+      query = query.where('status', isEqualTo: status);
+    }
+    if (platform != null) {
+      query = query.where('platform', isEqualTo: platform);
+    }
+    return query.orderBy('timestamp', descending: true).snapshots().map(
+        (snap) => snap.docs
+            .map((doc) =>
+                ErrorLog.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+            .toList());
+  }
+
+  Future<void> deleteErrorLogGlobal(String logId) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('error_logs')
+        .doc(logId)
+        .delete();
+  }
+
+  /// franchise scoped error logging
+  Future<void> addErrorLogFranchise(String franchiseId, ErrorLog log) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('error_logs')
+        .add(log.toFirestore());
+  }
+
+  Future<void> updateErrorLogFranchise(
+      String franchiseId, String logId, Map<String, dynamic> updates) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('error_logs')
+        .doc(logId)
+        .update(updates);
+  }
+
+  Future<ErrorLog?> getErrorLogFranchise(
+      String franchiseId, String logId) async {
+    final doc = await firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('error_logs')
+        .doc(logId)
+        .get();
+    if (!doc.exists) return null;
+    return ErrorLog.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+  }
+
+  Stream<List<ErrorLog>> errorLogsStreamFranchise(
+    String franchiseId, {
+    String? userId,
+    String? severity,
+    String? status,
+    String? platform,
+  }) {
+    firestore.Query query = firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('error_logs');
+    if (userId != null) {
+      query = query.where('userId',
+          isEqualTo: firestore.FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId));
+    }
+    if (severity != null) {
+      query = query.where('severity', isEqualTo: severity);
+    }
+    if (status != null) {
+      query = query.where('status', isEqualTo: status);
+    }
+    if (platform != null) {
+      query = query.where('platform', isEqualTo: platform);
+    }
+    return query.orderBy('timestamp', descending: true).snapshots().map(
+        (snap) => snap.docs
+            .map((doc) =>
+                ErrorLog.fromMap(doc.data() as Map<String, dynamic>, doc.id))
+            .toList());
+  }
+
+  Future<void> deleteErrorLogFranchise(String franchiseId, String logId) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('error_logs')
+        .doc(logId)
+        .delete();
+  }
+
+  /// Log errors
 
   Future<void> logSchemaError(
     String franchiseId, {
@@ -1332,11 +1599,64 @@ class FirestoreService {
         .map((doc) => doc.data()?['online'] == true);
   }
 
+  /// --- TOP-LEVEL AUDIT LOGS COLLECTION METHODS ---
+  /// Add a log to top-level `/audit_logs`
+  Future<void> addAuditLogGlobal(AuditLog log) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('audit_logs')
+        .add(log.toFirestore());
+  }
+
+  /// Get a single audit log by ID (top-level)
+  Future<AuditLog?> getAuditLogGlobal(String logId) async {
+    final doc = await firestore.FirebaseFirestore.instance
+        .collection('audit_logs')
+        .doc(logId)
+        .get();
+    if (!doc.exists) return null;
+    return AuditLog.fromFirestore(doc.data()!, doc.id);
+  }
+
+  /// Stream audit logs (optionally filtered by franchiseId/userId/type)
+  Stream<List<AuditLog>> auditLogsStreamGlobal(
+      {String? franchiseId, String? userId, String? action}) {
+    firestore.Query query = firestore.FirebaseFirestore.instance
+        .collection('audit_logs')
+        .orderBy('timestamp', descending: true);
+    if (franchiseId != null) {
+      query = query.where('franchiseId',
+          isEqualTo: firestore.FirebaseFirestore.instance
+              .collection('franchises')
+              .doc(franchiseId));
+    }
+    if (userId != null) {
+      query = query.where('userId', isEqualTo: userId);
+    }
+    if (action != null) {
+      query = query.where('action', isEqualTo: action);
+    }
+    return query.snapshots().map((snap) => snap.docs
+        .map((doc) {
+          final data = doc.data();
+          if (data != null) {
+            return AuditLog.fromFirestore(data as Map<String, dynamic>, doc.id);
+          } else {
+            return null;
+          }
+        })
+        .where((log) => log != null)
+        .cast<AuditLog>()
+        .toList());
+  }
+
   // --- AUDIT LOGS ---
-  Stream<List<AuditLog>> getAuditLogs(String franchiseId,
-      {String? userId, String? action}) {
-    firestore.Query query =
-        _db.collection('franchises').doc(franchiseId).collection('audit_logs');
+  Stream<List<AuditLog>> getAuditLogs(
+      {String? franchiseId, String? userId, String? action}) {
+    firestore.Query query = _db.collection('audit_logs');
+    if (franchiseId != null) {
+      query = query.where('franchiseId',
+          isEqualTo: _db.collection('franchises').doc(franchiseId));
+    }
     if (userId != null) {
       query = query.where('userId', isEqualTo: userId);
     }
@@ -1581,24 +1901,123 @@ class FirestoreService {
     return doc.exists ? Map<String, dynamic>.from(doc.data()!) : {};
   }
 
-  /// --- USER ---
-  Future<void> addAddressForUser(
-      String franchiseId, String userId, Address address) async {
-    final userRef = firestore.FirebaseFirestore.instance
-        .collection('franchises')
-        .doc(franchiseId)
+  // Add or update a bank account
+  Future<void> addOrUpdateBankAccount(BankAccount account) async {
+    await _db
+        .collection('bank_accounts')
+        .doc(account.id)
+        .set(account.toFirestore(), firestore.SetOptions(merge: true));
+  }
+
+  // Get a bank account by ID
+  Future<BankAccount?> getBankAccountById(String id) async {
+    final doc = await _db.collection('bank_accounts').doc(id).get();
+    if (!doc.exists || doc.data() == null) return null;
+    return BankAccount.fromFirestore(doc.data()!, doc.id);
+  }
+
+  // Delete a bank account
+  Future<void> deleteBankAccount(String id) async {
+    await _db.collection('bank_accounts').doc(id).delete();
+  }
+
+  // Stream all bank accounts (optionally filter by franchiseRef)
+  Stream<List<BankAccount>> bankAccountsStream(
+      {firestore.DocumentReference? franchiseRef}) {
+    firestore.Query query = _db.collection('bank_accounts');
+    if (franchiseRef != null) {
+      query = query.where('franchiseId', isEqualTo: franchiseRef);
+    }
+    return query.snapshots().map((snap) => snap.docs
+        .map((doc) => BankAccount.fromFirestore(
+            doc.data() as Map<String, dynamic>, doc.id))
+        .toList());
+  }
+
+  /// --- TOP-LEVEL USERS COLLECTION METHODS ---
+  /// Add a user at top-level `/users`
+  Future<void> addUserGlobal(admin_user.User user) async {
+    await firestore.FirebaseFirestore.instance
         .collection('users')
-        .doc(userId);
+        .doc(user.id)
+        .set(user.toFirestore(), firestore.SetOptions(merge: true));
+  }
+
+  /// Get a user from top-level `/users`
+  Future<admin_user.User?> getUserGlobal(String userId) async {
+    final doc = await firestore.FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .get();
+    if (!doc.exists) return null;
+    return admin_user.User.fromFirestore(doc.data()!, doc.id);
+  }
+
+  /// Update a user at top-level `/users`
+  Future<void> updateUserGlobal(admin_user.User user) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.id)
+        .update(user.toFirestore());
+  }
+
+  /// Delete a user from top-level `/users`
+  Future<void> deleteUserGlobal(String userId) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .delete();
+  }
+
+  /// Stream a single user from top-level `/users`
+  Stream<admin_user.User?> userStreamGlobal(String userId) {
+    return firestore.FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .snapshots()
+        .map((doc) {
+      final data = doc.data();
+      return data != null ? admin_user.User.fromFirestore(data, doc.id) : null;
+    });
+  }
+
+  /// Stream all users (optionally filtered by franchiseId)
+  Stream<List<admin_user.User>> allUsersGlobal({String? franchiseId}) {
+    firestore.Query query =
+        firestore.FirebaseFirestore.instance.collection('users');
+    if (franchiseId != null) {
+      query = query.where('franchise_ids',
+          arrayContains: firestore.FirebaseFirestore.instance
+              .collection('franchises')
+              .doc(franchiseId));
+    }
+    return query.snapshots().map((snap) => snap.docs
+        .map((doc) {
+          final data = doc.data();
+          if (data != null) {
+            return admin_user.User.fromFirestore(
+                data as Map<String, dynamic>, doc.id);
+          } else {
+            return null;
+          }
+        })
+        .where((user) => user != null)
+        .cast<admin_user.User>()
+        .toList());
+  }
+
+  /// --- USER ---
+  Future<void> addAddressForUser(String userId, Address address) async {
+    final userRef =
+        firestore.FirebaseFirestore.instance.collection('users').doc(userId);
     await userRef.update({
       'addresses': firestore.FieldValue.arrayUnion([address.toMap()])
     });
   }
 
   Future<void> updateAddressForUser(
-      String franchiseId, String userId, Address updatedAddress) async {
+      String userId, Address updatedAddress) async {
     final userDoc = await firestore.FirebaseFirestore.instance
-        .collection('franchises')
-        .doc(franchiseId)
         .collection('users')
         .doc(userId)
         .get();
@@ -1611,19 +2030,14 @@ class FirestoreService {
     if (index != -1) {
       addresses[index] = updatedAddress.toMap();
       await firestore.FirebaseFirestore.instance
-          .collection('franchises')
-          .doc(franchiseId)
           .collection('users')
           .doc(userId)
           .update({'addresses': addresses});
     }
   }
 
-  Future<void> removeAddressForUser(
-      String franchiseId, String userId, String addressId) async {
+  Future<void> removeAddressForUser(String userId, String addressId) async {
     final userDoc = await firestore.FirebaseFirestore.instance
-        .collection('franchises')
-        .doc(franchiseId)
         .collection('users')
         .doc(userId)
         .get();
@@ -1634,8 +2048,6 @@ class FirestoreService {
     addresses.removeWhere((a) => a['id'] == addressId);
 
     await firestore.FirebaseFirestore.instance
-        .collection('franchises')
-        .doc(franchiseId)
         .collection('users')
         .doc(userId)
         .update({'addresses': addresses});
@@ -1659,8 +2071,6 @@ class FirestoreService {
   Future<void> addFavoriteMenuItemForUser(String franchiseId, String userId,
       Map<String, dynamic> favoriteItem) async {
     await firestore.FirebaseFirestore.instance
-        .collection('franchises')
-        .doc(franchiseId)
         .collection('users')
         .doc(userId)
         .update({
@@ -1669,10 +2079,8 @@ class FirestoreService {
   }
 
   Future<void> removeFavoriteMenuItemForUser(
-      String franchiseId, String userId, String menuItemId) async {
+      String userId, String menuItemId) async {
     final doc = await firestore.FirebaseFirestore.instance
-        .collection('franchises')
-        .doc(franchiseId)
         .collection('users')
         .doc(userId)
         .get();
@@ -1683,19 +2091,13 @@ class FirestoreService {
     current.removeWhere((f) => f['menuItemId'] == menuItemId);
 
     await firestore.FirebaseFirestore.instance
-        .collection('franchises')
-        .doc(franchiseId)
         .collection('users')
         .doc(userId)
-        .update({
-      'favorites': current,
-    });
+        .update({'favorites': current});
   }
 
-  Future<admin_user.User?> getUser(String franchiseId, String userId) async {
-    final doc = await _db
-        .collection('franchises')
-        .doc(franchiseId)
+  Future<admin_user.User?> getUser(String userId) async {
+    final doc = await firestore.FirebaseFirestore.instance
         .collection('users')
         .doc(userId)
         .get();
@@ -1703,13 +2105,11 @@ class FirestoreService {
     return admin_user.User.fromFirestore(doc.data()!, doc.id);
   }
 
-  Future<void> addUser(String franchiseId, admin_user.User user) async {
-    await _db
-        .collection('franchises')
-        .doc(franchiseId)
+  Future<void> addUser(admin_user.User user) async {
+    await firestore.FirebaseFirestore.instance
         .collection('users')
         .doc(user.id)
-        .set(user.toFirestore());
+        .set(user.toFirestore(), firestore.SetOptions(merge: true));
   }
 
   Stream<admin_user.User?> currentUserStream(
@@ -1761,32 +2161,14 @@ class FirestoreService {
     });
   }
 
-  Stream<admin_user.User?> userStream(String uid, String franchiseId) {
-    print('[FirestoreService] userStream($uid, $franchiseId) CALLED');
-    return _db
-        .collection('franchises')
-        .doc(franchiseId)
+  Stream<admin_user.User?> userStream(String userId) {
+    return firestore.FirebaseFirestore.instance
         .collection('users')
-        .doc(uid)
+        .doc(userId)
         .snapshots()
         .map((doc) {
-      print('Firestore doc for $uid: exists=${doc.exists} data=${doc.data()}');
       final data = doc.data();
-      if (doc.exists && data != null) {
-        try {
-          final user = admin_user.User.fromFirestore(data, doc.id);
-          print('userStream returning: $user');
-          Future.delayed(Duration(milliseconds: 500))
-              .then((_) => print('userStream tick $user'));
-          return user;
-        } catch (e, stack) {
-          print('userStream mapping error: $e\n$stack');
-          return null;
-        }
-      } else {
-        print('Returning null for $uid');
-        return null;
-      }
+      return data != null ? admin_user.User.fromFirestore(data, doc.id) : null;
     });
   }
 
@@ -1882,7 +2264,7 @@ Stream<admin_user.User?> delayedUserStream(
   print('[delayedUserStream] waiting 1s for Firestore token...');
   await Future.delayed(const Duration(seconds: 1));
   print('[delayedUserStream] subscribing to userStream($uid, $franchiseId)...');
-  await for (final value in firestoreService.userStream(uid, franchiseId)) {
+  await for (final value in firestoreService.userStream(uid)) {
     print('[delayedUserStream] yielded value: $value');
     yield value;
   }

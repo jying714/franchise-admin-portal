@@ -37,6 +37,28 @@ class ErrorLog {
     this.updatedAt,
   });
 
+  /// For Firestore writes (do NOT include 'id' as field!)
+  Map<String, dynamic> toFirestore() {
+    return {
+      'message': message,
+      'severity': severity,
+      'source': source,
+      'screen': screen,
+      if (stackTrace != null) 'stackTrace': stackTrace,
+      if (contextData != null) 'contextData': contextData,
+      if (deviceInfo != null) 'deviceInfo': deviceInfo,
+      if (userId != null) 'userId': userId,
+      if (errorType != null) 'errorType': errorType,
+      if (assignedTo != null) 'assignedTo': assignedTo,
+      'resolved': resolved,
+      'archived': archived,
+      'comments': comments,
+      'timestamp': Timestamp.fromDate(timestamp),
+      if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+    };
+  }
+
+  /// For table views, debug export, etc. (INCLUDES 'id')
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -58,23 +80,20 @@ class ErrorLog {
     };
   }
 
-  /// Use this ONLY if you are *certain* the doc is valid (e.g. after tryParse).
-  factory ErrorLog.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory ErrorLog.fromMap(Map<String, dynamic> data, String id) {
     DateTime parseTimestamp(dynamic ts) {
       if (ts == null) throw Exception('Missing timestamp');
       if (ts is Timestamp) return ts.toDate();
       if (ts is DateTime) return ts;
-      if (ts is String)
-        return DateTime.tryParse(ts) ??
-            (throw Exception('Invalid string timestamp'));
+      if (ts is String) return DateTime.tryParse(ts) ?? DateTime.now();
       throw Exception('Unknown timestamp type');
     }
 
     List<Map<String, dynamic>> parseComments(dynamic val) {
+      if (val == null) return [];
       if (val is List) {
         return val
-            .whereType<Map>()
+            .where((e) => e is Map || e is Map<String, dynamic>)
             .map((e) => Map<String, dynamic>.from(e))
             .toList();
       }
@@ -84,7 +103,7 @@ class ErrorLog {
     final DateTime timestamp = parseTimestamp(data['timestamp']);
 
     return ErrorLog(
-      id: doc.id,
+      id: id,
       message: data['message'] ?? '',
       severity: data['severity'] ?? 'unknown',
       source: data['source'] ?? '',
@@ -104,53 +123,18 @@ class ErrorLog {
     );
   }
 
-  /// Robust parser: Returns `null` if timestamp is missing or invalid.
-  static ErrorLog? tryParse(DocumentSnapshot doc) {
+  factory ErrorLog.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    return ErrorLog.fromMap(data, doc.id);
+  }
 
-    DateTime? parseTimestamp(dynamic ts) {
-      if (ts == null) return null;
-      if (ts is Timestamp) return ts.toDate();
-      if (ts is DateTime) return ts;
-      if (ts is String) return DateTime.tryParse(ts);
+  static ErrorLog? tryParse(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>?;
+    if (data == null) return null;
+    try {
+      return ErrorLog.fromMap(data, doc.id);
+    } catch (e) {
       return null;
     }
-
-    List<Map<String, dynamic>> parseComments(dynamic val) {
-      if (val is List) {
-        return val
-            .whereType<Map>()
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
-      }
-      return [];
-    }
-
-    final DateTime? timestamp = parseTimestamp(data['timestamp']);
-    if (timestamp == null) {
-      // Uncomment for debugging:
-      // print('Skipped error log ${doc.id} with invalid timestamp: ${data['timestamp']}');
-      return null;
-    }
-
-    return ErrorLog(
-      id: doc.id,
-      message: data['message'] ?? '',
-      severity: data['severity'] ?? 'unknown',
-      source: data['source'] ?? '',
-      screen: data['screen'] ?? '',
-      stackTrace: data['stackTrace'],
-      contextData: (data['contextData'] as Map?)?.cast<String, dynamic>(),
-      deviceInfo: (data['deviceInfo'] as Map?)?.cast<String, dynamic>(),
-      userId: data['userId'],
-      errorType: data['errorType'],
-      assignedTo: data['assignedTo'],
-      resolved: data['resolved'] ?? false,
-      archived: data['archived'] ?? false,
-      comments: parseComments(data['comments']),
-      timestamp: timestamp,
-      updatedAt:
-          data['updatedAt'] != null ? parseTimestamp(data['updatedAt']) : null,
-    );
   }
 }

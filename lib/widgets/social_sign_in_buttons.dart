@@ -52,7 +52,7 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
       String franchiseId, BuildContext context, User user) async {
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
-    final existing = await firestoreService.getUser(franchiseId, user.uid);
+    final existing = await firestoreService.getUser(user.uid);
     if (existing == null) {
       final newUser = admin_user.User(
         id: user.uid,
@@ -66,7 +66,7 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
         defaultFranchise: franchiseId,
       );
 
-      await firestoreService.addUser(franchiseId, newUser);
+      await firestoreService.addUser(newUser);
     }
   }
 

@@ -69,7 +69,9 @@ class _MenuItemCardState extends State<MenuItemCard> {
           ? () async {
               if (isFavorited) {
                 await firestoreService.removeFavoriteMenuItemForUser(
-                    widget.franchiseId, _userId!, widget.menuItem.id);
+                  _userId!,
+                  widget.menuItem.id,
+                );
               } else {
                 await firestoreService.addFavoriteMenuItemForUser(
                   widget.franchiseId,

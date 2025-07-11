@@ -20,6 +20,8 @@ class User {
   final String status;
   final String defaultFranchise;
 
+  final String? avatarUrl;
+
   bool get isOwner => role == roleOwner;
   bool get isAdmin => role == roleAdmin;
   bool get isManager => role == roleManager;
@@ -38,6 +40,7 @@ class User {
     required this.language,
     required this.status,
     required this.defaultFranchise,
+    this.avatarUrl,
   }) : addresses = addresses ?? [];
 
   static User fromFirestore(Map<String, dynamic> data, String id) {
@@ -59,6 +62,7 @@ class User {
       language: data['language'] ?? 'en',
       status: data['status'] ?? 'active',
       defaultFranchise: data['defaultFranchise'] ?? '',
+      avatarUrl: data['avatarUrl'],
     );
   }
 
@@ -72,6 +76,7 @@ class User {
       'language': language,
       'status': status,
       'defaultFranchise': defaultFranchise,
+      'avatarUrl': avatarUrl,
     };
   }
 
@@ -84,6 +89,7 @@ class User {
     String? language,
     String? status,
     String? defaultFranchise,
+    String? avatarUrl,
   }) {
     return User(
       id: id,
@@ -95,6 +101,7 @@ class User {
       language: language ?? this.language,
       status: status ?? this.status,
       defaultFranchise: defaultFranchise ?? this.defaultFranchise,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
     );
   }
 }
