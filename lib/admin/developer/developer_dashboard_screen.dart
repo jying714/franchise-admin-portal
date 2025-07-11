@@ -17,6 +17,8 @@ import 'package:franchise_admin_portal/widgets/developer/feature_toggles_section
 import 'package:franchise_admin_portal/widgets/developer/plugin_registry_section.dart';
 import 'package:franchise_admin_portal/widgets/developer/schema_browser_section.dart';
 import 'package:franchise_admin_portal/widgets/developer/audit_trail_section.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/owner_hq_dashboard_screen.dart';
+import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 
 class DeveloperDashboardScreen extends StatefulWidget {
   const DeveloperDashboardScreen({Key? key}) : super(key: key);
@@ -90,6 +92,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
               : '${loc.developerDashboardTitle} — $franchiseId',
         ),
         actions: [
+          DashboardSwitcherDropdown(currentScreen: 'developer'),
           IconButton(
             icon: const Icon(Icons.sync_alt),
             tooltip: loc.switchFranchise,

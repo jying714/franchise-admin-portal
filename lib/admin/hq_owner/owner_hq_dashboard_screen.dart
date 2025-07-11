@@ -8,6 +8,8 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/role_badge.dart';
+import 'package:franchise_admin_portal/admin/developer/developer_dashboard_screen.dart';
+import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 
 /// Developer/HQ-only: Entry-point for HQ/Owner dashboard.
 /// Add this to your DashboardSection registry for 'hq_owner'.
@@ -93,6 +95,8 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold, color: colorScheme.onSurface),
             ),
             const Spacer(),
+            // --- ADD DEVELOPER DASHBOARD SWITCH IF USER IS DEVELOPER ---
+            DashboardSwitcherDropdown(currentScreen: 'hq'),
             RoleBadge(
                 role: user.roles.isNotEmpty ? user.roles.first : "hq_owner"),
             const SizedBox(width: 8),

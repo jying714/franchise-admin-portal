@@ -16,7 +16,7 @@ import 'package:franchise_admin_portal/widgets/header/profile_icon_button.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-// Add this import:
+import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_selector.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -148,6 +148,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
               ),
             const Spacer(),
+            DashboardSwitcherDropdown(currentScreen: 'admin'),
             // --- SWITCH FRANCHISE BUTTON (DEVELOPER ONLY) ---
             if (isDeveloper)
               Padding(
