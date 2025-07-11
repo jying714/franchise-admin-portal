@@ -27,7 +27,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   @override
   Widget build(BuildContext context) {
     final userProfileNotifier = Provider.of<UserProfileNotifier>(context);
-    final userRole = userProfileNotifier.user?.role?.toLowerCase() ?? 'guest';
+    final userRoles = userProfileNotifier.user?.roles ?? <String>[];
 
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
@@ -78,20 +78,20 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                             final analyticsService =
                                 Provider.of<AnalyticsService>(context,
                                     listen: false);
-                            final userRole = Provider.of<UserProfileNotifier>(
+                            final userRoles = Provider.of<UserProfileNotifier>(
                                         context,
                                         listen: false)
                                     .user
-                                    ?.role
-                                    ?.toLowerCase() ??
-                                'guest';
+                                    ?.roles ??
+                                <String>[];
 
-                            final allowedRoles = {
+                            const allowedRoles = {
                               'admin',
                               'owner',
                               'developer'
                             };
-                            if (!allowedRoles.contains(userRole)) {
+                            if (!userRoles
+                                .any((role) => allowedRoles.contains(role))) {
                               return const SizedBox.shrink();
                             }
 

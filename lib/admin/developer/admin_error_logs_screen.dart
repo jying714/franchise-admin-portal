@@ -115,12 +115,11 @@ class _AdminErrorLogsScreenState extends State<AdminErrorLogsScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final adminUser = Provider.of<AdminUserProvider>(context).user;
-    final isAdmin = adminUser != null &&
-        (adminUser.role == 'owner' ||
-            adminUser.role == 'manager' ||
-            adminUser.role == 'staff' ||
-            adminUser.role == 'developer' // <--- add this line!
-        );
+    final roles = adminUser?.roles ?? [];
+    final isAdmin = roles.contains('owner') ||
+        roles.contains('manager') ||
+        roles.contains('staff') ||
+        roles.contains('developer');
 
     if (!isAdmin) {
       return Scaffold(

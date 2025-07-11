@@ -24,8 +24,8 @@ class OwnerHQDashboardScreen extends StatelessWidget {
         Provider.of<FirestoreService>(context, listen: false);
 
     // HQ/Owner-only guard (not visible to regular managers, staff, etc)
-    final allowedRoles = ['owner', 'hq', 'developer'];
-    if (user == null || !allowedRoles.contains(user.role)) {
+    final allowedRoles = ['hq_owner', 'hq_manager', 'developer'];
+    if (user == null || !user.roles.any((r) => allowedRoles.contains(r))) {
       // Log and show unauthorized
       Future.microtask(() => firestoreService.logError(
             franchiseId,
@@ -34,7 +34,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
             screen: "OwnerHQDashboardScreen",
             userId: user?.id ?? "unknown",
             severity: "warning",
-            contextData: {'role': user?.role, 'attempt': 'access'},
+            contextData: {'roles': user?.roles, 'attempt': 'access'},
           ));
       return Scaffold(
         body: Center(
@@ -93,7 +93,8 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold, color: colorScheme.onSurface),
             ),
             const Spacer(),
-            RoleBadge(role: user.role ?? "owner"),
+            RoleBadge(
+                role: user.roles.isNotEmpty ? user.roles.first : "hq_owner"),
             const SizedBox(width: 8),
             CircleAvatar(
               radius: 18,

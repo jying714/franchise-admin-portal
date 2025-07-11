@@ -1234,7 +1234,7 @@ class FirestoreService {
     required String name,
     required String email,
     String? phone,
-    String role = 'staff',
+    required List<String> roles,
   }) async {
     final docRef =
         _db.collection('franchises').doc(franchiseId).collection('users').doc();
@@ -1243,7 +1243,7 @@ class FirestoreService {
       'name': name,
       'email': email,
       'phone': phone ?? '',
-      'role': role,
+      'roles': roles, // <-- use roles array!
       'createdAt': firestore.FieldValue.serverTimestamp(),
     });
     await AuditLogService().addLog(
@@ -1254,7 +1254,7 @@ class FirestoreService {
         'staffUserId': docRef.id,
         'name': name,
         'email': email,
-        'role': role
+        'roles': roles, // <-- log roles as array for consistency
       },
     );
   }

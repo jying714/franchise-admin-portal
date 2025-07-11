@@ -27,12 +27,12 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
     final userNotifier =
         Provider.of<UserProfileNotifier>(context, listen: false);
     final appUser = userNotifier.user;
-    print('[StaffAccessScreen] user = $appUser, role = ${appUser?.role}');
+    print('[StaffAccessScreen] user = $appUser, role = ${appUser?.roles}');
     return appUser != null &&
-        (appUser.role?.toLowerCase() == 'owner' ||
-            appUser.role?.toLowerCase() == 'manager' ||
-            appUser.role?.toLowerCase() == 'admin' ||
-            appUser.role?.toLowerCase() == 'developer');
+        (appUser.roles.contains('owner') ||
+            appUser.roles.contains('manager') ||
+            appUser.roles.contains('admin') ||
+            appUser.roles.contains('developer'));
   }
 
   @override
@@ -161,7 +161,8 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                               title: Text(user.name,
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold)),
-                              subtitle: Text('${user.email} • ${user.role}'),
+                              subtitle: Text(
+                                  '${user.email} • ${user.roles.join(", ")}'),
                               trailing: IconButton(
                                 icon:
                                     const Icon(Icons.delete, color: Colors.red),
@@ -265,7 +266,9 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                     franchiseId,
                     name: _name,
                     email: _email,
-                    role: _role,
+                    roles: [
+                      _role
+                    ], // _role is your current selected String role
                   );
                   Navigator.of(context).pop();
                 }

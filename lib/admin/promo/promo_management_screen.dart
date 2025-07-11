@@ -25,7 +25,8 @@ class PromoManagementScreen extends StatelessWidget {
     final loading = userNotifier.loading;
     print('[PROMO SCREEN] Build called');
     print(
-        'Current user: $user, role: ${user?.role}, isDeveloper: ${user?.isDeveloper}, loading: $loading');
+        'Current user: $user, roles: ${user?.roles}, isDeveloper: ${user?.isDeveloper}, loading: $loading');
+
     print('[PROMO SCREEN] franchiseId: $franchiseId');
     // Show loading spinner while loading or user is null
     if (loading || user == null) {

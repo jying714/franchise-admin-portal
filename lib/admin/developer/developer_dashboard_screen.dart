@@ -66,9 +66,9 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
 
-    if (appUser == null || appUser.role != 'developer') {
-      print(
-          '[DEBUG] Blocked. appUser=${appUser?.email}, role=${appUser?.role}');
+    final roles = appUser?.roles ?? [];
+    if (!roles.contains('developer')) {
+      print('[DEBUG] Blocked. appUser=${appUser?.email}, roles=${roles}');
       return Scaffold(
         body: Center(
           child: Text(
@@ -134,7 +134,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
                               'sectionIndex': _selectedIndex,
                               'sectionTitle': section.title,
                             },
-                            userId: appUser.id,
+                            userId: appUser?.id,
                           );
                           return Center(
                             child: Text(

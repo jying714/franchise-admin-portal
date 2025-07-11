@@ -24,9 +24,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   bool _canEdit(BuildContext context) {
     final user = Provider.of<admin_user.User?>(context, listen: false);
-    return user?.role == 'owner' ||
-        user?.role == 'manager' ||
-        user?.role == 'developer';
+    if (user == null) return false;
+    return user.roles.contains('owner') ||
+        user.roles.contains('manager') ||
+        user.roles.contains('developer');
   }
 
   Future<void> _addOrEditInventory(String franchiseId, BuildContext context,

@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'address.dart';
 
 class User {
+  static const String roleHqOwner = 'hq_owner';
+  static const String roleHqManager = 'hq_manager';
   static const String roleOwner = 'owner';
   static const String roleAdmin = 'admin';
   static const String roleManager = 'manager';
@@ -13,29 +15,30 @@ class User {
   final String name;
   final String email;
   final String? phoneNumber;
-  final String role;
+  final List<String> roles;
   final List<Address> addresses;
   final String language;
-
   final String status;
   final String defaultFranchise;
-
   final String? avatarUrl;
 
-  bool get isOwner => role == roleOwner;
-  bool get isAdmin => role == roleAdmin;
-  bool get isManager => role == roleManager;
-  bool get isStaff => role == roleStaff;
+  bool get isHqOwner => roles.contains(roleHqOwner);
+  bool get isHqManager => roles.contains(roleHqManager);
+  bool get isOwner => roles.contains(roleOwner);
+  bool get isAdmin => roles.contains(roleAdmin);
+  bool get isManager => roles.contains(roleManager);
+  bool get isStaff => roles.contains(roleStaff);
   bool get isCustomer =>
-      role == roleCustomer || !(isOwner || isAdmin || isManager || isStaff);
-  bool get isDeveloper => role == roleDeveloper;
+      roles.contains(roleCustomer) ||
+      !(isHqOwner || isHqManager || isOwner || isAdmin || isManager || isStaff);
+  bool get isDeveloper => roles.contains(roleDeveloper);
 
   User({
     required this.id,
     required this.name,
     required this.email,
     this.phoneNumber,
-    required this.role,
+    required this.roles,
     List<Address>? addresses,
     required this.language,
     required this.status,
@@ -44,17 +47,15 @@ class User {
   }) : addresses = addresses ?? [];
 
   static User fromFirestore(Map<String, dynamic> data, String id) {
-    print('User.fromFirestore called for $id with data: $data');
-    final rawRole = data['role'];
-    final String effectiveRole =
-        (rawRole is String && rawRole.isNotEmpty) ? rawRole : roleCustomer;
-    print('User.fromFirestore: about to return User(...) for $id');
+    final rolesFromDb =
+        (data['roles'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
+            <String>[];
     return User(
       id: id,
       name: data['name'] ?? '',
       email: data['email'] ?? '',
       phoneNumber: data['phoneNumber'] ?? data['phone'] ?? '',
-      role: effectiveRole,
+      roles: rolesFromDb,
       addresses: (data['addresses'] as List<dynamic>?)
               ?.map((e) => Address.fromMap(Map<String, dynamic>.from(e)))
               .toList() ??
@@ -71,7 +72,7 @@ class User {
       'name': name,
       'email': email,
       'phoneNumber': phoneNumber ?? '',
-      'role': role.isNotEmpty ? role : roleCustomer,
+      'roles': roles,
       'addresses': addresses.map((e) => e.toMap()).toList(),
       'language': language,
       'status': status,
@@ -84,7 +85,7 @@ class User {
     String? name,
     String? email,
     String? phoneNumber,
-    String? role,
+    List<String>? roles,
     List<Address>? addresses,
     String? language,
     String? status,
@@ -96,7 +97,7 @@ class User {
       name: name ?? this.name,
       email: email ?? this.email,
       phoneNumber: phoneNumber ?? this.phoneNumber,
-      role: role ?? this.role,
+      roles: roles ?? this.roles,
       addresses: addresses ?? this.addresses,
       language: language ?? this.language,
       status: status ?? this.status,

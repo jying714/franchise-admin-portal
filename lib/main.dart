@@ -25,6 +25,7 @@ import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.da
 import 'package:franchise_admin_portal/admin/developer/developer_dashboard_screen.dart';
 import 'package:franchise_admin_portal/admin/franchise/franchise_selector_screen.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/owner_hq_dashboard_screen.dart';
 
 void main() {
   runZonedGuarded(() async {
@@ -347,6 +348,7 @@ class FranchiseAdminPortalApp extends StatelessWidget {
             '/developer/dashboard': (_) => const DeveloperDashboardScreen(),
             '/developer/select-franchise': (_) =>
                 const FranchiseSelectorScreen(),
+            '/hq-owner/dashboard': (_) => const OwnerHQDashboardScreen(),
             '/unauthorized': (_) => Scaffold(
                   appBar: AppBar(title: const Text('Unauthorized')),
                   body:

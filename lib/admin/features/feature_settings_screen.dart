@@ -45,7 +45,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
         userId: user.id,
         severity: 'warning',
         contextData: {
-          'role': user.role,
+          'roles': user.roles,
           'attemptedKey': key,
           'attemptedValue': value,
         },
@@ -143,7 +143,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
             userId: user.id,
             severity: 'warning',
             contextData: {
-              'role': user.role,
+              'roles': user.roles,
               'attempt': 'access',
             },
           );

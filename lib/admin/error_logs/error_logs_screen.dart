@@ -73,7 +73,7 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
       );
     }
 
-    if (!_allowedRoles.contains(appUser.role)) {
+    if (!appUser.roles.any((r) => _allowedRoles.contains(r))) {
       return Scaffold(
         body: AdminEmptyStateWidget(
           title: loc.unauthorizedAccessTitle,

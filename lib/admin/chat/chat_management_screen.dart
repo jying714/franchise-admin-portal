@@ -46,7 +46,7 @@ class ChatManagementScreen extends StatelessWidget {
           userId: user?.id ?? 'unknown',
           severity: 'warning',
           contextData: {
-            'role': user?.role,
+            'roles': user?.roles,
             'attempt': 'access',
           },
         );

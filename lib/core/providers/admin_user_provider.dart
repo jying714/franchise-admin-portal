@@ -14,6 +14,18 @@ class AdminUserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool get isHqOwner => user?.isHqOwner == true;
+  bool get isHqManager => user?.isHqManager == true;
+  bool get isOwner => user?.isOwner == true;
+  bool get isManager => user?.isManager == true;
+  bool get isAdmin => user?.isAdmin == true;
+  bool get isStaff => user?.isStaff == true;
+  bool get isCustomer => user?.isCustomer == true;
+  bool get isDeveloper => user?.isDeveloper == true;
+
+  bool get isHqUser => isHqOwner || isHqManager;
+  bool get isFranchiseUser => isOwner || isManager;
+
   StreamSubscription? _sub;
   bool _loading = false;
   bool get loading => _loading;

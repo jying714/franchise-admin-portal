@@ -113,7 +113,7 @@ class _ImpersonationDialogState extends State<ImpersonationDialog> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final adminUser = Provider.of<AdminUserProvider>(context).user;
-    final isDeveloper = adminUser?.role == 'developer';
+    final isDeveloper = adminUser?.roles.contains('developer') ?? false;
 
     if (!isDeveloper) {
       return Dialog(

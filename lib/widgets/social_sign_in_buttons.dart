@@ -61,7 +61,7 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
         phoneNumber: user.phoneNumber,
         addresses: [],
         language: "en",
-        role: admin_user.User.roleAdmin,
+        roles: [admin_user.User.roleAdmin], // <-- NEW: roles array
         status: "active",
         defaultFranchise: franchiseId,
       );

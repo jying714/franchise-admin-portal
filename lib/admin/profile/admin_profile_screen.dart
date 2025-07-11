@@ -27,9 +27,8 @@ class AdminProfileScreen extends StatelessWidget {
       );
     }
 
-    if (user.role != 'developer' &&
-        user.role != 'admin' &&
-        user.role != 'manager') {
+    const allowedRoles = ['developer', 'admin', 'manager'];
+    if (!user.roles.any((r) => allowedRoles.contains(r))) {
       return Scaffold(
         appBar: AppBar(title: Text(loc.profile)),
         body: Center(
@@ -99,7 +98,7 @@ class AdminProfileScreen extends StatelessWidget {
               const SizedBox(height: 24),
 
               _sectionHeader(context, loc.accountDetails),
-              _infoRow(context, loc.role, user.role),
+              _infoRow(context, loc.role, user.roles.join(', ')),
               _infoRow(context, loc.status, user.status),
               _infoRow(context, loc.language, user.language),
               _infoRow(context, loc.defaultFranchise, user.defaultFranchise),

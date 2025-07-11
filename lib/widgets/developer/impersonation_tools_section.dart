@@ -166,8 +166,10 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
     final colorScheme = theme.colorScheme;
     final adminUser = Provider.of<AdminUserProvider>(context).user;
 
-    // Developer-only guard
-    if (adminUser == null || adminUser.role != 'developer') {
+    // Developer-only guard (multi-role array)
+    final isDeveloper = adminUser?.roles.contains('developer') ?? false;
+
+    if (!isDeveloper) {
       return Center(
         child: Text(
           loc.unauthorizedAccess,

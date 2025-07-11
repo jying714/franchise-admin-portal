@@ -54,7 +54,7 @@ class _StaffDirectoryScreenState extends State<StaffDirectoryScreen> {
                 ),
                 title: Text(user.name),
                 subtitle: Text(user.email),
-                trailing: Text(user.role),
+                trailing: Text(user.roles.join(", ")),
                 onTap: () {
                   // TODO: Future enhancement - navigate to staff detail / edit screen
                 },

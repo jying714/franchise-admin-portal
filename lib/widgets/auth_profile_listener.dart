@@ -92,11 +92,17 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     if (_navigated || firebaseUser == null || user == null || notifier.loading)
       return;
 
-    print('[Routing] Proceeding with user: ${user.email}, role: ${user.role}');
+    print('[Routing] Proceeding with user: ${user.email}, role: ${user.roles}');
 
     if (user.status?.toLowerCase() != 'active') {
       _navigated = true;
       Navigator.of(context).pushReplacementNamed('/unauthorized');
+      return;
+    }
+
+    if (user.isHqOwner || user.isHqManager) {
+      _navigated = true;
+      Navigator.of(context).pushReplacementNamed('/hq-owner/dashboard');
       return;
     }
 
@@ -110,13 +116,16 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     }
 
     // Admin flow: lock to default franchise
-    final lockedId = user.defaultFranchise ?? 'unknown';
-    if (franchiseProvider.franchiseId != lockedId) {
-      franchiseProvider.setFranchiseId(lockedId);
+    if (user.isOwner || user.isManager) {
+      // Franchise owner/manager get admin dashboard (franchisee admin panel)
+      final lockedId = user.defaultFranchise ?? 'unknown';
+      if (franchiseProvider.franchiseId != lockedId) {
+        franchiseProvider.setFranchiseId(lockedId);
+      }
+      _navigated = true;
+      Navigator.of(context).pushReplacementNamed('/admin/dashboard');
+      return;
     }
-
-    _navigated = true;
-    Navigator.of(context).pushReplacementNamed('/admin/dashboard');
   }
 
   void _maybeLogProfileError(

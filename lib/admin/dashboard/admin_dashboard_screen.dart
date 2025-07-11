@@ -73,13 +73,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final userNotifier = Provider.of<UserProfileNotifier>(context);
     final appUser = userNotifier.user;
 
-    if (userNotifier.loading || appUser == null || appUser.role == null) {
+// New multi-role-safe loading guard:
+    if (userNotifier.loading ||
+        appUser == null ||
+        (appUser.roles == null || appUser.roles!.isEmpty)) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
     print(
-        'userNotifier.loading: ${userNotifier.loading}, appUser: $appUser, role: ${appUser?.role}');
+        'userNotifier.loading: ${userNotifier.loading}, appUser: $appUser, roles: ${appUser?.roles}');
 
     print('AdminDashboardScreen build called');
 
@@ -88,10 +91,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final isMobile = MediaQuery.of(context).size.width < 800;
     final colorScheme = Theme.of(context).colorScheme;
     final loc = AppLocalizations.of(context)!;
-    final String userRole = appUser.role ?? "admin";
-    final bool isDeveloper = (appUser.role?.toLowerCase() ?? "") == "developer";
+    final List<String> userRoles = appUser.roles ?? <String>[];
+    final bool isDeveloper = userRoles.contains('developer');
+    final String userRoleLabel =
+        userRoles.isNotEmpty ? userRoles.join(', ') : "admin";
     print(
-        'ROLE CHECK: appUser.role = ${appUser.role}, isDeveloper = $isDeveloper');
+        'ROLE CHECK: appUser.role = ${appUser.roles}, isDeveloper = $isDeveloper');
 
     final sections = _sections;
     if (sections.isEmpty) {
@@ -159,7 +164,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const SizedBox(width: 8),
             SettingsIconButton(),
             const SizedBox(width: 12),
-            RoleBadge(role: userRole),
+            RoleBadge(role: userRoleLabel),
             const SizedBox(width: 8),
             ProfileIconButton(),
           ],

@@ -52,11 +52,12 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
 
   bool _canManageCategories(BuildContext context) {
     final user = Provider.of<UserProfileNotifier>(context, listen: false).user;
-    return user != null &&
-        (user.role == 'owner' ||
-            user.role == 'admin' ||
-            user.role == 'manager' ||
-            user.role == 'developer');
+    if (user == null) return false;
+    final roles = user.roles ?? <String>[];
+    return roles.contains('owner') ||
+        roles.contains('admin') ||
+        roles.contains('manager') ||
+        roles.contains('developer');
   }
 
   void _onCategorySelect(String id, bool selected) {
