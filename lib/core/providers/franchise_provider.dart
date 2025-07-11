@@ -3,11 +3,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 
 class FranchiseProvider extends ChangeNotifier {
+  VoidCallback? onFranchiseChanged;
   String _franchiseId = 'unknown';
   bool _loading = true;
   admin_user.User? _adminUser;
 
-  String get franchiseId => _franchiseId;
+  String get franchiseId => _franchiseId.isEmpty ? 'unknown' : _franchiseId;
   bool get loading => _loading;
   bool get isFranchiseSelected => _franchiseId != 'unknown';
   admin_user.User? get adminUser => _adminUser;
@@ -25,29 +26,28 @@ class FranchiseProvider extends ChangeNotifier {
 
   /// Load franchiseId from local storage (used at boot or cold start)
   Future<void> _loadFranchiseId() async {
+    _loading = true;
+    notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getString('selectedFranchiseId');
-    if (id != null) {
+    if (id != null && id.isNotEmpty) {
       _franchiseId = id;
+    } else {
+      _franchiseId = 'unknown';
     }
     _loading = false;
     notifyListeners();
   }
 
   /// Lock access unless explicitly allowed or user is developer
-  Future<void> setFranchiseId(String? id) async {
-    final value = id ?? 'unknown';
-    if (_franchiseId != value) {
-      print('[FranchiseProvider] setFranchiseId: $value');
-      _franchiseId = value;
+  Future<void> setFranchiseId(String id) async {
+    if (id.isEmpty) return;
+    if (_franchiseId != id) {
+      _franchiseId = id;
       notifyListeners();
+      if (onFranchiseChanged != null) onFranchiseChanged!();
       final prefs = await SharedPreferences.getInstance();
-      if (id != null) {
-        await prefs.setString('selectedFranchiseId', id);
-      } else {
-        await prefs.remove('selectedFranchiseId');
-      }
-      print('[FranchiseProvider] setFranchiseId: saved to prefs');
+      await prefs.setString('selectedFranchiseId', id);
     }
   }
 

@@ -9,6 +9,14 @@ import 'package:franchise_admin_portal/widgets/admin/admin_sidebar.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_bottom_nav_bar.dart';
 import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
 import 'package:franchise_admin_portal/widgets/dialogs/franchise_selector_dialog_content.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_selector.dart';
+import 'package:franchise_admin_portal/widgets/developer/overview_section.dart';
+import 'package:franchise_admin_portal/widgets/developer/impersonation_tools_section.dart';
+import 'package:franchise_admin_portal/widgets/developer/error_logs_section.dart';
+import 'package:franchise_admin_portal/widgets/developer/feature_toggles_section.dart';
+import 'package:franchise_admin_portal/widgets/developer/plugin_registry_section.dart';
+import 'package:franchise_admin_portal/widgets/developer/schema_browser_section.dart';
+import 'package:franchise_admin_portal/widgets/developer/audit_trail_section.dart';
 
 class DeveloperDashboardScreen extends StatefulWidget {
   const DeveloperDashboardScreen({Key? key}) : super(key: key);
@@ -28,23 +36,24 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
     _sections = _getDeveloperSections();
   }
 
-  void _selectFranchiseDialog(BuildContext context) {
-    showDialog(
+  Future<void> _selectFranchiseDialog(BuildContext context) async {
+    final selectedId = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.switchFranchise),
-        content: const SizedBox(
-          width: 500,
-          child: FranchiseSelectorDialogContent(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context)!.close),
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: SizedBox(
+          width: 420,
+          child: FranchiseSelector(
+            onSelected: (franchiseId) {
+              Navigator.of(context).pop(franchiseId);
+            },
           ),
-        ],
+        ),
       ),
     );
+    if (selectedId != null && selectedId.isNotEmpty) {
+      await context.read<FranchiseProvider>().setFranchiseId(selectedId);
+    }
   }
 
   @override
@@ -75,7 +84,11 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc.developerDashboardTitle),
+        title: Text(
+          franchiseId == 'all'
+              ? '${loc.developerDashboardTitle} — ${loc.allFranchisesLabel ?? "All Franchises"}'
+              : '${loc.developerDashboardTitle} — $franchiseId',
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.sync_alt),
@@ -155,55 +168,62 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         key: 'overview',
         title: 'Overview',
         icon: Icons.dashboard_outlined,
-        builder: (_) => const Center(child: Text('Developer Overview Screen')),
+        builder: (context) => OverviewSection(
+            franchiseId: context.watch<FranchiseProvider>().franchiseId),
         sidebarOrder: 0,
       ),
       DashboardSection(
         key: 'impersonationTools',
         title: 'Impersonation Tools',
         icon: Icons.switch_account_outlined,
-        builder: (_) => const Center(
-            child: Text('Franchise impersonation manager placeholder')),
+        builder: (context) => ImpersonationToolsSection(
+          franchiseId: context.watch<FranchiseProvider>().franchiseId,
+        ),
         sidebarOrder: 1,
       ),
       DashboardSection(
         key: 'errorMonitoring',
         title: 'Error Logs',
         icon: Icons.bug_report_outlined,
-        builder: (_) =>
-            const Center(child: Text('Error monitoring dashboard placeholder')),
+        builder: (context) => ErrorLogsSection(
+          franchiseId: context.watch<FranchiseProvider>().franchiseId,
+        ),
         sidebarOrder: 2,
       ),
       DashboardSection(
         key: 'featureFlags',
         title: 'Feature Toggles',
         icon: Icons.toggle_on_outlined,
-        builder: (_) =>
-            const Center(child: Text('Feature toggle manager placeholder')),
+        builder: (context) => FeatureTogglesSection(
+          franchiseId: context.watch<FranchiseProvider>().franchiseId,
+        ),
         sidebarOrder: 3,
       ),
       DashboardSection(
         key: 'pluginRegistry',
         title: 'Plugin Registry',
         icon: Icons.extension_outlined,
-        builder: (_) =>
-            const Center(child: Text('Plugin injection tool placeholder')),
+        builder: (context) => PluginRegistrySection(
+          franchiseId: context.watch<FranchiseProvider>().franchiseId,
+        ),
         sidebarOrder: 4,
       ),
       DashboardSection(
         key: 'firestoreSchema',
         title: 'Schema Browser',
         icon: Icons.schema_outlined,
-        builder: (_) =>
-            const Center(child: Text('Firestore schema browser placeholder')),
+        builder: (context) => SchemaBrowserSection(
+          franchiseId: context.watch<FranchiseProvider>().franchiseId,
+        ),
         sidebarOrder: 5,
       ),
       DashboardSection(
         key: 'auditTrail',
         title: 'Audit Trail',
         icon: Icons.timeline_outlined,
-        builder: (_) => const Center(
-            child: Text('Cross-franchise audit trail placeholder')),
+        builder: (context) => AuditTrailSection(
+          franchiseId: context.watch<FranchiseProvider>().franchiseId,
+        ),
         sidebarOrder: 6,
       ),
     ];

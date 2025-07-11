@@ -82,22 +82,35 @@ class _FranchiseSelectorState extends State<FranchiseSelector> {
               child: Text('No franchises available. Please contact support.'),
             );
           }
+
+// Insert 'All Franchises' at the top of the list.
+          final allFranchisesOption = _FranchiseInfo(
+            id: 'all',
+            name: 'All Franchises',
+            logoUrl: null,
+          );
+
+          final displayList = [allFranchisesOption, ...franchises];
+
           return ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
-            itemCount: franchises.length,
+            itemCount: displayList.length,
             separatorBuilder: (_, __) => const Divider(),
             itemBuilder: (context, idx) {
-              final f = franchises[idx];
+              final f = displayList[idx];
               return ListTile(
                 leading: f.logoUrl != null
                     ? CircleAvatar(backgroundImage: NetworkImage(f.logoUrl!))
-                    : const CircleAvatar(child: Icon(Icons.storefront)),
+                    : idx == 0
+                        ? const CircleAvatar(child: Icon(Icons.all_inclusive))
+                        : const CircleAvatar(child: Icon(Icons.storefront)),
                 title: Text(f.name),
                 subtitle: Text(f.id),
                 onTap: () => widget.onSelected(f.id),
                 trailing: const Icon(Icons.chevron_right),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               );
             },
           );

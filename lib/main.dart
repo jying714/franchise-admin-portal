@@ -76,11 +76,17 @@ void main() {
         child: FranchiseGate(
           child: Builder(
             builder: (context) {
+              final franchiseProvider = Provider.of<FranchiseProvider>(context);
+              if (franchiseProvider.loading) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+              final franchiseId = franchiseProvider.franchiseId;
               final firebaseUser = Provider.of<fb_auth.User?>(context);
-              final franchiseId =
-                  Provider.of<FranchiseProvider>(context).franchiseId;
               print(
                   '[main.dart] builder fired. firebaseUser: ${firebaseUser?.email}, franchiseId: $franchiseId');
+              // Do not include print statements
               return AuthProfileListener(
                 franchiseId: franchiseId,
                 child: KeyedSubtree(
@@ -354,7 +360,7 @@ class FranchiseAdminPortalApp extends StatelessWidget {
                 final firebaseUser = Provider.of<fb_auth.User?>(context);
                 print('[Main] firebaseUser: ${firebaseUser?.email}');
                 if (firebaseUser == null) {
-                  return const SignInScreen(); // ✅ Enforce login flow
+                  return const SignInScreen(); // enforce login flow
                 }
                 return const BrandedLoadingScreen(); // Will be replaced after routing
               },
