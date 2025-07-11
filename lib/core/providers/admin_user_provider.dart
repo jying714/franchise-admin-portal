@@ -9,6 +9,11 @@ class AdminUserProvider extends ChangeNotifier {
   admin_user.User? _user;
   admin_user.User? get user => _user;
 
+  set user(admin_user.User? value) {
+    _user = value;
+    notifyListeners();
+  }
+
   StreamSubscription? _sub;
   bool _loading = false;
   bool get loading => _loading;

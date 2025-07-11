@@ -940,6 +940,7 @@
   "testOrderPlaced": "Test Order Placed",
   "errorLoadingFranchises": "Error loading franchises.",
   "noFranchisesFound": "No franchises found.",
-  "loadingPleaseWait": "Loading please wait.."
+  "loadingPleaseWait": "Loading please wait..",
+  "failedToLoadFranchises": "Failed to load franchises. Please try again."
 
   }

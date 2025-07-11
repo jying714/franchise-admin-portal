@@ -29,7 +29,10 @@ class FranchiseSelector extends StatelessWidget {
               : const CircleAvatar(child: Icon(Icons.storefront)),
           title: Text(f.name),
           subtitle: Text(f.id),
-          onTap: () => onSelected(f.id),
+          onTap: () {
+            print('[FranchiseSelector] Franchise tapped: ${f.id}');
+            this.onSelected(f.id);
+          },
           trailing: isSelected
               ? const Icon(Icons.check_circle, color: Colors.green)
               : const Icon(Icons.chevron_right),

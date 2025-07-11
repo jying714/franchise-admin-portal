@@ -15,12 +15,16 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/services/analytics_service.dart';
 import 'package:franchise_admin_portal/core/theme_provider.dart';
 import 'package:franchise_admin_portal/admin/sign_in/sign_in_screen.dart';
-import 'package:franchise_admin_portal/home_wrapper.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'widgets/user_profile_notifier.dart'; // adjust path if needed
 import 'widgets/auth_profile_listener.dart'; // adjust path if needed
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_gate.dart';
+import 'package:franchise_admin_portal/widgets/branded_loading_screen.dart';
+import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.dart';
+import 'package:franchise_admin_portal/admin/developer/developer_dashboard_screen.dart';
+import 'package:franchise_admin_portal/admin/franchise/franchise_selector_screen.dart';
+import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 void main() {
   runZonedGuarded(() async {
@@ -28,7 +32,10 @@ void main() {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-
+    await fb_auth.FirebaseAuth.instance.setPersistence(
+      fb_auth.Persistence.LOCAL,
+    );
+    print('[main.dart] Firebase persistence set.');
     // Use a shared FirestoreService for error logging at app root
     final firestoreService = FirestoreService();
     const defaultFranchiseId = 'unknown';
@@ -55,6 +62,7 @@ void main() {
         providers: [
           ChangeNotifierProvider<FranchiseProvider>(
               create: (_) => FranchiseProvider()),
+          ChangeNotifierProvider(create: (_) => AdminUserProvider()),
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           ChangeNotifierProvider(create: (_) => AuthService()),
           Provider<FirestoreService>.value(value: firestoreService),
@@ -71,9 +79,10 @@ void main() {
               final firebaseUser = Provider.of<fb_auth.User?>(context);
               final franchiseId =
                   Provider.of<FranchiseProvider>(context).franchiseId;
-              print('main.dart: firebaseUser?.email = ${firebaseUser?.email}');
-              print('main.dart: franchiseId = $franchiseId');
+              print(
+                  '[main.dart] builder fired. firebaseUser: ${firebaseUser?.email}, franchiseId: $franchiseId');
               return AuthProfileListener(
+                franchiseId: franchiseId,
                 child: KeyedSubtree(
                   key: ValueKey(firebaseUser?.uid ?? 'nouid'),
                   child: FranchiseAdminPortalApp(franchiseId: franchiseId),
@@ -326,7 +335,31 @@ class FranchiseAdminPortalApp extends StatelessWidget {
             GlobalCupertinoLocalizations.delegate,
           ],
           supportedLocales: AppLocalizations.supportedLocales,
-          home: HomeWrapper(franchiseId: franchiseId),
+          routes: {
+            '/sign-in': (_) => const SignInScreen(),
+            '/admin/dashboard': (_) => const AdminDashboardScreen(),
+            '/developer/dashboard': (_) => const DeveloperDashboardScreen(),
+            '/developer/select-franchise': (_) =>
+                const FranchiseSelectorScreen(),
+            '/unauthorized': (_) => Scaffold(
+                  appBar: AppBar(title: const Text('Unauthorized')),
+                  body:
+                      const Center(child: Text('Your account is not active.')),
+                ),
+          },
+          home: AuthProfileListener(
+            franchiseId: franchiseId,
+            child: Builder(
+              builder: (context) {
+                final firebaseUser = Provider.of<fb_auth.User?>(context);
+                print('[Main] firebaseUser: ${firebaseUser?.email}');
+                if (firebaseUser == null) {
+                  return const SignInScreen(); // ✅ Enforce login flow
+                }
+                return const BrandedLoadingScreen(); // Will be replaced after routing
+              },
+            ),
+          ),
         );
       },
     );

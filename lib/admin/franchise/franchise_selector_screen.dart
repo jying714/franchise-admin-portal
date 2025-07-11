@@ -6,6 +6,8 @@ import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_sidebar.dart';
 import 'package:franchise_admin_portal/widgets/admin/franchise_selector.dart';
 import 'package:franchise_admin_portal/core/models/franchise_info.dart';
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/utils/franchise_utils.dart';
 
 class FranchiseSelectorScreen extends StatefulWidget {
   const FranchiseSelectorScreen({super.key});
@@ -55,16 +57,23 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
 
             final franchises = snapshot.data!;
             return Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: FranchiseSelector(
-                  items: franchises,
-                  selectedFranchiseId: franchiseProvider.franchiseId,
-                  onSelected: (franchiseId) {
-                    franchiseProvider.setFranchiseId(franchiseId);
+              padding: const EdgeInsets.all(16.0),
+              child: FranchiseSelector(
+                items: franchises,
+                selectedFranchiseId: franchiseProvider.franchiseId,
+                onSelected: (franchiseId) {
+                  print(
+                      '[FranchiseSelectorScreen] onSelected fired with: $franchiseId');
+                  franchiseProvider.setFranchiseId(franchiseId).then((_) {
+                    print(
+                        '[FranchiseSelectorScreen] franchiseProvider updated.');
                     Navigator.of(context)
                         .pushReplacementNamed('/admin/dashboard');
-                  },
-                ));
+                    print('[Routing] Navigating to /admin/dashboard');
+                  });
+                },
+              ),
+            );
           },
         ),
       ),

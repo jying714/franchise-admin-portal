@@ -12,3 +12,20 @@ String getScopedFranchiseId(BuildContext context) {
   if (user.isDeveloper) return provider.franchiseId;
   return user.defaultFranchise ?? provider.franchiseId;
 }
+
+Future<void> navigateAfterFranchiseSelection(
+  BuildContext context,
+  String franchiseId,
+) async {
+  final franchiseProvider =
+      Provider.of<FranchiseProvider>(context, listen: false);
+  final user = Provider.of<UserProfileNotifier>(context, listen: false).user;
+
+  franchiseProvider.setFranchiseId(franchiseId);
+
+  if (user != null && user.isDeveloper) {
+    Navigator.of(context).pushReplacementNamed('/developer/dashboard');
+  } else {
+    Navigator.of(context).pushReplacementNamed('/admin/dashboard');
+  }
+}

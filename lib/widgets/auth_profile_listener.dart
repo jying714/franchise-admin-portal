@@ -5,11 +5,14 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
+import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 class AuthProfileListener extends StatefulWidget {
+  final String franchiseId;
   final Widget child;
 
   const AuthProfileListener({
+    required this.franchiseId,
     required this.child,
     super.key,
   });
@@ -21,6 +24,7 @@ class AuthProfileListener extends StatefulWidget {
 class _AuthProfileListenerState extends State<AuthProfileListener> {
   Object? _lastLoggedError;
   bool _navigated = false;
+  bool _subscribed = false;
 
   @override
   void didChangeDependencies() {
@@ -32,12 +36,29 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     final franchiseProvider =
         Provider.of<FranchiseProvider>(context, listen: false);
 
-    // Subscribe to user profile based on current firebase user
-    notifier.listenToUser(firestoreService, firebaseUser?.uid, '');
+    // Attach listener only if not already attached
+    if (!_subscribed) {
+      _subscribed = true;
 
-    // Log errors and route after profile loads
-    _maybeLogProfileError(notifier, firebaseUser, firestoreService);
-    _handleRouting(notifier, firebaseUser, franchiseProvider);
+      // ✅ Listen for user changes and rerun routing when ready
+      notifier.addListener(() {
+        final user = notifier.user;
+        final loading = notifier.loading;
+        if (user != null) {
+          // ✅ Inject into AdminUserProvider
+          Provider.of<AdminUserProvider>(context, listen: false).user = user;
+        }
+
+        if (!_navigated && !loading && firebaseUser != null && user != null) {
+          _maybeLogProfileError(notifier, firebaseUser, firestoreService);
+          _handleRouting(notifier, firebaseUser, franchiseProvider);
+        }
+      });
+    }
+
+    // ✅ Ensure listenToUser is always called
+    notifier.listenToUser(
+        firestoreService, firebaseUser?.uid, widget.franchiseId);
   }
 
   @override
@@ -66,27 +87,36 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     UserProfileNotifier notifier,
     fb_auth.User? firebaseUser,
     FranchiseProvider franchiseProvider,
-  ) async {
+  ) {
     final user = notifier.user;
     if (_navigated || firebaseUser == null || user == null || notifier.loading)
       return;
 
-    if (user.status != 'active') {
+    print('[Routing] Proceeding with user: ${user.email}, role: ${user.role}');
+
+    if (user.status?.toLowerCase() != 'active') {
       _navigated = true;
       Navigator.of(context).pushReplacementNamed('/unauthorized');
       return;
     }
 
-    _navigated = true;
-    franchiseProvider.setAdminUser(user);
-
     if (user.isDeveloper) {
-      Navigator.of(context).pushReplacementNamed('/developer/dashboard');
-    } else {
-      await franchiseProvider
-          .setInitialFranchiseId(user.defaultFranchise ?? '');
-      Navigator.of(context).pushReplacementNamed('/admin/dashboard');
+      final selected = franchiseProvider.isFranchiseSelected;
+      _navigated = true;
+      Navigator.of(context).pushReplacementNamed(
+        selected ? '/developer/dashboard' : '/developer/select-franchise',
+      );
+      return;
     }
+
+    // Admin flow: lock to default franchise
+    final lockedId = user.defaultFranchise ?? 'unknown';
+    if (franchiseProvider.franchiseId != lockedId) {
+      franchiseProvider.setFranchiseId(lockedId);
+    }
+
+    _navigated = true;
+    Navigator.of(context).pushReplacementNamed('/admin/dashboard');
   }
 
   void _maybeLogProfileError(

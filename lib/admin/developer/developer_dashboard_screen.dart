@@ -8,6 +8,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_sidebar.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_bottom_nav_bar.dart';
 import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
+import 'package:franchise_admin_portal/widgets/dialogs/franchise_selector_dialog_content.dart';
 
 class DeveloperDashboardScreen extends StatefulWidget {
   const DeveloperDashboardScreen({Key? key}) : super(key: key);
@@ -32,7 +33,10 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context)!.switchFranchise),
-        content: const Text("Franchise selector placeholder here."),
+        content: const SizedBox(
+          width: 500,
+          child: FranchiseSelectorDialogContent(),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -54,6 +58,8 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     if (appUser == null || appUser.role != 'developer') {
+      print(
+          '[DEBUG] Blocked. appUser=${appUser?.email}, role=${appUser?.role}');
       return Scaffold(
         body: Center(
           child: Text(

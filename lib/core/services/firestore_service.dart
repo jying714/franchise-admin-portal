@@ -1102,6 +1102,16 @@ class FirestoreService {
     }).toList();
   }
 
+  Future<List<FranchiseInfo>> getFranchises() async {
+    final query = await firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .get();
+
+    return query.docs
+        .map((doc) => FranchiseInfo.fromFirestore(doc.data(), doc.id))
+        .toList();
+  }
+
   // --- FEEDBACK MANAGEMENT (Admin/Feedback Management Panel) ---
   Stream<List<feedback_model.FeedbackEntry>> getFeedbackEntries(
       String franchiseId) {

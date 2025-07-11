@@ -35,22 +35,19 @@ class FranchiseProvider extends ChangeNotifier {
   }
 
   /// Lock access unless explicitly allowed or user is developer
-  Future<void> setFranchiseId(String? id, {bool force = false}) async {
+  Future<void> setFranchiseId(String? id) async {
     final value = id ?? 'unknown';
-    final isAllowed = force || isDeveloper;
-
-    if (!isAllowed) return;
-
     if (_franchiseId != value) {
+      print('[FranchiseProvider] setFranchiseId: $value');
       _franchiseId = value;
       notifyListeners();
-
       final prefs = await SharedPreferences.getInstance();
       if (id != null) {
         await prefs.setString('selectedFranchiseId', id);
       } else {
         await prefs.remove('selectedFranchiseId');
       }
+      print('[FranchiseProvider] setFranchiseId: saved to prefs');
     }
   }
 
