@@ -7,9 +7,8 @@ import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 class AuditTrailSection extends StatefulWidget {
-  final String franchiseId;
-  const AuditTrailSection({Key? key, required this.franchiseId})
-      : super(key: key);
+  final String? franchiseId;
+  const AuditTrailSection({Key? key, this.franchiseId}) : super(key: key);
 
   @override
   State<AuditTrailSection> createState() => _AuditTrailSectionState();

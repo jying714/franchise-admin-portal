@@ -11,7 +11,8 @@ class FranchiseProvider extends ChangeNotifier {
 
   String get franchiseId => _franchiseId.isEmpty ? 'unknown' : _franchiseId;
   bool get loading => _loading;
-  bool get isFranchiseSelected => _franchiseId != 'unknown';
+  bool get isFranchiseSelected =>
+      _franchiseId != 'unknown' && _franchiseId.isNotEmpty;
   admin_user.User? get adminUser => _adminUser;
   bool get isDeveloper => _adminUser?.isDeveloper ?? false;
 

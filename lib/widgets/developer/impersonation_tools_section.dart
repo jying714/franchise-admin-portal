@@ -8,8 +8,8 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/developer/impersonation_dialog.dart';
 
 class ImpersonationToolsSection extends StatefulWidget {
-  final String franchiseId;
-  const ImpersonationToolsSection({Key? key, required this.franchiseId})
+  final String? franchiseId;
+  const ImpersonationToolsSection({Key? key, this.franchiseId})
       : super(key: key);
 
   @override

@@ -7,9 +7,8 @@ import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 class FeatureTogglesSection extends StatefulWidget {
-  final String franchiseId;
-  const FeatureTogglesSection({Key? key, required this.franchiseId})
-      : super(key: key);
+  final String? franchiseId;
+  const FeatureTogglesSection({Key? key, this.franchiseId}) : super(key: key);
 
   @override
   State<FeatureTogglesSection> createState() => _FeatureTogglesSectionState();

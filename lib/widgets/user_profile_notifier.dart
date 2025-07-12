@@ -17,18 +17,15 @@ class UserProfileNotifier extends ChangeNotifier {
   Object? _lastError;
   Object? get lastError => _lastError;
 
-  void listenToUser(
-      FirestoreService firestoreService, String? uid, String franchiseId) {
-    print(
-        '[UserProfileNotifier] listenToUser called for uid=$uid, franchiseId=$franchiseId');
+  void listenToUser(FirestoreService firestoreService, String? uid) {
+    print('[UserProfileNotifier] listenToUser called for uid=$uid');
 
     // Always cancel existing subscription if any.
     _sub?.cancel();
 
-    // Robust guard: Only start if both uid and franchiseId are valid.
-    if (uid == null || franchiseId == 'unknown') {
-      print(
-          '[UserProfileNotifier] Skipping listen: missing uid or franchiseId.');
+    // Robust guard: Only start if uid is valid.
+    if (uid == null) {
+      print('[UserProfileNotifier] Skipping listen: missing uid.');
       _user = null;
       _loading = false;
       _lastError = null;
@@ -40,7 +37,7 @@ class UserProfileNotifier extends ChangeNotifier {
     _lastError = null;
     _deferNotifyListeners();
 
-    _sub = delayedUserStream(firestoreService, uid, franchiseId).listen(
+    _sub = delayedUserStream(firestoreService, uid).listen(
       (u) {
         print('[UserProfileNotifier] Received user: ${u?.email}');
         _user = u;
@@ -55,27 +52,21 @@ class UserProfileNotifier extends ChangeNotifier {
         _deferNotifyListeners();
 
         final firebaseUser = fb_auth.FirebaseAuth.instance.currentUser;
-        // Only log if franchiseId is valid
-        if (franchiseId != 'unknown') {
-          await firestoreService.logError(
-            franchiseId,
-            message: err.toString(),
-            source: 'UserProfileNotifier.listenToUser',
-            userId: firebaseUser?.uid,
-            screen: 'HomeWrapper',
-            stackTrace: stack?.toString(),
-            errorType: err.runtimeType.toString(),
-            severity: 'error',
-            contextData: {
-              'userProfileLoading': true,
-              'uid': uid,
-              'franchiseId': franchiseId,
-            },
-          );
-        } else {
-          print(
-              '[UserProfileNotifier] Skipped error logging: franchiseId is unknown');
-        }
+        // No franchiseId context; pass empty string or remove as needed.
+        await firestoreService.logError(
+          '', // No franchise context in franchise-agnostic flow
+          message: err.toString(),
+          source: 'UserProfileNotifier.listenToUser',
+          userId: firebaseUser?.uid,
+          screen: 'HomeWrapper',
+          stackTrace: stack?.toString(),
+          errorType: err.runtimeType.toString(),
+          severity: 'error',
+          contextData: {
+            'userProfileLoading': true,
+            'uid': uid,
+          },
+        );
       },
     );
   }

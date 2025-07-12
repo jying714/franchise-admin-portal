@@ -14,42 +14,16 @@ class AuthService extends ChangeNotifier {
   Stream<User?> get authStateChanges => _auth.authStateChanges();
   app.User? get profileUser => _profileUser;
 
-  /// Ensures user profile exists with a default role (for admin UI usage)
-  Future<void> ensureUserProfile(String franchiseId, User firebaseUser) async {
-    final docRef = _firestore
-        .collection('franchises')
-        .doc(franchiseId)
-        .collection('users')
-        .doc(firebaseUser.uid);
-    final doc = await docRef.get();
-    if (!doc.exists) {
-      await docRef.set({
-        'name': firebaseUser.displayName ?? '',
-        'email': firebaseUser.email,
-        'phoneNumber': firebaseUser.phoneNumber ?? '',
-        'role': 'admin',
-        'createdAt': FieldValue.serverTimestamp(),
-        'onboarded': false,
-      });
-      LogUtils.i('User profile created for admin: ${firebaseUser.email}');
-    }
-  }
-
-  /// EMAIL SIGN-IN (used by admin)
-  Future<User?> signInWithEmail(
-      String franchiseId, String email, String password) async {
+  /// EMAIL SIGN-IN (for admin)
+  Future<User?> signInWithEmail(String email, String password) async {
     try {
       UserCredential result = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
       final user = result.user;
-      if (user != null) {
-        await ensureUserProfile(franchiseId, user);
-        await loadProfileUser(franchiseId);
-        notifyListeners();
-      }
       LogUtils.i('Admin signed in with email: $email');
+      notifyListeners();
       return user;
     } catch (e, stack) {
       LogUtils.e('Admin email sign-in error', e, stack);
@@ -57,9 +31,9 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  /// EMAIL REGISTRATION (optional)
+  /// EMAIL REGISTRATION (optional, if ever used)
   Future<User?> registerWithEmail(
-      String franchiseId, String email, String password, String name) async {
+      String email, String password, String name) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -67,12 +41,8 @@ class AuthService extends ChangeNotifier {
       );
       await result.user?.updateDisplayName(name);
       final user = result.user;
-      if (user != null) {
-        await ensureUserProfile(franchiseId, user);
-        await loadProfileUser(franchiseId);
-        notifyListeners();
-      }
       LogUtils.i('Admin registered with email: $email');
+      notifyListeners();
       return user;
     } catch (e, stack) {
       LogUtils.e('Admin registration error', e, stack);
@@ -91,25 +61,18 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  /// GOOGLE SIGN-IN (optional for web)
-
-  Future<User?> signInWithGoogle(String franchiseId) async {
+  /// GOOGLE SIGN-IN (optional for web/mobile)
+  Future<User?> signInWithGoogle() async {
     try {
       if (kIsWeb) {
-        // Flutter Web: use signInWithPopup, not google_sign_in
         GoogleAuthProvider googleProvider = GoogleAuthProvider();
         final userCredential = await _auth.signInWithPopup(googleProvider);
         final user = userCredential.user;
-        if (user != null) {
-          await ensureUserProfile(franchiseId, user);
-          await loadProfileUser(franchiseId);
-          notifyListeners();
-        }
         LogUtils.i(
             'Google sign-in successful (web): ${user?.email ?? 'No email'}');
+        notifyListeners();
         return user;
       } else {
-        // Mobile/Desktop fallback: use google_sign_in as before
         final GoogleSignIn googleSignIn = GoogleSignIn();
         final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
         if (googleUser == null) {
@@ -125,12 +88,8 @@ class AuthService extends ChangeNotifier {
         final UserCredential authResult =
             await _auth.signInWithCredential(credential);
         final user = authResult.user;
-        if (user != null) {
-          await ensureUserProfile(franchiseId, user);
-          await loadProfileUser(franchiseId);
-          notifyListeners();
-        }
         LogUtils.i('Google sign-in successful: ${user?.email ?? 'No email'}');
+        notifyListeners();
         return user;
       }
     } catch (e, stack) {
@@ -189,23 +148,7 @@ class AuthService extends ChangeNotifier {
     return result.user;
   }
 
-  Future<void> loadProfileUser(String franchiseId) async {
-    final firebaseUser = _auth.currentUser;
-    if (firebaseUser == null) {
-      _profileUser = null;
-      return;
-    }
-    final doc = await _firestore
-        .collection('franchises')
-        .doc(franchiseId)
-        .collection('users')
-        .doc(firebaseUser.uid)
-        .get();
-    if (doc.exists && doc.data() != null) {
-      _profileUser =
-          app.User.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
-    } else {
-      _profileUser = null;
-    }
-  }
+  // Removed all franchise-specific profile logic from login flow.
+  // If you need to load a user profile after login (by franchise, etc),
+  // do it from your profile/provider logic, not from AuthService.
 }

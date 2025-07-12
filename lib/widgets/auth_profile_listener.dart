@@ -8,11 +8,9 @@ import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 class AuthProfileListener extends StatefulWidget {
-  final String franchiseId;
   final Widget child;
 
   const AuthProfileListener({
-    required this.franchiseId,
     required this.child,
     super.key,
   });
@@ -56,9 +54,8 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
       });
     }
 
-    // ✅ Ensure listenToUser is always called
-    notifier.listenToUser(
-        firestoreService, firebaseUser?.uid, widget.franchiseId);
+    // Franchise-agnostic: only pass uid!
+    notifier.listenToUser(firestoreService, firebaseUser?.uid);
   }
 
   @override
@@ -92,20 +89,21 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     if (_navigated || firebaseUser == null || user == null || notifier.loading)
       return;
 
-    print('[Routing] Proceeding with user: ${user.email}, role: ${user.roles}');
-
-    if (user.status?.toLowerCase() != 'active') {
+    // If user account is not active
+    if (user.status.toLowerCase() != 'active') {
       _navigated = true;
       Navigator.of(context).pushReplacementNamed('/unauthorized');
       return;
     }
 
+    // HQ Owner/Manager: go to HQ dashboard
     if (user.isHqOwner || user.isHqManager) {
       _navigated = true;
       Navigator.of(context).pushReplacementNamed('/hq-owner/dashboard');
       return;
     }
 
+    // Developer: go to dev dashboard or franchise selector
     if (user.isDeveloper) {
       final selected = franchiseProvider.isFranchiseSelected;
       _navigated = true;
@@ -115,10 +113,15 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
       return;
     }
 
-    // Admin flow: lock to default franchise
+    // Owner/Manager: only set franchise and route if defaultFranchise is available
     if (user.isOwner || user.isManager) {
-      // Franchise owner/manager get admin dashboard (franchisee admin panel)
-      final lockedId = user.defaultFranchise ?? 'unknown';
+      final lockedId = user.defaultFranchise;
+      if (lockedId == null || lockedId.isEmpty) {
+        // Optionally, route to an error page or franchise selector if needed
+        _navigated = true;
+        Navigator.of(context).pushReplacementNamed('/unauthorized');
+        return;
+      }
       if (franchiseProvider.franchiseId != lockedId) {
         franchiseProvider.setFranchiseId(lockedId);
       }
@@ -126,6 +129,10 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
       Navigator.of(context).pushReplacementNamed('/admin/dashboard');
       return;
     }
+
+    // All other users: implement routing as needed
+    // e.g. if customer, show a customer homepage, etc.
+    // For now, do nothing; you may want to add additional cases
   }
 
   void _maybeLogProfileError(
@@ -152,7 +159,7 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
             },
           );
         } catch (e, stack) {
-          print('[AuthProfileListener] Failed to log error: $e\n$stack');
+          // Logging error; just print for dev, skip for prod
         }
       });
     }

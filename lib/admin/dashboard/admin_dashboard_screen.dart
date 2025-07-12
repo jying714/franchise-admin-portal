@@ -61,22 +61,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
 
-    // GUARD: Only proceed if franchiseId is ready
-    if (franchiseId == 'unknown') {
-      // Optionally, show an explicit loading message
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
     final userNotifier = Provider.of<UserProfileNotifier>(context);
     final appUser = userNotifier.user;
 
 // New multi-role-safe loading guard:
-    if (userNotifier.loading ||
-        appUser == null ||
-        (appUser.roles == null || appUser.roles!.isEmpty)) {
+    if (userNotifier.loading || appUser == null || appUser.roles.isEmpty) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -91,7 +80,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final isMobile = MediaQuery.of(context).size.width < 800;
     final colorScheme = Theme.of(context).colorScheme;
     final loc = AppLocalizations.of(context)!;
-    final List<String> userRoles = appUser.roles ?? <String>[];
+    final List<String> userRoles = appUser.roles;
     final bool isDeveloper = userRoles.contains('developer');
     final String userRoleLabel =
         userRoles.isNotEmpty ? userRoles.join(', ') : "admin";
@@ -279,10 +268,6 @@ class AdminSidebar extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final userNotifier = Provider.of<UserProfileNotifier>(context);
     final appUser = userNotifier.user;
-    const ownerEmail = 'j.ying714@gmail.com';
-
-    print(
-        'AdminSidebar: appUser.email = ${appUser?.email} (expecting $ownerEmail)');
     if (appUser == null) {
       print('AdminSidebar: Waiting for user profile to load...');
       return const Center(child: CircularProgressIndicator());
@@ -351,8 +336,6 @@ class AdminBottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final appUser = Provider.of<app.User?>(context, listen: false);
-    const ownerEmail =
-        'J.Ying714@gmail.com'; // <-- REPLACE with your real email
     return BottomNavigationBar(
       currentIndex: selectedIndex,
       onTap: onTap,

@@ -27,7 +27,13 @@ class AdminProfileScreen extends StatelessWidget {
       );
     }
 
-    const allowedRoles = ['developer', 'admin', 'manager'];
+    const allowedRoles = [
+      'developer',
+      'admin',
+      'manager',
+      'hq_owner',
+      'hq_manager'
+    ];
     if (!user.roles.any((r) => allowedRoles.contains(r))) {
       return Scaffold(
         appBar: AppBar(title: Text(loc.profile)),
@@ -101,7 +107,8 @@ class AdminProfileScreen extends StatelessWidget {
               _infoRow(context, loc.role, user.roles.join(', ')),
               _infoRow(context, loc.status, user.status),
               _infoRow(context, loc.language, user.language),
-              _infoRow(context, loc.defaultFranchise, user.defaultFranchise),
+              _infoRow(
+                  context, loc.defaultFranchise, user.defaultFranchise ?? ''),
 
               const Divider(height: 32),
               _sectionHeader(context, loc.settings),

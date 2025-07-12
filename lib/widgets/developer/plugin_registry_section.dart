@@ -8,9 +8,8 @@ import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/widgets/developer/plugin_config_dialog.dart';
 
 class PluginRegistrySection extends StatefulWidget {
-  final String franchiseId;
-  const PluginRegistrySection({Key? key, required this.franchiseId})
-      : super(key: key);
+  final String? franchiseId;
+  const PluginRegistrySection({Key? key, this.franchiseId}) : super(key: key);
 
   @override
   State<PluginRegistrySection> createState() => _PluginRegistrySectionState();

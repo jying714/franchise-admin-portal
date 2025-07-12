@@ -84,13 +84,17 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
       );
     }
 
+    // --- Robust app bar franchise label ---
+    final showFranchise = franchiseId != 'all' &&
+        franchiseId != 'unknown' &&
+        franchiseId.isNotEmpty;
+    final appBarTitle = showFranchise
+        ? '${loc.developerDashboardTitle} — $franchiseId'
+        : loc.developerDashboardTitle;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          franchiseId == 'all'
-              ? '${loc.developerDashboardTitle} — ${loc.allFranchisesLabel ?? "All Franchises"}'
-              : '${loc.developerDashboardTitle} — $franchiseId',
-        ),
+        title: Text(appBarTitle),
         actions: [
           DashboardSwitcherDropdown(currentScreen: 'developer'),
           IconButton(
@@ -166,13 +170,18 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
   }
 
   List<DashboardSection> _getDeveloperSections() {
+    String? getFranchiseOrNull(BuildContext context) {
+      final id = context.watch<FranchiseProvider>().franchiseId;
+      return (id == 'unknown' || id.isEmpty) ? null : id;
+    }
+
     return [
       DashboardSection(
         key: 'overview',
         title: 'Overview',
         icon: Icons.dashboard_outlined,
-        builder: (context) => OverviewSection(
-            franchiseId: context.watch<FranchiseProvider>().franchiseId),
+        builder: (context) =>
+            OverviewSection(franchiseId: getFranchiseOrNull(context)),
         sidebarOrder: 0,
       ),
       DashboardSection(
@@ -180,7 +189,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         title: 'Impersonation Tools',
         icon: Icons.switch_account_outlined,
         builder: (context) => ImpersonationToolsSection(
-          franchiseId: context.watch<FranchiseProvider>().franchiseId,
+          franchiseId: getFranchiseOrNull(context),
         ),
         sidebarOrder: 1,
       ),
@@ -189,7 +198,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         title: 'Error Logs',
         icon: Icons.bug_report_outlined,
         builder: (context) => ErrorLogsSection(
-          franchiseId: context.watch<FranchiseProvider>().franchiseId,
+          franchiseId: getFranchiseOrNull(context),
         ),
         sidebarOrder: 2,
       ),
@@ -198,7 +207,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         title: 'Feature Toggles',
         icon: Icons.toggle_on_outlined,
         builder: (context) => FeatureTogglesSection(
-          franchiseId: context.watch<FranchiseProvider>().franchiseId,
+          franchiseId: getFranchiseOrNull(context),
         ),
         sidebarOrder: 3,
       ),
@@ -207,7 +216,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         title: 'Plugin Registry',
         icon: Icons.extension_outlined,
         builder: (context) => PluginRegistrySection(
-          franchiseId: context.watch<FranchiseProvider>().franchiseId,
+          franchiseId: getFranchiseOrNull(context),
         ),
         sidebarOrder: 4,
       ),
@@ -216,7 +225,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         title: 'Schema Browser',
         icon: Icons.schema_outlined,
         builder: (context) => SchemaBrowserSection(
-          franchiseId: context.watch<FranchiseProvider>().franchiseId,
+          franchiseId: getFranchiseOrNull(context),
         ),
         sidebarOrder: 5,
       ),
@@ -225,7 +234,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         title: 'Audit Trail',
         icon: Icons.timeline_outlined,
         builder: (context) => AuditTrailSection(
-          franchiseId: context.watch<FranchiseProvider>().franchiseId,
+          franchiseId: getFranchiseOrNull(context),
         ),
         sidebarOrder: 6,
       ),

@@ -8,9 +8,8 @@ import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/admin/developer/developer_error_logs_screen.dart';
 
 class ErrorLogsSection extends StatefulWidget {
-  final String franchiseId;
-  const ErrorLogsSection({Key? key, required this.franchiseId})
-      : super(key: key);
+  final String? franchiseId;
+  const ErrorLogsSection({Key? key, this.franchiseId}) : super(key: key);
 
   @override
   State<ErrorLogsSection> createState() => _ErrorLogsSectionState();

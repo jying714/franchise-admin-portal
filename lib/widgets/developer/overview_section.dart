@@ -7,9 +7,8 @@ import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class OverviewSection extends StatefulWidget {
-  final String franchiseId;
-  const OverviewSection({Key? key, required this.franchiseId})
-      : super(key: key);
+  final String? franchiseId;
+  const OverviewSection({Key? key, this.franchiseId}) : super(key: key);
 
   @override
   State<OverviewSection> createState() => _OverviewSectionState();
@@ -392,13 +391,13 @@ class _DeveloperInsightCards extends StatelessWidget {
   final ThemeData theme;
   final ColorScheme colorScheme;
   final AppLocalizations loc;
-  final String franchiseId;
+  final String? franchiseId;
 
   const _DeveloperInsightCards({
     required this.theme,
     required this.colorScheme,
     required this.loc,
-    required this.franchiseId,
+    this.franchiseId,
   });
 
   @override

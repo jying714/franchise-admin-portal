@@ -2323,10 +2323,10 @@ class FirestoreService {
 }
 
 Stream<admin_user.User?> delayedUserStream(
-    FirestoreService firestoreService, String uid, String franchiseId) async* {
+    FirestoreService firestoreService, String uid) async* {
   print('[delayedUserStream] waiting 1s for Firestore token...');
   await Future.delayed(const Duration(seconds: 1));
-  print('[delayedUserStream] subscribing to userStream($uid, $franchiseId)...');
+  print('[delayedUserStream] subscribing to userStream($uid)...');
   await for (final value in firestoreService.userStream(uid)) {
     print('[delayedUserStream] yielded value: $value');
     yield value;

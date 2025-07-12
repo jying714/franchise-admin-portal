@@ -19,7 +19,7 @@ class User {
   final List<Address> addresses;
   final String language;
   final String status;
-  final String defaultFranchise;
+  final String? defaultFranchise;
   final String? avatarUrl;
 
   bool get isHqOwner => roles.contains(roleHqOwner);
@@ -42,7 +42,7 @@ class User {
     List<Address>? addresses,
     required this.language,
     required this.status,
-    required this.defaultFranchise,
+    this.defaultFranchise,
     this.avatarUrl,
   }) : addresses = addresses ?? [];
 
@@ -62,7 +62,7 @@ class User {
           [],
       language: data['language'] ?? 'en',
       status: data['status'] ?? 'active',
-      defaultFranchise: data['defaultFranchise'] ?? '',
+      defaultFranchise: data['defaultFranchise'],
       avatarUrl: data['avatarUrl'],
     );
   }
