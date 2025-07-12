@@ -11,6 +11,9 @@ import 'package:franchise_admin_portal/widgets/dashboard/role_badge.dart';
 import 'package:franchise_admin_portal/admin/developer/developer_dashboard_screen.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/franchise_financial_kpi_card.dart';
+import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
+import 'package:franchise_admin_portal/core/models/franchise_info.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/widgets/cash_flow_forecast_card.dart';
 
 /// Developer/HQ-only: Entry-point for HQ/Owner dashboard.
 /// Add this to your DashboardSection registry for 'hq_owner'.
@@ -75,7 +78,20 @@ class OwnerHQDashboardScreen extends StatelessWidget {
         ),
       );
     }
-
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final franchiseProvider =
+          Provider.of<FranchiseProvider>(context, listen: false);
+      if (franchiseProvider.allFranchises.isEmpty) {
+        try {
+          final firestoreService =
+              Provider.of<FirestoreService>(context, listen: false);
+          final franchises = await firestoreService.getFranchises();
+          franchiseProvider.setAllFranchises(franchises);
+        } catch (e) {
+          // Optional: Show error/snackbar if needed
+        }
+      }
+    });
     final isMobile = MediaQuery.of(context).size.width < 800;
     final gridColumns = isMobile ? 1 : 3;
     final gap = isMobile ? 12.0 : 22.0;
@@ -97,6 +113,8 @@ class OwnerHQDashboardScreen extends StatelessWidget {
             ),
             const Spacer(),
             // --- ADD DEVELOPER DASHBOARD SWITCH IF USER IS DEVELOPER ---
+            FranchisePickerDropdown(),
+            const SizedBox(width: 14), // Optional: space before other controls
             DashboardSwitcherDropdown(currentScreen: 'hq'),
             RoleBadge(
                 role: user.roles.isNotEmpty ? user.roles.first : "hq_owner"),
@@ -131,6 +149,13 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                       maxHeight: 320,
                     ),
                     child: FranchiseFinancialKpiCard(
+                      franchiseId: franchiseId,
+                      brandId: user.defaultFranchise,
+                    ),
+                  ),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: 220),
+                    child: CashFlowForecastCard(
                       franchiseId: franchiseId,
                       brandId: user.defaultFranchise,
                     ),

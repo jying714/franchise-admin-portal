@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
+import 'package:franchise_admin_portal/core/models/franchise_info.dart';
 
 class FranchiseProvider extends ChangeNotifier {
   VoidCallback? onFranchiseChanged;
@@ -65,5 +66,16 @@ class FranchiseProvider extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('selectedFranchiseId');
+  }
+
+  List<FranchiseInfo> _allFranchises = [];
+
+  // Public getter for the franchise picker
+  List<FranchiseInfo> get allFranchises => List.unmodifiable(_allFranchises);
+
+  // Optionally, expose a way to set them (you might fetch from Firestore/API)
+  void setAllFranchises(List<FranchiseInfo> franchises) {
+    _allFranchises = franchises;
+    notifyListeners();
   }
 }

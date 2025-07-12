@@ -1151,6 +1151,11 @@
   "errorLoadingKpi": "Failed to load KPIs.",
   "errorLoadingSection": "Error loading section",
   "featureComingSoonCashFlow": "Cash Flow Forecast (coming soon)",
-  "featureComingSoonRevenueTrends": "Per-Location Revenue Trends (coming soon)"
+  "featureComingSoonRevenueTrends": "Per-Location Revenue Trends (coming soon)",
+  "noFranchisesAvailable": "No Franchises Available.",
+  "openingBalance": "Opening Balance",
+  "projectedInflow": "Projected Inflow",
+  "projectedOutflow": "Projected Outflow",
+  "projectedClosing": "Projected Closing"
 
   }

@@ -2306,6 +2306,20 @@ class FirestoreService {
       rethrow; // or handle in UI
     }
   }
+
+  // HQ owner dashboard methods
+  Future<Map<String, dynamic>?> getCashFlowForecast(String franchiseId) async {
+    final snap = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('cash_flow_forecasts') // or a top-level collection
+        .orderBy('period', descending: true)
+        .limit(1)
+        .get();
+
+    if (snap.docs.isEmpty) return null;
+    return snap.docs.first.data();
+  }
 }
 
 Stream<admin_user.User?> delayedUserStream(

@@ -95,7 +95,7 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
       franchiseId: widget.franchiseId,
       brandId: widget.brandId,
       developerOnly: true,
-      showFuturePlaceholders: true,
+      showFuturePlaceholders: false,
       builder: (context) {
         return FutureBuilder<Map<String, dynamic>>(
           future: _kpiFuture,
@@ -156,14 +156,6 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
                     lastPayout: lastPayout,
                   ),
                   const SizedBox(height: 8),
-                  _FeaturePlaceholder(
-                    label: localizations?.featureComingSoonCashFlow ??
-                        'Cash Flow Forecast (coming soon)',
-                  ),
-                  _FeaturePlaceholder(
-                    label: localizations?.featureComingSoonRevenueTrends ??
-                        'Per-Location Revenue Trends (coming soon)',
-                  ),
                   if (_isDeveloper &&
                       Theme.of(context).brightness == Brightness.dark)
                     Padding(
