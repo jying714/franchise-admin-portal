@@ -116,32 +116,43 @@ class OwnerHQDashboardScreen extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // ROW 1: FINANCIAL KPIs & ALERTS
+              // Fixed childAspectRatio for consistent card heights
               GridView.count(
                 crossAxisCount: gridColumns,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: gap,
                 mainAxisSpacing: gap,
-                childAspectRatio: isMobile ? 2.2 : 2.9,
+                childAspectRatio: isMobile ? 1.8 : 2.4,
                 children: [
-                  FranchiseFinancialKpiCard(
-                    franchiseId: franchiseId,
-                    brandId: user.defaultFranchise,
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: 180,
+                      maxHeight: 320,
+                    ),
+                    child: FranchiseFinancialKpiCard(
+                      franchiseId: franchiseId,
+                      brandId: user.defaultFranchise,
+                    ),
                   ),
-                  const OutstandingInvoicesCard(),
-                  const PayoutStatusSummary(),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: 220),
+                    child: OutstandingInvoicesCard(),
+                  ),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: 220),
+                    child: PayoutStatusSummary(),
+                  ),
                 ],
               ),
               SizedBox(height: gap),
-              // ROW 2: MULTI-BRAND, ALERTS, QUICKLINKS, PLACEHOLDER
               GridView.count(
                 crossAxisCount: gridColumns,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: gap,
                 mainAxisSpacing: gap,
-                childAspectRatio: isMobile ? 1.6 : 2.2,
+                childAspectRatio: isMobile ? 1.8 : 2.4,
                 children: const [
                   MultiBrandOverviewPanel(),
                   FranchiseAlertsList(),
@@ -149,7 +160,6 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                 ],
               ),
               SizedBox(height: gap + 4),
-              // Future Features Row (Placeholder for Announcements, Compliance, Bulk Actions, Reports, etc.)
               FutureFeaturePlaceholderPanel(),
             ],
           ),

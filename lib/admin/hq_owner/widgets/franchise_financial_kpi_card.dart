@@ -54,36 +54,18 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
       final firestoreService =
           Provider.of<FirestoreService>(context, listen: false);
 
-      Future<Map<String, dynamic>> _loadKpis() async {
-        final firestoreService =
-            Provider.of<FirestoreService>(context, listen: false);
+      final analytics = await firestoreService
+          .getFranchiseAnalyticsSummary(widget.franchiseId);
+      final outstanding =
+          await firestoreService.getOutstandingInvoices(widget.franchiseId);
+      final lastPayout =
+          await firestoreService.getLastPayout(widget.franchiseId);
 
-        try {
-          final analytics = await firestoreService
-              .getFranchiseAnalyticsSummary(widget.franchiseId);
-          final outstanding =
-              await firestoreService.getOutstandingInvoices(widget.franchiseId);
-          final lastPayout =
-              await firestoreService.getLastPayout(widget.franchiseId);
-
-          return {
-            'analytics': analytics,
-            'outstanding': outstanding,
-            'lastPayout': lastPayout,
-          };
-        } catch (e, st) {
-          await firestoreService.logError(
-            widget.franchiseId,
-            message: 'Failed to load KPIs: $e',
-            source: 'FranchiseFinancialKpiCard',
-            screen: 'FranchiseFinancialKpiCard',
-            stackTrace: st.toString(),
-            severity: 'error',
-            contextData: {'franchiseId': widget.franchiseId},
-          );
-          rethrow;
-        }
-      }
+      return {
+        'analytics': analytics,
+        'outstanding': outstanding,
+        'lastPayout': lastPayout,
+      };
     } catch (e, st) {
       final firestoreService =
           Provider.of<FirestoreService>(context, listen: false);
@@ -93,12 +75,11 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
         source: 'FranchiseFinancialKpiCard',
         screen: 'FranchiseFinancialKpiCard',
         stackTrace: st.toString(),
-        contextData: {'franchiseId': widget.franchiseId},
         severity: 'error',
+        contextData: {'franchiseId': widget.franchiseId},
       );
       rethrow;
     }
-    throw Exception('Unreachable');
   }
 
   @override
@@ -122,68 +103,103 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const LoadingShimmerWidget();
             }
+
+            Widget cardContent;
+
             if (snapshot.hasError) {
-              return _ErrorCard(
-                message:
-                    localizations?.errorLoadingKpi ?? 'Failed to load KPIs.',
-                onRetry: () => setState(() {
-                  _kpiFuture = _loadKpis();
-                }),
+              cardContent = Card(
+                color: Theme.of(context).colorScheme.errorContainer,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(DesignTokens.paddingMd),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.redAccent),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          localizations?.errorLoadingKpi ??
+                              'Failed to load KPIs.',
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: DesignTokens.textColor,
+                                  ),
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: () => setState(() {
+                          _kpiFuture = _loadKpis();
+                        }),
+                        icon: const Icon(Icons.refresh),
+                        label: Text(localizations?.retry ?? 'Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            } else {
+              final analytics =
+                  snapshot.data?['analytics'] as Map<String, dynamic>? ?? {};
+              final outstanding = snapshot.data?['outstanding'] ?? 0.0;
+              final lastPayout =
+                  snapshot.data?['lastPayout'] as Map<String, dynamic>? ?? {};
+
+              cardContent = Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _KpiRow(
+                    localizations: localizations,
+                    analytics: analytics,
+                    outstanding: outstanding,
+                    lastPayout: lastPayout,
+                  ),
+                  const SizedBox(height: 8),
+                  _FeaturePlaceholder(
+                    label: localizations?.featureComingSoonCashFlow ??
+                        'Cash Flow Forecast (coming soon)',
+                  ),
+                  _FeaturePlaceholder(
+                    label: localizations?.featureComingSoonRevenueTrends ??
+                        'Per-Location Revenue Trends (coming soon)',
+                  ),
+                  if (_isDeveloper &&
+                      Theme.of(context).brightness == Brightness.dark)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        'Debug: FranchiseId=${widget.franchiseId}, BrandId=${widget.brandId}',
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelSmall
+                            ?.copyWith(color: _colors.outline),
+                      ),
+                    ),
+                ],
               );
             }
 
-            final analytics =
-                snapshot.data?['analytics'] as Map<String, dynamic>? ?? {};
-            final outstanding = snapshot.data?['outstanding'] ?? 0.0;
-            final lastPayout =
-                snapshot.data?['lastPayout'] as Map<String, dynamic>? ?? {};
-
-            final cardRadius = DesignTokens.radius2xl;
-            final brandColor = BrandingConfig.brandRed;
-
-            return Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(cardRadius),
-              ),
-              color: brandColor.withOpacity(0.04),
-              shadowColor: brandColor,
-              child: Padding(
-                padding: const EdgeInsets.all(DesignTokens.paddingLg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _KpiRow(
-                      localizations: localizations,
-                      analytics: analytics,
-                      outstanding: outstanding,
-                      lastPayout: lastPayout,
+            // --------- THIS IS THE KEY FIX ---------
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                // If the card is being rendered in a small fixed height (GridView/SizedBox), force scroll
+                if (constraints.maxHeight < 320) {
+                  // 320 is a reasonable height for all content to fit; adjust as needed
+                  return SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints:
+                          BoxConstraints(minHeight: constraints.maxHeight),
+                      child: cardContent,
                     ),
-                    const SizedBox(height: 8),
-                    _FeaturePlaceholder(
-                      label: localizations?.featureComingSoon?.toString() ??
-                          'Cash Flow Forecast (coming soon)',
-                    ),
-                    _FeaturePlaceholder(
-                      label: localizations?.featureComingSoon?.toString() ??
-                          'Per-Location Revenue Trends (coming soon)',
-                    ),
-                    if (_isDeveloper &&
-                        Theme.of(context).brightness == Brightness.dark)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          'Debug: FranchiseId=${widget.franchiseId}, BrandId=${widget.brandId}',
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelSmall
-                              ?.copyWith(color: _colors.outline),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+                  );
+                } else {
+                  // Allow content to expand naturally if there is space
+                  return cardContent;
+                }
+              },
             );
+            // ---------------------------------------
           },
         );
       },
@@ -289,13 +305,18 @@ class _ErrorCard extends StatelessWidget {
     return Card(
       color: Theme.of(context).colorScheme.errorContainer,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           children: [
             const Icon(Icons.error_outline, color: Colors.redAccent),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(message, style: const TextStyle(color: Colors.red)),
+              child: Text(
+                message,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                    ),
+              ),
             ),
             TextButton.icon(
               onPressed: onRetry,

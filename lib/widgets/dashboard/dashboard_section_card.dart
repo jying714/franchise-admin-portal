@@ -51,56 +51,70 @@ class DashboardSectionCard extends StatelessWidget {
       color: brandColor.withOpacity(0.04),
       shadowColor: brandColor,
       child: Padding(
-        padding: const EdgeInsets.all(DesignTokens.paddingLg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+          padding: const EdgeInsets.all(DesignTokens.paddingLg),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+                minHeight: 200,
+                maxHeight: 320), // You may want to tweak maxHeight!
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(icon, color: brandColor),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: brandColor,
-                      ),
+                Row(
+                  children: [
+                    Icon(icon, color: brandColor),
+                    const SizedBox(width: 8),
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: brandColor,
+                          ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 12),
+
+                // ---- Key Fix: Scrollable main card content ----
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Builder(
+                      builder: (context) {
+                        try {
+                          return builder(context);
+                        } catch (e, st) {
+                          final fs = Provider.of<FirestoreService>(context,
+                              listen: false);
+                          fs.logError(
+                            franchiseId,
+                            message: 'Error building section $title: $e',
+                            source: 'DashboardSectionCard',
+                            screen: title,
+                            stackTrace: st.toString(),
+                            severity: 'error',
+                          );
+                          return Text(
+                            loc.errorLoadingSection,
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: colorScheme.error,
+                                    ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                // ---- end Key Fix ----
+
+                if (showFuturePlaceholders) ...[
+                  const SizedBox(height: 12),
+                  _FeaturePlaceholder(label: loc.featureComingSoonCashFlow),
+                  _FeaturePlaceholder(
+                      label: loc.featureComingSoonRevenueTrends),
+                ],
               ],
             ),
-            const SizedBox(height: 12),
-            Builder(
-              builder: (context) {
-                try {
-                  return builder(context);
-                } catch (e, st) {
-                  final fs =
-                      Provider.of<FirestoreService>(context, listen: false);
-                  fs.logError(
-                    franchiseId,
-                    message: 'Error building section $title: $e',
-                    source: 'DashboardSectionCard',
-                    screen: title,
-                    stackTrace: st.toString(),
-                    severity: 'error',
-                  );
-                  return Text(
-                    loc.errorLoadingSection,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colorScheme.error,
-                        ),
-                  );
-                }
-              },
-            ),
-            if (showFuturePlaceholders) ...[
-              const SizedBox(height: 12),
-              _FeaturePlaceholder(label: loc.featureComingSoonCashFlow),
-              _FeaturePlaceholder(label: loc.featureComingSoonRevenueTrends),
-            ],
-          ],
-        ),
-      ),
+          )),
     );
   }
 }

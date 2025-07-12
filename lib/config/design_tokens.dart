@@ -221,6 +221,8 @@ class DesignTokens {
     ),
   ];
 
+  static const double paddingMd = 16.0;
+
   // ======================
   // === FUTURE TOKENS ====
   // ======================
