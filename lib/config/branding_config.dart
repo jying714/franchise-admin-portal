@@ -47,6 +47,12 @@ class BrandingConfig {
   // Profile Page
   static const String defaultProfileIcon = 'assets/images/default_profile.png';
 
+  // kpi
+  static Color brandColorFor(String brandId) {
+    // Extend this logic if brand-specific colors are used
+    return brandRed; // fallback to default brand color
+  }
+
   // ======================
   // === FUTURE TOKENS ====
   // ======================

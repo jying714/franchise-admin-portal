@@ -207,6 +207,20 @@ class DesignTokens {
   static const double radiusMd = 8.0;
   static const double radiusLg = 16.0;
 
+  static const double radius2xl = 32.0;
+  static const double paddingLg = 24.0;
+
+  // KPI widget
+  // Example for soft shadow (update to match your style)
+  static const List<BoxShadow> softShadow = [
+    BoxShadow(
+      color: Color(0x11000000), // Subtle shadow
+      blurRadius: 16,
+      spreadRadius: 2,
+      offset: Offset(0, 4),
+    ),
+  ];
+
   // ======================
   // === FUTURE TOKENS ====
   // ======================

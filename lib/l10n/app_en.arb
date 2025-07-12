@@ -1140,5 +1140,17 @@
   "integrations": "Accounting/API Integrations",
   "integrationsDesc": "Connect with QuickBooks, Xero, Sage, and more.",
   "scheduledReports": "Scheduled Reports",
-  "scheduledReportsDesc": "Schedule, download, or auto-email custom finance reports."
+  "scheduledReportsDesc": "Schedule, download, or auto-email custom finance reports.",
+  "kpiFinancials": "Financial KPIs",
+  "kpiRevenue": "Revenue",
+  "kpiOutstanding": "Outstanding",
+  "kpiLastPayout": "Last Payout",
+  "kpiAvgOrder": "Avg. Order",
+  "kpiPayoutDate": "Date",
+  "featureComingSoon": "{feature} (coming soon)",
+  "errorLoadingKpi": "Failed to load KPIs.",
+  "errorLoadingSection": "Error loading section",
+  "featureComingSoonCashFlow": "Cash Flow Forecast (coming soon)",
+  "featureComingSoonRevenueTrends": "Per-Location Revenue Trends (coming soon)"
+
   }

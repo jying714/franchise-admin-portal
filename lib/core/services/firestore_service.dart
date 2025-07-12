@@ -212,6 +212,55 @@ extension InvoiceFirestore on FirestoreService {
   }
 }
 
+extension FranchiseFinanceExtensions on FirestoreService {
+  Future<Map<String, dynamic>> getFranchiseAnalyticsSummary(
+      String franchiseId) async {
+    final snap = await _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('analytics_summaries')
+        .orderBy('period', descending: true)
+        .limit(1)
+        .get();
+
+    if (snap.docs.isEmpty) return {};
+    return snap.docs.first.data();
+  }
+
+  Future<double> getOutstandingInvoices(String franchiseId) async {
+    final snap = await _db
+        .collection('invoices')
+        .where('franchiseId', isEqualTo: _db.doc('franchises/$franchiseId'))
+        .where('status', isEqualTo: 'sent')
+        .get();
+
+    double total = 0.0;
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      if (data['paid_at'] == null) {
+        total += (data['total'] as num?)?.toDouble() ?? 0.0;
+      }
+    }
+    return total;
+  }
+
+  Future<Map<String, dynamic>> getLastPayout(String franchiseId) async {
+    final snap = await _db
+        .collection('payouts')
+        .where('franchiseId', isEqualTo: _db.doc('franchises/$franchiseId'))
+        .orderBy('scheduled_at', descending: true)
+        .limit(1)
+        .get();
+
+    if (snap.docs.isEmpty) return {};
+    final data = snap.docs.first.data();
+    return {
+      'amount': data['amount'],
+      'date': data['scheduled_at']?.toDate()?.toIso8601String(),
+    };
+  }
+}
+
 class FirestoreService {
   final firestore.FirebaseFirestore _db = firestore.FirebaseFirestore.instance;
   final fb_auth.FirebaseAuth auth = fb_auth.FirebaseAuth.instance;

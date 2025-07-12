@@ -10,6 +10,7 @@ import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/role_badge.dart';
 import 'package:franchise_admin_portal/admin/developer/developer_dashboard_screen.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/widgets/franchise_financial_kpi_card.dart';
 
 /// Developer/HQ-only: Entry-point for HQ/Owner dashboard.
 /// Add this to your DashboardSection registry for 'hq_owner'.
@@ -123,10 +124,13 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                 crossAxisSpacing: gap,
                 mainAxisSpacing: gap,
                 childAspectRatio: isMobile ? 2.2 : 2.9,
-                children: const [
-                  FranchiseFinancialKpiCard(),
-                  OutstandingInvoicesCard(),
-                  PayoutStatusSummary(),
+                children: [
+                  FranchiseFinancialKpiCard(
+                    franchiseId: franchiseId,
+                    brandId: user.defaultFranchise,
+                  ),
+                  const OutstandingInvoicesCard(),
+                  const PayoutStatusSummary(),
                 ],
               ),
               SizedBox(height: gap),
@@ -149,77 +153,6 @@ class OwnerHQDashboardScreen extends StatelessWidget {
               FutureFeaturePlaceholderPanel(),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// FINANCIAL KPIs: Franchise Revenue, Royalties, Overdue Fees
-class FranchiseFinancialKpiCard extends StatelessWidget {
-  const FranchiseFinancialKpiCard({super.key});
-  @override
-  Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
-    // TODO: Replace with real async data, here is static/mock
-    final monthlyRevenue = 47289.34;
-    final pendingRoyalty = 4217.12;
-    final storesReporting = 11;
-    final overdueFees = 3;
-
-    return Card(
-      color: colorScheme.surfaceVariant,
-      elevation: DesignTokens.adminCardElevation,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(loc.franchiseFinancials ?? "Financial Overview",
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                _KpiTile(
-                  icon: Icons.paid,
-                  label: loc.monthlyRevenue ?? "Monthly Revenue",
-                  value: "\$${monthlyRevenue.toStringAsFixed(2)}",
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(width: 18),
-                _KpiTile(
-                  icon: Icons.account_balance_wallet,
-                  label: loc.pendingRoyalties ?? "Pending Royalty",
-                  value: "\$${pendingRoyalty.toStringAsFixed(2)}",
-                  color: colorScheme.secondary,
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                _KpiTile(
-                  icon: Icons.store,
-                  label: loc.activeStores ?? "Stores Reporting",
-                  value: storesReporting.toString(),
-                  color: colorScheme.primaryContainer,
-                ),
-                const SizedBox(width: 18),
-                _KpiTile(
-                  icon: Icons.error,
-                  label: loc.overdueFees ?? "Overdue Fees",
-                  value: overdueFees > 0 ? overdueFees.toString() : "0",
-                  color: overdueFees > 0
-                      ? colorScheme.error
-                      : colorScheme.secondary,
-                ),
-              ],
-            ),
-          ],
         ),
       ),
     );
