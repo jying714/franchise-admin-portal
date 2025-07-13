@@ -5,7 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-
+import 'package:franchise_admin_portal/widgets/profile_gate_screen.dart';
+import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/firebase_options.dart';
 import 'package:franchise_admin_portal/core/services/auth_service.dart';
@@ -319,10 +320,12 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
               appBar: AppBar(title: const Text('Unauthorized')),
               body: const Center(child: Text('Your account is not active.')),
             ),
+        '/post-login-gate': (_) =>
+            AdminProviders(child: const ProfileGateScreen()),
       },
       home: firebaseUser == null
-          ? const LandingPage() // Show landing/login page if not signed in
-          : AdminProviders(child: BrandedLoadingScreen()),
+          ? const LandingPage()
+          : AdminProviders(child: const ProfileGateScreen()),
     );
   }
 }

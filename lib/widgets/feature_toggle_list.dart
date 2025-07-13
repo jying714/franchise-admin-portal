@@ -28,7 +28,7 @@ class FeatureToggleList extends StatelessWidget {
     final loc = AppLocalizations.of(context)!;
     return StreamBuilder<Map<String, dynamic>>(
       stream: Provider.of<FirestoreService>(context, listen: false)
-          .streamFeatureToggles(franchiseId),
+          .streamFranchiseFeatureToggles(franchiseId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const LoadingShimmerWidget();

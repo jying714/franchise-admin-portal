@@ -1182,6 +1182,22 @@
   "futureFeaturesTitle": "What's Coming Next?",
   "futureFeaturesBody": "New modules for delivery tracking, marketing automation, and more coming soon.",
   "copyright": "Copyright",
-  "allRightsReserved": "All rights reserved."
+  "allRightsReserved": "All rights reserved.",
+  "noValidRoleFound": "No valid role found for your account. Please contact support.",
+  "claimsRefreshFailed": "Failed to refresh your access permissions. Please try again or contact support.",
+  "profileLoadTimeout": "Profile loading timed out.",
+  "tryAgainOrContactSupport": "Please try again or contact support if the issue persists.",
+  "profileLoadFailed": "Failed to load your profile.",
+  "syncingRolesPleaseWait": "Syncing your access permissions, please wait...",
+  "redirectingToDeveloperDashboard": "Redirecting to developer dashboard...",
+  "redirecting": "Redirecting...",
+  "loadingProfileAndPermissions": "Loading your profile and permissions...",
+  "developerMode": "Developer Mode",
+  "devPanelDesc": "Developer-only tools and debug information.",
+  "forceClaimsRefresh": "Force Claims Refresh",
+  "signOut": "Sign Out",
+  "tryAgain": "Try Again",
+  "futureFeaturesTitle": "Upcoming Features",
+  "futureFeaturesBody": "We’re working on additional profile and access controls. Stay tuned!"
 
   }

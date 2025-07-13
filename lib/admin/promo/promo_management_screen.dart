@@ -104,7 +104,7 @@ class PromoManagementScreen extends StatelessWidget {
                   // Promo list
                   Expanded(
                     child: StreamBuilder<List<Promo>>(
-                      stream: firestoreService.getPromotions(franchiseId),
+                      stream: firestoreService.getPromos(franchiseId),
                       builder: (context, snapshot) {
                         print(
                             '[PROMO STREAM] Raw snapshot: ${snapshot.data}, error: ${snapshot.error}');
@@ -204,7 +204,7 @@ class PromoManagementScreen extends StatelessWidget {
               final franchiseId =
                   Provider.of<FranchiseProvider>(context, listen: false)
                       .franchiseId;
-              await service.deletePromotion(franchiseId, promoId);
+              await service.deletePromo(franchiseId, promoId);
               await AuditLogService().addLog(
                 franchiseId: franchiseId,
                 userId: user.id,

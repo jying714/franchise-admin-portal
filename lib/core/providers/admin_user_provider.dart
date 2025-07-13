@@ -46,7 +46,7 @@ class AdminUserProvider extends ChangeNotifier {
       return;
     }
 
-    _sub = firestoreService.adminUserStream(uid).listen(
+    _sub = firestoreService.userStream(uid).listen(
       (userDoc) {
         _user = userDoc;
         _loading = false;

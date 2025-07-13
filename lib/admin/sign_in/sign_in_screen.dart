@@ -7,6 +7,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/social_sign_in_buttons.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -19,6 +20,28 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _isLoading = false;
   String? _errorMessage;
 
+  Future<void> _callSetClaimsForExistingUsers() async {
+    setState(() => _isLoading = true);
+    try {
+      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable(
+        'setClaimsForExistingUsers',
+        options: HttpsCallableOptions(
+          timeout: const Duration(seconds: 30),
+        ),
+      );
+      final result = await callable.call(<String, dynamic>{});
+      setState(() {
+        _errorMessage = "Claims sync OK: ${result.data}";
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = "Sync claims failed: $e";
+      });
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
   void _setLoading(bool value) {
     setState(() {
       _isLoading = value;
@@ -26,8 +49,16 @@ class _SignInScreenState extends State<SignInScreen> {
     });
   }
 
-  void _handleSuccess(User? user) {
-    // Navigation happens automatically via main.dart stream
+  void _handleSuccess(User? user) async {
+    if (user != null) {
+      // Force refresh to pick up latest custom claims/roles from Firebase Auth
+      await user.getIdToken(true);
+      debugPrint('User signed in: ${user.email}');
+      // <--- ADD THIS FOR EXPLICIT POST-LOGIN ROUTE
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/post-login-gate');
+      }
+    }
   }
 
   void _handleError(String error) {
@@ -77,6 +108,18 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                   ),
                 ),
+              ElevatedButton(
+                child: Text('Print ID Token'),
+                onPressed: () async {
+                  final token =
+                      await FirebaseAuth.instance.currentUser?.getIdToken(true);
+                  debugPrint('ID TOKEN: $token');
+                },
+              ),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _callSetClaimsForExistingUsers,
+                child: const Text("Sync Claims (TEMP ADMIN BUTTON)"),
+              ),
               SocialSignInButtons(
                 isLoading: _isLoading,
                 setLoading: _setLoading,

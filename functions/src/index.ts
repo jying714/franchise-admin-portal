@@ -346,25 +346,33 @@ export const setRoleOnUserCreate = functions.auth.user()
 export const setClaimsOnUserCreate = functions.auth.user()
   .onCreate(async (user) => {
     const uid = user.uid;
-    // Try to fetch role from Firestore profile
-    //  (customize the collection as needed)
+    const email = user.email || "";
     let role = "customer";
-    try {
-      const userDoc = await admin.firestore()
-        .collection("users").doc(uid).get();
-      if (userDoc.exists && userDoc.data()?.roles?.length > 0) {
-      // Take the first role if array, or
-      // adjust to your needs (e.g., support multi-role)
-        role = userDoc.data()?.roles[0] || "customer";
-      }
-    } catch (e) {
-      console.error(
-        `[setClaimsOnUserCreate] Could not read Firestore profile for
-         ${uid}:`, e);
+
+    // 1. Try to fetch role from Firestore profile
+    let userDoc = await admin.firestore().collection("users").doc(uid).get();
+    if (userDoc.exists && userDoc.data()?.roles?.length > 0) {
+      role = userDoc.data()?.roles[0] || "customer";
     }
+
+    // 2. If no Firestore user profile, CREATE IT
+    if (!userDoc.exists) {
+      await admin.firestore().collection("users").doc(uid).set({
+        email,
+        roles: [role],
+        status: "active", // or "invited" or whatever is default
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, {merge: true});
+      // Immediately set userDoc for further steps
+      userDoc = await admin.firestore().collection("users").doc(uid).get();
+    }
+
+    // 3. Set custom user claims
     await admin.auth().setCustomUserClaims(uid, {role});
-    console.log(`[setClaimsOnUserCreate] Set custom claims for ${uid}:`, role);
+    console.log(`[setClaimsOnUserCreate] Set custom claims
+       and created profile for ${uid}:`, role);
   });
+
 
 export const setClaimsForExistingUsers = functions.https.onCall(
   async (data, context) => {
@@ -439,21 +447,24 @@ export const setUserRole = functions.https.onCall(
  * (create user by email if not exists) and set their role.
  * Only callable by an owner, developer, or admin.
  */
+const VALID_ROLES = ["owner", "developer", "admin",
+  "manager", "staff", "customer"];
+
 export const inviteAndSetRole = functions.https.onCall(
   async (data, context) => {
-    // SECURITY: Only allow privileged roles
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
-        "unauthenticated",
-        "Authentication required"
-      );
-    }
-    const callerClaims = context.auth.token;
-    const callerRole = callerClaims.role;
-    if (!["owner", "developer", "admin"].includes(callerRole)) {
+    // Security: Only allow privileged users to invite
+    if (
+      !context.auth ||
+      !context.auth.token ||
+      !(
+        context.auth.token.role === "owner" ||
+        context.auth.token.role === "developer" ||
+        context.auth.token.role === "admin"
+      )
+    ) {
       throw new functions.https.HttpsError(
         "permission-denied",
-        "Insufficient privileges"
+        "Only admins, owners, or developers can invite users."
       );
     }
 
@@ -461,17 +472,25 @@ export const inviteAndSetRole = functions.https.onCall(
     if (!email || !role) {
       throw new functions.https.HttpsError(
         "invalid-argument",
-        "Both email and role are required."
+        "Email and role are required."
+      );
+    }
+
+    // Validate that the passed role is in the allowed list
+    if (!VALID_ROLES.includes(role)) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        `Role "${role}" is not permitted.`
       );
     }
 
     let userRecord;
+    let isNewUser = false;
     try {
-      // Try to fetch user by email
       userRecord = await admin.auth().getUserByEmail(email);
     } catch (err) {
       if (typeof err === "object" && err !== null && "code" in err && (
-    err as { code?: string }).code === "auth/user-not-found") {
+        err as { code?: string }).code === "auth/user-not-found") {
         if (!password) {
           throw new functions.https.HttpsError(
             "invalid-argument",
@@ -482,35 +501,83 @@ export const inviteAndSetRole = functions.https.onCall(
           email,
           password,
         });
-        // (Optional: send invite email here)
+        isNewUser = true;
+
+        // Send password reset link (invite email)
+        try {
+          await admin.auth().generatePasswordResetLink(email);
+        } catch (emailErr) {
+          console.error("Failed to send password reset link:", emailErr);
+        }
       } else {
         throw new functions.https.HttpsError(
           "internal",
-          "Error fetching or creating user: " + (
-            typeof err === "object" && err !== null && "message" in err ? (
-          err as { message?: string }).message : String(err))
+          "Error fetching or creating user: " +
+            (typeof err === "object" && err !== null && "message" in err ?
+              (err as { message?: string }).message : String(err))
         );
       }
     }
 
-
-    // Set custom user claims (role)
+    // Set custom user claims
     await admin.auth().setCustomUserClaims(userRecord.uid, {role});
 
-    // (Optionally, create a user doc in Firestore here for your app, if needed)
-    // await admin.firestore().collection("users").doc(userRecord.uid).set({
-    //   email,
-    //   roles: [role],
-    //   status: "invited",
-    //   createdAt: admin.firestore.FieldValue.serverTimestamp()
-    // }, { merge: true });
+    // Create/update Firestore user profile
+    const userDocRef = admin.firestore()
+      .collection("users").doc(userRecord.uid);
+    const userDoc = await userDocRef.get();
+    if (!userDoc.exists) {
+      await userDocRef.set({
+        email,
+        roles: [role],
+        status: "invited",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, {merge: true});
+    } else {
+      // Ensure 'invited' status and role is present in roles array
+      const data = userDoc.data() || {};
+      const roles = Array.isArray(data.roles) ? data.roles : [];
+      if (!roles.includes(role)) {
+        roles.push(role);
+      }
+      await userDocRef.set({
+        roles,
+        status: "invited",
+      }, {merge: true});
+    }
 
     return {
       status: "ok",
       uid: userRecord.uid,
-      email,
       role,
-      existingUser: !!userRecord,
+      isNewUser,
     };
+  }
+);
+
+export const ensureUserProfile = functions.https.onCall(
+  async (data, context) => {
+    if (!context.auth || !["owner", "developer", "admin"]
+      .includes(context.auth.token.role)) {
+      throw new functions.https.HttpsError(
+        "permission-denied", "Must be owner, developer, or admin.");
+    }
+    const {uid, email, role} = data;
+    if (!uid || !email) {
+      throw new functions.https.HttpsError(
+        "invalid-argument", "uid and email are required.");
+    }
+    const userDocRef = admin.firestore().collection("users").doc(uid);
+    const userDoc = await userDocRef.get();
+    if (!userDoc.exists) {
+      await userDocRef.set({
+        email,
+        roles: [role || "customer"],
+        status: "active",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, {merge: true});
+      return {created: true};
+    }
+    return {created: false};
   }
 );

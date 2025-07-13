@@ -263,12 +263,11 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                 if (_formKey.currentState!.validate()) {
                   _formKey.currentState!.save();
                   await service.addStaffUser(
-                    franchiseId,
                     name: _name,
                     email: _email,
-                    roles: [
-                      _role
-                    ], // _role is your current selected String role
+                    roles: [_role],
+                    franchiseIds: [franchiseId], // Required, as a List<String>
+                    // phone: _phone, // optional, add if you have it
                   );
                   Navigator.of(context).pop();
                 }
@@ -298,7 +297,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
               final franchiseId =
                   Provider.of<FranchiseProvider>(context, listen: false)
                       .franchiseId;
-              await service.removeStaffUser(franchiseId, user.id);
+              await service.removeStaffUser(user.id);
               Navigator.of(context).pop();
             },
             child: Text(loc.staffRemoveButton),

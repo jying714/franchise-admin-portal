@@ -17,6 +17,9 @@ class UserProfileNotifier extends ChangeNotifier {
   Object? _lastError;
   Object? get lastError => _lastError;
 
+  FirestoreService? _lastFirestoreService;
+  String? _lastUid;
+
   void listenToUser(FirestoreService firestoreService, String? uid) {
     print('[UserProfileNotifier] listenToUser called for uid=$uid');
 
@@ -92,4 +95,13 @@ class UserProfileNotifier extends ChangeNotifier {
       notifyListeners();
     });
   }
+
+  void reload() {
+    if (_lastFirestoreService != null && _lastUid != null) {
+      listenToUser(_lastFirestoreService!, _lastUid);
+    }
+  }
+
+  Object? get error => lastError;
+  bool get isLoading => loading;
 }

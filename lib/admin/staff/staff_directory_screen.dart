@@ -20,7 +20,7 @@ class _StaffDirectoryScreenState extends State<StaffDirectoryScreen> {
     super.initState();
     final franchiseId = context.read<FranchiseProvider>().franchiseId;
     final firestoreService = context.read<FirestoreService>();
-    _staffFuture = firestoreService.getFranchiseStaff(franchiseId);
+    _staffFuture = firestoreService.allUsers(franchiseId: franchiseId).first;
   }
 
   @override

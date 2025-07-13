@@ -68,17 +68,16 @@ class _MenuItemCardState extends State<MenuItemCard> {
       onPressed: enabled
           ? () async {
               if (isFavorited) {
-                await firestoreService.removeFavoriteMenuItemForUser(
+                await firestoreService.removeFavoriteMenuItem(
                   _userId!,
+                  widget.franchiseId,
                   widget.menuItem.id,
                 );
               } else {
-                await firestoreService.addFavoriteMenuItemForUser(
-                  widget.franchiseId,
+                await firestoreService.addFavoriteMenuItem(
                   _userId!,
-                  {
-                    'menuItemId': widget.menuItem.id
-                  }, // pass as Map<String, dynamic>
+                  widget.franchiseId,
+                  widget.menuItem.id,
                 );
               }
               setState(() {});
@@ -356,24 +355,35 @@ class _MenuItemCardState extends State<MenuItemCard> {
                       // Heart/favorite
                       _userId == null
                           ? _favoriteHeart(false, false, loc)
-                          : StreamBuilder<List<MenuItem>>(
+                          : StreamBuilder<List<String>>(
                               stream:
-                                  firestoreService.getFavoriteMenuItemsForUser(
-                                      widget.franchiseId, _userId!),
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
+                                  firestoreService.favoritesMenuItemIdsStream(
+                                      _userId!, widget.franchiseId),
+                              builder: (context, idSnapshot) {
+                                if (!idSnapshot.hasData)
                                   return _favoriteHeart(false, false, loc);
-                                }
-                                if (snapshot.hasError) {
-                                  return _favoriteHeart(false, true, loc);
-                                }
-                                final isFavorited = snapshot.data?.any(
-                                        (mi) => mi.id == widget.menuItem.id) ??
-                                    false;
-                                return _favoriteHeart(isFavorited, true, loc);
+                                final ids = idSnapshot.data!;
+                                return StreamBuilder<List<MenuItem>>(
+                                  stream: firestoreService.getMenuItemsByIds(
+                                      widget.franchiseId, ids),
+                                  builder: (context, itemSnapshot) {
+                                    if (itemSnapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return _favoriteHeart(false, false, loc);
+                                    }
+                                    if (itemSnapshot.hasError) {
+                                      return _favoriteHeart(false, true, loc);
+                                    }
+                                    final isFavorited = itemSnapshot.data?.any(
+                                          (mi) => mi.id == widget.menuItem.id,
+                                        ) ??
+                                        false;
+                                    return _favoriteHeart(
+                                        isFavorited, true, loc);
+                                  },
+                                );
                               },
-                            ),
+                            )
                     ],
                   ),
                   // -- EXAMPLE: Show allergen tags from metadata (optional) --

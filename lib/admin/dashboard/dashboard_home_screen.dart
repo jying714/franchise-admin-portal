@@ -41,7 +41,7 @@ class DashboardHomeScreen extends StatelessWidget {
                   icon: Icons.shopping_cart,
                   getValue: () => context
                       .read<FirestoreService>()
-                      .getTotalOrdersTodayCount(),
+                      .getTotalOrdersTodayCount(franchiseId: franchiseId),
                   tooltip: 'Total orders placed today',
                   semanticLabel: 'Total orders placed today',
                 ),
