@@ -102,7 +102,7 @@ class LandingPage extends StatelessWidget {
                       children: [
                         ElevatedButton(
                           onPressed: () =>
-                              Navigator.of(context).pushNamed('/login'),
+                              Navigator.of(context).pushNamed('/sign-in'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: colorScheme.secondary,
                             foregroundColor: colorScheme.onSecondary,

@@ -35,14 +35,20 @@ class UserProfileNotifier extends ChangeNotifier {
       _deferNotifyListeners();
       return;
     }
-
+    print(
+        '[UserProfileNotifier] Attempting to subscribe: uid=$uid, firestoreService=$firestoreService');
     _loading = true;
     _lastError = null;
     _deferNotifyListeners();
 
+    print(
+        '[UserProfileNotifier] Subscribing to delayedUserStream for uid=$uid');
+
     _sub = delayedUserStream(firestoreService, uid).listen(
       (u) {
-        print('[UserProfileNotifier] Received user: ${u?.email}');
+        print(
+            '[UserProfileNotifier] Received user: ${u?.email}, roles=${u?.roles}, isActive=${u?.isActive}, uid=${u?.id}');
+
         _user = u;
         _loading = false;
         _lastError = null;
@@ -70,6 +76,8 @@ class UserProfileNotifier extends ChangeNotifier {
             'uid': uid,
           },
         );
+        _lastFirestoreService = firestoreService;
+        _lastUid = uid;
       },
     );
   }

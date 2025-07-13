@@ -35,13 +35,20 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       print(
           '[ProfileGateScreen] initState: Triggering UserProfileNotifier.reload()');
       _profileNotifier =
           Provider.of<UserProfileNotifier>(context, listen: false);
       _firestoreService = Provider.of<FirestoreService>(context, listen: false);
-      _profileNotifier.reload(); // Defensive reload on open
+
+      // Defensive: Always start user profile stream if Firebase user exists and not yet started
+      final fbUser = fb_auth.FirebaseAuth.instance.currentUser;
+      if (fbUser != null && _profileNotifier.user == null) {
+        _profileNotifier.listenToUser(_firestoreService, fbUser.uid);
+      } else {
+        _profileNotifier.reload();
+      }
       _startTimeout();
     });
   }
@@ -106,10 +113,8 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
       Navigator.of(context).pushReplacementNamed('/unauthorized');
       return;
     }
-    if (roles.contains(admin_user.User.roleHqOwner)) {
-      print('[ProfileGateScreen] Navigating to /hq-owner/dashboard');
-      Navigator.of(context).pushReplacementNamed('/hq-owner/dashboard');
-    } else if (roles.contains(admin_user.User.roleDeveloper)) {
+    // HQ roles are handled in build(), so no need to check here!
+    if (roles.contains(admin_user.User.roleDeveloper)) {
       print('[ProfileGateScreen] Navigating to /developer/dashboard');
       Navigator.of(context).pushReplacementNamed('/developer/dashboard');
     } else if (roles.contains(admin_user.User.roleOwner) ||
@@ -150,6 +155,22 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
     final user = notifier.user;
     final error = notifier.lastError;
     final isLoading = notifier.loading && !_timedOut;
+    print(
+        '[ProfileGateScreen] build: user=${user?.email}, roles=${user?.roles}, isActive=${user?.isActive}, error=$error, loading=$isLoading, timedOut=$_timedOut');
+
+    // === HQ OWNER/MANAGER REDIRECT ===
+    final hqRoles = ['hq_owner', 'hq_manager'];
+    if (user != null && user.roles.any((r) => hqRoles.contains(r))) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (ModalRoute.of(context)?.settings.name != '/hq-owner/dashboard') {
+          Navigator.of(context).pushReplacementNamed('/hq-owner/dashboard');
+        }
+      });
+      // While redirecting, show a loading/redirecting message.
+      return _loadingScreen(
+          loc.redirectingToOwnerHQDashboard ?? "Redirecting to HQ Dashboard...",
+          showSpinner: true);
+    }
 
     // 1. Timeout error UI
     if (_timedOut && user == null) {
@@ -176,7 +197,7 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
     // 3. If profile loaded, but claims/roles missing
     if (user != null && (user.roles == null || user.roles!.isEmpty)) {
       print(
-          '[ProfileGateScreen] State: Profile loaded, roles=${user.roles}, status=${user.status}');
+          '[ProfileGateScreen] Profile loaded, roles is null or empty! User: ${user.email}, roles: ${user.roles}, status: ${user.status}');
       // Attempt to force claims refresh (once), then reload page
       if (!_claimsRefreshed) {
         setState(() => _claimsRefreshed = true);
@@ -187,7 +208,8 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
 
     // 4. Profile loaded, roles present, developer-only guard
     if (user != null && user.roles != null && user.roles!.isNotEmpty) {
-      print('[ProfileGateScreen] State: Loading profile...');
+      print(
+          '[ProfileGateScreen] Profile loaded and roles present. roles=${user.roles}, user.status=${user.status}');
       // If dev, show extra info/tools
       if (user.roles!.contains('developer')) {
         return _dashboardSection(

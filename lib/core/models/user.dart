@@ -11,6 +11,7 @@ class User {
   static const String roleCustomer = 'customer';
   static const String roleDeveloper = 'developer';
 
+  final bool isActive;
   final String id;
   final String name;
   final String email;
@@ -44,6 +45,7 @@ class User {
     required this.status,
     this.defaultFranchise,
     this.avatarUrl,
+    this.isActive = true,
   }) : addresses = addresses ?? [];
 
   static User fromFirestore(Map<String, dynamic> data, String id) {
@@ -64,6 +66,7 @@ class User {
       status: data['status'] ?? 'active',
       defaultFranchise: data['defaultFranchise'],
       avatarUrl: data['avatarUrl'],
+      isActive: data['isActive'] ?? true,
     );
   }
 
@@ -78,6 +81,7 @@ class User {
       'status': status,
       'defaultFranchise': defaultFranchise,
       'avatarUrl': avatarUrl,
+      'isActive': isActive,
     };
   }
 
@@ -91,6 +95,7 @@ class User {
     String? status,
     String? defaultFranchise,
     String? avatarUrl,
+    bool? isActive,
   }) {
     return User(
       id: id,
@@ -103,6 +108,7 @@ class User {
       status: status ?? this.status,
       defaultFranchise: defaultFranchise ?? this.defaultFranchise,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      isActive: isActive ?? this.isActive,
     );
   }
 }

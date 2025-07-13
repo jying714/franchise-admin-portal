@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:franchise_admin_portal/core/services/auth_service.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 
 /// SocialSignInButtons (ADMIN VERSION)
 /// Only allows Google and Phone sign-in (no guest or demo modes).
@@ -79,6 +80,12 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
           await _defaultEnsureUserProfile(context, user);
         }
         if (!mounted) return;
+        // --- ADD THIS BLOCK ---
+        final firestoreService =
+            Provider.of<FirestoreService>(context, listen: false);
+        Provider.of<UserProfileNotifier>(context, listen: false)
+            .listenToUser(firestoreService, user.uid);
+        // --- END BLOCK ---
         widget.onSuccess?.call(user);
       } else {
         if (!mounted) return;

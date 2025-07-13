@@ -1198,6 +1198,7 @@
   "signOut": "Sign Out",
   "tryAgain": "Try Again",
   "futureFeaturesTitle": "Upcoming Features",
-  "futureFeaturesBody": "We’re working on additional profile and access controls. Stay tuned!"
+  "futureFeaturesBody": "We’re working on additional profile and access controls. Stay tuned!",
+  "redirectingToOwnerHQDashboard": "Redirecting to HQ Dashboard"
 
   }

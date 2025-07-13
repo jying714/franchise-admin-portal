@@ -296,53 +296,6 @@ export const forecastCashFlowOnDemand = functions.https.onCall(
   }
 );
 
-export const setRoleOnUserCreate = functions.auth.user()
-  .onCreate(async (user) => {
-  // Look up user profile in Firestore (top-level users collection)
-    const userDoc = await admin.firestore()
-      .collection("users").doc(user.uid).get();
-    let role: string | undefined = undefined;
-
-    // Try franchise-based user if not found at top level
-    if (!userDoc.exists) {
-    // Optionally: scan franchise subcollections if needed
-      const franchisesSnap = await admin.firestore()
-        .collection("franchises").get();
-      for (const franchise of franchisesSnap.docs) {
-        const subUserDoc = await admin
-          .firestore()
-          .collection("franchises")
-          .doc(franchise.id)
-          .collection("users")
-          .doc(user.uid)
-          .get();
-        if (subUserDoc.exists) {
-        // If found, use this role
-          const data = subUserDoc.data();
-          if (data?.roles?.length) role = data.roles[0];
-          else if (data?.role) role = data.role;
-          break;
-        }
-      }
-    } else {
-    // Use top-level user
-      const data = userDoc.data();
-      if (data?.roles?.length) role = data.roles[0];
-      else if (data?.role) role = data.role;
-    }
-
-    // Default fallback (if not set, make them 'admin'
-    // or something else appropriate)
-    if (!role) {
-      role = "admin";
-    }
-
-    // Set the custom claim
-    await admin.auth().setCustomUserClaims(user.uid, {role});
-
-    console.log(`Set custom claim for user ${user.email}: role=${role}`);
-  });
-
 export const setClaimsOnUserCreate = functions.auth.user()
   .onCreate(async (user) => {
     const uid = user.uid;
@@ -360,7 +313,7 @@ export const setClaimsOnUserCreate = functions.auth.user()
       await admin.firestore().collection("users").doc(uid).set({
         email,
         roles: [role],
-        status: "active", // or "invited" or whatever is default
+        status: "active",
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       }, {merge: true});
       // Immediately set userDoc for further steps
@@ -369,8 +322,10 @@ export const setClaimsOnUserCreate = functions.auth.user()
 
     // 3. Set custom user claims
     await admin.auth().setCustomUserClaims(uid, {role});
-    console.log(`[setClaimsOnUserCreate] Set custom claims
-       and created profile for ${uid}:`, role);
+    console.log(
+      `[setClaimsOnUserCreate] Set custom claims and created profile for
+       ${uid}:`, role
+    );
   });
 
 
@@ -437,7 +392,7 @@ export const setUserRole = functions.https.onCall(
     }
     await admin.auth().setCustomUserClaims(uid, {role});
     await admin.firestore().collection("users")
-      .doc(uid).set({role}, {merge: true});
+      .doc(uid).set({roles: [role]}, {merge: true});
     return {status: "ok", uid, role};
   }
 );

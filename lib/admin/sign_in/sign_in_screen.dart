@@ -8,6 +8,7 @@ import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/social_sign_in_buttons.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -51,13 +52,16 @@ class _SignInScreenState extends State<SignInScreen> {
 
   void _handleSuccess(User? user) async {
     if (user != null) {
-      // Force refresh to pick up latest custom claims/roles from Firebase Auth
       await user.getIdToken(true);
       debugPrint('User signed in: ${user.email}');
-      // <--- ADD THIS FOR EXPLICIT POST-LOGIN ROUTE
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/post-login-gate');
-      }
+      // --- START PROFILE STREAM before navigation ---
+      final firestoreService =
+          Provider.of<FirestoreService>(context, listen: false);
+      final userProfileNotifier =
+          Provider.of<UserProfileNotifier>(context, listen: false);
+      userProfileNotifier.listenToUser(firestoreService, user.uid);
+      // --- THEN navigate ---
+      if (mounted) {}
     }
   }
 

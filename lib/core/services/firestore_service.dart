@@ -157,9 +157,18 @@ class FirestoreService {
 
   /// Get a user from top-level `/users`
   Future<app_user.User?> getUser(String userId) async {
+    print('[FirestoreService] getUser called with userId=$userId');
     final doc = await _db.collection('users').doc(userId).get();
-    if (!doc.exists) return null;
-    return app_user.User.fromFirestore(doc.data()!, doc.id);
+    print(
+        '[FirestoreService] getUser Firestore response: exists=${doc.exists}, data=${doc.data()}');
+    if (!doc.exists) {
+      print('[FirestoreService] getUser: No user found for $userId');
+      return null;
+    }
+    final user = app_user.User.fromFirestore(doc.data()!, doc.id);
+    print(
+        '[FirestoreService] getUser: Created User model: email=${user.email}, roles=${user.roles}, isActive=${user.status == "active"}, id=${user.id}');
+    return user;
   }
 
   /// Update a user at top-level `/users`
@@ -1837,12 +1846,11 @@ class FirestoreService {
 
 // Helper: Delayed user stream
 Stream<app_user.User?> delayedUserStream(
-    FirestoreService firestoreService, String uid) async* {
-  print('[delayedUserStream] waiting 1s for Firestore token...');
+    FirestoreService fs, String uid) async* {
+  print('[delayedUserStream] Waiting to fetch user $uid');
   await Future.delayed(const Duration(seconds: 1));
-  print('[delayedUserStream] subscribing to userStream($uid)...');
-  await for (final value in firestoreService.userStream(uid)) {
-    print('[delayedUserStream] yielded value: $value');
-    yield value;
-  }
+  print('[delayedUserStream] Fetching user $uid from Firestore');
+  final user = await fs.getUser(uid);
+  print('[delayedUserStream] Got user: $user');
+  yield user;
 }
