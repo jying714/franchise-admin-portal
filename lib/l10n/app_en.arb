@@ -1200,6 +1200,24 @@
   "futureFeaturesTitle": "Upcoming Features",
   "futureFeaturesBody": "We’re working on additional profile and access controls. Stay tuned!",
   "redirectingToOwnerHQDashboard": "Redirecting to HQ Dashboard",
-  "selectFranchiseToManage": "Select Franchise To Manage"
+  "selectFranchiseToManage": "Select Franchise To Manage",
+  "dashboard_active_alerts": "Active Alerts",
+  "dashboard_alerts_filter_tooltip": "Filter alerts (coming soon)",
+  "dashboard_alerts_error": "Unable to load alerts.",
+  "dashboard_no_active_alerts": "No active alerts",
+  "dashboard_see_all_alerts": "See all alerts",
+  "unauthorized_title": "Access Denied",
+  "unauthorized_default_reason": "You do not have permission to view this section.",
+  "alert_dismissed_success": "Alert dismissed.",
+  "alert_dismissed_error": "Failed to dismiss alert.",
+  "alert_dismiss_button": "Dismiss",
+  "alert_time": "Time",
+  "alert_dismissed_on": "Dismissed On",
+  "alert_type": "Type",
+  "alert_type_generic": "General",
+  "alert_custom_fields": "Custom Fields",
+  "alert_dismissed_success": "Alert dismissed.",
+  "alert_dismissed_error": "Failed to dismiss alert.",
+  "alert_dismiss_button": "Dismiss"
 
   }

@@ -63,4 +63,23 @@ class AppConfig {
   static const String analyticsExportDir = 'exports/analytics';
   static const String dateFormat =
       'yyyy-MM-dd'; // For date pickers if not set elsewhere
+
+  // Example fields - adapt as needed
+  final String apiBaseUrl;
+  final String brandingColor;
+  final bool isProduction;
+
+  // 1. Singleton instance
+  static final AppConfig instance = AppConfig._internal(
+    apiBaseUrl: 'https://api.yourdomain.com',
+    brandingColor: '#C62828',
+    isProduction: true,
+  );
+
+  // 2. Private named constructor
+  const AppConfig._internal({
+    required this.apiBaseUrl,
+    required this.brandingColor,
+    required this.isProduction,
+  });
 }

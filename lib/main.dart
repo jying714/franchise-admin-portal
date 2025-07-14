@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-
+import 'package:franchise_admin_portal/admin/hq_owner/widgets/alert_list_screen.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/firebase_options.dart';
 import 'package:franchise_admin_portal/core/services/auth_service.dart';
@@ -175,6 +175,19 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
             return Scaffold(
               appBar: AppBar(title: const Text('Unauthorized')),
               body: const Center(child: Text('Your account is not active.')),
+            );
+          },
+          '/alerts': (context) {
+            print('[main.dart] /alerts route built');
+            final user =
+                Provider.of<AdminUserProvider>(context, listen: false).user;
+            final franchiseId = user?.defaultFranchise ??
+                ((user?.franchiseIds.isNotEmpty ?? false)
+                    ? user!.franchiseIds.first
+                    : '');
+            return AlertListScreen(
+              franchiseId: franchiseId,
+              developerMode: user?.isDeveloper ?? false,
             );
           },
         },

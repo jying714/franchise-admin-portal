@@ -14,6 +14,8 @@ import 'package:franchise_admin_portal/admin/hq_owner/widgets/franchise_financia
 import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
 import 'package:franchise_admin_portal/core/models/franchise_info.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/cash_flow_forecast_card.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/widgets/alerts_card.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 /// Developer/HQ-only: Entry-point for HQ/Owner dashboard.
 /// Add this to your DashboardSection registry for 'hq_owner'.
@@ -22,6 +24,9 @@ class OwnerHQDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    FirebaseAuth.instance.currentUser?.getIdTokenResult(true).then((token) {
+      print('[DEBUG] Firebase ID token claims: ${token.claims}');
+    });
     print('[OwnerHQDashboardScreen] build called');
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
@@ -179,10 +184,16 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                 crossAxisSpacing: gap,
                 mainAxisSpacing: gap,
                 childAspectRatio: isMobile ? 1.8 : 2.4,
-                children: const [
-                  MultiBrandOverviewPanel(),
-                  FranchiseAlertsList(),
-                  QuickLinksPanel(),
+                children: [
+                  const MultiBrandOverviewPanel(),
+                  AlertsCard(
+                    franchiseId: user.franchiseIds.isNotEmpty
+                        ? user.franchiseIds.first
+                        : '',
+                    userId: user.id,
+                    developerMode: user.isDeveloper,
+                  ),
+                  const QuickLinksPanel(),
                 ],
               ),
               SizedBox(height: gap + 4),
@@ -434,81 +445,6 @@ class MultiBrandOverviewPanel extends StatelessWidget {
   }
 }
 
-/// ALERTS LIST (Compliance, Overdues, Paused Stores)
-class FranchiseAlertsList extends StatelessWidget {
-  const FranchiseAlertsList({super.key});
-  @override
-  Widget build(BuildContext context) {
-    print('[FranchiseAlertsList] build called');
-    final loc = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
-    // TODO: Replace with real stream of alerts
-    final alerts = [
-      {
-        'type': 'overdue',
-        'icon': Icons.warning_amber_rounded,
-        'color': colorScheme.error,
-        'text':
-            loc.overduePaymentAlert ?? "Overdue franchise payment: Store #101"
-      },
-      {
-        'type': 'compliance',
-        'icon': Icons.policy_outlined,
-        'color': colorScheme.secondary,
-        'text': loc.complianceAlert ?? "Compliance doc missing: W-9 required"
-      },
-      {
-        'type': 'paused',
-        'icon': Icons.pause_circle_filled,
-        'color': colorScheme.primary,
-        'text': loc.storePausedAlert ?? "Store #104 is paused for season"
-      },
-    ];
-
-    return Card(
-      color: colorScheme.surfaceVariant,
-      elevation: DesignTokens.adminCardElevation,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(loc.franchiseAlerts ?? "Alerts",
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 6),
-            for (final alert in alerts)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Row(
-                  children: [
-                    Icon(alert['icon'] as IconData,
-                        color: alert['color'] as Color),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(alert['text'] as String)),
-                  ],
-                ),
-              ),
-            if (alerts.isEmpty)
-              Text(loc.noAlerts ?? "No active alerts.",
-                  style: const TextStyle(color: Colors.grey)),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.notifications),
-              label: Text(loc.alertHistory ?? "View Alert History"),
-              onPressed: () {
-                // TODO: Route to full alerts/history screen
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 /// QUICK LINKS PANEL
 class QuickLinksPanel extends StatelessWidget {
   const QuickLinksPanel({super.key});
@@ -573,6 +509,12 @@ class QuickLinksPanel extends StatelessWidget {
                   onTap: () {
                     // TODO: Route to support/chat
                   },
+                  color: colorScheme.primary,
+                ),
+                _QuickLinkTile(
+                  icon: Icons.notifications,
+                  label: loc.franchiseAlerts ?? "Alerts",
+                  onTap: () => Navigator.of(context).pushNamed('/alerts'),
                   color: colorScheme.primary,
                 ),
               ],
