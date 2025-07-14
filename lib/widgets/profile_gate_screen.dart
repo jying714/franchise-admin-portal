@@ -32,6 +32,7 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
   AppLocalizations get loc => AppLocalizations.of(context)!;
   ThemeData get theme => Theme.of(context);
   ColorScheme get colorScheme => theme.colorScheme;
+  admin_user.User? _lastSetUser;
 
   @override
   void initState() {
@@ -50,6 +51,8 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
       } else {
         _profileNotifier.reload();
       }
+
+      // Start profile load timeout after initiating reload/listen
       _startTimeout();
     });
   }
@@ -162,7 +165,12 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
 
     // === 1. HQ OWNER / HQ MANAGER: Top Priority ===
     if (user != null && user.roles != null && user.status == 'active') {
-      Provider.of<AdminUserProvider>(context, listen: false).user = user;
+      if (_lastSetUser != user) {
+        _lastSetUser = user;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Provider.of<AdminUserProvider>(context, listen: false).user = user;
+        });
+      }
       final roles = user.roles!;
       print(
           '[ProfileGateScreen] User loaded: email=${user.email}, roles=$roles, isActive=${user.isActive}');

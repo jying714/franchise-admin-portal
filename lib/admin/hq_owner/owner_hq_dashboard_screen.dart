@@ -34,7 +34,8 @@ class OwnerHQDashboardScreen extends StatelessWidget {
     final franchiseId = Provider.of<FranchiseProvider>(context).franchiseId;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
-
+    final userProfileUrl =
+        user?.avatarUrl ?? FirebaseAuth.instance.currentUser?.photoURL ?? '';
     // HQ/Owner-only guard (not visible to regular managers, staff, etc)
     final allowedRoles = ['hq_owner', 'hq_manager', 'developer'];
     if (user == null || !user.roles.any((r) => allowedRoles.contains(r))) {
@@ -127,8 +128,8 @@ class OwnerHQDashboardScreen extends StatelessWidget {
             const SizedBox(width: 8),
             CircleAvatar(
               radius: 18,
-              backgroundImage: user.avatarUrl != null
-                  ? NetworkImage(user.avatarUrl!)
+              backgroundImage: userProfileUrl.isNotEmpty
+                  ? NetworkImage(userProfileUrl)
                   : AssetImage(BrandingConfig.defaultProfileIcon)
                       as ImageProvider,
             ),

@@ -1,5 +1,6 @@
 // File: lib/landing_page.dart
-
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'config/design_tokens.dart';
@@ -16,10 +17,24 @@ class LandingPage extends StatelessWidget {
   const LandingPage({Key? key}) : super(key: key);
 
   // Error logging for async widget build failures
-  Future<void> _logError(
-      BuildContext context, Object error, StackTrace? stack) async {
-    // This can be connected to your logging backend if needed.
-    // Removed Firestore dependency here to keep landing page pure.
+  Future<void> _logErrorToBackend(String message,
+      {String? stack, Map<String, dynamic>? contextData}) async {
+    final uri = Uri.parse(
+        'https://us-central1-doughboyspizzeria-2b3d2.cloudfunctions.net/logPublicError');
+
+    try {
+      await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'message': message,
+          'stack': stack ?? '',
+          'contextData': contextData ?? {},
+        }),
+      );
+    } catch (e) {
+      print('Failed to send log to backend: $e');
+    }
   }
 
   @override

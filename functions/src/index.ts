@@ -23,9 +23,8 @@ async function runAnalyticsRollupForFranchise(
     now.toMillis() - 7 * 24 * 60 * 60 * 1000
   );
 
-  const ordersSnapshot = await ordersRef
-    .where("createdAt", ">=", weekAgo)
-    .get();
+  const ordersSnapshot = await ordersRef.where(
+    "createdAt", ">=", weekAgo).get();
 
   let totalRevenue = 0;
   let totalOrders = 0;
@@ -56,19 +55,20 @@ async function runAnalyticsRollupForFranchise(
 
   console.log(
     `[Rollup] Franchise ${franchiseId}: totalOrders=${totalOrders},` +
-    ` totalRevenue=${totalRevenue}`
+      ` totalRevenue=${totalRevenue}`
   );
 }
 
 /**
- * Scheduled: every Sunday at 3AM UTC for all franchises.
+ * Scheduled function to roll up analytics weekly for all franchises.
+ * Runs every Sunday at 3AM UTC.
+ * @returns {Promise<null>}
  */
 export const scheduledWeeklyAnalyticsRollup = functions
   .region("us-central1")
   .pubsub.schedule("0 3 * * 0")
   .timeZone("UTC")
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  .onRun(async (_context) => {
+  .onRun(async (): Promise<null> => {
     const franchisesSnapshot = await admin
       .firestore()
       .collection("franchises")
@@ -79,17 +79,16 @@ export const scheduledWeeklyAnalyticsRollup = functions
       try {
         await runAnalyticsRollupForFranchise(franchiseId);
       } catch (e) {
-        console.error(
-          `[Rollup] Error for franchise ${franchiseId}:`,
-          e
-        );
+        console.error(`[Rollup] Error for franchise ${franchiseId}:`, e);
       }
     }
     return null;
   });
 
 /**
- * Callable HTTPS function: admin/dev/owner only.
+ * Callable HTTPS function: roll up analytics for a franchise on demand.
+ * Only accessible by owner, developer, or admin roles.
+ * @param data.franchiseId - ID of franchise to roll up analytics for.
  */
 export const rollupAnalyticsOnDemand = functions.https.onCall(
   async (
@@ -102,8 +101,8 @@ export const rollupAnalyticsOnDemand = functions.https.onCall(
         "Authentication required"
       );
     }
-    const role = context.auth.token.role;
-    if (!["owner", "developer", "admin"].includes(role)) {
+    const roles: string[] = context.auth.token.roles || [];
+    if (!roles.some((r) => ["owner", "developer", "admin"].includes(r))) {
       throw new functions.https.HttpsError(
         "permission-denied",
         "Insufficient privileges"
@@ -122,17 +121,16 @@ export const rollupAnalyticsOnDemand = functions.https.onCall(
   }
 );
 
-// -------------------- CASH FLOW FORECAST LOGIC -------------------------
-
 /**
- * Gets the next period in YYYY-MM format and the start/end dates.
+ * Returns next monthly period string and start/end timestamps.
  * @return {{period: string, startDate: FirebaseFirestore.Timestamp,
- * endDate: FirebaseFirestore.Timestamp}}
+ *  endDate: FirebaseFirestore.Timestamp}} Object with period,
+ *  startDate, endDate properties.
  */
 function getNextPeriod(): {
-  period: string,
-  startDate: FirebaseFirestore.Timestamp,
-  endDate: FirebaseFirestore.Timestamp
+  period: string;
+  startDate: FirebaseFirestore.Timestamp;
+  endDate: FirebaseFirestore.Timestamp;
   } {
   const now = new Date();
   const year = now.getUTCFullYear();
@@ -153,7 +151,7 @@ function getNextPeriod(): {
 
 /**
  * Runs a cash flow forecast for a given franchise and writes to Firestore.
- * @param {string} franchiseId
+ * @param {string} franchiseId - Franchise to forecast.
  * @return {Promise<void>}
  */
 async function runCashFlowForecastForFranchise(
@@ -161,8 +159,8 @@ async function runCashFlowForecastForFranchise(
 ): Promise<void> {
   const {period, startDate, endDate} = getNextPeriod();
 
-  // Get average inflow (revenue) from last 3 analytics summaries
-  const analyticsRef = admin.firestore()
+  const analyticsRef = admin
+    .firestore()
     .collection("franchises")
     .doc(franchiseId)
     .collection("analytics_summaries");
@@ -173,7 +171,6 @@ async function runCashFlowForecastForFranchise(
     .get();
 
   let totalInflow = 0;
-  // Use const as totalOutflow is not reassigned
   const totalOutflow = 0;
   let count = 0;
 
@@ -188,9 +185,9 @@ async function runCashFlowForecastForFranchise(
   const avgInflow = count ? totalInflow / count : 0;
   const avgOutflow = count ? totalOutflow / count : 0;
 
-  // Get latest closing balance from last forecast (or set to 0)
   let openingBalance = 0;
-  const lastForecastSnap = await admin.firestore()
+  const lastForecastSnap = await admin
+    .firestore()
     .collection("franchises")
     .doc(franchiseId)
     .collection("cash_flow_forecasts")
@@ -207,8 +204,8 @@ async function runCashFlowForecastForFranchise(
 
   const projectedClosing = openingBalance + avgInflow - avgOutflow;
 
-  // Write forecast doc
-  const forecastRef = admin.firestore()
+  const forecastRef = admin
+    .firestore()
     .collection("franchises")
     .doc(franchiseId)
     .collection("cash_flow_forecasts")
@@ -231,20 +228,21 @@ async function runCashFlowForecastForFranchise(
 
   console.log(
     `[Forecast] Franchise ${franchiseId}, period ${period}: ` +
-    `inflow=${avgInflow}, outflow=${avgOutflow}, ` +
-    `opening=${openingBalance}, closing=${projectedClosing}`
+      `inflow=${avgInflow}, outflow=${avgOutflow}, ` +
+      `opening=${openingBalance}, closing=${projectedClosing}`
   );
 }
 
 /**
- * Scheduled: every month at 4AM UTC for all franchises.
+ * Scheduled function to run cash flow forecast monthly.
+ * Runs 1st of each month at 4AM UTC.
+ * @returns {Promise<null>}
  */
 export const scheduledMonthlyCashFlowForecast = functions
   .region("us-central1")
-  .pubsub.schedule("0 4 1 * *") // 1st of every month at 4AM UTC
+  .pubsub.schedule("0 4 1 * *")
   .timeZone("UTC")
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  .onRun(async (_context) => {
+  .onRun(async (): Promise<null> => {
     const franchisesSnapshot = await admin
       .firestore()
       .collection("franchises")
@@ -255,16 +253,17 @@ export const scheduledMonthlyCashFlowForecast = functions
       try {
         await runCashFlowForecastForFranchise(franchiseId);
       } catch (e) {
-        console.error(
-          `[Forecast] Error for franchise ${franchiseId}:`, e
-        );
+        console.error(`[Forecast] Error for franchise ${franchiseId}:`, e);
       }
     }
     return null;
   });
 
+
 /**
- * Callable HTTPS function for manual/QA runs.
+ * Callable HTTPS function for manual cash flow forecast runs.
+ * Only accessible by owner, developer, or admin roles.
+ * @param data.franchiseId - ID of franchise.
  */
 export const forecastCashFlowOnDemand = functions.https.onCall(
   async (
@@ -277,8 +276,8 @@ export const forecastCashFlowOnDemand = functions.https.onCall(
         "Authentication required"
       );
     }
-    const role = context.auth.token.role;
-    if (!["owner", "developer", "admin"].includes(role)) {
+    const roles: string[] = context.auth.token.roles || [];
+    if (!roles.some((r) => ["owner", "developer", "admin"].includes(r))) {
       throw new functions.https.HttpsError(
         "permission-denied",
         "Insufficient privileges"
@@ -296,45 +295,64 @@ export const forecastCashFlowOnDemand = functions.https.onCall(
   }
 );
 
-export const setClaimsOnUserCreate = functions.auth.user()
-  .onCreate(async (user) => {
+/**
+ * Trigger: on user creation, sets custom claims based on Firestore roles.
+ * Creates user profile if missing.
+ */
+export const setClaimsOnUserCreate = functions.auth.user().onCreate(
+  async (user) => {
     const uid = user.uid;
     const email = user.email || "";
-    let role = "customer";
+    let roles = ["customer"];
 
-    // 1. Try to fetch role from Firestore profile
+    // Try to fetch roles from Firestore profile
     let userDoc = await admin.firestore().collection("users").doc(uid).get();
     if (userDoc.exists && userDoc.data()?.roles?.length > 0) {
-      role = userDoc.data()?.roles[0] || "customer";
+      roles = userDoc.data()?.roles || ["customer"];
     }
 
-    // 2. If no Firestore user profile, CREATE IT
+    // Create user profile if missing
     if (!userDoc.exists) {
-      await admin.firestore().collection("users").doc(uid).set({
-        email,
-        roles: [role],
-        status: "active",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, {merge: true});
-      // Immediately set userDoc for further steps
+      await admin.firestore().collection("users").doc(uid).set(
+        {
+          email,
+          roles,
+          status: "active",
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        {merge: true}
+      );
       userDoc = await admin.firestore().collection("users").doc(uid).get();
     }
 
-    // 3. Set custom user claims
-    await admin.auth().setCustomUserClaims(uid, {role});
+    // Set custom user claims with roles array
+    await admin.auth().setCustomUserClaims(uid, {roles});
     console.log(
-      `[setClaimsOnUserCreate] Set custom claims and created profile for
-       ${uid}:`, role
+      `[setClaimsOnUserCreate] Set custom claims
+       and created profile for ${uid}:`,
+      roles
     );
-  });
+  }
+);
 
-
+/**
+ * Callable function to set custom claims for all existing users.
+ * Only callable by owner or developer roles.
+ */
 export const setClaimsForExistingUsers = functions.https.onCall(
   async (data, context) => {
-    if (!context.auth || !["owner", "developer"]
-      .includes(context.auth.token.role)) {
+    if (!context.auth) {
       throw new functions.https.HttpsError(
-        "permission-denied", "Must be owner or developer.");
+        "unauthenticated",
+        "Authentication required"
+      );
+    }
+    const callerRoles: string[] = context.auth.token.roles || [];
+    if (!callerRoles.some((r) => ["owner", "developer"].includes(r))) {
+      throw new functions.https.HttpsError(
+        "permission-denied",
+        "Must be owner or developer."
+      );
     }
 
     let nextPageToken: string | undefined = undefined;
@@ -342,79 +360,113 @@ export const setClaimsForExistingUsers = functions.https.onCall(
       const list = await admin.auth().listUsers(1000, nextPageToken);
       for (const user of list.users) {
         const userDoc = await admin.firestore()
-          .collection("users").doc(user.uid).get();
-        let role = "customer";
+          .collection("users")
+          .doc(user.uid)
+          .get();
+        let roles = ["customer"];
         if (userDoc.exists && userDoc.data()?.roles?.length > 0) {
-          role = userDoc.data()?.roles[0];
+          roles = userDoc.data()?.roles || ["customer"];
         }
-        await admin.auth().setCustomUserClaims(user.uid, {role});
+        await admin.auth().setCustomUserClaims(user.uid, {roles});
         console.log(
-          `[setClaimsForExistingUsers] Set claims for ${user.email}: ${role}`);
+          `[setClaimsForExistingUsers] Set claims for ${user.email}:`,
+          roles
+        );
       }
       nextPageToken = list.pageToken;
     } while (nextPageToken);
 
     return {status: "ok"};
-  });
+  }
+);
 
+/**
+ * Firestore trigger: syncs custom claims on user role update.
+ */
 export const syncClaimsOnUserRoleChange = functions.firestore
   .document("users/{userId}")
   .onUpdate(async (change, context) => {
     const userId = context.params.userId;
     const after = change.after.data();
     if (!after) return;
-    // Use first role, or adjust for your logic
-    const role =
-    (after.roles && after.roles.length > 0) ? after.roles[0] : "customer";
-    await admin.auth().setCustomUserClaims(userId, {role});
-    console.log(`[syncClaimsOnUserRoleChange] Synced claims
-       for ${userId}: ${role}`);
+
+    const roles = after.roles && after.roles.length > 0 ? after.roles : [
+      "customer"];
+    await admin.auth().setCustomUserClaims(userId, {roles});
+    console.log(
+      `[syncClaimsOnUserRoleChange] Synced claims for ${userId}:`, roles);
   });
 
+/**
+ * Callable function to set a user's roles.
+ * Can accept single role string or array of roles.
+ * Only callable by owner, developer, or admin.
+ */
 export const setUserRole = functions.https.onCall(
   async (
-    data: { uid?: string; role?: string },
+    data: { uid?: string; roles?: string[]; role?: string },
     context: functions.https.CallableContext
   ) => {
     if (!context.auth) {
       throw new functions.https.HttpsError(
         "unauthenticated", "Must be signed in.");
     }
-    const callerRole = context.auth.token.role;
-    if (!["owner", "developer", "admin"].includes(callerRole)) {
+    const callerRoles: string[] = context.auth.token.roles || [];
+    if (!callerRoles.some((r) => ["owner", "developer", "admin"].includes(r))) {
       throw new functions.https.HttpsError(
         "permission-denied", "Insufficient privileges.");
     }
-    const {uid, role} = data;
-    if (!uid || !role) {
+
+    const {uid, roles, role} = data;
+
+    if (!uid) {
       throw new functions.https.HttpsError(
-        "invalid-argument", "uid and role required.");
+        "invalid-argument", "uid is required.");
     }
-    await admin.auth().setCustomUserClaims(uid, {role});
+
+    let rolesToSet: string[];
+    if (roles && Array.isArray(roles) && roles.length > 0) {
+      rolesToSet = roles;
+    } else if (role && typeof role === "string") {
+      rolesToSet = [role];
+    } else {
+      throw new functions.https.HttpsError(
+        "invalid-argument", "role or roles array required.");
+    }
+
+    await admin.auth().setCustomUserClaims(uid, {roles: rolesToSet});
     await admin.firestore().collection("users")
-      .doc(uid).set({roles: [role]}, {merge: true});
-    return {status: "ok", uid, role};
+      .doc(uid).set({roles: rolesToSet}, {merge: true});
+
+    return {status: "ok", uid, roles: rolesToSet};
   }
 );
 
 /**
- * Callable Function: Invite a user
- * (create user by email if not exists) and set their role.
- * Only callable by an owner, developer, or admin.
+ * Callable function to invite a new user by email.
+ * Creates the user if they don't exist, sets role and sends invite.
+ * Only callable by owner, developer, or admin.
  */
-const VALID_ROLES = ["owner", "developer", "admin",
-  "manager", "staff", "customer"];
+const VALID_ROLES = [
+  "owner",
+  "developer",
+  "admin",
+  "manager",
+  "staff",
+  "customer",
+];
 
 export const inviteAndSetRole = functions.https.onCall(
   async (data, context) => {
-    // Security: Only allow privileged users to invite
     if (
       !context.auth ||
       !context.auth.token ||
       !(
-        context.auth.token.role === "owner" ||
-        context.auth.token.role === "developer" ||
-        context.auth.token.role === "admin"
+        context.auth.token.roles &&
+        Array.isArray(context.auth.token.roles) &&
+        context.auth.token.roles.some((r) =>
+          ["owner", "developer", "admin"].includes(r)
+        )
       )
     ) {
       throw new functions.https.HttpsError(
@@ -426,12 +478,9 @@ export const inviteAndSetRole = functions.https.onCall(
     const {email, password, role} = data;
     if (!email || !role) {
       throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Email and role are required."
-      );
+        "invalid-argument", "Email and role are required.");
     }
 
-    // Validate that the passed role is in the allowed list
     if (!VALID_ROLES.includes(role)) {
       throw new functions.https.HttpsError(
         "invalid-argument",
@@ -444,8 +493,12 @@ export const inviteAndSetRole = functions.https.onCall(
     try {
       userRecord = await admin.auth().getUserByEmail(email);
     } catch (err) {
-      if (typeof err === "object" && err !== null && "code" in err && (
-        err as { code?: string }).code === "auth/user-not-found") {
+      if (
+        typeof err === "object" &&
+        err !== null &&
+        "code" in err &&
+        (err as { code?: string }).code === "auth/user-not-found"
+      ) {
         if (!password) {
           throw new functions.https.HttpsError(
             "invalid-argument",
@@ -458,7 +511,6 @@ export const inviteAndSetRole = functions.https.onCall(
         });
         isNewUser = true;
 
-        // Send password reset link (invite email)
         try {
           await admin.auth().generatePasswordResetLink(email);
         } catch (emailErr) {
@@ -469,36 +521,41 @@ export const inviteAndSetRole = functions.https.onCall(
           "internal",
           "Error fetching or creating user: " +
             (typeof err === "object" && err !== null && "message" in err ?
-              (err as { message?: string }).message : String(err))
+              (err as { message?: string }).message :
+              String(err))
         );
       }
     }
 
-    // Set custom user claims
-    await admin.auth().setCustomUserClaims(userRecord.uid, {role});
+    await admin.auth().setCustomUserClaims(userRecord.uid, {roles: [role]});
 
-    // Create/update Firestore user profile
-    const userDocRef = admin.firestore()
-      .collection("users").doc(userRecord.uid);
+    const userDocRef = admin.firestore().collection(
+      "users").doc(userRecord.uid);
     const userDoc = await userDocRef.get();
+
     if (!userDoc.exists) {
-      await userDocRef.set({
-        email,
-        roles: [role],
-        status: "invited",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, {merge: true});
+      await userDocRef.set(
+        {
+          email,
+          roles: [role],
+          status: "invited",
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        {merge: true}
+      );
     } else {
-      // Ensure 'invited' status and role is present in roles array
       const data = userDoc.data() || {};
       const roles = Array.isArray(data.roles) ? data.roles : [];
       if (!roles.includes(role)) {
         roles.push(role);
       }
-      await userDocRef.set({
-        roles,
-        status: "invited",
-      }, {merge: true});
+      await userDocRef.set(
+        {
+          roles,
+          status: "invited",
+        },
+        {merge: true}
+      );
     }
 
     return {
@@ -510,29 +567,81 @@ export const inviteAndSetRole = functions.https.onCall(
   }
 );
 
+/**
+ * Callable function to ensure user profile exists.
+ * Only callable by owner, developer, or admin.
+ * @param data.uid - User ID
+ * @param data.email - User email
+ * @param data.role - Optional role (defaults to customer)
+ */
 export const ensureUserProfile = functions.https.onCall(
   async (data, context) => {
-    if (!context.auth || !["owner", "developer", "admin"]
-      .includes(context.auth.token.role)) {
+    if (
+      !context.auth ||
+      !context.auth.token ||
+      !(
+        context.auth.token.roles &&
+        Array.isArray(context.auth.token.roles) &&
+        context.auth.token.roles.some((r) =>
+          ["owner", "developer", "admin"].includes(r)
+        )
+      )
+    ) {
       throw new functions.https.HttpsError(
-        "permission-denied", "Must be owner, developer, or admin.");
+        "permission-denied",
+        "Must be owner, developer, or admin."
+      );
     }
     const {uid, email, role} = data;
     if (!uid || !email) {
       throw new functions.https.HttpsError(
-        "invalid-argument", "uid and email are required.");
+        "invalid-argument",
+        "uid and email are required."
+      );
     }
     const userDocRef = admin.firestore().collection("users").doc(uid);
     const userDoc = await userDocRef.get();
     if (!userDoc.exists) {
-      await userDocRef.set({
-        email,
-        roles: [role || "customer"],
-        status: "active",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, {merge: true});
+      await userDocRef.set(
+        {
+          email,
+          roles: [role || "customer"],
+          status: "active",
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        {merge: true}
+      );
       return {created: true};
     }
     return {created: false};
   }
 );
+
+export const logPublicError = functions.https.onRequest(
+  async (req, res): Promise<void> => {
+    if (req.method !== "POST") {
+      res.status(405).send("Method Not Allowed");
+      return;
+    }
+
+    const {message, stack, contextData} = req.body;
+
+    if (!message) {
+      res.status(400).send("Bad Request: Missing message");
+      return;
+    }
+
+    try {
+      await admin.firestore().collection("public_error_logs").add({
+        message,
+        stack: stack || "",
+        contextData: contextData || {},
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        source: "landing_page",
+      });
+      res.status(200).send("Logged");
+    } catch (e) {
+      console.error("Failed to log public error:", e);
+      res.status(500).send("Internal Server Error");
+    }
+  });
