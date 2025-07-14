@@ -2,11 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/core/models/audit_log.dart';
 
 class AuditLogService {
-  CollectionReference auditLogsRef(String franchiseId) =>
-      FirebaseFirestore.instance
-          .collection('franchises')
-          .doc(franchiseId)
-          .collection('audit_logs');
+  CollectionReference auditLogsRef() =>
+      FirebaseFirestore.instance.collection('audit_logs');
 
   /// Adds a generic, flexible audit log entry.
   Future<void> addLog({
@@ -28,7 +25,9 @@ class AuditLogService {
       details: details is Map ? details.toString() : details?.toString(),
       timestamp: DateTime.now(),
     );
-    await auditLogsRef(franchiseId).add(log.toFirestore());
+    final data = log.toFirestore();
+    data['franchiseId'] = franchiseId;
+    await auditLogsRef().add(data);
   }
 
   /// Shortcut for logging when an error log is viewed.
@@ -54,8 +53,9 @@ class AuditLogService {
     String? targetType,
     String? userId,
   }) {
-    Query query =
-        auditLogsRef(franchiseId).orderBy('timestamp', descending: true);
+    Query query = auditLogsRef()
+        .where('franchiseId', isEqualTo: franchiseId)
+        .orderBy('timestamp', descending: true);
     if (targetType != null && targetType.isNotEmpty) {
       query = query.where('targetType', isEqualTo: targetType);
     }
@@ -74,8 +74,9 @@ class AuditLogService {
     String? targetType,
     String? userId,
   }) async {
-    Query query =
-        auditLogsRef(franchiseId).orderBy('timestamp', descending: true);
+    Query query = auditLogsRef()
+        .where('franchiseId', isEqualTo: franchiseId)
+        .orderBy('timestamp', descending: true);
     if (targetType != null && targetType.isNotEmpty) {
       query = query.where('targetType', isEqualTo: targetType);
     }

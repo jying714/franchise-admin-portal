@@ -520,8 +520,9 @@ class FirestoreService {
     bool archived = false,
     bool? showResolved, // null = all, false = unresolved, true = resolved
   }) {
-    firestore.Query query =
-        _db.collection('franchises').doc(franchiseId).collection('error_logs');
+    firestore.Query query = _db
+        .collection('error_logs')
+        .where('franchiseId', isEqualTo: franchiseId);
 
     if (severity != null &&
         severity.isNotEmpty &&
@@ -607,8 +608,9 @@ class FirestoreService {
     String? status,
     String? platform,
   }) {
-    firestore.Query query =
-        _db.collection('franchises').doc(franchiseId).collection('error_logs');
+    firestore.Query query = _db
+        .collection('error_logs')
+        .where('franchiseId', isEqualTo: franchiseId);
     if (userId != null) query = query.where('userId', isEqualTo: userId);
     if (severity != null) query = query.where('severity', isEqualTo: severity);
     if (status != null) query = query.where('status', isEqualTo: status);
@@ -639,13 +641,10 @@ class FirestoreService {
     String? stackTrace,
     String? userId,
   }) async {
-    await _db
-        .collection('franchises')
-        .doc(franchiseId)
-        .collection('error_logs')
-        .add({
+    await _db.collection('error_logs').add({
       'timestamp': firestore.FieldValue.serverTimestamp(),
       'message': message,
+      'franchiseId': franchiseId,
       if (templateId != null) 'templateId': templateId,
       if (menuItemId != null) 'menuItemId': menuItemId,
       if (userId != null) 'userId': userId,
@@ -688,11 +687,10 @@ class FirestoreService {
         'archived': false,
         'comments': <Map<String, dynamic>>[],
       };
-      await _db
-          .collection('franchises')
-          .doc(franchiseId)
-          .collection('error_logs')
-          .add(data);
+      await _db.collection('error_logs').add({
+        ...data,
+        'franchiseId': franchiseId,
+      });
     } catch (e, stack) {
       print('[ERROR LOGGING FAILURE] $e\n$stack');
     }
@@ -701,23 +699,13 @@ class FirestoreService {
   // Update a log (mark as resolved/archived or add a comment)
   Future<void> updateErrorLog(
       String franchiseId, String logId, Map<String, dynamic> updates) async {
-    await _db
-        .collection('franchises')
-        .doc(franchiseId)
-        .collection('error_logs')
-        .doc(logId)
-        .update(updates);
+    await _db.collection('error_logs').doc(logId).update(updates);
   }
 
   // Add a comment to an error log
   Future<void> addCommentToErrorLog(
       String franchiseId, String logId, Map<String, dynamic> comment) async {
-    await _db
-        .collection('franchises')
-        .doc(franchiseId)
-        .collection('error_logs')
-        .doc(logId)
-        .update({
+    await _db.collection('error_logs').doc(logId).update({
       'comments': firestore.FieldValue.arrayUnion([comment]),
       'updatedAt': firestore.FieldValue.serverTimestamp(),
     });
@@ -730,21 +718,11 @@ class FirestoreService {
     if (resolved != null) updates['resolved'] = resolved;
     if (archived != null) updates['archived'] = archived;
     updates['updatedAt'] = firestore.FieldValue.serverTimestamp();
-    await _db
-        .collection('franchises')
-        .doc(franchiseId)
-        .collection('error_logs')
-        .doc(logId)
-        .update(updates);
+    await _db.collection('error_logs').doc(logId).update(updates);
   }
 
   Future<void> deleteErrorLog(String franchiseId, String logId) async {
-    await _db
-        .collection('franchises')
-        .doc(franchiseId)
-        .collection('error_logs')
-        .doc(logId)
-        .delete();
+    await _db.collection('error_logs').doc(logId).delete();
   }
 
   // === AUDIT LOGS (ROOT AND FRANCHISE SCOPE) ===
@@ -790,34 +768,31 @@ class FirestoreService {
   }
 
   // Add a log to franchise-specific `/franchises/{franchiseId}/audit_logs`
+  // Add an audit log to the root-level audit_logs collection
   Future<void> addAuditLogFranchise(String franchiseId, AuditLog log) async {
-    await _db
-        .collection('franchises')
-        .doc(franchiseId)
-        .collection('audit_logs')
-        .add(log.toFirestore());
+    final data = log.toFirestore();
+    data['franchiseId'] = franchiseId;
+    await _db.collection('audit_logs').add(data);
   }
 
-  // Get a single franchise audit log by ID
+// Get a single audit log from the root collection by ID
   Future<AuditLog?> getAuditLogFranchise(
       String franchiseId, String logId) async {
-    final doc = await _db
-        .collection('franchises')
-        .doc(franchiseId)
-        .collection('audit_logs')
-        .doc(logId)
-        .get();
+    final doc = await _db.collection('audit_logs').doc(logId).get();
     if (!doc.exists) return null;
+    // Optionally, you can check that doc.data()?['franchiseId'] == franchiseId if you want to enforce scoping here.
     return AuditLog.fromFirestore(doc.data()!, doc.id);
   }
 
-  // Stream franchise audit logs (optionally filtered by userId/action)
-  Stream<List<AuditLog>> auditLogsStreamFranchise(String franchiseId,
-      {String? userId, String? action}) {
+// Stream audit logs from the root collection, filtered by franchiseId (and optionally userId/action)
+  Stream<List<AuditLog>> auditLogsStreamFranchise(
+    String franchiseId, {
+    String? userId,
+    String? action,
+  }) {
     firestore.Query query = _db
-        .collection('franchises')
-        .doc(franchiseId)
         .collection('audit_logs')
+        .where('franchiseId', isEqualTo: franchiseId)
         .orderBy('timestamp', descending: true);
     if (userId != null) query = query.where('userId', isEqualTo: userId);
     if (action != null) query = query.where('action', isEqualTo: action);
@@ -950,6 +925,82 @@ class FirestoreService {
         .map((doc) =>
             Invoice.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
         .toList());
+  }
+
+  // dunning in invoices
+  Future<void> updateInvoiceDunningState(
+      String invoiceId, String dunningState) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('invoices')
+        .doc(invoiceId)
+        .update({
+      'dunning_state': dunningState,
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Add an overdue reminder to the invoice (atomic arrayUnion)
+  Future<void> addInvoiceOverdueReminder(
+      String invoiceId, Map<String, dynamic> reminder) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('invoices')
+        .doc(invoiceId)
+        .update({
+      'overdue_reminders': firestore.FieldValue.arrayUnion([reminder]),
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Set or update a payment plan object for an invoice
+  Future<void> setInvoicePaymentPlan(
+      String invoiceId, Map<String, dynamic> paymentPlan) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('invoices')
+        .doc(invoiceId)
+        .update({
+      'payment_plan': paymentPlan,
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Add an escalation event/history entry (atomic arrayUnion)
+  Future<void> addInvoiceEscalationEvent(
+      String invoiceId, Map<String, dynamic> escalationEvent) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('invoices')
+        .doc(invoiceId)
+        .update({
+      'escalation_history': firestore.FieldValue.arrayUnion([escalationEvent]),
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Fetch dunning workflow fields for an invoice
+  Future<Map<String, dynamic>?> getInvoiceWorkflowFields(
+      String invoiceId) async {
+    final doc = await firestore.FirebaseFirestore.instance
+        .collection('invoices')
+        .doc(invoiceId)
+        .get();
+    if (!doc.exists) return null;
+    final data = doc.data()!;
+    return {
+      'dunning_state': data['dunning_state'],
+      'overdue_reminders': data['overdue_reminders'],
+      'payment_plan': data['payment_plan'],
+      'escalation_history': data['escalation_history'],
+    };
+  }
+
+  /// Remove payment plan from invoice (if canceled or paid in full)
+  Future<void> removeInvoicePaymentPlan(String invoiceId) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('invoices')
+        .doc(invoiceId)
+        .update({
+      'payment_plan': firestore.FieldValue.delete(),
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
   }
 
   // --- REPORTS ---
@@ -1841,6 +1892,292 @@ class FirestoreService {
         .doc(id)
         .delete();
     // Optional: log this with audit if you want
+  }
+
+  // support_requests
+  /// Adds a new support request
+  Future<firestore.DocumentReference> addSupportRequest(
+      Map<String, dynamic> data) async {
+    final now = firestore.FieldValue.serverTimestamp();
+    data['created_at'] ??= now;
+    data['updated_at'] ??= now;
+    return await firestore.FirebaseFirestore.instance
+        .collection('support_requests')
+        .add(data);
+  }
+
+  /// Updates an existing support request
+  Future<void> updateSupportRequest(
+      String requestId, Map<String, dynamic> updates) async {
+    updates['updated_at'] = firestore.FieldValue.serverTimestamp();
+    await firestore.FirebaseFirestore.instance
+        .collection('support_requests')
+        .doc(requestId)
+        .update(updates);
+  }
+
+  /// Get a support request by ID
+  Future<Map<String, dynamic>?> getSupportRequestById(String requestId) async {
+    final doc = await firestore.FirebaseFirestore.instance
+        .collection('support_requests')
+        .doc(requestId)
+        .get();
+    return doc.exists ? doc.data() as Map<String, dynamic> : null;
+  }
+
+  /// Stream support requests, optionally filtered by franchise/location/status/type
+  Stream<List<Map<String, dynamic>>> supportRequestsStream({
+    String? franchiseId,
+    String? locationId,
+    String? status,
+    String? type,
+    String? assignedTo,
+    String? openedBy,
+    int limit = 50,
+  }) {
+    firestore.Query query =
+        firestore.FirebaseFirestore.instance.collection('support_requests');
+    if (franchiseId != null) {
+      query = query.where('franchiseId', isEqualTo: franchiseId);
+    }
+    if (locationId != null) {
+      query = query.where('locationId', isEqualTo: locationId);
+    }
+    if (status != null) {
+      query = query.where('status', isEqualTo: status);
+    }
+    if (type != null) {
+      query = query.where('type', isEqualTo: type);
+    }
+    if (assignedTo != null) {
+      query = query.where('assigned_to', isEqualTo: assignedTo);
+    }
+    if (openedBy != null) {
+      query = query.where('opened_by', isEqualTo: openedBy);
+    }
+    query = query.orderBy('created_at', descending: true).limit(limit);
+
+    return query.snapshots().map((snap) =>
+        snap.docs.map((doc) => doc.data() as Map<String, dynamic>).toList());
+  }
+
+  /// Append a message to a support request (atomic arrayUnion)
+  Future<void> addMessageToSupportRequest(
+      String requestId, Map<String, dynamic> message) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('support_requests')
+        .doc(requestId)
+        .update({
+      'messages': firestore.FieldValue.arrayUnion([message]),
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Delete a support request
+  Future<void> deleteSupportRequest(String requestId) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('support_requests')
+        .doc(requestId)
+        .delete();
+  }
+
+  /// Add a support note (internal only, atomic arrayUnion)
+  Future<void> addSupportNote(
+      String requestId, Map<String, dynamic> note) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('support_requests')
+        .doc(requestId)
+        .update({
+      'support_notes': firestore.FieldValue.arrayUnion([note]),
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Set or update ticket type taxonomy (e.g., 'billing', 'technical', etc.)
+  Future<void> updateSupportType(String requestId, String type) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('support_requests')
+        .doc(requestId)
+        .update({
+      'type': type,
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Link entities (e.g., invoiceId, paymentId) to a ticket
+  Future<void> linkEntitiesToSupportRequest(String requestId,
+      {String? invoiceId, String? paymentId}) async {
+    final update = <String, dynamic>{};
+    if (invoiceId != null) update['invoiceId'] = invoiceId;
+    if (paymentId != null) update['paymentId'] = paymentId;
+    update['updated_at'] = firestore.FieldValue.serverTimestamp();
+
+    await firestore.FirebaseFirestore.instance
+        .collection('support_requests')
+        .doc(requestId)
+        .update(update);
+  }
+
+  /// Update ticket status (with audit fields, e.g., close or escalate)
+  Future<void> updateSupportRequestStatus(
+    String requestId, {
+    required String status, // e.g. 'resolved', 'closed', etc.
+    String? lastUpdatedBy,
+    String? resolutionNotes,
+  }) async {
+    final update = <String, dynamic>{
+      'status': status,
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    };
+    if (lastUpdatedBy != null) update['last_updated_by'] = lastUpdatedBy;
+    if (resolutionNotes != null) update['resolution_notes'] = resolutionNotes;
+    if (status == 'closed' || status == 'resolved') {
+      update['closed_at'] = firestore.FieldValue.serverTimestamp();
+    }
+    await firestore.FirebaseFirestore.instance
+        .collection('support_requests')
+        .doc(requestId)
+        .update(update);
+  }
+
+  /// Get all support notes for a request
+  Future<List<Map<String, dynamic>>> getSupportNotes(String requestId) async {
+    final doc = await firestore.FirebaseFirestore.instance
+        .collection('support_requests')
+        .doc(requestId)
+        .get();
+    if (!doc.exists) return [];
+    final data = doc.data()!;
+    final notes = data['support_notes'] as List<dynamic>? ?? [];
+    return notes.cast<Map<String, dynamic>>();
+  }
+
+  /// Filter/stream tickets by type or status (for taxonomy/reporting)
+  Stream<List<Map<String, dynamic>>> supportRequestsByTypeOrStatus({
+    String? type,
+    String? status,
+    int limit = 50,
+  }) {
+    var query = firestore.FirebaseFirestore.instance
+        .collection('support_requests')
+        .orderBy('created_at', descending: true)
+        .limit(limit);
+
+    if (type != null) {
+      query = query.where('type', isEqualTo: type);
+    }
+    if (status != null) {
+      query = query.where('status', isEqualTo: status);
+    }
+
+    return query.snapshots().map((snap) =>
+        snap.docs.map((doc) => doc.data() as Map<String, dynamic>).toList());
+  }
+
+  // tax_reports
+  Future<firestore.DocumentReference> addTaxReport(
+      Map<String, dynamic> data) async {
+    final now = firestore.FieldValue.serverTimestamp();
+    data['created_at'] ??= now;
+    data['updated_at'] ??= now;
+    return await firestore.FirebaseFirestore.instance
+        .collection('tax_reports')
+        .add(data);
+  }
+
+  /// Update an existing tax report by ID
+  Future<void> updateTaxReport(
+      String reportId, Map<String, dynamic> updates) async {
+    updates['updated_at'] = firestore.FieldValue.serverTimestamp();
+    await firestore.FirebaseFirestore.instance
+        .collection('tax_reports')
+        .doc(reportId)
+        .update(updates);
+  }
+
+  /// Get a tax report by ID
+  Future<Map<String, dynamic>?> getTaxReportById(String reportId) async {
+    final doc = await firestore.FirebaseFirestore.instance
+        .collection('tax_reports')
+        .doc(reportId)
+        .get();
+    return doc.exists ? doc.data() as Map<String, dynamic> : null;
+  }
+
+  /// Stream tax reports, with filters
+  Stream<List<Map<String, dynamic>>> taxReportsStream({
+    String? franchiseId,
+    String? brandId,
+    String? reportType, // e.g., "sales_tax"
+    String? status, // e.g., "filed", "pending"
+    String? taxAuthority,
+    DateTime? filedAfter,
+    DateTime? filedBefore,
+    int limit = 100,
+  }) {
+    var query = firestore.FirebaseFirestore.instance
+        .collection('tax_reports')
+        .orderBy('created_at', descending: true)
+        .limit(limit);
+
+    if (franchiseId != null) {
+      query = query.where('franchiseId', isEqualTo: franchiseId);
+    }
+    if (brandId != null) {
+      query = query.where('brandId', isEqualTo: brandId);
+    }
+    if (reportType != null) {
+      query = query.where('report_type', isEqualTo: reportType);
+    }
+    if (status != null) {
+      query = query.where('status', isEqualTo: status);
+    }
+    if (taxAuthority != null) {
+      query = query.where('tax_authority', isEqualTo: taxAuthority);
+    }
+    if (filedAfter != null) {
+      query =
+          query.where('date_filed', isGreaterThanOrEqualTo: filedAfter.toUtc());
+    }
+    if (filedBefore != null) {
+      query =
+          query.where('date_filed', isLessThanOrEqualTo: filedBefore.toUtc());
+    }
+
+    return query.snapshots().map((snap) =>
+        snap.docs.map((doc) => doc.data() as Map<String, dynamic>).toList());
+  }
+
+  /// Delete a tax report by ID
+  Future<void> deleteTaxReport(String reportId) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('tax_reports')
+        .doc(reportId)
+        .delete();
+  }
+
+  /// Add a reminder to a tax report (atomic arrayUnion)
+  Future<void> addTaxReportReminder(
+      String reportId, Map<String, dynamic> reminder) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('tax_reports')
+        .doc(reportId)
+        .update({
+      'reminders_sent': firestore.FieldValue.arrayUnion([reminder]),
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Attach a file to a tax report (atomic arrayUnion)
+  Future<void> addTaxReportAttachment(
+      String reportId, Map<String, dynamic> attachment) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('tax_reports')
+        .doc(reportId)
+        .update({
+      'attached_files': firestore.FieldValue.arrayUnion([attachment]),
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
   }
 }
 
