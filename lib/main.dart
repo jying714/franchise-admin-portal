@@ -18,7 +18,7 @@ import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_gate.dart';
-
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/landing_page.dart';
 import 'package:franchise_admin_portal/admin/sign_in/sign_in_screen.dart';
 import 'package:franchise_admin_portal/widgets/profile_gate_screen.dart';
@@ -36,25 +36,23 @@ void main() {
     await fb_auth.FirebaseAuth.instance.setPersistence(
       fb_auth.Persistence.LOCAL,
     );
-    final firestoreService = FirestoreService();
-    const defaultFranchiseId = 'unknown';
 
     FlutterError.onError = (FlutterErrorDetails details) async {
       FlutterError.dumpErrorToConsole(details);
-      await firestoreService.logError(
-        defaultFranchiseId,
+      await ErrorLogger.log(
         message: details.exceptionAsString(),
+        stack: details.stack?.toString(),
         source: 'FlutterError',
-        stackTrace: details.stack?.toString(),
         severity: 'fatal',
         screen: 'main',
         contextData: {
           'library': details.library,
-          'context': details.context.toString(),
+          'context':
+              details.context?.toDescription() ?? details.context.toString(),
         },
       );
     };
-
+    final firestoreService = FirestoreService();
     runApp(
       MultiProvider(
         providers: [
@@ -71,16 +69,12 @@ void main() {
       ),
     );
   }, (Object error, StackTrace stack) async {
-    final firestoreService = FirestoreService();
-    const defaultFranchiseId = 'unknown';
-    await firestoreService.logError(
-      defaultFranchiseId,
+    await ErrorLogger.log(
       message: error.toString(),
+      stack: stack.toString(),
       source: 'runZonedGuarded',
-      stackTrace: stack.toString(),
       severity: 'fatal',
       screen: 'main',
-      contextData: {},
     );
   });
 }

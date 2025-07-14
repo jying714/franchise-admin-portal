@@ -645,3 +645,66 @@ export const logPublicError = functions.https.onRequest(
       res.status(500).send("Internal Server Error");
     }
   });
+
+interface ErrorLogEntry {
+  message: string;
+  stack?: string;
+  contextData?: Record<string, unknown>;
+  source?: string;
+  severity?: string;
+  screen?: string;
+  userId?: string | null;
+  userEmail?: string | null;
+  createdAt?: FirebaseFirestore.FieldValue;
+  env?: string;
+}
+
+export const logAppError = functions.https.onRequest(async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).send("Method Not Allowed");
+    return;
+  }
+
+  const {
+    message,
+    stack,
+    contextData,
+    source,
+    severity,
+    screen,
+    userId,
+    userEmail,
+  } = req.body;
+
+  if (!message || typeof message !== "string") {
+    res.status(400).send("Bad Request: Missing or invalid \"message\"");
+    return;
+  }
+
+  // Optional: severity and source validation
+  const allowedSeverities = new Set(["info", "warning", "error", "fatal"]);
+  const allowedSources = new Set(
+    ["FlutterError", "runZonedGuarded", "UI", "Network", "BusinessLogic"]);
+
+  const entry: ErrorLogEntry = {
+    message,
+    stack: typeof stack === "string" ? stack : "",
+    contextData:
+     contextData && typeof contextData === "object" ? contextData : {},
+    source: allowedSources.has(source) ? source : "unknown",
+    severity: allowedSeverities.has(severity) ? severity : "error",
+    screen: typeof screen === "string" ? screen : "",
+    userId: typeof userId === "string" ? userId : null,
+    userEmail: typeof userEmail === "string" ? userEmail : null,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    env: process.env.FUNCTIONS_EMULATOR ? "emulator" : "production",
+  };
+
+  try {
+    await admin.firestore().collection("error_logs").add(entry);
+    res.status(200).send("Logged");
+  } catch (err) {
+    console.error("Failed to write to error_logs:", err);
+    res.status(500).send("Internal Server Error");
+  }
+});
