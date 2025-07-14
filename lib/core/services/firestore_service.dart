@@ -28,6 +28,7 @@ import 'package:franchise_admin_portal/core/models/payout.dart';
 import 'package:franchise_admin_portal/core/models/report.dart';
 import 'package:franchise_admin_portal/core/models/invoice.dart';
 import 'package:franchise_admin_portal/core/models/bank_account.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class FirestoreService {
   final firestore.FirebaseFirestore _db = firestore.FirebaseFirestore.instance;
@@ -641,16 +642,17 @@ class FirestoreService {
     String? stackTrace,
     String? userId,
   }) async {
-    await _db.collection('error_logs').add({
-      'timestamp': firestore.FieldValue.serverTimestamp(),
-      'message': message,
-      'franchiseId': franchiseId,
-      if (templateId != null) 'templateId': templateId,
-      if (menuItemId != null) 'menuItemId': menuItemId,
-      if (userId != null) 'userId': userId,
-      if (stackTrace != null) 'stackTrace': stackTrace,
-      'source': 'customization_template_resolution'
-    });
+    await ErrorLogger.log(
+      message: message,
+      stack: stackTrace,
+      source: 'customization_template_resolution',
+      contextData: {
+        'franchiseId': franchiseId,
+        if (templateId != null) 'templateId': templateId,
+        if (menuItemId != null) 'menuItemId': menuItemId,
+        if (userId != null) 'userId': userId,
+      },
+    );
   }
 
   /// Generic error logger (franchise-scoped, supports all error types)
