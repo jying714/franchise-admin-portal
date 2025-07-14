@@ -8,6 +8,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/widgets/role_guard.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class AlertListScreen extends StatelessWidget {
   final String franchiseId;
@@ -71,18 +72,17 @@ class AlertListScreen extends StatelessWidget {
             ),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                fireService.logError(
-                  user?.defaultFranchise,
+                ErrorLogger.log(
                   message: 'Failed to load alert list: ${snapshot.error}',
                   source: 'alert_list_screen',
-                  userId: user?.id,
                   screen: 'AlertListScreen',
-                  stackTrace: snapshot.stackTrace?.toString(),
-                  errorType: snapshot.error.runtimeType.toString(),
+                  stack: snapshot.stackTrace?.toString(),
                   severity: 'error',
                   contextData: {
                     'franchiseId': franchiseId,
                     'locationId': locationId,
+                    'userId': user?.id,
+                    'errorType': snapshot.error.runtimeType.toString(),
                   },
                 );
                 return _AlertListError(
@@ -126,18 +126,17 @@ class AlertListScreen extends StatelessWidget {
                           SnackBar(content: Text(loc.alert_dismissed_success)),
                         );
                       } catch (e, stack) {
-                        fireService.logError(
-                          user?.defaultFranchise,
+                        await ErrorLogger.log(
                           message: 'Failed to dismiss alert: $e',
                           source: 'alert_list_screen',
-                          userId: user?.id,
                           screen: 'AlertListScreen',
-                          stackTrace: stack.toString(),
-                          errorType: e.runtimeType.toString(),
+                          stack: stack.toString(),
                           severity: 'error',
                           contextData: {
                             'franchiseId': franchiseId,
                             'alertId': alert.id,
+                            'userId': user?.id,
+                            'errorType': e.runtimeType.toString(),
                           },
                         );
                         ScaffoldMessenger.of(context).showSnackBar(

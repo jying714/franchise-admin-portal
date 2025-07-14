@@ -4,6 +4,7 @@ import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.d
 import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class AlertsCard extends StatelessWidget {
   final String franchiseId;
@@ -88,20 +89,18 @@ class AlertsCard extends StatelessWidget {
                     '[AlertsCard] StreamBuilder connectionState=${snapshot.connectionState}');
                 if (snapshot.hasError) {
                   print('[AlertsCard] ERROR loading alerts: ${snapshot.error}');
-                  fireService.logError(
-                    franchiseId,
+                  ErrorLogger.log(
                     message: 'Failed to load active alerts: ${snapshot.error}',
                     source: 'alerts_card',
-                    userId: userId,
                     screen: 'AlertsCard',
-                    stackTrace: snapshot.stackTrace?.toString(),
-                    errorType: snapshot.error.runtimeType.toString(),
+                    stack: snapshot.stackTrace?.toString(),
                     severity: 'error',
                     contextData: {
                       'franchiseId': franchiseId,
                       'locationId': locationId,
                       'userId': userId,
                       'developerMode': developerMode,
+                      'errorType': snapshot.error.runtimeType.toString(),
                     },
                   );
                   return _AlertError(

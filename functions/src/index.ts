@@ -1,8 +1,20 @@
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
+import cors from "cors";
 
 // *** REQUIRED: initialize the admin app ***
 admin.initializeApp();
+
+const corsHandler = cors({
+  origin: [
+    "http://localhost:5000", // Firebase emulator UI
+    "http://localhost:3000", // Local dev server (adjust if needed)
+    "http://127.0.0.1:5000", // Sometimes emulator uses this
+    "http://127.0.0.1:3000", // Or this for local dev server
+    "https://franchisehq.io", // Production domain
+  ],
+  credentials: true,
+});
 
 /**
  * Rolls up analytics for a given franchise (weekly summary).
@@ -617,8 +629,21 @@ export const ensureUserProfile = functions.https.onCall(
   }
 );
 
-export const logPublicError = functions.https.onRequest(
-  async (req, res): Promise<void> => {
+interface ErrorLogEntry {
+  message: string;
+  stack?: string;
+  contextData?: Record<string, unknown>;
+  source?: string;
+  severity?: string;
+  screen?: string;
+  userId?: string | null;
+  userEmail?: string | null;
+  createdAt?: FirebaseFirestore.FieldValue;
+  env?: string;
+}
+
+export const logPublicError = functions.https.onRequest((req, res) => {
+  corsHandler(req, res, async () => {
     if (req.method !== "POST") {
       res.status(405).send("Method Not Allowed");
       return;
@@ -645,66 +670,56 @@ export const logPublicError = functions.https.onRequest(
       res.status(500).send("Internal Server Error");
     }
   });
+});
 
-interface ErrorLogEntry {
-  message: string;
-  stack?: string;
-  contextData?: Record<string, unknown>;
-  source?: string;
-  severity?: string;
-  screen?: string;
-  userId?: string | null;
-  userEmail?: string | null;
-  createdAt?: FirebaseFirestore.FieldValue;
-  env?: string;
-}
+export const logAppError = functions.https.onRequest((req, res) => {
+  corsHandler(req, res, async () => {
+    if (req.method !== "POST") {
+      res.status(405).send("Method Not Allowed");
+      return;
+    }
 
-export const logAppError = functions.https.onRequest(async (req, res) => {
-  if (req.method !== "POST") {
-    res.status(405).send("Method Not Allowed");
-    return;
-  }
+    const {
+      message,
+      stack,
+      contextData,
+      source,
+      severity,
+      screen,
+      userId,
+      userEmail,
+    } = req.body;
 
-  const {
-    message,
-    stack,
-    contextData,
-    source,
-    severity,
-    screen,
-    userId,
-    userEmail,
-  } = req.body;
+    if (!message || typeof message !== "string") {
+      res.status(400).send("Bad Request: Missing or invalid \"message\"");
+      return;
+    }
 
-  if (!message || typeof message !== "string") {
-    res.status(400).send("Bad Request: Missing or invalid \"message\"");
-    return;
-  }
+    // Optional: severity and source validation
+    const allowedSeverities = new Set(["info", "warning", "error", "fatal"]);
+    const allowedSources = new Set(
+      ["FlutterError", "runZonedGuarded", "UI", "Network", "BusinessLogic"]);
 
-  // Optional: severity and source validation
-  const allowedSeverities = new Set(["info", "warning", "error", "fatal"]);
-  const allowedSources = new Set(
-    ["FlutterError", "runZonedGuarded", "UI", "Network", "BusinessLogic"]);
+    const entry: ErrorLogEntry = {
+      message,
+      stack: typeof stack === "string" ? stack : "",
+      contextData:
+        contextData && typeof contextData === "object" ? contextData : {},
+      source: allowedSources.has(source) ? source : "unknown",
+      severity: allowedSeverities.has(severity) ? severity : "error",
+      screen: typeof screen === "string" ? screen : "",
+      userId: typeof userId === "string" ? userId : null,
+      userEmail: typeof userEmail === "string" ? userEmail : null,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      env: process.env.FUNCTIONS_EMULATOR ? "emulator" : "production",
+    };
 
-  const entry: ErrorLogEntry = {
-    message,
-    stack: typeof stack === "string" ? stack : "",
-    contextData:
-     contextData && typeof contextData === "object" ? contextData : {},
-    source: allowedSources.has(source) ? source : "unknown",
-    severity: allowedSeverities.has(severity) ? severity : "error",
-    screen: typeof screen === "string" ? screen : "",
-    userId: typeof userId === "string" ? userId : null,
-    userEmail: typeof userEmail === "string" ? userEmail : null,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    env: process.env.FUNCTIONS_EMULATOR ? "emulator" : "production",
-  };
-
-  try {
-    await admin.firestore().collection("error_logs").add(entry);
-    res.status(200).send("Logged");
-  } catch (err) {
-    console.error("Failed to write to error_logs:", err);
-    res.status(500).send("Internal Server Error");
-  }
+    try {
+      await admin.firestore().collection("error_logs").add(entry);
+      res.status(200).send("Logged");
+    } catch (err) {
+      console.error("Failed to write to error_logs:", err);
+      res.status(500).send("Internal Server Error");
+    }
+  });
 });

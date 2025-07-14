@@ -6,6 +6,7 @@ import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
 import 'package:franchise_admin_portal/core/models/user.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 // Update import to your actual user model/provider location
 
@@ -102,23 +103,15 @@ class RoleGuard extends StatelessWidget {
     }
 
     // 🔜 Future: More granular audit, config, feature toggles, etc.
-    _firestoreService.logError(
-      user?.defaultFranchise ??
-          (user?.franchiseIds.isNotEmpty == true
-              ? user!.franchiseIds.first
-              : null),
-      message:
-          "Unauthorized access attempt${featureName != null ? ' to $featureName' : ''}: ${errorDetail ?? 'unknown reason'}",
-      source: screen ?? 'RoleGuard',
-      userId: user?.id,
-      screen: screen ?? 'RoleGuard',
-      stackTrace: null,
-      errorType: 'Unauthorized',
+    ErrorLogger.log(
+      message: "Unauthorized access attempt to $featureName: $errorDetail",
+      source: 'RoleGuard',
+      screen: 'RoleGuard',
       severity: 'warning',
       contextData: {
         'roles': user?.roles,
-        'userId': user?.id,
         'feature': featureName,
+        'errorType': 'Unauthorized', // add any extra custom fields as needed
       },
     );
 

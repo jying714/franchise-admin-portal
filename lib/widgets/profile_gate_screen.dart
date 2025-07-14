@@ -13,6 +13,7 @@ import '../widgets/user_profile_notifier.dart';
 import '../config/design_tokens.dart';
 import '../config/branding_config.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class ProfileGateScreen extends StatefulWidget {
   const ProfileGateScreen({Key? key}) : super(key: key);
@@ -72,11 +73,10 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
   Future<void> _logError(String message,
       {Object? error, StackTrace? stack}) async {
     try {
-      await _firestoreService.logError(
-        'unknown',
+      await ErrorLogger.log(
         message: message,
         source: 'profile_gate_screen',
-        stackTrace: stack?.toString(),
+        stack: stack?.toString(),
         severity: 'error',
         screen: 'ProfileGateScreen',
         contextData: {

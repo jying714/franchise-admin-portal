@@ -5,6 +5,7 @@ import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:franchise_admin_portal/core/models/alert_model.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class AlertsRepository {
   final FirebaseFirestore _firestore;
@@ -73,19 +74,18 @@ class AlertsRepository {
           await query.orderBy('created_at', descending: true).get();
       return snapshot.docs.map(AlertModel.fromFirestore).toList();
     } catch (e, stack) {
-      await _firestoreService.logError(
-        franchiseId,
+      await ErrorLogger.log(
         message: 'Failed to fetch all alerts: $e',
         source: 'alerts_repository_fetchAllAlerts',
-        stackTrace: stack.toString(),
+        stack: stack.toString(),
+        screen: 'AlertsRepository',
+        severity: 'error',
         contextData: {
           'franchiseId': franchiseId,
           'locationId': locationId,
+          'userId': userId,
+          'errorType': e.runtimeType.toString(),
         },
-        userId: userId,
-        screen: 'AlertsRepository',
-        errorType: e.runtimeType.toString(),
-        severity: 'error',
       );
       return [];
     }
@@ -104,19 +104,18 @@ class AlertsRepository {
         'seen_by': FieldValue.arrayUnion([userId]),
       });
     } catch (e, stack) {
-      await _firestoreService.logError(
-        franchiseId,
+      await ErrorLogger.log(
         message: 'Failed to dismiss alert: $e',
         source: 'alerts_repository_dismissAlert',
-        stackTrace: stack.toString(),
+        stack: stack.toString(),
+        screen: screen ?? 'AlertsRepository',
+        severity: 'error',
         contextData: {
+          'franchiseId': franchiseId,
           'alertId': alertId,
           'userId': userId,
+          'errorType': e.runtimeType.toString(),
         },
-        userId: userId,
-        screen: screen ?? 'AlertsRepository',
-        errorType: e.runtimeType.toString(),
-        severity: 'error',
       );
     }
   }
@@ -133,19 +132,18 @@ class AlertsRepository {
         'seen_by': FieldValue.arrayUnion([userId]),
       });
     } catch (e, stack) {
-      await _firestoreService.logError(
-        franchiseId,
+      await ErrorLogger.log(
         message: 'Failed to mark alert as seen: $e',
         source: 'alerts_repository_markAlertSeen',
-        stackTrace: stack.toString(),
+        stack: stack.toString(),
+        screen: screen ?? 'AlertsRepository',
+        severity: 'error',
         contextData: {
+          'franchiseId': franchiseId,
           'alertId': alertId,
           'userId': userId,
+          'errorType': e.runtimeType.toString(),
         },
-        userId: userId,
-        screen: screen ?? 'AlertsRepository',
-        errorType: e.runtimeType.toString(),
-        severity: 'error',
       );
     }
   }
