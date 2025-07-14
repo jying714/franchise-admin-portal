@@ -11,7 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:io';
-import 'package:franchise_admin_portal/core/models/export_utils.dart';
+import 'package:franchise_admin_portal/core/utils/export_utils.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
@@ -955,7 +955,7 @@ class ExportAnalyticsDialogSingleSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final csv = ExportUtils.analyticsSummaryToCsv(summary);
+    final csv = ExportUtils.analyticsSummaryToCsv(context, summary);
 
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),

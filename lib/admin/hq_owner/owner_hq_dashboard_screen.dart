@@ -17,6 +17,13 @@ import 'package:franchise_admin_portal/core/models/franchise_info.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/cash_flow_forecast_card.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/alerts_card.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/invoice_list_screen.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/invoice_detail_screen.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/invoice_export_dialog.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/invoice_audit_trail_widget.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/invoice_search_bar.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/invoice_data_table.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/widgets/invoices_card.dart';
 
 /// Developer/HQ-only: Entry-point for HQ/Owner dashboard.
 /// Add this to your DashboardSection registry for 'hq_owner'.
@@ -29,6 +36,33 @@ class OwnerHQDashboardScreen extends StatelessWidget {
       print('[DEBUG] Firebase ID token claims: ${token.claims}');
     });
     print('[OwnerHQDashboardScreen] build called');
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final franchiseProvider =
+          Provider.of<FranchiseProvider>(context, listen: false);
+      final firestoreService =
+          Provider.of<FirestoreService>(context, listen: false);
+
+      if (franchiseProvider.allFranchises.isEmpty) {
+        final franchises = await firestoreService.getFranchises();
+        franchiseProvider.setAllFranchises(franchises);
+      }
+
+      // Set initial franchiseId if none is selected yet
+      if (!franchiseProvider.isFranchiseSelected &&
+          franchiseProvider.allFranchises.isNotEmpty) {
+        String initialId;
+        final user =
+            Provider.of<UserProfileNotifier>(context, listen: false).user;
+        if (user != null &&
+            user.defaultFranchise != null &&
+            user.defaultFranchise!.isNotEmpty) {
+          initialId = user.defaultFranchise!;
+        } else {
+          initialId = franchiseProvider.allFranchises.first.id;
+        }
+        await franchiseProvider.setInitialFranchiseId(initialId);
+      }
+    });
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final user = Provider.of<UserProfileNotifier>(context).user;
@@ -173,7 +207,49 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                   ),
                   ConstrainedBox(
                     constraints: BoxConstraints(minHeight: 220),
-                    child: OutstandingInvoicesCard(),
+                    child: FutureBuilder<Map<String, dynamic>>(
+                      future: FirestoreService()
+                          .getInvoiceStatsForFranchise(franchiseId),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          return Center(
+                              child: Text('Error loading invoice stats'));
+                        } else if (!snapshot.hasData ||
+                            snapshot.data!.isEmpty) {
+                          return InvoicesCard(
+                            totalInvoices: 0,
+                            openInvoiceCount: 0,
+                            overdueInvoiceCount: 0,
+                            overdueAmount: 0.0,
+                            paidInvoiceCount: 0,
+                            outstandingBalance: 0.0,
+                            lastInvoiceDate: null,
+                            onViewAllPressed: () {
+                              Navigator.of(context).pushNamed('/hq/invoices');
+                            },
+                          );
+                        }
+                        final stats = snapshot.data!;
+                        return InvoicesCard(
+                          totalInvoices: stats['totalInvoices'] ?? 0,
+                          openInvoiceCount: stats['openInvoiceCount'] ?? 0,
+                          overdueInvoiceCount:
+                              stats['overdueInvoiceCount'] ?? 0,
+                          overdueAmount: stats['overdueAmount'] ?? 0.0,
+                          paidInvoiceCount: stats['paidInvoiceCount'] ?? 0,
+                          outstandingBalance:
+                              stats['outstandingBalance'] ?? 0.0,
+                          lastInvoiceDate: stats['lastInvoiceDate'],
+                          onViewAllPressed: () {
+                            Navigator.of(context).pushNamed('/hq/invoices');
+                          },
+                        );
+                      },
+                    ),
                   ),
                   ConstrainedBox(
                     constraints: BoxConstraints(minHeight: 220),
@@ -198,9 +274,14 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                     userId: user.id,
                     developerMode: user.isDeveloper,
                   ),
-                  const QuickLinksPanel(),
+                  QuickLinksPanel(
+                    key: UniqueKey(), // Optional: force rebuild if needed
+                    // Pass no args if your QuickLinksPanel uses Provider or context internally
+                    // Just make sure the widget uses context for navigation and localization
+                  ),
                 ],
               ),
+
               SizedBox(height: gap + 4),
               FutureFeaturePlaceholderPanel(),
             ],
@@ -252,66 +333,6 @@ class _KpiTile extends StatelessWidget {
           ],
         ),
       ],
-    );
-  }
-}
-
-/// OUTSTANDING INVOICES
-class OutstandingInvoicesCard extends StatelessWidget {
-  const OutstandingInvoicesCard({super.key});
-  @override
-  Widget build(BuildContext context) {
-    print('[OutstandingInvoicesCard] build called');
-    final loc = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
-    // TODO: Replace with real data stream
-    final invoiceCount = 4;
-    final overdueAmount = 1254.90;
-
-    return Card(
-      color: colorScheme.surfaceVariant,
-      elevation: DesignTokens.adminCardElevation,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(loc.outstandingInvoices ?? "Outstanding Invoices",
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Icon(Icons.description_outlined, color: colorScheme.primary),
-                const SizedBox(width: 10),
-                Text(
-                  "$invoiceCount ${loc.openInvoices ?? 'Open'}",
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                const SizedBox(width: 16),
-                Icon(Icons.error_outline, color: colorScheme.error),
-                const SizedBox(width: 6),
-                Text(
-                  "\$${overdueAmount.toStringAsFixed(2)} ${loc.overdue ?? 'Overdue'}",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: colorScheme.error),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.open_in_new),
-              label: Text(loc.viewInvoices ?? "View All"),
-              onPressed: () {
-                // TODO: Route to invoices screen
-              },
-            )
-          ],
-        ),
-      ),
     );
   }
 }
@@ -480,7 +501,7 @@ class QuickLinksPanel extends StatelessWidget {
                   icon: Icons.description,
                   label: loc.viewInvoices ?? "Invoices",
                   onTap: () {
-                    // TODO: Route to invoices screen
+                    Navigator.of(context).pushNamed('/hq/invoices');
                   },
                   color: colorScheme.primary,
                 ),

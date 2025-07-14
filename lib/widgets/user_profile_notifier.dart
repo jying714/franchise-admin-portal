@@ -5,11 +5,13 @@ import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:provider/provider.dart';
 
 class UserProfileNotifier extends ChangeNotifier {
   admin_user.User? _user;
   admin_user.User? get user => _user;
-
+  FranchiseProvider? _lastFranchiseProvider;
   StreamSubscription? _sub;
 
   bool _loading = false;
@@ -21,13 +23,16 @@ class UserProfileNotifier extends ChangeNotifier {
   FirestoreService? _lastFirestoreService;
   String? _lastUid;
 
-  void listenToUser(FirestoreService firestoreService, String? uid) {
+  void listenToUser(FirestoreService firestoreService, String? uid,
+      [FranchiseProvider? franchiseProvider]) {
     print('[UserProfileNotifier] listenToUser called for uid=$uid');
+    _lastFirestoreService = firestoreService;
+    _lastUid = uid;
+    _lastFranchiseProvider = franchiseProvider;
 
-    // Always cancel existing subscription if any.
+    // Cancel existing subscription if any.
     _sub?.cancel();
 
-    // Robust guard: Only start if uid is valid.
     if (uid == null) {
       print('[UserProfileNotifier] Skipping listen: missing uid.');
       _user = null;
@@ -36,6 +41,7 @@ class UserProfileNotifier extends ChangeNotifier {
       _deferNotifyListeners();
       return;
     }
+
     print(
         '[UserProfileNotifier] Attempting to subscribe: uid=$uid, firestoreService=$firestoreService');
     _loading = true;
@@ -47,13 +53,14 @@ class UserProfileNotifier extends ChangeNotifier {
 
     _sub = delayedUserStream(firestoreService, uid).listen(
       (u) {
-        print(
-            '[UserProfileNotifier] Received user: ${u?.email}, roles=${u?.roles}, isActive=${u?.isActive}, uid=${u?.id}');
-
         _user = u;
         _loading = false;
         _lastError = null;
         _deferNotifyListeners();
+
+        if (u != null && franchiseProvider != null) {
+          franchiseProvider.initializeWithUser(u);
+        }
       },
       onError: (err, stack) async {
         print('[UserProfileNotifier] ERROR: $err\nStack: $stack');
@@ -62,7 +69,6 @@ class UserProfileNotifier extends ChangeNotifier {
         _deferNotifyListeners();
 
         final firebaseUser = fb_auth.FirebaseAuth.instance.currentUser;
-        // No franchiseId context; pass empty string or remove as needed.
         ErrorLogger.log(
           message: err.toString(),
           source: 'UserProfileNotifier.listenToUser',
@@ -74,7 +80,6 @@ class UserProfileNotifier extends ChangeNotifier {
             'uid': uid,
             'userId': firebaseUser?.uid,
             'errorType': err.runtimeType.toString(),
-            // Add more context as needed
           },
         );
         _lastFirestoreService = firestoreService;
@@ -106,8 +111,10 @@ class UserProfileNotifier extends ChangeNotifier {
   }
 
   void reload() {
-    if (_lastFirestoreService != null && _lastUid != null) {
-      listenToUser(_lastFirestoreService!, _lastUid);
+    if (_lastFirestoreService != null &&
+        _lastUid != null &&
+        _lastFranchiseProvider != null) {
+      listenToUser(_lastFirestoreService!, _lastUid, _lastFranchiseProvider!);
     }
   }
 

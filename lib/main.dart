@@ -26,6 +26,8 @@ import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.da
 import 'package:franchise_admin_portal/admin/developer/developer_dashboard_screen.dart';
 import 'package:franchise_admin_portal/admin/franchise/franchise_selector_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/owner_hq_dashboard_screen.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/invoice_list_screen.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/invoice_detail_screen.dart';
 
 void main() {
   runZonedGuarded(() async {
@@ -183,6 +185,12 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
               franchiseId: franchiseId,
               developerMode: user?.isDeveloper ?? false,
             );
+          },
+          '/hq/invoices': (_) => const InvoiceListScreen(),
+          '/hq/invoice_detail': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments
+                as String; // invoiceId
+            return InvoiceDetailScreen(invoiceId: args);
           },
         },
         initialRoute: '/post-login-gate',

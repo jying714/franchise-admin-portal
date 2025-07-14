@@ -17,7 +17,7 @@ import 'package:franchise_admin_portal/core/models/feedback_entry.dart'
 import 'package:franchise_admin_portal/core/models/inventory.dart';
 import 'package:franchise_admin_portal/core/models/audit_log.dart';
 import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
-import 'package:franchise_admin_portal/core/models/export_utils.dart';
+import 'package:franchise_admin_portal/core/utils/export_utils.dart';
 import 'package:franchise_admin_portal/core/models/analytics_summary.dart';
 import 'package:async/async.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as app_user;
@@ -897,6 +897,92 @@ class FirestoreService {
   }
 
   // --- INVOICES ---
+  Future<Map<String, dynamic>> getInvoiceStatsForFranchise(
+      String franchiseId) async {
+    try {
+      final querySnapshot = await _db
+          .collection('invoices')
+          .where('franchiseId',
+              isEqualTo: _db.collection('franchises').doc(franchiseId))
+          .get();
+
+      final invoices = querySnapshot.docs
+          .map((doc) =>
+              Invoice.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+
+      final totalInvoices = invoices.length;
+      final openStatuses = {
+        InvoiceStatus.open,
+        InvoiceStatus.sent,
+        InvoiceStatus.viewed,
+        InvoiceStatus.draft,
+      };
+      final openInvoices =
+          invoices.where((inv) => openStatuses.contains(inv.status)).toList();
+      final overdueInvoices =
+          invoices.where((inv) => inv.status == InvoiceStatus.overdue).toList();
+      final paidInvoices =
+          invoices.where((inv) => inv.status == InvoiceStatus.paid).toList();
+
+      final totalOverdue =
+          overdueInvoices.fold<double>(0.0, (sum, inv) => sum + inv.total);
+      final outstandingBalance =
+          invoices.fold<double>(0.0, (sum, inv) => sum + inv.outstanding);
+
+      DateTime? lastInvoiceDate;
+      if (invoices.isNotEmpty) {
+        invoices.sort((a, b) =>
+            b.issuedAt?.compareTo(
+                a.issuedAt ?? DateTime.fromMillisecondsSinceEpoch(0)) ??
+            0);
+        lastInvoiceDate = invoices.first.issuedAt;
+      }
+
+      return {
+        'totalInvoices': totalInvoices,
+        'openInvoiceCount': openInvoices.length,
+        'overdueInvoiceCount': overdueInvoices.length,
+        'overdueAmount': totalOverdue,
+        'paidInvoiceCount': paidInvoices.length,
+        'outstandingBalance': outstandingBalance,
+        'lastInvoiceDate': lastInvoiceDate,
+      };
+    } catch (e, stackTrace) {
+      await ErrorLogger.log(
+        message: e.toString(),
+        stack: stackTrace.toString(),
+        source: 'FirestoreService',
+        screen: 'getInvoiceStatsForFranchise',
+        severity: 'error',
+      );
+      rethrow;
+    }
+  }
+
+  Future<List<Invoice>> fetchInvoicesFiltered({
+    required String franchiseId,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    firestore.Query query =
+        _db.collection('invoices').where('franchiseId', isEqualTo: franchiseId);
+
+    if (startDate != null) {
+      query = query.where('period_start',
+          isGreaterThanOrEqualTo: firestore.Timestamp.fromDate(startDate));
+    }
+    if (endDate != null) {
+      query = query.where('period_end',
+          isLessThanOrEqualTo: firestore.Timestamp.fromDate(endDate));
+    }
+
+    final snapshot = await query.get();
+    return snapshot.docs
+        .map((doc) =>
+            Invoice.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+        .toList();
+  }
 
   Future<void> addOrUpdateInvoice(Invoice invoice) async {
     await _db
@@ -913,20 +999,6 @@ class FirestoreService {
 
   Future<void> deleteInvoice(String id) async {
     await _db.collection('invoices').doc(id).delete();
-  }
-
-  Stream<List<Invoice>> invoicesStream({String? franchiseId, String? status}) {
-    firestore.Query query = _db.collection('invoices');
-    if (franchiseId != null) {
-      query = query.where('franchiseId', isEqualTo: franchiseId);
-    }
-    if (status != null) {
-      query = query.where('status', isEqualTo: status);
-    }
-    return query.snapshots().map((snap) => snap.docs
-        .map((doc) =>
-            Invoice.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-        .toList());
   }
 
   // dunning in invoices
@@ -1002,6 +1074,107 @@ class FirestoreService {
         .update({
       'payment_plan': firestore.FieldValue.delete(),
       'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> addInvoiceSupportNote(
+      String invoiceId, Map<String, dynamic> note) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('invoices')
+        .doc(invoiceId)
+        .update({
+      'support_notes': firestore.FieldValue.arrayUnion([note]),
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> addInvoiceAttachment(
+      String invoiceId, Map<String, dynamic> attachment) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('invoices')
+        .doc(invoiceId)
+        .update({
+      'attached_files': firestore.FieldValue.arrayUnion([attachment]),
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> addInvoiceAuditEvent(
+      String invoiceId, Map<String, dynamic> event) async {
+    await firestore.FirebaseFirestore.instance
+        .collection('invoices')
+        .doc(invoiceId)
+        .update({
+      'audit_trail': firestore.FieldValue.arrayUnion([event]),
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Call this before creating a new invoice, if you need sequential numbers.
+  Future<int> getNextInvoiceNumber() async {
+    final docRef = _db.collection('counters').doc('invoice_number');
+    return firestore.FirebaseFirestore.instance.runTransaction((txn) async {
+      final snapshot = await txn.get(docRef);
+      int current = (snapshot.data()?['value'] ?? 0) as int;
+      int next = current + 1;
+      txn.update(docRef, {'value': next});
+      return next;
+    });
+  }
+
+  Stream<List<Invoice>> invoicesStream({
+    String? franchiseId,
+    String? brandId,
+    String? locationId,
+    String? status,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
+    print(
+        '[FirestoreService] invoicesStream called with params: franchiseId=$franchiseId, brandId=$brandId, locationId=$locationId, status=$status, startDate=$startDate, endDate=$endDate');
+
+    firestore.Query query = _db.collection('invoices');
+
+    if (franchiseId != null) {
+      final franchiseRef = _db.collection('franchises').doc(franchiseId);
+      print('[FirestoreService] Filtering by franchiseRef: $franchiseRef');
+      query = query.where('franchiseId', isEqualTo: franchiseRef);
+    }
+    if (brandId != null) {
+      print('[FirestoreService] Filtering by brandId: $brandId');
+      query = query.where('brandId', isEqualTo: brandId);
+    }
+    if (locationId != null) {
+      final locationRef = _db.collection('franchise_locations').doc(locationId);
+      print('[FirestoreService] Filtering by locationRef: $locationRef');
+      query = query.where('locationId', isEqualTo: locationRef);
+    }
+    if (status != null) {
+      print('[FirestoreService] Filtering by status: $status');
+      query = query.where('status', isEqualTo: status);
+    }
+    if (startDate != null) {
+      print('[FirestoreService] Filtering by period_start >= $startDate');
+      query = query.where('period_start',
+          isGreaterThanOrEqualTo: firestore.Timestamp.fromDate(startDate));
+    }
+    if (endDate != null) {
+      print('[FirestoreService] Filtering by period_end <= $endDate');
+      query = query.where('period_end',
+          isLessThanOrEqualTo: firestore.Timestamp.fromDate(endDate));
+    }
+
+    return query.snapshots().map((snap) {
+      print(
+          '[FirestoreService] invoicesStream snapshot received: ${snap.docs.length} documents');
+      final invoices = snap.docs.map((doc) {
+        print('[FirestoreService] Doc ${doc.id} data: ${doc.data()}');
+        return Invoice.fromFirestore(
+            doc.data() as Map<String, dynamic>, doc.id);
+      }).toList();
+      print(
+          '[FirestoreService] invoicesStream mapped ${invoices.length} invoices');
+      return invoices;
     });
   }
 
@@ -1246,7 +1419,7 @@ class FirestoreService {
       {required String period}) async {
     final summary = await getAnalyticsSummary(franchiseId, period: period);
     if (summary == null) return '';
-    return ExportUtils.analyticsSummaryToCsv(summary);
+    return ExportUtils.analyticsSummaryToCsvNoContext(summary);
   }
 
   /// Returns total revenue for today

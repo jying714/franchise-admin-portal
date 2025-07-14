@@ -9,7 +9,11 @@ class FranchiseProvider extends ChangeNotifier {
   bool _loading = true;
   admin_user.User? _adminUser;
 
-  String get franchiseId => _franchiseId.isEmpty ? 'unknown' : _franchiseId;
+  String get franchiseId {
+    print('[FranchiseProvider] franchiseId getter: $_franchiseId');
+    return _franchiseId.isEmpty ? 'unknown' : _franchiseId;
+  }
+
   bool get loading => _loading;
   bool get isFranchiseSelected =>
       _franchiseId != 'unknown' && _franchiseId.isNotEmpty;
@@ -84,5 +88,24 @@ class FranchiseProvider extends ChangeNotifier {
   void setAllFranchises(List<FranchiseInfo> franchises) {
     _allFranchises = franchises;
     notifyListeners();
+  }
+
+  Future<void> initializeWithUser(admin_user.User user) async {
+    _adminUser = user;
+    final prefs = await SharedPreferences.getInstance();
+    final storedId = prefs.getString('selectedFranchiseId');
+    if (storedId != null && storedId.isNotEmpty) {
+      _franchiseId = storedId;
+    } else if (user.defaultFranchise != null &&
+        user.defaultFranchise!.isNotEmpty) {
+      _franchiseId = user.defaultFranchise!;
+      await prefs.setString('selectedFranchiseId', _franchiseId);
+    } else {
+      _franchiseId = 'unknown';
+    }
+    _loading = false;
+    notifyListeners();
+    print(
+        '[FranchiseProvider] Initialized franchiseId=$_franchiseId for user=${user.email}');
   }
 }
