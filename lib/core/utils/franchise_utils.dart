@@ -17,6 +17,10 @@ Future<void> navigateAfterFranchiseSelection(
   BuildContext context,
   String franchiseId,
 ) async {
+  print(
+      '[DEBUG-NAV] Called navigateAfterFranchiseSelection with franchiseId="$franchiseId" '
+      'user="${Provider.of<UserProfileNotifier>(context, listen: false).user}" '
+      'isDeveloper=${Provider.of<UserProfileNotifier>(context, listen: false).user?.isDeveloper}');
   final franchiseProvider =
       Provider.of<FranchiseProvider>(context, listen: false);
   final user = Provider.of<UserProfileNotifier>(context, listen: false).user;
@@ -24,8 +28,12 @@ Future<void> navigateAfterFranchiseSelection(
   franchiseProvider.setFranchiseId(franchiseId);
 
   if (user != null && user.isDeveloper) {
+    print(
+        '[DEBUG-NAV] Navigating to /developer/dashboard from navigateAfterFranchiseSelection');
     Navigator.of(context).pushReplacementNamed('/developer/dashboard');
   } else {
+    print(
+        '[DEBUG-NAV] Navigating to /admin/dashboard from navigateAfterFranchiseSelection');
     Navigator.of(context).pushReplacementNamed('/admin/dashboard');
   }
 }

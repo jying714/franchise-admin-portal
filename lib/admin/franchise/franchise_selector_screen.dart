@@ -26,10 +26,14 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     _franchisesFuture = firestoreService.fetchFranchiseList();
+    print('[FranchiseSelectorScreen] initState: fetching franchise list...');
   }
 
   @override
   Widget build(BuildContext context) {
+    print(
+        '[FranchiseSelectorScreen] build called (if you see this, YOU ARE ON THE SELECTOR SCREEN)');
+
     final loc = AppLocalizations.of(context)!;
     final franchiseProvider =
         Provider.of<FranchiseProvider>(context, listen: false);
@@ -48,14 +52,21 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
           future: _franchisesFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
+              print('[FranchiseSelectorScreen] Loading franchises...');
               return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
+              print(
+                  '[FranchiseSelectorScreen] Error loading franchises: ${snapshot.error}');
               return Center(child: Text(loc.errorLoadingFranchises));
             } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              print('[FranchiseSelectorScreen] No franchises found.');
               return Center(child: Text(loc.noFranchisesFound));
             }
 
             final franchises = snapshot.data!;
+            print(
+                '[FranchiseSelectorScreen] Franchises loaded: ${franchises.map((f) => f.id).toList()}');
+
             return Padding(
               padding: const EdgeInsets.all(16.0),
               child: FranchiseSelector(

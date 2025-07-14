@@ -43,6 +43,8 @@ class FranchiseProvider extends ChangeNotifier {
 
   /// Lock access unless explicitly allowed or user is developer
   Future<void> setFranchiseId(String id) async {
+    print(
+        '[FranchiseProvider] setFranchiseId called: new id="$id" (was "$_franchiseId")');
     if (id.isEmpty) return;
     if (_franchiseId != id) {
       _franchiseId = id;
@@ -55,6 +57,7 @@ class FranchiseProvider extends ChangeNotifier {
 
   /// Use this at login to override franchiseId based on defaultFranchise
   Future<void> setInitialFranchiseId(String id) async {
+    print('[FranchiseProvider] setInitialFranchiseId called: id="$id"');
     _franchiseId = id;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('selectedFranchiseId', id);
@@ -62,6 +65,9 @@ class FranchiseProvider extends ChangeNotifier {
   }
 
   Future<void> clear() async {
+    print(
+        '[FranchiseProvider] clear() called: franchiseId and adminUser set to null/unknown');
+
     _franchiseId = 'unknown';
     _adminUser = null;
     notifyListeners();

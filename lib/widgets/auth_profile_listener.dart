@@ -92,6 +92,8 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     // If user account is not active
     if (user.status.toLowerCase() != 'active') {
       _navigated = true;
+      print(
+          '[DEBUG-NAV] Attempting to navigate to /developer/select-franchise from <filename>:<linenumber>');
       Navigator.of(context).pushReplacementNamed('/unauthorized');
       return;
     }
@@ -99,6 +101,8 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     // HQ Owner/Manager: go to HQ dashboard
     if (user.isHqOwner || user.isHqManager) {
       _navigated = true;
+      print(
+          '[DEBUG-NAV] Attempting to navigate to /developer/select-franchise from <filename>:<linenumber>');
       Navigator.of(context).pushReplacementNamed('/hq-owner/dashboard');
       return;
     }
@@ -107,6 +111,11 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     if (user.isDeveloper) {
       final selected = franchiseProvider.isFranchiseSelected;
       _navigated = true;
+      print(
+          '[DEBUG-NAV] AUTH PROFILE LISTENER Routing to dev dashboard or franchise selector screen');
+      print(
+          '[DEBUG-NAV] Attempting to navigate to /developer/select-franchise from <filename>:<linenumber>');
+
       Navigator.of(context).pushReplacementNamed(
         selected ? '/developer/dashboard' : '/developer/select-franchise',
       );
@@ -119,6 +128,9 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
       if (lockedId == null || lockedId.isEmpty) {
         // Optionally, route to an error page or franchise selector if needed
         _navigated = true;
+        print(
+            '[DEBUG-NAV] Attempting to navigate to /developer/select-franchise from <filename>:<linenumber>');
+
         Navigator.of(context).pushReplacementNamed('/unauthorized');
         return;
       }
@@ -126,6 +138,9 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
         franchiseProvider.setFranchiseId(lockedId);
       }
       _navigated = true;
+      print(
+          '[DEBUG-NAV] Attempting to navigate to /developer/select-franchise from <filename>:<linenumber>');
+
       Navigator.of(context).pushReplacementNamed('/admin/dashboard');
       return;
     }

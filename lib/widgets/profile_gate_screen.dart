@@ -12,6 +12,7 @@ import '../core/providers/admin_user_provider.dart';
 import '../widgets/user_profile_notifier.dart';
 import '../config/design_tokens.dart';
 import '../config/branding_config.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class ProfileGateScreen extends StatefulWidget {
   const ProfileGateScreen({Key? key}) : super(key: key);
@@ -155,24 +156,100 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
     final user = notifier.user;
     final error = notifier.lastError;
     final isLoading = notifier.loading && !_timedOut;
+    print('[ProfileGateScreen] DEBUG TRACE: user=${user?.toString()}');
     print(
-        '[ProfileGateScreen] build: user=${user?.email}, roles=${user?.roles}, isActive=${user?.isActive}, error=$error, loading=$isLoading, timedOut=$_timedOut');
+        '[ProfileGateScreen] User profile loaded: email=${user?.email}, isActive=${user?.isActive}, roles=${user?.roles}, franchiseIds=${user?.franchiseIds}, defaultFranchise=${user?.defaultFranchise}');
 
-    // === HQ OWNER/MANAGER REDIRECT ===
-    final hqRoles = ['hq_owner', 'hq_manager'];
-    if (user != null && user.roles.any((r) => hqRoles.contains(r))) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (ModalRoute.of(context)?.settings.name != '/hq-owner/dashboard') {
+    // === 1. HQ OWNER / HQ MANAGER: Top Priority ===
+    if (user != null && user.roles != null && user.status == 'active') {
+      Provider.of<AdminUserProvider>(context, listen: false).user = user;
+      final roles = user.roles!;
+      print(
+          '[ProfileGateScreen] User loaded: email=${user.email}, roles=$roles, isActive=${user.isActive}');
+      if (roles.contains('hq_owner') || roles.contains('hq_manager')) {
+        print(
+            '[ProfileGateScreen] Detected hq_owner/hq_manager role, routing to /hq-owner/dashboard');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          print(
+              '[ProfileGateScreen] (HQ owner) Calling Navigator.pushReplacementNamed("/hq-owner/dashboard")');
           Navigator.of(context).pushReplacementNamed('/hq-owner/dashboard');
-        }
-      });
-      // While redirecting, show a loading/redirecting message.
-      return _loadingScreen(
+        });
+        return _loadingScreen(
           loc.redirectingToOwnerHQDashboard ?? "Redirecting to HQ Dashboard...",
-          showSpinner: true);
+          showSpinner: true,
+        );
+      } else if (roles.contains('developer')) {
+        print(
+            '[ProfileGateScreen] === Developer detected, redirecting to /developer/dashboard ===');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          print(
+              '[ProfileGateScreen] (Developer) Calling Navigator.pushReplacementNamed("/developer/dashboard")');
+          Navigator.of(context).pushReplacementNamed('/developer/dashboard');
+        });
+        return _loadingScreen(
+          loc.redirectingToDeveloperDashboard ??
+              "Redirecting to Developer Dashboard...",
+          showSpinner: true,
+        );
+      } else if (roles.contains('owner') || roles.contains('manager')) {
+        final franchiseIds = user.franchiseIds ?? [];
+        print('[ProfileGateScreen] OWNER/MANAGER: franchiseIds=$franchiseIds');
+
+        if (franchiseIds.length > 1) {
+          print(
+              '[ProfileGateScreen] Franchise selection required, showing FranchiseSelectorScreen. franchiseIds=$franchiseIds, selectedFranchiseId=${Provider.of<FranchiseProvider>(context, listen: false).franchiseId}');
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            print(
+                '[ProfileGateScreen] (Owner/Manager Multi) Calling Navigator.pushReplacementNamed("/developer/select-franchise")');
+            print(
+                '[DEBUG-NAV] Attempting to navigate to /developer/select-franchise from <filename>:<linenumber>');
+            Navigator.of(context)
+                .pushReplacementNamed('/developer/select-franchise');
+          });
+          return _loadingScreen(
+            loc.selectFranchiseToManage ?? "Select a franchise to manage...",
+            showSpinner: true,
+          );
+        } else if (franchiseIds.length == 1) {
+          print(
+              '[ProfileGateScreen] Admin/manager role detected, routing to AdminDashboardScreen. selectedFranchiseId=${Provider.of<FranchiseProvider>(context, listen: false).franchiseId}');
+          Provider.of<FranchiseProvider>(context, listen: false)
+              .setFranchiseId(franchiseIds.first);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            print(
+                '[ProfileGateScreen] (Owner/Manager Single) Calling Navigator.pushReplacementNamed("/admin/dashboard")');
+            print(
+                '[DEBUG-NAV] Attempting to navigate to /developer/select-franchise from <filename>:<linenumber>');
+
+            Navigator.of(context).pushReplacementNamed('/admin/dashboard');
+          });
+          return _loadingScreen(
+            loc.redirecting ?? "Redirecting...",
+            showSpinner: true,
+          );
+        } else {
+          print('[ProfileGateScreen] No franchises found for owner/manager');
+          _showErrorSnack("No franchises found in your profile.");
+          return _errorScreen(
+            msg: "No franchises found in your profile.",
+            details: "",
+            onRetry: _retry,
+            icon: Icons.error_outline,
+          );
+        }
+      } else {
+        print('[ProfileGateScreen] No valid role found, showing error');
+        _showErrorSnack(loc.noValidRoleFound);
+        return _errorScreen(
+          msg: loc.noValidRoleFound,
+          details: "",
+          onRetry: _retry,
+          icon: Icons.error_outline,
+        );
+      }
     }
 
-    // 1. Timeout error UI
+    // === 5. Timeout error UI ===
     if (_timedOut && user == null) {
       print('[ProfileGateScreen] State: Timed out, user is null.');
       return _errorScreen(
@@ -183,7 +260,7 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
       );
     }
 
-    // 2. Explicit error UI
+    // === 6. Explicit error UI ===
     if (error != null) {
       print('[ProfileGateScreen] State: Error detected - $error');
       return _errorScreen(
@@ -194,7 +271,7 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
       );
     }
 
-    // 3. If profile loaded, but claims/roles missing
+    // === 7. If profile loaded, but claims/roles missing ===
     if (user != null && (user.roles == null || user.roles!.isEmpty)) {
       print(
           '[ProfileGateScreen] Profile loaded, roles is null or empty! User: ${user.email}, roles: ${user.roles}, status: ${user.status}');
@@ -205,28 +282,8 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
       }
       return _loadingScreen(loc.syncingRolesPleaseWait, showSpinner: true);
     }
-
-    // 4. Profile loaded, roles present, developer-only guard
-    if (user != null && user.roles != null && user.roles!.isNotEmpty) {
-      print(
-          '[ProfileGateScreen] Profile loaded and roles present. roles=${user.roles}, user.status=${user.status}');
-      // If dev, show extra info/tools
-      if (user.roles!.contains('developer')) {
-        return _dashboardSection(
-          context,
-          child: _devSection(user, notifier),
-          info: loc.redirectingToDeveloperDashboard,
-        );
-      }
-      // For non-dev, just modular dashboard logic
-      _navigateToDashboard(user);
-      return _dashboardSection(
-        context,
-        info: loc.redirecting,
-      );
-    }
-
-    // 5. Default: show loading with branding
+    print('[ProfileGateScreen] Default: show loading with branding');
+    // === 8. Default: show loading with branding ===
     return _loadingScreen(loc.loadingProfileAndPermissions, showSpinner: true);
   }
 

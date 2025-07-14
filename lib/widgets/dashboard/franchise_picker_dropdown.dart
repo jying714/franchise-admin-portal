@@ -11,6 +11,8 @@ class FranchisePickerDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('[FranchisePickerDropdown] build called (dropdown in AppBar only)');
+
     final franchiseProvider = Provider.of<FranchiseProvider>(context);
     final franchises = franchiseProvider.allFranchises; // List<FranchiseInfo>
     final currentId = selectedFranchiseId ?? franchiseProvider.franchiseId;

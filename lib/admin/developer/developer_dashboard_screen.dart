@@ -61,6 +61,13 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final appUser = Provider.of<AdminUserProvider>(context).user;
+    if (appUser == null) {
+      print(
+          '[DEBUG] DeveloperDashboardScreen: appUser is null, showing spinner');
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final franchiseId = context.watch<FranchiseProvider>().franchiseId;
@@ -68,7 +75,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
 
-    final roles = appUser?.roles ?? [];
+    final roles = appUser.roles;
     if (!roles.contains('developer')) {
       print('[DEBUG] Blocked. appUser=${appUser?.email}, roles=${roles}');
       return Scaffold(

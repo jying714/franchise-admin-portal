@@ -22,6 +22,7 @@ class User {
   final String status;
   final String? defaultFranchise;
   final String? avatarUrl;
+  final List<String> franchiseIds;
 
   bool get isHqOwner => roles.contains(roleHqOwner);
   bool get isHqManager => roles.contains(roleHqManager);
@@ -46,12 +47,18 @@ class User {
     this.defaultFranchise,
     this.avatarUrl,
     this.isActive = true,
-  }) : addresses = addresses ?? [];
+    List<String>? franchiseIds,
+  })  : addresses = addresses ?? [],
+        franchiseIds = franchiseIds ?? <String>[];
 
   static User fromFirestore(Map<String, dynamic> data, String id) {
     final rolesFromDb =
         (data['roles'] as List<dynamic>?)?.map((e) => e.toString()).toList() ??
             <String>[];
+    final franchiseIdsFromDb = (data['franchiseIds'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        <String>[];
     return User(
       id: id,
       name: data['name'] ?? '',
@@ -67,6 +74,7 @@ class User {
       defaultFranchise: data['defaultFranchise'],
       avatarUrl: data['avatarUrl'],
       isActive: data['isActive'] ?? true,
+      franchiseIds: franchiseIdsFromDb,
     );
   }
 
@@ -82,6 +90,7 @@ class User {
       'defaultFranchise': defaultFranchise,
       'avatarUrl': avatarUrl,
       'isActive': isActive,
+      'franchiseIds': franchiseIds,
     };
   }
 
@@ -96,6 +105,7 @@ class User {
     String? defaultFranchise,
     String? avatarUrl,
     bool? isActive,
+    List<String>? franchiseIds,
   }) {
     return User(
       id: id,
@@ -109,6 +119,7 @@ class User {
       defaultFranchise: defaultFranchise ?? this.defaultFranchise,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       isActive: isActive ?? this.isActive,
+      franchiseIds: franchiseIds ?? this.franchiseIds,
     );
   }
 }

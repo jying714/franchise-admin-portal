@@ -91,9 +91,11 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final firebaseUser = Provider.of<fb_auth.User?>(context);
-
+    print(
+        '[main.dart] FranchiseAdminPortalRoot.build: firebaseUser=${firebaseUser?.email} uid=${firebaseUser?.uid}');
     // ==== UNAUTHENTICATED APP ====
     if (firebaseUser == null) {
+      print('[main.dart] Unauthenticated: showing landing/sign-in');
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Franchise Admin Portal',
@@ -118,6 +120,7 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
     }
 
     // ==== AUTHENTICATED APP ====
+    print('[main.dart] Authenticated: showing post-login app');
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<FranchiseProvider>(
@@ -147,20 +150,33 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
         ],
         supportedLocales: AppLocalizations.supportedLocales,
         routes: {
-          '/post-login-gate': (_) =>
-              const FranchiseGate(child: ProfileGateScreen()),
-          '/admin/dashboard': (_) =>
-              const FranchiseGate(child: AdminDashboardScreen()),
-          '/developer/dashboard': (_) =>
-              const FranchiseGate(child: DeveloperDashboardScreen()),
-          '/developer/select-franchise': (_) =>
-              const FranchiseGate(child: FranchiseSelectorScreen()),
-          '/hq-owner/dashboard': (_) =>
-              const FranchiseGate(child: OwnerHQDashboardScreen()),
-          '/unauthorized': (_) => Scaffold(
-                appBar: AppBar(title: const Text('Unauthorized')),
-                body: const Center(child: Text('Your account is not active.')),
-              ),
+          '/post-login-gate': (_) {
+            print('[main.dart] /post-login-gate route built');
+            return const ProfileGateScreen();
+          },
+          '/admin/dashboard': (_) {
+            print('[main.dart] /admin/dashboard route built');
+            return const FranchiseGate(child: AdminDashboardScreen());
+          },
+          '/developer/dashboard': (_) {
+            print('[main.dart] /developer/dashboard route built');
+            return const FranchiseGate(child: DeveloperDashboardScreen());
+          },
+          '/developer/select-franchise': (_) {
+            print('[main.dart] /developer/select-franchise route built');
+            return const FranchiseSelectorScreen();
+          },
+          '/hq-owner/dashboard': (_) {
+            print('[main.dart] /hq-owner/dashboard route built');
+            return const FranchiseGate(child: OwnerHQDashboardScreen());
+          },
+          '/unauthorized': (_) {
+            print('[main.dart] /unauthorized route built');
+            return Scaffold(
+              appBar: AppBar(title: const Text('Unauthorized')),
+              body: const Center(child: Text('Your account is not active.')),
+            );
+          },
         },
         initialRoute: '/post-login-gate',
         home: null,

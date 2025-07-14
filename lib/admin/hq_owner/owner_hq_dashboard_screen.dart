@@ -22,6 +22,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('[OwnerHQDashboardScreen] build called');
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final user = Provider.of<UserProfileNotifier>(context).user;
@@ -244,6 +245,7 @@ class OutstandingInvoicesCard extends StatelessWidget {
   const OutstandingInvoicesCard({super.key});
   @override
   Widget build(BuildContext context) {
+    print('[OutstandingInvoicesCard] build called');
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     // TODO: Replace with real data stream
@@ -303,6 +305,7 @@ class PayoutStatusSummary extends StatelessWidget {
   const PayoutStatusSummary({super.key});
   @override
   Widget build(BuildContext context) {
+    print('[PayoutStatusSummary] build called');
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     // TODO: Replace with real data stream
@@ -372,6 +375,7 @@ class MultiBrandOverviewPanel extends StatelessWidget {
   const MultiBrandOverviewPanel({super.key});
   @override
   Widget build(BuildContext context) {
+    print('[MultiBrandOverviewPanel] build called');
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     // TODO: Replace with real data stream
@@ -435,6 +439,7 @@ class FranchiseAlertsList extends StatelessWidget {
   const FranchiseAlertsList({super.key});
   @override
   Widget build(BuildContext context) {
+    print('[FranchiseAlertsList] build called');
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     // TODO: Replace with real stream of alerts
@@ -509,6 +514,7 @@ class QuickLinksPanel extends StatelessWidget {
   const QuickLinksPanel({super.key});
   @override
   Widget build(BuildContext context) {
+    print('[QuickLinksPanel] build called');
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     return Card(
@@ -612,6 +618,7 @@ class _QuickLinkTile extends StatelessWidget {
 class FutureFeaturePlaceholderPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    print('[FutureFeaturePlaceholderPanel] build called');
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
 

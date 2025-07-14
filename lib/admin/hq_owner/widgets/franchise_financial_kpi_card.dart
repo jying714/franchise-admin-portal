@@ -84,6 +84,7 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
 
   @override
   Widget build(BuildContext context) {
+    print('[FranchiseFinancialKpiCard] build called');
     _colors = Theme.of(context).colorScheme;
     final localizations = AppLocalizations.of(context);
 

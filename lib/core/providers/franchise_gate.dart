@@ -12,8 +12,10 @@ class FranchiseGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final franchiseProvider = Provider.of<FranchiseProvider>(context);
+    final user = Provider.of<UserProfileNotifier>(context).user;
+    print('[FranchiseGate] build called with child=${child.runtimeType}');
 
-    // --- Show spinner until franchiseId loaded from storage ---
+    // Wait for provider to finish loading franchiseId from storage
     if (franchiseProvider.loading) {
       return const MaterialApp(
         home: Scaffold(
@@ -22,7 +24,14 @@ class FranchiseGate extends StatelessWidget {
       );
     }
 
-    if (!franchiseProvider.isFranchiseSelected) {
+    // Determine roles
+    final roles = user?.roles ?? [];
+    final isHqOrDev = roles.contains('hq_owner') ||
+        roles.contains('hq_manager') ||
+        roles.contains('developer');
+
+    // Only force franchise selection for users that MUST select a franchise
+    if (!franchiseProvider.isFranchiseSelected && !isHqOrDev) {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         home: FranchiseSelector(
@@ -31,6 +40,7 @@ class FranchiseGate extends StatelessWidget {
       );
     }
 
+    // All good: render the protected child
     return child;
   }
 }

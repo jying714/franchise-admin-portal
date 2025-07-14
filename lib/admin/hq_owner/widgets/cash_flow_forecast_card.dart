@@ -76,6 +76,7 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
 
   @override
   Widget build(BuildContext context) {
+    print('[CashFlowForecastCard] build called');
     _colors = Theme.of(context).colorScheme;
     final localizations = AppLocalizations.of(context);
 

@@ -14,7 +14,8 @@ class DashboardSwitcherDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = Provider.of<UserProfileNotifier>(context).user;
     final loc = AppLocalizations.of(context)!;
-
+    print(
+        '[DashboardSwitcherDropdown] build called with roles=${user?.roles}, currentScreen="$currentScreen"');
     final roles = user?.roles ?? [];
 
     // Only allow for hq_owner, hq_manager, developer
@@ -61,6 +62,9 @@ class DashboardSwitcherDropdown extends StatelessWidget {
         if (selected == null) return;
         if (selected.route == ModalRoute.of(context)?.settings.name)
           return; // already here
+        print(
+            '[DEBUG-NAV] FROM DASHBOARD SWITCHER DOPDOWN Attempting to navigate to /developer/select-franchise from <filename>:<linenumber>');
+
         Navigator.of(context).pushReplacementNamed(selected.route);
       },
       items: options.map((opt) {

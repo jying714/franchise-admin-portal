@@ -1199,6 +1199,7 @@
   "tryAgain": "Try Again",
   "futureFeaturesTitle": "Upcoming Features",
   "futureFeaturesBody": "We’re working on additional profile and access controls. Stay tuned!",
-  "redirectingToOwnerHQDashboard": "Redirecting to HQ Dashboard"
+  "redirectingToOwnerHQDashboard": "Redirecting to HQ Dashboard",
+  "selectFranchiseToManage": "Select Franchise To Manage"
 
   }
