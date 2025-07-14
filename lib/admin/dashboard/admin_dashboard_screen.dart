@@ -1,3 +1,4 @@
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/services/auth_service.dart';
@@ -89,12 +90,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     final sections = _sections;
     if (sections.isEmpty) {
-      firestoreService.logError(
-        franchiseId,
+      ErrorLogger.log(
         message: "No dashboard sections registered.",
         source: "AdminDashboardScreen",
         screen: "AdminDashboardScreen",
-        errorType: "NoSectionsError",
+        severity: "error",
         contextData: {},
       );
       return Scaffold(
@@ -208,18 +208,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               try {
                                 return section.builder(context);
                               } catch (e, stack) {
-                                firestoreService.logError(
-                                  franchiseId,
+                                ErrorLogger.log(
                                   message: 'Dashboard section error: $e',
                                   source: 'AdminDashboardScreen',
                                   screen: section.title,
-                                  stackTrace: stack.toString(),
-                                  errorType: e.runtimeType.toString(),
+                                  stack: stack.toString(),
+                                  severity: 'error',
                                   contextData: {
+                                    'franchiseId': franchiseId,
                                     'sectionIndex': _selectedIndex,
                                     'sectionTitle': section.title,
+                                    'errorType': e.runtimeType.toString(),
+                                    'userId': appUser.id,
                                   },
-                                  userId: appUser.id,
                                 );
                                 print('Dashboard section error: $e\n$stack');
                                 return Center(

@@ -10,6 +10,7 @@ import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
 import 'package:franchise_admin_portal/core/models/chat.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class ChatManagementScreen extends StatelessWidget {
   const ChatManagementScreen({super.key});
@@ -37,15 +38,14 @@ class ChatManagementScreen extends StatelessWidget {
                 'User tried to access chat management without permission.'
           },
         );
-        await Provider.of<FirestoreService>(context, listen: false).logError(
-          franchiseId,
+        await ErrorLogger.log(
           message:
               'Unauthorized chat management access by ${user?.email ?? "unknown"}',
           source: 'ChatManagementScreen',
           screen: 'ChatManagementScreen',
-          userId: user?.id ?? 'unknown',
           severity: 'warning',
           contextData: {
+            'franchiseId': franchiseId,
             'roles': user?.roles,
             'attempt': 'access',
           },

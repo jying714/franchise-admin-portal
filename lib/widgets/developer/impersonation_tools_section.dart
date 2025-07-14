@@ -6,6 +6,7 @@ import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/developer/impersonation_dialog.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class ImpersonationToolsSection extends StatefulWidget {
   final String? franchiseId;
@@ -52,15 +53,16 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      Provider.of<FirestoreService>(context, listen: false).logError(
-        widget.franchiseId,
+      await ErrorLogger.log(
         message: 'Failed to fetch user list: $e',
-        stackTrace: stack.toString(),
+        stack: stack.toString(),
         source: 'ImpersonationToolsSection',
         screen: 'ImpersonationToolsSection',
-        errorType: e.runtimeType.toString(),
         severity: 'warning',
-        contextData: {},
+        contextData: {
+          'franchiseId': widget.franchiseId,
+          'errorType': e.runtimeType.toString(),
+        },
       );
     }
   }
@@ -81,15 +83,16 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
       setState(() {});
     } catch (e, stack) {
       // Non-blocking; just log error
-      Provider.of<FirestoreService>(context, listen: false).logError(
-        widget.franchiseId,
+      await ErrorLogger.log(
         message: 'Failed to fetch impersonation records: $e',
-        stackTrace: stack.toString(),
+        stack: stack.toString(),
         source: 'ImpersonationToolsSection',
         screen: 'ImpersonationToolsSection',
-        errorType: e.runtimeType.toString(),
         severity: 'info',
-        contextData: {},
+        contextData: {
+          'franchiseId': widget.franchiseId,
+          'errorType': e.runtimeType.toString(),
+        },
       );
     }
   }
@@ -98,16 +101,16 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
     try {
       // TODO: Implement real impersonation logic with backend/service
       await Future.delayed(const Duration(milliseconds: 400));
-      Provider.of<FirestoreService>(context, listen: false).logError(
-        widget.franchiseId,
+      await ErrorLogger.log(
         message: 'Impersonation started: ${user.email}',
         source: 'ImpersonationToolsSection',
         screen: 'ImpersonationToolsSection',
-        errorType: 'impersonation',
         severity: 'info',
         contextData: {
+          'franchiseId': widget.franchiseId,
           'impersonatedUserId': user.id,
           'impersonatedUserRole': user.role,
+          'errorType': 'impersonation',
         },
       );
       setState(() {
@@ -127,16 +130,16 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
       );
     } catch (e, stack) {
       setState(() => _selectedUser = null);
-      Provider.of<FirestoreService>(context, listen: false).logError(
-        widget.franchiseId,
+      await ErrorLogger.log(
         message: 'Impersonation failed: $e',
-        stackTrace: stack.toString(),
+        stack: stack.toString(),
         source: 'ImpersonationToolsSection',
         screen: 'ImpersonationToolsSection',
-        errorType: e.runtimeType.toString(),
         severity: 'error',
         contextData: {
+          'franchiseId': widget.franchiseId,
           'impersonatedUserId': user.id,
+          'errorType': e.runtimeType.toString(),
         },
       );
       ScaffoldMessenger.of(context).showSnackBar(

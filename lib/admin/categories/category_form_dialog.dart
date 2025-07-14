@@ -7,6 +7,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 // Optionally: If your user profile notifier/provider is named differently, update this import.
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class CategoryFormDialog extends StatefulWidget {
   final Category? category;
@@ -155,18 +156,16 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                                 listen: false)
                             .user
                             ?.id;
-                        await Provider.of<FirestoreService>(context,
-                                listen: false)
-                            .logError(
-                          franchiseId,
+                        await ErrorLogger.log(
                           message: e.toString(),
                           source: 'category_form_dialog',
                           screen: 'CategoryFormDialog',
-                          userId: userId,
-                          stackTrace: stack.toString(),
-                          errorType: e.runtimeType.toString(),
+                          stack: stack.toString(),
                           severity: 'error',
                           contextData: {
+                            'franchiseId': franchiseId,
+                            'userId': userId,
+                            'errorType': e.runtimeType.toString(),
                             'categoryId': widget.category?.id ?? 'new',
                             'name': _name,
                             'image': _image,

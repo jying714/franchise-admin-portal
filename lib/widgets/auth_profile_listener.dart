@@ -6,6 +6,7 @@ import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class AuthProfileListener extends StatefulWidget {
   final Widget child;
@@ -159,16 +160,15 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
       _lastLoggedError = notifier.lastError;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         try {
-          await firestoreService.logError(
-            '', // fallback franchise context unavailable here
+          await ErrorLogger.log(
             message: 'UserProfileNotifier error: ${notifier.lastError}',
             source: 'AuthProfileListener',
-            userId: user?.uid,
             screen: 'AuthProfileListener',
-            stackTrace: notifier.lastError is Error
+            stack: notifier.lastError is Error
                 ? (notifier.lastError as Error).stackTrace?.toString()
                 : null,
             contextData: {
+              'userId': user?.uid,
               'email': user?.email,
               'profileLoading': notifier.loading,
             },

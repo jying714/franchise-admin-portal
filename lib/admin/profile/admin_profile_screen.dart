@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class AdminProfileScreen extends StatelessWidget {
   const AdminProfileScreen({Key? key}) : super(key: key);
@@ -60,14 +61,16 @@ class AdminProfileScreen extends StatelessWidget {
               try {
                 userProvider.listenToAdminUser(firestoreService, user.id);
               } catch (e, stack) {
-                firestoreService.logError(
-                  franchiseId,
+                ErrorLogger.log(
                   message: 'Failed to refresh admin profile',
                   source: 'AdminProfileScreen',
                   screen: 'Profile',
-                  stackTrace: stack.toString(),
-                  errorType: e.runtimeType.toString(),
-                  userId: user.id,
+                  stack: stack.toString(),
+                  contextData: {
+                    'franchiseId': franchiseId,
+                    'errorType': e.runtimeType.toString(),
+                    'userId': user.id,
+                  },
                 );
               }
             },

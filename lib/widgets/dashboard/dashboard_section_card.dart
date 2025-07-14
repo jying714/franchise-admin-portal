@@ -7,6 +7,7 @@ import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class DashboardSectionCard extends StatelessWidget {
   final String title;
@@ -84,14 +85,18 @@ class DashboardSectionCard extends StatelessWidget {
                         } catch (e, st) {
                           final fs = Provider.of<FirestoreService>(context,
                               listen: false);
-                          fs.logError(
-                            franchiseId,
+                          ErrorLogger.log(
                             message: 'Error building section $title: $e',
+                            stack: st.toString(),
                             source: 'DashboardSectionCard',
                             screen: title,
-                            stackTrace: st.toString(),
                             severity: 'error',
+                            contextData: {
+                              'franchiseId': franchiseId,
+                              'sectionTitle': title,
+                            },
                           );
+
                           return Text(
                             loc.errorLoadingSection,
                             style:

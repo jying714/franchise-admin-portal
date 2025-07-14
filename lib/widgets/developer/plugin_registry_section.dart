@@ -6,6 +6,7 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/widgets/developer/plugin_config_dialog.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class PluginRegistrySection extends StatefulWidget {
   final String? franchiseId;
@@ -74,14 +75,15 @@ class _PluginRegistrySectionState extends State<PluginRegistrySection> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      Provider.of<FirestoreService>(context, listen: false).logError(
-        widget.franchiseId,
+      await ErrorLogger.log(
         message: 'Failed to load plugins: $e',
-        stackTrace: stack.toString(),
+        stack: stack.toString(),
         source: 'PluginRegistrySection',
         screen: 'DeveloperDashboardScreen',
         severity: 'warning',
-        contextData: {},
+        contextData: {
+          'franchiseId': widget.franchiseId,
+        },
       );
     }
   }
@@ -95,25 +97,31 @@ class _PluginRegistrySectionState extends State<PluginRegistrySection> {
             .map((p) => p.key == plugin.key ? p.copyWith(enabled: enabled) : p)
             .toList();
       });
-      Provider.of<FirestoreService>(context, listen: false).logError(
-        widget.franchiseId,
+      await ErrorLogger.log(
         message: 'Plugin toggled: ${plugin.key} -> $enabled',
         source: 'PluginRegistrySection',
         screen: 'DeveloperDashboardScreen',
-        errorType: 'plugin_toggle',
         severity: 'info',
-        contextData: {'pluginKey': plugin.key, 'enabled': enabled},
+        contextData: {
+          'franchiseId': widget.franchiseId,
+          'pluginKey': plugin.key,
+          'enabled': enabled,
+        },
       );
     } catch (e, stack) {
-      Provider.of<FirestoreService>(context, listen: false).logError(
-        widget.franchiseId,
+      await ErrorLogger.log(
         message: 'Failed to toggle plugin: $e',
-        stackTrace: stack.toString(),
+        stack: stack.toString(),
         source: 'PluginRegistrySection',
         screen: 'DeveloperDashboardScreen',
         severity: 'error',
-        contextData: {'pluginKey': plugin.key, 'enabled': enabled},
+        contextData: {
+          'franchiseId': widget.franchiseId,
+          'pluginKey': plugin.key,
+          'enabled': enabled,
+        },
       );
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to update plugin: $e'),

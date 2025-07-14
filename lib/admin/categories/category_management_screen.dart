@@ -13,6 +13,7 @@ import 'category_search_bar.dart';
 import 'bulk_action_bar.dart';
 import 'unauthorized_widget.dart';
 import 'undo_snackbar.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 // Optionally for user id (for error logging)
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
@@ -112,16 +113,16 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
           } catch (e, stack) {
             // Log error to Firestore
             try {
-              await firestoreService.logError(
-                franchiseId,
+              await ErrorLogger.log(
                 message: e.toString(),
                 source: 'category_management_screen',
                 screen: 'CategoryManagementScreen',
-                userId: userId,
-                stackTrace: stack.toString(),
-                errorType: e.runtimeType.toString(),
+                stack: stack.toString(),
                 severity: 'error',
                 contextData: {
+                  'franchiseId': franchiseId,
+                  'userId': userId,
+                  'errorType': e.runtimeType.toString(),
                   'categoryId': category?.id ?? 'new',
                   'name': saved.name,
                   'image': saved.image,
@@ -178,16 +179,16 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         await firestoreService.deleteCategory(franchiseId, category.id);
       } catch (e, stack) {
         try {
-          await firestoreService.logError(
-            franchiseId,
+          await ErrorLogger.log(
             message: e.toString(),
             source: 'category_management_screen',
             screen: 'CategoryManagementScreen',
-            userId: userId,
-            stackTrace: stack.toString(),
-            errorType: e.runtimeType.toString(),
+            stack: stack.toString(),
             severity: 'error',
             contextData: {
+              'franchiseId': franchiseId,
+              'userId': userId,
+              'errorType': e.runtimeType.toString(),
               'categoryId': category.id,
               'name': category.name,
               'operation': 'delete',
@@ -209,16 +210,16 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
               await firestoreService.addCategory(franchiseId, category);
             } catch (e, stack) {
               try {
-                await firestoreService.logError(
-                  franchiseId,
+                await ErrorLogger.log(
                   message: e.toString(),
                   source: 'category_management_screen',
                   screen: 'CategoryManagementScreen',
-                  userId: userId,
-                  stackTrace: stack.toString(),
-                  errorType: e.runtimeType.toString(),
+                  stack: stack.toString(),
                   severity: 'error',
                   contextData: {
+                    'franchiseId': franchiseId,
+                    'userId': userId,
+                    'errorType': e.runtimeType.toString(),
                     'categoryId': category.id,
                     'name': category.name,
                     'operation': 'undo_restore',
@@ -281,16 +282,16 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         }
       } catch (e, stack) {
         try {
-          await firestoreService.logError(
-            franchiseId,
+          await ErrorLogger.log(
             message: e.toString(),
             source: 'category_management_screen',
             screen: 'CategoryManagementScreen',
-            userId: userId,
-            stackTrace: stack.toString(),
-            errorType: e.runtimeType.toString(),
+            stack: stack.toString(),
             severity: 'error',
             contextData: {
+              'franchiseId': franchiseId,
+              'userId': userId,
+              'errorType': e.runtimeType.toString(),
               'categoryIds': selectedCats.map((c) => c.id).toList(),
               'operation': 'bulk_delete',
             },
@@ -315,16 +316,16 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
             }
           } catch (e, stack) {
             try {
-              await firestoreService.logError(
-                franchiseId,
+              await ErrorLogger.log(
                 message: e.toString(),
                 source: 'category_management_screen',
                 screen: 'CategoryManagementScreen',
-                userId: userId,
-                stackTrace: stack.toString(),
-                errorType: e.runtimeType.toString(),
+                stack: stack.toString(),
                 severity: 'error',
                 contextData: {
+                  'franchiseId': franchiseId,
+                  'userId': userId,
+                  'errorType': e.runtimeType.toString(),
                   'categoryIds': selectedCats.map((c) => c.id).toList(),
                   'operation': 'undo_bulk_restore',
                 },

@@ -5,6 +5,7 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class DeveloperErrorLogsScreen extends StatefulWidget {
   const DeveloperErrorLogsScreen({Key? key}) : super(key: key);
@@ -81,14 +82,15 @@ class _DeveloperErrorLogsScreenState extends State<DeveloperErrorLogsScreen> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      Provider.of<FirestoreService>(context, listen: false).logError(
-        _franchiseId ?? 'unknown',
+      await ErrorLogger.log(
         message: 'Failed to fetch developer error logs: $e',
-        stackTrace: stack.toString(),
+        stack: stack.toString(),
         source: 'DeveloperErrorLogsScreen',
         screen: 'DeveloperErrorLogsScreen',
         severity: 'warning',
-        contextData: {},
+        contextData: {
+          'franchiseId': _franchiseId ?? 'unknown',
+        },
       );
     }
   }

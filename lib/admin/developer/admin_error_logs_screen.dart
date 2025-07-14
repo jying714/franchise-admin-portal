@@ -5,6 +5,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class AdminErrorLogsScreen extends StatefulWidget {
   const AdminErrorLogsScreen({Key? key}) : super(key: key);
@@ -70,14 +71,15 @@ class _AdminErrorLogsScreenState extends State<AdminErrorLogsScreen> {
       });
       final franchiseId =
           Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
-      Provider.of<FirestoreService>(context, listen: false).logError(
-        franchiseId,
+      await ErrorLogger.log(
         message: 'Failed to fetch admin error logs: $e',
-        stackTrace: stack.toString(),
+        stack: stack.toString(),
         source: 'AdminErrorLogsScreen',
         screen: 'AdminErrorLogsScreen',
         severity: 'warning',
-        contextData: {},
+        contextData: {
+          'franchiseId': franchiseId,
+        },
       );
     }
   }

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class UserProfileNotifier extends ChangeNotifier {
   admin_user.User? _user;
@@ -62,18 +63,18 @@ class UserProfileNotifier extends ChangeNotifier {
 
         final firebaseUser = fb_auth.FirebaseAuth.instance.currentUser;
         // No franchiseId context; pass empty string or remove as needed.
-        await firestoreService.logError(
-          '', // No franchise context in franchise-agnostic flow
+        ErrorLogger.log(
           message: err.toString(),
           source: 'UserProfileNotifier.listenToUser',
-          userId: firebaseUser?.uid,
           screen: 'HomeWrapper',
-          stackTrace: stack?.toString(),
-          errorType: err.runtimeType.toString(),
+          stack: stack?.toString(),
           severity: 'error',
           contextData: {
             'userProfileLoading': true,
             'uid': uid,
+            'userId': firebaseUser?.uid,
+            'errorType': err.runtimeType.toString(),
+            // Add more context as needed
           },
         );
         _lastFirestoreService = firestoreService;

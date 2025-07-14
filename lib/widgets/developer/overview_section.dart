@@ -5,6 +5,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class OverviewSection extends StatefulWidget {
   final String? franchiseId;
@@ -65,14 +66,16 @@ class _OverviewSectionState extends State<OverviewSection> {
       });
       final firestoreService =
           Provider.of<FirestoreService>(context, listen: false);
-      firestoreService.logError(
-        widget.franchiseId,
+      ErrorLogger.log(
         message: 'Failed to fetch dashboard stats: $e',
-        stackTrace: stack.toString(),
+        stack: stack.toString(),
         source: 'OverviewSection',
         severity: 'warning',
         screen: 'DeveloperDashboardScreen',
-        contextData: {},
+        contextData: {
+          'franchiseId': widget.franchiseId,
+          // Add other context fields as needed
+        },
       );
     }
   }

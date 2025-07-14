@@ -8,6 +8,7 @@ import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class FeatureSettingsScreen extends StatefulWidget {
   const FeatureSettingsScreen({super.key});
@@ -37,17 +38,17 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
           'message': 'User with insufficient role tried to toggle feature.',
         },
       );
-      await Provider.of<FirestoreService>(context, listen: false).logError(
-        franchiseId,
+      await ErrorLogger.log(
         message: 'Unauthorized feature toggle attempt by ${user.email}',
         source: 'FeatureSettingsScreen',
         screen: 'FeatureSettingsScreen',
-        userId: user.id,
         severity: 'warning',
         contextData: {
           'roles': user.roles,
           'attemptedKey': key,
           'attemptedValue': value,
+          'userId': user.id,
+          'franchiseId': franchiseId,
         },
       );
       _showUnauthorizedDialog(loc);
@@ -135,16 +136,16 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
                   'User with insufficient role tried to access feature settings.',
             },
           );
-          await Provider.of<FirestoreService>(context, listen: false).logError(
-            franchiseId,
+          await ErrorLogger.log(
             message: 'Unauthorized feature settings access by ${user.email}',
             source: 'FeatureSettingsScreen',
             screen: 'FeatureSettingsScreen',
-            userId: user.id,
             severity: 'warning',
             contextData: {
               'roles': user.roles,
               'attempt': 'access',
+              'userId': user.id,
+              'franchiseId': franchiseId,
             },
           );
         });

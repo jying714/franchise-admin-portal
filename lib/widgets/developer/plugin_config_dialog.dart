@@ -4,6 +4,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class PluginConfigDialog extends StatefulWidget {
   final String pluginId;
@@ -59,14 +60,14 @@ class _PluginConfigDialogState extends State<PluginConfigDialog> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      Provider.of<FirestoreService>(context, listen: false).logError(
-        widget.franchiseId,
+      await ErrorLogger.log(
         message: 'Failed to save plugin config: $e',
-        stackTrace: stack.toString(),
+        stack: stack.toString(),
         source: 'PluginConfigDialog',
         screen: 'PluginConfigDialog',
         severity: 'error',
         contextData: {
+          'franchiseId': widget.franchiseId,
           'pluginId': widget.pluginId,
         },
       );

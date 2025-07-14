@@ -6,6 +6,7 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class AlertDetailDialog extends StatelessWidget {
   final AlertModel alert;
@@ -134,18 +135,16 @@ class AlertDetailDialog extends StatelessWidget {
                             ),
                           );
                         } catch (e, stack) {
-                          fireService.logError(
-                            user?.defaultFranchise,
+                          await ErrorLogger.log(
                             message: 'Failed to dismiss alert: $e',
+                            stack: stack.toString(),
                             source: 'alert_detail_dialog',
-                            userId: user?.id,
-                            screen: "AlertDetailDialog",
-                            stackTrace: stack.toString(),
-                            errorType: e.runtimeType.toString(),
+                            screen: 'AlertDetailDialog',
                             severity: 'error',
                             contextData: {
                               'franchiseId': franchiseId,
                               'alertId': alert.id,
+                              'userId': user?.id,
                             },
                           );
                           ScaffoldMessenger.of(context).showSnackBar(

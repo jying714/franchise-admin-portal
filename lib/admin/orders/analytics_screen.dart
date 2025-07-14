@@ -13,6 +13,7 @@ import 'package:share_plus/share_plus.dart';
 import 'dart:io';
 import 'package:franchise_admin_portal/core/models/export_utils.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -126,14 +127,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                                               "Analytics rollup complete!")),
                                     );
                                   } catch (e) {
-                                    firestoreService.logError(
-                                      franchiseId,
+                                    ErrorLogger.log(
                                       message:
                                           'Error running manual rollup: $e',
                                       source: 'AnalyticsScreen',
                                       screen: 'ManualRollupButton',
                                       severity: 'error',
-                                      stackTrace: e.toString(),
+                                      stack: e.toString(),
+                                      contextData: {'franchiseId': franchiseId},
                                     );
 
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -204,13 +205,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
                         // --- 2. Error fetching data ---
                         if (snapshot.hasError) {
-                          firestoreService.logError(
-                            franchiseId,
+                          ErrorLogger.log(
                             message: 'Error loading analytics data',
                             source: 'analytics_dashboard',
                             screen: 'AnalyticsScreen',
-                            stackTrace: snapshot.error?.toString(),
+                            stack: snapshot.error?.toString(),
                             severity: 'error',
+                            contextData: {'franchiseId': franchiseId},
                           );
                           return Center(
                               child: Text(
@@ -221,12 +222,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
                         // --- 3. No analytics data at all ---
                         if (summaries.isEmpty) {
-                          firestoreService.logError(
-                            franchiseId,
+                          ErrorLogger.log(
                             message: 'No analytics data found for any period',
                             source: 'analytics_dashboard',
                             screen: 'AnalyticsScreen',
                             severity: 'warning',
+                            contextData: {'franchiseId': franchiseId},
                           );
                           return const Center(
                               child: Text(
@@ -246,15 +247,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                               (s) => s.period == selected,
                               orElse: () => sorted.first);
                         } catch (e, stack) {
-                          firestoreService.logError(
-                            franchiseId,
+                          ErrorLogger.log(
                             message:
                                 'Failed to find analytics summary for selected period',
                             source: 'analytics_dashboard',
                             screen: 'AnalyticsScreen',
                             severity: 'error',
-                            stackTrace: stack.toString(),
-                            contextData: {'selectedPeriod': selected},
+                            stack: stack.toString(),
+                            contextData: {
+                              'franchiseId': franchiseId,
+                              'selectedPeriod': selected,
+                            },
                           );
                           return const Center(
                               child: Text(
@@ -264,14 +267,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         // --- 5. Check for missing feedback data ---
                         final hasFeedback = summary.feedbackStats != null;
                         if (!hasFeedback) {
-                          firestoreService.logError(
-                            franchiseId,
+                          ErrorLogger.log(
                             message:
                                 'Missing feedbackStats in analytics summary',
                             source: 'feedback_stats_parse',
                             screen: 'AnalyticsScreen',
                             severity: 'warning',
-                            contextData: {'period': summary.period},
+                            contextData: {
+                              'franchiseId': franchiseId,
+                              'period': summary.period,
+                            },
                           );
                         }
 
@@ -362,16 +367,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                                     requiredFields.forEach((key, value) {
                                       if (value == null) {
                                         missingMetrics.add(key);
-                                        firestoreService.logError(
-                                          franchiseId,
+                                        ErrorLogger.log(
                                           message:
                                               'Missing $key in analytics summary',
                                           source: 'analytics_dashboard',
                                           screen: 'AnalyticsScreen',
                                           severity: 'warning',
                                           contextData: {
+                                            'franchiseId': franchiseId,
                                             'period': summary.period,
-                                            'field': key
+                                            'field': key,
                                           },
                                         );
                                       }

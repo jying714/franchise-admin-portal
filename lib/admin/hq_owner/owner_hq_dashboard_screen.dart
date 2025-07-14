@@ -1,3 +1,4 @@
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
@@ -40,14 +41,17 @@ class OwnerHQDashboardScreen extends StatelessWidget {
     final allowedRoles = ['hq_owner', 'hq_manager', 'developer'];
     if (user == null || !user.roles.any((r) => allowedRoles.contains(r))) {
       // Log and show unauthorized
-      Future.microtask(() => firestoreService.logError(
-            franchiseId,
+      Future.microtask(() => ErrorLogger.log(
             message: "Unauthorized HQ Dashboard access attempt.",
             source: "OwnerHQDashboardScreen",
             screen: "OwnerHQDashboardScreen",
-            userId: user?.id ?? "unknown",
             severity: "warning",
-            contextData: {'roles': user?.roles, 'attempt': 'access'},
+            contextData: {
+              'roles': user?.roles,
+              'attempt': 'access',
+              'userId': user?.id ?? "unknown",
+              'franchiseId': franchiseId,
+            },
           ));
       return Scaffold(
         body: Center(

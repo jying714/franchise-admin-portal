@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
@@ -69,14 +69,15 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
     } catch (e, st) {
       final firestoreService =
           Provider.of<FirestoreService>(context, listen: false);
-      await firestoreService.logError(
-        widget.franchiseId,
+      ErrorLogger.log(
         message: 'Failed to load KPIs: $e',
         source: 'FranchiseFinancialKpiCard',
         screen: 'FranchiseFinancialKpiCard',
-        stackTrace: st.toString(),
+        stack: st.toString(),
         severity: 'error',
-        contextData: {'franchiseId': widget.franchiseId},
+        contextData: {
+          'franchiseId': widget.franchiseId,
+        },
       );
       rethrow;
     }

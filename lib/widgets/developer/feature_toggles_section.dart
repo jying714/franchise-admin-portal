@@ -5,6 +5,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class FeatureTogglesSection extends StatefulWidget {
   final String? franchiseId;
@@ -67,14 +68,15 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      Provider.of<FirestoreService>(context, listen: false).logError(
-        widget.franchiseId,
+      await ErrorLogger.log(
         message: 'Failed to load feature toggles: $e',
-        stackTrace: stack.toString(),
+        stack: stack.toString(),
         source: 'FeatureTogglesSection',
         screen: 'DeveloperDashboardScreen',
         severity: 'warning',
-        contextData: {},
+        contextData: {
+          'franchiseId': widget.franchiseId,
+        },
       );
     }
   }
@@ -89,24 +91,30 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
                 ft.key == toggle.key ? ft.copyWith(enabled: enabled) : ft)
             .toList();
       });
-      Provider.of<FirestoreService>(context, listen: false).logError(
-        widget.franchiseId,
+      await ErrorLogger.log(
         message: 'Feature toggle updated: ${toggle.key} -> $enabled',
         source: 'FeatureTogglesSection',
         screen: 'DeveloperDashboardScreen',
-        errorType: 'feature_toggle',
         severity: 'info',
-        contextData: {'featureKey': toggle.key, 'enabled': enabled},
+        contextData: {
+          'franchiseId': widget.franchiseId,
+          'featureKey': toggle.key,
+          'enabled': enabled,
+          'event': 'feature_toggle',
+        },
       );
     } catch (e, stack) {
-      Provider.of<FirestoreService>(context, listen: false).logError(
-        widget.franchiseId,
+      await ErrorLogger.log(
         message: 'Failed to update feature toggle: $e',
-        stackTrace: stack.toString(),
+        stack: stack.toString(),
         source: 'FeatureTogglesSection',
         screen: 'DeveloperDashboardScreen',
         severity: 'error',
-        contextData: {'featureKey': toggle.key, 'enabled': enabled},
+        contextData: {
+          'franchiseId': widget.franchiseId,
+          'featureKey': toggle.key,
+          'enabled': enabled,
+        },
       );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

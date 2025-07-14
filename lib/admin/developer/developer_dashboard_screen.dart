@@ -19,6 +19,7 @@ import 'package:franchise_admin_portal/widgets/developer/schema_browser_section.
 import 'package:franchise_admin_portal/widgets/developer/audit_trail_section.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/owner_hq_dashboard_screen.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class DeveloperDashboardScreen extends StatefulWidget {
   const DeveloperDashboardScreen({Key? key}) : super(key: key);
@@ -137,18 +138,19 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
                         try {
                           return section.builder(context);
                         } catch (e, stack) {
-                          firestoreService.logError(
-                            franchiseId,
+                          ErrorLogger.log(
                             message: 'Developer dashboard section error: $e',
                             source: 'DeveloperDashboardScreen',
                             screen: section.title,
-                            stackTrace: stack.toString(),
-                            errorType: e.runtimeType.toString(),
+                            stack: stack.toString(),
+                            severity: 'error',
                             contextData: {
+                              'franchiseId': franchiseId,
                               'sectionIndex': _selectedIndex,
                               'sectionTitle': section.title,
+                              'errorType': e.runtimeType.toString(),
+                              if (appUser?.id != null) 'userId': appUser!.id,
                             },
-                            userId: appUser?.id,
                           );
                           return Center(
                             child: Text(

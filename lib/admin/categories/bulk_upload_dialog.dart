@@ -6,6 +6,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 // Optionally for user id:
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class BulkUploadDialog extends StatefulWidget {
   const BulkUploadDialog({super.key});
@@ -114,16 +115,16 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
                   } catch (e, stack) {
                     // Remote error logging
                     try {
-                      await firestoreService.logError(
-                        franchiseId,
+                      await ErrorLogger.log(
                         message: e.toString(),
                         source: 'bulk_upload_dialog',
                         screen: 'BulkUploadDialog',
-                        userId: userId,
-                        stackTrace: stack.toString(),
-                        errorType: e.runtimeType.toString(),
+                        stack: stack.toString(),
                         severity: 'error',
                         contextData: {
+                          'franchiseId': franchiseId,
+                          'userId': userId,
+                          'errorType': e.runtimeType.toString(),
                           'csvText': _controller.text,
                         },
                       );

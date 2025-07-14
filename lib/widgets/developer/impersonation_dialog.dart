@@ -5,6 +5,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class ImpersonationDialog extends StatefulWidget {
   final String franchiseId;
@@ -74,14 +75,16 @@ class _ImpersonationDialogState extends State<ImpersonationDialog> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      Provider.of<FirestoreService>(context, listen: false).logError(
-        widget.franchiseId,
+      await ErrorLogger.log(
         message: 'Failed to fetch users for impersonation: $e',
-        stackTrace: stack.toString(),
+        stack: stack.toString(),
         source: 'ImpersonationDialog',
         screen: 'DeveloperDashboardScreen',
         severity: 'warning',
-        contextData: {},
+        contextData: {
+          'franchiseId': widget.franchiseId,
+          'errorType': e.runtimeType.toString(),
+        },
       );
     }
   }
