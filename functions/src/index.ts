@@ -6,15 +6,21 @@ import cors from "cors";
 admin.initializeApp();
 
 const corsHandler = cors({
-  origin: [
-    "http://localhost:5000", // Firebase emulator UI
-    "http://localhost:3000", // Local dev server (adjust if needed)
-    "http://127.0.0.1:5000", // Sometimes emulator uses this
-    "http://127.0.0.1:3000", // Or this for local dev server
-    "https://franchisehq.io", // Production domain
-  ],
+  origin: (origin, callback) => {
+    if (
+      !origin ||
+      origin === "https://franchisehq.io" ||
+      /^http:\/\/localhost(:\d+)?$/.test(origin) ||
+      /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 });
+
 
 /**
  * Rolls up analytics for a given franchise (weekly summary).

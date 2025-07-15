@@ -896,6 +896,317 @@ class FirestoreService {
         .toList());
   }
 
+  Future<List<Map<String, dynamic>>> getPayoutsForFranchise({
+    required String franchiseId,
+    String? status,
+    String? searchQuery,
+  }) async {
+    final docRef = firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId);
+
+    firestore.Query<Map<String, dynamic>> query = firestore
+        .FirebaseFirestore.instance
+        .collection('payouts')
+        .where('franchiseId', isEqualTo: docRef);
+
+    if (status != null && status.isNotEmpty && status != 'all') {
+      query = query.where('status', isEqualTo: status);
+    }
+
+    final snap = await query.orderBy('scheduled_at', descending: true).get();
+
+    List<Map<String, dynamic>> payouts = snap.docs.map((doc) {
+      final rawData = doc.data();
+      final data =
+          (rawData is Map<String, dynamic>) ? rawData : <String, dynamic>{};
+
+      return {
+        'id': doc.id,
+        'status': data['status'] ?? '',
+        'amount':
+            (data['amount'] is num) ? (data['amount'] as num).toDouble() : 0.0,
+        'created_at': (data['scheduled_at'] is firestore.Timestamp)
+            ? (data['scheduled_at'] as firestore.Timestamp).toDate()
+            : null,
+        'sent_at': (data['sent_at'] is firestore.Timestamp)
+            ? (data['sent_at'] as firestore.Timestamp).toDate()
+            : null,
+        'failed_at': (data['failed_at'] is firestore.Timestamp)
+            ? (data['failed_at'] as firestore.Timestamp).toDate()
+            : null,
+        'method': data['method'] is String ? data['method'] as String : '',
+        'bank_account_last4': data['bank_account_last4']?.toString() ?? '',
+        'notes': data['notes'] is String ? data['notes'] as String : '',
+      };
+    }).toList();
+
+    // Local search filtering across all visible fields
+    if (searchQuery != null && searchQuery.trim().isNotEmpty) {
+      final q = searchQuery.trim().toLowerCase();
+      payouts = payouts.where((p) {
+        return (p['id'] ?? '').toString().toLowerCase().contains(q) ||
+            (p['status'] ?? '').toString().toLowerCase().contains(q) ||
+            (p['amount']?.toString() ?? '').toLowerCase().contains(q) ||
+            (p['method'] ?? '').toString().toLowerCase().contains(q) ||
+            (p['bank_account_last4'] ?? '')
+                .toString()
+                .toLowerCase()
+                .contains(q) ||
+            (p['notes'] ?? '').toString().toLowerCase().contains(q) ||
+            (p['created_at'] != null &&
+                p['created_at'].toString().toLowerCase().contains(q)) ||
+            (p['sent_at'] != null &&
+                p['sent_at'].toString().toLowerCase().contains(q)) ||
+            (p['failed_at'] != null &&
+                p['failed_at'].toString().toLowerCase().contains(q));
+      }).toList();
+    }
+
+    return payouts;
+  }
+
+  /// Search payouts with filters: status, date range, amount, method, account, user, search text.
+  Future<List<Payout>> fetchPayouts({
+    String? franchiseId,
+    String? status,
+    String? locationId,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? search,
+    String? sortBy, // 'scheduled_at', 'amount', etc.
+    bool descending = true,
+    int? limit,
+    firestore.DocumentSnapshot? startAfter, // For paged results
+  }) async {
+    firestore.Query query = _db.collection('payouts');
+    if (franchiseId != null) {
+      query = query.where('franchiseId',
+          isEqualTo: _db.collection('franchises').doc(franchiseId));
+    }
+    if (status != null && status != 'all')
+      query = query.where('status', isEqualTo: status);
+    if (locationId != null) {
+      query = query.where('locationId',
+          isEqualTo: _db.collection('franchise_locations').doc(locationId));
+    }
+    if (startDate != null)
+      query = query.where('scheduled_at',
+          isGreaterThanOrEqualTo: firestore.Timestamp.fromDate(startDate));
+    if (endDate != null)
+      query = query.where('scheduled_at',
+          isLessThanOrEqualTo: firestore.Timestamp.fromDate(endDate));
+    if (search != null && search.isNotEmpty) {
+      // For ID or notes search (Firestore can't do full text, but support id/last4)
+      query = query
+          .where('notes', isGreaterThanOrEqualTo: search)
+          .where('notes', isLessThan: search + 'z');
+    }
+    if (sortBy != null)
+      query = query.orderBy(sortBy, descending: descending);
+    else
+      query = query.orderBy('scheduled_at', descending: descending);
+    if (startAfter != null) query = query.startAfterDocument(startAfter);
+    if (limit != null) query = query.limit(limit);
+    final snap = await query.get();
+    return snap.docs
+        .map((doc) =>
+            Payout.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+        .toList();
+  }
+
+  // Full payout details, including audit trail
+  Future<Map<String, dynamic>?> getPayoutDetailsWithAudit(
+      String payoutId) async {
+    final doc = await _db.collection('payouts').doc(payoutId).get();
+    if (!doc.exists) return null;
+    final data = doc.data()!;
+    // Audit trail is array of maps, or fallback to empty
+    final auditTrail =
+        List<Map<String, dynamic>>.from(data['audit_trail'] ?? []);
+    return {...data, 'id': doc.id, 'audit_trail': auditTrail};
+  }
+
+// Append event to audit trail
+  Future<void> addPayoutAuditEvent(
+      String payoutId, Map<String, dynamic> event) async {
+    await _db.collection('payouts').doc(payoutId).update({
+      'audit_trail': firestore.FieldValue.arrayUnion([event]),
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Add (meta) attachment to payout (arrayUnion pattern)
+  Future<void> addAttachmentToPayout(
+      String payoutId, Map<String, dynamic> attachment) async {
+    await _db.collection('payouts').doc(payoutId).update({
+      'attachments': firestore.FieldValue.arrayUnion([attachment]),
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+// Remove attachment (by full meta match or maybe by id/path)
+  Future<void> removeAttachmentFromPayout(
+      String payoutId, Map<String, dynamic> attachment) async {
+    await _db.collection('payouts').doc(payoutId).update({
+      'attachments': firestore.FieldValue.arrayRemove([attachment]),
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Bulk update payouts (status, sent, failed, etc.) by list of payoutIds
+  Future<void> bulkUpdatePayoutStatus(
+      List<String> payoutIds, String status) async {
+    final batch = _db.batch();
+    for (final id in payoutIds) {
+      batch.update(_db.collection('payouts').doc(id), {
+        'status': status,
+        'updated_at': firestore.FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
+  }
+
+  /// Append a new comment/note to the payout (atomic, safe).
+  Future<void> addPayoutComment(
+      String payoutId, Map<String, dynamic> comment) async {
+    await _db.collection('payouts').doc(payoutId).update({
+      'comments': firestore.FieldValue.arrayUnion([comment]),
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Fetch all comments (notes) for a specific payout by ID.
+  /// Returns a list of note maps. Includes audit trail if you want.
+  Future<List<Map<String, dynamic>>> getPayoutComments(String payoutId) async {
+    final doc = await _db.collection('payouts').doc(payoutId).get();
+    if (!doc.exists) return [];
+    final data = doc.data()!;
+    final comments = data['comments'] as List? ?? [];
+    return List<Map<String, dynamic>>.from(comments);
+  }
+
+  /// Optionally: Remove a comment (match by content or add a unique note ID/timestamp for robust remove)
+  Future<void> removePayoutComment(
+      String payoutId, Map<String, dynamic> comment) async {
+    await _db.collection('payouts').doc(payoutId).update({
+      'comments': firestore.FieldValue.arrayRemove([comment]),
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> markPayoutSent(String payoutId, {DateTime? sentAt}) async {
+    await _db.collection('payouts').doc(payoutId).update({
+      'status': 'sent',
+      'sent_at': firestore.FieldValue.serverTimestamp(),
+      if (sentAt != null) 'sent_at': firestore.Timestamp.fromDate(sentAt),
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> setPayoutStatus(String payoutId, String newStatus) async {
+    await _db.collection('payouts').doc(payoutId).update({
+      'status': newStatus,
+      'failed_at':
+          newStatus == 'failed' ? firestore.FieldValue.serverTimestamp() : null,
+      'sent_at':
+          newStatus == 'sent' ? firestore.FieldValue.serverTimestamp() : null,
+      // Optionally clear error fields if status != failed
+      if (newStatus != 'failed') ...{
+        'error_message': '',
+        'error_code': '',
+      },
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> markPayoutFailed(String payoutId,
+      {String? errorMsg, String? errorCode}) async {
+    await _db.collection('payouts').doc(payoutId).update({
+      'status': 'failed',
+      'failed_at': firestore.FieldValue.serverTimestamp(),
+      if (errorMsg != null) 'error_message': errorMsg,
+      if (errorCode != null) 'error_code': errorCode,
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> retryPayout(String payoutId) async {
+    // Update status to 'pending' or custom, clear error fields, append audit event, etc.
+    await _db.collection('payouts').doc(payoutId).update({
+      'status': 'pending',
+      'error_message': '',
+      'error_code': '',
+      'updated_at': firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<List<AuditLog>> getAuditLogsForPayout(String payoutId) async {
+    final snap = await _db
+        .collection('audit_logs')
+        .where('targetId', isEqualTo: payoutId)
+        .get();
+    return snap.docs
+        .map((doc) => AuditLog.fromFirestore(doc.data(), doc.id))
+        .toList();
+  }
+
+  // Bulk export (returns CSV or data list)
+  /// Exports payouts matching the given filters to a CSV string.
+  /// Filters must match your fetchPayouts() method signature and your Payout model fields.
+  Future<String> exportPayoutsToCsv({
+    String? franchiseId,
+    String? status,
+    String? locationId,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? search,
+    String? sortBy, // e.g., 'scheduled_at', 'amount'
+    bool descending = true,
+    int? limit,
+  }) async {
+    // Fetch payouts using your existing method.
+    final payouts = await fetchPayouts(
+      franchiseId: franchiseId,
+      status: status,
+      locationId: locationId,
+      startDate: startDate,
+      endDate: endDate,
+      search: search,
+      sortBy: sortBy,
+      descending: descending,
+      limit: limit,
+    );
+
+    // CSV header (adjust/add fields as needed)
+    final csv = StringBuffer();
+    csv.writeln(
+        'ID,Amount,Currency,Status,Method,Scheduled At,Sent At,Failed At,Bank Account Last4,Notes,Failure Reason,Error Code,Error Message');
+
+    for (final p in payouts) {
+      // Format fields safely, escaping quotes in notes, handling nulls.
+      String formatDate(DateTime? dt) => dt != null ? dt.toIso8601String() : '';
+
+      String escape(String? value) =>
+          value == null ? '' : value.replaceAll('"', '""');
+
+      csv.writeln('${p.id},'
+          '${p.amount},'
+          '${p.currency},'
+          '${p.status},'
+          '${escape(p.method)},'
+          '${formatDate(p.scheduledAt)},'
+          '${formatDate(p.sentAt)},'
+          '${formatDate(p.failedAt)},'
+          '${escape(p.bankAccountLast4)},'
+          '"${escape(p.notes)}",'
+          '"${escape(p.failureReason)}",'
+          '"${escape(p.errorCode)}",'
+          '"${escape(p.errorMessage)}"');
+    }
+    return csv.toString();
+  }
+
   // --- INVOICES ---
   Future<Map<String, dynamic>> getInvoiceStatsForFranchise(
       String franchiseId) async {
@@ -2010,6 +2321,57 @@ class FirestoreService {
       'amount': data['amount'],
       'date': data['scheduled_at']?.toDate()?.toIso8601String(),
     };
+  }
+
+  // Get payout stats for franchise
+  Future<Map<String, int>> getPayoutStatsForFranchise(
+      String franchiseId) async {
+    try {
+      final query = firestore.FirebaseFirestore.instance
+          .collection('payouts')
+          .where('franchiseId', isEqualTo: franchiseId);
+
+      final snapshot = await query.get();
+
+      int pending = 0;
+      int sent = 0;
+      int failed = 0;
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final status = data['status'] as String? ?? '';
+
+        if (status == 'pending') {
+          pending++;
+        } else if (status == 'sent') {
+          sent++;
+        } else if (status == 'failed') {
+          failed++;
+        }
+        // You may add more status handling as needed.
+      }
+
+      return {
+        'pending': pending,
+        'sent': sent,
+        'failed': failed,
+      };
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'getPayoutStatsForFranchise failed: $e',
+        stack: stack.toString(),
+        source: 'FirestoreService',
+        screen: 'getPayoutStatsForFranchise',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      // Return zeroed counts on failure for graceful UI degradation
+      return {
+        'pending': 0,
+        'sent': 0,
+        'failed': 0,
+      };
+    }
   }
 
   // Promo methods

@@ -24,6 +24,8 @@ import 'package:franchise_admin_portal/admin/hq_owner/invoice_audit_trail_widget
 import 'package:franchise_admin_portal/admin/hq_owner/invoice_search_bar.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/invoice_data_table.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/invoices_card.dart';
+import 'package:franchise_admin_portal/widgets/dashboard/billing_summary_card.dart';
+import 'package:franchise_admin_portal/widgets/dashboard/payout_status_card.dart';
 
 /// Developer/HQ-only: Entry-point for HQ/Owner dashboard.
 /// Add this to your DashboardSection registry for 'hq_owner'.
@@ -253,7 +255,11 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                   ),
                   ConstrainedBox(
                     constraints: BoxConstraints(minHeight: 220),
-                    child: PayoutStatusSummary(),
+                    child: PayoutStatusCard(),
+                  ),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: 220),
+                    child: BillingSummaryCard(),
                   ),
                 ],
               ),
@@ -333,66 +339,6 @@ class _KpiTile extends StatelessWidget {
           ],
         ),
       ],
-    );
-  }
-}
-
-/// PAYOUT STATUS SUMMARY
-class PayoutStatusSummary extends StatelessWidget {
-  const PayoutStatusSummary({super.key});
-  @override
-  Widget build(BuildContext context) {
-    print('[PayoutStatusSummary] build called');
-    final loc = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
-    // TODO: Replace with real data stream
-    final pending = 2;
-    final sent = 8;
-    final failed = 1;
-
-    return Card(
-      color: colorScheme.surfaceVariant,
-      elevation: DesignTokens.adminCardElevation,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(loc.payoutStatus ?? "Payouts",
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                _StatusDot(color: colorScheme.primary),
-                const SizedBox(width: 4),
-                Text("${loc.pending ?? "Pending"}: $pending",
-                    style: TextStyle(color: colorScheme.primary)),
-                const SizedBox(width: 14),
-                _StatusDot(color: colorScheme.secondary),
-                const SizedBox(width: 4),
-                Text("${loc.sent ?? "Sent"}: $sent",
-                    style: TextStyle(color: colorScheme.secondary)),
-                const SizedBox(width: 14),
-                _StatusDot(color: colorScheme.error),
-                const SizedBox(width: 4),
-                Text("${loc.failed ?? "Failed"}: $failed",
-                    style: TextStyle(color: colorScheme.error)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.payments_outlined),
-              label: Text(loc.viewPayouts ?? "View All"),
-              onPressed: () {
-                // TODO: Route to payout history screen
-              },
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -509,7 +455,7 @@ class QuickLinksPanel extends StatelessWidget {
                   icon: Icons.payments,
                   label: loc.payoutStatus ?? "Payouts",
                   onTap: () {
-                    // TODO: Route to payout screen
+                    Navigator.of(context).pushNamed('/hq/payouts');
                   },
                   color: colorScheme.secondary,
                 ),

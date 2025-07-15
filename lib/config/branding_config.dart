@@ -53,6 +53,11 @@ class BrandingConfig {
     return brandRed; // fallback to default brand color
   }
 
+  // Recommended dashboard card background (adjust to your design, e.g. neutral surface or white)
+  static const Color dashboardCardColor = Colors.white;
+
+// Accent color (typically your brand color or another action/CTA color)
+  static const Color accentColor = brandRed;
   // landing page
   static const String heroScreenshot =
       'https://yourcdn.com/assets/landing_hero.png';

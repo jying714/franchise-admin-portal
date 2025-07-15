@@ -28,6 +28,8 @@ import 'package:franchise_admin_portal/admin/franchise/franchise_selector_screen
 import 'package:franchise_admin_portal/admin/hq_owner/owner_hq_dashboard_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/invoice_list_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/invoice_detail_screen.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/payout_list_screen.dart';
+import 'package:franchise_admin_portal/core/providers/payout_filter_provider.dart';
 
 void main() {
   runZonedGuarded(() async {
@@ -192,6 +194,10 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
                 as String; // invoiceId
             return InvoiceDetailScreen(invoiceId: args);
           },
+          '/hq/payouts': (_) => ChangeNotifierProvider(
+                create: (_) => PayoutFilterProvider(),
+                child: const PayoutListScreen(),
+              ),
         },
         initialRoute: '/post-login-gate',
         home: null,
