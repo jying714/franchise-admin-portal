@@ -114,17 +114,23 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
-        routes: {
-          '/': (_) => const LandingPage(),
-          '/landing': (_) => const LandingPage(),
-          '/sign-in': (_) => const SignInScreen(),
-          '/invite-accept': (_) => const InviteAcceptScreen(),
+        onGenerateRoute: (RouteSettings settings) {
+          final uri = Uri.parse(settings.name ?? '/');
+          if (uri.path == '/' || uri.path == '/landing') {
+            return MaterialPageRoute(builder: (context) => const LandingPage());
+          }
+          if (uri.path == '/sign-in') {
+            return MaterialPageRoute(
+                builder: (context) => const SignInScreen());
+          }
+          if (uri.path == '/invite-accept') {
+            return MaterialPageRoute(
+                builder: (context) => const InviteAcceptScreen());
+          }
+          // fallback
+          return MaterialPageRoute(builder: (context) => const LandingPage());
         },
-        initialRoute: '/',
         home: null,
-        onUnknownRoute: (settings) => MaterialPageRoute(
-          builder: (_) => const LandingPage(),
-        ),
       );
     }
 
@@ -133,21 +139,22 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<FranchiseProvider>(
-            create: (_) => FranchiseProvider()),
-        ChangeNotifierProvider(create: (_) => AdminUserProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => AuthService()),
+            create: (context) => FranchiseProvider()),
+        ChangeNotifierProvider(create: (context) => AdminUserProvider()),
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
+        ChangeNotifierProvider(create: (context) => AuthService()),
         Provider<FirestoreService>.value(value: FirestoreService()),
-        Provider(create: (_) => AnalyticsService()),
+        Provider(create: (context) => AnalyticsService()),
         StreamProvider<fb_auth.User?>.value(
           value: fb_auth.FirebaseAuth.instance.authStateChanges(),
           initialData: null,
         ),
-        ChangeNotifierProvider(create: (_) => UserProfileNotifier()),
+        ChangeNotifierProvider(create: (context) => UserProfileNotifier()),
         ChangeNotifierProvider(
-          create: (_) => FranchiseeInvitationProvider(
+          create: (context) => FranchiseeInvitationProvider(
             service: FranchiseeInvitationService(
-              firestoreService: Provider.of<FirestoreService>(_, listen: false),
+              firestoreService:
+                  Provider.of<FirestoreService>(context, listen: false),
             ),
           ),
         ),
@@ -165,76 +172,106 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
-        routes: {
-          '/post-login-gate': (_) {
-            print('[main.dart] /post-login-gate route built');
-            return const ProfileGateScreen();
-          },
-          '/admin/dashboard': (_) {
-            print('[main.dart] /admin/dashboard route built');
-            return const FranchiseGate(child: AdminDashboardScreen());
-          },
-          '/developer/dashboard': (_) {
-            print('[main.dart] /developer/dashboard route built');
-            return const FranchiseGate(child: DeveloperDashboardScreen());
-          },
-          '/developer/select-franchise': (_) {
-            print('[main.dart] /developer/select-franchise route built');
-            return const FranchiseSelectorScreen();
-          },
-          '/hq-owner/dashboard': (_) {
-            print('[main.dart] /hq-owner/dashboard route built');
-            return const FranchiseGate(child: OwnerHQDashboardScreen());
-          },
-          '/platform-owner/dashboard': (_) =>
-              const PlatformOwnerDashboardScreen(),
-          '/unauthorized': (_) {
-            print('[main.dart] /unauthorized route built');
-            return Scaffold(
-              appBar: AppBar(title: const Text('Unauthorized')),
-              body: const Center(child: Text('Your account is not active.')),
+        onGenerateRoute: (RouteSettings settings) {
+          final uri = Uri.parse(settings.name ?? '/');
+          // Authenticated routes:
+          if (uri.path == '/post-login-gate') {
+            return MaterialPageRoute(
+                builder: (context) => const ProfileGateScreen());
+          }
+          if (uri.path == '/admin/dashboard') {
+            return MaterialPageRoute(
+                builder: (context) =>
+                    const FranchiseGate(child: AdminDashboardScreen()));
+          }
+          if (uri.path == '/developer/dashboard') {
+            return MaterialPageRoute(
+                builder: (context) =>
+                    const FranchiseGate(child: DeveloperDashboardScreen()));
+          }
+          if (uri.path == '/developer/select-franchise') {
+            return MaterialPageRoute(
+                builder: (context) => const FranchiseSelectorScreen());
+          }
+          if (uri.path == '/hq-owner/dashboard') {
+            return MaterialPageRoute(
+                builder: (context) =>
+                    const FranchiseGate(child: OwnerHQDashboardScreen()));
+          }
+          if (uri.path == '/platform-owner/dashboard') {
+            return MaterialPageRoute(
+                builder: (context) => const PlatformOwnerDashboardScreen());
+          }
+          if (uri.path == '/unauthorized') {
+            return MaterialPageRoute(
+              builder: (context) => Scaffold(
+                appBar: AppBar(title: const Text('Unauthorized')),
+                body: const Center(child: Text('Your account is not active.')),
+              ),
             );
-          },
-          '/alerts': (context) {
-            print('[main.dart] /alerts route built');
-            final user =
-                Provider.of<AdminUserProvider>(context, listen: false).user;
-            final franchiseId = user?.defaultFranchise ??
-                ((user?.franchiseIds.isNotEmpty ?? false)
-                    ? user!.franchiseIds.first
-                    : '');
-            return AlertListScreen(
-              franchiseId: franchiseId,
-              developerMode: user?.isDeveloper ?? false,
+          }
+          if (uri.path == '/alerts') {
+            return MaterialPageRoute(
+              builder: (context) {
+                final user =
+                    Provider.of<AdminUserProvider>(context, listen: false).user;
+                final franchiseId = user?.defaultFranchise ??
+                    ((user?.franchiseIds.isNotEmpty ?? false)
+                        ? user!.franchiseIds.first
+                        : '');
+                return AlertListScreen(
+                  franchiseId: franchiseId,
+                  developerMode: user?.isDeveloper ?? false,
+                );
+              },
             );
-          },
-          '/hq/invoices': (_) => const InvoiceListScreen(),
-          '/hq/invoice_detail': (context) {
-            final args = ModalRoute.of(context)!.settings.arguments
-                as String; // invoiceId
-            return InvoiceDetailScreen(invoiceId: args);
-          },
-          '/hq/payouts': (_) => ChangeNotifierProvider(
-                create: (_) => PayoutFilterProvider(),
+          }
+          if (uri.path == '/hq/invoices') {
+            return MaterialPageRoute(
+                builder: (context) => const InvoiceListScreen());
+          }
+          if (uri.path == '/hq/invoice_detail') {
+            // Pass arguments via settings.arguments as before
+            final args = settings.arguments as String?;
+            return MaterialPageRoute(
+                builder: (context) =>
+                    InvoiceDetailScreen(invoiceId: args ?? ''));
+          }
+          if (uri.path == '/hq/payouts') {
+            return MaterialPageRoute(
+              builder: (context) => ChangeNotifierProvider(
+                create: (context) => PayoutFilterProvider(),
                 child: const PayoutListScreen(),
               ),
-          '/profile': (context) => const UniversalProfileScreen(),
-          '/invite-accept': (context) => const InviteAcceptScreen(),
-          '/franchise-onboarding': (context) {
-            final args = ModalRoute.of(context)!.settings.arguments as Map?;
+            );
+          }
+          if (uri.path == '/profile') {
+            return MaterialPageRoute(
+                builder: (context) => const UniversalProfileScreen());
+          }
+          if (uri.path == '/invite-accept') {
+            return MaterialPageRoute(
+                builder: (context) => const InviteAcceptScreen());
+          }
+          if (uri.path == '/franchise-onboarding') {
+            final args = settings.arguments as Map?;
             final token = args?['token'] as String?;
             if (token == null || token.isEmpty) {
-              // Optionally handle error/redirect
-              return Scaffold(
-                appBar: AppBar(title: const Text('Invalid Invite')),
-                body: const Center(
-                    child: Text('Invalid or missing invitation token.')),
+              return MaterialPageRoute(
+                builder: (context) => Scaffold(
+                  appBar: AppBar(title: const Text('Invalid Invite')),
+                  body: const Center(
+                      child: Text('Invalid or missing invitation token.')),
+                ),
               );
             }
-            return FranchiseOnboardingScreen(inviteToken: token);
-          },
+            return MaterialPageRoute(
+                builder: (context) =>
+                    FranchiseOnboardingScreen(inviteToken: token));
+          }
+          // fallback
+          return MaterialPageRoute(builder: (context) => const LandingPage());
         },
-        initialRoute: '/post-login-gate',
         home: null,
       ),
     );
