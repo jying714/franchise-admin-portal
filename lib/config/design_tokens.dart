@@ -77,7 +77,8 @@ class DesignTokens {
   static const double imageRadius = 12.0;
   static const double formFieldRadius = 12.0;
   static const double badgeRadius = 10.0;
-
+  static const double cardBorderRadiusLarge = 24.0;
+  static const double cardBorderRadiusSmall = 10.0;
   // ----------- Sizing / Borders -----------
   static const double iconSize = 24.0;
   static const double cardBorderWidth = 2.0;

@@ -10,6 +10,9 @@ class User {
   static const String roleStaff = 'staff';
   static const String roleCustomer = 'customer';
   static const String roleDeveloper = 'developer';
+  static const String rolePlatformOwner = 'platform_owner';
+  static const String roleFranchisee = 'franchisee';
+  static const String roleStoreOwner = 'store_owner';
 
   final bool isActive;
   final String id;
@@ -30,6 +33,9 @@ class User {
   bool get isAdmin => roles.contains(roleAdmin);
   bool get isManager => roles.contains(roleManager);
   bool get isStaff => roles.contains(roleStaff);
+  bool get isPlatformOwner => roles.contains(rolePlatformOwner);
+  bool get isFranchisee => roles.contains(roleFranchisee);
+  bool get isStoreOwner => roles.contains(roleStoreOwner);
   bool get isCustomer =>
       roles.contains(roleCustomer) ||
       !(isHqOwner || isHqManager || isOwner || isAdmin || isManager || isStaff);

@@ -10,9 +10,12 @@ import 'package:franchise_admin_portal/core/models/user.dart' as app;
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 import 'package:franchise_admin_portal/core/providers/franchisee_invitation_provider.dart';
-import 'package:franchise_admin_portal/core/services/franchisee_invitation_service.dart';
+import 'package:franchise_admin_portal/widgets/financials/franchisee_invitation_service.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/dialogs/franchisee_invitation_dialog.dart';
+import 'package:franchise_admin_portal/widgets/financials/platform_revenue_summary_panel.dart';
+import 'package:franchise_admin_portal/core/providers/platform_financials_provider.dart';
+import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
 
 class PlatformOwnerDashboardScreen extends StatelessWidget {
   const PlatformOwnerDashboardScreen({Key? key}) : super(key: key);
@@ -93,98 +96,156 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
     final hPadding = isWide ? 38.0 : 16.0;
     final vPadding = isWide ? 28.0 : 14.0;
 
-    return Scaffold(
-      backgroundColor: colorScheme.background,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        titleSpacing: 0,
-        elevation: 1,
-        title: Row(
-          children: [
-            const SizedBox(width: 8),
-            Image.network(
-              BrandingConfig.logoUrl,
-              height: 36,
-              errorBuilder: (_, __, ___) => const Icon(Icons.domain, size: 34),
+    return ChangeNotifierProvider(
+        create: (_) => PlatformFinancialsProvider()..loadFinancials(),
+        child: Scaffold(
+          backgroundColor: colorScheme.background,
+          appBar: AppBar(
+            backgroundColor: colorScheme.surface,
+            titleSpacing: 0,
+            elevation: 1,
+            title: Row(
+              children: [
+                const SizedBox(width: 8),
+                Image.network(
+                  BrandingConfig.logoUrl,
+                  height: 36,
+                  errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.domain, size: 34),
+                ),
+                const SizedBox(width: 16),
+                Text(
+                  loc.platformOwnerDashboardTitle,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                ),
+              ],
             ),
-            const SizedBox(width: 16),
-            Text(
-              loc.platformOwnerDashboardTitle,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
+            actions: [
+              DashboardSwitcherDropdown(
+                  currentScreen: '/platform-owner/dashboard'),
+              Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Chip(
+                  label: Text(
+                    loc.platformOwner,
+                    style: TextStyle(
+                      color: colorScheme.onPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-            ),
-          ],
-        ),
-        actions: [
-          DashboardSwitcherDropdown(currentScreen: '/platform-owner/dashboard'),
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Chip(
-              label: Text(
-                loc.platformOwner,
-                style: TextStyle(
-                  color: colorScheme.onPrimary,
-                  fontWeight: FontWeight.w600,
+                  backgroundColor: colorScheme.primary,
+                  avatar: const Icon(Icons.verified_user,
+                      color: Colors.white, size: 20),
                 ),
               ),
-              backgroundColor: colorScheme.primary,
-              avatar: const Icon(Icons.verified_user,
-                  color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              UserAvatarMenu(size: 36),
+              const SizedBox(width: 8),
+            ],
+          ),
+          body: Padding(
+            padding:
+                EdgeInsets.symmetric(horizontal: hPadding, vertical: vPadding),
+            child: ListView(
+              children: [
+                // --- Franchise Invitation Panel ---
+                ChangeNotifierProvider(
+                  create: (context) => FranchiseeInvitationProvider(
+                    service: FranchiseeInvitationService(
+                      firestoreService:
+                          Provider.of<FirestoreService>(context, listen: false),
+                    ),
+                  )..fetchInvitations(),
+                  child: FranchiseInvitationPanel(
+                      loc: loc, colorScheme: colorScheme),
+                ),
+
+                const SizedBox(height: 36),
+
+                // --- Franchise List Panel ---
+                FranchiseListPanel(loc: loc, colorScheme: colorScheme),
+
+                const SizedBox(height: 36),
+
+                // --- Global Financial Panel ---
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 36.0),
+                  child: Consumer<PlatformFinancialsProvider>(
+                    builder: (context, provider, _) {
+                      if (provider.loading) {
+                        return Center(child: CircularProgressIndicator());
+                      }
+                      if (provider.error != null) {
+                        return Card(
+                          color: colorScheme.errorContainer,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              children: [
+                                Icon(Icons.warning,
+                                    color: colorScheme.error, size: 32),
+                                const SizedBox(height: 8),
+                                Text(
+                                  AppLocalizations.of(context)!
+                                      .genericErrorOccurred,
+                                  style: TextStyle(
+                                    color: colorScheme.error,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(provider.error!),
+                                const SizedBox(height: 12),
+                                ElevatedButton(
+                                  onPressed: () => provider.refresh(),
+                                  child:
+                                      Text(AppLocalizations.of(context)!.retry),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+                      if (provider.overview == null || provider.kpis == null) {
+                        return Center(child: CircularProgressIndicator());
+                      }
+                      return PlatformRevenueSummaryPanel(
+                          // Optionally pass values if you want more fine-grained control
+                          // (If your PlatformRevenueSummaryPanel consumes the Provider directly, you don't need to pass anything)
+                          );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 36),
+
+                // --- Platform Analytics Panel ---
+                PlatformAnalyticsPanel(loc: loc, colorScheme: colorScheme),
+
+                const SizedBox(height: 36),
+
+                // --- Platform Settings Panel ---
+                PlatformSettingsPanel(loc: loc, colorScheme: colorScheme),
+
+                const SizedBox(height: 36),
+
+                // --- Owner Announcements Panel ---
+                OwnerAnnouncementsPanel(loc: loc, colorScheme: colorScheme),
+
+                const SizedBox(height: 36),
+
+                // === Future Features Placeholder ===
+                _futureFeaturePlaceholder(context, loc, colorScheme),
+              ],
             ),
           ),
-        ],
-      ),
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: hPadding, vertical: vPadding),
-        child: ListView(
-          children: [
-            // --- Franchise Invitation Panel ---
-            ChangeNotifierProvider(
-              create: (context) => FranchiseeInvitationProvider(
-                service: FranchiseeInvitationService(
-                  firestoreService:
-                      Provider.of<FirestoreService>(context, listen: false),
-                ),
-              )..fetchInvitations(),
-              child:
-                  FranchiseInvitationPanel(loc: loc, colorScheme: colorScheme),
-            ),
-
-            const SizedBox(height: 36),
-
-            // --- Franchise List Panel ---
-            FranchiseListPanel(loc: loc, colorScheme: colorScheme),
-
-            const SizedBox(height: 36),
-
-            // --- Global Financial Panel ---
-            GlobalFinancialPanel(loc: loc, colorScheme: colorScheme),
-
-            const SizedBox(height: 36),
-
-            // --- Platform Analytics Panel ---
-            PlatformAnalyticsPanel(loc: loc, colorScheme: colorScheme),
-
-            const SizedBox(height: 36),
-
-            // --- Platform Settings Panel ---
-            PlatformSettingsPanel(loc: loc, colorScheme: colorScheme),
-
-            const SizedBox(height: 36),
-
-            // --- Owner Announcements Panel ---
-            OwnerAnnouncementsPanel(loc: loc, colorScheme: colorScheme),
-
-            const SizedBox(height: 36),
-
-            // === Future Features Placeholder ===
-            _futureFeaturePlaceholder(context, loc, colorScheme),
-          ],
-        ),
-      ),
-    );
+        ));
   }
 
   Widget _futureFeaturePlaceholder(

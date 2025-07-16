@@ -9,6 +9,9 @@ import 'package:franchise_admin_portal/widgets/dashboard/billing_summary_card.da
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:franchise_admin_portal/core/models/platform_revenue_overview.dart';
+import 'package:franchise_admin_portal/core/services/payout_service.dart';
+import 'package:franchise_admin_portal/core/models/platform_financial_kpis.dart';
 
 /// Service class handling all Invoice-related Firestore operations.
 /// Integrates error logging, supports filtering, streaming, and atomic updates.
@@ -383,6 +386,114 @@ class InvoiceService {
         screen: 'downloadSummary',
         severity: 'error',
         contextData: {'franchiseId': franchiseId},
+      );
+      rethrow;
+    }
+  }
+
+  /// Platform-wide aggregate: Returns revenue, subscription, royalty, overdue for YTD.
+  Future<PlatformRevenueOverview> fetchPlatformRevenueOverview() async {
+    try {
+      final now = DateTime.now();
+      final ytdStart = DateTime(now.year, 1, 1);
+
+      final query = _db.collection('invoices').where('period_start',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(ytdStart));
+
+      final invoices = await query.get();
+
+      double totalRevenueYtd = 0;
+      double subscriptionRevenue = 0;
+      double royaltyRevenue = 0;
+      double overdueAmount = 0;
+
+      for (var doc in invoices.docs) {
+        final data = doc.data();
+        final amountDue = (data['amount_due'] ?? 0).toDouble();
+        final status = data['status']?.toString();
+        final type = data['type']?.toString()?.toLowerCase() ?? '';
+
+        // Sum revenue by type
+        totalRevenueYtd += amountDue;
+        if (type == 'subscription') {
+          subscriptionRevenue += amountDue;
+        } else if (type == 'royalty') {
+          royaltyRevenue += amountDue;
+        }
+
+        // Overdue
+        if (status == 'overdue' || status == 'unpaid') {
+          overdueAmount += amountDue;
+        }
+      }
+
+      return PlatformRevenueOverview(
+        totalRevenueYtd: totalRevenueYtd,
+        subscriptionRevenue: subscriptionRevenue,
+        royaltyRevenue: royaltyRevenue,
+        overdueAmount: overdueAmount,
+      );
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: e.toString(),
+        stack: stack.toString(),
+        source: 'InvoiceService',
+        screen: 'fetchPlatformRevenueOverview',
+        severity: 'error',
+      );
+      rethrow;
+    }
+  }
+
+  /// Platform-wide KPIs: MRR, ARR, Active Franchises, Recent Payouts.
+  /// Assumes MRR = current month's subscription invoices; ARR = MRR * 12.
+  Future<PlatformFinancialKpis> fetchPlatformFinancialKpis() async {
+    try {
+      final now = DateTime.now();
+      final startOfMonth = DateTime(now.year, now.month, 1);
+
+      // Get all invoices for this month, type: subscription
+      final subQuery = _db
+          .collection('invoices')
+          .where('type', isEqualTo: 'subscription')
+          .where('period_start',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth));
+      final subInvoices = await subQuery.get();
+
+      double mrr = 0;
+      for (var doc in subInvoices.docs) {
+        final data = doc.data();
+        mrr += (data['amount_due'] ?? 0).toDouble();
+      }
+      double arr = mrr * 12;
+
+      // Count active franchises (any invoice this month)
+      final activeFranchiseIds = <String>{};
+      for (var doc in subInvoices.docs) {
+        final data = doc.data();
+        final franchiseId = data['franchiseId']?.toString();
+        if (franchiseId != null && franchiseId.isNotEmpty) {
+          activeFranchiseIds.add(franchiseId);
+        }
+      }
+
+      // Get payouts for past 30 days (delegate to PayoutService for platform-wide)
+      final recentPayouts =
+          await PayoutService().sumRecentPlatformPayouts(days: 30);
+
+      return PlatformFinancialKpis(
+        mrr: mrr,
+        arr: arr,
+        activeFranchises: activeFranchiseIds.length,
+        recentPayouts: recentPayouts,
+      );
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: e.toString(),
+        stack: stack.toString(),
+        source: 'InvoiceService',
+        screen: 'fetchPlatformFinancialKpis',
+        severity: 'error',
       );
       rethrow;
     }

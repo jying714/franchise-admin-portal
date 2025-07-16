@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/widgets/dashboard/kpi_card.dart';
+import 'package:franchise_admin_portal/widgets/financials/kpi_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/analytics_placeholder_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/activity_feed_widget.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/urgent_status_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/notifications_panel.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/widgets/dashboard/dashboard_stat_card.dart';
+import 'package:franchise_admin_portal/widgets/financials/dashboard_stat_card.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/widgets/dashboard/revenue_stat_card.dart';
+import 'package:franchise_admin_portal/widgets/financials/revenue_stat_card.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 

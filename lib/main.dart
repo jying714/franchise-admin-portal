@@ -26,13 +26,14 @@ import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.da
 import 'package:franchise_admin_portal/admin/developer/developer_dashboard_screen.dart';
 import 'package:franchise_admin_portal/admin/franchise/franchise_selector_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/owner_hq_dashboard_screen.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/invoice_list_screen.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/invoice_detail_screen.dart';
+import 'package:franchise_admin_portal/widgets/financials/invoice_list_screen.dart';
+import 'package:franchise_admin_portal/widgets/financials/invoice_detail_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/payout_list_screen.dart';
 import 'package:franchise_admin_portal/core/providers/payout_filter_provider.dart';
 import 'package:franchise_admin_portal/admin/owner/platform_owner_dashboard_screen.dart';
 import 'package:franchise_admin_portal/core/providers/franchisee_invitation_provider.dart';
-import 'package:franchise_admin_portal/core/services/franchisee_invitation_service.dart';
+import 'package:franchise_admin_portal/widgets/financials/franchisee_invitation_service.dart';
+import 'package:franchise_admin_portal/admin/profile/universal_profile_screen.dart';
 
 void main() {
   runZonedGuarded(() async {
@@ -213,6 +214,7 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
                 create: (_) => PayoutFilterProvider(),
                 child: const PayoutListScreen(),
               ),
+          '/profile': (context) => const UniversalProfileScreen(),
         },
         initialRoute: '/post-login-gate',
         home: null,

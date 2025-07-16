@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/services/franchisee_invitation_service.dart';
+import 'package:franchise_admin_portal/widgets/financials/franchisee_invitation_service.dart';
 import 'package:franchise_admin_portal/core/providers/franchisee_invitation_provider.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';

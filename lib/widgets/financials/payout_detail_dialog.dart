@@ -7,7 +7,7 @@ import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 
 // Add the two new widgets here:
-import 'package:franchise_admin_portal/admin/hq_owner/widgets/payout_note_editor.dart';
+import 'package:franchise_admin_portal/widgets/financials/payout_note_editor.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/attachment_uploader.dart';
 
 class PayoutDetailDialog extends StatefulWidget {

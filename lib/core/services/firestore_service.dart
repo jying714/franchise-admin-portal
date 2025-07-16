@@ -30,6 +30,9 @@ import 'package:franchise_admin_portal/core/models/invoice.dart';
 import 'package:franchise_admin_portal/core/models/bank_account.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/core/models/franchisee_invitation.dart';
+import 'package:franchise_admin_portal/core/services/payout_service.dart';
+import 'package:franchise_admin_portal/core/models/platform_revenue_overview.dart';
+import 'package:franchise_admin_portal/core/models/platform_financial_kpis.dart';
 
 class FirestoreService {
   final firestore.FirebaseFirestore _db = firestore.FirebaseFirestore.instance;
@@ -148,6 +151,33 @@ class FirestoreService {
   }
 
   // === USERS (GLOBAL, INDUSTRY STANDARD) ===
+
+  Future<void> updateUserProfile(
+      String userId, Map<String, dynamic> data) async {
+    try {
+      await firestore.FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .update(data);
+    } catch (e, stack) {
+      // Use your ErrorLogger utility as appropriate
+      await ErrorLogger.log(
+        message: 'Failed to update user profile: $e',
+        stack: stack.toString(),
+        source: 'FirestoreService',
+        screen: 'updateUserProfile',
+        severity: 'error',
+        contextData: {'userId': userId, ...data},
+      );
+      rethrow;
+    }
+  }
+
+  /// (Optional) Upload profile photo, then update avatarUrl in user profile.
+  /// You must handle file upload in a separate service (Firebase Storage).
+  Future<void> updateUserAvatar(String userId, String avatarUrl) async {
+    return updateUserProfile(userId, {'avatarUrl': avatarUrl});
+  }
 
   /// Add a user at top-level `/users`
   Future<void> addUser(app_user.User user) async {
@@ -2882,6 +2912,140 @@ class FirestoreService {
       );
       rethrow;
     }
+  }
+
+  // PLATFORM dashboard methods
+  /// Returns platform-wide aggregate revenue stats for this year.
+  Future<PlatformRevenueOverview> fetchPlatformRevenueOverview() async {
+    try {
+      final now = DateTime.now();
+      final ytdStart = DateTime(now.year, 1, 1);
+
+      final query = _db.collection('invoices').where('period_start',
+          isGreaterThanOrEqualTo: firestore.Timestamp.fromDate(ytdStart));
+
+      final invoices = await query.get();
+
+      double totalRevenueYtd = 0;
+      double subscriptionRevenue = 0;
+      double royaltyRevenue = 0;
+      double overdueAmount = 0;
+
+      for (var doc in invoices.docs) {
+        final data = doc.data();
+        // Defensive casting for robustness
+        final amountDue = ((data['amount_due'] ?? 0) as num).toDouble();
+        final status = data['status']?.toString();
+        final type = data['type']?.toString()?.toLowerCase() ?? '';
+
+        // Sum revenue by type
+        totalRevenueYtd += amountDue;
+        if (type == 'subscription') {
+          subscriptionRevenue += amountDue;
+        } else if (type == 'royalty') {
+          royaltyRevenue += amountDue;
+        }
+
+        // Overdue
+        if (status == 'overdue' || status == 'unpaid') {
+          overdueAmount += amountDue;
+        }
+      }
+
+      return PlatformRevenueOverview(
+        totalRevenueYtd: totalRevenueYtd,
+        subscriptionRevenue: subscriptionRevenue,
+        royaltyRevenue: royaltyRevenue,
+        overdueAmount: overdueAmount,
+      );
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: e.toString(),
+        stack: stack.toString(),
+        source: 'FirestoreService',
+        screen: 'fetchPlatformRevenueOverview',
+        severity: 'error',
+      );
+      rethrow;
+    }
+  }
+
+  /// Returns platform-wide financial KPIs: MRR, ARR, active franchises, recent payouts.
+  Future<PlatformFinancialKpis> fetchPlatformFinancialKpis() async {
+    try {
+      final now = DateTime.now();
+      final startOfMonth = DateTime(now.year, now.month, 1);
+
+      // Get all invoices for this month, type: subscription
+      final subQuery = _db
+          .collection('invoices')
+          .where('type', isEqualTo: 'subscription')
+          .where('period_start',
+              isGreaterThanOrEqualTo:
+                  firestore.Timestamp.fromDate(startOfMonth));
+      final subInvoices = await subQuery.get();
+
+      double mrr = 0;
+      final activeFranchiseIds = <String>{};
+      for (var doc in subInvoices.docs) {
+        final data = doc.data();
+        mrr += ((data['amount_due'] ?? 0) as num).toDouble();
+        final franchiseId = data['franchiseId']?.toString();
+        if (franchiseId != null && franchiseId.isNotEmpty) {
+          activeFranchiseIds.add(franchiseId);
+        }
+      }
+      double arr = mrr * 12;
+
+      // Get payouts for past 30 days using PayoutService
+      final recentPayouts =
+          await PayoutService().sumRecentPlatformPayouts(days: 30);
+
+      return PlatformFinancialKpis(
+        mrr: mrr,
+        arr: arr,
+        activeFranchises: activeFranchiseIds.length,
+        recentPayouts: recentPayouts,
+      );
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: e.toString(),
+        stack: stack.toString(),
+        source: 'FirestoreService',
+        screen: 'fetchPlatformFinancialKpis',
+        severity: 'error',
+      );
+      rethrow;
+    }
+  }
+
+  // Platform billing methods
+  Future<List<Map<String, dynamic>>> getPlatformInvoicesForUser(
+      String userId) async {
+    // platform_invoices: filter by user/franchisee id
+    final query = await _db
+        .collection('platform_invoices')
+        .where('franchiseeId', isEqualTo: userId)
+        .get();
+    return query.docs.map((d) => {...d.data(), 'id': d.id}).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> getPlatformPaymentsForUser(
+      String userId) async {
+    final query = await _db
+        .collection('platform_payments')
+        .where('franchiseeId', isEqualTo: userId)
+        .get();
+    return query.docs.map((d) => {...d.data(), 'id': d.id}).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> getStoreInvoicesForUser(
+      String userId) async {
+    final query = await _db
+        .collection('store_invoices')
+        .where('storeOwnerId', isEqualTo: userId)
+        .get();
+    return query.docs.map((d) => {...d.data(), 'id': d.id}).toList();
   }
 }
 

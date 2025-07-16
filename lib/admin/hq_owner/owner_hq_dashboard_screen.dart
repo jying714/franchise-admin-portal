@@ -11,21 +11,22 @@ import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/role_badge.dart';
 import 'package:franchise_admin_portal/admin/developer/developer_dashboard_screen.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/widgets/franchise_financial_kpi_card.dart';
+import 'package:franchise_admin_portal/widgets/financials/franchise_financial_kpi_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
 import 'package:franchise_admin_portal/core/models/franchise_info.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/widgets/cash_flow_forecast_card.dart';
+import 'package:franchise_admin_portal/widgets/financials/cash_flow_forecast_card.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/alerts_card.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/invoice_list_screen.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/invoice_detail_screen.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/invoice_export_dialog.dart';
+import 'package:franchise_admin_portal/widgets/financials/invoice_list_screen.dart';
+import 'package:franchise_admin_portal/widgets/financials/invoice_detail_screen.dart';
+import 'package:franchise_admin_portal/widgets/financials/invoice_export_dialog.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/invoice_audit_trail_widget.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/invoice_search_bar.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/invoice_data_table.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/widgets/invoices_card.dart';
+import 'package:franchise_admin_portal/widgets/financials/invoice_data_table.dart';
+import 'package:franchise_admin_portal/widgets/financials/invoices_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/billing_summary_card.dart';
-import 'package:franchise_admin_portal/widgets/dashboard/payout_status_card.dart';
+import 'package:franchise_admin_portal/widgets/financials/payout_status_card.dart';
+import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
 
 /// Developer/HQ-only: Entry-point for HQ/Owner dashboard.
 /// Add this to your DashboardSection registry for 'hq_owner'.
@@ -166,13 +167,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
             RoleBadge(
                 role: user.roles.isNotEmpty ? user.roles.first : "hq_owner"),
             const SizedBox(width: 8),
-            CircleAvatar(
-              radius: 18,
-              backgroundImage: userProfileUrl.isNotEmpty
-                  ? NetworkImage(userProfileUrl)
-                  : AssetImage(BrandingConfig.defaultProfileIcon)
-                      as ImageProvider,
-            ),
+            const UserAvatarMenu(size: 36),
           ],
         ),
       ),
