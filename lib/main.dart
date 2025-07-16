@@ -94,6 +94,7 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('window.location: ${Uri.base.toString()}');
     final firebaseUser = Provider.of<fb_auth.User?>(context);
     print(
         '[main.dart] FranchiseAdminPortalRoot.build: firebaseUser=${firebaseUser?.email} uid=${firebaseUser?.uid}');

@@ -8,6 +8,7 @@ import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
+import 'dart:html' as html;
 
 class InviteAcceptScreen extends StatefulWidget {
   const InviteAcceptScreen({super.key});
@@ -29,6 +30,11 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
   @override
   void initState() {
     super.initState();
+    print('==== InviteAcceptScreen INIT ====');
+    print('Dart: Uri.base: ${Uri.base.toString()}');
+    // Extra: Print window location in web
+    print('JS: window.location.href: ${html.window.location.href}');
+    print('JS: window.location.hash: ${html.window.location.hash}');
     _loadToken();
   }
 
@@ -163,6 +169,11 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('==== InviteAcceptScreen BUILD ====');
+    print('Dart: Uri.base: ${Uri.base.toString()}');
+    // Extra: Print window location in web
+    print('JS: window.location.href: ${html.window.location.href}');
+    print('JS: window.location.hash: ${html.window.location.hash}');
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
