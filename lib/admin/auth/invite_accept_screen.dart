@@ -46,14 +46,19 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
   }
 
   void _loadToken() {
-    // Try to get token from URL query or route arguments
     final uri = Uri.base;
     final token = uri.queryParameters['token'];
+    print('[InviteAcceptScreen] Extracted token from URL: $token');
     setState(() {
       _token = token;
     });
     if (token != null && token.isNotEmpty) {
       _fetchInvite(token);
+    } else {
+      setState(() {
+        _loading = false;
+        _error = "No invitation token in the URL.";
+      });
     }
   }
 
@@ -63,20 +68,22 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
       _error = null;
       _inviteData = null;
     });
+    print('[InviteAcceptScreen] _fetchInvite: token=$token');
     try {
       final doc = await Provider.of<FirestoreService>(context, listen: false)
           .getFranchiseeInvitationByToken(token);
+      print('[InviteAcceptScreen] Fetched doc: $doc');
       if (doc == null) {
-        setState(() => _error = AppLocalizations.of(context)!.inviteNotFound);
+        print('[InviteAcceptScreen] No invite found for token');
+        setState(() => _error = "Invitation not found or expired."); // fallback
         return;
       }
       if (doc['status'] == 'revoked') {
-        setState(() => _error = AppLocalizations.of(context)!.inviteRevoked);
+        setState(() => _error = "Invitation was revoked.");
         return;
       }
       if (doc['status'] == 'accepted') {
-        setState(
-            () => _error = AppLocalizations.of(context)!.inviteAlreadyAccepted);
+        setState(() => _error = "Invitation already accepted.");
         return;
       }
       setState(() {
@@ -84,6 +91,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         _isNewUser = doc['isNewUser'] == true;
       });
     } catch (e, st) {
+      print('[InviteAcceptScreen] Exception: $e\n$st');
       await ErrorLogger.log(
         message: 'Invite fetch failed: $e',
         stack: st.toString(),
@@ -93,7 +101,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         contextData: {'token': token},
       );
       setState(() {
-        _error = AppLocalizations.of(context)!.failedToLoadData;
+        _error = "Failed to load invitation data.";
       });
     } finally {
       setState(() => _loading = false);
