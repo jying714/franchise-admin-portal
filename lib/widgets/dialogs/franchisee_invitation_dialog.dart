@@ -28,6 +28,7 @@ class _FranchiseeInvitationDialogState
 
   // Adjust these roles as appropriate
   static const _roleOptions = [
+    'hq_owner',
     'owner',
     'admin',
     'manager',

@@ -470,6 +470,7 @@ export const setUserRole = functions.https.onCall(
 
 const VALID_ROLES = [
   "platform_owner",
+  "hq_owner",
   "owner",
   "developer",
   "admin",
@@ -545,8 +546,8 @@ async function sendOnboardingEmail({
   await sgMail.send({
     to: email,
     from: {
-      name: "Franchise Admin Portal",
-      email: "noreply@your-portal-domain.com", // <-- Change this!
+      name: "Joshua Yingling",
+      email: "JoshuaYingling@FranchiseHQ.io", // <-- Change this!
     },
     subject,
     html,
@@ -601,7 +602,7 @@ export const inviteAndSetRole = functions.https.onCall(
         typeof err === "object" &&
         err !== null &&
         "code" in err &&
-        (err as { code?: string }).code === "auth/user-not-found"
+        (err).code === "auth/user-not-found"
       ) {
         if (!password) {
           throw new functions.https.HttpsError(
@@ -626,7 +627,7 @@ export const inviteAndSetRole = functions.https.onCall(
           "internal",
           "Error fetching or creating user: " +
             (typeof err === "object" && err !== null && "message" in err ?
-              (err as { message?: string }).message :
+              (err).message :
               String(err))
         );
       }
@@ -636,8 +637,8 @@ export const inviteAndSetRole = functions.https.onCall(
     await admin.auth().setCustomUserClaims(userRecord.uid, {roles: [role]});
 
     // --- Write/merge user doc in 'users' ---
-    const userDocRef = admin.firestore().collection(
-      "users").doc(userRecord.uid);
+    const userDocRef = admin.firestore().collection("users")
+      .doc(userRecord.uid);
     const userDoc = await userDocRef.get();
 
     if (!userDoc.exists) {
@@ -665,11 +666,14 @@ export const inviteAndSetRole = functions.https.onCall(
       );
     }
 
-    // --- Generate a secure invite token (
-    // for acceptance, revocation, audit) ---
+    // --- Generate a secure invite token ---
     const token = admin.firestore().collection(INVITATION_COLLECTION).doc().id;
     const inviterUserId = context.auth.uid;
     const now = admin.firestore.FieldValue.serverTimestamp();
+    // Add expiresAt (7 days from now)
+    const expiresAt = admin.firestore.Timestamp.fromDate(
+      new Date(Date.now() + 1000 * 60 * 60 * 24 * 7)
+    );
 
     // --- Build onboarding invite link (front-end route must handle this) ---
     const inviteUrl = `${APP_BASE_URL}/invite-accept?token=${token}`;
@@ -680,12 +684,13 @@ export const inviteAndSetRole = functions.https.onCall(
       role,
       inviterUserId,
       invitedUserId: userRecord.uid,
-      status: "pending", // revoked/accepted handled by other functions
+      status: "pending",
       token,
       createdAt: now,
       lastSentAt: now,
       isNewUser,
       inviteUrl,
+      expiresAt, // <-- Added expiry here
       ...(franchiseName && {franchiseName}),
       ...(brandId && {brandId}),
       ...extraMeta,
@@ -722,6 +727,7 @@ export const inviteAndSetRole = functions.https.onCall(
     };
   }
 );
+
 
 // === Revocation Function ===
 /**
@@ -768,33 +774,49 @@ export const acceptInvitation = functions.https.onCall(
   async (data, context) => {
     if (!context.auth) {
       throw new functions.https.HttpsError(
-        "unauthenticated", "Authentication required.");
+        "unauthenticated", "Authentication required."
+      );
     }
     const {token} = data;
     if (!token) {
       throw new functions.https.HttpsError(
-        "invalid-argument", "Token required.");
+        "invalid-argument", "Token required."
+      );
     }
     // Fetch invite doc
-    const inviteDocRef = admin.firestore().collection(
-      INVITATION_COLLECTION).doc(token);
+    const inviteDocRef = admin.firestore()
+      .collection(INVITATION_COLLECTION)
+      .doc(token);
     const inviteDoc = await inviteDocRef.get();
     if (!inviteDoc.exists) {
       throw new functions.https.HttpsError(
-        "not-found", "Invitation not found.");
+        "not-found", "Invitation not found."
+      );
     }
     const inviteData = inviteDoc.data();
     if (!inviteData) {
       throw new functions.https.HttpsError(
-        "not-found", "Invitation not found.");
+        "not-found", "Invitation not found."
+      );
+    }
+    // --- Expiry logic ---
+    if (
+      inviteData.expiresAt &&
+      inviteData.expiresAt.toDate() < new Date()
+    ) {
+      throw new functions.https.HttpsError(
+        "failed-precondition", "Invitation has expired."
+      );
     }
     if (inviteData.status === "revoked") {
       throw new functions.https.HttpsError(
-        "failed-precondition", "Invitation has been revoked.");
+        "failed-precondition", "Invitation has been revoked."
+      );
     }
     if (inviteData.status === "accepted") {
       throw new functions.https.HttpsError(
-        "already-exists", "Invitation has already been accepted.");
+        "already-exists", "Invitation has already been accepted."
+      );
     }
     // Mark invitation as accepted
     await inviteDocRef.update({
@@ -803,8 +825,9 @@ export const acceptInvitation = functions.https.onCall(
       acceptedBy: context.auth.uid,
     });
     // Update user doc
-    const userDocRef = admin.firestore().collection(
-      "users").doc(context.auth.uid);
+    const userDocRef = admin.firestore()
+      .collection("users")
+      .doc(context.auth.uid);
     await userDocRef.set(
       {
         status: "active",

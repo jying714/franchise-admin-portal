@@ -55,6 +55,8 @@ class FirestoreService {
   String get _categories => AppConfig.categoriesCollection;
 
   final functions = FirebaseFunctions.instance;
+  firestore.CollectionReference get invitationCollection =>
+      _db.collection('franchisee_invitations');
 
   /// Get all ingredient metadata, with in-memory caching.
   Future<List<IngredientMetadata>> getAllIngredientMetadata(String franchiseId,
@@ -148,6 +150,45 @@ class FirestoreService {
 
     collectIds(customizations);
     return getAllergensForIngredientIds(franchiseId, ingredientIds);
+  }
+
+  // === INVITE USERS ===
+  // Fetch invite data by token
+  Future<Map<String, dynamic>?> getFranchiseeInvitationByToken(
+      String token) async {
+    final snap = await invitationCollection.doc(token).get();
+    final data = snap.data();
+    if (data == null) return null;
+    return {
+      ...(data as Map<Object?, Object?>)
+          .map((k, v) => MapEntry(k.toString(), v)),
+      'id': snap.id,
+    };
+  }
+
+  // On acceptance of invite create new profile / fill franchise ID field
+  /// Creates a new franchise profile.
+  /// Returns the franchiseId (doc id).
+  Future<String> createFranchiseProfile({
+    required Map<String, dynamic> franchiseData,
+    required String invitedUserId,
+  }) async {
+    final doc = await _db.collection('franchises').add(franchiseData);
+    // Update the user document with this franchise (if needed)
+    await _db.collection('users').doc(invitedUserId).set({
+      'franchiseIds': firestore.FieldValue.arrayUnion([doc.id]),
+      'defaultFranchise': doc.id,
+    }, firestore.SetOptions(merge: true));
+    return doc.id;
+  }
+
+  // Call cloud function to accept invitation
+  Future<void> callAcceptInvitationFunction(String token) async {
+    // This assumes you use Firebase Functions callable, e.g. with cloud_functions
+    // (You can use your own wrapper if preferred)
+    final functions = FirebaseFunctions.instance;
+    final acceptInvite = functions.httpsCallable('acceptInvitation');
+    await acceptInvite({'token': token});
   }
 
   // === USERS (GLOBAL, INDUSTRY STANDARD) ===
@@ -2749,8 +2790,6 @@ class FirestoreService {
   }
 
   /// Invitation collection
-  firestore.CollectionReference get invitationCollection =>
-      _db.collection('franchisee_invitations');
 
   /// Fetch all invitations (optionally filter by status, inviter, email, etc.)
   Future<List<FranchiseeInvitation>> fetchInvitations({

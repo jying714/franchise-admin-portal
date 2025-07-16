@@ -34,6 +34,8 @@ import 'package:franchise_admin_portal/admin/owner/platform_owner_dashboard_scre
 import 'package:franchise_admin_portal/core/providers/franchisee_invitation_provider.dart';
 import 'package:franchise_admin_portal/widgets/financials/franchisee_invitation_service.dart';
 import 'package:franchise_admin_portal/admin/profile/universal_profile_screen.dart';
+import 'package:franchise_admin_portal/admin/auth/invite_accept_screen.dart';
+import 'package:franchise_admin_portal/admin/profile/franchise_onboarding_screen.dart';
 
 void main() {
   runZonedGuarded(() async {
@@ -215,6 +217,20 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
                 child: const PayoutListScreen(),
               ),
           '/profile': (context) => const UniversalProfileScreen(),
+          '/invite-accept': (context) => const InviteAcceptScreen(),
+          '/franchise-onboarding': (context) {
+            final args = ModalRoute.of(context)!.settings.arguments as Map?;
+            final token = args?['token'] as String?;
+            if (token == null || token.isEmpty) {
+              // Optionally handle error/redirect
+              return Scaffold(
+                appBar: AppBar(title: const Text('Invalid Invite')),
+                body: const Center(
+                    child: Text('Invalid or missing invitation token.')),
+              );
+            }
+            return FranchiseOnboardingScreen(inviteToken: token);
+          },
         },
         initialRoute: '/post-login-gate',
         home: null,
