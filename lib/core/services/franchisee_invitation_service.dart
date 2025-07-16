@@ -204,7 +204,7 @@ class FranchiseeInvitationService {
     throw UnimplementedError('Bulk invitation is a planned feature.');
   }
 
-  /// Export invitations (not yet implemented)
+  /// Export invitatons (not yet implemented)
   Future<void> exportInvitations() async {
     throw UnimplementedError('Export invitations is a planned feature.');
   }

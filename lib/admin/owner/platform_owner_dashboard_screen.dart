@@ -134,21 +134,6 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
                   color: Colors.white, size: 20),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Chip(
-              label: Text(
-                loc.platformOwner,
-                style: TextStyle(
-                  color: colorScheme.onPrimary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              backgroundColor: colorScheme.primary,
-              avatar: const Icon(Icons.verified_user,
-                  color: Colors.white, size: 20),
-            ),
-          )
         ],
       ),
       body: Padding(
