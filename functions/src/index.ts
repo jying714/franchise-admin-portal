@@ -677,7 +677,7 @@ export const inviteAndSetRole = functions.https.onCall(
     );
 
     // --- Build onboarding invite link (front-end route must handle this) ---
-    const inviteUrl = `${APP_BASE_URL}/invite-accept?token=${token}`;
+    const inviteUrl = `${APP_BASE_URL}/#/invite-accept?token=${token}`;
 
     // --- Create invitation record in Firestore ---
     const invitationDoc = {
