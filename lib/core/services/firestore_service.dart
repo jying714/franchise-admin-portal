@@ -29,6 +29,7 @@ import 'package:franchise_admin_portal/core/models/report.dart';
 import 'package:franchise_admin_portal/core/models/invoice.dart';
 import 'package:franchise_admin_portal/core/models/bank_account.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:franchise_admin_portal/core/models/franchisee_invitation.dart';
 
 class FirestoreService {
   final firestore.FirebaseFirestore _db = firestore.FirebaseFirestore.instance;
@@ -2715,6 +2716,172 @@ class FirestoreService {
       'attached_files': firestore.FieldValue.arrayUnion([attachment]),
       'updated_at': firestore.FieldValue.serverTimestamp(),
     });
+  }
+
+  /// Invitation collection
+  firestore.CollectionReference get invitationCollection =>
+      _db.collection('franchisee_invitations');
+
+  /// Fetch all invitations (optionally filter by status, inviter, email, etc.)
+  Future<List<FranchiseeInvitation>> fetchInvitations({
+    String? status,
+    String? inviterUserId,
+    String? email,
+  }) async {
+    try {
+      firestore.Query query = invitationCollection;
+      if (status != null) {
+        query = query.where('status', isEqualTo: status);
+      }
+      if (inviterUserId != null) {
+        query = query.where('inviterUserId', isEqualTo: inviterUserId);
+      }
+      if (email != null) {
+        query = query.where('email', isEqualTo: email);
+      }
+      final snap = await query.orderBy('createdAt', descending: true).get();
+      return snap.docs.map((doc) => FranchiseeInvitation.fromDoc(doc)).toList();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to fetch invitations',
+        stack: stack.toString(),
+        source: 'FirestoreService.fetchInvitations',
+        screen: 'FranchiseeInvitation',
+        contextData: {
+          'exception': e.toString(),
+        },
+      );
+      rethrow;
+    }
+  }
+
+  /// Listen to all invitations (stream for reactive UI)
+  Stream<List<FranchiseeInvitation>> invitationStream({
+    String? status,
+    String? inviterUserId,
+  }) {
+    firestore.Query query = invitationCollection;
+    if (status != null) {
+      query = query.where('status', isEqualTo: status);
+    }
+    if (inviterUserId != null) {
+      query = query.where('inviterUserId', isEqualTo: inviterUserId);
+    }
+    return query.orderBy('createdAt', descending: true).snapshots().map(
+        (snap) =>
+            snap.docs.map((doc) => FranchiseeInvitation.fromDoc(doc)).toList());
+  }
+
+  /// Fetch invitation by ID (returns null if not found)
+  Future<FranchiseeInvitation?> fetchInvitationById(String id) async {
+    try {
+      final doc = await invitationCollection.doc(id).get();
+      if (!doc.exists) return null;
+      return FranchiseeInvitation.fromDoc(doc);
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to fetch invitation by id',
+        stack: stack.toString(),
+        source: 'FirestoreService.fetchInvitationById',
+        screen: 'FranchiseeInvitation',
+        contextData: {'exception': e.toString(), 'id': id},
+      );
+      rethrow;
+    }
+  }
+
+  /// Edit (patch) invitation metadata (admin usage only)
+  Future<void> updateInvitation(String id, Map<String, dynamic> data) async {
+    try {
+      await invitationCollection.doc(id).update(data);
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to update invitation',
+        stack: stack.toString(),
+        source: 'FirestoreService.updateInvitation',
+        screen: 'FranchiseeInvitation',
+        contextData: {'exception': e.toString(), 'id': id, 'data': data},
+      );
+      rethrow;
+    }
+  }
+
+  /// Cancel or revoke an invitation (changes status, does not hard-delete)
+  Future<void> cancelInvitation(String id, {String? revokedByUserId}) async {
+    try {
+      await invitationCollection.doc(id).update({
+        'status': 'revoked',
+        if (revokedByUserId != null) 'revokedByUserId': revokedByUserId,
+        'revokedAt': firestore.Timestamp.now(),
+      });
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to cancel/revoke invitation',
+        stack: stack.toString(),
+        source: 'FirestoreService.cancelInvitation',
+        screen: 'FranchiseeInvitation',
+        contextData: {
+          'exception': e.toString(),
+          'id': id,
+          'revokedBy': revokedByUserId
+        },
+      );
+      rethrow;
+    }
+  }
+
+  /// Delete an invitation (admin: hard delete)
+  Future<void> deleteInvitation(String id) async {
+    try {
+      await invitationCollection.doc(id).delete();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to delete invitation',
+        stack: stack.toString(),
+        source: 'FirestoreService.deleteInvitation',
+        screen: 'FranchiseeInvitation',
+        contextData: {'exception': e.toString(), 'id': id},
+      );
+      rethrow;
+    }
+  }
+
+  /// Mark invitation as expired (set status, for automatic cleanup)
+  Future<void> expireInvitation(String id) async {
+    try {
+      await invitationCollection.doc(id).update({
+        'status': 'expired',
+        'expiredAt': firestore.Timestamp.now(),
+      });
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to expire invitation',
+        stack: stack.toString(),
+        source: 'FirestoreService.expireInvitation',
+        screen: 'FranchiseeInvitation',
+        contextData: {'exception': e.toString(), 'id': id},
+      );
+      rethrow;
+    }
+  }
+
+  /// Mark invitation as re-sent (admin or automated resend)
+  Future<void> markInvitationResent(String id) async {
+    try {
+      await invitationCollection.doc(id).update({
+        'status': 'sent',
+        'lastSentAt': firestore.Timestamp.now(),
+      });
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to mark invitation as resent',
+        stack: stack.toString(),
+        source: 'FirestoreService.markInvitationResent',
+        screen: 'FranchiseeInvitation',
+        contextData: {'exception': e.toString(), 'id': id},
+      );
+      rethrow;
+    }
   }
 }
 

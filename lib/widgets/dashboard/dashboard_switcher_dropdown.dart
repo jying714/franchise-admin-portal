@@ -19,8 +19,12 @@ class DashboardSwitcherDropdown extends StatelessWidget {
     final roles = user?.roles ?? [];
 
     // Only allow for hq_owner, hq_manager, developer
-    if (!roles
-        .any((r) => ['hq_owner', 'hq_manager', 'developer'].contains(r))) {
+    if (!roles.any((r) => [
+          'platform_owner',
+          'hq_owner',
+          'hq_manager',
+          'developer'
+        ].contains(r))) {
       return const SizedBox.shrink();
     }
 
@@ -42,6 +46,12 @@ class DashboardSwitcherDropdown extends StatelessWidget {
           key: 'hq',
           label: loc.ownerHQDashboardTitle ?? 'HQ Dashboard',
           route: '/hq-owner/dashboard', // <-- matches your route
+        ),
+      if (roles.contains('platform_owner'))
+        _DashboardTarget(
+          key: 'platform_owner',
+          label: loc.platformOwnerDashboardTitle ?? 'Platform Owner Dashboard',
+          route: '/platform-owner/dashboard',
         ),
     ];
 

@@ -51,3 +51,4 @@ package-lock.json
 # Secret and service files
 serviceAccountKey.json
 setCustomClaim.js
+send_test_email.js

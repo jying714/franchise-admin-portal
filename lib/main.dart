@@ -30,6 +30,9 @@ import 'package:franchise_admin_portal/admin/hq_owner/invoice_list_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/invoice_detail_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/payout_list_screen.dart';
 import 'package:franchise_admin_portal/core/providers/payout_filter_provider.dart';
+import 'package:franchise_admin_portal/admin/owner/platform_owner_dashboard_screen.dart';
+import 'package:franchise_admin_portal/core/providers/franchisee_invitation_provider.dart';
+import 'package:franchise_admin_portal/core/services/franchisee_invitation_service.dart';
 
 void main() {
   runZonedGuarded(() async {
@@ -114,6 +117,9 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
         },
         initialRoute: '/',
         home: null,
+        onUnknownRoute: (settings) => MaterialPageRoute(
+          builder: (_) => const LandingPage(),
+        ),
       );
     }
 
@@ -133,6 +139,13 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
           initialData: null,
         ),
         ChangeNotifierProvider(create: (_) => UserProfileNotifier()),
+        ChangeNotifierProvider(
+          create: (_) => FranchiseeInvitationProvider(
+            service: FranchiseeInvitationService(
+              firestoreService: Provider.of<FirestoreService>(_, listen: false),
+            ),
+          ),
+        ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -168,6 +181,8 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
             print('[main.dart] /hq-owner/dashboard route built');
             return const FranchiseGate(child: OwnerHQDashboardScreen());
           },
+          '/platform-owner/dashboard': (_) =>
+              const PlatformOwnerDashboardScreen(),
           '/unauthorized': (_) {
             print('[main.dart] /unauthorized route built');
             return Scaffold(

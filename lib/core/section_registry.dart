@@ -99,13 +99,13 @@ final List<DashboardSection> sectionRegistry = [
     builder: (_) => const StaffAccessScreen(),
     sidebarOrder: 8,
   ),
-  DashboardSection(
-    key: 'featureSettings',
-    title: 'Feature Toggles',
-    icon: Icons.toggle_on_outlined,
-    builder: (_) => const FeatureSettingsScreen(),
-    sidebarOrder: 9,
-  ),
+  // DashboardSection(
+  //   key: 'featureSettings',
+  //   title: 'Feature Toggles',
+  //   icon: Icons.toggle_on_outlined,
+  //   builder: (_) => const FeatureSettingsScreen(),
+  //   sidebarOrder: 9,
+  // ),
   DashboardSection(
     key: 'chatManagement',
     title: 'Support Chat',
@@ -113,14 +113,14 @@ final List<DashboardSection> sectionRegistry = [
     builder: (_) => const ChatManagementScreen(),
     sidebarOrder: 10,
   ),
-  DashboardSection(
-    key: 'errorLogs',
-    title: 'Error Logs',
-    icon: Icons.bug_report,
-    builder: (_) => const ErrorLogsScreen(),
-    sidebarOrder: 11,
-    showInSidebar: true,
-  ),
+  // DashboardSection(
+  //   key: 'errorLogs',
+  //   title: 'Error Logs',
+  //   icon: Icons.bug_report,
+  //   builder: (_) => const ErrorLogsScreen(),
+  //   sidebarOrder: 11,
+  //   showInSidebar: true,
+  // ),
   // ---- Plugin or Franchise-specific Section Example ----
   // DashboardSection(
   //   key: 'customPluginSection',

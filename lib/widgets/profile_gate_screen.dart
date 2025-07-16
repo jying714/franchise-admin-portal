@@ -174,7 +174,22 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
       final roles = user.roles!;
       print(
           '[ProfileGateScreen] User loaded: email=${user.email}, roles=$roles, isActive=${user.isActive}');
-      if (roles.contains('hq_owner') || roles.contains('hq_manager')) {
+      // === Platform Owner: Top Priority ===
+      if (roles.contains('platform_owner')) {
+        print(
+            '[ProfileGateScreen] Detected platform_owner role, routing to /platform-owner/dashboard');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          print(
+              '[ProfileGateScreen] (Platform Owner) Calling Navigator.pushReplacementNamed("/platform-owner/dashboard")');
+          Navigator.of(context)
+              .pushReplacementNamed('/platform-owner/dashboard');
+        });
+        return _loadingScreen(
+          loc.redirectingToPlatformOwnerDashboard ??
+              "Redirecting to Platform Owner Dashboard...",
+          showSpinner: true,
+        );
+      } else if (roles.contains('hq_owner') || roles.contains('hq_manager')) {
         print(
             '[ProfileGateScreen] Detected hq_owner/hq_manager role, routing to /hq-owner/dashboard');
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -200,6 +215,8 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
           showSpinner: true,
         );
       } else if (roles.contains('owner') || roles.contains('manager')) {
+        // ... Franchise logic remains unchanged ...
+
         final franchiseIds = user.franchiseIds ?? [];
         print('[ProfileGateScreen] OWNER/MANAGER: franchiseIds=$franchiseIds');
 

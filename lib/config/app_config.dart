@@ -7,7 +7,7 @@ class AppConfig {
   static const String cartCollection = 'cart';
   static const String bannersCollection = 'banners';
   static const String feedbackCollection = 'feedback';
-  static const String inventoryCollection = 'inventory';
+  static const String inventoryCollection = 'inventory_transactions';
   static const String supportChatsCollection = 'support_chats';
   static const String promotionsCollection = 'promotions';
   static const String configCollection = 'config';

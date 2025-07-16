@@ -19,6 +19,7 @@ import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_selector.dart';
+import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({Key? key}) : super(key: key);
@@ -99,7 +100,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       );
       return Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.red,
+          backgroundColor: DesignTokens.primaryColor,
           title: Text("ERROR: No sections found"),
         ),
         body: Center(

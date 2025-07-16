@@ -1,9 +1,13 @@
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import cors from "cors";
+import * as sgMail from "@sendgrid/mail";
 
 // *** REQUIRED: initialize the admin app ***
 admin.initializeApp();
+
+const SENDGRID_API_KEY = functions.config().sendgrid.key;
+const APP_BASE_URL = "https://franchisehq.io";
 
 const corsHandler = cors({
   origin: (origin, callback) => {
@@ -120,7 +124,8 @@ export const rollupAnalyticsOnDemand = functions.https.onCall(
       );
     }
     const roles: string[] = context.auth.token.roles || [];
-    if (!roles.some((r) => ["owner", "developer", "admin"].includes(r))) {
+    if (!roles.some((r) => [
+      "platform_owner", "owner", "developer", "admin"].includes(r))) {
       throw new functions.https.HttpsError(
         "permission-denied",
         "Insufficient privileges"
@@ -295,7 +300,8 @@ export const forecastCashFlowOnDemand = functions.https.onCall(
       );
     }
     const roles: string[] = context.auth.token.roles || [];
-    if (!roles.some((r) => ["owner", "developer", "admin"].includes(r))) {
+    if (!roles.some((r) => [
+      "platform_owner", "owner", "developer", "admin"].includes(r))) {
       throw new functions.https.HttpsError(
         "permission-denied",
         "Insufficient privileges"
@@ -366,7 +372,8 @@ export const setClaimsForExistingUsers = functions.https.onCall(
       );
     }
     const callerRoles: string[] = context.auth.token.roles || [];
-    if (!callerRoles.some((r) => ["owner", "developer"].includes(r))) {
+    if (!callerRoles.some((r) => [
+      "platform_owner", "owner", "developer"].includes(r))) {
       throw new functions.https.HttpsError(
         "permission-denied",
         "Must be owner or developer."
@@ -430,7 +437,8 @@ export const setUserRole = functions.https.onCall(
         "unauthenticated", "Must be signed in.");
     }
     const callerRoles: string[] = context.auth.token.roles || [];
-    if (!callerRoles.some((r) => ["owner", "developer", "admin"].includes(r))) {
+    if (!callerRoles.some((r) => [
+      "platform_owner", "owner", "developer", "admin"].includes(r))) {
       throw new functions.https.HttpsError(
         "permission-denied", "Insufficient privileges.");
     }
@@ -460,12 +468,8 @@ export const setUserRole = functions.https.onCall(
   }
 );
 
-/**
- * Callable function to invite a new user by email.
- * Creates the user if they don't exist, sets role and sends invite.
- * Only callable by owner, developer, or admin.
- */
 const VALID_ROLES = [
+  "platform_owner",
   "owner",
   "developer",
   "admin",
@@ -474,8 +478,88 @@ const VALID_ROLES = [
   "customer",
 ];
 
+const INVITATION_COLLECTION = "franchisee_invitations";
+
+/**
+ * Helper: Send onboarding/invite email via SendGrid.
+ */
+async function sendOnboardingEmail({
+  email,
+  inviteUrl,
+  franchiseName,
+  isNewUser,
+  token,
+}: {
+  email: string;
+  inviteUrl: string;
+  franchiseName?: string;
+  isNewUser: boolean;
+  token: string;
+}) {
+  sgMail.setApiKey(SENDGRID_API_KEY);
+
+  const subject = isNewUser ?
+    "You're invited to join the Franchise Portal" :
+    "Access granted: Franchise Admin Portal";
+
+  const html = `
+  <div style="font-family: Arial, sans-serif;
+   max-width: 500px; margin: 0 auto;">
+    <h2>Welcome to the Franchise Admin Portal!</h2>
+    <p>
+      You've been invited to join as ${
+  franchiseName ?
+    `the owner of <b>${franchiseName}</b>` :
+    "a franchisee"
+}.
+    </p>
+    <p>
+      Click the button below to ${
+  isNewUser ? "set your password and " : ""
+}accept your invitation and get started:
+    </p>
+    <a href="${inviteUrl}"
+      style="display:inline-block;background:#008CBA;color:#fff;
+      padding:12px 30px;margin:18px 0;border-radius:5px;
+      text-decoration:none;font-weight:bold;">
+      Accept Invitation
+    </a>
+    <p>
+      If the button above doesn't work, copy and
+       paste this link into your browser:
+    </p>
+    <p style="word-break:break-all;">${inviteUrl}</p>
+    <p>
+      If you have questions, reply to this email or contact our support team.
+    </p>
+    <p style="color: #888;">
+      This invite was intended for ${email}. If you didn't expect this,
+      you can safely ignore it.
+    </p>
+    <hr/>
+    <small>Invite code: ${token}</small>
+  </div>
+`;
+
+
+  await sgMail.send({
+    to: email,
+    from: {
+      name: "Franchise Admin Portal",
+      email: "noreply@your-portal-domain.com", // <-- Change this!
+    },
+    subject,
+    html,
+  });
+}
+
+/**
+ * Callable function to invite a new user by email,
+ *  send onboarding invite, and track status.
+ */
 export const inviteAndSetRole = functions.https.onCall(
   async (data, context) => {
+    // --- Permission check ---
     if (
       !context.auth ||
       !context.auth.token ||
@@ -483,22 +567,24 @@ export const inviteAndSetRole = functions.https.onCall(
         context.auth.token.roles &&
         Array.isArray(context.auth.token.roles) &&
         context.auth.token.roles.some((r) =>
-          ["owner", "developer", "admin"].includes(r)
+          ["platform_owner", "owner", "developer", "admin"].includes(r)
         )
       )
     ) {
       throw new functions.https.HttpsError(
         "permission-denied",
-        "Only admins, owners, or developers can invite users."
+        "Only platform owners, admins, owners, or developers can invite users."
       );
     }
 
-    const {email, password, role} = data;
+    // --- Input validation ---
+    const {email, password, role, franchiseName, brandId, ...extraMeta} = data;
+
     if (!email || !role) {
       throw new functions.https.HttpsError(
-        "invalid-argument", "Email and role are required.");
+        "invalid-argument", "Email and role are required."
+      );
     }
-
     if (!VALID_ROLES.includes(role)) {
       throw new functions.https.HttpsError(
         "invalid-argument",
@@ -529,6 +615,7 @@ export const inviteAndSetRole = functions.https.onCall(
         });
         isNewUser = true;
 
+        // (Optional) Send password reset link for onboarding
         try {
           await admin.auth().generatePasswordResetLink(email);
         } catch (emailErr) {
@@ -545,8 +632,10 @@ export const inviteAndSetRole = functions.https.onCall(
       }
     }
 
+    // --- Set custom claims ---
     await admin.auth().setCustomUserClaims(userRecord.uid, {roles: [role]});
 
+    // --- Write/merge user doc in 'users' ---
     const userDocRef = admin.firestore().collection(
       "users").doc(userRecord.uid);
     const userDoc = await userDocRef.get();
@@ -562,8 +651,8 @@ export const inviteAndSetRole = functions.https.onCall(
         {merge: true}
       );
     } else {
-      const data = userDoc.data() || {};
-      const roles = Array.isArray(data.roles) ? data.roles : [];
+      const docData = userDoc.data() || {};
+      const roles = Array.isArray(docData.roles) ? docData.roles : [];
       if (!roles.includes(role)) {
         roles.push(role);
       }
@@ -576,14 +665,157 @@ export const inviteAndSetRole = functions.https.onCall(
       );
     }
 
+    // --- Generate a secure invite token (
+    // for acceptance, revocation, audit) ---
+    const token = admin.firestore().collection(INVITATION_COLLECTION).doc().id;
+    const inviterUserId = context.auth.uid;
+    const now = admin.firestore.FieldValue.serverTimestamp();
+
+    // --- Build onboarding invite link (front-end route must handle this) ---
+    const inviteUrl = `${APP_BASE_URL}/invite-accept?token=${token}`;
+
+    // --- Create invitation record in Firestore ---
+    const invitationDoc = {
+      email,
+      role,
+      inviterUserId,
+      invitedUserId: userRecord.uid,
+      status: "pending", // revoked/accepted handled by other functions
+      token,
+      createdAt: now,
+      lastSentAt: now,
+      isNewUser,
+      inviteUrl,
+      ...(franchiseName && {franchiseName}),
+      ...(brandId && {brandId}),
+      ...extraMeta,
+    };
+
+    await admin
+      .firestore()
+      .collection(INVITATION_COLLECTION)
+      .doc(token)
+      .set(invitationDoc, {merge: true});
+
+    // --- Send onboarding/invite email ---
+    try {
+      await sendOnboardingEmail({
+        email,
+        inviteUrl,
+        franchiseName,
+        isNewUser,
+        token,
+      });
+    } catch (emailErr) {
+      console.error("Failed to send onboarding/invite email:", emailErr);
+      // Optionally: Mark invite as failed-to-send in Firestore
+    }
+
+    // --- Return result ---
     return {
       status: "ok",
       uid: userRecord.uid,
       role,
       isNewUser,
+      token,
+      inviteUrl,
     };
   }
 );
+
+// === Revocation Function ===
+/**
+ * Callable function to revoke an invitation (by token).
+ * Sets status to 'revoked'. Only privileged roles can revoke.
+ */
+export const revokeInvitation = functions.https.onCall(
+  async (data, context) => {
+    if (
+      !context.auth ||
+      !context.auth.token ||
+      !(
+        context.auth.token.roles &&
+        Array.isArray(context.auth.token.roles) &&
+        context.auth.token.roles.some((r) =>
+          ["platform_owner", "owner", "developer", "admin"].includes(r)
+        )
+      )
+    ) {
+      throw new functions.https.HttpsError(
+        "permission-denied", "Insufficient privileges");
+    }
+    const {token} = data;
+    if (!token) {
+      throw new functions.https.HttpsError(
+        "invalid-argument", "Token required.");
+    }
+    await admin.firestore().collection(INVITATION_COLLECTION).doc(
+      token).update({
+      status: "revoked",
+      revokedAt: admin.firestore.FieldValue.serverTimestamp(),
+      revokedBy: context.auth.uid,
+    });
+    return {status: "ok", token};
+  }
+);
+
+// === Acceptance Function ===
+/**
+ * Callable function to accept an invitation by token.
+ * Sets status to 'accepted', updates user doc.
+ */
+export const acceptInvitation = functions.https.onCall(
+  async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated", "Authentication required.");
+    }
+    const {token} = data;
+    if (!token) {
+      throw new functions.https.HttpsError(
+        "invalid-argument", "Token required.");
+    }
+    // Fetch invite doc
+    const inviteDocRef = admin.firestore().collection(
+      INVITATION_COLLECTION).doc(token);
+    const inviteDoc = await inviteDocRef.get();
+    if (!inviteDoc.exists) {
+      throw new functions.https.HttpsError(
+        "not-found", "Invitation not found.");
+    }
+    const inviteData = inviteDoc.data();
+    if (!inviteData) {
+      throw new functions.https.HttpsError(
+        "not-found", "Invitation not found.");
+    }
+    if (inviteData.status === "revoked") {
+      throw new functions.https.HttpsError(
+        "failed-precondition", "Invitation has been revoked.");
+    }
+    if (inviteData.status === "accepted") {
+      throw new functions.https.HttpsError(
+        "already-exists", "Invitation has already been accepted.");
+    }
+    // Mark invitation as accepted
+    await inviteDocRef.update({
+      status: "accepted",
+      acceptedAt: admin.firestore.FieldValue.serverTimestamp(),
+      acceptedBy: context.auth.uid,
+    });
+    // Update user doc
+    const userDocRef = admin.firestore().collection(
+      "users").doc(context.auth.uid);
+    await userDocRef.set(
+      {
+        status: "active",
+        invitationAcceptedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      {merge: true}
+    );
+    return {status: "ok", token};
+  }
+);
+
 
 /**
  * Callable function to ensure user profile exists.
@@ -601,7 +833,7 @@ export const ensureUserProfile = functions.https.onCall(
         context.auth.token.roles &&
         Array.isArray(context.auth.token.roles) &&
         context.auth.token.roles.some((r) =>
-          ["owner", "developer", "admin"].includes(r)
+          ["platform_owner", "owner", "developer", "admin"].includes(r)
         )
       )
     ) {
