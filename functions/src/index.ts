@@ -1,7 +1,8 @@
 import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import cors from "cors";
-import * as sgMail from "@sendgrid/mail";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const sgMail = require("@sendgrid/mail");
 
 // *** REQUIRED: initialize the admin app ***
 admin.initializeApp();
