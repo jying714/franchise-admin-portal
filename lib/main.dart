@@ -117,6 +117,7 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
           '/': (_) => const LandingPage(),
           '/landing': (_) => const LandingPage(),
           '/sign-in': (_) => const SignInScreen(),
+          '/invite-accept': (_) => const InviteAcceptScreen(),
         },
         initialRoute: '/',
         home: null,
