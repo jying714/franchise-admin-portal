@@ -319,8 +319,10 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
     final userEmailLower = (currentUser?.email ?? '').toLowerCase();
     final isLoggedIn = currentUser != null;
     print('isLoggedIn: $isLoggedIn');
-    final isUidMatch =
-        isLoggedIn && inviteUid != null && currentUser.uid == inviteUid;
+    final isUidMatch = isLoggedIn &&
+        inviteUid != null &&
+        currentUser != null &&
+        currentUser.uid == inviteUid;
 
     final isEmailMatch = isLoggedIn && userEmailLower == inviteEmailLower;
     print('inviteEmail: $inviteEmail');
