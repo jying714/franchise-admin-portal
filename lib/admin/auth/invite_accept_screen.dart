@@ -282,6 +282,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
     }
 
     if (_inviteData == null) {
+      print("DEBUG: _inviteData is null in _buildInvitePanel");
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -300,7 +301,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
 // Centralized invite account logic
     final fb_auth.User? currentUser = fb_auth.FirebaseAuth.instance.currentUser;
     final inviteUid = _inviteData?['invitedUserId'] as String?;
-    final inviteEmailLower = inviteEmail.toLowerCase();
+    final inviteEmailLower = (inviteEmail ?? '').toLowerCase();
     final userEmailLower = (currentUser?.email ?? '').toLowerCase();
     final isLoggedIn = currentUser != null;
     final isUidMatch = isLoggedIn && currentUser!.uid == inviteUid;
