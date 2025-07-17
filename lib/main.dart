@@ -70,7 +70,7 @@ void main() {
       );
     };
 
-    runApp(const FranchiseAdminPortalApp());
+    runApp(const FranchiseAuthBootstrap());
   }, (Object error, StackTrace stack) async {
     print('[main.dart] runZonedGuarded: Uncaught error: $error');
     await ErrorLogger.log(
@@ -83,8 +83,34 @@ void main() {
   });
 }
 
-class FranchiseAdminPortalApp extends StatelessWidget {
-  const FranchiseAdminPortalApp({super.key});
+/// This widget ensures StreamProvider is in effect and waits for the auth state to resolve
+class FranchiseAuthBootstrap extends StatelessWidget {
+  const FranchiseAuthBootstrap({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        Provider<FirestoreService>.value(value: FirestoreService()),
+        Provider(create: (_) => AnalyticsService()),
+        ChangeNotifierProvider(create: (_) => FranchiseProvider()),
+        ChangeNotifierProvider(create: (_) => AdminUserProvider()),
+        ChangeNotifierProvider(create: (_) => UserProfileNotifier()),
+        // Only one StreamProvider at the very top!
+        StreamProvider<fb_auth.User?>.value(
+          value: fb_auth.FirebaseAuth.instance.authStateChanges(),
+          initialData: null,
+        ),
+      ],
+      child: const FranchiseAuthGate(),
+    );
+  }
+}
+
+class FranchiseAuthGate extends StatelessWidget {
+  const FranchiseAuthGate({super.key});
 
   String _getInitialRouteFromHash() {
     final hash = html.window.location.hash;
@@ -96,23 +122,22 @@ class FranchiseAdminPortalApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthService()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        Provider<FirestoreService>.value(value: FirestoreService()),
-        Provider(create: (_) => AnalyticsService()),
-        StreamProvider<fb_auth.User?>.value(
-          value: fb_auth.FirebaseAuth.instance.authStateChanges(),
-          initialData: null,
+    final fbUser = Provider.of<fb_auth.User?>(context);
+
+    // On web, we may not know the auth state yet on first build.
+    // If currentUser is null AND fbUser is null, wait for the stream.
+    final loading =
+        fbUser == null && fb_auth.FirebaseAuth.instance.currentUser == null;
+    if (loading) {
+      return const MaterialApp(
+        home: Scaffold(
+          body: Center(child: CircularProgressIndicator()),
         ),
-        ChangeNotifierProvider(create: (_) => FranchiseProvider()),
-        ChangeNotifierProvider(create: (_) => AdminUserProvider()),
-        ChangeNotifierProvider(create: (_) => UserProfileNotifier()),
-        // Do NOT put FranchiseeInvitationProvider here!
-      ],
-      child: FranchiseAdminPortalRoot(initialRoute: _getInitialRouteFromHash()),
-    );
+      );
+    }
+
+    // Auth state resolved - continue with app
+    return FranchiseAdminPortalRoot(initialRoute: _getInitialRouteFromHash());
   }
 }
 
