@@ -14,6 +14,7 @@ class User {
   static const String roleFranchisee = 'franchisee';
   static const String roleStoreOwner = 'store_owner';
 
+  final bool? completeProfile;
   final bool isActive;
   final String id;
   final String name;
@@ -54,6 +55,7 @@ class User {
     this.avatarUrl,
     this.isActive = true,
     List<String>? franchiseIds,
+    this.completeProfile,
   })  : addresses = addresses ?? [],
         franchiseIds = franchiseIds ?? <String>[];
 
@@ -81,6 +83,7 @@ class User {
       avatarUrl: data['avatarUrl'],
       isActive: data['isActive'] ?? true,
       franchiseIds: franchiseIdsFromDb,
+      completeProfile: data['completeProfile'],
     );
   }
 
@@ -97,6 +100,7 @@ class User {
       'avatarUrl': avatarUrl,
       'isActive': isActive,
       'franchiseIds': franchiseIds,
+      'completeProfile': completeProfile,
     };
   }
 
@@ -112,6 +116,7 @@ class User {
     String? avatarUrl,
     bool? isActive,
     List<String>? franchiseIds,
+    bool? completeProfile,
   }) {
     return User(
       id: id,
@@ -126,6 +131,7 @@ class User {
       avatarUrl: avatarUrl ?? this.avatarUrl,
       isActive: isActive ?? this.isActive,
       franchiseIds: franchiseIds ?? this.franchiseIds,
+      completeProfile: completeProfile ?? this.completeProfile,
     );
   }
 }

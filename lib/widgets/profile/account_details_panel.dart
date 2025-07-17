@@ -73,7 +73,27 @@ class _AccountDetailsPanelState extends State<AccountDetailsPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[AccountDetailsPanel] loc is null! Localization not available for this context.');
+      // Return a minimal error card or placeholder (never Scaffold from a widget)
+      return Card(
+        color: Colors.red.shade100,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Row(
+            children: [
+              Icon(Icons.error, color: Colors.red),
+              const SizedBox(width: 12),
+              Expanded(
+                  child: Text('Localization missing! [debug]',
+                      style: TextStyle(color: Colors.red))),
+            ],
+          ),
+        ),
+      );
+    }
     final colorScheme = Theme.of(context).colorScheme;
 
     return Card(

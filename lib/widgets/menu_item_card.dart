@@ -125,7 +125,14 @@ class _MenuItemCardState extends State<MenuItemCard> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final isWide = MediaQuery.of(context).size.width > 600;
@@ -156,16 +163,17 @@ class _MenuItemCardState extends State<MenuItemCard> {
                   borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
                   child: widget.menuItem.image != null &&
                           widget.menuItem.image!.isNotEmpty
-                      ? Image.network(
-                          widget.menuItem.image!,
+                      ? SizedBox(
                           width: DesignTokens.menuItemImageWidth,
                           height: DesignTokens.menuItemImageHeight,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Image.asset(
-                            BrandingConfig.defaultPizzaIcon,
-                            width: DesignTokens.menuItemImageWidth,
-                            height: DesignTokens.menuItemImageHeight,
+                          child: Image.network(
+                            widget.menuItem.image!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Image.asset(
+                              BrandingConfig.defaultPizzaIcon,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         )
                       : Image.asset(

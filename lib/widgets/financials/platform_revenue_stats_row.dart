@@ -18,14 +18,39 @@ class PlatformRevenueStatsRow extends StatelessWidget {
   });
 
   String _formatCurrency(BuildContext context, double value) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[_formatCurrency] loc is null! Localization not available for this context.');
+      // Return a sensible fallback string instead of a widget:
+      return value.toStringAsFixed(2); // Or just return '--'
+    }
     // Uses intl/currency formatting per locale if available
     return loc.currencyFormat(value);
   }
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[PlatformRevenueStatsRow] loc is null! Localization not available for this context.');
+      return Card(
+        color: Colors.red.shade100,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Row(
+            children: [
+              Icon(Icons.error, color: Colors.red),
+              const SizedBox(width: 12),
+              Expanded(
+                  child: Text('Localization missing! [debug]',
+                      style: TextStyle(color: Colors.red))),
+            ],
+          ),
+        ),
+      );
+    }
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 

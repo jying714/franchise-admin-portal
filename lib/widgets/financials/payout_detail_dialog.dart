@@ -31,7 +31,12 @@ class _PayoutDetailDialogState extends State<PayoutDetailDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[PayoutDetailDialog] loc is null! Localization not available for this context.');
+      return const SizedBox.shrink();
+    }
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 

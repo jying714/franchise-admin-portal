@@ -299,7 +299,14 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
   }
 
   Widget buildMenuHeaderRow(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final textColor = Theme.of(context).colorScheme.onSurface;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
@@ -512,7 +519,14 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final firestore = Provider.of<FirestoreService>(context, listen: false);
     final user = Provider.of<UserProfileNotifier>(context).user;
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final colorScheme = Theme.of(context).colorScheme;
 
     if (user == null) return _unauthorizedScaffold();

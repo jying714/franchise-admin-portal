@@ -41,7 +41,12 @@ class _InvoiceExportDialogState extends State<InvoiceExportDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[InvoiceExportDialog] loc is null! Localization not available for this context.');
+      return const SizedBox.shrink();
+    }
 
     return AlertDialog(
       title: Text(loc.exportInvoices),
@@ -178,7 +183,9 @@ class _InvoiceExportDialogState extends State<InvoiceExportDialog> {
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.exportFailed)),
+          SnackBar(
+              content: Text(AppLocalizations.of(context)?.exportFailed ??
+                  'Export failed')),
         );
       }
     } finally {

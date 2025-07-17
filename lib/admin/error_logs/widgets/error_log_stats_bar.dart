@@ -18,7 +18,14 @@ class ErrorLogStatsBar extends StatelessWidget {
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final colorScheme = Theme.of(context).colorScheme;
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
 
     Color _chipBg(Color? token, Color fallback) =>
         token ?? fallback.withOpacity(0.12);

@@ -28,7 +28,14 @@ class AlertDetailDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final colorScheme = Theme.of(context).colorScheme;
     final appConfig = AppConfig.instance;
     final fireService = FirestoreService();
@@ -185,7 +192,13 @@ class AlertDetailDialog extends StatelessWidget {
   }
 
   static String _formatDateTime(BuildContext context, DateTime dateTime) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[YourWidget] loc is null! Localization not available for this context.');
+      // Handle gracefully or show fallback string
+      return 'N/A'; // Or any suitable fallback string
+    }
     final d = dateTime;
     return "${d.year}-${_two(d.month)}-${_two(d.day)} ${_two(d.hour)}:${_two(d.minute)}";
   }

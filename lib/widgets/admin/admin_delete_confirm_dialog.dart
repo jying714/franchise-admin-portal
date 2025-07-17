@@ -18,7 +18,14 @@ class AdminDeleteConfirmDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     return AlertDialog(
       title: Text(titleOverride ?? loc.deleteItemsTitle),
       content: Text(

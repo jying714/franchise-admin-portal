@@ -17,7 +17,12 @@ class PayoutStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[PayoutStatusCard] loc is null! Localization not available for this context.');
+      return const SizedBox.shrink();
+    }
     final theme = Theme.of(context);
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;

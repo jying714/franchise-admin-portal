@@ -33,7 +33,16 @@ class _InventoryScreenState extends State<InventoryScreen> {
   Future<void> _addOrEditInventory(String franchiseId, BuildContext context,
       {Inventory? item}) async {
     final firestore = Provider.of<FirestoreService>(context, listen: false);
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[YourWidget] loc is null! Localization not available for this context.');
+      // Optionally, show a SnackBar or dialog here
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text('Localization missing! [debug]'))
+      // );
+      return;
+    }
     final nameController = TextEditingController(text: item?.name ?? '');
     final skuController = TextEditingController(text: item?.sku ?? '');
     final stockController =
@@ -129,7 +138,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
   Future<void> _deleteInventory(
       String franchiseId, BuildContext context, Inventory item) async {
     final firestore = Provider.of<FirestoreService>(context, listen: false);
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[YourWidget] loc is null! Localization not available for this context.');
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text('Localization missing! [debug]'))
+      // );
+      return;
+    }
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -178,7 +195,14 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final firestore = Provider.of<FirestoreService>(context, listen: false);
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final canEdit = _canEdit(context);
 
     return Scaffold(

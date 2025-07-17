@@ -127,7 +127,14 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final adminUser = Provider.of<AdminUserProvider>(context).user;

@@ -51,7 +51,13 @@ class _PayoutsFilterBarState extends State<PayoutsFilterBar> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[PayoutsFilterBar] loc is null! Localization not available for this context.');
+      // Return a placeholder container, not a Scaffold!
+      return SizedBox.shrink();
+    }
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final filterProvider = Provider.of<PayoutFilterProvider>(context);

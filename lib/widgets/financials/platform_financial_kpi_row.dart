@@ -18,13 +18,27 @@ class PlatformFinancialKpiRow extends StatelessWidget {
   });
 
   String _formatCurrency(BuildContext context, double value) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[PlatformFinancialKpiRow] loc is null! Localization not available for this context.');
+      // Return a sensible string fallback, NOT a widget:
+      return '--'; // Or value.toStringAsFixed(2)
+    }
     return loc.currencyFormat(value);
   }
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[Platform financial KIP row BUILD] loc is null! Localization not available for this context.');
+      // Handle gracefully or show fallback UI
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final theme = Theme.of(context);
 
     final kpis = [

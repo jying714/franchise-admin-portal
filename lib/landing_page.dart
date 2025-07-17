@@ -6,6 +6,7 @@ import 'config/design_tokens.dart';
 import 'config/branding_config.dart';
 import 'widgets/empty_state_widget.dart';
 import 'dart:ui';
+import 'package:franchise_admin_portal/widgets/safe_logo_image.dart';
 
 // Demo asset URLs (swap for real URLs in production)
 const heroScreenshot =
@@ -77,8 +78,12 @@ class GlassHero extends StatelessWidget {
                               width: 320,
                               height: 220,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                  color: Colors.grey[100], height: 220),
+                              errorBuilder: (_, __, ___) => Image.asset(
+                                BrandingConfig.bannerPlaceholder,
+                                width: 320,
+                                height: 220,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                         ],
@@ -93,7 +98,14 @@ class GlassHero extends StatelessWidget {
 
   Widget _verticalContent(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final media = MediaQuery.of(context);
     final isMobile = media.size.width < 700;
 
@@ -109,7 +121,11 @@ class GlassHero extends StatelessWidget {
               BrandingConfig.logoUrl,
               height: 68,
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => SizedBox(),
+              errorBuilder: (_, __, ___) => Image.asset(
+                BrandingConfig.logoMain,
+                height: 68,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
         Text(
@@ -226,7 +242,14 @@ class LandingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final colorScheme = Theme.of(context).colorScheme;
     final media = MediaQuery.of(context);
     final isMobile = media.size.width < 700;
@@ -580,11 +603,11 @@ class LandingPage extends StatelessWidget {
               height: 155,
               width: double.infinity,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorBuilder: (_, __, ___) => Image.asset(
+                BrandingConfig.menuItemPlaceholderImage,
                 height: 155,
-                color: Colors.grey[200],
-                child:
-                    Icon(Icons.broken_image, size: 50, color: Colors.grey[400]),
+                width: double.infinity,
+                fit: BoxFit.cover,
               ),
             ),
           ),

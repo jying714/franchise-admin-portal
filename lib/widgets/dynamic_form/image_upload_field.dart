@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:franchise_admin_portal/config/branding_config.dart';
 
 /// Renders an image upload or URL field combo.
 /// Used for admin editing of item preview image.
@@ -69,7 +70,14 @@ class _ImageUploadFieldState extends State<ImageUploadField> {
                   width: 70,
                   height: 70,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
+                  errorBuilder: (_, __, ___) => Image.asset(
+                    BrandingConfig.defaultCategoryIcon,
+                    width: 70,
+                    height: 70,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                        const Icon(Icons.broken_image, size: 40),
+                  ),
                 ),
               ),
             Expanded(

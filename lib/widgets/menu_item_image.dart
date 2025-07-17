@@ -22,36 +22,36 @@ class MenuItemImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Widget imageWidget;
-    if (imageUrl != null && imageUrl!.isNotEmpty) {
-      imageWidget = Image.network(
-        imageUrl!,
-        width: width ?? DesignTokens.menuItemImageWidth,
-        height: height ?? DesignTokens.menuItemImageHeight,
-        fit: fit,
-        errorBuilder: (context, error, stackTrace) => Image.asset(
-          BrandingConfig.defaultPizzaIcon,
-          width: width ?? DesignTokens.menuItemImageWidth,
-          height: height ?? DesignTokens.menuItemImageHeight,
-          fit: fit,
-        ),
-      );
-    } else {
-      imageWidget = Image.asset(
-        BrandingConfig.defaultPizzaIcon,
-        width: width ?? DesignTokens.menuItemImageWidth,
-        height: height ?? DesignTokens.menuItemImageHeight,
-        fit: fit,
-      );
-    }
+    final double w = width ?? DesignTokens.menuItemImageWidth;
+    final double h = height ?? DesignTokens.menuItemImageHeight;
+    final BoxFit boxFit = fit ?? BoxFit.cover;
 
-    // Only wrap in ClipRRect if borderRadius is provided.
+    final image = (imageUrl != null && imageUrl!.isNotEmpty)
+        ? Image.network(
+            imageUrl!,
+            width: w,
+            height: h,
+            fit: boxFit,
+            errorBuilder: (context, error, stackTrace) => Image.asset(
+              BrandingConfig.defaultPizzaIcon,
+              width: w,
+              height: h,
+              fit: boxFit,
+            ),
+          )
+        : Image.asset(
+            BrandingConfig.defaultPizzaIcon,
+            width: w,
+            height: h,
+            fit: boxFit,
+          );
+
     if (borderRadius != null) {
       return ClipRRect(
         borderRadius: borderRadius!,
-        child: imageWidget,
+        child: image,
       );
     }
-    return imageWidget;
+    return image;
   }
 }

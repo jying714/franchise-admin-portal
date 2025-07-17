@@ -28,7 +28,14 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
 
     return Scaffold(
       backgroundColor: DesignTokens.backgroundColor,
@@ -380,7 +387,16 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
 
   void _confirmDelete(
       BuildContext context, FirestoreService service, String feedbackId) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[YourWidget] loc is null! Localization not available for this context.');
+      // Optionally show a SnackBar:
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Localization missing! [debug]')),
+      );
+      return; // Stop execution
+    }
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     showDialog(

@@ -66,7 +66,14 @@ class OwnerHQDashboardScreen extends StatelessWidget {
         await franchiseProvider.setInitialFranchiseId(initialId);
       }
     });
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final colorScheme = Theme.of(context).colorScheme;
     final user = Provider.of<UserProfileNotifier>(context).user;
     final franchiseId = Provider.of<FranchiseProvider>(context).franchiseId;
@@ -354,7 +361,14 @@ class MultiBrandOverviewPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     print('[MultiBrandOverviewPanel] build called');
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final colorScheme = Theme.of(context).colorScheme;
     // TODO: Replace with real data stream
     final brands = [
@@ -418,7 +432,14 @@ class QuickLinksPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     print('[QuickLinksPanel] build called');
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final colorScheme = Theme.of(context).colorScheme;
     return Card(
       color: colorScheme.surfaceVariant,
@@ -528,7 +549,14 @@ class FutureFeaturePlaceholderPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     print('[FutureFeaturePlaceholderPanel] build called');
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final colorScheme = Theme.of(context).colorScheme;
 
     // Placeholders for: Announcements, Tax Docs, Compliance, Bulk Ops, Custom Billing, Multi-Currency, Scheduled Reports, API Integrations, etc.

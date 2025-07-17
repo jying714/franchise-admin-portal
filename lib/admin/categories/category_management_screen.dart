@@ -149,7 +149,15 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     if (!_canManageCategories(context) || _isLoading || _bulkLoading) return;
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[YourWidget] loc is null! Localization not available for this context.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Localization missing! [debug]')),
+      );
+      return;
+    }
     final userId =
         Provider.of<UserProfileNotifier?>(context, listen: false)?.user?.id;
     final confirm = await showDialog<bool>(
@@ -245,7 +253,15 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     if (!_canManageCategories(context) || _isLoading || _bulkLoading) return;
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[YourWidget] loc is null! Localization not available for this context.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Localization missing! [debug]')),
+      );
+      return;
+    }
     final userId =
         Provider.of<UserProfileNotifier?>(context, listen: false)?.user?.id;
     final selectedCats =
@@ -517,7 +533,14 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   Widget build(BuildContext context) {
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final isMobile = MediaQuery.of(context).size.width < 600;
     final colorScheme = Theme.of(context).colorScheme;
 

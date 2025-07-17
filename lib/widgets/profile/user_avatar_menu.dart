@@ -15,7 +15,18 @@ class UserAvatarMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final userProvider = Provider.of<AdminUserProvider>(context, listen: false);
     final user = userProvider.user;
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[UserAvatarMenu] loc is null! Localization not available for this context.');
+      // Return a minimal placeholder avatar with a tooltip or similar
+      return CircleAvatar(
+        radius: size / 2,
+        backgroundColor:
+            backgroundColor ?? Theme.of(context).colorScheme.surfaceVariant,
+        child: Icon(Icons.error, color: Colors.red),
+      );
+    }
     final avatarUrl = user?.avatarUrl ??
         fb_auth.FirebaseAuth.instance.currentUser?.photoURL ??
         '';

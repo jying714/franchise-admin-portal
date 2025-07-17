@@ -60,16 +60,17 @@ class BrandingConfig {
   static const Color accentColor = brandRed;
   // landing page
   static const String heroScreenshot =
-      'https://yourcdn.com/assets/landing_hero.png';
+      'https://via.placeholder.com/640x300.png?text=Landing+Hero';
   static const String adminDashboardScreenshot =
-      'https://yourcdn.com/assets/admin_dashboard.png';
+      'https://via.placeholder.com/480x240.png?text=Admin+Dashboard';
   static const String mobileAppScreenshot =
-      'https://yourcdn.com/assets/mobile_app.png';
+      'https://via.placeholder.com/240x480.png?text=Mobile+App';
   static const String menuEditorScreenshot =
-      'https://yourcdn.com/assets/menu_editor.png';
+      'https://via.placeholder.com/480x240.png?text=Menu+Editor';
   static const String demoVideoUrl =
       'https://www.youtube.com/watch?v=yourdemo'; // or leave blank if not available
-  static const String logoUrl = 'https://yourcdn.com/assets/logo.png';
+  static const String logoUrl =
+      'https://via.placeholder.com/256x64.png?text=Logo';
   static const String primaryContact =
       'support@doughboyspizzeria.com'; // or your real contact email
 

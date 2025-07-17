@@ -26,7 +26,12 @@ class ExportUtils {
   /// Exports a list of MenuItem objects to CSV string.
   /// Includes key fields, nutrition, tags, and customizations as JSON.
   static String menuItemsToCsv(BuildContext context, List<MenuItem> items) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[ExportUtils] loc is null! Localization not available for this context.');
+      return 'Localization missing! [debug]';
+    }
     final csv = StringBuffer();
     try {
       csv.writeln([
@@ -84,7 +89,12 @@ class ExportUtils {
 
   /// Exports a list of Category objects to CSV string.
   static String categoriesToCsv(BuildContext context, List<Category> cats) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[ExportUtils] loc is null! Localization not available for this context.');
+      return 'Localization missing! [debug]';
+    }
     final csv = StringBuffer();
     try {
       csv.writeln([
@@ -117,7 +127,12 @@ class ExportUtils {
 
   /// Exports a list of AuditLog entries to CSV.
   static String auditLogsToCsv(BuildContext context, List<AuditLog> logs) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[ExportUtils] loc is null! Localization not available for this context.');
+      return 'Localization missing! [debug]';
+    }
     final csv = StringBuffer();
     try {
       csv.writeln([
@@ -154,7 +169,12 @@ class ExportUtils {
 
   /// Exports a list of Promo objects to CSV string.
   static String promosToCsv(BuildContext context, List<Promo> promos) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[ExportUtils] loc is null! Localization not available for this context.');
+      return 'Localization missing! [debug]';
+    }
     final csv = StringBuffer();
     try {
       csv.writeln([
@@ -210,7 +230,12 @@ class ExportUtils {
   /// Exports a single AnalyticsSummary to CSV string (single row).
   static String analyticsSummaryToCsv(
       BuildContext context, AnalyticsSummary summary) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[ExportUtils] loc is null! Localization not available for this context.');
+      return 'Localization missing! [debug]';
+    }
     final csv = StringBuffer();
     try {
       csv.writeln([
@@ -261,7 +286,12 @@ class ExportUtils {
   /// Exports multiple AnalyticsSummary objects to CSV string (multiple rows).
   static String analyticsSummariesToCsv(
       BuildContext context, List<AnalyticsSummary> summaries) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[ExportUtils] loc is null! Localization not available for this context.');
+      return 'Localization missing! [debug]';
+    }
     final csv = StringBuffer();
     try {
       csv.writeln([
@@ -362,7 +392,12 @@ class ExportUtils {
   }
 
   static String invoicesToCsv(BuildContext context, List<Invoice> invoices) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[ExportUtils] loc is null! Localization not available for this context.');
+      return 'Localization missing! [debug]';
+    }
     final csv = StringBuffer();
     csv.writeln([
       loc.invoiceNumber,

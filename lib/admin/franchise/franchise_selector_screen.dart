@@ -34,7 +34,14 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
     print(
         '[FranchiseSelectorScreen] build called (if you see this, YOU ARE ON THE SELECTOR SCREEN)');
 
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final franchiseProvider =
         Provider.of<FranchiseProvider>(context, listen: false);
 

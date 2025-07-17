@@ -30,10 +30,16 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
   static const _timeoutSeconds = 10;
   late FirestoreService _firestoreService;
   late UserProfileNotifier _profileNotifier;
-  AppLocalizations get loc => AppLocalizations.of(context)!;
-  ThemeData get theme => Theme.of(context);
-  ColorScheme get colorScheme => theme.colorScheme;
   admin_user.User? _lastSetUser;
+
+  String? _getInviteToken() {
+    // If you save the invite token in localStorage after invite-accept
+    try {
+      return html.window.localStorage['invite_token'];
+    } catch (_) {
+      return null;
+    }
+  }
 
   @override
   void initState() {
@@ -107,7 +113,8 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
   }
 
   // Modular dashboard section handler
-  Future<void> _navigateToDashboard(admin_user.User user) async {
+  Future<void> _navigateToDashboard(
+      admin_user.User user, AppLocalizations loc) async {
     final roles = user.roles ?? <String>[];
     print(
         '[ProfileGateScreen] _navigateToDashboard: roles=$roles, status=${user.status}');
@@ -128,17 +135,17 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
     } else {
       print('[ProfileGateScreen] No recognized role. roles=$roles');
       await _logError('User has no recognized role', error: roles);
-      _showErrorSnack(loc.noValidRoleFound);
+      _showErrorSnack(loc.noValidRoleFound, Theme.of(context));
     }
   }
 
-  void _showErrorSnack(String msg) {
+  void _showErrorSnack(String msg, ThemeData theme) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: colorScheme.error),
+      SnackBar(content: Text(msg), backgroundColor: theme.colorScheme.error),
     );
   }
 
-  Future<void> _forceClaimsAndReload() async {
+  Future<void> _forceClaimsAndReload(AppLocalizations loc) async {
     try {
       final user = fb_auth.FirebaseAuth.instance.currentUser;
       if (user != null) {
@@ -149,12 +156,20 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
       }
     } catch (e, stack) {
       await _logError('Failed to refresh claims/token', error: e, stack: stack);
-      _showErrorSnack(loc.claimsRefreshFailed);
+      _showErrorSnack(loc.claimsRefreshFailed, Theme.of(context));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    if (loc == null) {
+      return _loadingScreen("Loading localization...", theme, colorScheme,
+          showSpinner: true);
+    }
+
     final notifier = Provider.of<UserProfileNotifier>(context);
     final user = notifier.user;
     final error = notifier.lastError;
@@ -163,6 +178,24 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
     print(
         '[ProfileGateScreen] User profile loaded: email=${user?.email}, isActive=${user?.isActive}, roles=${user?.roles}, franchiseIds=${user?.franchiseIds}, defaultFranchise=${user?.defaultFranchise}');
 
+    // === Onboarding: Detect incomplete profile ===
+    if (user != null &&
+        (user.completeProfile == null || user.completeProfile == false)) {
+      print(
+          '[ProfileGateScreen] User profile incomplete, redirecting to onboarding.');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).pushReplacementNamed(
+          '/franchise-onboarding',
+          arguments: {'token': _getInviteToken()},
+        );
+      });
+      return _loadingScreen(
+        "Redirecting to franchise onboarding...",
+        theme,
+        colorScheme,
+        showSpinner: true,
+      );
+    }
     // === 1. HQ OWNER / HQ MANAGER: Top Priority ===
     if (user != null && user.roles != null && user.status == 'active') {
       if (_lastSetUser != user) {
@@ -185,8 +218,9 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
               .pushReplacementNamed('/platform-owner/dashboard');
         });
         return _loadingScreen(
-          loc.redirectingToPlatformOwnerDashboard ??
-              "Redirecting to Platform Owner Dashboard...",
+          loc.redirectingToPlatformOwnerDashboard ?? "Redirecting...",
+          theme,
+          colorScheme,
           showSpinner: true,
         );
       } else if (roles.contains('hq_owner') || roles.contains('hq_manager')) {
@@ -199,6 +233,8 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
         });
         return _loadingScreen(
           loc.redirectingToOwnerHQDashboard ?? "Redirecting to HQ Dashboard...",
+          theme,
+          colorScheme,
           showSpinner: true,
         );
       } else if (roles.contains('developer')) {
@@ -212,11 +248,12 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
         return _loadingScreen(
           loc.redirectingToDeveloperDashboard ??
               "Redirecting to Developer Dashboard...",
+          theme,
+          colorScheme,
           showSpinner: true,
         );
       } else if (roles.contains('owner') || roles.contains('manager')) {
         // ... Franchise logic remains unchanged ...
-
         final franchiseIds = user.franchiseIds ?? [];
         print('[ProfileGateScreen] OWNER/MANAGER: franchiseIds=$franchiseIds');
 
@@ -226,13 +263,13 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             print(
                 '[ProfileGateScreen] (Owner/Manager Multi) Calling Navigator.pushReplacementNamed("/developer/select-franchise")');
-            print(
-                '[DEBUG-NAV] Attempting to navigate to /developer/select-franchise from <filename>:<linenumber>');
             Navigator.of(context)
                 .pushReplacementNamed('/developer/select-franchise');
           });
           return _loadingScreen(
             loc.selectFranchiseToManage ?? "Select a franchise to manage...",
+            theme,
+            colorScheme,
             showSpinner: true,
           );
         } else if (franchiseIds.length == 1) {
@@ -243,32 +280,37 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             print(
                 '[ProfileGateScreen] (Owner/Manager Single) Calling Navigator.pushReplacementNamed("/admin/dashboard")');
-            print(
-                '[DEBUG-NAV] Attempting to navigate to /developer/select-franchise from <filename>:<linenumber>');
-
             Navigator.of(context).pushReplacementNamed('/admin/dashboard');
           });
           return _loadingScreen(
             loc.redirecting ?? "Redirecting...",
+            theme,
+            colorScheme,
             showSpinner: true,
           );
         } else {
           print('[ProfileGateScreen] No franchises found for owner/manager');
-          _showErrorSnack("No franchises found in your profile.");
+          _showErrorSnack("No franchises found in your profile.", theme);
           return _errorScreen(
             msg: "No franchises found in your profile.",
             details: "",
             onRetry: _retry,
+            theme: theme,
+            colorScheme: colorScheme,
+            loc: loc,
             icon: Icons.error_outline,
           );
         }
       } else {
         print('[ProfileGateScreen] No valid role found, showing error');
-        _showErrorSnack(loc.noValidRoleFound);
+        _showErrorSnack(loc.noValidRoleFound, theme);
         return _errorScreen(
           msg: loc.noValidRoleFound,
           details: "",
           onRetry: _retry,
+          theme: theme,
+          colorScheme: colorScheme,
+          loc: loc,
           icon: Icons.error_outline,
         );
       }
@@ -281,6 +323,9 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
         msg: loc.profileLoadTimeout,
         details: loc.tryAgainOrContactSupport,
         onRetry: _retry,
+        theme: theme,
+        colorScheme: colorScheme,
+        loc: loc,
         icon: Icons.timer_off,
       );
     }
@@ -292,6 +337,9 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
         msg: loc.profileLoadFailed,
         details: error.toString(),
         onRetry: _retry,
+        theme: theme,
+        colorScheme: colorScheme,
+        loc: loc,
         icon: Icons.error_outline,
       );
     }
@@ -303,123 +351,20 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
       // Attempt to force claims refresh (once), then reload page
       if (!_claimsRefreshed) {
         setState(() => _claimsRefreshed = true);
-        _forceClaimsAndReload();
+        _forceClaimsAndReload(loc);
       }
-      return _loadingScreen(loc.syncingRolesPleaseWait, showSpinner: true);
+      return _loadingScreen(loc.syncingRolesPleaseWait, theme, colorScheme,
+          showSpinner: true);
     }
     print('[ProfileGateScreen] Default: show loading with branding');
     // === 8. Default: show loading with branding ===
-    return _loadingScreen(loc.loadingProfileAndPermissions, showSpinner: true);
-  }
-
-  // === Dashboard Section Modular ===
-  Widget _dashboardSection(BuildContext context,
-      {Widget? child, String? info}) {
-    return Scaffold(
-      backgroundColor: colorScheme.background,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
-            child: Card(
-              shape: RoundedRectangleBorder(
-                borderRadius:
-                    BorderRadius.circular(DesignTokens.adminCardRadius),
-              ),
-              margin: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
-              elevation: DesignTokens.adminCardElevation,
-              color: colorScheme.surface,
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (BrandingConfig.logoUrl.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 18),
-                        child: Image.network(
-                          BrandingConfig.logoUrl,
-                          height: 68,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    if (info != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 24),
-                        child: Text(
-                          info,
-                          style: theme.textTheme.titleLarge,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    if (child != null) child,
-                    // === Placeholder for future features ===
-                    Padding(
-                      padding: const EdgeInsets.only(top: 36),
-                      child: _futureFeatureSection(context),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // === Developer-Only Section ===
-  Widget _devSection(admin_user.User user, UserProfileNotifier notifier) {
-    final fbUser = fb_auth.FirebaseAuth.instance.currentUser;
-    return Column(
-      children: [
-        Icon(Icons.terminal, size: 42, color: colorScheme.primary),
-        const SizedBox(height: 12),
-        Text(
-          loc.developerMode,
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: colorScheme.primary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(loc.devPanelDesc, style: theme.textTheme.bodyMedium),
-        const SizedBox(height: 20),
-        // Debug info
-        if (fbUser != null)
-          SelectableText('Firebase UID: ${fbUser.uid}',
-              style: theme.textTheme.bodySmall),
-        SelectableText('Profile roles: ${user.roles?.join(", ")}',
-            style: theme.textTheme.bodySmall),
-        SelectableText('Active: ${user.status == 'active'}',
-            style: theme.textTheme.bodySmall),
-        const SizedBox(height: 18),
-        ElevatedButton.icon(
-          icon: const Icon(Icons.sync),
-          label: Text(loc.forceClaimsRefresh),
-          onPressed: _forceClaimsAndReload,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: colorScheme.secondary,
-            foregroundColor: colorScheme.onSecondary,
-          ),
-        ),
-        const SizedBox(height: 12),
-        OutlinedButton.icon(
-          icon: const Icon(Icons.logout),
-          label: Text(loc.signOut),
-          onPressed: () async {
-            await fb_auth.FirebaseAuth.instance.signOut();
-            if (kIsWeb) html.window.location.reload();
-          },
-        ),
-        const SizedBox(height: 18),
-        if (_retrying) const CircularProgressIndicator(),
-      ],
-    );
+    return _loadingScreen(loc.loadingProfileAndPermissions, theme, colorScheme,
+        showSpinner: true);
   }
 
   // === Loading State UI ===
-  Widget _loadingScreen(String msg, {bool showSpinner = false}) {
+  Widget _loadingScreen(String msg, ThemeData theme, ColorScheme colorScheme,
+      {bool showSpinner = false}) {
     return Scaffold(
       backgroundColor: colorScheme.background,
       body: Center(
@@ -433,6 +378,11 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
                   BrandingConfig.logoUrl,
                   height: 78,
                   fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => Image.asset(
+                    BrandingConfig.logoMain,
+                    height: 78,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
             if (showSpinner) const CircularProgressIndicator(),
@@ -453,6 +403,9 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
     required String msg,
     required String details,
     required VoidCallback onRetry,
+    required ThemeData theme,
+    required ColorScheme colorScheme,
+    required AppLocalizations loc,
     IconData? icon,
   }) {
     return Scaffold(
@@ -500,6 +453,9 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
 
   // === Future Feature Placeholder Section ===
   Widget _futureFeatureSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final loc = AppLocalizations.of(context)!;
     return Column(
       children: [
         Icon(Icons.lightbulb_outline, color: colorScheme.secondary, size: 26),

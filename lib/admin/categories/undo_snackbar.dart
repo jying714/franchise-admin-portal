@@ -13,7 +13,15 @@ class UndoSnackbar {
     String? undoLabel,
     void Function(SnackBarClosedReason reason)? onClosed,
   }) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[YourWidget] loc is null! Localization not available for this context.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Localization missing! [debug]')),
+      );
+      return;
+    }
     final scaffold = ScaffoldMessenger.of(context);
 
     scaffold.hideCurrentSnackBar();

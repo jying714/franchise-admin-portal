@@ -58,7 +58,16 @@ class _MenuItemCustomizationsDialogState
   }
 
   void _addGroup() {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[YourWidget] loc is null! Localization not available for this context.');
+      // Optionally, show a SnackBar or AlertDialog here if you want to warn the user.
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text('Localization missing! [debug]'))
+      // );
+      return; // Just exit the function early.
+    }
     String groupName = '';
     String type = 'single';
     int minSelect = 1;
@@ -186,7 +195,15 @@ class _MenuItemCustomizationsDialogState
   }
 
   void _addOption(int groupIdx) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[YourWidget] loc is null! Localization not available for this context.');
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text('Localization missing! [debug]'))
+      // );
+      return;
+    }
     String optName = '';
     double optPrice = 0.0;
     Map<String, double>? upcharges;
@@ -323,7 +340,15 @@ class _MenuItemCustomizationsDialogState
   }
 
   void _editOption(int groupIdx, int optIdx) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[YourWidget] loc is null! Localization not available for this context.');
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text('Localization missing! [debug]'))
+      // );
+      return;
+    }
     var opt = _groups[groupIdx].options[optIdx];
     String optName = opt.name;
     double optPrice = opt.price;
@@ -481,7 +506,14 @@ class _MenuItemCustomizationsDialogState
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: SizedBox(

@@ -54,7 +54,12 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
   }
 
   Future<void> _addNote() async {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[PayoutNoteEditor] loc is null! Localization not available for this context.');
+      return;
+    }
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     setState(() {
@@ -94,7 +99,12 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
   }
 
   Future<void> _removeNote(Map<String, dynamic> note) async {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[PayoutNoteEditor] loc is null! Localization not available for this context.');
+      return;
+    }
     try {
       await FirestoreService().removePayoutComment(widget.payoutId, note);
       setState(() {
@@ -116,7 +126,12 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[PayoutNoteEditor] loc is null! Localization not available for this context.');
+      return const SizedBox.shrink();
+    }
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 

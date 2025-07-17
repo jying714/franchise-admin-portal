@@ -81,7 +81,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         Provider.of<FirestoreService>(context, listen: false);
     final isMobile = MediaQuery.of(context).size.width < 800;
     final colorScheme = Theme.of(context).colorScheme;
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final List<String> userRoles = appUser.roles;
     final bool isDeveloper = userRoles.contains('developer');
     final String userRoleLabel =

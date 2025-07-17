@@ -111,7 +111,14 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final colorScheme = Theme.of(context).colorScheme;
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
 
     return Dialog(
       insetPadding: const EdgeInsets.all(32),

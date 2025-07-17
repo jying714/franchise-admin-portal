@@ -14,7 +14,15 @@ class FranchiseSelectorDialogContent extends StatelessWidget {
         Provider.of<FirestoreService>(context, listen: false);
     final franchiseProvider =
         Provider.of<FranchiseProvider>(context, listen: false);
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      // Fallback UI for missing localization:
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
 
     return FutureBuilder<List<FranchiseInfo>>(
       future:

@@ -18,7 +18,14 @@ class CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final String imagePath =
         (category.image != null && category.image!.isNotEmpty)
             ? category.image!
@@ -61,11 +68,11 @@ class CategoryCard extends StatelessWidget {
                           width: double.infinity,
                           height: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Image.asset(
-                            BrandingConfig.defaultCategoryIcon,
-                            width: double.infinity,
-                            height: double.infinity,
-                            fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Positioned.fill(
+                            child: Image.asset(
+                              BrandingConfig.defaultCategoryIcon,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         )
                       : Image.asset(

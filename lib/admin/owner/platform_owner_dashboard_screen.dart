@@ -16,6 +16,7 @@ import 'package:franchise_admin_portal/widgets/dialogs/franchisee_invitation_dia
 import 'package:franchise_admin_portal/widgets/financials/platform_revenue_summary_panel.dart';
 import 'package:franchise_admin_portal/core/providers/platform_financials_provider.dart';
 import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
+import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 class PlatformOwnerDashboardScreen extends StatelessWidget {
   const PlatformOwnerDashboardScreen({Key? key}) : super(key: key);
@@ -29,10 +30,27 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    print('[PlatformOwnerDashboardScreen] build called');
+    final adminUserProvider =
+        Provider.of<AdminUserProvider>(context, listen: false);
+    final user = adminUserProvider.user;
+    final loc = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    final user = Provider.of<UserProfileNotifier>(context).user;
-
+    print('[PlatformOwnerDashboardScreen] user: $user');
+    print('[PlatformOwnerDashboardScreen] loc: $loc');
+    print('[PlatformOwnerDashboardScreen] colorScheme: $colorScheme');
+    if (user == null) {
+      print('[PlatformOwnerDashboardScreen] user is null! Returning error.');
+      return Scaffold(
+        body: Center(child: Text('User profile missing. [debug]')),
+      );
+    }
+    if (loc == null) {
+      print('[PlatformOwnerDashboardScreen] loc is null! Localization error.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     // === Platform Owner Access Guard ===
     if (!_isPlatformOwner(user)) {
       // Log unauthorized access attempt
@@ -110,8 +128,14 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
                 Image.network(
                   BrandingConfig.logoUrl,
                   height: 36,
-                  errorBuilder: (_, __, ___) =>
-                      const Icon(Icons.domain, size: 34),
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => SizedBox(
+                    height: 36,
+                    child: Center(
+                      child:
+                          Icon(Icons.domain, size: 34, color: Colors.grey[400]),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Text(

@@ -101,7 +101,12 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[InvoiceListScreen] loc is null! Localization not available for this context.');
+      return const SizedBox.shrink();
+    }
     final franchiseId = _franchiseProvider.franchiseId;
     print(
         '[InvoiceListScreen] build called with franchiseId=$franchiseId, searchTerm=$_searchTerm, statusFilter=$_statusFilter');

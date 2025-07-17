@@ -89,7 +89,26 @@ class _PlatformRevenueSummaryPanelState
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[PlatformRevenueSummaryPanel] loc is null! Localization not available for this context.');
+      return Card(
+        color: Colors.red.shade100,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Row(
+            children: [
+              Icon(Icons.error, color: Colors.red),
+              const SizedBox(width: 12),
+              Expanded(
+                  child: Text('Localization missing! [debug]',
+                      style: TextStyle(color: Colors.red))),
+            ],
+          ),
+        ),
+      );
+    }
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 

@@ -73,7 +73,14 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         Provider.of<FirestoreService>(context, listen: false);
     final franchiseId = context.watch<FranchiseProvider>().franchiseId;
     final isMobile = MediaQuery.of(context).size.width < 800;
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final colorScheme = Theme.of(context).colorScheme;
 
     final roles = appUser.roles;

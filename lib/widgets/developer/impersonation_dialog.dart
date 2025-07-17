@@ -94,7 +94,16 @@ class _ImpersonationDialogState extends State<ImpersonationDialog> {
   }
 
   void _onImpersonate(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[YourWidget] loc is null! Localization not available for this context.');
+      // Show a SnackBar or log error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Localization missing! [debug]')),
+      );
+      return;
+    }
     if (_selectedUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.impersonationDialogSelectUserFirst)),
@@ -112,7 +121,15 @@ class _ImpersonationDialogState extends State<ImpersonationDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      // Fallback UI for missing localization:
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final adminUser = Provider.of<AdminUserProvider>(context).user;

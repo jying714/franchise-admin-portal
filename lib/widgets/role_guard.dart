@@ -65,7 +65,14 @@ class RoleGuard extends StatelessWidget {
     // This example assumes a top-level InheritedWidget/provider for user.
     final user = context.watch<AdminUserProvider>().user;
 
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     final colorScheme = Theme.of(context).colorScheme;
     final _appConfig = appConfig ?? AppConfig.instance;
     final _firestoreService = FirestoreService();

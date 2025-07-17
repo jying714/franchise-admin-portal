@@ -133,7 +133,15 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
   @override
   Widget build(BuildContext context) {
     try {
-      final loc = AppLocalizations.of(context)!;
+      final loc = AppLocalizations.of(context);
+      if (loc == null) {
+        print(
+            '[YourWidget] loc is null! Localization not available for this context.');
+        // Handle gracefully or show fallback UI
+        return Scaffold(
+          body: Center(child: Text('Localization missing! [debug]')),
+        );
+      }
       final theme = Theme.of(context);
       final colorScheme = theme.colorScheme;
       final filterProvider = Provider.of<PayoutFilterProvider>(context);

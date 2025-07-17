@@ -143,7 +143,14 @@ class _InvoiceDataTableState extends State<InvoiceDataTable> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
 
     if (_sortedInvoices.isEmpty) {
       return Center(
@@ -234,7 +241,13 @@ class _InvoiceDataSource extends DataTableSource {
   DataRow? getRow(int index) {
     if (index >= invoices.length) return null;
     final invoice = invoices[index];
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[InvoiceDataTable] loc is null! Localization not available for this context.');
+      // Just skip the row to prevent type errors:
+      return null;
+    }
 
     String statusString = invoice.status.toString().split('.').last;
     String issuedDateString = invoice.issuedAt != null

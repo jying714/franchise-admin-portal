@@ -42,7 +42,12 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[InvoiceDetailScreen] loc is null! Localization not available for this context.');
+      return const SizedBox.shrink();
+    }
 
     return Scaffold(
       appBar: AppBar(

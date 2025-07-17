@@ -21,7 +21,15 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
   String? _uploadResult;
 
   Future<void> _showErrorDialog(BuildContext context, String message) async {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[YourWidget] loc is null! Localization not available for this context.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Localization missing! [debug]')),
+      );
+      return;
+    }
     await showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -44,7 +52,14 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
 
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[${runtimeType}] loc is null! Localization not available for this context.');
+      return Scaffold(
+        body: Center(child: Text('Localization missing! [debug]')),
+      );
+    }
     // Optionally get userId for logging:
     final userId =
         Provider.of<UserProfileNotifier?>(context, listen: false)?.user?.id;

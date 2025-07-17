@@ -51,7 +51,12 @@ class BannerCarousel extends StatelessWidget {
   }
 
   String _getCTAForAction(BuildContext context, String type) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[YourWidget] loc is null! Localization not available for this context.');
+      return 'Localization missing! [debug]';
+    }
     switch (type) {
       case 'linkCategory':
         return loc.browseCategoryCta;

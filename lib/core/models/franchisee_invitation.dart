@@ -37,7 +37,26 @@ class FranchiseeInvitation {
 
   /// For localization of status and info.
   String localizedStatus(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      print(
+          '[FranchiseeInvitation] loc is null! Localization not available for this context.');
+      // Fallback to default English or raw status
+      switch (status) {
+        case 'pending':
+          return 'Pending';
+        case 'sent':
+          return 'Sent';
+        case 'accepted':
+          return 'Accepted';
+        case 'revoked':
+          return 'Revoked';
+        case 'expired':
+          return 'Expired';
+        default:
+          return status;
+      }
+    }
     switch (status) {
       case 'pending':
         return loc.inviteStatusPending ?? 'Pending';
