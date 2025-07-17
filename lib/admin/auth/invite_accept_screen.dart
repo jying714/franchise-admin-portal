@@ -46,9 +46,15 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
   }
 
   void _loadToken() {
-    final uri = Uri.base;
-    final token = uri.queryParameters['token'];
-    print('[InviteAcceptScreen] Extracted token from URL: $token');
+    // Parse the token from the hash fragment if needed
+    final hash = html.window.location.hash; // e.g. #/invite-accept?token=...
+    print('[InviteAcceptScreen] window.location.hash: $hash');
+    String? token;
+    if (hash.isNotEmpty) {
+      final uri = Uri.parse(hash.substring(1)); // Remove the leading #
+      token = uri.queryParameters['token'];
+    }
+    print('[InviteAcceptScreen] Extracted token from hash: $token');
     setState(() {
       _token = token;
     });
