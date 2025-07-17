@@ -133,7 +133,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
       _loading = true;
       _error = null;
     });
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
     try {
       final inviteEmail = (_inviteData?['email'] as String?) ?? '';
       if (inviteEmail.isEmpty) {
@@ -149,14 +149,14 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         final pw2 = _pw2Controller.text.trim();
         if (pw.length < 8) {
           setState(() {
-            _error = loc.passwordTooShort;
+            _error = loc?.passwordTooShort ?? "Password too short";
             _loading = false;
           });
           return;
         }
         if (pw != pw2) {
           setState(() {
-            _error = loc.passwordsDoNotMatch;
+            _error = loc?.passwordsDoNotMatch ?? "Passwords do not match";
             _loading = false;
           });
           return;
@@ -218,7 +218,8 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         contextData: {'token': _effectiveToken},
       );
       setState(() {
-        _error = AppLocalizations.of(context)!.inviteAcceptFailed;
+        _error = AppLocalizations.of(context)?.inviteAcceptFailed ??
+            "Failed to accept invitation.";
       });
     } finally {
       setState(() => _loading = false);
@@ -232,7 +233,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
     print('JS: window.location.href: ${html.window.location.href}');
     print('JS: window.location.hash: ${html.window.location.hash}');
 
-    final loc = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
     print(
@@ -241,7 +242,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
     return Scaffold(
       backgroundColor: colorScheme.background,
       appBar: AppBar(
-        title: Text(loc.acceptInvitation ?? "Accept Invitation"),
+        title: Text(loc?.acceptInvitation ?? "Accept Invitation"),
         backgroundColor: colorScheme.surface,
       ),
       body: Center(
@@ -270,7 +271,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
   }
 
   Widget _buildInvitePanel(
-      AppLocalizations loc, ColorScheme colorScheme, ThemeData theme) {
+      AppLocalizations? loc, ColorScheme colorScheme, ThemeData theme) {
     print('=== _buildInvitePanel called ===');
     print('_inviteData: $_inviteData');
     print('_error: $_error');
@@ -294,9 +295,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
       print("DEBUG: _inviteData is null in _buildInvitePanel");
       return Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(loc.loadingInvite ?? "Loading invitation..."),
-        ],
+        children: [Text(loc?.loadingInvite ?? "Loading invitation...")],
       );
     }
 
@@ -343,7 +342,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         Icon(Icons.mark_email_unread, color: colorScheme.primary, size: 40),
         const SizedBox(height: 16),
         Text(
-          loc.inviteWelcome(inviteEmail),
+          loc?.inviteWelcome(inviteEmail) ?? "Invitation for $inviteEmail",
           style: (theme.textTheme.titleLarge ?? const TextStyle())
               .copyWith(fontWeight: FontWeight.w600),
           textAlign: TextAlign.center,
@@ -352,7 +351,8 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 7),
             child: Text(
-              loc.inviteForFranchise(inviteFranchiseName),
+              loc?.inviteForFranchise(inviteFranchiseName) ??
+                  "For franchise: $inviteFranchiseName",
               style: (theme.textTheme.bodyMedium ?? const TextStyle())
                   .copyWith(color: colorScheme.secondary),
             ),
@@ -360,7 +360,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         const SizedBox(height: 18),
         if (_isNewUser) ...[
           Text(
-            loc.inviteSetPassword,
+            loc?.inviteSetPassword ?? "Set your password below",
             style: theme.textTheme.bodyMedium ?? const TextStyle(),
           ),
           const SizedBox(height: 8),
@@ -368,7 +368,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
             controller: _pwController,
             obscureText: true,
             decoration: InputDecoration(
-              labelText: loc.password,
+              labelText: loc?.password ?? "Password",
               border: const OutlineInputBorder(),
             ),
           ),
@@ -377,7 +377,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
             controller: _pw2Controller,
             obscureText: true,
             decoration: InputDecoration(
-              labelText: loc.confirmPassword,
+              labelText: loc?.confirmPassword ?? "Confirm Password",
               border: const OutlineInputBorder(),
             ),
           ),
@@ -448,20 +448,20 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         ElevatedButton.icon(
           onPressed: _acceptInvite,
           icon: const Icon(Icons.check_circle),
-          label: Text(loc.acceptInvitation ?? "Accept Invitation"),
+          label: Text(loc?.acceptInvitation ?? "Accept Invitation"),
         ),
       ],
     );
   }
 
-  Widget _buildAccepted(AppLocalizations loc, ColorScheme colorScheme) {
+  Widget _buildAccepted(AppLocalizations? loc, ColorScheme colorScheme) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(Icons.verified, color: colorScheme.primary, size: 44),
         const SizedBox(height: 14),
         Text(
-          loc.inviteAcceptedTitle,
+          loc?.inviteAcceptedTitle ?? "Invitation Accepted",
           style: TextStyle(
               fontWeight: FontWeight.bold,
               color: colorScheme.primary,
@@ -469,7 +469,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         ),
         const SizedBox(height: 7),
         Text(
-          loc.inviteAcceptedDesc,
+          loc?.inviteAcceptedDesc ?? "Your invitation has been accepted.",
           style: TextStyle(
             color: colorScheme.onSurfaceVariant,
             fontSize: 15,
@@ -479,7 +479,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         const SizedBox(height: 20),
         ElevatedButton.icon(
           icon: const Icon(Icons.dashboard_customize_outlined),
-          label: Text(loc.goToDashboard ?? "Go to Dashboard"),
+          label: Text(loc?.goToDashboard ?? "Go to Dashboard"),
           onPressed: () {
             Navigator.of(context)
                 .pushNamedAndRemoveUntil('/dashboard', (route) => false);
