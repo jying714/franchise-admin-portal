@@ -38,6 +38,42 @@ import 'package:franchise_admin_portal/admin/auth/invite_accept_screen.dart';
 import 'package:franchise_admin_portal/admin/profile/franchise_onboarding_screen.dart';
 import 'dart:html' as html;
 
+/// Returns initial unauth route and optional invite token, e.g. ('/invite-accept', 'abc123').
+Map<String, dynamic> getInitialUnauthRoute() {
+  final hash = html.window.location.hash;
+  print(
+      '[main.dart][getInitialUnauthRoute] Current window.location.hash: $hash');
+  if (hash.startsWith('#/invite-accept')) {
+    final queryIndex = hash.indexOf('?');
+    String token = '';
+    if (queryIndex != -1) {
+      final queryString = hash.substring(queryIndex + 1);
+      print(
+          '[main.dart][getInitialUnauthRoute] Extracted query string: $queryString');
+      try {
+        final params = Uri.splitQueryString(queryString);
+        token = params['token'] ?? '';
+        print('[main.dart][getInitialUnauthRoute] Found token param: $token');
+      } catch (e, stack) {
+        print(
+            '[main.dart][getInitialUnauthRoute] Error parsing query string: $e\n$stack');
+      }
+    } else {
+      print('[main.dart][getInitialUnauthRoute] No query string found after ?');
+    }
+    return {
+      'route': '/invite-accept',
+      'token': token,
+    };
+  }
+  print(
+      '[main.dart][getInitialUnauthRoute] No invite-accept hash found. Defaulting to landing.');
+  return {
+    'route': '/',
+    'token': '',
+  };
+}
+
 void main() {
   print('[main.dart] main(): Starting runZonedGuarded.');
   runZonedGuarded(() async {
@@ -127,51 +163,73 @@ class FranchiseAppRootSplit extends StatelessWidget {
       print(
           '[main.dart][FranchiseAppRootSplit] Unauthenticated: showing public app');
       return Builder(
-        builder: (ctx) => MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Franchise Admin Portal',
-          theme: _lightTheme,
-          darkTheme: _darkTheme,
-          themeMode:
-              Provider.of<ThemeProvider>(context, listen: true).themeMode ??
-                  ThemeMode.system,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          initialRoute: '/',
-          onGenerateRoute: (RouteSettings settings) {
-            print(
-                '[DEBUG][main.dart][onGenerateRoute] Unauthenticated: route=${settings.name}');
-            // Allow deep link navigation by hash or direct path
-            Uri uri = Uri.parse(settings.name ?? '/');
-            final String path = uri.path;
+        builder: (ctx) {
+          final initial = getInitialUnauthRoute();
+          final String initialRoute = initial['route'] as String;
+          final String inviteToken = initial['token'] as String;
+          print(
+              '[main.dart][FranchiseAppRootSplit] Unauthed initialRoute: $initialRoute, inviteToken: $inviteToken');
 
-            if (path == '/' || path == '/landing') {
-              return MaterialPageRoute(builder: (_) => const LandingPage());
-            }
-            if (path == '/sign-in') {
-              return MaterialPageRoute(builder: (_) => const SignInScreen());
-            }
-            if (path == '/invite-accept') {
-              String? token;
-              // Extract token from ?token= param
-              if (uri.queryParameters.containsKey('token')) {
-                token = uri.queryParameters['token'];
-              } else if (settings.arguments is Map &&
-                  (settings.arguments as Map).containsKey('token')) {
-                token = (settings.arguments as Map)['token'] as String?;
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Franchise Admin Portal',
+            theme: _lightTheme,
+            darkTheme: _darkTheme,
+            themeMode:
+                Provider.of<ThemeProvider>(context, listen: true).themeMode ??
+                    ThemeMode.system,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            initialRoute: initialRoute,
+            onGenerateRoute: (RouteSettings settings) {
+              print(
+                  '[DEBUG][main.dart][onGenerateRoute] [UNAUTH] route=${settings.name}, args=${settings.arguments}');
+              Uri uri = Uri.parse(settings.name ?? '/');
+              final String path = uri.path;
+
+              if (path == '/' || path == '/landing') {
+                print(
+                    '[DEBUG][main.dart][onGenerateRoute] Routing to LandingPage.');
+                return MaterialPageRoute(builder: (_) => const LandingPage());
               }
-              return MaterialPageRoute(
-                  builder: (_) => InviteAcceptScreen(inviteToken: token));
-            }
-            // Fallback for unknown routes
-            return MaterialPageRoute(builder: (_) => const LandingPage());
-          },
-        ),
+              if (path == '/sign-in') {
+                print(
+                    '[DEBUG][main.dart][onGenerateRoute] Routing to SignInScreen.');
+                return MaterialPageRoute(builder: (_) => const SignInScreen());
+              }
+              if (path == '/invite-accept') {
+                String? token;
+                if (uri.queryParameters.containsKey('token')) {
+                  token = uri.queryParameters['token'];
+                  print(
+                      '[DEBUG][main.dart][onGenerateRoute] Got token from URI: $token');
+                } else if (settings.arguments is Map &&
+                    (settings.arguments as Map).containsKey('token')) {
+                  token = (settings.arguments as Map)['token'] as String?;
+                  print(
+                      '[DEBUG][main.dart][onGenerateRoute] Got token from RouteSettings.arguments: $token');
+                } else if (inviteToken.isNotEmpty) {
+                  token = inviteToken;
+                  print(
+                      '[DEBUG][main.dart][onGenerateRoute] Using initial inviteToken: $token');
+                }
+                print(
+                    '[DEBUG][main.dart][onGenerateRoute] Routing to InviteAcceptScreen with token: $token');
+                return MaterialPageRoute(
+                  builder: (_) => InviteAcceptScreen(inviteToken: token),
+                );
+              }
+              print(
+                  '[DEBUG][main.dart][onGenerateRoute] Routing to fallback LandingPage.');
+              return MaterialPageRoute(builder: (_) => const LandingPage());
+            },
+          );
+        },
       );
     }
 
