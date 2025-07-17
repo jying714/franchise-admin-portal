@@ -36,6 +36,7 @@ import 'package:franchise_admin_portal/widgets/financials/franchisee_invitation_
 import 'package:franchise_admin_portal/admin/profile/universal_profile_screen.dart';
 import 'package:franchise_admin_portal/admin/auth/invite_accept_screen.dart';
 import 'package:franchise_admin_portal/admin/profile/franchise_onboarding_screen.dart';
+import 'dart:html' as html;
 
 void main() {
   print('[main.dart] main(): Starting runZonedGuarded.');
@@ -102,6 +103,31 @@ void main() {
 class FranchiseAdminPortalRoot extends StatelessWidget {
   const FranchiseAdminPortalRoot({super.key});
 
+  void _maybeRestoreInviteRoute(BuildContext context) {
+    final hash = html.window.location.hash;
+    if (hash.startsWith('#/invite-accept')) {
+      final questionMarkIndex = hash.indexOf('?');
+      String? token;
+      if (questionMarkIndex != -1 && questionMarkIndex < hash.length - 1) {
+        final queryString = hash.substring(questionMarkIndex + 1);
+        final params = Uri.splitQueryString(queryString);
+        token = params['token'];
+      }
+      if (token != null && token.isNotEmpty) {
+        print(
+            '[main.dart] Restoring InviteAcceptScreen with token from hash: $token');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (ModalRoute.of(context)?.settings.name != '/invite-accept') {
+            Navigator.of(context).pushReplacementNamed(
+              '/invite-accept',
+              arguments: {'token': token},
+            );
+          }
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     print(
@@ -158,6 +184,7 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
     // ==== AUTHENTICATED APP ====
     print(
         '[main.dart] FranchiseAdminPortalRoot: Authenticated, showing post-login app.');
+    _maybeRestoreInviteRoute(context);
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<FranchiseProvider>(
