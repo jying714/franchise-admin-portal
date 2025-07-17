@@ -561,6 +561,10 @@ async function sendOnboardingEmail({
  */
 export const inviteAndSetRole = functions.https.onCall(
   async (data, context) => {
+    console.log("inviteAndSetRole: called with data:", data);
+    console.log(
+      "inviteAndSetRole: context.auth:", JSON.stringify(context.auth));
+
     // --- Permission check ---
     if (
       !context.auth ||
@@ -573,6 +577,8 @@ export const inviteAndSetRole = functions.https.onCall(
         )
       )
     ) {
+      console.error(
+        "inviteAndSetRole: Permission denied for context.auth:", context.auth);
       throw new functions.https.HttpsError(
         "permission-denied",
         "Only platform owners, admins, owners, or developers can invite users."
@@ -583,12 +589,15 @@ export const inviteAndSetRole = functions.https.onCall(
     const {email, password, role, franchiseName, brandId, ...extraMeta} = data;
 
     if (!email || !role) {
+      console.error(
+        "inviteAndSetRole: Missing email or role", {email, role, data});
       throw new functions.https.HttpsError(
         "invalid-argument",
         "Email and role are required."
       );
     }
     if (!VALID_ROLES.includes(role)) {
+      console.error("inviteAndSetRole: Invalid role", {role, VALID_ROLES});
       throw new functions.https.HttpsError(
         "invalid-argument",
         `Role "${role}" is not permitted.`
@@ -601,7 +610,11 @@ export const inviteAndSetRole = functions.https.onCall(
     try {
       userRecord = await admin.auth().getUserByEmail(email);
       isNewUser = false;
+      console.log(
+        "inviteAndSetRole: Existing user found", {uid: userRecord.uid, email});
     } catch (err) {
+      console.warn(
+        "inviteAndSetRole: getUserByEmail error", {error: err, email});
       if (
         typeof err === "object" &&
         err !== null &&
@@ -609,23 +622,49 @@ export const inviteAndSetRole = functions.https.onCall(
         err.code === "auth/user-not-found"
       ) {
         if (!password) {
+          console.error(
+            "inviteAndSetRole: Password required for new user invite",
+            {email});
           throw new functions.https.HttpsError(
             "invalid-argument",
             "Password required for new user invite."
           );
         }
-        userRecord = await admin.auth().createUser({
-          email,
-          password,
-        });
-        isNewUser = true;
+        try {
+          userRecord = await admin.auth().createUser({
+            email,
+            password,
+          });
+          isNewUser = true;
+          console.log("inviteAndSetRole: Created new user",
+            {uid: userRecord.uid, email});
+        } catch (createErr) {
+          console.error("inviteAndSetRole: Failed to create user",
+            {error: createErr, email});
+          throw new functions.https.HttpsError(
+            "internal",
+            "Error creating new user: " +
+              (typeof createErr === "object" && createErr !==
+                 null && "message" in createErr ?
+                createErr.message :
+                String(createErr))
+          );
+        }
         // (Optional) Send password reset link for onboarding
         try {
           await admin.auth().generatePasswordResetLink(email);
+          console.log(
+            "inviteAndSetRole: Sent password reset link for onboarding",
+            {email});
         } catch (emailErr) {
-          console.error("Failed to send password reset link:", emailErr);
+          console.error(
+            "inviteAndSetRole: Failed to send password reset link:",
+            emailErr);
         }
       } else {
+        console.error(
+          "inviteAndSetRole: Unexpected error fetching/creating user",
+          {error: err});
         throw new functions.https.HttpsError(
           "internal",
           "Error fetching or creating user: " +
@@ -637,36 +676,97 @@ export const inviteAndSetRole = functions.https.onCall(
     }
 
     // --- Set custom claims ---
-    await admin.auth().setCustomUserClaims(userRecord.uid, {roles: [role]});
+    try {
+      await admin.auth().setCustomUserClaims(userRecord.uid, {roles: [role]});
+      console.log("inviteAndSetRole: Set custom claims for user",
+        {uid: userRecord.uid, role});
+    } catch (claimsErr) {
+      console.error("inviteAndSetRole: Failed to set custom claims",
+        {error: claimsErr, uid: userRecord.uid});
+      throw new functions.https.HttpsError(
+        "internal",
+        "Failed to set custom claims: " +
+          (typeof claimsErr === "object" && claimsErr !== null &&
+             "message" in claimsErr ?
+            claimsErr.message :
+            String(claimsErr))
+      );
+    }
 
     // --- Write/merge user doc in 'users' ---
     const userDocRef = admin.firestore().collection(
       "users").doc(userRecord.uid);
-    const userDoc = await userDocRef.get();
+    let userDoc;
+    try {
+      userDoc = await userDocRef.get();
+      console.log("inviteAndSetRole: Fetched user doc",
+        {exists: userDoc.exists, uid: userRecord.uid});
+    } catch (firestoreGetErr) {
+      console.error("inviteAndSetRole: Error reading user doc",
+        {error: firestoreGetErr, uid: userRecord.uid});
+      throw new functions.https.HttpsError(
+        "internal",
+        "Error reading user doc: " +
+          (typeof firestoreGetErr === "object" && firestoreGetErr !==
+             null && "message" in firestoreGetErr ?
+            firestoreGetErr.message :
+            String(firestoreGetErr))
+      );
+    }
 
     if (!userDoc.exists) {
-      await userDocRef.set(
-        {
-          email,
-          roles: [role],
-          status: "invited",
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        },
-        {merge: true}
-      );
+      try {
+        await userDocRef.set(
+          {
+            email,
+            roles: [role],
+            status: "invited",
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          {merge: true}
+        );
+        console.log("inviteAndSetRole: Created new user doc",
+          {uid: userRecord.uid});
+      } catch (setUserDocErr) {
+        console.error("inviteAndSetRole: Error creating user doc",
+          {error: setUserDocErr, uid: userRecord.uid});
+        throw new functions.https.HttpsError(
+          "internal",
+          "Error creating user doc: " +
+            (typeof setUserDocErr === "object" && setUserDocErr !==
+               null && "message" in setUserDocErr ?
+              setUserDocErr.message :
+              String(setUserDocErr))
+        );
+      }
     } else {
       const docData = userDoc.data() || {};
       const roles = Array.isArray(docData.roles) ? docData.roles : [];
       if (!roles.includes(role)) {
         roles.push(role);
       }
-      await userDocRef.set(
-        {
-          roles,
-          status: "invited",
-        },
-        {merge: true}
-      );
+      try {
+        await userDocRef.set(
+          {
+            roles,
+            status: "invited",
+          },
+          {merge: true}
+        );
+        console.log("inviteAndSetRole: Updated roles/status in user doc",
+          {uid: userRecord.uid, roles});
+      } catch (updateUserDocErr) {
+        console.error("inviteAndSetRole: Error updating user doc",
+          {error: updateUserDocErr, uid: userRecord.uid});
+        throw new functions.https.HttpsError(
+          "internal",
+          "Error updating user doc: " +
+            (typeof updateUserDocErr === "object" && updateUserDocErr !==
+               null && "message" in updateUserDocErr ?
+              updateUserDocErr.message :
+              String(updateUserDocErr))
+        );
+      }
     }
 
     // --- Generate a secure invite token ---
@@ -680,6 +780,8 @@ export const inviteAndSetRole = functions.https.onCall(
 
     // --- Build onboarding invite link (front-end route must handle this) ---
     const inviteUrl = `${APP_BASE_URL}/#/invite-accept?token=${token}`;
+    console.log("inviteAndSetRole: Prepared invitation URL",
+      {inviteUrl, token});
 
     // --- Create invitation record in Firestore ---
     const invitationDoc = {
@@ -699,11 +801,25 @@ export const inviteAndSetRole = functions.https.onCall(
       ...extraMeta,
     };
 
-    await admin
-      .firestore()
-      .collection(INVITATION_COLLECTION)
-      .doc(token)
-      .set(invitationDoc, {merge: true});
+    try {
+      await admin
+        .firestore()
+        .collection(INVITATION_COLLECTION)
+        .doc(token)
+        .set(invitationDoc, {merge: true});
+      console.log("inviteAndSetRole: Wrote invitation doc", {token, email});
+    } catch (invitationDocErr) {
+      console.error("inviteAndSetRole: Failed to create invitation doc",
+        {error: invitationDocErr, token, email});
+      throw new functions.https.HttpsError(
+        "internal",
+        "Failed to create invitation doc: " +
+          (typeof invitationDocErr === "object" &&
+             invitationDocErr !== null && "message" in invitationDocErr ?
+            invitationDocErr.message :
+            String(invitationDocErr))
+      );
+    }
 
     // --- Send onboarding/invite email ---
     try {
@@ -714,12 +830,23 @@ export const inviteAndSetRole = functions.https.onCall(
         isNewUser,
         token,
       });
+      console.log(
+        "inviteAndSetRole: Sent onboarding/invite email", {email, inviteUrl});
     } catch (emailErr) {
-      console.error("Failed to send onboarding/invite email:", emailErr);
+      console.error(
+        "inviteAndSetRole: Failed to send onboarding/invite email:", emailErr);
       // Optionally: Mark invite as failed-to-send in Firestore
     }
 
     // --- Return result ---
+    console.log("inviteAndSetRole: SUCCESS", {
+      status: "ok",
+      uid: userRecord.uid,
+      role,
+      isNewUser,
+      token,
+      inviteUrl,
+    });
     return {
       status: "ok",
       uid: userRecord.uid,
