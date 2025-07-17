@@ -223,7 +223,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print('==== InviteAcceptScreen BUILD ====');
+    print('==== InviteAcceptScreen BUILD (top) ====');
     print('Dart: Uri.base: ${Uri.base.toString()}');
     print('JS: window.location.href: ${html.window.location.href}');
     print('JS: window.location.hash: ${html.window.location.hash}');
@@ -231,6 +231,8 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
+    print(
+        '_loading: $_loading, _accepted: $_accepted, _inviteData: $_inviteData');
 
     return Scaffold(
       backgroundColor: colorScheme.background,
