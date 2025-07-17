@@ -6,6 +6,14 @@ import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
+import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+
+String roleToDashboardRoute(List<String> roles) {
+  if (roles.contains('platform_owner')) return '/platform-owner/dashboard';
+  if (roles.contains('hq_owner')) return '/hq-owner/dashboard';
+  if (roles.contains('developer')) return '/developer/dashboard';
+  return '/admin/dashboard';
+}
 
 class FranchiseOnboardingScreen extends StatefulWidget {
   final String? inviteToken; // Make nullable
@@ -131,8 +139,14 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
                 Text(AppLocalizations.of(context)!.profileEditContactSupport),
             actions: [
               TextButton(
-                onPressed: () =>
-                    Navigator.of(context).pushReplacementNamed('/admin'),
+                onPressed: () {
+                  final adminUserProvider =
+                      Provider.of<AdminUserProvider>(context, listen: false);
+                  final roles =
+                      adminUserProvider.user?.roles?.cast<String>() ?? [];
+                  final dashboardRoute = roleToDashboardRoute(roles);
+                  Navigator.of(context).pushReplacementNamed(dashboardRoute);
+                },
                 child: Text(AppLocalizations.of(context)!.continueLabel),
               ),
             ],

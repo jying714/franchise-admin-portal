@@ -215,7 +215,52 @@ class _FranchiseAdminPortalRootState extends State<FranchiseAdminPortalRoot> {
           print(
               '[main.dart] Authenticated onGenerateRoute: route=${settings.name}');
           final uri = Uri.parse(settings.name ?? '/');
-          // Authenticated routes:
+
+          // === Role-based root/landing routing ===
+          if (uri.path == '/' || uri.path == '/landing') {
+            final userProvider =
+                Provider.of<AdminUserProvider>(context, listen: false);
+            final user = userProvider.user;
+
+            // No user or roles: Unauthorized
+            if (user == null || user.roles == null || user.roles.isEmpty) {
+              print('[main.dart] Routing to Unauthorized (no user/roles)');
+              return MaterialPageRoute(
+                builder: (context) => Scaffold(
+                  appBar: AppBar(title: const Text('Unauthorized')),
+                  body: const Center(
+                      child: Text('Your account is not active or authorized.')),
+                ),
+              );
+            }
+
+            // Role-based dashboard routing
+            if (user.roles.contains('platform_owner')) {
+              print('[main.dart] Routing to PlatformOwnerDashboardScreen');
+              return MaterialPageRoute(
+                  builder: (context) => const PlatformOwnerDashboardScreen());
+            }
+            if (user.roles.contains('hq_owner')) {
+              print('[main.dart] Routing to OwnerHQDashboardScreen');
+              return MaterialPageRoute(
+                  builder: (context) =>
+                      const FranchiseGate(child: OwnerHQDashboardScreen()));
+            }
+            if (user.roles.contains('developer')) {
+              print('[main.dart] Routing to DeveloperDashboardScreen');
+              return MaterialPageRoute(
+                  builder: (context) =>
+                      const FranchiseGate(child: DeveloperDashboardScreen()));
+            }
+
+            // Fallback for other roles
+            print('[main.dart] Routing to AdminDashboardScreen (fallback)');
+            return MaterialPageRoute(
+                builder: (context) =>
+                    const FranchiseGate(child: AdminDashboardScreen()));
+          }
+
+          // ======= Standard Authenticated Routes =======
           if (uri.path == '/post-login-gate') {
             print('[main.dart] Routing to ProfileGateScreen');
             return MaterialPageRoute(
