@@ -1,5 +1,4 @@
 // File: lib/main.dart
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -97,61 +96,211 @@ class FranchiseAdminPortalApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Franchise Admin Portal',
-      theme: _lightTheme,
-      darkTheme: _darkTheme,
-      themeMode: ThemeProvider().themeMode,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        Provider<FirestoreService>.value(value: FirestoreService()),
+        Provider(create: (_) => AnalyticsService()),
+        StreamProvider<fb_auth.User?>.value(
+          value: fb_auth.FirebaseAuth.instance.authStateChanges(),
+          initialData: null,
+        ),
+        ChangeNotifierProvider(create: (_) => FranchiseProvider()),
+        ChangeNotifierProvider(create: (_) => AdminUserProvider()),
+        ChangeNotifierProvider(create: (_) => UserProfileNotifier()),
+        // Do NOT put FranchiseeInvitationProvider here!
       ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      initialRoute: _getInitialRouteFromHash(),
-      builder: (context, child) {
-        return MultiProvider(
-          providers: [
-            ChangeNotifierProvider(create: (_) => AuthService()),
-            ChangeNotifierProvider(create: (_) => ThemeProvider()),
-            Provider<FirestoreService>.value(value: FirestoreService()),
-            Provider(create: (_) => AnalyticsService()),
-            StreamProvider<fb_auth.User?>.value(
-              value: fb_auth.FirebaseAuth.instance.authStateChanges(),
-              initialData: null,
-            ),
-            ChangeNotifierProvider(create: (_) => FranchiseProvider()),
-            ChangeNotifierProvider(create: (_) => AdminUserProvider()),
-            ChangeNotifierProvider(create: (_) => UserProfileNotifier()),
-            ChangeNotifierProvider(
-              create: (_) => FranchiseeInvitationProvider(
-                service: FranchiseeInvitationService(
-                  firestoreService:
-                      Provider.of<FirestoreService>(_, listen: false),
-                ),
-              ),
-            ),
-          ],
-          child: child!,
-        );
-      },
-      onGenerateRoute: (RouteSettings settings) {
-        print('[main.dart] onGenerateRoute: route=${settings.name}');
-        final uri = Uri.parse(settings.name ?? '/');
-        final fbUser = Provider.of<fb_auth.User?>(context, listen: false);
+      child: FranchiseAdminPortalRoot(initialRoute: _getInitialRouteFromHash()),
+    );
+  }
+}
 
-        // ==== UNAUTHENTICATED APP ====
-        if (fbUser == null) {
-          if (uri.path == '/' || uri.path == '/landing') {
-            print('[main.dart] Routing to LandingPage');
+class FranchiseAdminPortalRoot extends StatelessWidget {
+  final String initialRoute;
+  const FranchiseAdminPortalRoot({super.key, required this.initialRoute});
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => FranchiseeInvitationProvider(
+        service: FranchiseeInvitationService(
+          firestoreService:
+              Provider.of<FirestoreService>(context, listen: false),
+        ),
+      ),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Franchise Admin Portal',
+        theme: _lightTheme,
+        darkTheme: _darkTheme,
+        themeMode: ThemeProvider().themeMode,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        initialRoute: initialRoute,
+        onGenerateRoute: (RouteSettings settings) {
+          print('[main.dart] onGenerateRoute: route=${settings.name}');
+          final uri = Uri.parse(settings.name ?? '/');
+          final fbUser = Provider.of<fb_auth.User?>(context, listen: false);
+
+          // ==== UNAUTHENTICATED APP ====
+          if (fbUser == null) {
+            if (uri.path == '/' || uri.path == '/landing') {
+              print('[main.dart] Routing to LandingPage');
+              return MaterialPageRoute(
+                  builder: (context) => const LandingPage());
+            }
+            if (uri.path == '/sign-in') {
+              print('[main.dart] Routing to SignInScreen');
+              return MaterialPageRoute(
+                  builder: (context) => const SignInScreen());
+            }
+            if (uri.path == '/invite-accept') {
+              final args = settings.arguments as Map?;
+              final token = args?['token'] as String?;
+              print('[main.dart] Routing to InviteAcceptScreen, token=$token');
+              return MaterialPageRoute(
+                builder: (context) => InviteAcceptScreen(inviteToken: token),
+              );
+            }
+            print('[main.dart] Routing to fallback LandingPage');
             return MaterialPageRoute(builder: (context) => const LandingPage());
           }
-          if (uri.path == '/sign-in') {
-            print('[main.dart] Routing to SignInScreen');
+
+          // ==== AUTHENTICATED APP ====
+          final userProvider =
+              Provider.of<AdminUserProvider>(context, listen: false);
+          final user = userProvider.user;
+
+          // === Role-based root/landing routing ===
+          if (uri.path == '/' || uri.path == '/landing') {
+            // No user or roles: Unauthorized
+            if (user == null || user.roles == null || user.roles.isEmpty) {
+              print('[main.dart] Routing to Unauthorized (no user/roles)');
+              return MaterialPageRoute(
+                builder: (context) => Scaffold(
+                  appBar: AppBar(title: const Text('Unauthorized')),
+                  body: const Center(
+                      child: Text('Your account is not active or authorized.')),
+                ),
+              );
+            }
+            // Role-based dashboard routing
+            if (user.roles.contains('platform_owner')) {
+              print('[main.dart] Routing to PlatformOwnerDashboardScreen');
+              return MaterialPageRoute(
+                  builder: (context) => const PlatformOwnerDashboardScreen());
+            }
+            if (user.roles.contains('hq_owner')) {
+              print('[main.dart] Routing to OwnerHQDashboardScreen');
+              return MaterialPageRoute(
+                  builder: (context) =>
+                      const FranchiseGate(child: OwnerHQDashboardScreen()));
+            }
+            if (user.roles.contains('developer')) {
+              print('[main.dart] Routing to DeveloperDashboardScreen');
+              return MaterialPageRoute(
+                  builder: (context) =>
+                      const FranchiseGate(child: DeveloperDashboardScreen()));
+            }
+            // Fallback for other roles
+            print('[main.dart] Routing to AdminDashboardScreen (fallback)');
             return MaterialPageRoute(
-                builder: (context) => const SignInScreen());
+                builder: (context) =>
+                    const FranchiseGate(child: AdminDashboardScreen()));
+          }
+
+          // ======= Standard Authenticated Routes =======
+          if (uri.path == '/post-login-gate') {
+            print('[main.dart] Routing to ProfileGateScreen');
+            return MaterialPageRoute(
+                builder: (context) => const ProfileGateScreen());
+          }
+          if (uri.path == '/admin/dashboard') {
+            print('[main.dart] Routing to AdminDashboardScreen');
+            return MaterialPageRoute(
+                builder: (context) =>
+                    const FranchiseGate(child: AdminDashboardScreen()));
+          }
+          if (uri.path == '/developer/dashboard') {
+            print('[main.dart] Routing to DeveloperDashboardScreen');
+            return MaterialPageRoute(
+                builder: (context) =>
+                    const FranchiseGate(child: DeveloperDashboardScreen()));
+          }
+          if (uri.path == '/developer/select-franchise') {
+            print('[main.dart] Routing to FranchiseSelectorScreen');
+            return MaterialPageRoute(
+                builder: (context) => const FranchiseSelectorScreen());
+          }
+          if (uri.path == '/hq-owner/dashboard') {
+            print('[main.dart] Routing to OwnerHQDashboardScreen');
+            return MaterialPageRoute(
+                builder: (context) =>
+                    const FranchiseGate(child: OwnerHQDashboardScreen()));
+          }
+          if (uri.path == '/platform-owner/dashboard') {
+            print('[main.dart] Routing to PlatformOwnerDashboardScreen');
+            return MaterialPageRoute(
+                builder: (context) => const PlatformOwnerDashboardScreen());
+          }
+          if (uri.path == '/unauthorized') {
+            print('[main.dart] Routing to Unauthorized');
+            return MaterialPageRoute(
+              builder: (context) => Scaffold(
+                appBar: AppBar(title: const Text('Unauthorized')),
+                body: const Center(child: Text('Your account is not active.')),
+              ),
+            );
+          }
+          if (uri.path == '/alerts') {
+            print('[main.dart] Routing to AlertListScreen');
+            return MaterialPageRoute(
+              builder: (context) {
+                final user =
+                    Provider.of<AdminUserProvider>(context, listen: false).user;
+                final franchiseId = user?.defaultFranchise ??
+                    ((user?.franchiseIds.isNotEmpty ?? false)
+                        ? user!.franchiseIds.first
+                        : '');
+                return AlertListScreen(
+                  franchiseId: franchiseId,
+                  developerMode: user?.isDeveloper ?? false,
+                );
+              },
+            );
+          }
+          if (uri.path == '/hq/invoices') {
+            print('[main.dart] Routing to InvoiceListScreen');
+            return MaterialPageRoute(
+                builder: (context) => const InvoiceListScreen());
+          }
+          if (uri.path == '/hq/invoice_detail') {
+            final args = settings.arguments as String?;
+            print(
+                '[main.dart] Routing to InvoiceDetailScreen, invoiceId=$args');
+            return MaterialPageRoute(
+                builder: (context) =>
+                    InvoiceDetailScreen(invoiceId: args ?? ''));
+          }
+          if (uri.path == '/hq/payouts') {
+            print('[main.dart] Routing to PayoutListScreen');
+            return MaterialPageRoute(
+              builder: (context) => ChangeNotifierProvider(
+                create: (context) => PayoutFilterProvider(),
+                child: const PayoutListScreen(),
+              ),
+            );
+          }
+          if (uri.path == '/profile') {
+            print('[main.dart] Routing to UniversalProfileScreen');
+            return MaterialPageRoute(
+                builder: (context) => const UniversalProfileScreen());
           }
           if (uri.path == '/invite-accept') {
             final args = settings.arguments as Map?;
@@ -161,170 +310,31 @@ class FranchiseAdminPortalApp extends StatelessWidget {
               builder: (context) => InviteAcceptScreen(inviteToken: token),
             );
           }
+          if (uri.path == '/franchise-onboarding') {
+            final args = settings.arguments as Map?;
+            final token = args?['token'] as String?;
+            print(
+                '[main.dart] Routing to FranchiseOnboardingScreen, token=$token');
+            if (token == null || token.isEmpty) {
+              print(
+                  '[main.dart] FranchiseOnboardingScreen: Invalid or missing token!');
+              return MaterialPageRoute(
+                builder: (context) => Scaffold(
+                  appBar: AppBar(title: const Text('Invalid Invite')),
+                  body: const Center(
+                      child: Text('Invalid or missing invitation token.')),
+                ),
+              );
+            }
+            return MaterialPageRoute(
+                builder: (context) =>
+                    FranchiseOnboardingScreen(inviteToken: token));
+          }
           print('[main.dart] Routing to fallback LandingPage');
           return MaterialPageRoute(builder: (context) => const LandingPage());
-        }
-
-        // ==== AUTHENTICATED APP ====
-        final userProvider =
-            Provider.of<AdminUserProvider>(context, listen: false);
-        final user = userProvider.user;
-
-        // === Role-based root/landing routing ===
-        if (uri.path == '/' || uri.path == '/landing') {
-          // No user or roles: Unauthorized
-          if (user == null || user.roles == null || user.roles.isEmpty) {
-            print('[main.dart] Routing to Unauthorized (no user/roles)');
-            return MaterialPageRoute(
-              builder: (context) => Scaffold(
-                appBar: AppBar(title: const Text('Unauthorized')),
-                body: const Center(
-                    child: Text('Your account is not active or authorized.')),
-              ),
-            );
-          }
-          // Role-based dashboard routing
-          if (user.roles.contains('platform_owner')) {
-            print('[main.dart] Routing to PlatformOwnerDashboardScreen');
-            return MaterialPageRoute(
-                builder: (context) => const PlatformOwnerDashboardScreen());
-          }
-          if (user.roles.contains('hq_owner')) {
-            print('[main.dart] Routing to OwnerHQDashboardScreen');
-            return MaterialPageRoute(
-                builder: (context) =>
-                    const FranchiseGate(child: OwnerHQDashboardScreen()));
-          }
-          if (user.roles.contains('developer')) {
-            print('[main.dart] Routing to DeveloperDashboardScreen');
-            return MaterialPageRoute(
-                builder: (context) =>
-                    const FranchiseGate(child: DeveloperDashboardScreen()));
-          }
-          // Fallback for other roles
-          print('[main.dart] Routing to AdminDashboardScreen (fallback)');
-          return MaterialPageRoute(
-              builder: (context) =>
-                  const FranchiseGate(child: AdminDashboardScreen()));
-        }
-
-        // ======= Standard Authenticated Routes =======
-        if (uri.path == '/post-login-gate') {
-          print('[main.dart] Routing to ProfileGateScreen');
-          return MaterialPageRoute(
-              builder: (context) => const ProfileGateScreen());
-        }
-        if (uri.path == '/admin/dashboard') {
-          print('[main.dart] Routing to AdminDashboardScreen');
-          return MaterialPageRoute(
-              builder: (context) =>
-                  const FranchiseGate(child: AdminDashboardScreen()));
-        }
-        if (uri.path == '/developer/dashboard') {
-          print('[main.dart] Routing to DeveloperDashboardScreen');
-          return MaterialPageRoute(
-              builder: (context) =>
-                  const FranchiseGate(child: DeveloperDashboardScreen()));
-        }
-        if (uri.path == '/developer/select-franchise') {
-          print('[main.dart] Routing to FranchiseSelectorScreen');
-          return MaterialPageRoute(
-              builder: (context) => const FranchiseSelectorScreen());
-        }
-        if (uri.path == '/hq-owner/dashboard') {
-          print('[main.dart] Routing to OwnerHQDashboardScreen');
-          return MaterialPageRoute(
-              builder: (context) =>
-                  const FranchiseGate(child: OwnerHQDashboardScreen()));
-        }
-        if (uri.path == '/platform-owner/dashboard') {
-          print('[main.dart] Routing to PlatformOwnerDashboardScreen');
-          return MaterialPageRoute(
-              builder: (context) => const PlatformOwnerDashboardScreen());
-        }
-        if (uri.path == '/unauthorized') {
-          print('[main.dart] Routing to Unauthorized');
-          return MaterialPageRoute(
-            builder: (context) => Scaffold(
-              appBar: AppBar(title: const Text('Unauthorized')),
-              body: const Center(child: Text('Your account is not active.')),
-            ),
-          );
-        }
-        if (uri.path == '/alerts') {
-          print('[main.dart] Routing to AlertListScreen');
-          return MaterialPageRoute(
-            builder: (context) {
-              final user =
-                  Provider.of<AdminUserProvider>(context, listen: false).user;
-              final franchiseId = user?.defaultFranchise ??
-                  ((user?.franchiseIds.isNotEmpty ?? false)
-                      ? user!.franchiseIds.first
-                      : '');
-              return AlertListScreen(
-                franchiseId: franchiseId,
-                developerMode: user?.isDeveloper ?? false,
-              );
-            },
-          );
-        }
-        if (uri.path == '/hq/invoices') {
-          print('[main.dart] Routing to InvoiceListScreen');
-          return MaterialPageRoute(
-              builder: (context) => const InvoiceListScreen());
-        }
-        if (uri.path == '/hq/invoice_detail') {
-          final args = settings.arguments as String?;
-          print('[main.dart] Routing to InvoiceDetailScreen, invoiceId=$args');
-          return MaterialPageRoute(
-              builder: (context) => InvoiceDetailScreen(invoiceId: args ?? ''));
-        }
-        if (uri.path == '/hq/payouts') {
-          print('[main.dart] Routing to PayoutListScreen');
-          return MaterialPageRoute(
-            builder: (context) => ChangeNotifierProvider(
-              create: (context) => PayoutFilterProvider(),
-              child: const PayoutListScreen(),
-            ),
-          );
-        }
-        if (uri.path == '/profile') {
-          print('[main.dart] Routing to UniversalProfileScreen');
-          return MaterialPageRoute(
-              builder: (context) => const UniversalProfileScreen());
-        }
-        if (uri.path == '/invite-accept') {
-          final args = settings.arguments as Map?;
-          final token = args?['token'] as String?;
-          print('[main.dart] Routing to InviteAcceptScreen, token=$token');
-          return MaterialPageRoute(
-            builder: (context) => InviteAcceptScreen(inviteToken: token),
-          );
-        }
-        if (uri.path == '/franchise-onboarding') {
-          final args = settings.arguments as Map?;
-          final token = args?['token'] as String?;
-          print(
-              '[main.dart] Routing to FranchiseOnboardingScreen, token=$token');
-          if (token == null || token.isEmpty) {
-            print(
-                '[main.dart] FranchiseOnboardingScreen: Invalid or missing token!');
-            return MaterialPageRoute(
-              builder: (context) => Scaffold(
-                appBar: AppBar(title: const Text('Invalid Invite')),
-                body: const Center(
-                    child: Text('Invalid or missing invitation token.')),
-              ),
-            );
-          }
-          return MaterialPageRoute(
-              builder: (context) =>
-                  FranchiseOnboardingScreen(inviteToken: token));
-        }
-        print('[main.dart] Routing to fallback LandingPage');
-        return MaterialPageRoute(builder: (context) => const LandingPage());
-      },
-      home: null,
+        },
+        home: null,
+      ),
     );
   }
 }
