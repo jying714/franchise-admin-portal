@@ -340,8 +340,8 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         const SizedBox(height: 16),
         Text(
           loc.inviteWelcome(inviteEmail),
-          style:
-              theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+          style: (theme.textTheme.titleLarge ?? const TextStyle())
+              .copyWith(fontWeight: FontWeight.w600),
           textAlign: TextAlign.center,
         ),
         if (inviteFranchiseName.isNotEmpty)
@@ -349,8 +349,8 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
             padding: const EdgeInsets.only(top: 7),
             child: Text(
               loc.inviteForFranchise(inviteFranchiseName),
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: colorScheme.secondary),
+              style: (theme.textTheme.bodyMedium ?? const TextStyle())
+                  .copyWith(color: colorScheme.secondary),
             ),
           ),
         const SizedBox(height: 18),
