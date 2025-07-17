@@ -110,31 +110,12 @@ class FranchiseAdminPortalRoot extends StatefulWidget {
 class _FranchiseAdminPortalRootState extends State<FranchiseAdminPortalRoot> {
   bool _inviteRouteRestored = false;
 
-  void _maybeRestoreInviteRoute(BuildContext context) {
-    if (_inviteRouteRestored) return; // Prevent infinite loop
+  String _getInitialRouteFromHash() {
     final hash = html.window.location.hash;
     if (hash.startsWith('#/invite-accept')) {
-      final questionMarkIndex = hash.indexOf('?');
-      String? token;
-      if (questionMarkIndex != -1 && questionMarkIndex < hash.length - 1) {
-        final queryString = hash.substring(questionMarkIndex + 1);
-        final params = Uri.splitQueryString(queryString);
-        token = params['token'];
-      }
-      if (token != null && token.isNotEmpty) {
-        print(
-            '[main.dart] Restoring InviteAcceptScreen with token from hash: $token');
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (ModalRoute.of(context)?.settings.name != '/invite-accept') {
-            setState(() => _inviteRouteRestored = true);
-            Navigator.of(context).pushReplacementNamed(
-              '/invite-accept',
-              arguments: {'token': token},
-            );
-          }
-        });
-      }
+      return '/invite-accept' + hash.substring('#/invite-accept'.length);
     }
+    return '/';
   }
 
   @override
@@ -193,7 +174,6 @@ class _FranchiseAdminPortalRootState extends State<FranchiseAdminPortalRoot> {
     // ==== AUTHENTICATED APP ====
     print(
         '[main.dart] FranchiseAdminPortalRoot: Authenticated, showing post-login app.');
-    _maybeRestoreInviteRoute(context);
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<FranchiseProvider>(
@@ -230,6 +210,7 @@ class _FranchiseAdminPortalRootState extends State<FranchiseAdminPortalRoot> {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
+        initialRoute: _getInitialRouteFromHash(),
         onGenerateRoute: (RouteSettings settings) {
           print(
               '[main.dart] Authenticated onGenerateRoute: route=${settings.name}');
