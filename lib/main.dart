@@ -100,10 +100,18 @@ void main() {
   });
 }
 
-class FranchiseAdminPortalRoot extends StatelessWidget {
+class FranchiseAdminPortalRoot extends StatefulWidget {
   const FranchiseAdminPortalRoot({super.key});
+  @override
+  State<FranchiseAdminPortalRoot> createState() =>
+      _FranchiseAdminPortalRootState();
+}
+
+class _FranchiseAdminPortalRootState extends State<FranchiseAdminPortalRoot> {
+  bool _inviteRouteRestored = false;
 
   void _maybeRestoreInviteRoute(BuildContext context) {
+    if (_inviteRouteRestored) return; // Prevent infinite loop
     final hash = html.window.location.hash;
     if (hash.startsWith('#/invite-accept')) {
       final questionMarkIndex = hash.indexOf('?');
@@ -118,6 +126,7 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
             '[main.dart] Restoring InviteAcceptScreen with token from hash: $token');
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (ModalRoute.of(context)?.settings.name != '/invite-accept') {
+            setState(() => _inviteRouteRestored = true);
             Navigator.of(context).pushReplacementNamed(
               '/invite-accept',
               arguments: {'token': token},
@@ -130,9 +139,9 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final firebaseUser = Provider.of<fb_auth.User?>(context);
     print(
         '[main.dart] FranchiseAdminPortalRoot.build: window.location = ${Uri.base.toString()}');
-    final firebaseUser = Provider.of<fb_auth.User?>(context);
     print(
         '[main.dart] FranchiseAdminPortalRoot.build: firebaseUser=${firebaseUser?.email} uid=${firebaseUser?.uid}');
     // ==== UNAUTHENTICATED APP ====
