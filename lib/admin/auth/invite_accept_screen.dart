@@ -140,8 +140,16 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
           return;
         }
         // Register user with Firebase Auth
+        final inviteEmail = (_inviteData?['email'] as String?) ?? '';
+        if (inviteEmail.isEmpty) {
+          setState(() {
+            _error = "Invitation email missing. Cannot register.";
+            _loading = false;
+          });
+          return;
+        }
         await fb_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: _inviteData!['email'],
+          email: inviteEmail,
           password: pw,
         );
       } else {
@@ -262,22 +270,27 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
       );
     }
 
+    // Defensive assignment of all used fields
+    final inviteEmail = (_inviteData?['email'] as String?) ?? 'Unknown';
+    final inviteFranchiseName =
+        (_inviteData?['franchiseName'] as String?) ?? '';
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(Icons.mark_email_unread, color: colorScheme.primary, size: 40),
         const SizedBox(height: 16),
         Text(
-          loc.inviteWelcome(_inviteData!['email']),
+          loc.inviteWelcome(inviteEmail),
           style:
               theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
           textAlign: TextAlign.center,
         ),
-        if (_inviteData!['franchiseName'] != null)
+        if (inviteFranchiseName.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 7),
             child: Text(
-              loc.inviteForFranchise(_inviteData!['franchiseName']),
+              loc.inviteForFranchise(inviteFranchiseName),
               style: theme.textTheme.bodyMedium
                   ?.copyWith(color: colorScheme.secondary),
             ),
