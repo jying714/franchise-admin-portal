@@ -308,15 +308,20 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
 
 // Centralized invite account logic
     final fb_auth.User? currentUser = fb_auth.FirebaseAuth.instance.currentUser;
+    print('currentUser: $currentUser');
     final inviteUidRaw = _inviteData?['invitedUserId'];
+    print('inviteUidRaw: $inviteUidRaw');
     final inviteUid = (inviteUidRaw is String && inviteUidRaw.isNotEmpty)
         ? inviteUidRaw
         : null;
+    print('inviteUid: $inviteUid');
     final inviteEmailLower = inviteEmail.toLowerCase();
     final userEmailLower = (currentUser?.email ?? '').toLowerCase();
     final isLoggedIn = currentUser != null;
+    print('isLoggedIn: $isLoggedIn');
     final isUidMatch =
-        isLoggedIn && inviteUid != null && currentUser!.uid == inviteUid;
+        isLoggedIn && inviteUid != null && currentUser.uid == inviteUid;
+
     final isEmailMatch = isLoggedIn && userEmailLower == inviteEmailLower;
     print('inviteEmail: $inviteEmail');
     print('inviteUid: $inviteUid');
