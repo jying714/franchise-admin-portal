@@ -270,10 +270,11 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
       );
     }
 
-    // Defensive assignment of all used fields
+    // Null-safe extract fields (always provide a default)
     final inviteEmail = (_inviteData?['email'] as String?) ?? 'Unknown';
     final inviteFranchiseName =
         (_inviteData?['franchiseName'] as String?) ?? '';
+    final inviteStatus = (_inviteData?['status'] as String?) ?? 'unknown';
 
     return Column(
       mainAxisSize: MainAxisSize.min,
