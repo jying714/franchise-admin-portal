@@ -179,9 +179,21 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
   Widget build(BuildContext context) {
     print('==== InviteAcceptScreen BUILD ====');
     print('Dart: Uri.base: ${Uri.base.toString()}');
-    // Extra: Print window location in web
     print('JS: window.location.href: ${html.window.location.href}');
     print('JS: window.location.hash: ${html.window.location.hash}');
+
+    final uri = Uri.base;
+    final token = uri.queryParameters['token'];
+
+    // If the token has changed or is not yet loaded, trigger loading.
+    if (token != null && token.isNotEmpty && token != _token && !_loading) {
+      print('[InviteAcceptScreen] Detected new token in build: $token');
+      // This is safe because setState will trigger a rebuild, but since _loading will be true, it will not loop.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadToken();
+      });
+    }
+
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
