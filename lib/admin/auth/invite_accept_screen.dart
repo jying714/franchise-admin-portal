@@ -46,13 +46,18 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
   }
 
   void _loadToken() {
-    // Parse the token from the hash fragment if needed
     final hash = html.window.location.hash; // e.g. #/invite-accept?token=...
     print('[InviteAcceptScreen] window.location.hash: $hash');
     String? token;
     if (hash.isNotEmpty) {
-      final uri = Uri.parse(hash.substring(1)); // Remove the leading #
-      token = uri.queryParameters['token'];
+      final hashPart = hash.substring(1); // Remove the leading #
+      // Find the query part after '?' in the hash
+      final questionMarkIndex = hashPart.indexOf('?');
+      if (questionMarkIndex != -1 && questionMarkIndex < hashPart.length - 1) {
+        final queryString = hashPart.substring(questionMarkIndex + 1);
+        final params = Uri.splitQueryString(queryString);
+        token = params['token'];
+      }
     }
     print('[InviteAcceptScreen] Extracted token from hash: $token');
     setState(() {
