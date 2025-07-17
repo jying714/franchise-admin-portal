@@ -83,10 +83,9 @@ void main() {
   });
 }
 
-/// This widget ensures StreamProvider is in effect and waits for the auth state to resolve
+/// Top-level provider bootstrapping (including StreamProvider for auth)
 class FranchiseAuthBootstrap extends StatelessWidget {
   const FranchiseAuthBootstrap({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -98,7 +97,6 @@ class FranchiseAuthBootstrap extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => FranchiseProvider()),
         ChangeNotifierProvider(create: (_) => AdminUserProvider()),
         ChangeNotifierProvider(create: (_) => UserProfileNotifier()),
-        // Only one StreamProvider at the very top!
         StreamProvider<fb_auth.User?>.value(
           value: fb_auth.FirebaseAuth.instance.authStateChanges(),
           initialData: null,
@@ -109,6 +107,7 @@ class FranchiseAuthBootstrap extends StatelessWidget {
   }
 }
 
+/// AuthGate waits for the Firebase Auth state to resolve
 class FranchiseAuthGate extends StatelessWidget {
   const FranchiseAuthGate({super.key});
 
@@ -124,11 +123,11 @@ class FranchiseAuthGate extends StatelessWidget {
   Widget build(BuildContext context) {
     final fbUser = Provider.of<fb_auth.User?>(context);
 
-    // On web, we may not know the auth state yet on first build.
-    // If currentUser is null AND fbUser is null, wait for the stream.
     final loading =
         fbUser == null && fb_auth.FirebaseAuth.instance.currentUser == null;
     if (loading) {
+      print(
+          '[main.dart] FranchiseAuthGate: Waiting for Firebase Auth stream to resolve.');
       return const MaterialApp(
         home: Scaffold(
           body: Center(child: CircularProgressIndicator()),
@@ -136,17 +135,64 @@ class FranchiseAuthGate extends StatelessWidget {
       );
     }
 
-    // Auth state resolved - continue with app
+    print('[main.dart] FranchiseAuthGate: Auth state resolved. Proceeding.');
     return FranchiseAdminPortalRoot(initialRoute: _getInitialRouteFromHash());
   }
 }
 
+/// App root that only builds the MaterialApp and routing after user profile is loaded
 class FranchiseAdminPortalRoot extends StatelessWidget {
   final String initialRoute;
   const FranchiseAdminPortalRoot({super.key, required this.initialRoute});
 
   @override
   Widget build(BuildContext context) {
+    final fbUser = Provider.of<fb_auth.User?>(context);
+    final adminUserProvider = Provider.of<AdminUserProvider>(context);
+
+    print(
+        '[main.dart] FranchiseAdminPortalRoot: fbUser=${fbUser?.email}, uid=${fbUser?.uid}');
+    print(
+        '[main.dart] FranchiseAdminPortalRoot: adminUserProvider.isLoading=${adminUserProvider.loading}');
+    print(
+        '[main.dart] FranchiseAdminPortalRoot: adminUserProvider.user=${adminUserProvider.user}');
+
+    // Not authenticated: show nothing (should be handled by AuthGate)
+    if (fbUser == null) {
+      print(
+          '[main.dart] FranchiseAdminPortalRoot: Not authenticated - should not reach here.');
+      return const SizedBox.shrink();
+    }
+
+    // User profile still loading
+    if (adminUserProvider.loading) {
+      print(
+          '[main.dart] FranchiseAdminPortalRoot: User profile is still loading...');
+      return const MaterialApp(
+        home: Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
+    // Authenticated, but app user record is null or missing roles
+    if (adminUserProvider.user == null ||
+        adminUserProvider.user?.roles == null) {
+      print(
+          '[main.dart] FranchiseAdminPortalRoot: Authenticated but no app user found! Showing Unauthorized.');
+      return MaterialApp(
+        home: Scaffold(
+          appBar: AppBar(title: const Text('Unauthorized')),
+          body: const Center(
+            child: Text('Your account is not active or authorized.'),
+          ),
+        ),
+      );
+    }
+
+    // Success! Build the app.
+    print(
+        '[main.dart] FranchiseAdminPortalRoot: Authenticated and app user loaded. Building router.');
     return ChangeNotifierProvider(
       create: (_) => FranchiseeInvitationProvider(
         service: FranchiseeInvitationService(
@@ -171,51 +217,10 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
         onGenerateRoute: (RouteSettings settings) {
           print('[main.dart] onGenerateRoute: route=${settings.name}');
           final uri = Uri.parse(settings.name ?? '/');
-          final fbUser = Provider.of<fb_auth.User?>(context, listen: false);
+          final user = adminUserProvider.user!;
 
-          // ==== UNAUTHENTICATED APP ====
-          if (fbUser == null) {
-            if (uri.path == '/' || uri.path == '/landing') {
-              print('[main.dart] Routing to LandingPage');
-              return MaterialPageRoute(
-                  builder: (context) => const LandingPage());
-            }
-            if (uri.path == '/sign-in') {
-              print('[main.dart] Routing to SignInScreen');
-              return MaterialPageRoute(
-                  builder: (context) => const SignInScreen());
-            }
-            if (uri.path == '/invite-accept') {
-              final args = settings.arguments as Map?;
-              final token = args?['token'] as String?;
-              print('[main.dart] Routing to InviteAcceptScreen, token=$token');
-              return MaterialPageRoute(
-                builder: (context) => InviteAcceptScreen(inviteToken: token),
-              );
-            }
-            print('[main.dart] Routing to fallback LandingPage');
-            return MaterialPageRoute(builder: (context) => const LandingPage());
-          }
-
-          // ==== AUTHENTICATED APP ====
-          final userProvider =
-              Provider.of<AdminUserProvider>(context, listen: false);
-          final user = userProvider.user;
-
-          // === Role-based root/landing routing ===
+          // Role-based root/landing routing
           if (uri.path == '/' || uri.path == '/landing') {
-            // No user or roles: Unauthorized
-            if (user == null || user.roles == null || user.roles.isEmpty) {
-              print('[main.dart] Routing to Unauthorized (no user/roles)');
-              return MaterialPageRoute(
-                builder: (context) => Scaffold(
-                  appBar: AppBar(title: const Text('Unauthorized')),
-                  body: const Center(
-                      child: Text('Your account is not active or authorized.')),
-                ),
-              );
-            }
-            // Role-based dashboard routing
             if (user.roles.contains('platform_owner')) {
               print('[main.dart] Routing to PlatformOwnerDashboardScreen');
               return MaterialPageRoute(
@@ -233,7 +238,6 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
                   builder: (context) =>
                       const FranchiseGate(child: DeveloperDashboardScreen()));
             }
-            // Fallback for other roles
             print('[main.dart] Routing to AdminDashboardScreen (fallback)');
             return MaterialPageRoute(
                 builder: (context) =>
@@ -287,15 +291,13 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
             print('[main.dart] Routing to AlertListScreen');
             return MaterialPageRoute(
               builder: (context) {
-                final user =
-                    Provider.of<AdminUserProvider>(context, listen: false).user;
-                final franchiseId = user?.defaultFranchise ??
-                    ((user?.franchiseIds.isNotEmpty ?? false)
-                        ? user!.franchiseIds.first
+                final franchiseId = user.defaultFranchise ??
+                    ((user.franchiseIds.isNotEmpty)
+                        ? user.franchiseIds.first
                         : '');
                 return AlertListScreen(
                   franchiseId: franchiseId,
-                  developerMode: user?.isDeveloper ?? false,
+                  developerMode: user.isDeveloper ?? false,
                 );
               },
             );
@@ -332,8 +334,7 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
             final token = args?['token'] as String?;
             print('[main.dart] Routing to InviteAcceptScreen, token=$token');
             return MaterialPageRoute(
-              builder: (context) => InviteAcceptScreen(inviteToken: token),
-            );
+                builder: (context) => InviteAcceptScreen(inviteToken: token));
           }
           if (uri.path == '/franchise-onboarding') {
             final args = settings.arguments as Map?;
