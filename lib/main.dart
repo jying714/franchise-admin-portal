@@ -132,7 +132,9 @@ class FranchiseAppRootSplit extends StatelessWidget {
           title: 'Franchise Admin Portal',
           theme: _lightTheme,
           darkTheme: _darkTheme,
-          themeMode: safeThemeMode(ctx),
+          themeMode:
+              Provider.of<ThemeProvider>(context, listen: true).themeMode ??
+                  ThemeMode.system,
           localizationsDelegates: const [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
@@ -140,17 +142,35 @@ class FranchiseAppRootSplit extends StatelessWidget {
             GlobalCupertinoLocalizations.delegate,
           ],
           supportedLocales: AppLocalizations.supportedLocales,
-          routes: {
-            '/': (_) => const LandingPage(),
-            '/landing': (_) => const LandingPage(),
-            '/sign-in': (_) => const SignInScreen(),
-            '/invite-accept': (_) => const InviteAcceptScreen(),
-            '/franchise-onboarding': (_) => const FranchiseOnboardingScreen(),
-          },
           initialRoute: '/',
-          onUnknownRoute: (settings) => MaterialPageRoute(
-            builder: (_) => const LandingPage(),
-          ),
+          onGenerateRoute: (RouteSettings settings) {
+            print(
+                '[DEBUG][main.dart][onGenerateRoute] Unauthenticated: route=${settings.name}');
+            // Allow deep link navigation by hash or direct path
+            Uri uri = Uri.parse(settings.name ?? '/');
+            final String path = uri.path;
+
+            if (path == '/' || path == '/landing') {
+              return MaterialPageRoute(builder: (_) => const LandingPage());
+            }
+            if (path == '/sign-in') {
+              return MaterialPageRoute(builder: (_) => const SignInScreen());
+            }
+            if (path == '/invite-accept') {
+              String? token;
+              // Extract token from ?token= param
+              if (uri.queryParameters.containsKey('token')) {
+                token = uri.queryParameters['token'];
+              } else if (settings.arguments is Map &&
+                  (settings.arguments as Map).containsKey('token')) {
+                token = (settings.arguments as Map)['token'] as String?;
+              }
+              return MaterialPageRoute(
+                  builder: (_) => InviteAcceptScreen(inviteToken: token));
+            }
+            // Fallback for unknown routes
+            return MaterialPageRoute(builder: (_) => const LandingPage());
+          },
         ),
       );
     }
