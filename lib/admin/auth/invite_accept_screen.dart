@@ -126,7 +126,15 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
     });
     final loc = AppLocalizations.of(context)!;
     try {
-      // Password validation if new user
+      final inviteEmail = (_inviteData?['email'] as String?) ?? '';
+      if (inviteEmail.isEmpty) {
+        setState(() {
+          _error = "Invitation email missing. Cannot register.";
+          _loading = false;
+        });
+        return;
+      }
+
       if (_isNewUser) {
         final pw = _pwController.text.trim();
         final pw2 = _pw2Controller.text.trim();
@@ -144,30 +152,42 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
           });
           return;
         }
-        // Register user with Firebase Auth
-        final inviteEmail = (_inviteData?['email'] as String?) ?? '';
-        if (inviteEmail.isEmpty) {
-          setState(() {
-            _error = "Invitation email missing. Cannot register.";
-            _loading = false;
-          });
-          return;
+
+        try {
+          // Attempt to register user with Firebase Auth
+          await fb_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(
+            email: inviteEmail,
+            password: pw,
+          );
+        } on fb_auth.FirebaseAuthException catch (e) {
+          if (e.code == 'email-already-in-use') {
+            // This user already exists—prompt to sign in instead
+            setState(() {
+              _error =
+                  "This email is already registered. Please sign in to accept your invitation.";
+              _loading = false;
+            });
+            return;
+          } else {
+            setState(() {
+              _error = e.message ?? "Unknown error during registration.";
+              _loading = false;
+            });
+            return;
+          }
         }
-        await fb_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: inviteEmail,
-          password: pw,
-        );
       } else {
-        // If not new user, user should sign in manually
+        // Not a new user—try to sign in automatically if possible
         final user = fb_auth.FirebaseAuth.instance.currentUser;
         if (user == null) {
           setState(() {
-            _error = loc.signInRequiredToAcceptInvite;
+            _error =
+                "This email is already registered. Please sign in to accept your invitation.";
             _loading = false;
           });
           return;
         }
-        // (Optional: check user.email == _inviteData!['email'])
+        // (Optional: You could check here that user.email == inviteEmail, if desired)
       }
 
       // Call cloud function to mark as accepted
