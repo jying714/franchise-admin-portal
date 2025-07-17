@@ -361,7 +361,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         if (_isNewUser) ...[
           Text(
             loc.inviteSetPassword,
-            style: theme.textTheme.bodyMedium,
+            style: theme.textTheme.bodyMedium ?? const TextStyle(),
           ),
           const SizedBox(height: 8),
           TextFormField(
@@ -389,7 +389,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
               if (isLoggedIn && isUidMatch) {
                 return Text(
                   "You are signed in with the invited account. Click accept to continue.",
-                  style: theme.textTheme.bodyMedium,
+                  style: theme.textTheme.bodyMedium ?? const TextStyle(),
                   textAlign: TextAlign.center,
                 );
               }
@@ -399,7 +399,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
                   children: [
                     Text(
                       "You are signed in with the correct email, but not the invited account. If this is intentional, contact support.",
-                      style: theme.textTheme.bodyMedium,
+                      style: theme.textTheme.bodyMedium ?? const TextStyle(),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
@@ -424,7 +424,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
                 children: [
                   Text(
                     "It looks like your email is already registered. Please sign in to accept this invitation and continue onboarding.",
-                    style: theme.textTheme.bodyMedium,
+                    style: theme.textTheme.bodyMedium ?? const TextStyle(),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
