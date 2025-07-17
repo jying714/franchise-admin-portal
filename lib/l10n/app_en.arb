@@ -1484,7 +1484,13 @@
   "failedToLoadData": "Failed to load invitation.",
   "continueLabel": "Continue",
   "hours": "Hours",
-  "role_hq_owner": "HQ Owner"
+  "role_hq_owner": "HQ Owner",
+  "emailLabel": "Email",
+  "signInWithEmailButton": "Sign in with Email",
+  "forgotPassword": "Forgot password?",
+  "emailRequired": "Please enter your email address.",
+  "passwordTooShort": "Password required (min 6 chars)",
+  "orDivider": "OR"
 
   
   }
