@@ -265,6 +265,9 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
 
   Widget _buildInvitePanel(
       AppLocalizations loc, ColorScheme colorScheme, ThemeData theme) {
+    print('=== _buildInvitePanel called ===');
+    print('_inviteData: $_inviteData');
+    print('_error: $_error');
     if (_error != null) {
       return Column(
         mainAxisSize: MainAxisSize.min,
