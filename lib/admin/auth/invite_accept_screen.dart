@@ -278,7 +278,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
           const SizedBox(height: 12),
           Text(
             _error!,
-            style: theme.textTheme.bodyMedium!.copyWith(
+            style: (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
                 color: colorScheme.error, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
