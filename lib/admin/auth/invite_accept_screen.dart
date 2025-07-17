@@ -127,6 +127,8 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
   }
 
   Future<void> _acceptInvite() async {
+    print(
+        '[InviteAcceptScreen] _acceptInvite() called, _isNewUser=$_isNewUser, inviteData=$_inviteData');
     setState(() {
       _loading = true;
       _error = null;
@@ -204,6 +206,8 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         '/franchise-onboarding',
         arguments: {'token': _effectiveToken!},
       );
+      print(
+          '[InviteAcceptScreen] Navigating to /franchise-onboarding with token=$_effectiveToken');
     } catch (e, st) {
       await ErrorLogger.log(
         message: 'Invite accept failed: $e',

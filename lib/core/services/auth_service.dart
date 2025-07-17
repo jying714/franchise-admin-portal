@@ -151,27 +151,42 @@ class AuthService extends ChangeNotifier {
   }
 
   void saveInviteToken(String? token) {
+    print('[auth_service.dart] saveInviteToken called with token=$token');
     _inviteToken = token;
     // Persist for reload/redirect flow, especially on web:
     if (token != null) {
       // LocalStorage is web-only, safe to check kIsWeb
       if (kIsWeb) {
+        print(
+            '[auth_service.dart] saveInviteToken: saving token to localStorage');
         html.window.localStorage['inviteToken'] = token;
       }
     }
   }
 
   String? getInviteToken() {
-    if (_inviteToken != null) return _inviteToken;
-    if (kIsWeb) {
-      return html.window.localStorage['inviteToken'];
+    print('[auth_service.dart] getInviteToken called');
+    if (_inviteToken != null) {
+      print(
+          '[auth_service.dart] getInviteToken: returning from _inviteToken ($_inviteToken)');
+      return _inviteToken;
     }
+    if (kIsWeb) {
+      final token = html.window.localStorage['inviteToken'];
+      print(
+          '[auth_service.dart] getInviteToken: returning from localStorage ($token)');
+      return token;
+    }
+    print('[auth_service.dart] getInviteToken: no token found, returning null');
     return null;
   }
 
   void clearInviteToken() {
+    print('[auth_service.dart] clearInviteToken called');
     _inviteToken = null;
     if (kIsWeb) {
+      print(
+          '[auth_service.dart] clearInviteToken: removing token from localStorage');
       html.window.localStorage.remove('inviteToken');
     }
   }

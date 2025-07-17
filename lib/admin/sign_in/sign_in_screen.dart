@@ -79,6 +79,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('[sign_in_screen.dart] build: Sign-in screen showing');
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 

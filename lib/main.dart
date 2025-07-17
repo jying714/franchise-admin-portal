@@ -38,16 +38,23 @@ import 'package:franchise_admin_portal/admin/auth/invite_accept_screen.dart';
 import 'package:franchise_admin_portal/admin/profile/franchise_onboarding_screen.dart';
 
 void main() {
+  print('[main.dart] main(): Starting runZonedGuarded.');
   runZonedGuarded(() async {
+    print('[main.dart] runZonedGuarded: Initializing Flutter bindings.');
     WidgetsFlutterBinding.ensureInitialized();
+
+    print('[main.dart] runZonedGuarded: Initializing Firebase.');
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
     await fb_auth.FirebaseAuth.instance.setPersistence(
       fb_auth.Persistence.LOCAL,
     );
+    print(
+        '[main.dart] runZonedGuarded: Firebase initialized and persistence set.');
 
     FlutterError.onError = (FlutterErrorDetails details) async {
+      print('[main.dart] FlutterError.onError: ${details.exceptionAsString()}');
       FlutterError.dumpErrorToConsole(details);
       await ErrorLogger.log(
         message: details.exceptionAsString(),
@@ -62,7 +69,9 @@ void main() {
         },
       );
     };
+
     final firestoreService = FirestoreService();
+    print('[main.dart] runZonedGuarded: Starting runApp.');
     runApp(
       MultiProvider(
         providers: [
@@ -79,6 +88,7 @@ void main() {
       ),
     );
   }, (Object error, StackTrace stack) async {
+    print('[main.dart] runZonedGuarded: Uncaught error: $error');
     await ErrorLogger.log(
       message: error.toString(),
       stack: stack.toString(),
@@ -94,13 +104,15 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('window.location: ${Uri.base.toString()}');
+    print(
+        '[main.dart] FranchiseAdminPortalRoot.build: window.location = ${Uri.base.toString()}');
     final firebaseUser = Provider.of<fb_auth.User?>(context);
     print(
         '[main.dart] FranchiseAdminPortalRoot.build: firebaseUser=${firebaseUser?.email} uid=${firebaseUser?.uid}');
     // ==== UNAUTHENTICATED APP ====
     if (firebaseUser == null) {
-      print('[main.dart] Unauthenticated: showing landing/sign-in');
+      print(
+          '[main.dart] FranchiseAdminPortalRoot: Unauthenticated, showing landing/sign-in.');
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Franchise Admin Portal',
@@ -115,21 +127,27 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
         ],
         supportedLocales: AppLocalizations.supportedLocales,
         onGenerateRoute: (RouteSettings settings) {
+          print(
+              '[main.dart] Unauthenticated onGenerateRoute: route=${settings.name}');
           final uri = Uri.parse(settings.name ?? '/');
           if (uri.path == '/' || uri.path == '/landing') {
+            print('[main.dart] Routing to LandingPage');
             return MaterialPageRoute(builder: (context) => const LandingPage());
           }
           if (uri.path == '/sign-in') {
+            print('[main.dart] Routing to SignInScreen');
             return MaterialPageRoute(
                 builder: (context) => const SignInScreen());
           }
           if (uri.path == '/invite-accept') {
             final args = settings.arguments as Map?;
             final token = args?['token'] as String?;
+            print('[main.dart] Routing to InviteAcceptScreen, token=$token');
             return MaterialPageRoute(
               builder: (context) => InviteAcceptScreen(inviteToken: token),
             );
           }
+          print('[main.dart] Routing to fallback LandingPage');
           // fallback
           return MaterialPageRoute(builder: (context) => const LandingPage());
         },
@@ -138,7 +156,8 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
     }
 
     // ==== AUTHENTICATED APP ====
-    print('[main.dart] Authenticated: showing post-login app');
+    print(
+        '[main.dart] FranchiseAdminPortalRoot: Authenticated, showing post-login app.');
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<FranchiseProvider>(
@@ -176,36 +195,45 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
         ],
         supportedLocales: AppLocalizations.supportedLocales,
         onGenerateRoute: (RouteSettings settings) {
+          print(
+              '[main.dart] Authenticated onGenerateRoute: route=${settings.name}');
           final uri = Uri.parse(settings.name ?? '/');
           // Authenticated routes:
           if (uri.path == '/post-login-gate') {
+            print('[main.dart] Routing to ProfileGateScreen');
             return MaterialPageRoute(
                 builder: (context) => const ProfileGateScreen());
           }
           if (uri.path == '/admin/dashboard') {
+            print('[main.dart] Routing to AdminDashboardScreen');
             return MaterialPageRoute(
                 builder: (context) =>
                     const FranchiseGate(child: AdminDashboardScreen()));
           }
           if (uri.path == '/developer/dashboard') {
+            print('[main.dart] Routing to DeveloperDashboardScreen');
             return MaterialPageRoute(
                 builder: (context) =>
                     const FranchiseGate(child: DeveloperDashboardScreen()));
           }
           if (uri.path == '/developer/select-franchise') {
+            print('[main.dart] Routing to FranchiseSelectorScreen');
             return MaterialPageRoute(
                 builder: (context) => const FranchiseSelectorScreen());
           }
           if (uri.path == '/hq-owner/dashboard') {
+            print('[main.dart] Routing to OwnerHQDashboardScreen');
             return MaterialPageRoute(
                 builder: (context) =>
                     const FranchiseGate(child: OwnerHQDashboardScreen()));
           }
           if (uri.path == '/platform-owner/dashboard') {
+            print('[main.dart] Routing to PlatformOwnerDashboardScreen');
             return MaterialPageRoute(
                 builder: (context) => const PlatformOwnerDashboardScreen());
           }
           if (uri.path == '/unauthorized') {
+            print('[main.dart] Routing to Unauthorized');
             return MaterialPageRoute(
               builder: (context) => Scaffold(
                 appBar: AppBar(title: const Text('Unauthorized')),
@@ -214,6 +242,7 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
             );
           }
           if (uri.path == '/alerts') {
+            print('[main.dart] Routing to AlertListScreen');
             return MaterialPageRoute(
               builder: (context) {
                 final user =
@@ -230,17 +259,20 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
             );
           }
           if (uri.path == '/hq/invoices') {
+            print('[main.dart] Routing to InvoiceListScreen');
             return MaterialPageRoute(
                 builder: (context) => const InvoiceListScreen());
           }
           if (uri.path == '/hq/invoice_detail') {
-            // Pass arguments via settings.arguments as before
             final args = settings.arguments as String?;
+            print(
+                '[main.dart] Routing to InvoiceDetailScreen, invoiceId=$args');
             return MaterialPageRoute(
                 builder: (context) =>
                     InvoiceDetailScreen(invoiceId: args ?? ''));
           }
           if (uri.path == '/hq/payouts') {
+            print('[main.dart] Routing to PayoutListScreen');
             return MaterialPageRoute(
               builder: (context) => ChangeNotifierProvider(
                 create: (context) => PayoutFilterProvider(),
@@ -249,12 +281,14 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
             );
           }
           if (uri.path == '/profile') {
+            print('[main.dart] Routing to UniversalProfileScreen');
             return MaterialPageRoute(
                 builder: (context) => const UniversalProfileScreen());
           }
           if (uri.path == '/invite-accept') {
             final args = settings.arguments as Map?;
             final token = args?['token'] as String?;
+            print('[main.dart] Routing to InviteAcceptScreen, token=$token');
             return MaterialPageRoute(
               builder: (context) => InviteAcceptScreen(inviteToken: token),
             );
@@ -262,7 +296,11 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
           if (uri.path == '/franchise-onboarding') {
             final args = settings.arguments as Map?;
             final token = args?['token'] as String?;
+            print(
+                '[main.dart] Routing to FranchiseOnboardingScreen, token=$token');
             if (token == null || token.isEmpty) {
+              print(
+                  '[main.dart] FranchiseOnboardingScreen: Invalid or missing token!');
               return MaterialPageRoute(
                 builder: (context) => Scaffold(
                   appBar: AppBar(title: const Text('Invalid Invite')),
@@ -275,6 +313,7 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
                 builder: (context) =>
                     FranchiseOnboardingScreen(inviteToken: token));
           }
+          print('[main.dart] Routing to fallback LandingPage');
           // fallback
           return MaterialPageRoute(builder: (context) => const LandingPage());
         },

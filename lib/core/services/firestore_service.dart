@@ -156,9 +156,17 @@ class FirestoreService {
   // Fetch invite data by token
   Future<Map<String, dynamic>?> getFranchiseeInvitationByToken(
       String token) async {
+    print(
+        '[firestore_service.dart] getFranchiseeInvitationByToken called with token=$token');
     final snap = await invitationCollection.doc(token).get();
     final data = snap.data();
-    if (data == null) return null;
+    if (data == null) {
+      print(
+          '[firestore_service.dart] getFranchiseeInvitationByToken: No invite doc found for token=$token');
+      return null;
+    }
+    print(
+        '[firestore_service.dart] getFranchiseeInvitationByToken: Invite doc loaded for token=$token data=$data');
     return {
       ...(data as Map<Object?, Object?>)
           .map((k, v) => MapEntry(k.toString(), v)),
@@ -184,11 +192,13 @@ class FirestoreService {
 
   // Call cloud function to accept invitation
   Future<void> callAcceptInvitationFunction(String token) async {
-    // This assumes you use Firebase Functions callable, e.g. with cloud_functions
-    // (You can use your own wrapper if preferred)
+    print(
+        '[firestore_service.dart] callAcceptInvitationFunction called with token=$token');
     final functions = FirebaseFunctions.instance;
     final acceptInvite = functions.httpsCallable('acceptInvitation');
     await acceptInvite({'token': token});
+    print(
+        '[firestore_service.dart] callAcceptInvitationFunction: acceptInvitation function invoked for token=$token');
   }
 
   // Claim invitation

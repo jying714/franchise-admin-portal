@@ -24,6 +24,7 @@ class GlassHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('[landing_page.dart] build: Unauthenticated landing page');
     final colorScheme = Theme.of(context).colorScheme;
     final media = MediaQuery.of(context);
 
@@ -151,7 +152,10 @@ class GlassHero extends StatelessWidget {
           alignment: WrapAlignment.start,
           children: [
             ElevatedButton(
-              onPressed: () => Navigator.of(context).pushNamed('/sign-in'),
+              onPressed: () {
+                print('[landing_page.dart] Login button pressed');
+                Navigator.of(context).pushNamed('/sign-in');
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green[700],
                 foregroundColor: Colors.white,
@@ -200,6 +204,7 @@ class LandingPage extends StatelessWidget {
   // Error logging for async widget build failures
   Future<void> _logErrorToBackend(String message,
       {String? stack, Map<String, dynamic>? contextData}) async {
+    print('[landing_page.dart] _logErrorToBackend called: $message');
     final uri = Uri.parse(
         'https://us-central1-doughboyspizzeria-2b3d2.cloudfunctions.net/logPublicError');
     try {
@@ -212,8 +217,10 @@ class LandingPage extends StatelessWidget {
           'contextData': contextData ?? {},
         }),
       );
+      print('[landing_page.dart] _logErrorToBackend: POST succeeded');
     } catch (e) {
-      print('Failed to send log to backend: $e');
+      print(
+          '[landing_page.dart] _logErrorToBackend: Failed to send log to backend: $e');
     }
   }
 
