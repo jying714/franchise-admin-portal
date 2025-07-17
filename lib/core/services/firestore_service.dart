@@ -191,6 +191,15 @@ class FirestoreService {
     await acceptInvite({'token': token});
   }
 
+  // Claim invitation
+  Future<void> claimInvitation(String token, String newUid) async {
+    // Simple Firestore update. (Could call a cloud function for security.)
+    final docRef = firestore.FirebaseFirestore.instance
+        .collection('franchisee_invitations')
+        .doc(token);
+    await docRef.update({'invitedUserId': newUid});
+  }
+
   // === USERS (GLOBAL, INDUSTRY STANDARD) ===
 
   Future<void> updateUserProfile(

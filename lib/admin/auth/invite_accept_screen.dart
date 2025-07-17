@@ -9,16 +9,17 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'dart:html' as html;
+import 'package:franchise_admin_portal/core/services/auth_service.dart';
 
 class InviteAcceptScreen extends StatefulWidget {
-  const InviteAcceptScreen({super.key});
+  final String? inviteToken;
+  const InviteAcceptScreen({super.key, this.inviteToken});
 
   @override
   State<InviteAcceptScreen> createState() => _InviteAcceptScreenState();
 }
 
 class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
-  String? _token;
   Map<String, dynamic>? _inviteData;
   String? _error;
   bool _loading = false;
@@ -26,16 +27,12 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
   bool _isNewUser = false;
   final _pwController = TextEditingController();
   final _pw2Controller = TextEditingController();
+  String? _effectiveToken;
+  bool _didLoadToken = false;
 
   @override
   void initState() {
     super.initState();
-    print('==== InviteAcceptScreen INIT ====');
-    print('Dart: Uri.base: ${Uri.base.toString()}');
-    // Extra: Print window location in web
-    print('JS: window.location.href: ${html.window.location.href}');
-    print('JS: window.location.hash: ${html.window.location.hash}');
-    _loadToken();
   }
 
   @override
@@ -45,26 +42,36 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
     super.dispose();
   }
 
-  void _loadToken() {
-    final hash = html.window.location.hash; // e.g. #/invite-accept?token=...
-    print('[InviteAcceptScreen] window.location.hash: $hash');
-    String? token;
-    if (hash.isNotEmpty) {
-      final hashPart = hash.substring(1); // Remove the leading #
-      // Find the query part after '?' in the hash
-      final questionMarkIndex = hashPart.indexOf('?');
-      if (questionMarkIndex != -1 && questionMarkIndex < hashPart.length - 1) {
-        final queryString = hashPart.substring(questionMarkIndex + 1);
-        final params = Uri.splitQueryString(queryString);
-        token = params['token'];
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didLoadToken) return;
+    _didLoadToken = true;
+
+    // Priority: Constructor, then arguments, then hash
+    _effectiveToken = widget.inviteToken;
+    if (_effectiveToken == null) {
+      final args = (ModalRoute.of(context)?.settings.arguments as Map?) ?? {};
+      _effectiveToken = args['token'] as String?;
+    }
+    // As a final fallback, parse from hash for deep linking support:
+    if (_effectiveToken == null || _effectiveToken!.isEmpty) {
+      final hash = html.window.location.hash;
+      if (hash.isNotEmpty) {
+        final hashPart = hash.substring(1); // Remove leading #
+        final questionMarkIndex = hashPart.indexOf('?');
+        if (questionMarkIndex != -1 &&
+            questionMarkIndex < hashPart.length - 1) {
+          final queryString = hashPart.substring(questionMarkIndex + 1);
+          final params = Uri.splitQueryString(queryString);
+          _effectiveToken = params['token'];
+        }
       }
     }
-    print('[InviteAcceptScreen] Extracted token from hash: $token');
-    setState(() {
-      _token = token;
-    });
-    if (token != null && token.isNotEmpty) {
-      _fetchInvite(token);
+    if (_effectiveToken != null && _effectiveToken!.isNotEmpty) {
+      Provider.of<AuthService>(context, listen: false)
+          .saveInviteToken(_effectiveToken!);
+      _fetchInvite(_effectiveToken!);
     } else {
       setState(() {
         _loading = false;
@@ -191,11 +198,11 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
       }
 
       // Call cloud function to mark as accepted
-      await FirestoreService().callAcceptInvitationFunction(_token!);
+      await FirestoreService().callAcceptInvitationFunction(_effectiveToken!);
 
       Navigator.of(context).pushReplacementNamed(
         '/franchise-onboarding',
-        arguments: {'token': _token},
+        arguments: {'token': _effectiveToken!},
       );
     } catch (e, st) {
       await ErrorLogger.log(
@@ -204,7 +211,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         source: 'InviteAcceptScreen',
         screen: 'invite_accept',
         severity: 'error',
-        contextData: {'token': _token},
+        contextData: {'token': _effectiveToken},
       );
       setState(() {
         _error = AppLocalizations.of(context)!.inviteAcceptFailed;
@@ -220,18 +227,6 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
     print('Dart: Uri.base: ${Uri.base.toString()}');
     print('JS: window.location.href: ${html.window.location.href}');
     print('JS: window.location.hash: ${html.window.location.hash}');
-
-    final uri = Uri.base;
-    final token = uri.queryParameters['token'];
-
-    // If the token has changed or is not yet loaded, trigger loading.
-    if (token != null && token.isNotEmpty && token != _token && !_loading) {
-      print('[InviteAcceptScreen] Detected new token in build: $token');
-      // This is safe because setState will trigger a rebuild, but since _loading will be true, it will not loop.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _loadToken();
-      });
-    }
 
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
@@ -296,10 +291,20 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
     }
 
     // Null-safe extract fields (always provide a default)
+    // Null-safe extract fields (always provide a default)
     final inviteEmail = (_inviteData?['email'] as String?) ?? 'Unknown';
     final inviteFranchiseName =
         (_inviteData?['franchiseName'] as String?) ?? '';
     final inviteStatus = (_inviteData?['status'] as String?) ?? 'unknown';
+
+// Centralized invite account logic
+    final fb_auth.User? currentUser = fb_auth.FirebaseAuth.instance.currentUser;
+    final inviteUid = _inviteData?['invitedUserId'] as String?;
+    final inviteEmailLower = inviteEmail.toLowerCase();
+    final userEmailLower = (currentUser?.email ?? '').toLowerCase();
+    final isLoggedIn = currentUser != null;
+    final isUidMatch = isLoggedIn && currentUser!.uid == inviteUid;
+    final isEmailMatch = isLoggedIn && userEmailLower == inviteEmailLower;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -347,9 +352,66 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
           ),
         ],
         if (!_isNewUser)
-          Text(
-            loc.inviteAcceptExisting,
-            style: theme.textTheme.bodyMedium,
+          Builder(
+            builder: (context) {
+              // Case 1: Signed in and correct UID (invited user)
+              if (isLoggedIn && isUidMatch) {
+                return Text(
+                  "You are signed in with the invited account. Click accept to continue.",
+                  style: theme.textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                );
+              }
+              // Case 2: Signed in, correct email, but UID mismatch (edge case: merged Google/social login, etc.)
+              if (isLoggedIn && isEmailMatch && !isUidMatch) {
+                return Column(
+                  children: [
+                    Text(
+                      "You are signed in with the correct email, but not the invited account. If this is intentional, contact support.",
+                      style: theme.textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.logout),
+                      label: const Text("Switch Account"),
+                      onPressed: () async {
+                        await fb_auth.FirebaseAuth.instance.signOut();
+                        Provider.of<AuthService>(context, listen: false)
+                            .saveInviteToken(_effectiveToken ?? '');
+                        Navigator.of(context).pushNamed(
+                          '/sign-in',
+                          arguments: {'token': _effectiveToken},
+                        );
+                      },
+                    ),
+                  ],
+                );
+              }
+              // Case 3: Not signed in
+              return Column(
+                children: [
+                  Text(
+                    "It looks like your email is already registered. Please sign in to accept this invitation and continue onboarding.",
+                    style: theme.textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.login),
+                    label: const Text("Sign In"),
+                    onPressed: () {
+                      Provider.of<AuthService>(context, listen: false)
+                          .saveInviteToken(_effectiveToken ?? '');
+                      Navigator.of(context).pushNamed(
+                        '/sign-in',
+                        arguments: {'token': _effectiveToken},
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
           ),
         const SizedBox(height: 24),
         ElevatedButton.icon(

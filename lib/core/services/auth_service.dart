@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:franchise_admin_portal/core/utils/log_utils.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as app;
+import 'dart:html' as html show window;
 
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -13,6 +14,7 @@ class AuthService extends ChangeNotifier {
   User? get currentUser => _auth.currentUser;
   Stream<User?> get authStateChanges => _auth.authStateChanges();
   app.User? get profileUser => _profileUser;
+  String? _inviteToken;
 
   /// EMAIL SIGN-IN (for admin)
   Future<User?> signInWithEmail(String email, String password) async {
@@ -146,6 +148,32 @@ class AuthService extends ChangeNotifier {
     );
     final result = await FirebaseAuth.instance.signInWithCredential(credential);
     return result.user;
+  }
+
+  void saveInviteToken(String? token) {
+    _inviteToken = token;
+    // Persist for reload/redirect flow, especially on web:
+    if (token != null) {
+      // LocalStorage is web-only, safe to check kIsWeb
+      if (kIsWeb) {
+        html.window.localStorage['inviteToken'] = token;
+      }
+    }
+  }
+
+  String? getInviteToken() {
+    if (_inviteToken != null) return _inviteToken;
+    if (kIsWeb) {
+      return html.window.localStorage['inviteToken'];
+    }
+    return null;
+  }
+
+  void clearInviteToken() {
+    _inviteToken = null;
+    if (kIsWeb) {
+      html.window.localStorage.remove('inviteToken');
+    }
   }
 
   // Removed all franchise-specific profile logic from login flow.

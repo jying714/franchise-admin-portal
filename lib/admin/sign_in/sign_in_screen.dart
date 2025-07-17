@@ -61,7 +61,15 @@ class _SignInScreenState extends State<SignInScreen> {
           Provider.of<UserProfileNotifier>(context, listen: false);
       userProfileNotifier.listenToUser(firestoreService, user.uid);
       // --- THEN navigate ---
-      if (mounted) {}
+      final token =
+          Provider.of<AuthService>(context, listen: false).getInviteToken();
+      if (token != null) {
+        Provider.of<AuthService>(context, listen: false).clearInviteToken();
+        Navigator.pushReplacementNamed(context, '/franchise-onboarding',
+            arguments: {'token': token});
+        return;
+      }
+      // If no token, continue to your default post-login navigation here (if needed)
     }
   }
 

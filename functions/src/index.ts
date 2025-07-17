@@ -557,7 +557,7 @@ async function sendOnboardingEmail({
 
 /**
  * Callable function to invite a new user by email,
- *  send onboarding invite, and track status.
+ * send onboarding invite, and track status.
  */
 export const inviteAndSetRole = functions.https.onCall(
   async (data, context) => {
@@ -584,7 +584,8 @@ export const inviteAndSetRole = functions.https.onCall(
 
     if (!email || !role) {
       throw new functions.https.HttpsError(
-        "invalid-argument", "Email and role are required."
+        "invalid-argument",
+        "Email and role are required."
       );
     }
     if (!VALID_ROLES.includes(role)) {
@@ -594,16 +595,18 @@ export const inviteAndSetRole = functions.https.onCall(
       );
     }
 
+    // --- User creation/check ---
     let userRecord;
     let isNewUser = false;
     try {
       userRecord = await admin.auth().getUserByEmail(email);
+      isNewUser = false;
     } catch (err) {
       if (
         typeof err === "object" &&
         err !== null &&
         "code" in err &&
-        (err).code === "auth/user-not-found"
+        err.code === "auth/user-not-found"
       ) {
         if (!password) {
           throw new functions.https.HttpsError(
@@ -616,7 +619,6 @@ export const inviteAndSetRole = functions.https.onCall(
           password,
         });
         isNewUser = true;
-
         // (Optional) Send password reset link for onboarding
         try {
           await admin.auth().generatePasswordResetLink(email);
@@ -628,7 +630,7 @@ export const inviteAndSetRole = functions.https.onCall(
           "internal",
           "Error fetching or creating user: " +
             (typeof err === "object" && err !== null && "message" in err ?
-              (err).message :
+              err.message :
               String(err))
         );
       }
@@ -638,8 +640,8 @@ export const inviteAndSetRole = functions.https.onCall(
     await admin.auth().setCustomUserClaims(userRecord.uid, {roles: [role]});
 
     // --- Write/merge user doc in 'users' ---
-    const userDocRef = admin.firestore().collection("users")
-      .doc(userRecord.uid);
+    const userDocRef = admin.firestore().collection(
+      "users").doc(userRecord.uid);
     const userDoc = await userDocRef.get();
 
     if (!userDoc.exists) {
@@ -691,7 +693,7 @@ export const inviteAndSetRole = functions.https.onCall(
       lastSentAt: now,
       isNewUser,
       inviteUrl,
-      expiresAt, // <-- Added expiry here
+      expiresAt,
       ...(franchiseName && {franchiseName}),
       ...(brandId && {brandId}),
       ...extraMeta,

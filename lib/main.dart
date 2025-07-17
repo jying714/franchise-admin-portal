@@ -124,8 +124,11 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
                 builder: (context) => const SignInScreen());
           }
           if (uri.path == '/invite-accept') {
+            final args = settings.arguments as Map?;
+            final token = args?['token'] as String?;
             return MaterialPageRoute(
-                builder: (context) => const InviteAcceptScreen());
+              builder: (context) => InviteAcceptScreen(inviteToken: token),
+            );
           }
           // fallback
           return MaterialPageRoute(builder: (context) => const LandingPage());
@@ -250,8 +253,11 @@ class FranchiseAdminPortalRoot extends StatelessWidget {
                 builder: (context) => const UniversalProfileScreen());
           }
           if (uri.path == '/invite-accept') {
+            final args = settings.arguments as Map?;
+            final token = args?['token'] as String?;
             return MaterialPageRoute(
-                builder: (context) => const InviteAcceptScreen());
+              builder: (context) => InviteAcceptScreen(inviteToken: token),
+            );
           }
           if (uri.path == '/franchise-onboarding') {
             final args = settings.arguments as Map?;

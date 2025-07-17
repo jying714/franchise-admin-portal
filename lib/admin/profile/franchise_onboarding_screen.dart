@@ -8,8 +8,8 @@ import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
 
 class FranchiseOnboardingScreen extends StatefulWidget {
-  final String inviteToken;
-  const FranchiseOnboardingScreen({super.key, required this.inviteToken});
+  final String? inviteToken; // Make nullable
+  const FranchiseOnboardingScreen({super.key, this.inviteToken});
 
   @override
   State<FranchiseOnboardingScreen> createState() =>
@@ -29,9 +29,20 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
   String? _logoUrl;
   bool _saving = false;
 
+  String? _effectiveToken;
+  bool _didLoadToken = false;
+
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didLoadToken) return;
+    _didLoadToken = true;
+
+    _effectiveToken = widget.inviteToken;
+    if (_effectiveToken == null) {
+      final args = (ModalRoute.of(context)?.settings.arguments as Map?) ?? {};
+      _effectiveToken = args['token'] as String?;
+    }
     _fetchInvite();
   }
 
@@ -40,11 +51,18 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       _loading = true;
       _loadError = null;
     });
+    if (_effectiveToken == null || _effectiveToken!.isEmpty) {
+      setState(() {
+        _loadError = "No invite token found. Please use your invitation link.";
+        _loading = false;
+      });
+      return;
+    }
     try {
       final invite = await Provider.of<FirestoreService>(
         context,
         listen: false,
-      ).getFranchiseeInvitationByToken(widget.inviteToken);
+      ).getFranchiseeInvitationByToken(_effectiveToken ?? '');
       if (invite == null) {
         setState(() {
           _loadError = AppLocalizations.of(context)!.unauthorized;
@@ -101,7 +119,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
         invitedUserId: userId,
       );
       // Accept invitation via cloud function
-      await firestore.callAcceptInvitationFunction(widget.inviteToken);
+      await firestore.callAcceptInvitationFunction(_effectiveToken ?? '');
 
       // Optionally route to dashboard or show success
       if (mounted) {
