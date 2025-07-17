@@ -293,7 +293,10 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
 
     // Null-safe extract fields (always provide a default)
     // Null-safe extract fields (always provide a default)
-    final inviteEmail = (_inviteData?['email'] as String?) ?? 'Unknown';
+    final inviteEmailRaw = _inviteData?['email'];
+    final inviteEmail = (inviteEmailRaw is String && inviteEmailRaw.isNotEmpty)
+        ? inviteEmailRaw
+        : 'Unknown';
     final inviteFranchiseName =
         (_inviteData?['franchiseName'] as String?) ?? '';
     final inviteStatus = (_inviteData?['status'] as String?) ?? 'unknown';
@@ -301,7 +304,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
 // Centralized invite account logic
     final fb_auth.User? currentUser = fb_auth.FirebaseAuth.instance.currentUser;
     final inviteUid = _inviteData?['invitedUserId'] as String?;
-    final inviteEmailLower = (inviteEmail ?? '').toLowerCase();
+    final inviteEmailLower = inviteEmail.toLowerCase();
     final userEmailLower = (currentUser?.email ?? '').toLowerCase();
     final isLoggedIn = currentUser != null;
     final isUidMatch = isLoggedIn && currentUser!.uid == inviteUid;
