@@ -11,6 +11,7 @@ import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/core/services/auth_service.dart';
 import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 String roleToDashboardRoute(List<String> roles) {
   if (roles.contains('platform_owner')) return '/platform-owner/dashboard';
@@ -195,6 +196,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
         'defaultFranchise': franchiseId,
         'franchiseIds': [franchiseId],
       });
+      await FirebaseAuth.instance.currentUser?.getIdToken(true);
       // Clear invite token for proper login without token
       Provider.of<AuthService>(context, listen: false).clearInviteToken();
 
