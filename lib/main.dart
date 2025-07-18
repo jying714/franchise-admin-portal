@@ -40,6 +40,12 @@ import 'dart:html' as html;
 
 /// Returns initial unauth route and optional invite token, e.g. ('/invite-accept', 'abc123').
 Map<String, dynamic> getInitialUnauthRoute() {
+  final currentUser = fb_auth.FirebaseAuth.instance.currentUser;
+  if (currentUser != null) {
+    print(
+        '[getInitialUnauthRoute] User is signed in. Skipping invite-accept route.');
+    return {'route': '/', 'token': ''};
+  }
   final hash = html.window.location.hash;
   print(
       '[main.dart][getInitialUnauthRoute] Current window.location.hash: $hash');
@@ -240,7 +246,6 @@ class FranchiseAppRootSplit extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => FranchiseProvider()),
         ChangeNotifierProvider(create: (_) => AdminUserProvider()),
-        ChangeNotifierProvider(create: (_) => AuthService()),
         Provider<FirestoreService>.value(value: FirestoreService()),
         Provider(create: (_) => AnalyticsService()),
         StreamProvider<fb_auth.User?>.value(

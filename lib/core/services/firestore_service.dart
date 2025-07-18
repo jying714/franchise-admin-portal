@@ -183,25 +183,69 @@ class FirestoreService {
     required String invitedUserId,
   }) async {
     try {
-      // You can generate the franchiseId here or accept it from data.
-      String franchiseId =
-          franchiseData['franchiseId'] ?? _db.collection('franchises').doc().id;
+      // Determine franchiseId: use provided or generate from name
+      String? franchiseId = franchiseData['franchiseId'];
+
+      if (franchiseId == null || franchiseId.trim().isEmpty) {
+        final name = (franchiseData['name'] ?? '') as String;
+        if (name.trim().isEmpty) {
+          throw Exception(
+              'Franchise name is required to generate franchiseId.');
+        }
+
+        // Generate slug-style ID from franchise name
+        franchiseId = name.toLowerCase().replaceAll(RegExp(r'\s+'), '');
+      }
+
+      final franchiseRef = _db.collection('franchises').doc(franchiseId);
+      final userRef = _db.collection('users').doc(invitedUserId);
 
       // Write to /franchises/{franchiseId}
-      await _db.collection('franchises').doc(franchiseId).set({
+      await franchiseRef.set({
         ...franchiseData,
+        'franchiseId': franchiseId,
         'ownerUserId': invitedUserId,
-        'status': 'active', // or "invited" if you want to gate onboarding
+        'status': 'active',
         'createdAt': firestore.FieldValue.serverTimestamp(),
         'updatedAt': firestore.FieldValue.serverTimestamp(),
       }, firestore.SetOptions(merge: true));
 
+      // ✅ Update the invited user's franchise metadata
+      await userRef.set({
+        'franchiseIds': firestore.FieldValue.arrayUnion([franchiseId]),
+        'defaultFranchise': franchiseId,
+      }, firestore.SetOptions(merge: true));
+
       return franchiseId;
     } catch (e, st) {
-      // You may want to use your error logger here
       print('[FirestoreService] createFranchiseProfile error: $e\n$st');
+      await ErrorLogger.log(
+        message: 'Failed to create franchise profile: $e',
+        stack: st.toString(),
+        source: 'FirestoreService',
+        screen: 'createFranchiseProfile',
+        severity: 'error',
+      );
       rethrow;
     }
+  }
+
+  Future<void> updateUserClaims({
+    required String uid,
+    required List<String> franchiseIds,
+    List<String>? roles,
+    Map<String, dynamic>? additionalClaims,
+  }) async {
+    final callable = functions.httpsCallable('updateUserClaims');
+
+    final payload = {
+      'uid': uid,
+      'franchiseIds': franchiseIds,
+      'roles': roles ?? [],
+      if (additionalClaims != null) 'additionalClaims': additionalClaims,
+    };
+
+    await callable.call(payload);
   }
 
   /// Update existing franchise profile fields.

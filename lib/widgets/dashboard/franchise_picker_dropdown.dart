@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/models/franchise_info.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 class FranchisePickerDropdown extends StatelessWidget {
   final String? selectedFranchiseId;
@@ -14,9 +15,18 @@ class FranchisePickerDropdown extends StatelessWidget {
     print('[FranchisePickerDropdown] build called (dropdown in AppBar only)');
 
     final franchiseProvider = Provider.of<FranchiseProvider>(context);
-    final franchises = franchiseProvider.allFranchises; // List<FranchiseInfo>
-    final currentId = selectedFranchiseId ?? franchiseProvider.franchiseId;
+    final user = Provider.of<AdminUserProvider>(context).user;
     final loc = AppLocalizations.of(context);
+
+    final allFranchises = franchiseProvider.allFranchises;
+    final allowedFranchiseIds = user?.franchiseIds ?? [];
+
+    // ✅ Filter only franchises the user is allowed to access
+    final franchises = allFranchises
+        ?.where((f) => allowedFranchiseIds.contains(f.id))
+        .toList();
+
+    final currentId = selectedFranchiseId ?? franchiseProvider.franchiseId;
 
     if (franchises == null || franchises.isEmpty) {
       return Tooltip(

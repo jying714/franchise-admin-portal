@@ -1018,6 +1018,36 @@ export const acceptInvitation = functions.https.onCall(
       },
       {merge: true}
     );
+    // OPTIONAL: Add franchiseId to user's profile and
+    //  custom claims if available in invitation
+    if (inviteData.franchiseId) {
+      const franchiseId = inviteData.franchiseId;
+      const userRef = admin.firestore().collection(
+        "users").doc(context.auth.uid);
+
+      // Update Firestore user doc
+      await userRef.set(
+        {
+          franchiseIds: admin.firestore.FieldValue.arrayUnion(franchiseId),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        {merge: true}
+      );
+
+      // Fetch current roles (preserve existing roles)
+      const userDoc = await userRef.get();
+      const roles = (userDoc.data()?.roles ?? ["customer"]);
+
+      // Set custom claims
+      await admin.auth().setCustomUserClaims(context.auth.uid, {
+        roles,
+        franchiseIds: [franchiseId], // or merge if you want
+        // arrayUnion-like behavior
+      });
+
+      console.log(`[acceptInvitation] Added franchiseId
+         ${franchiseId} to user ${context.auth.uid}`);
+    }
     return {status: "ok", token};
   }
 );
@@ -1167,3 +1197,55 @@ export const logAppError = functions.https.onRequest((req, res) => {
     }
   });
 });
+
+export const updateUserClaims = functions.https.onCall(
+  async (data, context) => {
+    const {uid, roles, franchiseIds, additionalClaims} = data;
+
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        "unauthenticated", "Must be signed in.");
+    }
+
+    const callerRoles = context.auth.token.roles || [];
+    if (!hasPrivilegedRole(callerRoles)) {
+      throw new functions.https.HttpsError(
+        "permission-denied", "Insufficient privileges.");
+    }
+
+    if (!uid) {
+      throw new functions.https.HttpsError("invalid-argument", "Missing uid.");
+    }
+
+    // Set custom claims
+    await admin.auth().setCustomUserClaims(uid, {
+      roles: roles ?? [],
+      franchiseIds: franchiseIds ?? [],
+      ...(additionalClaims ?? {}), // Merges in defaultFranchise
+    });
+
+    // Optional: mirror to Firestore
+    await admin.firestore().collection("users").doc(uid).set(
+      {
+        roles: roles ?? [],
+        franchiseIds: franchiseIds ?? [],
+        ...(additionalClaims ?? {}),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      {merge: true}
+    );
+
+    return {status: "ok", uid};
+  }
+);
+
+/**
+ * Checks whether the user has a privileged role.
+ * @param {string[]} roles - Array of user roles.
+ * @return {boolean} True if user has at least one privileged role.
+ */
+function hasPrivilegedRole(roles: string[]): boolean {
+  return roles.some((r) =>
+    ["platform_owner", "owner", "developer", "admin"].includes(r)
+  );
+}
