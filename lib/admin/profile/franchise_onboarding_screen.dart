@@ -12,6 +12,7 @@ import 'package:franchise_admin_portal/core/services/auth_service.dart';
 import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 
 String roleToDashboardRoute(List<String> roles) {
   if (roles.contains('platform_owner')) return '/platform-owner/dashboard';
@@ -226,6 +227,11 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       final adminUserProvider =
           Provider.of<AdminUserProvider>(context, listen: false);
       adminUserProvider.user = updatedUser;
+
+      // ✅ Ensure ProfileGateScreen re-reads the fresh user
+      final userProfileNotifier =
+          Provider.of<UserProfileNotifier>(context, listen: false);
+      userProfileNotifier.reload();
 
       // Clear invite token
       Provider.of<AuthService>(context, listen: false).clearInviteToken();
