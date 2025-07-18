@@ -84,6 +84,8 @@ class _SignInScreenState extends State<SignInScreen> {
       final token =
           Provider.of<AuthService>(context, listen: false).getInviteToken();
       if (token != null) {
+        debugPrint(
+            '[SignInScreen] Navigating to onboarding, token=$token'); // <-- ADD THIS LINE
         Provider.of<AuthService>(context, listen: false).clearInviteToken();
         Navigator.pushReplacementNamed(context, '/franchise-onboarding',
             arguments: {'token': token});

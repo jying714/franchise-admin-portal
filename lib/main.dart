@@ -488,7 +488,13 @@ class _FranchiseAuthenticatedRootState
             }
             if (uri.path == '/franchise-onboarding') {
               final args = settings.arguments as Map?;
-              final token = args?['token'] as String?;
+              String? token = args?['token'] as String?;
+              if (token == null || token.isEmpty) {
+                // Try to get from AuthService
+                token = Provider.of<AuthService>(context, listen: false)
+                    .getInviteToken();
+                print('[main.dart] Fetched token from AuthService: $token');
+              }
               print(
                   '[main.dart] Routing to FranchiseOnboardingScreen, token=$token');
               if (token == null || token.isEmpty) {
@@ -503,9 +509,11 @@ class _FranchiseAuthenticatedRootState
                 );
               }
               return MaterialPageRoute(
-                  builder: (context) =>
-                      FranchiseOnboardingScreen(inviteToken: token));
+                builder: (context) =>
+                    FranchiseOnboardingScreen(inviteToken: token),
+              );
             }
+
             print('[main.dart] Routing to fallback LandingPage');
             return MaterialPageRoute(builder: (context) => const LandingPage());
           } catch (e, stack) {
