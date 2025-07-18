@@ -13,6 +13,7 @@ import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 
 String roleToDashboardRoute(List<String> roles) {
   if (roles.contains('platform_owner')) return '/platform-owner/dashboard';
@@ -174,12 +175,10 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
 
       print(
           '[FranchiseOnboardingScreen] Calling createFranchiseProfile with: $franchiseData');
-
       final franchiseId = await firestore.createFranchiseProfile(
         franchiseData: franchiseData,
         invitedUserId: userId,
       );
-
       print('[FranchiseOnboardingScreen] Franchise created: $franchiseId');
 
       await firestore.saveFranchiseBusinessHours(
@@ -196,7 +195,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       await firestore.updateUserClaims(
         uid: userId,
         franchiseIds: [franchiseId],
-        roles: null, // preserve existing
+        roles: null,
         additionalClaims: {
           'defaultFranchise': franchiseId,
         },
@@ -215,7 +214,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
           '[FranchiseOnboardingScreen] Updating Firestore user profile: $userUpdate');
       await firestore.updateUserProfile(userId, userUpdate);
 
-      // 🔄 Force token refresh and wait for roles to propagate
+      // 🔄 Force token refresh
       final fbUser = FirebaseAuth.instance.currentUser;
       if (fbUser == null)
         throw Exception("Firebase user unexpectedly null after onboarding");
@@ -228,13 +227,11 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       while (retryCount < 10) {
         final idToken = await fbUser.getIdTokenResult(true);
         claims = idToken.claims ?? {};
-        final roles = (claims['roles'] as List?)?.cast<String>() ?? [];
-
+        final rolesFromToken = (claims['roles'] as List?)?.cast<String>() ?? [];
         print(
-            '[FranchiseOnboardingScreen] Fetched ID token claims: roles=$roles');
+            '[FranchiseOnboardingScreen] Token claims (attempt $retryCount): roles=$rolesFromToken');
 
-        if (roles.contains('hq_owner')) break;
-
+        if (rolesFromToken.isNotEmpty) break;
         retryCount++;
         await Future.delayed(const Duration(milliseconds: 300));
       }
@@ -243,10 +240,27 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       final roles = roleList?.cast<String>() ?? [];
       if (!roles.contains('hq_owner')) {
         print(
-            '[FranchiseOnboardingScreen] Custom claim "hq_owner" not found after retrying.');
+            '[FranchiseOnboardingScreen] ⚠️ Custom claim "hq_owner" not found after retrying.');
       }
 
-      final updatedUser = await firestore.getUser(userId);
+      // 🕓 Poll Firestore until roles are updated
+      admin_user.User? updatedUser;
+      int attempt = 0;
+      while (attempt < 10) {
+        updatedUser = await firestore.getUser(userId);
+        final loadedRoles = updatedUser?.roles ?? [];
+        print(
+            '[FranchiseOnboardingScreen] Firestore getUser (attempt $attempt): roles=$loadedRoles');
+        if (loadedRoles.isNotEmpty) break;
+        attempt++;
+        await Future.delayed(const Duration(milliseconds: 300));
+      }
+
+      if ((updatedUser?.roles ?? []).isEmpty) {
+        print(
+            '[FranchiseOnboardingScreen] ⚠️ Firestore user.roles still empty after retries.');
+      }
+
       final adminUserProvider =
           Provider.of<AdminUserProvider>(context, listen: false);
       adminUserProvider.user = updatedUser;
@@ -262,7 +276,6 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       if (mounted) {
         final roles = updatedUser?.roles ?? [];
         final dashboardRoute = roleToDashboardRoute(roles);
-
         print(
             '[FranchiseOnboardingScreen] Routing to dashboard: $dashboardRoute');
 

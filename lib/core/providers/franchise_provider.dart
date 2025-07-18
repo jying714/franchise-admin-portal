@@ -107,5 +107,7 @@ class FranchiseProvider extends ChangeNotifier {
     notifyListeners();
     print(
         '[FranchiseProvider] Initialized franchiseId=$_franchiseId for user=${user.email}');
+    print(
+        '[FranchiseProvider] Final state: franchiseId=$_franchiseId, user roles=${user.roles}');
   }
 }
