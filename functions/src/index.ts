@@ -484,6 +484,7 @@ const INVITATION_COLLECTION = "franchisee_invitations";
 
 /**
  * Helper: Send onboarding/invite email via SendGrid.
+ * Distinguishes new vs. existing users, and includes onboarding/password links.
  */
 async function sendOnboardingEmail({
   email,
@@ -491,79 +492,121 @@ async function sendOnboardingEmail({
   franchiseName,
   isNewUser,
   token,
+  passwordResetLink,
 }: {
   email: string;
   inviteUrl: string;
   franchiseName?: string;
   isNewUser: boolean;
   token: string;
+  passwordResetLink?: string;
 }) {
   sgMail.setApiKey(SENDGRID_API_KEY);
 
-  const subject = isNewUser ?
-    "You're invited to join the Franchise Portal" :
-    "Access granted: Franchise Admin Portal";
+  let subject = "You're invited to join the Franchise Admin Portal";
+  let instructions = "";
+
+  if (isNewUser && passwordResetLink) {
+    subject = "Set your password to activate your FranchiseHQ account";
+    instructions += `
+      <p>
+        <b>Step 1:</b> 
+        <a href="${passwordResetLink}" style="
+          color: #008CBA; text-decoration: underline; font-weight: bold;">
+          Set your password
+        </a>
+        (required for your first login).
+      </p>
+      <p>
+        <b>Step 2:</b> 
+        After setting your password, please
+        <a href="${inviteUrl}" style="
+          color: #008CBA; text-decoration: underline; font-weight: bold;">
+          accept your invitation here
+        </a>
+        to begin onboarding.
+      </p>
+    `;
+  } else {
+    subject = "Access granted: Franchise Admin Portal";
+    instructions += `
+      <p>
+        Click the button below to accept your invitation:
+      </p>
+      <a href="${inviteUrl}" style="
+        display:inline-block;background:#008CBA;color:#fff;
+        padding:12px 30px;margin:18px 0;border-radius:5px;
+        text-decoration:none;font-weight:bold;">
+        Accept Invitation
+      </a>
+    `;
+  }
 
   const html = `
-  <div style="font-family: Arial, sans-serif;
-   max-width: 500px; margin: 0 auto;">
-    <h2>Welcome to the Franchise Admin Portal!</h2>
-    <p>
-      You've been invited to join as ${
+    <div style="font-family: Arial, sans-serif;
+      max-width: 500px; margin: 0 auto;">
+      <h2>Welcome to the Franchise Admin Portal!</h2>
+      <p>
+        You've been invited to join ${
   franchiseName ?
-    `the owner of <b>${franchiseName}</b>` :
-    "a franchisee"
+    `as the owner of <b>${franchiseName}</b>` :
+    "the Franchise Admin Portal"
 }.
-    </p>
-    <p>
-      Click the button below to ${
-  isNewUser ? "set your password and " : ""
-}accept your invitation and get started:
-    </p>
-    <a href="${inviteUrl}"
-      style="display:inline-block;background:#008CBA;color:#fff;
-      padding:12px 30px;margin:18px 0;border-radius:5px;
-      text-decoration:none;font-weight:bold;">
-      Accept Invitation
-    </a>
-    <p>
-      If the button above doesn't work, copy and
-       paste this link into your browser:
-    </p>
-    <p style="word-break:break-all;">${inviteUrl}</p>
-    <p>
-      If you have questions, reply to this email or contact our support team.
-    </p>
-    <p style="color: #888;">
-      This invite was intended for ${email}. If you didn't expect this,
-      you can safely ignore it.
-    </p>
-    <hr/>
-    <small>Invite code: ${token}</small>
-  </div>
-`;
-
+      </p>
+      ${instructions}
+      <p>
+        If a link above doesn't work, copy and paste it into your browser.
+      </p>
+      <p>
+        <b>Onboarding Link:</b><br/>
+        <span style="word-break:break-all;">${inviteUrl}</span>
+      </p>
+      ${
+  isNewUser && passwordResetLink ?
+    `<p>
+              <b>Password Setup Link:</b><br/>
+              <span style="word-break:break-all;">
+                ${passwordResetLink}
+              </span>
+            </p>` :
+    ""
+}
+      <p>
+        For help, reply to this email or contact support.
+      </p>
+      <p style="color: #888;">
+        This invite was intended for ${email}.
+        If you did not expect it, you can ignore it.
+      </p>
+      <hr/>
+      <small>Invite code: ${token}</small>
+    </div>
+  `;
 
   await sgMail.send({
     to: email,
     from: {
       name: "Joshua Yingling",
-      email: "JoshuaYingling@FranchiseHQ.io", // <-- Change this!
+      email: "JoshuaYingling@FranchiseHQ.io",
     },
     subject,
     html,
   });
 }
 
+
 /**
  * Callable function to invite a new user by email,
  * send onboarding invite, and track status.
+ * Sends both a password reset and onboarding link in one email.
  */
 export const inviteAndSetRole = functions.https.onCall(
   async (data, context) => {
     console.log("inviteAndSetRole: called with data:", data);
     console.log(
-      "inviteAndSetRole: context.auth:", JSON.stringify(context.auth));
+      "inviteAndSetRole: context.auth:",
+      JSON.stringify(context.auth)
+    );
 
     // --- Permission check ---
     if (
@@ -578,7 +621,9 @@ export const inviteAndSetRole = functions.https.onCall(
       )
     ) {
       console.error(
-        "inviteAndSetRole: Permission denied for context.auth:", context.auth);
+        "inviteAndSetRole: Permission denied for context.auth:",
+        context.auth
+      );
       throw new functions.https.HttpsError(
         "permission-denied",
         "Only platform owners, admins, owners, or developers can invite users."
@@ -586,7 +631,7 @@ export const inviteAndSetRole = functions.https.onCall(
     }
 
     // --- Input validation ---
-    const {email, password, role, franchiseName, brandId, ...extraMeta} = data;
+    const {email, role, franchiseName, brandId, ...extraMeta} = data;
 
     if (!email || !role) {
       console.error(
@@ -611,29 +656,24 @@ export const inviteAndSetRole = functions.https.onCall(
       userRecord = await admin.auth().getUserByEmail(email);
       isNewUser = false;
       console.log(
-        "inviteAndSetRole: Existing user found", {uid: userRecord.uid, email});
+        "inviteAndSetRole: Existing user found",
+        {uid: userRecord.uid, email}
+      );
     } catch (err) {
       console.warn(
-        "inviteAndSetRole: getUserByEmail error", {error: err, email});
+        "inviteAndSetRole: getUserByEmail error", {error: err, email}
+      );
       if (
         typeof err === "object" &&
         err !== null &&
         "code" in err &&
         err.code === "auth/user-not-found"
       ) {
-        if (!password) {
-          console.error(
-            "inviteAndSetRole: Password required for new user invite",
-            {email});
-          throw new functions.https.HttpsError(
-            "invalid-argument",
-            "Password required for new user invite."
-          );
-        }
+        // Create user with no password. Password will be set via reset link.
         try {
           userRecord = await admin.auth().createUser({
             email,
-            password,
+            // DO NOT set password here; will force user to use reset link.
           });
           isNewUser = true;
           console.log("inviteAndSetRole: Created new user",
@@ -644,27 +684,17 @@ export const inviteAndSetRole = functions.https.onCall(
           throw new functions.https.HttpsError(
             "internal",
             "Error creating new user: " +
-              (typeof createErr === "object" && createErr !==
-                 null && "message" in createErr ?
+              (typeof createErr === "object" &&
+                createErr !== null && "message" in createErr ?
                 createErr.message :
                 String(createErr))
           );
         }
-        // (Optional) Send password reset link for onboarding
-        try {
-          await admin.auth().generatePasswordResetLink(email);
-          console.log(
-            "inviteAndSetRole: Sent password reset link for onboarding",
-            {email});
-        } catch (emailErr) {
-          console.error(
-            "inviteAndSetRole: Failed to send password reset link:",
-            emailErr);
-        }
       } else {
         console.error(
           "inviteAndSetRole: Unexpected error fetching/creating user",
-          {error: err});
+          {error: err}
+        );
         throw new functions.https.HttpsError(
           "internal",
           "Error fetching or creating user: " +
@@ -673,6 +703,21 @@ export const inviteAndSetRole = functions.https.onCall(
               String(err))
         );
       }
+    }
+
+    // --- Generate password reset link (ALWAYS send this) ---
+    let passwordResetLink = null;
+    try {
+      passwordResetLink = await admin.auth().generatePasswordResetLink(email);
+      console.log(
+        "inviteAndSetRole: Generated password reset link",
+        {email, passwordResetLink}
+      );
+    } catch (emailErr) {
+      console.error(
+        "inviteAndSetRole: Failed to generate password reset link:",
+        emailErr
+      );
     }
 
     // --- Set custom claims ---
@@ -799,6 +844,7 @@ export const inviteAndSetRole = functions.https.onCall(
       ...(franchiseName && {franchiseName}),
       ...(brandId && {brandId}),
       ...extraMeta,
+      passwordResetLink, // ADDED for debugging/tracing
     };
 
     try {
@@ -821,7 +867,7 @@ export const inviteAndSetRole = functions.https.onCall(
       );
     }
 
-    // --- Send onboarding/invite email ---
+    // --- Send onboarding/invite email with BOTH links ---
     try {
       await sendOnboardingEmail({
         email,
@@ -829,12 +875,17 @@ export const inviteAndSetRole = functions.https.onCall(
         franchiseName,
         isNewUser,
         token,
+        passwordResetLink: passwordResetLink ?? undefined,
       });
       console.log(
-        "inviteAndSetRole: Sent onboarding/invite email", {email, inviteUrl});
+        "inviteAndSetRole: Sent onboarding/invite email with links",
+        {email, inviteUrl, passwordResetLink}
+      );
     } catch (emailErr) {
       console.error(
-        "inviteAndSetRole: Failed to send onboarding/invite email:", emailErr);
+        "inviteAndSetRole: Failed to send onboarding/invite email:",
+        emailErr
+      );
       // Optionally: Mark invite as failed-to-send in Firestore
     }
 
@@ -846,6 +897,7 @@ export const inviteAndSetRole = functions.https.onCall(
       isNewUser,
       token,
       inviteUrl,
+      passwordResetLink,
     });
     return {
       status: "ok",
@@ -854,6 +906,7 @@ export const inviteAndSetRole = functions.https.onCall(
       isNewUser,
       token,
       inviteUrl,
+      passwordResetLink,
     };
   }
 );

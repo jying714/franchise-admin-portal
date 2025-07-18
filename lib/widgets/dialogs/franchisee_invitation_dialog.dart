@@ -168,7 +168,8 @@ class _FranchiseeInvitationDialogState
     _formKey.currentState!.save();
 
     setState(() => _isLoading = true);
-
+    debugPrint('[FranchiseeInvitationDialog] Sending invite: email=$_email, '
+        'franchiseName=$_franchiseName, role=$_role, notes=$_notes');
     try {
       final invitationProvider =
           Provider.of<FranchiseeInvitationProvider>(context, listen: false);

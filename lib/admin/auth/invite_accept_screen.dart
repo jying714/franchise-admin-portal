@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/profile/franchise_onboarding_screen.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
@@ -24,23 +23,8 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
   String? _error;
   bool _loading = false;
   bool _accepted = false;
-  bool _isNewUser = false;
-  final _pwController = TextEditingController();
-  final _pw2Controller = TextEditingController();
   String? _effectiveToken;
   bool _didLoadToken = false;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _pwController.dispose();
-    _pw2Controller.dispose();
-    super.dispose();
-  }
 
   @override
   void didChangeDependencies() {
@@ -86,14 +70,11 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
       _error = null;
       _inviteData = null;
     });
-    print('[InviteAcceptScreen] _fetchInvite: token=$token');
     try {
       final doc = await Provider.of<FirestoreService>(context, listen: false)
           .getFranchiseeInvitationByToken(token);
-      print('[InviteAcceptScreen] Fetched doc: $doc');
       if (doc == null) {
-        print('[InviteAcceptScreen] No invite found for token');
-        setState(() => _error = "Invitation not found or expired."); // fallback
+        setState(() => _error = "Invitation not found or expired.");
         return;
       }
       if (doc['status'] == 'revoked') {
@@ -106,10 +87,8 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
       }
       setState(() {
         _inviteData = doc;
-        _isNewUser = doc['isNewUser'] == true;
       });
     } catch (e, st) {
-      print('[InviteAcceptScreen] Exception: $e\n$st');
       await ErrorLogger.log(
         message: 'Invite fetch failed: $e',
         stack: st.toString(),
@@ -127,8 +106,6 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
   }
 
   Future<void> _acceptInvite() async {
-    print(
-        '[InviteAcceptScreen] _acceptInvite() called, _isNewUser=$_isNewUser, inviteData=$_inviteData');
     setState(() {
       _loading = true;
       _error = null;
@@ -138,65 +115,30 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
       final inviteEmail = (_inviteData?['email'] as String?) ?? '';
       if (inviteEmail.isEmpty) {
         setState(() {
-          _error = "Invitation email missing. Cannot register.";
+          _error = "Invitation email missing. Cannot continue.";
           _loading = false;
         });
         return;
       }
-
-      if (_isNewUser) {
-        final pw = _pwController.text.trim();
-        final pw2 = _pw2Controller.text.trim();
-        if (pw.length < 8) {
-          setState(() {
-            _error = loc?.passwordTooShort ?? "Password too short";
-            _loading = false;
-          });
-          return;
-        }
-        if (pw != pw2) {
-          setState(() {
-            _error = loc?.passwordsDoNotMatch ?? "Passwords do not match";
-            _loading = false;
-          });
-          return;
-        }
-
-        try {
-          // Attempt to register user with Firebase Auth
-          await fb_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(
-            email: inviteEmail,
-            password: pw,
-          );
-        } on fb_auth.FirebaseAuthException catch (e) {
-          if (e.code == 'email-already-in-use') {
-            // This user already exists—prompt to sign in instead
-            setState(() {
-              _error =
-                  "This email is already registered. Please sign in to accept your invitation.";
-              _loading = false;
-            });
-            return;
-          } else {
-            setState(() {
-              _error = e.message ?? "Unknown error during registration.";
-              _loading = false;
-            });
-            return;
-          }
-        }
-      } else {
-        // Not a new user—try to sign in automatically if possible
-        final user = fb_auth.FirebaseAuth.instance.currentUser;
-        if (user == null) {
-          setState(() {
-            _error =
-                "This email is already registered. Please sign in to accept your invitation.";
-            _loading = false;
-          });
-          return;
-        }
-        // (Optional: You could check here that user.email == inviteEmail, if desired)
+      // Must be logged in as correct user/uid
+      final fb_auth.User? currentUser =
+          fb_auth.FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        setState(() {
+          _error = loc?.inviteMustSignIn ??
+              "Please sign in with your invited email.";
+          _loading = false;
+        });
+        return;
+      }
+      final inviteUid = _inviteData?['invitedUserId'];
+      if (inviteUid != null && currentUser.uid != inviteUid) {
+        setState(() {
+          _error =
+              "Signed-in account does not match the invite. Please sign in with the correct email.";
+          _loading = false;
+        });
+        return;
       }
 
       // Call cloud function to mark as accepted
@@ -206,8 +148,6 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         '/franchise-onboarding',
         arguments: {'token': _effectiveToken!},
       );
-      print(
-          '[InviteAcceptScreen] Navigating to /franchise-onboarding with token=$_effectiveToken');
     } catch (e, st) {
       await ErrorLogger.log(
         message: 'Invite accept failed: $e',
@@ -228,16 +168,9 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print('==== InviteAcceptScreen BUILD (top) ====');
-    print('Dart: Uri.base: ${Uri.base.toString()}');
-    print('JS: window.location.href: ${html.window.location.href}');
-    print('JS: window.location.hash: ${html.window.location.hash}');
-
     final loc = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
-    print(
-        '_loading: $_loading, _accepted: $_accepted, _inviteData: $_inviteData');
 
     return Scaffold(
       backgroundColor: colorScheme.background,
@@ -272,9 +205,6 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
 
   Widget _buildInvitePanel(
       AppLocalizations? loc, ColorScheme colorScheme, ThemeData theme) {
-    print('=== _buildInvitePanel called ===');
-    print('_inviteData: $_inviteData');
-    print('_error: $_error');
     if (_error != null) {
       return Column(
         mainAxisSize: MainAxisSize.min,
@@ -292,49 +222,24 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
     }
 
     if (_inviteData == null) {
-      print("DEBUG: _inviteData is null in _buildInvitePanel");
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [Text(loc?.loadingInvite ?? "Loading invitation...")],
       );
     }
 
-    // Null-safe extract fields (always provide a default)
-    // Null-safe extract fields (always provide a default)
-    final inviteEmailRaw = _inviteData?['email'];
-    final inviteEmail = (inviteEmailRaw is String && inviteEmailRaw.isNotEmpty)
-        ? inviteEmailRaw
-        : 'Unknown';
+    final inviteEmail = (_inviteData?['email'] as String?) ?? 'Unknown';
     final inviteFranchiseName =
         (_inviteData?['franchiseName'] as String?) ?? '';
-    final inviteStatus = (_inviteData?['status'] as String?) ?? 'unknown';
 
-// Centralized invite account logic
     final fb_auth.User? currentUser = fb_auth.FirebaseAuth.instance.currentUser;
-    print('currentUser: $currentUser');
-    final inviteUidRaw = _inviteData?['invitedUserId'];
-    print('inviteUidRaw: $inviteUidRaw');
-    final inviteUid = (inviteUidRaw is String && inviteUidRaw.isNotEmpty)
-        ? inviteUidRaw
-        : null;
-    print('inviteUid: $inviteUid');
-    final inviteEmailLower = inviteEmail.toLowerCase();
-    final userEmailLower = (currentUser?.email ?? '').toLowerCase();
+    final inviteUid = _inviteData?['invitedUserId'];
     final isLoggedIn = currentUser != null;
-    print('isLoggedIn: $isLoggedIn');
-    final isUidMatch = isLoggedIn &&
-        inviteUid != null &&
-        currentUser != null &&
-        currentUser.uid == inviteUid;
-
+    final isUidMatch =
+        isLoggedIn && inviteUid != null && currentUser!.uid == inviteUid;
+    final userEmailLower = (currentUser?.email ?? '').toLowerCase();
+    final inviteEmailLower = inviteEmail.toLowerCase();
     final isEmailMatch = isLoggedIn && userEmailLower == inviteEmailLower;
-    print('inviteEmail: $inviteEmail');
-    print('inviteUid: $inviteUid');
-    print('currentUser: $currentUser');
-    print('currentUser.uid: ${currentUser?.uid}');
-    print('isLoggedIn: $isLoggedIn');
-    print('isUidMatch: $isUidMatch');
-    print('isEmailMatch: $isEmailMatch');
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -358,72 +263,13 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
             ),
           ),
         const SizedBox(height: 18),
-        if (_isNewUser) ...[
-          Text(
-            loc?.inviteSetPassword ?? "Set your password below",
-            style: theme.textTheme.bodyMedium ?? const TextStyle(),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _pwController,
-            obscureText: true,
-            decoration: InputDecoration(
-              labelText: loc?.password ?? "Password",
-              border: const OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _pw2Controller,
-            obscureText: true,
-            decoration: InputDecoration(
-              labelText: loc?.confirmPassword ?? "Confirm Password",
-              border: const OutlineInputBorder(),
-            ),
-          ),
-        ],
-        if (!_isNewUser)
-          Builder(
-            builder: (context) {
-              // Case 1: Signed in and correct UID (invited user)
-              if (isLoggedIn && isUidMatch) {
-                return Text(
-                  "You are signed in with the invited account. Click accept to continue.",
-                  style: theme.textTheme.bodyMedium ?? const TextStyle(),
-                  textAlign: TextAlign.center,
-                );
-              }
-              // Case 2: Signed in, correct email, but UID mismatch (edge case: merged Google/social login, etc.)
-              if (isLoggedIn && isEmailMatch && !isUidMatch) {
-                return Column(
-                  children: [
-                    Text(
-                      "You are signed in with the correct email, but not the invited account. If this is intentional, contact support.",
-                      style: theme.textTheme.bodyMedium ?? const TextStyle(),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.logout),
-                      label: const Text("Switch Account"),
-                      onPressed: () async {
-                        await fb_auth.FirebaseAuth.instance.signOut();
-                        Provider.of<AuthService>(context, listen: false)
-                            .saveInviteToken(_effectiveToken ?? '');
-                        Navigator.of(context).pushNamed(
-                          '/sign-in',
-                          arguments: {'token': _effectiveToken},
-                        );
-                      },
-                    ),
-                  ],
-                );
-              }
-              // Case 3: Not signed in
+        Builder(
+          builder: (context) {
+            if (!isLoggedIn) {
               return Column(
                 children: [
                   Text(
-                    "It looks like your email is already registered. Please sign in to accept this invitation and continue onboarding.",
+                    "Please sign in with your invited email to continue.",
                     style: theme.textTheme.bodyMedium ?? const TextStyle(),
                     textAlign: TextAlign.center,
                   ),
@@ -442,13 +288,50 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
                   ),
                 ],
               );
-            },
-          ),
-        const SizedBox(height: 24),
-        ElevatedButton.icon(
-          onPressed: _acceptInvite,
-          icon: const Icon(Icons.check_circle),
-          label: Text(loc?.acceptInvitation ?? "Accept Invitation"),
+            }
+            if (!isUidMatch) {
+              return Column(
+                children: [
+                  Text(
+                    "You are signed in with a different account.\n"
+                    "Please sign in with the invited email to accept this invite.",
+                    style: theme.textTheme.bodyMedium ?? const TextStyle(),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.logout),
+                    label: const Text("Switch Account"),
+                    onPressed: () async {
+                      await fb_auth.FirebaseAuth.instance.signOut();
+                      Provider.of<AuthService>(context, listen: false)
+                          .saveInviteToken(_effectiveToken ?? '');
+                      Navigator.of(context).pushNamed(
+                        '/sign-in',
+                        arguments: {'token': _effectiveToken},
+                      );
+                    },
+                  ),
+                ],
+              );
+            }
+            // All good
+            return Column(
+              children: [
+                Text(
+                  "You are signed in as the invited user. Click below to accept.",
+                  style: theme.textTheme.bodyMedium ?? const TextStyle(),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: _acceptInvite,
+                  icon: const Icon(Icons.check_circle),
+                  label: Text(loc?.acceptInvitation ?? "Accept Invitation"),
+                ),
+              ],
+            );
+          },
         ),
       ],
     );

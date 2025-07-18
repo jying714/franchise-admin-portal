@@ -1490,7 +1490,8 @@
   "forgotPassword": "Forgot password?",
   "emailRequired": "Please enter your email address.",
   "passwordTooShort": "Password required (min 6 chars)",
-  "orDivider": "OR"
+  "orDivider": "OR",
+  "inviteMustSignIn": "Invite Must Sign In"
 
   
   }
