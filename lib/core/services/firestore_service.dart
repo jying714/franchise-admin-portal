@@ -33,6 +33,8 @@ import 'package:franchise_admin_portal/core/models/franchisee_invitation.dart';
 import 'package:franchise_admin_portal/core/services/payout_service.dart';
 import 'package:franchise_admin_portal/core/models/platform_revenue_overview.dart';
 import 'package:franchise_admin_portal/core/models/platform_financial_kpis.dart';
+import 'package:franchise_admin_portal/core/models/platform_invoice.dart';
+import 'package:franchise_admin_portal/core/models/platform_payment.dart';
 
 class FirestoreService {
   final firestore.FirebaseFirestore _db = firestore.FirebaseFirestore.instance;
@@ -3241,6 +3243,154 @@ class FirestoreService {
         .where('franchiseeId', isEqualTo: userId)
         .get();
     return query.docs.map((d) => {...d.data(), 'id': d.id}).toList();
+  }
+
+  Future<List<PlatformInvoice>> getPlatformInvoicesForFranchisee(
+      String franchiseeId) async {
+    try {
+      final snapshot = await _db
+          .collection('platform_invoices')
+          .where('franchiseeId', isEqualTo: franchiseeId)
+          .orderBy('dueDate', descending: true)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => PlatformInvoice.fromMap(doc.id, doc.data()))
+          .toList();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to fetch platform invoices for $franchiseeId: $e',
+        stack: stack.toString(),
+        source: 'FirestoreService.getPlatformInvoicesForFranchisee',
+        screen: 'universal_profile_screen',
+      );
+      return [];
+    }
+  }
+
+  Future<void> createPlatformInvoice(PlatformInvoice invoice) async {
+    try {
+      await _db
+          .collection('platform_invoices')
+          .doc(invoice.id)
+          .set(invoice.toMap());
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to create platform invoice ${invoice.id}: $e',
+        stack: stack.toString(),
+        source: 'FirestoreService.createPlatformInvoice',
+        screen: 'invoice_admin',
+      );
+    }
+  }
+
+  Future<void> updatePlatformInvoiceStatus(
+      String invoiceId, String newStatus) async {
+    try {
+      await _db
+          .collection('platform_invoices')
+          .doc(invoiceId)
+          .update({'status': newStatus});
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message:
+            'Failed to update invoice status ($invoiceId -> $newStatus): $e',
+        stack: stack.toString(),
+        source: 'FirestoreService.updatePlatformInvoiceStatus',
+        screen: 'invoice_admin',
+      );
+    }
+  }
+
+  Future<List<PlatformPayment>> getPlatformPaymentsForFranchisee(
+      String franchiseeId) async {
+    try {
+      final snapshot = await _db
+          .collection('platform_payments')
+          .where('franchiseeId', isEqualTo: franchiseeId)
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => PlatformPayment.fromMap(doc.id, doc.data()))
+          .toList();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to fetch platform payments for $franchiseeId: $e',
+        stack: stack.toString(),
+        source: 'FirestoreService.getPlatformPaymentsForFranchisee',
+        screen: 'universal_profile_screen',
+      );
+      return [];
+    }
+  }
+
+  Future<void> createPlatformPayment(PlatformPayment payment) async {
+    try {
+      await _db
+          .collection('platform_payments')
+          .doc(payment.id)
+          .set(payment.toMap());
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to create platform payment ${payment.id}: $e',
+        stack: stack.toString(),
+        source: 'FirestoreService.createPlatformPayment',
+        screen: 'developer_tools',
+      );
+    }
+  }
+
+  Future<void> markPlatformPaymentCompleted(String paymentId) async {
+    try {
+      await _db
+          .collection('platform_payments')
+          .doc(paymentId)
+          .update({'status': 'completed'});
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to mark platform payment $paymentId as completed: $e',
+        stack: stack.toString(),
+        source: 'FirestoreService.markPlatformPaymentCompleted',
+        screen: 'payment_processing',
+      );
+    }
+  }
+
+  Future<void> updatePlatformPaymentStatus(
+      String paymentId, String newStatus) async {
+    try {
+      await _db
+          .collection('platform_payments')
+          .doc(paymentId)
+          .update({'status': newStatus});
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message:
+            'Failed to update platform payment status ($paymentId -> $newStatus): $e',
+        stack: stack.toString(),
+        source: 'FirestoreService.updatePlatformPaymentStatus',
+        screen: 'payment_admin',
+      );
+    }
+  }
+
+  Future<void> markPlatformInvoicePaid(String invoiceId, String method) async {
+    try {
+      await _db.collection('platform_invoices').doc(invoiceId).update({
+        'status': 'paid',
+        'paidAt': firestore.FieldValue.serverTimestamp(),
+        'lastPaymentMethod': method, // 👈 optional field
+      });
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to mark invoice paid: $e',
+        stack: stack.toString(),
+        source: 'markPlatformInvoicePaid',
+        screen: 'pay_invoice_dialog',
+      );
+      rethrow;
+    }
   }
 
   Future<List<Map<String, dynamic>>> getStoreInvoicesForUser(

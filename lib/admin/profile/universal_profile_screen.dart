@@ -11,6 +11,9 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/widgets/profile/account_details_panel.dart';
+import 'package:franchise_admin_portal/widgets/financials/franchisee_invoice_list.dart';
+import 'package:franchise_admin_portal/widgets/financials/franchisee_payment_list.dart';
+import 'package:franchise_admin_portal/core/models/platform_payment.dart';
 
 // FUTURE: Modular import for payment methods and plan management
 // import 'package:franchise_admin_portal/widgets/financials/payment_method_manager.dart';
@@ -57,8 +60,8 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
       if (user.isPlatformOwner == true) {
         // Platform owner: no personal billing, but could show org-wide info
         setState(() => _billingData = null);
-      } else if (user.isFranchisee == true) {
-        // Franchisee: show platform_invoices, platform_payments
+      } else if (user.isFranchisee == true || user.roles.contains('hq_owner')) {
+        // Franchisee or HQ Owner: show platform_invoices, platform_payments
         final invoices = await firestore.getPlatformInvoicesForUser(user.id);
         final payments = await firestore.getPlatformPaymentsForUser(user.id);
         setState(() => _billingData = {
@@ -166,7 +169,7 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
             builder: (context) =>
                 _platformOwnerPanel(context, user, loc, colorScheme),
           ),
-        if (user.isFranchisee == true)
+        if (user.isFranchisee == true || user.roles.contains('hq_owner'))
           DashboardSectionCard(
             title: loc.billingAndPayments,
             icon: Icons.receipt_long,
@@ -232,16 +235,9 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (invoices.isEmpty && payments.isEmpty)
-          Text(loc.noBillingRecords,
-              style: TextStyle(color: colorScheme.onSurface.withOpacity(0.7))),
-        if (invoices.isNotEmpty)
-          _invoiceListPanel(context, invoices, loc, colorScheme),
-        if (payments.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 14),
-            child: _paymentListPanel(context, payments, loc, colorScheme),
-          ),
+        FranchiseeInvoiceList(invoices: invoices.cast()),
+        const SizedBox(height: 14),
+        FranchiseePaymentList(payments: payments.cast<PlatformPayment>()),
         // Future: payment methods, disputes, receipts
       ],
     );
@@ -260,12 +256,13 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
 
   Widget _invoiceListPanel(BuildContext context, List invoices,
       AppLocalizations loc, ColorScheme colorScheme) {
-    // Basic list; expand/replace with InvoiceListScreen as needed
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(loc.invoices,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+        Text(
+          loc.invoices,
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        ),
         const SizedBox(height: 6),
         ...invoices.map((inv) => ListTile(
               leading: Icon(Icons.receipt_long, color: colorScheme.primary),
@@ -275,26 +272,12 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
               trailing: Icon(Icons.arrow_forward_ios,
                   size: 16, color: colorScheme.secondary),
               onTap: () {
-                Navigator.pushNamed(context, '/hq/invoice_detail',
-                    arguments: inv['id']);
+                Navigator.pushNamed(
+                  context,
+                  '/hq/invoice_detail',
+                  arguments: inv['id'],
+                );
               },
-            )),
-      ],
-    );
-  }
-
-  Widget _paymentListPanel(BuildContext context, List payments,
-      AppLocalizations loc, ColorScheme colorScheme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(loc.payments,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-        const SizedBox(height: 6),
-        ...payments.map((pay) => ListTile(
-              leading: Icon(Icons.payment, color: colorScheme.secondary),
-              title: Text('${loc.amount}: \$${pay['amount'] ?? '-'}'),
-              subtitle: Text('${loc.date}: ${pay['date'] ?? '-'}'),
             )),
       ],
     );

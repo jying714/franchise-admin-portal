@@ -1517,10 +1517,23 @@
   "paymentType": "Payment Type",
   "scheduledFor": "Scheduled For",
   "executedAt": "Processed At",
-  "recurringRule": "Recurring Rule",
+  "recurringRule": "Recurring",
   "enterPaymentDetails": "Enter payment details",
   "confirmPayment": "Confirm Payment",
   "paymentCompleted": "Payment marked as completed",
-  "developerOnlyFeature": "Developer-only feature"
-  
+  "developerOnlyFeature": "Developer-only feature",
+  "statusPaid": "Paid",
+  "statusOverdue": "Overdue",
+  "statusSent": "Sent",
+  "statusDraft": "Draft",
+  "statusRefunded": "Refunded",
+  "statusVoided": "Voided",
+  "statusFailed": "Failed",
+  "splitPayment": "Split Payment",
+  "payInvoice": "Pay Invoice",
+  "noteDevOnlyPlaceholder": "Placeholder – dev-only payment flow active",
+  "statusUnpaid": "Status Unpaid",
+  "statusPartial": "Status Partial"
+
+
   }
