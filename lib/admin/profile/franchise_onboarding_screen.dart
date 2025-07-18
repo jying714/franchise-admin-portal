@@ -6,6 +6,7 @@ import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
+import 'package:franchise_admin_portal/widgets/business/business_hours_editor.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 String roleToDashboardRoute(List<String> roles) {
@@ -16,7 +17,7 @@ String roleToDashboardRoute(List<String> roles) {
 }
 
 class FranchiseOnboardingScreen extends StatefulWidget {
-  final String? inviteToken; // Make nullable
+  final String? inviteToken;
   const FranchiseOnboardingScreen({super.key, this.inviteToken});
 
   @override
@@ -32,10 +33,20 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
   // Franchise profile fields
   late TextEditingController _nameController;
   late TextEditingController _addressController;
-  late TextEditingController _contactController;
-  late TextEditingController _hoursController;
+  late TextEditingController _cityController;
+  late TextEditingController _stateController;
+  late TextEditingController _zipController;
+  late TextEditingController _phoneController;
+  late TextEditingController _supportPhoneController;
+  late TextEditingController _emailController;
+  late TextEditingController _websiteController;
+  late TextEditingController _ownerController;
+  late TextEditingController _einController;
+  late TextEditingController _categoryController;
   String? _logoUrl;
   bool _saving = false;
+
+  List<Map<String, dynamic>> _businessHours = [];
 
   String? _effectiveToken;
   bool _didLoadToken = false;
@@ -67,10 +78,8 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       return;
     }
     try {
-      final invite = await Provider.of<FirestoreService>(
-        context,
-        listen: false,
-      ).getFranchiseeInvitationByToken(_effectiveToken ?? '');
+      final fs = Provider.of<FirestoreService>(context, listen: false);
+      final invite = await fs.getFranchiseeInvitationByToken(_effectiveToken!);
       if (invite == null) {
         setState(() {
           _loadError = AppLocalizations.of(context)!.unauthorized;
@@ -79,13 +88,34 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
         return;
       }
       _inviteData = invite;
-      // Pre-fill from invite data if available
+
+      // Prefill all fields with whatever is available
       _nameController =
           TextEditingController(text: invite['franchiseName'] ?? '');
       _addressController = TextEditingController(text: invite['address'] ?? '');
-      _contactController = TextEditingController(text: invite['contact'] ?? '');
-      _hoursController = TextEditingController(text: invite['hours'] ?? '');
-      _logoUrl = invite['logoUrl'] as String?;
+      _cityController = TextEditingController(text: invite['city'] ?? '');
+      _stateController = TextEditingController(text: invite['state'] ?? '');
+      _zipController = TextEditingController(text: invite['zip'] ?? '');
+      _phoneController = TextEditingController(
+          text: invite['phone'] ?? invite['contact'] ?? '');
+      _supportPhoneController =
+          TextEditingController(text: invite['supportPhone'] ?? '');
+      _emailController = TextEditingController(
+          text: invite['businessEmail'] ?? invite['email'] ?? '');
+      _websiteController = TextEditingController(text: invite['website'] ?? '');
+      _ownerController = TextEditingController(text: invite['ownerName'] ?? '');
+      _einController = TextEditingController(text: invite['EIN'] ?? '');
+      _categoryController =
+          TextEditingController(text: invite['category'] ?? '');
+
+      // If franchiseId is pre-assigned, try to fetch hours for it
+      final franchiseId = invite['franchiseId'] ?? '';
+      if (franchiseId != null && franchiseId.toString().isNotEmpty) {
+        _businessHours = await fs.getFranchiseBusinessHours(franchiseId);
+      } else {
+        _businessHours = [];
+      }
+
       setState(() => _loading = false);
     } catch (e, st) {
       await ErrorLogger.log(
@@ -113,18 +143,33 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       if (userId == null) throw Exception('No user linked to invite.');
       final franchiseData = {
         'name': _nameController.text.trim(),
-        'address': _addressController.text.trim(),
-        'contact': _contactController.text.trim(),
-        'hours': _hoursController.text.trim(),
+        'address': {
+          'street': _addressController.text.trim(),
+          'city': _cityController.text.trim(),
+          'state': _stateController.text.trim(),
+          'zip': _zipController.text.trim(),
+        },
+        'phone': _phoneController.text.trim(),
+        'supportPhone': _supportPhoneController.text.trim(),
+        'businessEmail': _emailController.text.trim(),
+        'website': _websiteController.text.trim(),
+        'ownerName': _ownerController.text.trim(),
+        'EIN': _einController.text.trim(),
+        'category': _categoryController.text.trim(),
         'logoUrl': _logoUrl ?? '',
         'ownerId': userId,
         'createdAt': DateTime.now().toUtc().toIso8601String(),
-        // Add more fields as needed
       };
-      // Write new franchise document
+
+      // Write/merge new franchise document
       final franchiseId = await firestore.createFranchiseProfile(
         franchiseData: franchiseData,
         invitedUserId: userId,
+      );
+      // Save business hours with new modular method
+      await firestore.saveFranchiseBusinessHours(
+        franchiseId: franchiseId,
+        hours: _businessHours,
       );
       // Accept invitation via cloud function
       await firestore.callAcceptInvitationFunction(_effectiveToken ?? '');
@@ -238,34 +283,124 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
         TextFormField(
           controller: _addressController,
           decoration: InputDecoration(
-            labelText: loc.address,
+            labelText: loc.streetAddress ?? "Street Address",
             prefixIcon: const Icon(Icons.location_on_outlined),
           ),
         ),
         const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _cityController,
+                decoration: InputDecoration(
+                  labelText: loc.city,
+                  prefixIcon: const Icon(Icons.location_city),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextFormField(
+                controller: _stateController,
+                decoration: InputDecoration(
+                  labelText: loc.state,
+                  prefixIcon: const Icon(Icons.map),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextFormField(
+                controller: _zipController,
+                decoration: InputDecoration(
+                  labelText: loc.zip,
+                  prefixIcon: const Icon(Icons.local_post_office),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
         TextFormField(
-          controller: _contactController,
+          controller: _phoneController,
           decoration: InputDecoration(
-            labelText: loc.contactSupport,
-            prefixIcon: const Icon(Icons.contact_phone),
+            labelText: loc.phone ?? "Primary Phone",
+            prefixIcon: const Icon(Icons.phone),
           ),
         ),
         const SizedBox(height: 12),
         TextFormField(
-          controller: _hoursController,
+          controller: _supportPhoneController,
           decoration: InputDecoration(
-            labelText: loc.hours ?? 'Business Hours',
-            prefixIcon: const Icon(Icons.access_time),
+            labelText: loc.contactSupport,
+            prefixIcon: const Icon(Icons.support_agent),
           ),
         ),
-        const SizedBox(height: 20),
-        // Logo upload could be added here
-        // Add upload field or logo preview widget
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _emailController,
+          decoration: InputDecoration(
+            labelText: loc.businessEmail ?? "Business Email",
+            prefixIcon: const Icon(Icons.email_outlined),
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _websiteController,
+          decoration: InputDecoration(
+            labelText: loc.website ?? "Website",
+            prefixIcon: const Icon(Icons.public),
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _ownerController,
+          decoration: InputDecoration(
+            labelText: loc.ownerName ?? "Owner Name",
+            prefixIcon: const Icon(Icons.person_outline),
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _einController,
+          decoration: InputDecoration(
+            labelText: loc.taxIdEIN ?? "Tax ID (EIN)",
+            prefixIcon: const Icon(Icons.badge),
+          ),
+        ),
+        const SizedBox(height: 12),
+        TextFormField(
+          controller: _categoryController,
+          decoration: InputDecoration(
+            labelText: loc.businessType ?? "Business Category",
+            prefixIcon: const Icon(Icons.category),
+          ),
+        ),
+        const SizedBox(height: 24),
+        Text(loc.hours ?? "Business Hours",
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(color: colorScheme.primary)),
+        const SizedBox(height: 10),
+        // --- The business hours editor widget ---
+        BusinessHoursEditor(
+          initialHours: _businessHours,
+          onChanged: (val) => _businessHours = val,
+        ),
+        const SizedBox(height: 24),
+        // --- Logo upload/preview would go here ---
+        // (Placeholder for future image upload)
         _saving
             ? const CircularProgressIndicator()
             : ElevatedButton.icon(
                 icon: const Icon(Icons.check_circle),
                 label: Text(loc.save),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                ),
                 onPressed: _saveProfile,
               ),
         if (_loadError != null)

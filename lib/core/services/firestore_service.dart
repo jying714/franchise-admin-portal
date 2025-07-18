@@ -177,17 +177,91 @@ class FirestoreService {
   // On acceptance of invite create new profile / fill franchise ID field
   /// Creates a new franchise profile.
   /// Returns the franchiseId (doc id).
+  /// Create a new franchise profile and return its franchiseId (doc ID).
   Future<String> createFranchiseProfile({
     required Map<String, dynamic> franchiseData,
     required String invitedUserId,
   }) async {
-    final doc = await _db.collection('franchises').add(franchiseData);
-    // Update the user document with this franchise (if needed)
-    await _db.collection('users').doc(invitedUserId).set({
-      'franchiseIds': firestore.FieldValue.arrayUnion([doc.id]),
-      'defaultFranchise': doc.id,
-    }, firestore.SetOptions(merge: true));
-    return doc.id;
+    try {
+      // You can generate the franchiseId here or accept it from data.
+      String franchiseId =
+          franchiseData['franchiseId'] ?? _db.collection('franchises').doc().id;
+
+      // Write to /franchises/{franchiseId}
+      await _db.collection('franchises').doc(franchiseId).set({
+        ...franchiseData,
+        'ownerUserId': invitedUserId,
+        'status': 'active', // or "invited" if you want to gate onboarding
+        'createdAt': firestore.FieldValue.serverTimestamp(),
+        'updatedAt': firestore.FieldValue.serverTimestamp(),
+      }, firestore.SetOptions(merge: true));
+
+      return franchiseId;
+    } catch (e, st) {
+      // You may want to use your error logger here
+      print('[FirestoreService] createFranchiseProfile error: $e\n$st');
+      rethrow;
+    }
+  }
+
+  /// Update existing franchise profile fields.
+  Future<void> updateFranchiseProfile({
+    required String franchiseId,
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      await _db.collection('franchises').doc(franchiseId).set({
+        ...data,
+        'updatedAt': firestore.FieldValue.serverTimestamp(),
+      }, firestore.SetOptions(merge: true));
+    } catch (e, st) {
+      print('[FirestoreService] updateFranchiseProfile error: $e\n$st');
+      rethrow;
+    }
+  }
+
+  /// Save business hours array to /franchises/{franchiseId}
+  Future<void> saveFranchiseBusinessHours({
+    required String franchiseId,
+    required List<Map<String, dynamic>> hours,
+  }) async {
+    try {
+      await _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .set({'hours': hours}, firestore.SetOptions(merge: true));
+    } catch (e, st) {
+      await ErrorLogger.log(
+        message: 'Failed to save business hours: $e',
+        stack: st.toString(),
+        source: 'FirestoreService',
+        severity: 'error',
+        screen: 'business_hours_editor',
+        contextData: {'franchiseId': franchiseId, 'hours': hours},
+      );
+      rethrow;
+    }
+  }
+
+  /// Load business hours array from /franchises/{franchiseId}
+  Future<List<Map<String, dynamic>>> getFranchiseBusinessHours(
+      String franchiseId) async {
+    try {
+      final doc = await _db.collection('franchises').doc(franchiseId).get();
+      if (!doc.exists || !(doc.data()?['hours'] is List)) return [];
+      final List<dynamic> raw = doc.data()?['hours'] ?? [];
+      return raw.map((e) => Map<String, dynamic>.from(e)).toList();
+    } catch (e, st) {
+      await ErrorLogger.log(
+        message: 'Failed to load business hours: $e',
+        stack: st.toString(),
+        source: 'FirestoreService',
+        severity: 'error',
+        screen: 'business_hours_editor',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return [];
+    }
   }
 
   // Call cloud function to accept invitation

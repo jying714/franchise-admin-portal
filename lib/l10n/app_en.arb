@@ -1491,7 +1491,25 @@
   "emailRequired": "Please enter your email address.",
   "passwordTooShort": "Password required (min 6 chars)",
   "orDivider": "OR",
-  "inviteMustSignIn": "Invite Must Sign In"
+  "inviteMustSignIn": "Invite Must Sign In",
+  "setupBusinessHours": "Setup business hours",
+  "setupBusinessHoursDesc": "Your business hours are used for calculating on-duty hours. Business hours are also advertised on your Mobile App and Webpage.",
+  "openAt": "open at",
+  "closeAt": "close at",
+  "addMore": "[+] add more",
+  "remove": "Remove",
+  "mustSetAtLeastOneInterval": "Set at least one business hour.",
+  "mustSelectDays": "Select days for each interval.",
+  "openMustBeforeClose": "Open time must be before close time.",
+  "daysOverlap": "Overlapping days across intervals are not allowed.",
+  "streetAddress": "Street Address",
+  "zip": "ZIP Code",
+  "businessEmail": "Business Email",
+  "website": "Website",
+  "ownerName": "Owner Name",
+  "taxIdEIN": "Tax ID (EIN)",
+  "businessType": "Business Category"
+
 
   
   }
