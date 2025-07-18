@@ -331,21 +331,27 @@ class FirestoreService {
   // === USERS (GLOBAL, INDUSTRY STANDARD) ===
 
   Future<void> updateUserProfile(
-      String userId, Map<String, dynamic> data) async {
+      String userId, Map<String, dynamic>? data) async {
+    print(
+        '[DEBUG] Calling updateUserProfile with userId=$userId and data=$data');
+    if (data == null || data.isEmpty) {
+      throw ArgumentError(
+          'updateUserProfile called with empty or null data for userId=$userId');
+    }
+
     try {
       await firestore.FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
-          .update(data);
+          .set(data, firestore.SetOptions(merge: true));
     } catch (e, stack) {
-      // Use your ErrorLogger utility as appropriate
       await ErrorLogger.log(
         message: 'Failed to update user profile: $e',
         stack: stack.toString(),
         source: 'FirestoreService',
         screen: 'updateUserProfile',
         severity: 'error',
-        contextData: {'userId': userId, ...data},
+        contextData: {'userId': userId, ...?data},
       );
       rethrow;
     }
