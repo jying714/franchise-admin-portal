@@ -1198,42 +1198,77 @@ export const logAppError = functions.https.onRequest((req, res) => {
   });
 });
 
+type Claims = {
+  defaultFranchise?: string;
+  [key: string]: unknown;
+};
+
+type FirestoreUpdate = {
+  roles: string[];
+  franchiseIds: string[];
+  updatedAt: FirebaseFirestore.FieldValue;
+  defaultFranchise?: string;
+};
+
 export const updateUserClaims = functions.https.onCall(
   async (data, context) => {
     const {uid, roles, franchiseIds, additionalClaims} = data;
 
     if (!context.auth) {
       throw new functions.https.HttpsError(
-        "unauthenticated", "Must be signed in.");
+        "unauthenticated",
+        "Must be signed in."
+      );
     }
 
     const callerRoles = context.auth.token.roles || [];
     if (!hasPrivilegedRole(callerRoles)) {
       throw new functions.https.HttpsError(
-        "permission-denied", "Insufficient privileges.");
+        "permission-denied",
+        "Insufficient privileges."
+      );
     }
 
     if (!uid) {
-      throw new functions.https.HttpsError("invalid-argument", "Missing uid.");
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Missing uid."
+      );
     }
 
-    // Set custom claims
+    // ✅ Typed & sanitized additional claims
+    const sanitizedClaims: Claims = {...(additionalClaims ?? {})};
+    if ("franchiseId" in sanitizedClaims) {
+      console.warn(
+        `⚠️ Stripping out 'franchiseId' from additionalClaims for user: ${uid}`
+      );
+      delete sanitizedClaims.franchiseId;
+    }
+
+    // ✅ Set custom user claims
     await admin.auth().setCustomUserClaims(uid, {
       roles: roles ?? [],
       franchiseIds: franchiseIds ?? [],
-      ...(additionalClaims ?? {}), // Merges in defaultFranchise
+      ...sanitizedClaims,
     });
 
-    // Optional: mirror to Firestore
-    await admin.firestore().collection("users").doc(uid).set(
-      {
-        roles: roles ?? [],
-        franchiseIds: franchiseIds ?? [],
-        ...(additionalClaims ?? {}),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      },
-      {merge: true}
-    );
+    // ✅ Build safe Firestore update object
+    const firestoreUpdate: FirestoreUpdate = {
+      roles: roles ?? [],
+      franchiseIds: franchiseIds ?? [],
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    if (sanitizedClaims.defaultFranchise) {
+      firestoreUpdate.defaultFranchise =
+       sanitizedClaims.defaultFranchise as string;
+    }
+
+    await admin
+      .firestore()
+      .collection("users")
+      .doc(uid)
+      .set(firestoreUpdate, {merge: true});
 
     return {status: "ok", uid};
   }
@@ -1245,8 +1280,12 @@ export const updateUserClaims = functions.https.onCall(
  * @return {boolean} True if user has at least one privileged role.
  */
 function hasPrivilegedRole(roles: string[]): boolean {
-  return roles.some((r) =>
-    ["platform_owner", "owner", "developer", "admin", "hq_owner"]
-      .includes(r)
-  );
+  const allowed = new Set([
+    "platform_owner",
+    "developer",
+    "hq_owner",
+    "hq_manager",
+    "admin",
+  ]);
+  return roles.some((role) => allowed.has(role));
 }
