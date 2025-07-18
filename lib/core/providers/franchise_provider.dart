@@ -62,10 +62,30 @@ class FranchiseProvider extends ChangeNotifier {
   /// Use this at login to override franchiseId based on defaultFranchise
   Future<void> setInitialFranchiseId(String id) async {
     print('[FranchiseProvider] setInitialFranchiseId called: id="$id"');
+
+    if (_franchiseId == id) {
+      print(
+          '[FranchiseProvider] setInitialFranchiseId: No change (already "$id"), skipping update.');
+      return;
+    }
+
     _franchiseId = id;
+
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('selectedFranchiseId', id);
+    final existing = prefs.getString('selectedFranchiseId');
+
+    if (existing != id) {
+      await prefs.setString('selectedFranchiseId', id);
+      print(
+          '[FranchiseProvider] setInitialFranchiseId: Saved to SharedPreferences: "$id"');
+    } else {
+      print(
+          '[FranchiseProvider] setInitialFranchiseId: Already persisted, skipping write.');
+    }
+
     notifyListeners();
+    print(
+        '[FranchiseProvider] setInitialFranchiseId: Notified listeners. Current franchiseId="$id"');
   }
 
   Future<void> clear() async {
@@ -93,18 +113,38 @@ class FranchiseProvider extends ChangeNotifier {
   Future<void> initializeWithUser(admin_user.User user) async {
     _adminUser = user;
     final prefs = await SharedPreferences.getInstance();
+
+    // ✅ If _franchiseId already initialized, don't override
+    if (_franchiseId != null &&
+        _franchiseId != 'unknown' &&
+        _franchiseId!.isNotEmpty) {
+      print(
+          '[FranchiseProvider] initializeWithUser: Skipped — already set to $_franchiseId');
+      _loading = false;
+      notifyListeners();
+      return;
+    }
+
     final storedId = prefs.getString('selectedFranchiseId');
     if (storedId != null && storedId.isNotEmpty) {
       _franchiseId = storedId;
+      print(
+          '[FranchiseProvider] initializeWithUser: Loaded from SharedPreferences: $_franchiseId');
     } else if (user.defaultFranchise != null &&
         user.defaultFranchise!.isNotEmpty) {
       _franchiseId = user.defaultFranchise!;
       await prefs.setString('selectedFranchiseId', _franchiseId);
+      print(
+          '[FranchiseProvider] initializeWithUser: Set from user.defaultFranchise: $_franchiseId');
     } else {
       _franchiseId = 'unknown';
+      print(
+          '[FranchiseProvider] initializeWithUser: No valid source, defaulting to "unknown"');
     }
+
     _loading = false;
     notifyListeners();
+
     print(
         '[FranchiseProvider] Initialized franchiseId=$_franchiseId for user=${user.email}');
     print(

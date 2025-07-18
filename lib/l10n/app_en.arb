@@ -1508,8 +1508,19 @@
   "website": "Website",
   "ownerName": "Owner Name",
   "taxIdEIN": "Tax ID (EIN)",
-  "businessType": "Business Category"
-
-
+  "businessType": "Business Category",
+  "platformInvoices": "Platform Invoices",
+  "platformPayments": "Platform Payments",
+  "noPaymentsFound": "No payments found.",
+  "addPlatformPayment": "Add Payment",
+  "paymentStatus": "Payment Status",
+  "paymentType": "Payment Type",
+  "scheduledFor": "Scheduled For",
+  "executedAt": "Processed At",
+  "recurringRule": "Recurring Rule",
+  "enterPaymentDetails": "Enter payment details",
+  "confirmPayment": "Confirm Payment",
+  "paymentCompleted": "Payment marked as completed",
+  "developerOnlyFeature": "Developer-only feature"
   
   }

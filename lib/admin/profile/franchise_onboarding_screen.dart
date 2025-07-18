@@ -14,6 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 String roleToDashboardRoute(List<String> roles) {
   if (roles.contains('platform_owner')) return '/platform-owner/dashboard';
@@ -196,11 +197,15 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
         uid: userId,
         franchiseIds: [franchiseId],
         roles: null,
-        additionalClaims: {
-          'defaultFranchise': franchiseId,
-        },
+        additionalClaims: {'defaultFranchise': franchiseId},
       );
       print('[FranchiseOnboardingScreen] Custom claims updated for $userId');
+
+      // ✅ Set FranchiseProvider immediately
+      await Provider.of<FranchiseProvider>(context, listen: false)
+          .setInitialFranchiseId(franchiseId);
+      print(
+          '[FranchiseOnboardingScreen] FranchiseProvider updated to: $franchiseId');
 
       final userUpdate = {
         'completeProfile': true,
@@ -214,10 +219,10 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
           '[FranchiseOnboardingScreen] Updating Firestore user profile: $userUpdate');
       await firestore.updateUserProfile(userId, userUpdate);
 
-      // 🔄 Force token refresh
       final fbUser = FirebaseAuth.instance.currentUser;
-      if (fbUser == null)
+      if (fbUser == null) {
         throw Exception("Firebase user unexpectedly null after onboarding");
+      }
 
       print(
           '[FranchiseOnboardingScreen] Waiting for custom claims to propagate...');
@@ -236,8 +241,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
         await Future.delayed(const Duration(milliseconds: 300));
       }
 
-      final roleList = claims['roles'] as List?;
-      final roles = roleList?.cast<String>() ?? [];
+      final roles = (claims['roles'] as List?)?.cast<String>() ?? [];
       if (!roles.contains('hq_owner')) {
         print(
             '[FranchiseOnboardingScreen] ⚠️ Custom claim "hq_owner" not found after retrying.');
@@ -261,21 +265,25 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
             '[FranchiseOnboardingScreen] ⚠️ Firestore user.roles still empty after retries.');
       }
 
-      final adminUserProvider =
-          Provider.of<AdminUserProvider>(context, listen: false);
-      adminUserProvider.user = updatedUser;
+      if (updatedUser != null) {
+        Provider.of<AdminUserProvider>(context, listen: false).user =
+            updatedUser;
+        Provider.of<UserProfileNotifier>(context, listen: false).reload();
 
-      final userProfileNotifier =
-          Provider.of<UserProfileNotifier>(context, listen: false);
-      userProfileNotifier.reload();
+        // Optional: double sync FranchiseProvider if defaultFranchise is found
+        if (updatedUser.defaultFranchise != null &&
+            updatedUser.defaultFranchise!.isNotEmpty) {
+          await Provider.of<FranchiseProvider>(context, listen: false)
+              .setInitialFranchiseId(updatedUser.defaultFranchise!);
+        }
+      }
 
       Provider.of<AuthService>(context, listen: false).clearInviteToken();
       print(
           '[FranchiseOnboardingScreen] Invite token cleared from localStorage');
 
       if (mounted) {
-        final roles = updatedUser?.roles ?? [];
-        final dashboardRoute = roleToDashboardRoute(roles);
+        final dashboardRoute = roleToDashboardRoute(updatedUser?.roles ?? []);
         print(
             '[FranchiseOnboardingScreen] Routing to dashboard: $dashboardRoute');
 
@@ -288,9 +296,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
             actions: [
               TextButton(
                 onPressed: () {
-                  if (kIsWeb) {
-                    html.window.location.hash = '';
-                  }
+                  if (kIsWeb) html.window.location.hash = '';
                   Navigator.of(context).pushReplacementNamed(dashboardRoute);
                 },
                 child: Text(AppLocalizations.of(context)!.continueLabel),
@@ -311,6 +317,9 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       setState(() {
         _loadError = e.toString();
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save profile: ${_loadError ?? e}')),
+      );
     } finally {
       print('[FranchiseOnboardingScreen] _saveProfile: END');
       setState(() => _saving = false);
