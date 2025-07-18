@@ -1246,6 +1246,7 @@ export const updateUserClaims = functions.https.onCall(
  */
 function hasPrivilegedRole(roles: string[]): boolean {
   return roles.some((r) =>
-    ["platform_owner", "owner", "developer", "admin"].includes(r)
+    ["platform_owner", "owner", "developer", "admin", "hq_owner"]
+      .includes(r)
   );
 }
