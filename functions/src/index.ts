@@ -1036,17 +1036,36 @@ export const acceptInvitation = functions.https.onCall(
 
       // Fetch current roles (preserve existing roles)
       const userDoc = await userRef.get();
-      const roles = (userDoc.data()?.roles ?? ["customer"]);
+      let roles = userDoc.data()?.roles ?? [];
+
+      if (!Array.isArray(roles) || roles.length === 0) {
+        if (typeof inviteData.role === "string" && inviteData.role.length > 0) {
+          roles = [inviteData.role];
+          console.log(
+            "[acceptInvitation] No roles in user doc, using invite role:",
+            roles);
+        } else {
+          roles = ["customer"]; // fallback only if inviteData.role is absent
+          console.warn(
+            "[acceptInvitation] No roles found. Defaulting to customer.");
+        }
+
+        // 🔄 Write roles back to Firestore immediately to sync
+        await userRef.set({roles}, {merge: true});
+      }
 
       // Set custom claims
       await admin.auth().setCustomUserClaims(context.auth.uid, {
         roles,
-        franchiseIds: [franchiseId], // or merge if you want
-        // arrayUnion-like behavior
+        franchiseIds: [franchiseId],
       });
 
-      console.log(`[acceptInvitation] Added franchiseId
-         ${franchiseId} to user ${context.auth.uid}`);
+
+      console.log(`[acceptInvitation] Finalized user setup:
+  uid=${context.auth.uid},
+  roles=${JSON.stringify(roles)},
+  franchiseIds=[${franchiseId}]
+`);
     }
     return {status: "ok", token};
   }
