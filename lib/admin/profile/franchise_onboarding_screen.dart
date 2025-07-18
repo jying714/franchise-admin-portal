@@ -195,7 +195,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       await firestore.updateUserClaims(
         uid: userId,
         franchiseIds: [franchiseId],
-        roles: [], // preserve existing
+        roles: null, // preserve existing
         additionalClaims: {
           'defaultFranchise': franchiseId,
         },
@@ -216,9 +216,16 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
 
       await firestore.updateUserProfile(userId, userUpdate);
 
+      // 🔄 Force token refresh
       await FirebaseAuth.instance.currentUser?.getIdToken(true);
       print(
           '[FranchiseOnboardingScreen] Forced token refresh for user $userId');
+
+      // ✅ Re-fetch user from Firestore and bind to AdminUserProvider
+      final updatedUser = await firestore.getUser(userId);
+      final adminUserProvider =
+          Provider.of<AdminUserProvider>(context, listen: false);
+      adminUserProvider.user = updatedUser;
 
       // Clear invite token
       Provider.of<AuthService>(context, listen: false).clearInviteToken();
@@ -227,9 +234,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
 
       // Navigate to dashboard
       if (mounted) {
-        final adminUserProvider =
-            Provider.of<AdminUserProvider>(context, listen: false);
-        final roles = adminUserProvider.user?.roles?.cast<String>() ?? [];
+        final roles = updatedUser?.roles ?? [];
         final dashboardRoute = roleToDashboardRoute(roles);
 
         print(
