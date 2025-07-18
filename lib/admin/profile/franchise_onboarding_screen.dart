@@ -137,14 +137,20 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
   }
 
   Future<void> _saveProfile() async {
+    print('[FranchiseOnboardingScreen] _saveProfile: BEGIN');
     setState(() {
       _saving = true;
       _loadError = null;
     });
+
     try {
       final firestore = Provider.of<FirestoreService>(context, listen: false);
       final userId = _inviteData?['invitedUserId'] as String?;
       if (userId == null) throw Exception('No user linked to invite.');
+
+      print(
+          '[FranchiseOnboardingScreen] Preparing franchiseData for userId=$userId');
+
       final franchiseData = {
         'name': _nameController.text.trim(),
         'address': {
@@ -165,43 +171,70 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
         'createdAt': DateTime.now().toUtc().toIso8601String(),
       };
 
-      // Write/merge new franchise document
+      print(
+          '[FranchiseOnboardingScreen] Calling createFranchiseProfile with: $franchiseData');
+
       final franchiseId = await firestore.createFranchiseProfile(
         franchiseData: franchiseData,
         invitedUserId: userId,
       );
-      // Save business hours with new modular method
+
+      print('[FranchiseOnboardingScreen] Franchise created: $franchiseId');
+
       await firestore.saveFranchiseBusinessHours(
         franchiseId: franchiseId,
         hours: _businessHours,
       );
-      // Accept invitation via cloud function
-      await firestore.callAcceptInvitationFunction(_effectiveToken ?? '');
+      print(
+          '[FranchiseOnboardingScreen] Business hours saved for $franchiseId');
 
-// ✅ Update user's franchiseIds and claims via callable function
+      await firestore.callAcceptInvitationFunction(_effectiveToken ?? '');
+      print(
+          '[FranchiseOnboardingScreen] Invitation accepted for token $_effectiveToken');
+
       await firestore.updateUserClaims(
         uid: userId,
         franchiseIds: [franchiseId],
-        roles: [], // preserve existing roles
+        roles: [], // preserve existing
         additionalClaims: {
-          'defaultFranchise': franchiseId, // ✅ NEW
+          'defaultFranchise': franchiseId,
         },
       );
+      print('[FranchiseOnboardingScreen] Custom claims updated for $userId');
 
-// Optionally mirror this to Firestore directly, if not handled inside the function:
-      await firestore.updateUserProfile(userId, {
+      // Write to user profile directly in Firestore
+      final userUpdate = {
         'completeProfile': true,
         'isActive': true,
         'status': 'active',
-        'defaultFranchise': franchiseId,
         'franchiseIds': [franchiseId],
-      });
-      await FirebaseAuth.instance.currentUser?.getIdToken(true);
-      // Clear invite token for proper login without token
-      Provider.of<AuthService>(context, listen: false).clearInviteToken();
+        'defaultFranchise': franchiseId, // Optional
+      };
 
-      // Optionally route to dashboard or show success
+      print(
+          '[FranchiseOnboardingScreen] Updating Firestore user profile: $userUpdate');
+
+      await firestore.updateUserProfile(userId, userUpdate);
+
+      await FirebaseAuth.instance.currentUser?.getIdToken(true);
+      print(
+          '[FranchiseOnboardingScreen] Forced token refresh for user $userId');
+
+      // Clear invite token
+      Provider.of<AuthService>(context, listen: false).clearInviteToken();
+      print(
+          '[FranchiseOnboardingScreen] Invite token cleared from localStorage');
+
+      // Navigate to dashboard
       if (mounted) {
+        final adminUserProvider =
+            Provider.of<AdminUserProvider>(context, listen: false);
+        final roles = adminUserProvider.user?.roles?.cast<String>() ?? [];
+        final dashboardRoute = roleToDashboardRoute(roles);
+
+        print(
+            '[FranchiseOnboardingScreen] Routing to dashboard: $dashboardRoute');
+
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
@@ -211,11 +244,6 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
             actions: [
               TextButton(
                 onPressed: () {
-                  final adminUserProvider =
-                      Provider.of<AdminUserProvider>(context, listen: false);
-                  final roles =
-                      adminUserProvider.user?.roles?.cast<String>() ?? [];
-                  final dashboardRoute = roleToDashboardRoute(roles);
                   if (kIsWeb) {
                     html.window.location.hash = '';
                   }
@@ -235,10 +263,12 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
         screen: 'franchise_onboarding',
         severity: 'error',
       );
+      print('[FranchiseOnboardingScreen] ERROR: $e\n$st');
       setState(() {
         _loadError = e.toString();
       });
     } finally {
+      print('[FranchiseOnboardingScreen] _saveProfile: END');
       setState(() => _saving = false);
     }
   }
