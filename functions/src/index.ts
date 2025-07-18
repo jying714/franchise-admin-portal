@@ -1264,16 +1264,31 @@ export const updateUserClaims = functions.https.onCall(
       delete sanitizedClaims.franchiseId;
     }
 
+    // ✅ Safely resolve roles
+    let rolesToUse = roles;
+    if (!rolesToUse) {
+      const userDoc = await admin.firestore().collection(
+        "users").doc(uid).get();
+      rolesToUse = userDoc.data()?.roles ?? [];
+      console.log(
+        `[updateUserClaims] No roles provided; using existing: ${
+          JSON.stringify(rolesToUse)}`);
+    } else {
+      console.log(
+        `[updateUserClaims] Using provided roles: ${
+          JSON.stringify(rolesToUse)}`);
+    }
+
     // ✅ Set custom user claims
     await admin.auth().setCustomUserClaims(uid, {
-      roles: roles ?? [],
+      roles: rolesToUse,
       franchiseIds: franchiseIds ?? [],
       ...sanitizedClaims,
     });
 
     // ✅ Build safe Firestore update object
     const firestoreUpdate: FirestoreUpdate = {
-      roles: roles ?? [],
+      roles: rolesToUse,
       franchiseIds: franchiseIds ?? [],
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };

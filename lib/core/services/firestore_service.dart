@@ -241,11 +241,33 @@ class FirestoreService {
     final payload = {
       'uid': uid,
       'franchiseIds': franchiseIds,
-      'roles': roles ?? [],
+      if (roles != null) 'roles': roles,
       if (additionalClaims != null) 'additionalClaims': additionalClaims,
     };
 
-    await callable.call(payload);
+    print('[FirestoreService] updateUserClaims called with:');
+    print('  uid=$uid');
+    print('  franchiseIds=$franchiseIds');
+    if (roles != null) {
+      print('  roles=$roles');
+    } else {
+      print('  roles=null (preserve existing)');
+    }
+    if (additionalClaims != null) {
+      print('  additionalClaims=$additionalClaims');
+    } else {
+      print('  additionalClaims=null');
+    }
+
+    try {
+      final result = await callable.call(payload);
+      print(
+          '[FirestoreService] updateUserClaims success: result=${result.data}');
+    } catch (e, st) {
+      print('[FirestoreService] updateUserClaims ERROR: $e');
+      print('[FirestoreService] Stack trace:\n$st');
+      rethrow;
+    }
   }
 
   /// Update existing franchise profile fields.
