@@ -203,42 +203,62 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       );
       print('[FranchiseOnboardingScreen] Custom claims updated for $userId');
 
-      // Write to user profile directly in Firestore
       final userUpdate = {
         'completeProfile': true,
         'isActive': true,
         'status': 'active',
         'franchiseIds': [franchiseId],
-        'defaultFranchise': franchiseId, // Optional
+        'defaultFranchise': franchiseId,
       };
 
       print(
           '[FranchiseOnboardingScreen] Updating Firestore user profile: $userUpdate');
-
       await firestore.updateUserProfile(userId, userUpdate);
 
-      // 🔄 Force token refresh
-      await FirebaseAuth.instance.currentUser?.getIdToken(true);
-      print(
-          '[FranchiseOnboardingScreen] Forced token refresh for user $userId');
+      // 🔄 Force token refresh and wait for roles to propagate
+      final fbUser = FirebaseAuth.instance.currentUser;
+      if (fbUser == null)
+        throw Exception("Firebase user unexpectedly null after onboarding");
 
-      // ✅ Re-fetch user from Firestore and bind to AdminUserProvider
+      print(
+          '[FranchiseOnboardingScreen] Waiting for custom claims to propagate...');
+      int retryCount = 0;
+      Map<String, dynamic> claims = {};
+
+      while (retryCount < 10) {
+        final idToken = await fbUser.getIdTokenResult(true);
+        claims = idToken.claims ?? {};
+        final roles = (claims['roles'] as List?)?.cast<String>() ?? [];
+
+        print(
+            '[FranchiseOnboardingScreen] Fetched ID token claims: roles=$roles');
+
+        if (roles.contains('hq_owner')) break;
+
+        retryCount++;
+        await Future.delayed(const Duration(milliseconds: 300));
+      }
+
+      final roleList = claims['roles'] as List?;
+      final roles = roleList?.cast<String>() ?? [];
+      if (!roles.contains('hq_owner')) {
+        print(
+            '[FranchiseOnboardingScreen] Custom claim "hq_owner" not found after retrying.');
+      }
+
       final updatedUser = await firestore.getUser(userId);
       final adminUserProvider =
           Provider.of<AdminUserProvider>(context, listen: false);
       adminUserProvider.user = updatedUser;
 
-      // ✅ Ensure ProfileGateScreen re-reads the fresh user
       final userProfileNotifier =
           Provider.of<UserProfileNotifier>(context, listen: false);
       userProfileNotifier.reload();
 
-      // Clear invite token
       Provider.of<AuthService>(context, listen: false).clearInviteToken();
       print(
           '[FranchiseOnboardingScreen] Invite token cleared from localStorage');
 
-      // Navigate to dashboard
       if (mounted) {
         final roles = updatedUser?.roles ?? [];
         final dashboardRoute = roleToDashboardRoute(roles);
