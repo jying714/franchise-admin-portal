@@ -25,6 +25,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
   bool _accepted = false;
   String? _effectiveToken;
   bool _didLoadToken = false;
+  bool _emailRegistered = false;
 
   @override
   void didChangeDependencies() {
@@ -87,6 +88,20 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
       }
       setState(() {
         _inviteData = doc;
+      });
+      final inviteEmail = (doc['email'] as String?) ?? '';
+      bool emailRegistered = false;
+      if (inviteEmail.isNotEmpty) {
+        try {
+          final methods = await fb_auth.FirebaseAuth.instance
+              .fetchSignInMethodsForEmail(inviteEmail);
+          emailRegistered = methods.isNotEmpty;
+        } catch (e) {
+          // Optionally, log error but do not block UI
+        }
+      }
+      setState(() {
+        _emailRegistered = emailRegistered;
       });
     } catch (e, st) {
       await ErrorLogger.log(
@@ -265,6 +280,33 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         const SizedBox(height: 18),
         Builder(
           builder: (context) {
+            if (_emailRegistered) {
+              // STEP 4: Show sign-in prompt if the invitee already registered
+              return Column(
+                children: [
+                  Text(
+                    "Your account is already registered. Please sign in with your email to accept this invitation.",
+                    style: theme.textTheme.bodyMedium ?? const TextStyle(),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.login),
+                    label: const Text("Sign In"),
+                    onPressed: () {
+                      Provider.of<AuthService>(context, listen: false)
+                          .saveInviteToken(_effectiveToken ?? '');
+                      Navigator.of(context).pushNamed(
+                        '/sign-in',
+                        arguments: {'token': _effectiveToken},
+                      );
+                    },
+                  ),
+                ],
+              );
+            }
+
+            // If not registered, continue the rest of your existing logic:
             if (!isLoggedIn) {
               return Column(
                 children: [
@@ -315,7 +357,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
                 ],
               );
             }
-            // All good
+            // All good (not registered, signed in with correct user)
             return Column(
               children: [
                 Text(
