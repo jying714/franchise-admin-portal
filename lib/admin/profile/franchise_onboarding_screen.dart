@@ -188,7 +188,13 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       );
 
 // Optionally mirror this to Firestore directly, if not handled inside the function:
-      await firestore.updateUserProfile(userId, {});
+      await firestore.updateUserProfile(userId, {
+        'completeProfile': true,
+        'isActive': true,
+        'status': 'active',
+        'defaultFranchise': franchiseId,
+        'franchiseIds': [franchiseId],
+      });
       // Clear invite token for proper login without token
       Provider.of<AuthService>(context, listen: false).clearInviteToken();
 
