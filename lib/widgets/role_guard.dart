@@ -64,7 +64,8 @@ class RoleGuard extends StatelessWidget {
     // Replace below with your actual User/profile/provider solution.
     // This example assumes a top-level InheritedWidget/provider for user.
     final user = context.watch<AdminUserProvider>().user;
-
+    debugPrint(
+        '[RoleGuard] User object: ${user?.email}, roles: ${user?.roles}');
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       print(
@@ -97,6 +98,11 @@ class RoleGuard extends StatelessWidget {
       if (!passes)
         errorDetail = "Missing all of any allowed roles: $requireAnyRole";
     } else if (allowedRoles != null && allowedRoles!.isNotEmpty) {
+      debugPrint('[RoleGuard] Checking access for feature: $featureName');
+      debugPrint('[RoleGuard] allowedRoles: $allowedRoles');
+      debugPrint('[RoleGuard] requireAnyRole: $requireAnyRole');
+      debugPrint('[RoleGuard] requireAllRoles: $requireAllRoles');
+      debugPrint('[RoleGuard] developerBypass: $developerBypass');
       passes = user.roles.any((r) => allowedRoles!.contains(r));
       if (!passes)
         errorDetail = "User role(s) not in allowedRoles: $allowedRoles";

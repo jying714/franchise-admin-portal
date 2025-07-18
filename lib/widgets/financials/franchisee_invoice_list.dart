@@ -35,6 +35,13 @@ class FranchiseeInvoiceList extends StatelessWidget {
         ? BrandingConfig.brandColorFor(brandId!)
         : BrandingConfig.brandRed;
 
+    debugPrint('[FranchiseeInvoiceList] Received ${invoices.length} invoices');
+    for (var inv in invoices) {
+      debugPrint(
+        '[FranchiseeInvoiceList] Invoice: id=${inv.id}, amount=${inv.amount ?? inv.amount}, status=${inv.status}, dueDate=${inv.dueDate}',
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -69,6 +76,9 @@ class FranchiseeInvoiceList extends StatelessWidget {
                 const SizedBox(height: DesignTokens.adminCardSpacing),
             itemBuilder: (context, index) {
               final invoice = invoices[index];
+              debugPrint(
+                '[FranchiseeInvoiceList] Rendering tile for invoice ${invoice.id} - ${invoice.status}',
+              );
               return FranchiseeInvoiceTile(invoice: invoice);
             },
           ),

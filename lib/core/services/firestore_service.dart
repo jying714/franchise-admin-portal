@@ -7,7 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:franchise_admin_portal/core/models/message.dart';
-import 'package:franchise_admin_portal/core/models/category.dart';
+import 'package:franchise_admin_portal/core/models/category.dart' as model;
 import 'package:franchise_admin_portal/core/models/menu_item.dart';
 import 'package:franchise_admin_portal/core/models/promo.dart';
 import 'package:franchise_admin_portal/core/models/banner.dart';
@@ -35,6 +35,7 @@ import 'package:franchise_admin_portal/core/models/platform_revenue_overview.dar
 import 'package:franchise_admin_portal/core/models/platform_financial_kpis.dart';
 import 'package:franchise_admin_portal/core/models/platform_invoice.dart';
 import 'package:franchise_admin_portal/core/models/platform_payment.dart';
+import 'package:flutter/foundation.dart';
 
 class FirestoreService {
   final firestore.FirebaseFirestore _db = firestore.FirebaseFirestore.instance;
@@ -2171,7 +2172,7 @@ class FirestoreService {
   }
 
   // get categories
-  Stream<List<Category>> getCategories(String franchiseId,
+  Stream<List<model.Category>> getCategories(String franchiseId,
       {String? search, String? sortBy, bool descending = false}) {
     firestore.Query query =
         _db.collection('franchises').doc(franchiseId).collection(_categories);
@@ -2187,19 +2188,19 @@ class FirestoreService {
     }
 
     return query.snapshots().map((snap) => snap.docs
-        .map((d) =>
-            Category.fromFirestore(d.data() as Map<String, dynamic>, d.id))
+        .map((d) => model.Category.fromFirestore(
+            d.data() as Map<String, dynamic>, d.id))
         .toList());
   }
 
-  Future<void> addCategory(String franchiseId, Category category,
+  Future<void> addCategory(String franchiseId, model.Category category,
       {String? userId}) async {
     final doc = _db
         .collection('franchises')
         .doc(franchiseId)
         .collection(_categories)
         .doc();
-    final categoryWithId = Category(
+    final categoryWithId = model.Category(
       id: doc.id,
       name: category.name,
       description: category.description,
@@ -2211,7 +2212,7 @@ class FirestoreService {
     // await AuditLogService().addLog(...);
   }
 
-  Future<void> updateCategory(String franchiseId, Category category,
+  Future<void> updateCategory(String franchiseId, model.Category category,
       {String? userId}) async {
     await _db
         .collection('franchises')
@@ -3228,21 +3229,68 @@ class FirestoreService {
   // Platform billing methods
   Future<List<Map<String, dynamic>>> getPlatformInvoicesForUser(
       String userId) async {
-    // platform_invoices: filter by user/franchisee id
-    final query = await _db
-        .collection('platform_invoices')
-        .where('franchiseeId', isEqualTo: userId)
-        .get();
-    return query.docs.map((d) => {...d.data(), 'id': d.id}).toList();
+    try {
+      debugPrint(
+          '[FirestoreService] getPlatformInvoicesForUser called for userId=$userId');
+
+      final query = await _db
+          .collection('platform_invoices')
+          .where('franchiseeId', isEqualTo: userId)
+          .get();
+
+      final result = query.docs.map((d) => {...d.data(), 'id': d.id}).toList();
+      debugPrint(
+          '[FirestoreService] platform_invoices results for $userId: ${result.length} docs');
+      for (var doc in result) {
+        debugPrint('[FirestoreService] Invoice doc: $doc');
+      }
+
+      return result;
+    } catch (e, stack) {
+      debugPrint('[FirestoreService] ERROR in getPlatformInvoicesForUser: $e');
+      await ErrorLogger.log(
+        message: 'Failed to load platform invoices: $e',
+        stack: stack.toString(),
+        source: 'FirestoreService',
+        screen: 'getPlatformInvoicesForUser',
+        severity: 'error',
+        contextData: {'userId': userId},
+      );
+      return [];
+    }
   }
 
   Future<List<Map<String, dynamic>>> getPlatformPaymentsForUser(
       String userId) async {
-    final query = await _db
-        .collection('platform_payments')
-        .where('franchiseeId', isEqualTo: userId)
-        .get();
-    return query.docs.map((d) => {...d.data(), 'id': d.id}).toList();
+    try {
+      debugPrint(
+          '[FirestoreService] getPlatformPaymentsForUser called for userId=$userId');
+
+      final query = await _db
+          .collection('platform_payments')
+          .where('franchiseeId', isEqualTo: userId)
+          .get();
+
+      final result = query.docs.map((d) => {...d.data(), 'id': d.id}).toList();
+      debugPrint(
+          '[FirestoreService] platform_payments results for $userId: ${result.length} docs');
+      for (var doc in result) {
+        debugPrint('[FirestoreService] Payment doc: $doc');
+      }
+
+      return result;
+    } catch (e, stack) {
+      debugPrint('[FirestoreService] ERROR in getPlatformPaymentsForUser: $e');
+      await ErrorLogger.log(
+        message: 'Failed to load platform payments: $e',
+        stack: stack.toString(),
+        source: 'FirestoreService',
+        screen: 'getPlatformPaymentsForUser',
+        severity: 'error',
+        contextData: {'userId': userId},
+      );
+      return [];
+    }
   }
 
   Future<List<PlatformInvoice>> getPlatformInvoicesForFranchisee(

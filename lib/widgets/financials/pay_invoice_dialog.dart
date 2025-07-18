@@ -12,7 +12,10 @@ import 'package:franchise_admin_portal/widgets/role_guard.dart';
 class PayInvoiceDialog extends StatefulWidget {
   final PlatformInvoice invoice;
 
-  const PayInvoiceDialog({Key? key, required this.invoice}) : super(key: key);
+  PayInvoiceDialog({Key? key, required this.invoice}) : super(key: key) {
+    debugPrint(
+        '[PayInvoiceDialog] Constructor: invoice=${invoice.invoiceNumber}, id=${invoice.id}');
+  }
 
   @override
   State<PayInvoiceDialog> createState() => _PayInvoiceDialogState();
@@ -26,11 +29,13 @@ class _PayInvoiceDialogState extends State<PayInvoiceDialog> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint(
+        '[PayInvoiceDialog] build called for invoice=${widget.invoice.invoiceNumber}');
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
 
     return RoleGuard(
-      allowedRoles: ['developer'],
+      allowedRoles: ['developer', 'hq_owner'],
       featureName: 'PayPlatformInvoice',
       screen: 'PayInvoiceDialog',
       child: AlertDialog(

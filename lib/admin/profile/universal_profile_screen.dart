@@ -14,6 +14,8 @@ import 'package:franchise_admin_portal/widgets/profile/account_details_panel.dar
 import 'package:franchise_admin_portal/widgets/financials/franchisee_invoice_list.dart';
 import 'package:franchise_admin_portal/widgets/financials/franchisee_payment_list.dart';
 import 'package:franchise_admin_portal/core/models/platform_payment.dart';
+import 'package:franchise_admin_portal/core/models/platform_invoice.dart';
+import 'package:franchise_admin_portal/widgets/financials/pay_invoice_dialog.dart';
 
 // FUTURE: Modular import for payment methods and plan management
 // import 'package:franchise_admin_portal/widgets/financials/payment_method_manager.dart';
@@ -68,6 +70,10 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
               'invoices': invoices,
               'payments': payments,
             });
+        debugPrint(
+            '[UniversalProfileScreen] Loaded invoices: $invoices'); // << ADD THIS
+        debugPrint(
+            '[UniversalProfileScreen] Loaded payments: $payments'); // << ADD THIS
       } else if (user.isStoreOwner == true) {
         // Store owner: show direct store invoices/payments
         final invoices = await firestore.getStoreInvoicesForUser(user.id);
@@ -235,9 +241,17 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FranchiseeInvoiceList(invoices: invoices.cast()),
+        FranchiseeInvoiceList(
+          invoices: invoices
+              .map((data) => PlatformInvoice.fromMap(data['id'], data))
+              .toList(),
+        ),
         const SizedBox(height: 14),
-        FranchiseePaymentList(payments: payments.cast<PlatformPayment>()),
+        FranchiseePaymentList(
+          payments: payments
+              .map((data) => PlatformPayment.fromMap(data['id'], data))
+              .toList(),
+        ),
         // Future: payment methods, disputes, receipts
       ],
     );
@@ -265,20 +279,25 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
         ),
         const SizedBox(height: 6),
         ...invoices.map((inv) => ListTile(
-              leading: Icon(Icons.receipt_long, color: colorScheme.primary),
-              title: Text(
-                  '${loc.amount}: \$${inv['amount_due'] ?? inv['amount'] ?? '-'}'),
-              subtitle: Text('${loc.status}: ${inv['status'] ?? '-'}'),
-              trailing: Icon(Icons.arrow_forward_ios,
-                  size: 16, color: colorScheme.secondary),
-              onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  '/hq/invoice_detail',
-                  arguments: inv['id'],
-                );
-              },
-            )),
+            leading: Icon(Icons.receipt_long, color: colorScheme.primary),
+            title: Text(
+                '${loc.amount}: \$${inv['amount_due'] ?? inv['amount'] ?? '-'}'),
+            subtitle: Text('${loc.status}: ${inv['status'] ?? '-'}'),
+            trailing: Icon(Icons.arrow_forward_ios,
+                size: 16, color: colorScheme.secondary),
+            onTap: () {
+              final parsedInvoice = PlatformInvoice.fromMap(inv, inv['id']);
+              debugPrint(
+                  '[PayInvoiceDialog] Opening dialog for invoice: ${parsedInvoice.invoiceNumber} (${parsedInvoice.id})');
+
+              showDialog(
+                context: context,
+                builder: (context) {
+                  debugPrint('[PayInvoiceDialog] showDialog builder called');
+                  return PayInvoiceDialog(invoice: parsedInvoice);
+                },
+              );
+            })),
       ],
     );
   }

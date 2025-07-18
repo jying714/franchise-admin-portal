@@ -13,6 +13,9 @@ class FranchiseePaymentList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint(
+        '[FranchiseePaymentList] Received payments: ${payments.map((p) => "${p.id}:${p.amount} ${p.currency}").toList()}');
+
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -44,8 +47,13 @@ class FranchiseePaymentList extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             itemCount: payments.length,
             separatorBuilder: (_, __) => const Divider(height: 16),
-            itemBuilder: (context, index) =>
-                FranchiseePaymentTile(payment: payments[index]),
+            itemBuilder: (context, index) {
+              final payment = payments[index];
+              debugPrint(
+                  '[FranchiseePaymentList] Rendering tile for payment ${payment.id} (${payment.amount} ${payment.currency})');
+
+              return FranchiseePaymentTile(payment: payment);
+            },
           ),
         const SizedBox(height: 12),
         Text(
