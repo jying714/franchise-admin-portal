@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class AppConfig {
   // ===== FIRESTORE COLLECTION NAMES =====
   static const String usersCollection = 'users';
@@ -82,4 +84,55 @@ class AppConfig {
     required this.brandingColor,
     required this.isProduction,
   });
+
+  /// Converts internal feature keys into display-friendly names.
+  /// TODO: Replace with localized strings or a proper feature map.
+  static String featureDisplayName(String featureKey) {
+    switch (featureKey) {
+      case 'mobile_app':
+        return 'Mobile App';
+      case 'web_ordering':
+        return 'Web Ordering';
+      case 'multi_location':
+        return 'Multi-location Support';
+      case 'custom_branding':
+        return 'Custom Branding';
+      case 'priority_support':
+        return 'Priority Support';
+      case 'analytics_dashboard':
+        return 'Analytics Dashboard';
+      case 'coupon_management':
+        return 'Coupon Management';
+      case 'loyalty_program':
+        return 'Loyalty Program';
+      case 'pos_integration':
+        return 'POS Integration';
+      case 'custom_plan':
+        return 'Custom Plan Features';
+      default:
+        return featureKey;
+    }
+  }
+
+  /// Maps subscription statuses to corresponding display colors.
+  static Color statusColor(String status, ThemeData theme) {
+    switch (status) {
+      case 'active':
+        return theme.colorScheme.primaryContainer;
+      case 'paused':
+        return theme.colorScheme.secondaryContainer;
+      case 'trialing':
+        return theme.colorScheme.tertiaryContainer;
+      case 'canceled':
+        return theme.colorScheme.errorContainer;
+      default:
+        return theme.colorScheme.outlineVariant;
+    }
+  }
+
+  /// Formats a DateTime object into a readable string using default dateFormat.
+  static String formatDate(DateTime? date) {
+    if (date == null) return '';
+    return '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
 }

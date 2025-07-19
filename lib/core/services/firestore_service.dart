@@ -36,6 +36,8 @@ import 'package:franchise_admin_portal/core/models/platform_financial_kpis.dart'
 import 'package:franchise_admin_portal/core/models/platform_invoice.dart';
 import 'package:franchise_admin_portal/core/models/platform_payment.dart';
 import 'package:flutter/foundation.dart';
+import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
+import 'package:franchise_admin_portal/core/models/franchise_subscriptions_model.dart';
 
 class FirestoreService {
   final firestore.FirebaseFirestore _db = firestore.FirebaseFirestore.instance;
@@ -3436,6 +3438,88 @@ class FirestoreService {
         stack: stack.toString(),
         source: 'markPlatformInvoicePaid',
         screen: 'pay_invoice_dialog',
+      );
+      rethrow;
+    }
+  }
+
+  static Future<List<PlatformPlan>> getPlatformPlans() async {
+    final snap = await firestore.FirebaseFirestore.instance
+        .collection("platform_plans")
+        .get();
+    return snap.docs
+        .map((doc) => PlatformPlan.fromMap(doc.id, doc.data()))
+        .toList();
+  }
+
+  static Future<List<FranchiseSubscription>> getFranchiseSubscriptions() async {
+    final snap = await firestore.FirebaseFirestore.instance
+        .collection("franchise_subscriptions")
+        .get();
+    return snap.docs
+        .map((doc) => FranchiseSubscription.fromMap(doc.id, doc.data()))
+        .toList();
+  }
+
+  Future<void> saveFranchiseSubscription(
+      FranchiseSubscription subscription) async {
+    try {
+      final docRef = subscription.id.isNotEmpty
+          ? _db.collection('franchise_subscriptions').doc(subscription.id)
+          : _db.collection('franchise_subscriptions').doc();
+
+      await docRef.set(
+          subscription.toFirestore(), firestore.SetOptions(merge: true));
+    } catch (e, st) {
+      await ErrorLogger.log(
+        message: 'Failed to save franchise subscription',
+        stack: st.toString(),
+        source: 'FirestoreService',
+        screen: 'saveFranchiseSubscription',
+        severity: 'error',
+      );
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteFranchiseSubscription(String id) async {
+    try {
+      await firestore.FirebaseFirestore.instance
+          .collection('franchise_subscriptions')
+          .doc(id)
+          .delete();
+    } catch (e, st) {
+      await ErrorLogger.log(
+        message: 'Failed to delete franchise_subscription $id',
+        stack: st.toString(),
+        source: 'FirestoreService',
+        screen: 'deleteFranchiseSubscription',
+        severity: 'error',
+      );
+      rethrow;
+    }
+  }
+
+  static Future<void> deleteManyFranchiseSubscriptions(List<String> ids) async {
+    final batch = firestore.FirebaseFirestore.instance.batch();
+
+    try {
+      for (final id in ids) {
+        final docRef = firestore.FirebaseFirestore.instance
+            .collection('franchise_subscriptions')
+            .doc(id);
+        batch.delete(docRef);
+      }
+
+      await batch.commit();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to delete multiple franchise subscriptions',
+        stack: stack.toString(),
+        source: 'FirestoreService',
+        screen: 'franchise_subscriptions_section',
+        severity: 'error',
+        contextData: {'ids': ids, 'exception': e.toString()},
       );
       rethrow;
     }

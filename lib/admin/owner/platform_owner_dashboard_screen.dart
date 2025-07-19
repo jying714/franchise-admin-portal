@@ -17,6 +17,10 @@ import 'package:franchise_admin_portal/widgets/financials/platform_revenue_summa
 import 'package:franchise_admin_portal/core/providers/platform_financials_provider.dart';
 import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:franchise_admin_portal/admin/owner/sections/platform_plans_summary_card.dart';
+import 'package:franchise_admin_portal/admin/owner/sections/franchise_subscription_summary_card.dart';
+import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
+import 'package:franchise_admin_portal/admin/owner/screens/full_platform_subscriptions_screen.dart';
 
 class PlatformOwnerDashboardScreen extends StatelessWidget {
   const PlatformOwnerDashboardScreen({Key? key}) : super(key: key);
@@ -251,6 +255,15 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
 
                 // --- Platform Analytics Panel ---
                 PlatformAnalyticsPanel(loc: loc, colorScheme: colorScheme),
+
+                const SizedBox(height: 36),
+
+                // --- Platform plans summary card ---
+                const PlatformPlansSummaryCard(),
+
+                const SizedBox(height: 36),
+                // --- Franchise subscriptions summary card ---
+                const FranchiseSubscriptionSummaryCard(),
 
                 const SizedBox(height: 36),
 

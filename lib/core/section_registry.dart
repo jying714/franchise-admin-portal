@@ -12,7 +12,8 @@ import 'package:franchise_admin_portal/admin/staff/staff_access_screen.dart';
 import 'package:franchise_admin_portal/admin/features/feature_settings_screen.dart';
 import 'package:franchise_admin_portal/admin/chat/chat_management_screen.dart';
 import 'package:franchise_admin_portal/admin/error_logs/error_logs_screen.dart';
-
+import 'package:franchise_admin_portal/admin/developer/platform/platform_plans_section.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 // Any new (plugin/module) screens can be imported and registered here
 
 class DashboardSection {
@@ -130,6 +131,13 @@ final List<DashboardSection> sectionRegistry = [
   //   sidebarOrder: 11,
   //   showInSidebar: true,
   // ),
+  DashboardSection(
+    key: 'platform_plans_section',
+    title: 'Platform Plans', // Use a static string here
+    icon: Icons.payment,
+    sidebarOrder: 60,
+    builder: (context) => const PlatformPlansSection(),
+  ),
 ];
 
 /// Easily sort or filter sections for the sidebar/nav.

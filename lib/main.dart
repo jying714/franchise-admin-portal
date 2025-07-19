@@ -36,6 +36,8 @@ import 'package:franchise_admin_portal/widgets/financials/franchisee_invitation_
 import 'package:franchise_admin_portal/admin/profile/universal_profile_screen.dart';
 import 'package:franchise_admin_portal/admin/auth/invite_accept_screen.dart';
 import 'package:franchise_admin_portal/admin/profile/franchise_onboarding_screen.dart';
+import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
+import 'package:franchise_admin_portal/admin/owner/screens/full_platform_subscriptions_screen.dart';
 import 'dart:html' as html;
 
 /// Returns initial unauth route and optional invite token, e.g. ('/invite-accept', 'abc123').
@@ -429,6 +431,18 @@ class _FranchiseAuthenticatedRootState
               print('[main.dart] Routing to PlatformOwnerDashboardScreen');
               return MaterialPageRoute(
                   builder: (context) => const PlatformOwnerDashboardScreen());
+            }
+            if (uri.path == '/platform/plans') {
+              print('[main.dart] Routing to FullPlatformPlansScreen');
+              return MaterialPageRoute(
+                builder: (context) => const FullPlatformPlansScreen(),
+              );
+            }
+            if (uri.path == '/platform/subscriptions') {
+              print('[main.dart] Routing to FullPlatformSubscriptionsScreen');
+              return MaterialPageRoute(
+                builder: (context) => const FullPlatformSubscriptionsScreen(),
+              );
             }
             if (uri.path == '/unauthorized') {
               print('[main.dart] Routing to Unauthorized');
