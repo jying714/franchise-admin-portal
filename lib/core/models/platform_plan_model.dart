@@ -28,6 +28,7 @@ class PlatformPlan {
   });
 
   factory PlatformPlan.fromMap(String id, Map<String, dynamic> data) {
+    print('[DEBUG][PlatformPlan.fromMap] Raw data for $id: $data');
     return PlatformPlan(
       id: id,
       name: data['name'] ?? '',
@@ -35,7 +36,9 @@ class PlatformPlan {
       price: (data['price'] ?? 0).toDouble(),
       currency: data['currency'] ?? 'USD',
       billingInterval: data['billingInterval'] ?? 'monthly',
-      includedFeatures: List<String>.from(data['includedFeatures'] ?? []),
+      includedFeatures: List<String>.from(
+        data['includedFeatures'] ?? data['features'] ?? [],
+      ),
       active: data['active'] ?? false,
       isCustom: data['isCustom'] ?? false,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),

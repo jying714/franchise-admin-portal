@@ -67,6 +67,19 @@ class RoleGuard extends StatelessWidget {
     debugPrint(
         '[RoleGuard] User object: ${user?.email}, roles: ${user?.roles}');
     final loc = AppLocalizations.of(context);
+    // Restrict access to incomplete onboarding (for franchisees)
+    if ((user?.isFranchisee ?? false) && !(user?.onboardingComplete ?? false)) {
+      return Scaffold(
+        body: Center(
+          child: _DefaultUnauthorizedWidget(
+            reason: loc?.onboardingRequiredBody ??
+                'You must complete onboarding to access this screen.',
+            loc: loc!,
+            colorScheme: Theme.of(context).colorScheme,
+          ),
+        ),
+      );
+    }
     if (loc == null) {
       print(
           '[${runtimeType}] loc is null! Localization not available for this context.');

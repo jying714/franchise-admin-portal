@@ -27,6 +27,7 @@ class User {
   final String? defaultFranchise;
   final String? avatarUrl;
   final List<String> franchiseIds;
+  final bool onboardingComplete;
 
   bool get isHqOwner => roles.contains(roleHqOwner);
   bool get isHqManager => roles.contains(roleHqManager);
@@ -56,6 +57,7 @@ class User {
     this.isActive = true,
     List<String>? franchiseIds,
     this.completeProfile,
+    this.onboardingComplete = false,
   })  : addresses = addresses ?? [],
         franchiseIds = franchiseIds ?? <String>[];
 
@@ -84,6 +86,7 @@ class User {
       isActive: data['isActive'] ?? true,
       franchiseIds: franchiseIdsFromDb,
       completeProfile: data['completeProfile'],
+      onboardingComplete: data['onboardingStatus'] == 'complete',
     );
   }
 
@@ -101,6 +104,7 @@ class User {
       'isActive': isActive,
       'franchiseIds': franchiseIds,
       'completeProfile': completeProfile,
+      'onboardingStatus': onboardingComplete ? 'complete' : 'incomplete',
     };
   }
 
@@ -117,6 +121,7 @@ class User {
     bool? isActive,
     List<String>? franchiseIds,
     bool? completeProfile,
+    bool? onboardingComplete,
   }) {
     return User(
       id: id,
@@ -132,6 +137,7 @@ class User {
       isActive: isActive ?? this.isActive,
       franchiseIds: franchiseIds ?? this.franchiseIds,
       completeProfile: completeProfile ?? this.completeProfile,
+      onboardingComplete: onboardingComplete ?? this.onboardingComplete,
     );
   }
 }

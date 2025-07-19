@@ -38,6 +38,12 @@ import 'package:franchise_admin_portal/admin/auth/invite_accept_screen.dart';
 import 'package:franchise_admin_portal/admin/profile/franchise_onboarding_screen.dart';
 import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
 import 'package:franchise_admin_portal/admin/owner/screens/full_platform_subscriptions_screen.dart';
+import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/screens/available_platform_plans_screen.dart';
+import 'package:franchise_admin_portal/core/providers/platform_plan_selection_provider.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_subscription_provider.dart';
+import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
+
 import 'dart:html' as html;
 
 /// Returns initial unauth route and optional invite token, e.g. ('/invite-accept', 'abc123').
@@ -248,6 +254,24 @@ class FranchiseAppRootSplit extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => FranchiseProvider()),
         ChangeNotifierProvider(create: (_) => AdminUserProvider()),
+        ChangeNotifierProxyProvider<AdminUserProvider,
+            FranchiseSubscriptionNotifier>(
+          create: (_) => FranchiseSubscriptionNotifier(
+            service: FranchiseSubscriptionService(),
+            franchiseId: '', // temp value, will be updated
+          ),
+          update: (_, adminUserProvider, notifier) {
+            final franchiseId = adminUserProvider.user?.defaultFranchise ?? '';
+            notifier ??= FranchiseSubscriptionNotifier(
+              service: FranchiseSubscriptionService(),
+              franchiseId: franchiseId,
+            );
+            notifier
+                .updateFranchiseId(franchiseId); // make sure you implement this
+            return notifier;
+          },
+        ),
+        ChangeNotifierProvider(create: (_) => PlatformPlanSelectionProvider()),
         Provider<FirestoreService>.value(value: FirestoreService()),
         Provider(create: (_) => AnalyticsService()),
         StreamProvider<fb_auth.User?>.value(
@@ -532,7 +556,13 @@ class _FranchiseAuthenticatedRootState
                     FranchiseOnboardingScreen(inviteToken: token),
               );
             }
-
+            if (uri.path == '/hq-owner/available-plans') {
+              print(
+                  '[main.dart] Routing to AvailablePlatformPlansScreen (HQ Owner)');
+              return MaterialPageRoute(
+                builder: (context) => const AvailablePlatformPlansScreen(),
+              );
+            }
             print('[main.dart] Routing to fallback LandingPage');
             return MaterialPageRoute(builder: (context) => const LandingPage());
           } catch (e, stack) {

@@ -21,6 +21,7 @@ import 'package:franchise_admin_portal/admin/owner/sections/platform_plans_summa
 import 'package:franchise_admin_portal/admin/owner/sections/franchise_subscription_summary_card.dart';
 import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
 import 'package:franchise_admin_portal/admin/owner/screens/full_platform_subscriptions_screen.dart';
+import 'package:franchise_admin_portal/admin/owner/sections/quick_links_card.dart';
 
 class PlatformOwnerDashboardScreen extends StatelessWidget {
   const PlatformOwnerDashboardScreen({Key? key}) : super(key: key);
@@ -179,6 +180,10 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
                 EdgeInsets.symmetric(horizontal: hPadding, vertical: vPadding),
             child: ListView(
               children: [
+                // --- Quick Links Card ---
+                const QuickLinksCard(),
+
+                const SizedBox(height: 36),
                 // --- Franchise Invitation Panel ---
                 ChangeNotifierProvider(
                   create: (context) => FranchiseeInvitationProvider(

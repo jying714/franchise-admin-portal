@@ -37,7 +37,7 @@ import 'package:franchise_admin_portal/core/models/platform_invoice.dart';
 import 'package:franchise_admin_portal/core/models/platform_payment.dart';
 import 'package:flutter/foundation.dart';
 import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
-import 'package:franchise_admin_portal/core/models/franchise_subscriptions_model.dart';
+import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
 
 class FirestoreService {
   final firestore.FirebaseFirestore _db = firestore.FirebaseFirestore.instance;
@@ -3444,12 +3444,38 @@ class FirestoreService {
   }
 
   static Future<List<PlatformPlan>> getPlatformPlans() async {
-    final snap = await firestore.FirebaseFirestore.instance
-        .collection("platform_plans")
-        .get();
-    return snap.docs
-        .map((doc) => PlatformPlan.fromMap(doc.id, doc.data()))
-        .toList();
+    try {
+      print('[FirestoreService] getPlatformPlans: Fetching all plans...');
+      final snap = await firestore.FirebaseFirestore.instance
+          .collection('platform_plans')
+          .get();
+
+      print(
+          '[FirestoreService] getPlatformPlans: Retrieved ${snap.docs.length} documents');
+      for (var doc in snap.docs) {
+        print('[FirestoreService] Raw doc ${doc.id}: ${doc.data()}');
+      }
+
+      final plans = snap.docs.map((doc) {
+        final plan = PlatformPlan.fromMap(doc.id, doc.data());
+        print(
+            '[FirestoreService] Plan loaded: ${plan.name} (active: ${plan.active})');
+        return plan;
+      }).toList();
+      print(
+          '[FirestoreService] getPlatformPlans: Parsed ${plans.length} plans');
+      return plans;
+    } catch (e, stack) {
+      print('[FirestoreService] getPlatformPlans: ERROR $e\n$stack');
+      await ErrorLogger.log(
+        message: 'Error loading platform plans: $e',
+        stack: stack.toString(),
+        source: 'FirestoreService',
+        screen: 'getPlatformPlans',
+        severity: 'error',
+      );
+      return [];
+    }
   }
 
   static Future<List<FranchiseSubscription>> getFranchiseSubscriptions() async {
@@ -3522,6 +3548,138 @@ class FirestoreService {
         contextData: {'ids': ids, 'exception': e.toString()},
       );
       rethrow;
+    }
+  }
+
+  Future<void> subscribeFranchiseToPlan({
+    required String franchiseId,
+    required PlatformPlan plan,
+  }) async {
+    final batch = _db.batch();
+    final subscriptionsRef = _db.collection('franchise_subscriptions');
+
+    try {
+      debugPrint(
+          '[FirestoreService] subscribeFranchiseToPlan: Fetching active subscriptions for franchiseId=$franchiseId');
+
+      final existing = await subscriptionsRef
+          .where('franchiseId', isEqualTo: franchiseId)
+          .where('active', isEqualTo: true)
+          .get();
+
+      for (final doc in existing.docs) {
+        debugPrint(
+            '[FirestoreService] Deactivating existing subscription: ${doc.id}');
+        batch.update(doc.reference, {'active': false});
+      }
+
+      final newRef = subscriptionsRef.doc();
+      debugPrint(
+          '[FirestoreService] Creating new subscription document: ${newRef.id}');
+
+      batch.set(newRef, {
+        'franchiseId': franchiseId,
+        'platformPlanId': plan.id,
+        'subscribedAt': firestore.FieldValue.serverTimestamp(),
+        'active': true,
+        'autoRenew': true,
+        'priceAtSubscription': plan.price,
+        'billingInterval': plan.billingInterval,
+        'planSnapshot': {
+          'name': plan.name,
+          'description': plan.description,
+          'features': plan.includedFeatures,
+          'currency': plan.currency,
+        },
+      });
+
+      await batch.commit();
+      debugPrint(
+          '[FirestoreService] Subscription committed for franchiseId=$franchiseId');
+
+      await ErrorLogger.log(
+        message: 'Franchise subscribed to platform plan',
+        source: 'FirestoreService',
+        screen: 'confirm_plan_subscription_dialog',
+        severity: 'info',
+        contextData: {
+          'franchiseId': franchiseId,
+          'planId': plan.id,
+          'planName': plan.name,
+        },
+      );
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to subscribe franchise to plan: $e',
+        source: 'FirestoreService',
+        screen: 'confirm_plan_subscription_dialog',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {
+          'franchiseId': franchiseId,
+          'planId': plan.id,
+        },
+      );
+      rethrow;
+    }
+  }
+
+  Future<FranchiseSubscription?> getCurrentSubscriptionForFranchise(
+      String franchiseId) async {
+    try {
+      debugPrint(
+          '[FirestoreService] getCurrentSubscriptionForFranchise: franchiseId=$franchiseId');
+
+      final query = await _db
+          .collection('franchise_subscriptions')
+          .where('franchiseId', isEqualTo: franchiseId)
+          .where('active', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) {
+        debugPrint('[FirestoreService] No active subscription found.');
+        return null;
+      }
+
+      final doc = query.docs.first;
+      debugPrint('[FirestoreService] Active subscription found: ${doc.id}');
+      return FranchiseSubscription.fromMap(doc.id, doc.data());
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to load current subscription: $e',
+        source: 'FirestoreService',
+        screen: 'getCurrentSubscriptionForFranchise',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId},
+      );
+      return null;
+    }
+  }
+
+  Future<List<FranchiseSubscription>> getAllFranchiseSubscriptions() async {
+    try {
+      debugPrint(
+          '[FirestoreService] getAllFranchiseSubscriptions: Fetching all subscriptions...');
+
+      final snap = await _db.collection('franchise_subscriptions').get();
+
+      final list = snap.docs
+          .map((doc) => FranchiseSubscription.fromMap(doc.id, doc.data()))
+          .toList();
+
+      debugPrint('[FirestoreService] Retrieved ${list.length} subscriptions.');
+      return list;
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to fetch all franchise subscriptions: $e',
+        source: 'FirestoreService',
+        screen: 'getAllFranchiseSubscriptions',
+        severity: 'error',
+        stack: stack.toString(),
+      );
+      return [];
     }
   }
 

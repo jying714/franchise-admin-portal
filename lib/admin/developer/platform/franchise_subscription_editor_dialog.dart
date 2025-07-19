@@ -6,7 +6,7 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
 import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
-import 'package:franchise_admin_portal/core/models/franchise_subscriptions_model.dart';
+import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
 import 'package:provider/provider.dart';
 
 class FranchiseSubscriptionEditorDialog extends StatefulWidget {
@@ -52,7 +52,7 @@ class _FranchiseSubscriptionEditorDialogState
     _discountPercent = sub?.discountPercent ?? 0;
     _customQuoteDetails = sub?.customQuoteDetails;
 
-    _selectedPlanId = sub?.planId;
+    _selectedPlanId = sub?.platformPlanId;
     _status = sub?.status ?? 'active';
 
     _loadPlans();
@@ -85,7 +85,7 @@ class _FranchiseSubscriptionEditorDialogState
       final newSub = FranchiseSubscription(
         id: widget.subscription?.id ?? '',
         franchiseId: widget.franchiseId,
-        planId: _selectedPlanId!,
+        platformPlanId: _selectedPlanId!,
         status: _status,
         startDate: _startDate,
         nextBillingDate: _nextBillingDate,
@@ -96,6 +96,8 @@ class _FranchiseSubscriptionEditorDialogState
         lastInvoiceId: widget.subscription?.lastInvoiceId,
         createdAt: widget.subscription?.createdAt,
         updatedAt: DateTime.now(),
+        priceAtSubscription: widget.subscription?.priceAtSubscription ?? 0.0,
+        subscribedAt: widget.subscription?.subscribedAt ?? DateTime.now(),
       );
 
       await fs.saveFranchiseSubscription(newSub);

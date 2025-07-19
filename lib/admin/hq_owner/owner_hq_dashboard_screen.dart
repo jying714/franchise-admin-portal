@@ -27,6 +27,8 @@ import 'package:franchise_admin_portal/widgets/financials/invoices_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/billing_summary_card.dart';
 import 'package:franchise_admin_portal/widgets/financials/payout_status_card.dart';
 import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
+import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
+import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
 
 /// Developer/HQ-only: Entry-point for HQ/Owner dashboard.
 /// Add this to your DashboardSection registry for 'hq_owner'.
@@ -262,6 +264,96 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                   ConstrainedBox(
                     constraints: BoxConstraints(minHeight: 220),
                     child: BillingSummaryCard(),
+                  ),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 180),
+                    child: StreamBuilder<FranchiseSubscription?>(
+                      stream: FranchiseSubscriptionService()
+                          .watchCurrentSubscription(franchiseId),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          return Center(
+                              child: Text(AppLocalizations.of(context)
+                                      ?.subscriptionLoadError ??
+                                  'Error loading subscription'));
+                        }
+
+                        final subscription = snapshot.data;
+                        if (subscription == null) {
+                          return Card(
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Text(
+                                  AppLocalizations.of(context)
+                                          ?.noActiveSubscription ??
+                                      'No active subscription',
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+
+                        final snapshotMap = subscription.planSnapshot;
+                        final planName = snapshotMap?['name'] ?? 'Unknown Plan';
+                        final price = snapshotMap?['price']
+                                ?.toStringAsFixed(2) ??
+                            subscription.priceAtSubscription.toStringAsFixed(2);
+                        final interval = snapshotMap?['billingInterval'] ??
+                            subscription.billingInterval ??
+                            'unknown';
+
+                        return Card(
+                          color: Theme.of(context).colorScheme.surfaceVariant,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                                DesignTokens.adminCardRadius),
+                          ),
+                          elevation: DesignTokens.adminCardElevation,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(AppLocalizations.of(context)
+                                        ?.activePlanLabel ??
+                                    'Active Platform Plan'),
+                                const SizedBox(height: 8),
+                                Text(
+                                  planName,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  '\$$price / $interval',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                      ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Subscribed on: ${subscription.subscribedAt?.toLocal().toString().split(' ').first ?? 'unknown'}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -504,6 +596,15 @@ class QuickLinksPanel extends StatelessWidget {
                   label: loc.franchiseAlerts ?? "Alerts",
                   onTap: () => Navigator.of(context).pushNamed('/alerts'),
                   color: colorScheme.primary,
+                ),
+                _QuickLinkTile(
+                  icon: Icons.credit_card,
+                  label: loc.viewPlatformPlans ?? "Platform Plans",
+                  onTap: () {
+                    Navigator.of(context)
+                        .pushNamed('/hq-owner/available-plans');
+                  },
+                  color: colorScheme.tertiary,
                 ),
               ],
             ),

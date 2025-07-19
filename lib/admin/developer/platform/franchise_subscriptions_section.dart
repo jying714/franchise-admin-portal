@@ -8,7 +8,7 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:franchise_admin_portal/core/models/franchise_subscriptions_model.dart';
+import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
 import 'package:franchise_admin_portal/admin/developer/platform/franchise_subscription_editor_dialog.dart';
 import 'package:franchise_admin_portal/admin/categories/bulk_action_bar.dart';
 
@@ -267,7 +267,7 @@ class _FranchiseSubscriptionsSectionState
               ],
             ),
             const SizedBox(height: 8),
-            Text('${loc.planIdLabel}: ${sub.planId}'),
+            Text('${loc.planIdLabel}: ${sub.platformPlanId}'),
             const SizedBox(height: 4),
             if (sub.isTrial)
               Text(

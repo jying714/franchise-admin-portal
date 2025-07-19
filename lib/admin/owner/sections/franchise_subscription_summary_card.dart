@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/models/franchise_subscriptions_model.dart';
+import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:provider/provider.dart';
@@ -92,7 +92,7 @@ class FranchiseSubscriptionSummaryCard extends StatelessWidget {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                  'ID: ${sub.franchiseId} • ${sub.planId}',
+                                  'ID: ${sub.franchiseId} • ${sub.platformPlanId}',
                                   style: theme.textTheme.bodyMedium),
                             ),
                           ],

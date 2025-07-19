@@ -1562,5 +1562,21 @@
   "enableBulkSelect": "Enable Bulk Select",
   "translateStatus": "{status, select, active{Active} paused{Paused} trialing{Trialing} canceled{Canceled} other{Unknown}}",
   "editPlan": "Edit Plan",
-  "deletePlan": "Delete Plan"
+  "deletePlan": "Delete Plan",
+  "quickLinksLabel": "Quick Links",
+  "currentPlan": "Current Plan",
+  "subscribe": "Subscribe",
+  "confirmPlanSubscriptionTitle": "Subscribe to Plan",
+  "confirmPlanSubscriptionPrompt": "Do you want to subscribe to this plan?",
+  "subscriptionSuccessMessage": "Successfully subscribed to plan.",
+  "billingIntervalLabel": "Billing Interval",
+  "priceLabel": "Price",
+  "selectThisPlan": "Select This Plan",
+  "onboardingRequiredBody": "You must complete onboarding to access this screen.",
+  "viewPlatformPlans": "View Platform Plans",
+  "noActiveSubscription": "No Active Subscription",
+  "activePlanLabel": "Active Plan",
+  "subscriptionLoadError": "Error Loading Subscription",
+  "priceAtSubscription": "Price Of Subscription"
+
   }

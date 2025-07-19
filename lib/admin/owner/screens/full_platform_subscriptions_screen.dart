@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:franchise_admin_portal/core/models/franchise_subscriptions_model.dart';
+import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
@@ -108,7 +108,7 @@ class _FullPlatformSubscriptionsScreenState
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text('${loc.planIdLabel}: ${sub.planId}'),
+                        Text('${loc.planIdLabel}: ${sub.platformPlanId}'),
                         const SizedBox(height: 4),
                         if (sub.isTrial)
                           Text(
