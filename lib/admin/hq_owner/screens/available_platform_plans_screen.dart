@@ -182,9 +182,22 @@ class _AvailablePlatformPlansScreenState
                                     onSuccess: () async {
                                       await FranchiseOnboardingService()
                                           .markOnboardingComplete(franchiseId);
-                                      Navigator.of(context)
-                                          .pushReplacementNamed(
-                                              '/admin/dashboard');
+
+                                      // Role-aware redirect
+                                      final roles = user?.roles ?? [];
+
+                                      if (roles.contains('hq_owner')) {
+                                        Navigator.of(context)
+                                            .pushReplacementNamed(
+                                                '/hq-owner/dashboard');
+                                      } else if (roles.contains('admin')) {
+                                        Navigator.of(context)
+                                            .pushReplacementNamed(
+                                                '/admin/dashboard');
+                                      } else {
+                                        Navigator.of(context)
+                                            .pushReplacementNamed('/');
+                                      }
                                     },
                                   );
                                 }

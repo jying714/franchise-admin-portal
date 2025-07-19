@@ -73,6 +73,9 @@ class FranchiseSubscription {
   });
 
   factory FranchiseSubscription.fromMap(String id, Map<String, dynamic> data) {
+    print(
+        '[FranchiseSubscriptionModel] fromMap: planId=${data['planId']}, price=${data['priceAtSubscription']}');
+
     return FranchiseSubscription(
       id: id,
       franchiseId: data['franchiseId'] ?? '',

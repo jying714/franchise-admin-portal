@@ -3581,6 +3581,7 @@ class FirestoreService {
         'franchiseId': franchiseId,
         'platformPlanId': plan.id,
         'subscribedAt': firestore.FieldValue.serverTimestamp(),
+        'startDate': firestore.FieldValue.serverTimestamp(),
         'active': true,
         'autoRenew': true,
         'priceAtSubscription': plan.price,

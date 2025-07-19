@@ -174,7 +174,7 @@ class FranchiseSubscriptionService {
       return _db
           .collection('franchise_subscriptions')
           .where('franchiseId', isEqualTo: franchiseId)
-          .where('status', isEqualTo: 'active')
+          .where('active', isEqualTo: true)
           .orderBy('startDate', descending: true)
           .limit(1)
           .snapshots()

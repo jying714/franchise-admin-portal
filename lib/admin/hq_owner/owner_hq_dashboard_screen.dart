@@ -271,11 +271,18 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                       stream: FranchiseSubscriptionService()
                           .watchCurrentSubscription(franchiseId),
                       builder: (context, snapshot) {
+                        print(
+                            '[HQDashboard] StreamBuilder state=${snapshot.connectionState}, hasData=${snapshot.hasData}, hasError=${snapshot.hasError}');
+
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
+                          print(
+                              '[HQDashboard] Waiting for subscription data...');
                           return const Center(
                               child: CircularProgressIndicator());
                         } else if (snapshot.hasError) {
+                          print(
+                              '[HQDashboard] ERROR loading subscription: ${snapshot.error}');
                           return Center(
                               child: Text(AppLocalizations.of(context)
                                       ?.subscriptionLoadError ??
@@ -284,6 +291,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
 
                         final subscription = snapshot.data;
                         if (subscription == null) {
+                          print('[HQDashboard] No active subscription found.');
                           return Card(
                             child: Center(
                               child: Padding(
@@ -307,6 +315,8 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                         final interval = snapshotMap?['billingInterval'] ??
                             subscription.billingInterval ??
                             'unknown';
+                        print(
+                            '[HQDashboard] Rendering active subscription card: Plan=${planName}, Price=$price, Interval=$interval');
 
                         return Card(
                           color: Theme.of(context).colorScheme.surfaceVariant,

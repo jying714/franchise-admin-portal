@@ -25,10 +25,18 @@ class FranchiseSubscriptionNotifier extends ChangeNotifier {
     try {
       _subscriptionStream =
           _service.watchCurrentSubscription(_franchiseId).listen((sub) {
+        print(
+            '[FranchiseSubscriptionNotifier] Received subscription: ${sub?.platformPlanId}');
         _currentSubscription = sub;
         notifyListeners();
+        print(
+            '[FranchiseSubscriptionNotifier] Received subscription update: ${sub?.platformPlanId ?? 'null'}');
+
+        notifyListeners();
+        print('[FranchiseSubscriptionNotifier] Notified listeners.');
       });
     } catch (e, stack) {
+      print('[FranchiseSubscriptionNotifier] Initialization error: $e');
       await ErrorLogger.log(
         message: 'FranchiseSubscriptionNotifier initialization failed: $e',
         stack: stack.toString(),

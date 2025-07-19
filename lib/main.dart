@@ -262,6 +262,8 @@ class FranchiseAppRootSplit extends StatelessWidget {
           ),
           update: (_, adminUserProvider, notifier) {
             final franchiseId = adminUserProvider.user?.defaultFranchise ?? '';
+            print(
+                '[Provider] Updating FranchiseSubscriptionNotifier with franchiseId=$franchiseId');
             notifier ??= FranchiseSubscriptionNotifier(
               service: FranchiseSubscriptionService(),
               franchiseId: franchiseId,
