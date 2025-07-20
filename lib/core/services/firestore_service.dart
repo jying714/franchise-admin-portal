@@ -40,8 +40,9 @@ import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
 import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
 
 class FirestoreService {
-  final firestore.FirebaseFirestore _db = firestore.FirebaseFirestore.instance;
-  final fb_auth.FirebaseAuth auth = fb_auth.FirebaseAuth.instance;
+  static final firestore.FirebaseFirestore _db =
+      firestore.FirebaseFirestore.instance;
+  static final fb_auth.FirebaseAuth auth = fb_auth.FirebaseAuth.instance;
 
   // --- [NEW]: Ingredient Metadata Caching ---
   List<IngredientMetadata>? _cachedIngredientMetadata;
@@ -3497,13 +3498,120 @@ class FirestoreService {
     }
   }
 
+  static Future<PlatformPlan?> getPlatformPlanById(String id) async {
+    try {
+      final doc = await _db.collection('platform_plans').doc(id).get();
+
+      if (doc.exists) {
+        return PlatformPlan.fromFirestore(doc);
+      } else {
+        ErrorLogger.log(
+          message: 'PlatformPlan not found for ID: $id',
+          stack: '',
+          source: 'FirestoreService',
+          screen: 'firestore_service.dart',
+          severity: 'warning',
+          contextData: {'missingId': id},
+        );
+        return null;
+      }
+    } catch (e, stack) {
+      ErrorLogger.log(
+        message: 'Error fetching PlatformPlan by ID: $id',
+        stack: stack.toString(),
+        source: 'FirestoreService',
+        screen: 'firestore_service.dart',
+        severity: 'error',
+        contextData: {'exception': e.toString(), 'id': id},
+      );
+      return null;
+    }
+  }
+
+  /// 🔁 Updates the current franchise subscription document with new plan data.
+  static Future<void> updateFranchiseSubscription({
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      final franchiseId = data['franchiseId'];
+      if (franchiseId == null) {
+        throw Exception('Missing franchiseId in subscription data payload.');
+      }
+
+      final docRef = _db.collection('franchise_subscriptions').doc(franchiseId);
+      await docRef.set(data, firestore.SetOptions(merge: true));
+    } catch (e, stack) {
+      ErrorLogger.log(
+        message: 'Failed to update franchise subscription',
+        stack: stack.toString(),
+        source: 'FirestoreService',
+        screen: 'firestore_service.dart',
+        severity: 'error',
+        contextData: {'exception': e.toString(), 'inputData': data},
+      );
+      rethrow;
+    }
+  }
+
   static Future<List<FranchiseSubscription>> getFranchiseSubscriptions() async {
-    final snap = await firestore.FirebaseFirestore.instance
-        .collection("franchise_subscriptions")
-        .get();
-    return snap.docs
-        .map((doc) => FranchiseSubscription.fromMap(doc.id, doc.data()))
-        .toList();
+    try {
+      final snap = await firestore.FirebaseFirestore.instance
+          .collection("franchise_subscriptions")
+          .get();
+
+      return snap.docs
+          .map((doc) => FranchiseSubscription.fromMap(doc.id, doc.data()))
+          .toList();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to fetch franchise subscriptions',
+        stack: stack.toString(),
+        source: 'FirestoreService',
+        screen: 'firestore_service.dart',
+        severity: 'error',
+        contextData: {
+          'exception': e.toString(),
+        },
+      );
+      return [];
+    }
+  }
+
+  Future<FranchiseSubscription?> getFranchiseSubscription(
+      String franchiseId) async {
+    try {
+      final doc = await _db
+          .collection('franchise_subscriptions')
+          .doc(franchiseId)
+          .get();
+
+      if (doc.exists && doc.data() != null) {
+        return FranchiseSubscription.fromMap(doc.id, doc.data()!);
+      } else {
+        await ErrorLogger.log(
+          message: 'No subscription found for franchiseId: $franchiseId',
+          stack: '',
+          source: 'FirestoreService',
+          screen: 'firestore_service.dart',
+          severity: 'warning',
+          contextData: {'franchiseId': franchiseId},
+        );
+        return null;
+      }
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Error fetching franchise subscription',
+        stack: stack.toString(),
+        source: 'FirestoreService',
+        screen: 'firestore_service.dart',
+        severity: 'error',
+        contextData: {
+          'franchiseId': franchiseId,
+          'exception': e.toString(),
+        },
+      );
+      return null;
+    }
   }
 
   Future<void> saveFranchiseSubscription(

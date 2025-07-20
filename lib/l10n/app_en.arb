@@ -1629,8 +1629,34 @@
   "invoiceStatusLabel": "Invoice Status",
   "partial": "Partial",
   "unpaid": "Unpaid",
-  "overdueBadge": "Overdue"
-
+  "overdueBadge": "Overdue",
+  "currentPlatformPlan": "Your Current Platform Plan",
+  "noActivePlatformPlan": "You're not subscribed to a platform plan.",
+  "nextBillingDate": "Next billing date: {date}",
+  "errorLoadingPlan": "Error loading current plan.",
+  "mockPaymentHeader": "Mock Payment Details",
+  "mockPaymentDisclaimer": "This is a test-only input form. No real charges will be made.",
+  "nameOnCard": "Name on Card",
+  "cardNumber": "Card Number",
+  "invalidCardNumber": "Please enter a valid card number",
+  "expiryDate": "Expiry Date (MM/YY)",
+  "invalidExpiryDate": "Enter a valid expiry date",
+  "cvv": "CVV",
+  "invalidCvv": "Enter a 3-digit CVV",
+  "validatePayment": "Validate Payment",
+  "mockPaymentValidated": "Mock payment validated successfully.",
+  "hideDetails": "Hide Details",
+  "priceWithInterval": "{price} / {interval}",
+  "billingInterval": "Billing Interval",
+  "monthly": "Monthly",
+  "yearly": "Yearly",
+  "selectPlan": "Select This Plan",
+  "subscriptionUpdated": "Subscription updated successfully!",
+  "cardType": "Card Type",
+  "paymentValidated": "Payment Validated",
+  "completePaymentToContinue": "Complete payment to continue",
+  "selectBillingIntervalFirst": "Please select a billing interval first",
+  "unnamedPlan": "Unnamed Plan"
 
 
   }

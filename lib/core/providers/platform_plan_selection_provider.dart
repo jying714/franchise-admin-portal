@@ -5,6 +5,7 @@ import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
 
 class PlatformPlanSelectionProvider extends ChangeNotifier {
   PlatformPlan? _selectedPlan;
@@ -85,6 +86,28 @@ class PlatformPlanSelectionProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  FranchiseSubscription? _currentSubscription;
+
+  FranchiseSubscription? get currentSubscription => _currentSubscription;
+
+  Future<void> refreshSubscription(String franchiseId) async {
+    try {
+      final sub =
+          await FirestoreService().getFranchiseSubscription(franchiseId);
+      _currentSubscription = sub;
+      notifyListeners();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to refresh subscription for franchise: $franchiseId',
+        stack: stack.toString(),
+        source: 'PlatformPlanSelectionProvider',
+        screen: 'available_platform_plans_screen',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId, 'exception': e.toString()},
+      );
     }
   }
 }

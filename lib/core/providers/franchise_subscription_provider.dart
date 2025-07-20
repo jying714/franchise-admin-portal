@@ -6,54 +6,43 @@ import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class FranchiseSubscriptionNotifier extends ChangeNotifier {
   final FranchiseSubscriptionService _service;
-  late String _franchiseId;
-
-  FranchiseSubscriptionNotifier({
-    required FranchiseSubscriptionService service,
-    required String franchiseId,
-  }) : _service = service {
-    _franchiseId = franchiseId;
-    _init();
-  }
+  String _franchiseId;
 
   FranchiseSubscription? _currentSubscription;
   FranchiseSubscription? get currentSubscription => _currentSubscription;
 
+  bool _hasLoaded = false;
+  bool get hasLoaded => _hasLoaded;
+
   StreamSubscription<FranchiseSubscription?>? _subscriptionStream;
 
-  Future<void> _init() async {
-    try {
-      _subscriptionStream =
-          _service.watchCurrentSubscription(_franchiseId).listen((sub) {
-        print(
-            '[FranchiseSubscriptionNotifier] Received subscription: ${sub?.platformPlanId}');
-        _currentSubscription = sub;
-        notifyListeners();
-        print(
-            '[FranchiseSubscriptionNotifier] Received subscription update: ${sub?.platformPlanId ?? 'null'}');
-
-        notifyListeners();
-        print('[FranchiseSubscriptionNotifier] Notified listeners.');
-      });
-    } catch (e, stack) {
-      print('[FranchiseSubscriptionNotifier] Initialization error: $e');
-      await ErrorLogger.log(
-        message: 'FranchiseSubscriptionNotifier initialization failed: $e',
-        stack: stack.toString(),
-        source: 'FranchiseSubscriptionNotifier',
-        screen: 'provider_init',
-        severity: 'error',
-        contextData: {'franchiseId': _franchiseId},
-      );
+  FranchiseSubscriptionNotifier({
+    required FranchiseSubscriptionService service,
+    required String franchiseId,
+  })  : _service = service,
+        _franchiseId = franchiseId {
+    if (franchiseId.isNotEmpty) {
+      _initSubscription(franchiseId);
     }
   }
 
-  void updateFranchiseId(String newId) {
-    if (_franchiseId != newId) {
-      _franchiseId = newId;
-      _subscriptionStream?.cancel();
-      _init();
+  void _initSubscription(String franchiseId) {
+    _subscriptionStream?.cancel(); // Clear prior stream
+    _subscriptionStream =
+        _service.watchCurrentSubscription(franchiseId).listen((sub) {
+      print('[FranchiseSubscriptionNotifier] Received: ${sub?.platformPlanId}');
+      _currentSubscription = sub;
+      _hasLoaded = true;
       notifyListeners();
+      print('[FranchiseSubscriptionNotifier] Notified listeners.');
+    });
+  }
+
+  void updateFranchiseId(String newId) {
+    if (newId.isNotEmpty && _franchiseId != newId) {
+      _franchiseId = newId;
+      _hasLoaded = false;
+      _initSubscription(newId);
     }
   }
 

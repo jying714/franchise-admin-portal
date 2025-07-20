@@ -253,22 +253,22 @@ class FranchiseAppRootSplit extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => FranchiseProvider()),
         ChangeNotifierProvider(create: (_) => AdminUserProvider()),
-        ChangeNotifierProxyProvider<AdminUserProvider,
+        ChangeNotifierProxyProvider<FranchiseProvider,
             FranchiseSubscriptionNotifier>(
           create: (_) => FranchiseSubscriptionNotifier(
             service: FranchiseSubscriptionService(),
-            franchiseId: '', // temp value, will be updated
+            franchiseId: '', // initially empty
           ),
-          update: (_, adminUserProvider, notifier) {
-            final franchiseId = adminUserProvider.user?.defaultFranchise ?? '';
-            print(
-                '[Provider] Updating FranchiseSubscriptionNotifier with franchiseId=$franchiseId');
+          update: (_, franchiseProvider, notifier) {
+            final fid = franchiseProvider.franchiseId;
+            debugPrint('[Provider] FranchiseSubscriptionNotifier update: $fid');
             notifier ??= FranchiseSubscriptionNotifier(
               service: FranchiseSubscriptionService(),
-              franchiseId: franchiseId,
+              franchiseId: fid,
             );
-            notifier
-                .updateFranchiseId(franchiseId); // make sure you implement this
+            if (fid.isNotEmpty && fid != 'unknown') {
+              notifier.updateFranchiseId(fid);
+            }
             return notifier;
           },
         ),

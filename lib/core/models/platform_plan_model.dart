@@ -87,4 +87,12 @@ class PlatformPlan {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
+
+  factory PlatformPlan.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return PlatformPlan.fromMap(doc.id, data);
+  }
+
+  /// ✅ Derived property: should not be stored
+  bool get requiresPayment => !isCustom && price > 0;
 }

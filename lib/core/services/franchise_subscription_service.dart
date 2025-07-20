@@ -27,7 +27,11 @@ class FranchiseSubscriptionService {
           .get();
 
       for (final doc in existing.docs) {
-        batch.update(doc.reference, {'active': false});
+        batch.update(doc.reference, {
+          'active': false,
+          'status': 'cancelled', // 👈 Mark as no longer current
+          'cancelledAt': FieldValue.serverTimestamp(), // optional timestamp
+        });
       }
 
       final newRef = subscriptionsRef.doc();
@@ -36,6 +40,7 @@ class FranchiseSubscriptionService {
         'platformPlanId': plan.id,
         'subscribedAt': FieldValue.serverTimestamp(),
         'active': true,
+        'status': 'active',
         'autoRenew': true,
         'priceAtSubscription': plan.price,
         'billingInterval': plan.billingInterval,
