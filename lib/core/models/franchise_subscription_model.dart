@@ -52,6 +52,18 @@ class FranchiseSubscription {
   /// Date of subscription (explicit timestamp)
   final DateTime? subscribedAt;
 
+  /// Date of subscription cancellation
+  final bool cancelAtPeriodEnd;
+
+  /// Timestamp of last known activity (e.g., user login, menu edit)
+  final DateTime? lastActivity;
+
+  /// Whether subscription auto-renews
+  final bool autoRenew;
+
+  /// Whether any associated invoice is overdue
+  final bool hasOverdueInvoice;
+
   const FranchiseSubscription({
     required this.id,
     required this.franchiseId,
@@ -70,6 +82,10 @@ class FranchiseSubscription {
     final this.planSnapshot,
     required this.priceAtSubscription,
     this.subscribedAt,
+    required this.cancelAtPeriodEnd,
+    this.lastActivity,
+    this.autoRenew = true,
+    this.hasOverdueInvoice = false,
   });
 
   factory FranchiseSubscription.fromMap(String id, Map<String, dynamic> data) {
@@ -98,6 +114,10 @@ class FranchiseSubscription {
       priceAtSubscription:
           (data['priceAtSubscription'] as num?)?.toDouble() ?? 0.0,
       subscribedAt: (data['subscribedAt'] as Timestamp?)?.toDate(),
+      cancelAtPeriodEnd: data['cancelAtPeriodEnd'] ?? false,
+      lastActivity: (data['lastActivity'] as Timestamp?)?.toDate(),
+      autoRenew: data['autoRenew'] ?? true,
+      hasOverdueInvoice: data['hasOverdueInvoice'] ?? false,
     );
   }
 
@@ -123,6 +143,10 @@ class FranchiseSubscription {
           (data['priceAtSubscription'] as num?)?.toDouble() ?? 0.0,
       subscribedAt:
           (data['subscribedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      cancelAtPeriodEnd: data['cancelAtPeriodEnd'] ?? false,
+      lastActivity: (data['lastActivity'] as Timestamp?)?.toDate(),
+      autoRenew: data['autoRenew'] ?? true,
+      hasOverdueInvoice: data['hasOverdueInvoice'] ?? false,
     );
   }
 
@@ -149,6 +173,12 @@ class FranchiseSubscription {
       'subscribedAt': subscribedAt != null
           ? Timestamp.fromDate(subscribedAt!)
           : FieldValue.serverTimestamp(),
+      'cancelAtPeriodEnd': cancelAtPeriodEnd,
+      'lastActivity':
+          lastActivity != null ? Timestamp.fromDate(lastActivity!) : null,
+      'autoRenew': autoRenew,
+      'cancelAtPeriodEnd': cancelAtPeriodEnd,
+      'hasOverdueInvoice': hasOverdueInvoice,
     };
   }
 
@@ -167,6 +197,10 @@ class FranchiseSubscription {
     DateTime? updatedAt,
     double? priceAtSubscription,
     DateTime? subscribedAt,
+    bool? cancelAtPeriodEnd,
+    DateTime? lastActivity,
+    bool? autoRenew,
+    bool? hasOverdueInvoice,
   }) {
     return FranchiseSubscription(
       id: id,
@@ -184,6 +218,10 @@ class FranchiseSubscription {
       updatedAt: updatedAt ?? this.updatedAt,
       priceAtSubscription: priceAtSubscription ?? this.priceAtSubscription,
       subscribedAt: subscribedAt ?? this.subscribedAt,
+      cancelAtPeriodEnd: cancelAtPeriodEnd ?? this.cancelAtPeriodEnd,
+      lastActivity: lastActivity ?? this.lastActivity,
+      autoRenew: autoRenew ?? this.autoRenew,
+      hasOverdueInvoice: hasOverdueInvoice ?? this.hasOverdueInvoice,
     );
   }
 

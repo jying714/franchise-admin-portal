@@ -58,6 +58,19 @@ class PlatformInvoice {
   /// Optional sandbox/test invoice flag
   final bool isTest;
 
+  /// True if the invoice has been marked paid
+  bool get isPaid => status.toLowerCase() == 'paid';
+
+  /// True if the invoice is unpaid and past the due date
+  bool get isOverdue =>
+      status.toLowerCase() == 'unpaid' && dueDate.isBefore(DateTime.now());
+
+  /// True if invoice is partially paid
+  bool get isPartial => status.toLowerCase() == 'partial';
+
+  /// True if invoice is unpaid (not paid or partial)
+  bool get isUnpaid => status.toLowerCase() == 'unpaid';
+
   PlatformInvoice({
     required this.id,
     required this.franchiseeId,

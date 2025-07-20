@@ -36,7 +36,7 @@ class _FranchiseSubscriptionEditorDialogState
   final _formKey = GlobalKey<FormState>();
   String? _selectedPlanId;
   String _status = 'active';
-
+  bool _cancelAtPeriodEnd = false;
   List<PlatformPlan> _plans = [];
 
   @override
@@ -55,7 +55,7 @@ class _FranchiseSubscriptionEditorDialogState
     _selectedPlanId = sub?.platformPlanId;
     final validStatuses = ['active', 'paused', 'trialing', 'canceled'];
     _status = validStatuses.contains(sub?.status) ? sub!.status! : 'active';
-
+    _cancelAtPeriodEnd = sub?.cancelAtPeriodEnd ?? false;
     _loadPlans();
   }
 
@@ -118,6 +118,7 @@ class _FranchiseSubscriptionEditorDialogState
         updatedAt: DateTime.now(),
         priceAtSubscription: widget.subscription?.priceAtSubscription ?? 0.0,
         subscribedAt: widget.subscription?.subscribedAt ?? DateTime.now(),
+        cancelAtPeriodEnd: _cancelAtPeriodEnd,
       );
 
       await fs.saveFranchiseSubscription(newSub);
@@ -215,6 +216,27 @@ class _FranchiseSubscriptionEditorDialogState
                         value == null || !validStatuses.contains(value)
                             ? loc.pleaseSelectAPlan
                             : null,
+                  ),
+                  Tooltip(
+                    message: (_status == 'paused' || _status == 'canceled')
+                        ? loc.toggleLockedDueToStatus
+                        : '',
+                    child: SwitchListTile(
+                      title: Text(loc.cancelAtPeriodEndToggle),
+                      subtitle: Text(loc.cancelAtPeriodEndDescription),
+                      value: _cancelAtPeriodEnd,
+                      onChanged: (_status == 'paused' || _status == 'canceled')
+                          ? null
+                          : (val) {
+                              setState(() {
+                                _cancelAtPeriodEnd = val;
+                              });
+                            },
+                      contentPadding: const EdgeInsets.only(top: 8, bottom: 8),
+                      secondary: (_status == 'paused' || _status == 'canceled')
+                          ? const Icon(Icons.lock_outline)
+                          : null,
+                    ),
                   ),
                 ],
               ),

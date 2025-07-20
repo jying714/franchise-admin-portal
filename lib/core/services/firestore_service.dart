@@ -453,6 +453,25 @@ class FirestoreService {
         .toList());
   }
 
+  Future<List<app_user.User>> getAllUsers() async {
+    try {
+      final snap = await _db.collection('users').get();
+      return snap.docs.map((doc) {
+        final data = doc.data();
+        return app_user.User.fromFirestore(data, doc.id);
+      }).toList();
+    } catch (e, st) {
+      await ErrorLogger.log(
+        message: 'Failed to fetch all users: $e',
+        stack: st.toString(),
+        source: 'FirestoreService',
+        screen: 'getAllUsers',
+        severity: 'error',
+      );
+      return [];
+    }
+  }
+
   // === USER ADDRESSES ===
 
   /// Add an address to `/users/{uid}/addresses/{addressId}`

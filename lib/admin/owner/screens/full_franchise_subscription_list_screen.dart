@@ -5,11 +5,13 @@ import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
+import 'package:franchise_admin_portal/core/models/enriched/enriched_franchise_subscription.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import 'package:franchise_admin_portal/core/services/enrichment/franchise_subscription_enricher.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/admin/developer/platform/franchise_subscription_editor_dialog.dart';
+import 'package:franchise_admin_portal/admin/owner/widgets/franchise_subscription_list_tile.dart';
 
 class FullFranchiseSubscriptionListScreen extends StatefulWidget {
   const FullFranchiseSubscriptionListScreen({super.key});
@@ -21,20 +23,41 @@ class FullFranchiseSubscriptionListScreen extends StatefulWidget {
 
 class _FullFranchiseSubscriptionListScreenState
     extends State<FullFranchiseSubscriptionListScreen> {
-  late Future<List<FranchiseSubscription>> _subsFuture;
+  late Future<List<EnrichedFranchiseSubscription>> _enrichedSubsFuture;
 
   @override
   void initState() {
     super.initState();
-    _subsFuture = _loadSubscriptions();
+    _enrichedSubsFuture = _loadEnrichedSubscriptions();
   }
 
-  Future<List<FranchiseSubscription>> _loadSubscriptions() async {
+  Future<List<EnrichedFranchiseSubscription>>
+      _loadEnrichedSubscriptions() async {
     try {
-      return await FirestoreService.getFranchiseSubscriptions();
+      final firestore = context.read<FirestoreService>();
+      final enricher = FranchiseSubscriptionEnricher(firestore);
+      final enriched = await enricher.enrichAllSubscriptions();
+
+      // 🐞 Debug & duplicate detection
+      final seen = <String>{};
+      for (final e in enriched) {
+        final id = e.subscription.id;
+        final plan = e.planId;
+        final fid = e.franchiseId;
+
+        if (seen.contains(id)) {
+          debugPrint('[⚠️ DUPLICATE] FranchiseId: $fid, Plan: $plan, ID: $id');
+        } else {
+          seen.add(id);
+        }
+
+        debugPrint('[✅ Enriched] FranchiseId: $fid, Plan: $plan, ID: $id');
+      }
+
+      return enriched;
     } catch (e, stack) {
       await ErrorLogger.log(
-        message: 'load_franchise_subscriptions_failed',
+        message: 'load_enriched_subscriptions_failed',
         stack: stack.toString(),
         source: 'FullFranchiseSubscriptionListScreen',
         screen: 'full_franchise_subscription_list_screen',
@@ -75,8 +98,8 @@ class _FullFranchiseSubscriptionListScreenState
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: FutureBuilder<List<FranchiseSubscription>>(
-          future: _subsFuture,
+        child: FutureBuilder<List<EnrichedFranchiseSubscription>>(
+          future: _enrichedSubsFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
               return const Center(child: CircularProgressIndicator());
@@ -92,68 +115,16 @@ class _FullFranchiseSubscriptionListScreenState
               itemCount: subs.length,
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
-                final sub = subs[index];
-                return Card(
-                  elevation: DesignTokens.adminCardElevation,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  color: colorScheme.surface,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text('${loc.franchiseIdLabel}: ${sub.franchiseId}',
-                                style: theme.textTheme.titleSmall),
-                            const Spacer(),
-                            Chip(
-                              label: Text(loc.translateStatus(sub.status)),
-                              backgroundColor:
-                                  AppConfig.statusColor(sub.status, theme),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.edit),
-                              tooltip: loc.editSubscription,
-                              onPressed: () async {
-                                final result = await showDialog<bool>(
-                                  context: context,
-                                  builder: (_) =>
-                                      FranchiseSubscriptionEditorDialog(
-                                    franchiseId: sub.franchiseId,
-                                    subscription: sub,
-                                  ),
-                                );
-                                if (result == true) {
-                                  setState(() {
-                                    _subsFuture = _loadSubscriptions();
-                                  });
-                                }
-                              },
-                            )
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text('${loc.planIdLabel}: ${sub.platformPlanId}'),
-                        const SizedBox(height: 4),
-                        if (sub.isTrial)
-                          Text(
-                              '${loc.trialEndsLabel}: ${AppConfig.formatDate(sub.trialEndsAt)}',
-                              style: theme.textTheme.labelMedium
-                                  ?.copyWith(color: colorScheme.secondary)),
-                        const SizedBox(height: 4),
-                        Text(
-                            '${loc.nextBillingLabel}: ${AppConfig.formatDate(sub.nextBillingDate)}'),
-                        const SizedBox(height: 4),
-                        if (sub.discountPercent > 0)
-                          Text('${loc.discountLabel}: ${sub.discountPercent}%',
-                              style: theme.textTheme.labelSmall),
-                        if (sub.customQuoteDetails?.isNotEmpty ?? false)
-                          Text('${loc.notesLabel}: ${sub.customQuoteDetails}'),
-                      ],
-                    ),
-                  ),
+                final enriched = subs[index];
+
+                return FranchiseSubscriptionListTile(
+                  key: ValueKey(enriched.subscription.id),
+                  enriched: enriched,
+                  onRefreshRequested: () {
+                    setState(() {
+                      _enrichedSubsFuture = _loadEnrichedSubscriptions();
+                    });
+                  },
                 );
               },
             );

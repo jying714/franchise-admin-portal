@@ -1582,7 +1582,55 @@
   "planDetails": "Plan Details",
   "statusActive": "Active",
   "statusInactive": "Inactive",
-  "unknownDate": "Unknown Date"
+  "unknownDate": "Unknown Date",
+  "perLabel": "per {interval}",
+  "@perLabel": {
+    "description": "Used to describe billing interval, e.g., 'per month', 'per year'",
+    "placeholders": {
+      "interval": {}
+    }
+  },
+  "customQuote": "Custom Quote",
+  "@customQuote": {
+    "description": "Label shown when a subscription is under a custom price quote"
+  },
+  "startDateLabel": "Start Date",
+  "@startDateLabel": {
+    "description": "Label for the subscription start date"
+  },
+  "planCancelsAtPeriodEnd": "Plan is set to cancel at the end of this billing cycle.",
+  "@planCancelsAtPeriodEnd": {
+    "description": "Shown as a warning if cancelAtPeriodEnd is true"
+  },
+  "subscriptionBillingInsights": "Billing insights and usage coming soon",
+  "@subscriptionBillingInsights": {
+    "description": "Future placeholder for billing-related analytics"
+  },
+  "ownerLabel": "Owner",
+  "contactEmailLabel": "Contact Email",
+  "phoneNumberLabel": "Phone Number",
+  "linkedUserIdLabel": "Linked User ID",
+  "statusLabel": "Status",
+  "trialEndLabel": "Trial Ends",
+  "subscriptionCreated": "Subscription Created",
+  "linkedInvoices": "Linked Invoices",
+  "invoiceNumberLabel": "Invoice #",
+  "amountLabel": "Amount",
+  "notAvailable": "N/A",
+  "subscriptionAnalytics": "Subscription analytics",
+  "editSubscriptionFailed": "Failed to open subscription editor.",
+  "showDetailsTooltip": "Show details",
+  "hideDetailsTooltip": "Hide details",
+  "subscriptionInsights": "Insights",
+  "cancelAtPeriodEndToggle": "Cancel at End of Billing Cycle",
+  "cancelAtPeriodEndDescription": "Plan will auto-cancel after the current billing cycle completes.",
+  "toggleLockedDueToStatus": "Disabled due to current subscription status",
+  "paymentOverdueWarning": "⚠️ Payment Overdue",
+  "invoiceStatusLabel": "Invoice Status",
+  "partial": "Partial",
+  "unpaid": "Unpaid",
+  "overdueBadge": "Overdue"
+
 
 
   }

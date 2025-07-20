@@ -28,6 +28,7 @@ class User {
   final String? avatarUrl;
   final List<String> franchiseIds;
   final bool onboardingComplete;
+  final DateTime? updatedAt;
 
   bool get isHqOwner => roles.contains(roleHqOwner);
   bool get isHqManager => roles.contains(roleHqManager);
@@ -58,6 +59,7 @@ class User {
     List<String>? franchiseIds,
     this.completeProfile,
     this.onboardingComplete = false,
+    this.updatedAt,
   })  : addresses = addresses ?? [],
         franchiseIds = franchiseIds ?? <String>[];
 
@@ -87,6 +89,7 @@ class User {
       franchiseIds: franchiseIdsFromDb,
       completeProfile: data['completeProfile'],
       onboardingComplete: data['onboardingStatus'] == 'complete',
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -105,6 +108,7 @@ class User {
       'franchiseIds': franchiseIds,
       'completeProfile': completeProfile,
       'onboardingStatus': onboardingComplete ? 'complete' : 'incomplete',
+      if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
     };
   }
 
