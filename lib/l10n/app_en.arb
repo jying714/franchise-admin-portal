@@ -1577,6 +1577,12 @@
   "noActiveSubscription": "No Active Subscription",
   "activePlanLabel": "Active Plan",
   "subscriptionLoadError": "Error Loading Subscription",
-  "priceAtSubscription": "Price Of Subscription"
+  "priceAtSubscription": "Price Of Subscription",
+  "subscriptionsListTitle": "Franchise Subscriptions",
+  "planDetails": "Plan Details",
+  "statusActive": "Active",
+  "statusInactive": "Inactive",
+  "unknownDate": "Unknown Date"
+
 
   }

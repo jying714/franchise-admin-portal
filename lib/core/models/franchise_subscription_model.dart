@@ -102,10 +102,28 @@ class FranchiseSubscription {
   }
 
   factory FranchiseSubscription.fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data()!;
-    return FranchiseSubscription.fromMap(doc.id, data);
+      QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data();
+    return FranchiseSubscription(
+      id: doc.id,
+      franchiseId: data['franchiseId'] ?? '',
+      platformPlanId: data['platformPlanId'] ?? '',
+      status: data['status'] ?? 'active',
+      startDate: (data['startDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      nextBillingDate:
+          (data['nextBillingDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      isTrial: data['isTrial'] ?? false,
+      trialEndsAt: (data['trialEndsAt'] as Timestamp?)?.toDate(),
+      discountPercent: data['discountPercent'] ?? 0,
+      customQuoteDetails: data['customQuoteDetails'],
+      lastInvoiceId: data['lastInvoiceId'],
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+      priceAtSubscription:
+          (data['priceAtSubscription'] as num?)?.toDouble() ?? 0.0,
+      subscribedAt:
+          (data['subscribedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    );
   }
 
   Map<String, dynamic> toFirestore() {

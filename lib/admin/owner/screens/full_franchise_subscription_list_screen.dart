@@ -1,3 +1,5 @@
+// 📄 lib/admin/owner/screens/full_franchise_subscription_list_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -7,17 +9,18 @@ import 'package:franchise_admin_portal/core/models/franchise_subscription_model.
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:franchise_admin_portal/admin/developer/platform/franchise_subscription_editor_dialog.dart';
 
-class FullPlatformSubscriptionsScreen extends StatefulWidget {
-  const FullPlatformSubscriptionsScreen({super.key});
+class FullFranchiseSubscriptionListScreen extends StatefulWidget {
+  const FullFranchiseSubscriptionListScreen({super.key});
 
   @override
-  State<FullPlatformSubscriptionsScreen> createState() =>
-      _FullPlatformSubscriptionsScreenState();
+  State<FullFranchiseSubscriptionListScreen> createState() =>
+      _FullFranchiseSubscriptionListScreenState();
 }
 
-class _FullPlatformSubscriptionsScreenState
-    extends State<FullPlatformSubscriptionsScreen> {
+class _FullFranchiseSubscriptionListScreenState
+    extends State<FullFranchiseSubscriptionListScreen> {
   late Future<List<FranchiseSubscription>> _subsFuture;
 
   @override
@@ -31,10 +34,10 @@ class _FullPlatformSubscriptionsScreenState
       return await FirestoreService.getFranchiseSubscriptions();
     } catch (e, stack) {
       await ErrorLogger.log(
-        message: 'load_platform_subscriptions_failed',
+        message: 'load_franchise_subscriptions_failed',
         stack: stack.toString(),
-        source: 'FullPlatformSubscriptionsScreen',
-        screen: 'full_platform_subscriptions_screen',
+        source: 'FullFranchiseSubscriptionListScreen',
+        screen: 'full_franchise_subscription_list_screen',
         severity: 'error',
         contextData: {'exception': e.toString()},
       );
@@ -46,16 +49,21 @@ class _FullPlatformSubscriptionsScreenState
   Widget build(BuildContext context) {
     final user = context.watch<AdminUserProvider>().user;
     final loc = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    if (!(user?.isDeveloper ?? false) && !(user?.isPlatformOwner ?? false)) {
+    final isAuthorized =
+        user?.isDeveloper == true || user?.isPlatformOwner == true;
+
+    if (!isAuthorized) {
       return Scaffold(
         appBar: AppBar(title: Text(loc.franchiseSubscriptionsTitle)),
         body: Center(
-          child: Text(loc.unauthorizedAccessMessage,
-              style: theme.textTheme.bodyLarge
-                  ?.copyWith(color: colorScheme.error)),
+          child: Text(
+            loc.unauthorizedAccessMessage,
+            style:
+                theme.textTheme.bodyLarge?.copyWith(color: colorScheme.error),
+          ),
         ),
       );
     }
@@ -104,6 +112,25 @@ class _FullPlatformSubscriptionsScreenState
                               label: Text(loc.translateStatus(sub.status)),
                               backgroundColor:
                                   AppConfig.statusColor(sub.status, theme),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              tooltip: loc.editSubscription,
+                              onPressed: () async {
+                                final result = await showDialog<bool>(
+                                  context: context,
+                                  builder: (_) =>
+                                      FranchiseSubscriptionEditorDialog(
+                                    franchiseId: sub.franchiseId,
+                                    subscription: sub,
+                                  ),
+                                );
+                                if (result == true) {
+                                  setState(() {
+                                    _subsFuture = _loadSubscriptions();
+                                  });
+                                }
+                              },
                             )
                           ],
                         ),
@@ -122,6 +149,8 @@ class _FullPlatformSubscriptionsScreenState
                         if (sub.discountPercent > 0)
                           Text('${loc.discountLabel}: ${sub.discountPercent}%',
                               style: theme.textTheme.labelSmall),
+                        if (sub.customQuoteDetails?.isNotEmpty ?? false)
+                          Text('${loc.notesLabel}: ${sub.customQuoteDetails}'),
                       ],
                     ),
                   ),

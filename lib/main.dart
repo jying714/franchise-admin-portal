@@ -37,13 +37,12 @@ import 'package:franchise_admin_portal/admin/profile/universal_profile_screen.da
 import 'package:franchise_admin_portal/admin/auth/invite_accept_screen.dart';
 import 'package:franchise_admin_portal/admin/profile/franchise_onboarding_screen.dart';
 import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
-import 'package:franchise_admin_portal/admin/owner/screens/full_platform_subscriptions_screen.dart';
 import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/screens/available_platform_plans_screen.dart';
 import 'package:franchise_admin_portal/core/providers/platform_plan_selection_provider.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_subscription_provider.dart';
 import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
-
+import 'package:franchise_admin_portal/admin/owner/screens/full_franchise_subscription_list_screen.dart';
 import 'dart:html' as html;
 
 /// Returns initial unauth route and optional invite token, e.g. ('/invite-accept', 'abc123').
@@ -465,11 +464,14 @@ class _FranchiseAuthenticatedRootState
               );
             }
             if (uri.path == '/platform/subscriptions') {
-              print('[main.dart] Routing to FullPlatformSubscriptionsScreen');
+              print(
+                  '[main.dart] Routing to FullFranchiseSubscriptionListScreen');
               return MaterialPageRoute(
-                builder: (context) => const FullPlatformSubscriptionsScreen(),
+                builder: (context) =>
+                    const FullFranchiseSubscriptionListScreen(),
               );
             }
+
             if (uri.path == '/unauthorized') {
               print('[main.dart] Routing to Unauthorized');
               return MaterialPageRoute(

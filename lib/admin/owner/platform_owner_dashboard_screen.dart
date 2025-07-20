@@ -20,7 +20,6 @@ import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/admin/owner/sections/platform_plans_summary_card.dart';
 import 'package:franchise_admin_portal/admin/owner/sections/franchise_subscription_summary_card.dart';
 import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
-import 'package:franchise_admin_portal/admin/owner/screens/full_platform_subscriptions_screen.dart';
 import 'package:franchise_admin_portal/admin/owner/sections/quick_links_card.dart';
 
 class PlatformOwnerDashboardScreen extends StatelessWidget {

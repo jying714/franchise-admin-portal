@@ -3684,6 +3684,15 @@ class FirestoreService {
     }
   }
 
+  Future<List<firestore.QueryDocumentSnapshot<Map<String, dynamic>>>>
+      getAllFranchiseSubscriptionsRaw() async {
+    final snap = await _db
+        .collection('franchise_subscriptions')
+        .orderBy('subscribedAt', descending: true)
+        .get();
+    return snap.docs;
+  }
+
   Future<List<Map<String, dynamic>>> getStoreInvoicesForUser(
       String userId) async {
     final query = await _db

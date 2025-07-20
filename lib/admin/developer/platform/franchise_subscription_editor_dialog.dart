@@ -53,7 +53,8 @@ class _FranchiseSubscriptionEditorDialogState
     _customQuoteDetails = sub?.customQuoteDetails;
 
     _selectedPlanId = sub?.platformPlanId;
-    _status = sub?.status ?? 'active';
+    final validStatuses = ['active', 'paused', 'trialing', 'canceled'];
+    _status = validStatuses.contains(sub?.status) ? sub!.status! : 'active';
 
     _loadPlans();
   }
@@ -61,8 +62,27 @@ class _FranchiseSubscriptionEditorDialogState
   Future<void> _loadPlans() async {
     try {
       final plans = await FirestoreService.getPlatformPlans();
+      String? validSelectedId = _selectedPlanId;
+
+      final planIds = plans.map((p) => p.id).toSet();
+      if (validSelectedId != null && !planIds.contains(validSelectedId)) {
+        validSelectedId = null; // Avoid assigning a non-existent plan
+      }
+
+      debugPrint('[DEBUG] Loaded ${plans.length} plans from Firestore');
+      for (final p in plans) {
+        debugPrint('[DEBUG] Plan ID: ${p.id}, name: ${p.name}');
+      }
+      debugPrint('[DEBUG] Current selected planId = $_selectedPlanId');
+
       setState(() {
         _plans = plans;
+
+        // Ensure _selectedPlanId is only set if it's a valid option
+        final matchingPlan = plans.where((p) => p.id == _selectedPlanId);
+        if (_selectedPlanId == null || matchingPlan.isEmpty) {
+          _selectedPlanId = null;
+        }
       });
     } catch (e, st) {
       await ErrorLogger.log(
@@ -123,6 +143,25 @@ class _FranchiseSubscriptionEditorDialogState
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
 
+    final validStatuses = ['active', 'paused', 'trialing', 'canceled'];
+    final statusItems = validStatuses
+        .map((s) => DropdownMenuItem(
+              value: s,
+              child: Text(loc.translateStatus(s)),
+            ))
+        .toList();
+
+    if (!validStatuses.contains(_status)) {
+      statusItems.insert(
+        0,
+        DropdownMenuItem(
+          value: _status,
+          enabled: false,
+          child: Text('[Invalid status] $_status'),
+        ),
+      );
+    }
+
     return AlertDialog(
       title: Text(widget.subscription == null
           ? loc.addSubscription
@@ -154,7 +193,9 @@ class _FranchiseSubscriptionEditorDialogState
                       setState(() => _selectedPlanId = value);
                     },
                     validator: (value) =>
-                        value == null ? loc.pleaseSelectAPlan : null,
+                        (value == null || !_plans.any((p) => p.id == value))
+                            ? loc.pleaseSelectAPlan
+                            : null,
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
@@ -163,25 +204,17 @@ class _FranchiseSubscriptionEditorDialogState
                       border: const OutlineInputBorder(),
                     ),
                     value: _status,
-                    items: [
-                      DropdownMenuItem(
-                          value: 'active',
-                          child: Text(loc.subscriptionStatus_active)),
-                      DropdownMenuItem(
-                          value: 'paused',
-                          child: Text(loc.subscriptionStatus_paused)),
-                      DropdownMenuItem(
-                          value: 'trialing',
-                          child: Text(loc.subscriptionStatus_trialing)),
-                      DropdownMenuItem(
-                          value: 'canceled',
-                          child: Text(loc.subscriptionStatus_canceled)),
-                    ],
+                    isExpanded: true,
+                    items: statusItems,
                     onChanged: (value) {
-                      if (value != null) {
+                      if (value != null && validStatuses.contains(value)) {
                         setState(() => _status = value);
                       }
                     },
+                    validator: (value) =>
+                        value == null || !validStatuses.contains(value)
+                            ? loc.pleaseSelectAPlan
+                            : null,
                   ),
                 ],
               ),
