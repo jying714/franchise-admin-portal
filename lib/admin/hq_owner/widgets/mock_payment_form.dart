@@ -6,6 +6,7 @@ import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/mock_payment_data.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/tight_section_card.dart';
 import 'package:franchise_admin_portal/widgets/role_guard.dart';
+import 'dart:math' as math;
 
 class MockPaymentForm extends StatefulWidget {
   final Function(MockPaymentData payment) onValidated;
@@ -174,6 +175,9 @@ class _MockPaymentFormState extends State<MockPaymentForm> {
           maskedCardString: '${_cardType ?? '****'} **** **** $last4',
           expiryDate: _expiryController.text.trim(),
         );
+
+        debugPrint('[MockPaymentForm] onValidated triggered with $maskedCard');
+
         widget.onValidated(paymentData);
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -203,17 +207,23 @@ class _MockPaymentFormState extends State<MockPaymentForm> {
 class _CardNumberFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
+      TextEditingValue oldValue, TextEditingValue newValue) {
     final digitsOnly = newValue.text.replaceAll(RegExp(r'\D'), '');
-    final newText = digitsOnly.replaceAllMapped(
-      RegExp(r".{1,4}"),
-      (match) => '${match.group(0)} ',
-    );
+    final buffer = StringBuffer();
+
+    int selectionIndex = 0;
+    for (int i = 0; i < digitsOnly.length; i++) {
+      if (i > 0 && i % 4 == 0) {
+        buffer.write(' ');
+        if (i < newValue.selection.baseOffset) selectionIndex++;
+      }
+      buffer.write(digitsOnly[i]);
+      if (i < newValue.selection.baseOffset) selectionIndex++;
+    }
+
     return TextEditingValue(
-      text: newText.trimRight(),
-      selection: TextSelection.collapsed(offset: newText.length),
+      text: buffer.toString(),
+      selection: TextSelection.collapsed(offset: selectionIndex),
     );
   }
 }
@@ -221,20 +231,23 @@ class _CardNumberFormatter extends TextInputFormatter {
 class _ExpiryDateFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    var text = newValue.text.replaceAll('/', '');
-    if (text.length > 4) text = text.substring(0, 4);
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    final rawText = newValue.text.replaceAll('/', '');
     final buffer = StringBuffer();
-    for (int i = 0; i < text.length; i++) {
-      if (i == 2) buffer.write('/');
-      buffer.write(text[i]);
+
+    int selectionIndex = newValue.selection.baseOffset;
+    for (int i = 0; i < rawText.length && i < 4; i++) {
+      if (i == 2) {
+        buffer.write('/');
+        if (i < selectionIndex) selectionIndex++;
+      }
+      buffer.write(rawText[i]);
     }
-    final formatted = buffer.toString();
+
+    final resultText = buffer.toString();
     return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
+      text: resultText,
+      selection: TextSelection.collapsed(offset: selectionIndex),
     );
   }
 }

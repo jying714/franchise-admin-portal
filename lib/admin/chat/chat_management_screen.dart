@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/admin/chat/admin_chat_detail_dialog.dart';
 import 'package:provider/provider.dart';
+import 'package:franchise_admin_portal/admin/chat/admin_chat_detail_dialog.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
@@ -11,6 +11,8 @@ import 'package:franchise_admin_portal/core/models/chat.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:franchise_admin_portal/core/utils/user_permissions.dart';
+import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
 
 class ChatManagementScreen extends StatelessWidget {
   const ChatManagementScreen({super.key});
@@ -23,9 +25,7 @@ class ChatManagementScreen extends StatelessWidget {
         Provider.of<FirestoreService>(context, listen: false);
     final user = Provider.of<UserProfileNotifier>(context).user;
 
-    // --- Role enforcement (owner/admin/manager only) ---
-    if (user == null ||
-        !(user.isOwner || user.isAdmin || user.isManager || user.isDeveloper)) {
+    if (!UserPermissions.canAccessChatManagement(user)) {
       Future.microtask(() async {
         await AuditLogService().addLog(
           franchiseId: franchiseId,
@@ -51,41 +51,13 @@ class ChatManagementScreen extends StatelessWidget {
           },
         );
       });
-      return Scaffold(
-        backgroundColor: DesignTokens.backgroundColor,
-        body: Row(
-          children: [
-            Expanded(
-              flex: 11,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.lock_outline,
-                        size: 54, color: Colors.redAccent),
-                    const SizedBox(height: 16),
-                    const Text(
-                      "Unauthorized — You do not have permission to access this page.",
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 18),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.home),
-                      label: const Text("Return to Home"),
-                      onPressed: () {
-                        Navigator.of(context)
-                            .popUntil((route) => route.isFirst);
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Expanded(flex: 9, child: Container()),
-          ],
-        ),
+
+      return AdminUnauthorizedWidget(
+        title: 'Chat Management',
+        message: 'You do not have permission to access this page.',
+        buttonText: 'Return to Home',
+        onReturnHome: () =>
+            Navigator.of(context).popUntil((route) => route.isFirst),
       );
     }
 
@@ -94,7 +66,6 @@ class ChatManagementScreen extends StatelessWidget {
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Main content column
           Expanded(
             flex: 11,
             child: Padding(
@@ -103,7 +74,6 @@ class ChatManagementScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header row
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12.0),
                     child: Row(
@@ -121,7 +91,6 @@ class ChatManagementScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Chat list
                   Expanded(
                     child: StreamBuilder<List<Chat>>(
                       stream: firestoreService.getSupportChats(franchiseId),
@@ -156,10 +125,10 @@ class ChatManagementScreen extends StatelessWidget {
                                 showDialog(
                                   context: context,
                                   builder: (_) => AdminChatDetailDialog(
-                                      franchiseId: franchiseId,
-                                      chatId: chat.id,
-                                      userName:
-                                          chat.userName ?? 'Unknown User'),
+                                    franchiseId: franchiseId,
+                                    chatId: chat.id,
+                                    userName: chat.userName ?? 'Unknown User',
+                                  ),
                                 );
                               },
                             );
@@ -172,11 +141,7 @@ class ChatManagementScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Right panel placeholder
-          Expanded(
-            flex: 9,
-            child: Container(),
-          ),
+          Expanded(flex: 9, child: Container()),
         ],
       ),
     );
@@ -194,8 +159,9 @@ class ChatManagementScreen extends StatelessWidget {
             const Text("Are you sure you want to delete this chat thread?"),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel")),
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
           ElevatedButton(
             onPressed: () async {
               await service.deleteSupportChat(franchiseId, chatId);

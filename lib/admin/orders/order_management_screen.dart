@@ -9,15 +9,37 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/widgets/role_guard.dart';
 
-class OrderManagementScreen extends StatefulWidget {
+class OrderManagementScreen extends StatelessWidget {
   const OrderManagementScreen({super.key});
 
   @override
-  State<OrderManagementScreen> createState() => _OrderManagementScreenState();
+  Widget build(BuildContext context) {
+    return RoleGuard(
+      allowedRoles: [
+        'platform_owner',
+        'hq_owner',
+        'manager',
+        'developer',
+        'admin'
+      ],
+      featureName: 'OrderManagementScreen',
+      child: const _OrderManagementScreenContent(),
+    );
+  }
 }
 
-class _OrderManagementScreenState extends State<OrderManagementScreen> {
+class _OrderManagementScreenContent extends StatefulWidget {
+  const _OrderManagementScreenContent();
+
+  @override
+  State<_OrderManagementScreenContent> createState() =>
+      _OrderManagementScreenContentState();
+}
+
+class _OrderManagementScreenContentState
+    extends State<_OrderManagementScreenContent> {
   String _searchText = '';
   String? _filterStatus;
   DateTimeRange? _dateRange;
@@ -26,18 +48,6 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
 
   Future<void> _updateOrderStatus(String franchiseId, order_model.Order order,
       String newStatus, admin_user.User user) async {
-    if (!(user.isOwner || user.isManager || user.isDeveloper || user.isAdmin)) {
-      await AuditLogService().addLog(
-        franchiseId: franchiseId,
-        userId: user.id,
-        action: 'unauthorized_order_status_change',
-        targetType: 'order',
-        targetId: order.id,
-        details: {'attemptedStatus': newStatus},
-      );
-      _showUnauthorizedDialog();
-      return;
-    }
     await Provider.of<FirestoreService>(context, listen: false)
         .updateOrderStatus(franchiseId, order.id, newStatus);
     await AuditLogService().addLog(
@@ -52,21 +62,8 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
 
   Future<void> _processRefund(String franchiseId, order_model.Order order,
       double amount, admin_user.User user) async {
-    if (!user.isOwner && !user.isManager) {
-      await AuditLogService().addLog(
-        franchiseId: franchiseId,
-        userId: user.id,
-        action: 'unauthorized_refund_attempt',
-        targetType: 'order',
-        targetId: order.id,
-        details: {'attemptedAmount': amount},
-      );
-      _showUnauthorizedDialog();
-      return;
-    }
     await Provider.of<FirestoreService>(context, listen: false)
         .refundOrder(franchiseId, order.id, amount: amount);
-
     await AuditLogService().addLog(
       franchiseId: franchiseId,
       userId: user.id,
@@ -74,23 +71,6 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
       targetType: 'order',
       targetId: order.id,
       details: {'refundAmount': amount},
-    );
-  }
-
-  void _showUnauthorizedDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Unauthorized"),
-        content: const Text(
-            "You do not have permission to perform this action. This attempt has been logged."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("OK"),
-          ),
-        ],
-      ),
     );
   }
 
@@ -188,7 +168,9 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
       }
       if (_dateRange != null) {
         if (o.timestamp.isBefore(_dateRange!.start) ||
-            o.timestamp.isAfter(_dateRange!.end)) return false;
+            o.timestamp.isAfter(_dateRange!.end)) {
+          return false;
+        }
       }
       return true;
     }).toList();
@@ -215,65 +197,20 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
     final userNotifier = Provider.of<UserProfileNotifier>(context);
     final user = userNotifier.user;
     final loading = userNotifier.loading;
-
-    if (loading) {
-      return Scaffold(
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (user == null) {
-      return Scaffold(
-        body: const Center(child: Text("Unauthorized — Please log in.")),
-      );
-    }
-
-    if (!(user.isOwner || user.isManager || user.isDeveloper || user.isAdmin)) {
-      Future.microtask(() {
-        AuditLogService().addLog(
-          franchiseId: franchiseId,
-          userId: user.id,
-          action: 'unauthorized_order_management_access',
-          targetType: 'order_management',
-          targetId: '',
-          details: {'message': 'User with insufficient role tried to access.'},
-        );
-      });
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.lock_outline, size: 54, color: Colors.redAccent),
-              const SizedBox(height: 16),
-              const Text(
-                "Unauthorized — You do not have permission to access this page.",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 18),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.home),
-                label: const Text("Return to Home"),
-                onPressed: () {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
+
+    if (loading || user == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Main content column
           Expanded(
             flex: 11,
             child: Padding(
@@ -282,24 +219,16 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // HEADER ROW
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12.0),
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text(
-                          "Order Management",
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 22,
-                          ),
-                        ),
+                        const Text("Order Management",
+                            style: TextStyle(
+                                fontSize: 22, fontWeight: FontWeight.bold)),
                         const Spacer(),
                         IconButton(
-                          icon:
-                              const Icon(Icons.download, color: Colors.black87),
+                          icon: const Icon(Icons.download),
                           tooltip: "Export Orders",
                           onPressed: () =>
                               _showExportDialog(franchiseId, _lastOrders, user),
@@ -307,73 +236,64 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                       ],
                     ),
                   ),
-                  // SEARCH BAR & FILTERS
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            decoration: const InputDecoration(
-                              labelText: "Search by Order ID or Name",
-                              prefixIcon: Icon(Icons.search),
-                            ),
-                            onChanged: (val) =>
-                                setState(() => _searchText = val.trim()),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          decoration: const InputDecoration(
+                            labelText: "Search by Order ID or Name",
+                            prefixIcon: Icon(Icons.search),
                           ),
+                          onChanged: (val) =>
+                              setState(() => _searchText = val.trim()),
                         ),
-                        const SizedBox(width: 8),
-                        DropdownButton<String>(
-                          value: _filterStatus,
-                          hint: const Text("Status"),
-                          items: [
-                            null,
-                            'Placed',
-                            'Preparing',
-                            'Ready',
-                            'Out for Delivery',
-                            'Delivered',
-                            'Picked Up',
-                            'Refunded'
-                          ]
-                              .map(
-                                (s) => DropdownMenuItem<String>(
+                      ),
+                      const SizedBox(width: 8),
+                      DropdownButton<String>(
+                        value: _filterStatus,
+                        hint: const Text("Status"),
+                        items: [
+                          null,
+                          'Placed',
+                          'Preparing',
+                          'Ready',
+                          'Out for Delivery',
+                          'Delivered',
+                          'Picked Up',
+                          'Refunded'
+                        ]
+                            .map((s) => DropdownMenuItem<String>(
                                   value: s,
                                   child: Text(s ?? "All"),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (val) =>
-                              setState(() => _filterStatus = val),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.calendar_today),
-                          tooltip: "Filter by Date",
-                          onPressed: () async {
-                            final range = await showDateRangePicker(
-                              context: context,
-                              firstDate: DateTime.now()
-                                  .subtract(const Duration(days: 365)),
-                              lastDate:
-                                  DateTime.now().add(const Duration(days: 1)),
-                            );
-                            if (range != null) {
-                              setState(() => _dateRange = range);
-                            }
-                          },
-                        ),
-                        Checkbox(
-                          value: _showRefunded,
-                          onChanged: (val) =>
-                              setState(() => _showRefunded = val ?? true),
-                        ),
-                        const Text("Show Refunded"),
-                      ],
-                    ),
+                                ))
+                            .toList(),
+                        onChanged: (val) => setState(() => _filterStatus = val),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.calendar_today),
+                        tooltip: "Filter by Date",
+                        onPressed: () async {
+                          final range = await showDateRangePicker(
+                            context: context,
+                            firstDate: DateTime.now()
+                                .subtract(const Duration(days: 365)),
+                            lastDate:
+                                DateTime.now().add(const Duration(days: 1)),
+                          );
+                          if (range != null) {
+                            setState(() => _dateRange = range);
+                          }
+                        },
+                      ),
+                      Checkbox(
+                        value: _showRefunded,
+                        onChanged: (val) =>
+                            setState(() => _showRefunded = val ?? true),
+                      ),
+                      const Text("Show Refunded"),
+                    ],
                   ),
-                  // ORDERS LIST
                   Expanded(
                     child: StreamBuilder<List<order_model.Order>>(
                       stream: firestoreService.getAllOrdersStream(franchiseId),
@@ -389,8 +309,8 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                             iconData: Icons.receipt_long,
                           );
                         }
-                        var orders = _filterOrders(snapshot.data!, user);
-                        _lastOrders = orders; // cache for export
+                        final orders = _filterOrders(snapshot.data!, user);
+                        _lastOrders = orders;
                         return ListView.builder(
                           itemCount: orders.length,
                           itemBuilder: (ctx, i) {
@@ -409,10 +329,9 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                                       : '#'),
                                 ),
                                 title: Text(
-                                  "${order.id} — ${order.userNameDisplay}",
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold),
-                                ),
+                                    "${order.id} — ${order.userNameDisplay}",
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold)),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -448,13 +367,11 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
                                     return items;
                                   },
                                 ),
-                                onTap: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (_) =>
-                                        OrderDetailDialog(order: order),
-                                  );
-                                },
+                                onTap: () => showDialog(
+                                  context: context,
+                                  builder: (_) =>
+                                      OrderDetailDialog(order: order),
+                                ),
                               ),
                             );
                           },
@@ -466,11 +383,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> {
               ),
             ),
           ),
-          // Right panel placeholder (for layout consistency)
-          Expanded(
-            flex: 9,
-            child: Container(),
-          ),
+          Expanded(flex: 9, child: Container()),
         ],
       ),
     );
@@ -491,7 +404,7 @@ class OrderDetailDialog extends StatelessWidget {
           children: [
             Text("Customer: ${order.userNameDisplay}"),
             const SizedBox(height: 8),
-            Text("Items:"),
+            const Text("Items:"),
             ...order.items.map((item) => Text(
                   "- ${item.name} x${item.quantity} (\$${(item.price * item.quantity).toStringAsFixed(2)})",
                   style: const TextStyle(fontSize: 15),

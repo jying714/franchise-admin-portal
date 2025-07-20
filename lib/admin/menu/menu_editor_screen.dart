@@ -28,8 +28,9 @@ import 'package:franchise_admin_portal/admin/menu/customization_types.dart'
     as ct;
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/widgets/role_guard.dart';
+import 'package:franchise_admin_portal/core/utils/user_permissions.dart';
 
-// COLUMN SCHEMA DEFINITION
 const menuItemColumns = [
   {"key": "image", "width": 56.0, "header": "Image"},
   {"key": "name", "flex": 3, "header": "Name"},
@@ -40,14 +41,35 @@ const menuItemColumns = [
   {"key": "dietary", "flex": 3, "header": "Dietary/Allergens"},
 ];
 
-class MenuEditorScreen extends StatefulWidget {
+class MenuEditorScreen extends StatelessWidget {
   const MenuEditorScreen({super.key});
 
   @override
-  State<MenuEditorScreen> createState() => _MenuEditorScreenState();
+  Widget build(BuildContext context) {
+    return RoleGuard(
+      requireAnyRole: [
+        'platform_owner',
+        'hq_owner',
+        'manager',
+        'developer',
+        'admin',
+      ],
+      featureName: 'menu_editor_screen',
+      screen: 'MenuEditorScreen',
+      child: const MenuEditorScreenContent(),
+    );
+  }
 }
 
-class _MenuEditorScreenState extends State<MenuEditorScreen> {
+class MenuEditorScreenContent extends StatefulWidget {
+  const MenuEditorScreenContent({super.key});
+
+  @override
+  State<MenuEditorScreenContent> createState() =>
+      _MenuEditorScreenContentState();
+}
+
+class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
   final ValueNotifier<List<String>> _selectedIds =
       ValueNotifier<List<String>>([]);
 
@@ -102,13 +124,6 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
     _selectedIds.value = [];
   }
 
-  bool _canEdit(admin_user.User? user) =>
-      user != null &&
-      (user.isOwner || user.isAdmin || user.isManager || user.isDeveloper);
-
-  bool _canDeleteOrExport(admin_user.User? user) =>
-      user != null && (user.isOwner || user.isAdmin || user.isDeveloper);
-
   Future<void> _addOrEditMenuItemPanel({MenuItem? item}) async {
     setState(() {
       _editingMenuItem = item;
@@ -129,7 +144,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
 
   Future<void> _bulkUpload(String franchiseId, BuildContext context,
       List<Category> categories, admin_user.User user) async {
-    if (!_canDeleteOrExport(user)) {
+    if (!UserPermissions.canDeleteMenu(user)) {
       await _logUnauthorizedAttempt(
           franchiseId, user, 'bulk_upload_menu_items');
       _showUnauthorizedDialog();
@@ -161,7 +176,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
   Future<void> _deleteMenuItems(String franchiseId, BuildContext context,
       List<MenuItem> items, admin_user.User user) async {
     final firestore = Provider.of<FirestoreService>(context, listen: false);
-    if (!_canDeleteOrExport(user)) {
+    if (!UserPermissions.canDeleteMenu(user)) {
       await _logUnauthorizedAttempt(franchiseId, user, 'delete_menu_items');
       _showUnauthorizedDialog();
       return;
@@ -215,7 +230,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
 
   Future<void> _openCustomizations(String franchiseId, BuildContext context,
       MenuItem item, admin_user.User user) async {
-    if (!_canEdit(user)) {
+    if (!UserPermissions.canEditMenu(user)) {
       await _logUnauthorizedAttempt(
           franchiseId, user, 'edit_customizations', item.id);
       _showUnauthorizedDialog();
@@ -259,7 +274,7 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
 
   Future<void> _exportToCSV(String franchiseId, BuildContext context,
       List<MenuItem> items, admin_user.User user) async {
-    if (!_canDeleteOrExport(user)) {
+    if (!UserPermissions.canDeleteMenu(user)) {
       await _logUnauthorizedAttempt(franchiseId, user, 'export_menu_csv');
       _showUnauthorizedDialog();
       return;
@@ -520,6 +535,8 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
     final firestore = Provider.of<FirestoreService>(context, listen: false);
     final user = Provider.of<UserProfileNotifier>(context).user;
     final loc = AppLocalizations.of(context);
+    debugPrint(
+        '[MenuEditorScreen] Current user: ${user?.email}, roles: ${user?.roles}, franchiseId: $franchiseId');
     if (loc == null) {
       print(
           '[${runtimeType}] loc is null! Localization not available for this context.');
@@ -529,12 +546,16 @@ class _MenuEditorScreenState extends State<MenuEditorScreen> {
     }
     final colorScheme = Theme.of(context).colorScheme;
 
-    if (user == null) return _unauthorizedScaffold();
-    if (!(user.isOwner || user.isAdmin || user.isManager || user.isDeveloper))
+    if (user == null) {
+      debugPrint(
+          '[MenuEditorScreen] No user loaded – returning unauthorized scaffold');
+      return _unauthorizedScaffold();
+    }
+    if (!UserPermissions.canAccessMenuEditor(user))
       return _unauthorizedScaffold();
 
-    final canEdit = _canEdit(user);
-    final canDeleteOrExport = _canDeleteOrExport(user);
+    final canEdit = UserPermissions.canEditMenu(user);
+    final canDeleteOrExport = UserPermissions.canDeleteMenu(user);
 
     return Scaffold(
       backgroundColor: colorScheme.background,

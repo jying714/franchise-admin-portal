@@ -35,10 +35,16 @@ class FranchiseSubscriptionService {
       }
 
       final newRef = subscriptionsRef.doc();
-      batch.set(newRef, {
+
+      debugPrint(
+          '[🔥DEBUG] Creating new subscription for franchiseId=$franchiseId with planId=${plan.id}');
+      debugPrint('[🔥DEBUG] Subscription document ID: ${newRef.id}');
+
+      final newSubscriptionData = {
         'franchiseId': franchiseId,
         'platformPlanId': plan.id,
         'subscribedAt': FieldValue.serverTimestamp(),
+        'startDate': FieldValue.serverTimestamp(),
         'active': true,
         'status': 'active',
         'autoRenew': true,
@@ -49,10 +55,20 @@ class FranchiseSubscriptionService {
           'description': plan.description,
           'features': plan.includedFeatures,
           'currency': plan.currency,
+          'price': plan.price,
+          'billingInterval': plan.billingInterval,
+          'isCustom': plan.isCustom,
         },
-      });
+      };
 
+      debugPrint(
+          '[🔥DEBUG] Writing subscription document with fields: $newSubscriptionData');
+
+      batch.set(newRef, newSubscriptionData);
+
+      debugPrint('[🔥DEBUG] Committing batch write...');
       await batch.commit();
+      debugPrint('[🔥DEBUG] Batch commit complete ✅');
 
       await ErrorLogger.log(
         message: 'Franchise subscribed to platform plan',

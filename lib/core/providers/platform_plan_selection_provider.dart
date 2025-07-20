@@ -6,6 +6,7 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
+import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
 
 class PlatformPlanSelectionProvider extends ChangeNotifier {
   PlatformPlan? _selectedPlan;
@@ -53,7 +54,7 @@ class PlatformPlanSelectionProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await FirestoreService().subscribeFranchiseToPlan(
+      await FranchiseSubscriptionService().subscribeFranchiseToPlan(
         franchiseId: franchiseId,
         plan: plan,
       );

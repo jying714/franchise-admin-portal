@@ -11,6 +11,7 @@ import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'mock_payment_form.dart';
 import 'mock_payment_data.dart';
 import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
+import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
 
 class PlatformPlanTile extends StatefulWidget {
   final PlatformPlan plan;
@@ -273,7 +274,10 @@ class _PlatformPlanTileState extends State<PlatformPlanTile> {
         hasOverdueInvoice: false,
       );
 
-      await FirestoreService().saveFranchiseSubscription(subscription);
+      await FranchiseSubscriptionService().subscribeFranchiseToPlan(
+        franchiseId: franchiseId,
+        plan: widget.plan,
+      );
 
       widget.onPlanUpdated();
 

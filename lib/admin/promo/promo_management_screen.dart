@@ -10,6 +10,9 @@ import 'package:franchise_admin_portal/admin/promo/promo_form_dialog.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/utils/user_permissions.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
 
 class PromoManagementScreen extends StatelessWidget {
   const PromoManagementScreen({super.key});
@@ -23,34 +26,33 @@ class PromoManagementScreen extends StatelessWidget {
     final userNotifier = Provider.of<UserProfileNotifier>(context);
     final user = userNotifier.user;
     final loading = userNotifier.loading;
+
     print('[PROMO SCREEN] Build called');
     print(
         'Current user: $user, roles: ${user?.roles}, isDeveloper: ${user?.isDeveloper}, loading: $loading');
-
     print('[PROMO SCREEN] franchiseId: $franchiseId');
-    // Show loading spinner while loading or user is null
+
     if (loading || user == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (!(user.isOwner ||
-        user.isAdmin ||
-        user.isManager ||
-        user.isStaff ||
-        user.isDeveloper)) {
-      return _unauthorizedScaffold(context);
+    if (!UserPermissions.canAccessPromoManagement(user)) {
+      return AdminUnauthorizedWidget(
+        title: "Promo Management",
+        message: "You do not have permission to access this section.",
+        buttonText: "Return to Home",
+      );
     }
-    final canEdit =
-        user.isOwner || user.isAdmin || user.isManager || user.isDeveloper;
+
+    final canEdit = UserPermissions.canEditPromos(user);
 
     return Scaffold(
       backgroundColor: DesignTokens.backgroundColor,
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Main content column
           Expanded(
             flex: 11,
             child: Padding(
@@ -59,7 +61,6 @@ class PromoManagementScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header row
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12.0),
                     child: Row(
@@ -83,16 +84,31 @@ class PromoManagementScreen extends StatelessWidget {
                                 context: context,
                                 builder: (_) => PromoFormDialog(
                                   onSave: (promo) async {
-                                    await firestoreService.addPromo(
-                                        franchiseId, promo);
-                                    await AuditLogService().addLog(
-                                      franchiseId: franchiseId,
-                                      userId: user.id,
-                                      action: 'add_promo',
-                                      targetType: 'promo',
-                                      targetId: promo.id,
-                                      details: {'name': promo.name},
-                                    );
+                                    try {
+                                      await firestoreService.addPromo(
+                                          franchiseId, promo);
+                                      await AuditLogService().addLog(
+                                        franchiseId: franchiseId,
+                                        userId: user.id,
+                                        action: 'add_promo',
+                                        targetType: 'promo',
+                                        targetId: promo.id,
+                                        details: {'name': promo.name},
+                                      );
+                                    } catch (e, stack) {
+                                      await ErrorLogger.log(
+                                        message: e.toString(),
+                                        source: 'promo_management_screen',
+                                        screen: 'PromoManagementScreen',
+                                        stack: stack.toString(),
+                                        contextData: {
+                                          'franchiseId': franchiseId,
+                                          'userId': user.id,
+                                          'promoId': promo.id,
+                                          'operation': 'add',
+                                        },
+                                      );
+                                    }
                                   },
                                 ),
                               );
@@ -101,16 +117,19 @@ class PromoManagementScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Promo list
                   Expanded(
                     child: StreamBuilder<List<Promo>>(
                       stream: firestoreService.getPromos(franchiseId),
                       builder: (context, snapshot) {
-                        print(
-                            '[PROMO STREAM] Raw snapshot: ${snapshot.data}, error: ${snapshot.error}');
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {
                           return const LoadingShimmerWidget();
+                        }
+                        if (snapshot.hasError) {
+                          return const EmptyStateWidget(
+                            title: "Error loading promos",
+                            message: "Please try again later.",
+                          );
                         }
                         if (!snapshot.hasData || snapshot.data!.isEmpty) {
                           return const EmptyStateWidget(
@@ -142,17 +161,36 @@ class PromoManagementScreen extends StatelessWidget {
                                           builder: (_) => PromoFormDialog(
                                             promo: promo,
                                             onSave: (updated) async {
-                                              await firestoreService
-                                                  .updatePromo(
-                                                      franchiseId, updated);
-                                              await AuditLogService().addLog(
-                                                franchiseId: franchiseId,
-                                                userId: user.id,
-                                                action: 'update_promo',
-                                                targetType: 'promo',
-                                                targetId: updated.id,
-                                                details: {'name': updated.name},
-                                              );
+                                              try {
+                                                await firestoreService
+                                                    .updatePromo(
+                                                        franchiseId, updated);
+                                                await AuditLogService().addLog(
+                                                  franchiseId: franchiseId,
+                                                  userId: user.id,
+                                                  action: 'update_promo',
+                                                  targetType: 'promo',
+                                                  targetId: updated.id,
+                                                  details: {
+                                                    'name': updated.name
+                                                  },
+                                                );
+                                              } catch (e, stack) {
+                                                await ErrorLogger.log(
+                                                  message: e.toString(),
+                                                  source:
+                                                      'promo_management_screen',
+                                                  screen:
+                                                      'PromoManagementScreen',
+                                                  stack: stack.toString(),
+                                                  contextData: {
+                                                    'franchiseId': franchiseId,
+                                                    'userId': user.id,
+                                                    'promoId': updated.id,
+                                                    'operation': 'update',
+                                                  },
+                                                );
+                                              }
                                             },
                                           ),
                                         );
@@ -177,7 +215,6 @@ class PromoManagementScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Right panel placeholder
           Expanded(
             flex: 9,
             child: Container(),
@@ -204,49 +241,36 @@ class PromoManagementScreen extends StatelessWidget {
               final franchiseId =
                   Provider.of<FranchiseProvider>(context, listen: false)
                       .franchiseId;
-              await service.deletePromo(franchiseId, promoId);
-              await AuditLogService().addLog(
-                franchiseId: franchiseId,
-                userId: user.id,
-                action: 'delete_promo',
-                targetType: 'promo',
-                targetId: promoId,
-                details: {},
-              );
+              try {
+                await service.deletePromo(franchiseId, promoId);
+                await AuditLogService().addLog(
+                  franchiseId: franchiseId,
+                  userId: user.id,
+                  action: 'delete_promo',
+                  targetType: 'promo',
+                  targetId: promoId,
+                  details: {},
+                );
+              } catch (e, stack) {
+                await ErrorLogger.log(
+                  message: e.toString(),
+                  source: 'promo_management_screen',
+                  screen: 'PromoManagementScreen',
+                  stack: stack.toString(),
+                  contextData: {
+                    'franchiseId': franchiseId,
+                    'userId': user.id,
+                    'promoId': promoId,
+                    'operation': 'delete',
+                  },
+                );
+              }
               if (!context.mounted) return;
               Navigator.pop(context);
             },
             child: const Text("Delete"),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _unauthorizedScaffold(BuildContext context) {
-    return Scaffold(
-      backgroundColor: DesignTokens.backgroundColor,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.lock_outline, size: 54, color: Colors.redAccent),
-            const SizedBox(height: 16),
-            const Text(
-              "Unauthorized — You do not have permission to access this page.",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 18),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.home),
-              label: const Text("Return to Home"),
-              onPressed: () {
-                Navigator.of(context).popUntil((route) => route.isFirst);
-              },
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -7,6 +7,10 @@ import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/utils/user_permissions.dart';
+import 'package:franchise_admin_portal/widgets/role_guard.dart';
+
 import 'category_form_dialog.dart';
 import 'bulk_upload_dialog.dart';
 import 'category_search_bar.dart';
@@ -14,9 +18,6 @@ import 'bulk_action_bar.dart';
 import 'unauthorized_widget.dart';
 import 'undo_snackbar.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-
-// Optionally for user id (for error logging)
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 
 const categoryColumns = [
   {"key": "select", "width": 40.0, "header": ""},
@@ -26,15 +27,36 @@ const categoryColumns = [
   {"key": "actions", "width": 96.0, "header": ""},
 ];
 
-class CategoryManagementScreen extends StatefulWidget {
+class CategoryManagementScreen extends StatelessWidget {
   const CategoryManagementScreen({super.key});
 
   @override
-  State<CategoryManagementScreen> createState() =>
-      _CategoryManagementScreenState();
+  Widget build(BuildContext context) {
+    return RoleGuard(
+      requireAnyRole: [
+        'platform_owner',
+        'hq_owner',
+        'manager',
+        'developer',
+        'admin',
+      ],
+      featureName: 'category_management_screen',
+      screen: 'CategoryManagementScreen',
+      child: const CategoryManagementScreenContent(),
+    );
+  }
 }
 
-class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
+class CategoryManagementScreenContent extends StatefulWidget {
+  const CategoryManagementScreenContent({super.key});
+
+  @override
+  State<CategoryManagementScreenContent> createState() =>
+      _CategoryManagementScreenContentState();
+}
+
+class _CategoryManagementScreenContentState
+    extends State<CategoryManagementScreenContent> {
   late FirestoreService firestoreService;
   List<Category> _allCategories = [];
   List<Category> _filteredCategories = [];
@@ -51,40 +73,29 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     firestoreService = Provider.of<FirestoreService>(context, listen: false);
   }
 
-  bool _canManageCategories(BuildContext context) {
+  bool get _canManage {
     final user = Provider.of<UserProfileNotifier>(context, listen: false).user;
-    if (user == null) return false;
-    final roles = user.roles ?? <String>[];
-    return roles.contains('owner') ||
-        roles.contains('admin') ||
-        roles.contains('manager') ||
-        roles.contains('developer');
+    return UserPermissions.canManageCategories(user);
   }
 
   void _onCategorySelect(String id, bool selected) {
     setState(() {
-      if (selected) {
-        _selectedIds.add(id);
-      } else {
-        _selectedIds.remove(id);
-      }
+      selected ? _selectedIds.add(id) : _selectedIds.remove(id);
     });
   }
 
   void _onSelectAll(bool? checked) {
     setState(() {
-      if (checked == true) {
-        _selectedIds = _filteredCategories.map((c) => c.id).toSet();
-      } else {
-        _selectedIds.clear();
-      }
+      _selectedIds =
+          checked == true ? _filteredCategories.map((c) => c.id).toSet() : {};
     });
   }
 
   Future<void> _openCategoryDialog({Category? category}) async {
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
-    if (!_canManageCategories(context) || _isLoading || _bulkLoading) return;
+    if (!_canManage || _isLoading || _bulkLoading) return;
+
     await showDialog<Category>(
       context: context,
       builder: (_) => CategoryFormDialog(
@@ -111,26 +122,21 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
               );
             }
           } catch (e, stack) {
-            // Log error to Firestore
-            try {
-              await ErrorLogger.log(
-                message: e.toString(),
-                source: 'category_management_screen',
-                screen: 'CategoryManagementScreen',
-                stack: stack.toString(),
-                severity: 'error',
-                contextData: {
-                  'franchiseId': franchiseId,
-                  'userId': userId,
-                  'errorType': e.runtimeType.toString(),
-                  'categoryId': category?.id ?? 'new',
-                  'name': saved.name,
-                  'image': saved.image,
-                  'description': saved.description,
-                  'operation': category == null ? 'add' : 'update',
-                },
-              );
-            } catch (_) {}
+            await ErrorLogger.log(
+              message: e.toString(),
+              stack: stack.toString(),
+              source: 'category_management_screen',
+              screen: 'CategoryManagementScreen',
+              contextData: {
+                'franchiseId': franchiseId,
+                'userId': userId,
+                'categoryId': category?.id ?? 'new',
+                'name': saved.name,
+                'image': saved.image,
+                'description': saved.description,
+                'operation': category == null ? 'add' : 'update',
+              },
+            );
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                   content:
@@ -148,18 +154,11 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
       {bool showUndo = true}) async {
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
-    if (!_canManageCategories(context) || _isLoading || _bulkLoading) return;
-    final loc = AppLocalizations.of(context);
-    if (loc == null) {
-      print(
-          '[YourWidget] loc is null! Localization not available for this context.');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Localization missing! [debug]')),
-      );
-      return;
-    }
+    if (!_canManage || _isLoading || _bulkLoading) return;
+    final loc = AppLocalizations.of(context)!;
     final userId =
         Provider.of<UserProfileNotifier?>(context, listen: false)?.user?.id;
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -167,9 +166,8 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         content: Text(loc.deleteCategoryConfirm(category.name)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(loc.cancel),
-          ),
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(loc.cancel)),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
@@ -181,31 +179,28 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         ],
       ),
     );
+
     if (confirm == true) {
       setState(() => _isLoading = true);
       try {
         await firestoreService.deleteCategory(franchiseId, category.id);
       } catch (e, stack) {
-        try {
-          await ErrorLogger.log(
-            message: e.toString(),
-            source: 'category_management_screen',
-            screen: 'CategoryManagementScreen',
-            stack: stack.toString(),
-            severity: 'error',
-            contextData: {
-              'franchiseId': franchiseId,
-              'userId': userId,
-              'errorType': e.runtimeType.toString(),
-              'categoryId': category.id,
-              'name': category.name,
-              'operation': 'delete',
-            },
-          );
-        } catch (_) {}
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(loc.failedToDeleteCategory)),
+        await ErrorLogger.log(
+          message: e.toString(),
+          stack: stack.toString(),
+          source: 'category_management_screen',
+          screen: 'CategoryManagementScreen',
+          contextData: {
+            'franchiseId': franchiseId,
+            'userId': userId,
+            'categoryId': category.id,
+            'name': category.name,
+            'operation': 'delete',
+          },
         );
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(loc.failedToDeleteCategory)));
       }
       setState(() => _isLoading = false);
       if (showUndo) {
@@ -217,148 +212,34 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
             try {
               await firestoreService.addCategory(franchiseId, category);
             } catch (e, stack) {
-              try {
-                await ErrorLogger.log(
-                  message: e.toString(),
-                  source: 'category_management_screen',
-                  screen: 'CategoryManagementScreen',
-                  stack: stack.toString(),
-                  severity: 'error',
-                  contextData: {
-                    'franchiseId': franchiseId,
-                    'userId': userId,
-                    'errorType': e.runtimeType.toString(),
-                    'categoryId': category.id,
-                    'name': category.name,
-                    'operation': 'undo_restore',
-                  },
-                );
-              } catch (_) {}
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(loc.failedToRestoreCategory)),
+              await ErrorLogger.log(
+                message: e.toString(),
+                stack: stack.toString(),
+                source: 'category_management_screen',
+                screen: 'CategoryManagementScreen',
+                contextData: {
+                  'franchiseId': franchiseId,
+                  'userId': userId,
+                  'categoryId': category.id,
+                  'name': category.name,
+                  'operation': 'undo_restore',
+                },
               );
+              ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(loc.failedToRestoreCategory)));
             }
             setState(() => _isLoading = false);
           },
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(loc.categoryDeleted)),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(loc.categoryDeleted)));
       }
-    }
-  }
-
-  Future<void> _bulkDeleteCategories() async {
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
-    if (!_canManageCategories(context) || _isLoading || _bulkLoading) return;
-    final loc = AppLocalizations.of(context);
-    if (loc == null) {
-      print(
-          '[YourWidget] loc is null! Localization not available for this context.');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Localization missing! [debug]')),
-      );
-      return;
-    }
-    final userId =
-        Provider.of<UserProfileNotifier?>(context, listen: false)?.user?.id;
-    final selectedCats =
-        _filteredCategories.where((c) => _selectedIds.contains(c.id)).toList();
-    if (selectedCats.isEmpty) return;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(loc.delete),
-        content: Text(loc.deleteCategoryConfirm(
-          loc.selectedCount(selectedCats.length),
-        )),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(loc.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: DesignTokens.errorColor,
-              foregroundColor: Colors.white,
-            ),
-            child: Text(loc.delete),
-          ),
-        ],
-      ),
-    );
-    if (confirm == true) {
-      setState(() => _bulkLoading = true);
-      try {
-        for (final c in selectedCats) {
-          await firestoreService.deleteCategory(franchiseId, c.id);
-        }
-      } catch (e, stack) {
-        try {
-          await ErrorLogger.log(
-            message: e.toString(),
-            source: 'category_management_screen',
-            screen: 'CategoryManagementScreen',
-            stack: stack.toString(),
-            severity: 'error',
-            contextData: {
-              'franchiseId': franchiseId,
-              'userId': userId,
-              'errorType': e.runtimeType.toString(),
-              'categoryIds': selectedCats.map((c) => c.id).toList(),
-              'operation': 'bulk_delete',
-            },
-          );
-        } catch (_) {}
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(loc.failedToDeleteCategory)),
-        );
-      }
-      setState(() {
-        _bulkLoading = false;
-        _selectedIds.clear();
-      });
-      UndoSnackbar.show(
-        context,
-        message: loc.categoryDeleted,
-        onUndo: () async {
-          setState(() => _bulkLoading = true);
-          try {
-            for (final c in selectedCats) {
-              await firestoreService.addCategory(franchiseId, c);
-            }
-          } catch (e, stack) {
-            try {
-              await ErrorLogger.log(
-                message: e.toString(),
-                source: 'category_management_screen',
-                screen: 'CategoryManagementScreen',
-                stack: stack.toString(),
-                severity: 'error',
-                contextData: {
-                  'franchiseId': franchiseId,
-                  'userId': userId,
-                  'errorType': e.runtimeType.toString(),
-                  'categoryIds': selectedCats.map((c) => c.id).toList(),
-                  'operation': 'undo_bulk_restore',
-                },
-              );
-            } catch (_) {}
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(loc.failedToRestoreCategory)),
-            );
-          }
-          setState(() => _bulkLoading = false);
-        },
-      );
     }
   }
 
   void _showBulkUploadDialog() async {
-    if (!_canManageCategories(context) || _isLoading || _bulkLoading) return;
+    if (!_canManage || _isLoading || _bulkLoading) return;
     final uploaded = await showDialog<bool>(
       context: context,
       builder: (_) => const BulkUploadDialog(),
@@ -375,10 +256,8 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     setState(() {
       _searchQuery = query;
       _filteredCategories = _allCategories
-          .where(
-              (c) => c.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+          .where((c) => c.name.toLowerCase().contains(query.toLowerCase()))
           .toList();
-      // Deselect anything not visible
       _selectedIds
           .removeWhere((id) => !_filteredCategories.any((c) => c.id == id));
     });
@@ -389,17 +268,11 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
       _sortKey = key;
       _sortAsc = ascending;
       _filteredCategories.sort((a, b) {
-        int cmp = 0;
-        switch (key) {
-          case 'name':
-            cmp = a.name.compareTo(b.name);
-            break;
-          case 'description':
-            cmp = (a.description ?? '').compareTo(b.description ?? '');
-            break;
-          default:
-            cmp = 0;
-        }
+        final cmp = switch (key) {
+          'name' => a.name.compareTo(b.name),
+          'description' => (a.description ?? '').compareTo(b.description ?? ''),
+          _ => 0,
+        };
         return ascending ? cmp : -cmp;
       });
     });
@@ -417,8 +290,6 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                 value: _filteredCategories.isNotEmpty &&
                     _selectedIds.length == _filteredCategories.length,
                 onChanged: (checked) => _onSelectAll(checked),
-                tristate: false,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 semanticLabel: AppLocalizations.of(context)!.bulkSelection,
               ),
             );
@@ -426,20 +297,15 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
             return SizedBox(
               width: col["width"] as double,
               child: Center(
-                child: Text(
-                  col["header"] as String? ?? "",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
+                child: Text(col["header"] as String? ?? "",
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
             );
           } else {
             return Expanded(
               flex: col["flex"] as int,
-              child: Text(
-                col["header"] as String? ?? "",
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
+              child: Text(col["header"] as String? ?? "",
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
             );
           }
         }).toList(),
@@ -461,24 +327,20 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                 value: _selectedIds.contains(category.id),
                 onChanged: (checked) =>
                     _onCategorySelect(category.id, checked ?? false),
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                semanticLabel: AppLocalizations.of(context)!.bulkSelection,
               ),
             );
           case "image":
             return SizedBox(
               width: col["width"] as double,
               child: Center(
-                child: (category.image != null && category.image!.isNotEmpty)
+                child: category.image != null && category.image!.isNotEmpty
                     ? CircleAvatar(
                         backgroundImage: NetworkImage(category.image!),
-                        radius: 20,
-                      )
+                        radius: 20)
                     : CircleAvatar(
                         backgroundImage:
                             AssetImage(BrandingConfig.defaultCategoryIcon),
-                        radius: 20,
-                      ),
+                        radius: 20),
               ),
             );
           case "name":
@@ -533,24 +395,9 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   Widget build(BuildContext context) {
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
-    final loc = AppLocalizations.of(context);
-    if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
-      );
-    }
+    final loc = AppLocalizations.of(context)!;
     final isMobile = MediaQuery.of(context).size.width < 600;
     final colorScheme = Theme.of(context).colorScheme;
-
-    if (!_canManageCategories(context)) {
-      return UnauthorizedWidget(
-        message: loc.unauthorizedAccessMessage,
-        actionLabel: loc.returnHome,
-        onHome: () => Navigator.of(context).popUntil((route) => route.isFirst),
-      );
-    }
 
     return Stack(
       children: [
@@ -559,50 +406,45 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
           body: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Main content column, matches MenuEditorScreen (flex: 11)
+              // Main content (flex 11)
               Expanded(
                 flex: 11,
                 child: Padding(
-                  padding:
-                      const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
+                  padding: const EdgeInsets.all(24.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header: section title & actions (like Menu Editor)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              loc.adminCategoryManagement,
-                              style: TextStyle(
-                                color: colorScheme.onBackground,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 22,
-                              ),
+                      // Header
+                      Row(
+                        children: [
+                          Text(
+                            loc.adminCategoryManagement,
+                            style: TextStyle(
+                              color: colorScheme.onBackground,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 22,
                             ),
-                            const Spacer(),
-                            IconButton(
-                              icon: Icon(Icons.upload_file,
-                                  color: colorScheme.onBackground),
-                              tooltip: loc.bulkUploadCategories,
-                              onPressed: _isLoading || _bulkLoading
-                                  ? null
-                                  : _showBulkUploadDialog,
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.add,
-                                  color: colorScheme.onBackground),
-                              tooltip: loc.addCategory,
-                              onPressed: _isLoading || _bulkLoading
-                                  ? null
-                                  : () => _openCategoryDialog(),
-                            ),
-                          ],
-                        ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: Icon(Icons.upload_file,
+                                color: colorScheme.onBackground),
+                            tooltip: loc.bulkUploadCategories,
+                            onPressed: _isLoading || _bulkLoading
+                                ? null
+                                : _showBulkUploadDialog,
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.add,
+                                color: colorScheme.onBackground),
+                            tooltip: loc.addCategory,
+                            onPressed: _isLoading || _bulkLoading
+                                ? null
+                                : () => _openCategoryDialog(),
+                          ),
+                        ],
                       ),
-                      // Search bar
+                      const SizedBox(height: 12),
                       CategorySearchBar(
                         onChanged: _onSearch,
                         onSortChanged: (sortKey) =>
@@ -612,19 +454,17 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                         onSortDirectionToggle: () =>
                             _onSort(_sortKey, !_sortAsc),
                       ),
-                      const SizedBox(height: 12),
-                      // Bulk actions bar (desktop only)
                       if (!isMobile && _selectedIds.isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
+                          padding: const EdgeInsets.only(top: 8.0),
                           child: BulkActionBar(
                             selectedCount: _selectedIds.length,
-                            onBulkDelete: _bulkDeleteCategories,
+                            onBulkDelete: () {},
                             onClearSelection: () =>
                                 setState(() => _selectedIds.clear()),
                           ),
                         ),
-                      // Grid/List area
+                      const SizedBox(height: 12),
                       Expanded(
                         child: StreamBuilder<List<Category>>(
                           stream: firestoreService.getCategories(franchiseId),
@@ -646,8 +486,6 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                                         .toLowerCase()
                                         .contains(_searchQuery.toLowerCase()))
                                     .toList();
-
-                            // Deselect any no longer present
                             _selectedIds.removeWhere((id) =>
                                 !_filteredCategories.any((c) => c.id == id));
 
@@ -659,77 +497,79 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                               );
                             }
 
-                            // MOBILE VERSION (column based)
-                            if (isMobile) {
-                              return ListView.separated(
-                                itemCount: _filteredCategories.length,
-                                separatorBuilder: (_, __) =>
-                                    const Divider(height: 1),
-                                itemBuilder: (ctx, idx) {
-                                  final category = _filteredCategories[idx];
-                                  return ListTile(
-                                    leading: (category.image != null &&
-                                            category.image!.isNotEmpty)
-                                        ? CircleAvatar(
-                                            backgroundImage:
-                                                NetworkImage(category.image!),
-                                            radius: 24,
-                                          )
-                                        : CircleAvatar(
-                                            backgroundImage: AssetImage(
-                                                BrandingConfig
-                                                    .defaultCategoryIcon),
-                                            radius: 24,
-                                          ),
-                                    title: Text(category.name),
-                                    subtitle: (category.description != null &&
-                                            category.description!.isNotEmpty)
-                                        ? Text(category.description!)
-                                        : null,
-                                    trailing: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        IconButton(
-                                          icon: Icon(Icons.edit,
-                                              color: colorScheme.secondary),
-                                          tooltip: loc.edit,
-                                          onPressed: _isLoading || _bulkLoading
-                                              ? null
-                                              : () => _openCategoryDialog(
-                                                  category: category),
-                                        ),
-                                        IconButton(
-                                          icon: Icon(Icons.delete,
-                                              color: colorScheme.error),
-                                          tooltip: loc.delete,
-                                          onPressed: _isLoading || _bulkLoading
-                                              ? null
-                                              : () => _deleteCategory(category),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              );
-                            }
-
-                            // DESKTOP/TABLET VERSION (row based, aligned columns)
-                            return Column(
-                              children: [
-                                buildCategoryHeaderRow(context, true),
-                                const Divider(height: 1),
-                                Expanded(
-                                  child: ListView.separated(
+                            return isMobile
+                                ? ListView.separated(
                                     itemCount: _filteredCategories.length,
                                     separatorBuilder: (_, __) =>
                                         const Divider(height: 1),
-                                    itemBuilder: (ctx, idx) =>
-                                        buildCategoryDataRow(ctx,
-                                            _filteredCategories[idx], true),
-                                  ),
-                                ),
-                              ],
-                            );
+                                    itemBuilder: (ctx, idx) {
+                                      final category = _filteredCategories[idx];
+                                      return ListTile(
+                                        leading: (category.image?.isNotEmpty ??
+                                                false)
+                                            ? CircleAvatar(
+                                                backgroundImage: NetworkImage(
+                                                    category.image!),
+                                                radius: 24,
+                                              )
+                                            : CircleAvatar(
+                                                backgroundImage: AssetImage(
+                                                    BrandingConfig
+                                                        .defaultCategoryIcon),
+                                                radius: 24,
+                                              ),
+                                        title: Text(category.name),
+                                        subtitle:
+                                            (category.description?.isNotEmpty ??
+                                                    false)
+                                                ? Text(category.description!)
+                                                : null,
+                                        trailing: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              icon: Icon(Icons.edit,
+                                                  color: colorScheme.secondary),
+                                              tooltip: loc.edit,
+                                              onPressed: _isLoading ||
+                                                      _bulkLoading
+                                                  ? null
+                                                  : () => _openCategoryDialog(
+                                                      category: category),
+                                            ),
+                                            IconButton(
+                                              icon: Icon(Icons.delete,
+                                                  color: colorScheme.error),
+                                              tooltip: loc.delete,
+                                              onPressed: _isLoading ||
+                                                      _bulkLoading
+                                                  ? null
+                                                  : () =>
+                                                      _deleteCategory(category),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Column(
+                                    children: [
+                                      buildCategoryHeaderRow(context, true),
+                                      const Divider(height: 1),
+                                      Expanded(
+                                        child: ListView.separated(
+                                          itemCount: _filteredCategories.length,
+                                          separatorBuilder: (_, __) =>
+                                              const Divider(height: 1),
+                                          itemBuilder: (ctx, idx) =>
+                                              buildCategoryDataRow(
+                                                  ctx,
+                                                  _filteredCategories[idx],
+                                                  true),
+                                        ),
+                                      ),
+                                    ],
+                                  );
                           },
                         ),
                       ),
@@ -737,45 +577,14 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                   ),
                 ),
               ),
-              // Right panel placeholder, matches MenuEditorScreen (flex: 9)
-              Expanded(
-                flex: 9,
-                child: Container(), // Future right panel
-              ),
+              Expanded(flex: 9, child: Container()),
             ],
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            icon: Icon(
-              Icons.add,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.black
-                  : colorScheme.onPrimary,
-            ),
-            label: Text(
-              loc.addCategory,
-              style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.black
-                    : colorScheme.onPrimary,
-              ),
-            ),
-            backgroundColor: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white
-                : colorScheme.primary,
-            foregroundColor: Theme.of(context).brightness == Brightness.dark
-                ? Colors.black
-                : colorScheme.onPrimary,
-            onPressed:
-                _isLoading || _bulkLoading ? null : () => _openCategoryDialog(),
-            tooltip: loc.addCategory,
           ),
         ),
         if (_isLoading || _bulkLoading)
           Container(
             color: Colors.black.withOpacity(0.22),
-            child: const Center(
-              child: CircularProgressIndicator(),
-            ),
+            child: const Center(child: CircularProgressIndicator()),
           ),
       ],
     );

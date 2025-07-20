@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import 'package:franchise_admin_portal/core/utils/user_permissions.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
+import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 
 class StaffAccessScreen extends StatefulWidget {
   const StaffAccessScreen({super.key});
@@ -21,19 +24,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
   final _formKey = GlobalKey<FormState>();
   String _name = '';
   String _email = '';
-  String _role = 'staff'; // default
-
-  bool _canEditStaff(BuildContext context) {
-    final userNotifier =
-        Provider.of<UserProfileNotifier>(context, listen: false);
-    final appUser = userNotifier.user;
-    print('[StaffAccessScreen] user = $appUser, role = ${appUser?.roles}');
-    return appUser != null &&
-        (appUser.roles.contains('owner') ||
-            appUser.roles.contains('manager') ||
-            appUser.roles.contains('admin') ||
-            appUser.roles.contains('developer'));
-  }
+  String _role = 'staff';
 
   @override
   Widget build(BuildContext context) {
@@ -47,42 +38,17 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
         body: Center(child: Text('Localization missing! [debug]')),
       );
     }
-    final canEdit = _canEditStaff(context);
+    final user = Provider.of<UserProfileNotifier>(context).user;
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
 
-    // Security: Only owners/managers can access. Others see branded error.
-    if (!canEdit) {
-      return Scaffold(
-        backgroundColor: BrandingConfig.brandRed.withOpacity(0.03),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.lock_outline, size: 64, color: Colors.red.shade300),
-                const SizedBox(height: 16),
-                Text(
-                  loc.unauthorizedAdminMessage,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () => Navigator.of(context)
-                      .pushNamedAndRemoveUntil('/', (_) => false),
-                  icon: const Icon(Icons.home),
-                  label: Text(loc.returnToHomeButton),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: BrandingConfig.brandRed,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+    if (!UserPermissions.canManageStaff(user)) {
+      return AdminUnauthorizedWidget(
+        title: loc.staffAccessTitle,
+        message: loc.unauthorizedAdminMessage,
+        buttonText: loc.returnToHomeButton,
+        onReturnHome: () =>
+            Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false),
       );
     }
 
@@ -97,7 +63,6 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Main content column
           Expanded(
             flex: 11,
             child: Padding(
@@ -106,7 +71,6 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header row
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12.0),
                     child: Row(
@@ -133,7 +97,6 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                       ],
                     ),
                   ),
-                  // Staff List
                   Expanded(
                     child: StreamBuilder<List<admin_user.User>>(
                       stream: firestoreService.getStaffUsers(franchiseId),
@@ -187,7 +150,6 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
               ),
             ),
           ),
-          // Right panel placeholder
           Expanded(
             flex: 9,
             child: Container(),
@@ -210,9 +172,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
-                  decoration: InputDecoration(
-                    labelText: loc.staffNameLabel,
-                  ),
+                  decoration: InputDecoration(labelText: loc.staffNameLabel),
                   validator: (v) => (v == null || v.trim().isEmpty)
                       ? loc.staffNameRequired
                       : null,
@@ -220,9 +180,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                 ),
                 const SizedBox(height: 8),
                 TextFormField(
-                  decoration: InputDecoration(
-                    labelText: loc.staffEmailLabel,
-                  ),
+                  decoration: InputDecoration(labelText: loc.staffEmailLabel),
                   validator: (v) => (v == null || v.trim().isEmpty)
                       ? loc.staffEmailRequired
                       : null,
@@ -232,28 +190,16 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   value: _role,
-                  decoration: InputDecoration(
-                    labelText: loc.staffRoleLabel,
-                  ),
+                  decoration: InputDecoration(labelText: loc.staffRoleLabel),
                   items: [
                     DropdownMenuItem(
-                      value: 'owner',
-                      child: Text(loc.staffRoleOwner),
-                    ),
+                        value: 'owner', child: Text(loc.staffRoleOwner)),
                     DropdownMenuItem(
-                      value: 'manager',
-                      child: Text(loc.staffRoleManager),
-                    ),
+                        value: 'manager', child: Text(loc.staffRoleManager)),
                     DropdownMenuItem(
-                      value: 'staff',
-                      child: Text(loc.staffRoleStaff),
-                    ),
+                        value: 'staff', child: Text(loc.staffRoleStaff)),
                   ],
-                  onChanged: (v) {
-                    setState(() {
-                      _role = v!;
-                    });
-                  },
+                  onChanged: (v) => setState(() => _role = v!),
                 ),
               ],
             ),
@@ -269,14 +215,30 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                         .franchiseId;
                 if (_formKey.currentState!.validate()) {
                   _formKey.currentState!.save();
-                  await service.addStaffUser(
-                    name: _name,
-                    email: _email,
-                    roles: [_role],
-                    franchiseIds: [franchiseId], // Required, as a List<String>
-                    // phone: _phone, // optional, add if you have it
-                  );
-                  Navigator.of(context).pop();
+                  try {
+                    await service.addStaffUser(
+                      name: _name,
+                      email: _email,
+                      roles: [_role],
+                      franchiseIds: [franchiseId],
+                    );
+                    Navigator.of(context).pop();
+                  } catch (e, stack) {
+                    await ErrorLogger.log(
+                      message: e.toString(),
+                      stack: stack.toString(),
+                      source: 'staff_access_screen',
+                      screen: 'StaffAccessScreen',
+                      severity: 'error',
+                      contextData: {
+                        'franchiseId': franchiseId,
+                        'name': _name,
+                        'email': _email,
+                        'role': _role,
+                        'operation': 'add_staff'
+                      },
+                    );
+                  }
                 }
               },
               child: Text(loc.staffAddButton),
@@ -304,8 +266,25 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
               final franchiseId =
                   Provider.of<FranchiseProvider>(context, listen: false)
                       .franchiseId;
-              await service.removeStaffUser(user.id);
-              Navigator.of(context).pop();
+              try {
+                await service.removeStaffUser(user.id);
+                Navigator.of(context).pop();
+              } catch (e, stack) {
+                await ErrorLogger.log(
+                  message: e.toString(),
+                  stack: stack.toString(),
+                  source: 'staff_access_screen',
+                  screen: 'StaffAccessScreen',
+                  severity: 'error',
+                  contextData: {
+                    'franchiseId': franchiseId,
+                    'userId': user.id,
+                    'name': user.name,
+                    'email': user.email,
+                    'operation': 'remove_staff'
+                  },
+                );
+              }
             },
             child: Text(loc.staffRemoveButton),
           ),
