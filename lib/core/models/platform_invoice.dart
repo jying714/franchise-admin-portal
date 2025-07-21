@@ -71,6 +71,30 @@ class PlatformInvoice {
   /// True if invoice is unpaid (not paid or partial)
   bool get isUnpaid => status.toLowerCase() == 'unpaid';
 
+  /// Optional: Associated subscription (for recurring invoices)
+  final String? subscriptionId;
+
+  /// Timestamp when the invoice was paid (for audit / reconciliation)
+  final DateTime? paidAt;
+
+  /// Optional: External payment processor ID (e.g., Stripe invoice ID)
+  final String? externalInvoiceId;
+
+  /// Optional: External payment provider name (e.g., 'stripe')
+  final String? paymentProvider;
+
+  /// Optional: Method used (e.g. 'card', 'ach')
+  final String? paymentMethod;
+
+  /// Optional log of payment attempts with metadata
+  final List<Map<String, dynamic>>? paymentAttempts;
+
+  /// Last known status of payment attempt
+  final String? lastAttemptStatus;
+
+  /// Optional public receipt URL (if available from provider)
+  final String? receiptUrl;
+
   PlatformInvoice({
     required this.id,
     required this.franchiseeId,
@@ -89,6 +113,14 @@ class PlatformInvoice {
     this.planId,
     this.taxBreakdown,
     this.isTest = false,
+    this.subscriptionId,
+    this.paidAt,
+    this.externalInvoiceId,
+    this.paymentProvider,
+    this.paymentMethod,
+    this.paymentAttempts,
+    this.lastAttemptStatus,
+    this.receiptUrl,
   });
 
   /// Deserializes from Firestore document
@@ -116,6 +148,16 @@ class PlatformInvoice {
             ? Map<String, dynamic>.from(data['taxBreakdown'])
             : null,
         isTest: data['isTest'] ?? false,
+        subscriptionId: data['subscriptionId'],
+        paidAt: (data['paidAt'] as Timestamp?)?.toDate(),
+        externalInvoiceId: data['externalInvoiceId'],
+        paymentProvider: data['paymentProvider'],
+        paymentMethod: data['paymentMethod'],
+        paymentAttempts: data['paymentAttempts'] != null
+            ? List<Map<String, dynamic>>.from(data['paymentAttempts'])
+            : null,
+        lastAttemptStatus: data['lastAttemptStatus'],
+        receiptUrl: data['receiptUrl'],
       );
     } catch (e, stack) {
       ErrorLogger.log(
@@ -148,6 +190,79 @@ class PlatformInvoice {
       if (planId != null) 'planId': planId,
       if (taxBreakdown != null) 'taxBreakdown': taxBreakdown,
       'isTest': isTest,
+      if (subscriptionId != null) 'subscriptionId': subscriptionId,
+      if (paidAt != null) 'paidAt': Timestamp.fromDate(paidAt!),
+      if (externalInvoiceId != null) 'externalInvoiceId': externalInvoiceId,
+      if (paymentProvider != null) 'paymentProvider': paymentProvider,
+      if (paymentMethod != null) 'paymentMethod': paymentMethod,
+      if (paymentAttempts != null) 'paymentAttempts': paymentAttempts,
+      if (lastAttemptStatus != null) 'lastAttemptStatus': lastAttemptStatus,
+      if (receiptUrl != null) 'receiptUrl': receiptUrl,
     };
+  }
+
+  Map<String, dynamic> toWebhookPayload() {
+    return {
+      'invoiceId': id,
+      'franchiseeId': franchiseeId,
+      'amount': amount,
+      'currency': currency,
+      'status': status,
+      'dueDate': dueDate.toIso8601String(),
+      'createdAt': createdAt.toIso8601String(),
+      'receiptUrl': receiptUrl,
+      'paymentProvider': paymentProvider,
+      'externalInvoiceId': externalInvoiceId,
+      'subscriptionId': subscriptionId,
+      'invoiceNumber': invoiceNumber,
+      'paidAt': paidAt?.toIso8601String(),
+    };
+  }
+
+  /// Parses invoice data from a Stripe invoice webhook payload.
+  factory PlatformInvoice.fromStripeWebhook(
+    Map<String, dynamic> eventData,
+    String invoiceId,
+  ) {
+    final invoice = eventData['data']['object'];
+
+    return PlatformInvoice(
+      id: invoiceId,
+      franchiseeId: invoice['metadata']['franchiseeId'] ?? '',
+      invoiceNumber: invoice['number'] ?? invoiceId,
+      amount: (invoice['amount_due'] ?? 0) / 100, // Stripe uses cents
+      currency: invoice['currency']?.toUpperCase() ?? 'USD',
+      createdAt: DateTime.fromMillisecondsSinceEpoch(invoice['created'] * 1000),
+      dueDate: invoice['due_date'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(invoice['due_date'] * 1000)
+          : DateTime.fromMillisecondsSinceEpoch(invoice['created'] * 1000)
+              .add(const Duration(days: 30)),
+      status: invoice['status'] ?? 'unpaid',
+      issuedBy: 'stripe',
+      paymentIds:
+          invoice['payment_intent'] != null ? [invoice['payment_intent']] : [],
+      lineItems: invoice['lines'] != null
+          ? {
+              'raw': invoice['lines'],
+            }
+          : null,
+      note: invoice['description'],
+      pdfUrl: invoice['invoice_pdf'],
+      receiptUrl:
+          invoice['hosted_invoice_url'], // This is Stripe’s receipt page
+      planId: invoice['metadata']['planId'],
+      externalInvoiceId: invoice['id'],
+      paymentProvider: 'stripe',
+      paymentMethod:
+          invoice['payment_settings']?['payment_method_types'] != null
+              ? invoice['payment_settings']['payment_method_types'].join(', ')
+              : null,
+      isTest: invoice['livemode'] == false,
+      subscriptionId: invoice['subscription'],
+      paidAt: invoice['status_transitions']?['paid_at'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(
+              invoice['status_transitions']['paid_at'] * 1000)
+          : null,
+    );
   }
 }

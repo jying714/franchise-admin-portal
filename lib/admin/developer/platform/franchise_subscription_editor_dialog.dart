@@ -8,6 +8,7 @@ import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
 import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
 import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
 import 'package:provider/provider.dart';
+import 'package:franchise_admin_portal/widgets/role_guard.dart';
 
 class FranchiseSubscriptionEditorDialog extends StatefulWidget {
   final FranchiseSubscription? subscription; // null if creating new
@@ -38,6 +39,12 @@ class _FranchiseSubscriptionEditorDialogState
   String _status = 'active';
   bool _cancelAtPeriodEnd = false;
   List<PlatformPlan> _plans = [];
+  String? _paymentTokenId;
+  String? _cardLast4;
+  String? _cardBrand;
+  String? _billingEmail;
+  String? _paymentStatus;
+  String? _receiptUrl;
 
   @override
   void initState() {
@@ -56,6 +63,12 @@ class _FranchiseSubscriptionEditorDialogState
     final validStatuses = ['active', 'paused', 'trialing', 'canceled'];
     _status = validStatuses.contains(sub?.status) ? sub!.status! : 'active';
     _cancelAtPeriodEnd = sub?.cancelAtPeriodEnd ?? false;
+    _paymentTokenId = sub?.paymentTokenId;
+    _cardLast4 = sub?.cardLast4;
+    _cardBrand = sub?.cardBrand;
+    _billingEmail = sub?.billingEmail;
+    _paymentStatus = sub?.paymentStatus;
+    _receiptUrl = sub?.receiptUrl;
     _loadPlans();
   }
 
@@ -102,13 +115,17 @@ class _FranchiseSubscriptionEditorDialogState
     final fs = context.read<FirestoreService>();
 
     try {
+      final selectedPlan = _plans.firstWhere((p) => p.id == _selectedPlanId);
+      final billingCycleInDays =
+          selectedPlan.billingInterval == 'yearly' ? 365 : 30;
       final newSub = FranchiseSubscription(
         id: widget.subscription?.id ?? '',
         franchiseId: widget.franchiseId,
         platformPlanId: _selectedPlanId!,
         status: _status,
         startDate: _startDate,
-        nextBillingDate: _nextBillingDate,
+        nextBillingDate: _startDate.add(Duration(days: billingCycleInDays)),
+        billingCycleInDays: billingCycleInDays,
         isTrial: _isTrial,
         trialEndsAt: _isTrial ? _trialEndsAt : null,
         discountPercent: _discountPercent,
@@ -119,6 +136,12 @@ class _FranchiseSubscriptionEditorDialogState
         priceAtSubscription: widget.subscription?.priceAtSubscription ?? 0.0,
         subscribedAt: widget.subscription?.subscribedAt ?? DateTime.now(),
         cancelAtPeriodEnd: _cancelAtPeriodEnd,
+        paymentTokenId: _paymentTokenId,
+        cardLast4: _cardLast4,
+        cardBrand: _cardBrand,
+        billingEmail: _billingEmail,
+        paymentStatus: _paymentStatus,
+        receiptUrl: _receiptUrl,
       );
 
       await fs.saveFranchiseSubscription(newSub);
@@ -236,6 +259,50 @@ class _FranchiseSubscriptionEditorDialogState
                       secondary: (_status == 'paused' || _status == 'canceled')
                           ? const Icon(Icons.lock_outline)
                           : null,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  RoleGuard(
+                    allowedRoles: ['platform_owner', 'developer'],
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          initialValue: _billingEmail,
+                          decoration: InputDecoration(
+                            labelText: loc.billingEmail,
+                            border: const OutlineInputBorder(),
+                          ),
+                          onChanged: (val) => _billingEmail = val.trim(),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          initialValue: _paymentTokenId,
+                          decoration: const InputDecoration(
+                            labelText: 'Payment Token (for debug)',
+                            border: OutlineInputBorder(),
+                          ),
+                          onChanged: (val) => _paymentTokenId = val.trim(),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          initialValue: _cardLast4,
+                          decoration: const InputDecoration(
+                            labelText: 'Card Last 4',
+                            border: OutlineInputBorder(),
+                          ),
+                          readOnly: true,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          initialValue: _cardBrand,
+                          decoration: const InputDecoration(
+                            labelText: 'Card Brand',
+                            border: OutlineInputBorder(),
+                          ),
+                          readOnly: true,
+                        ),
+                      ],
                     ),
                   ),
                 ],

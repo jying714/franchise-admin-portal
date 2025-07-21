@@ -12,6 +12,9 @@ import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/widgets/role_guard.dart';
+import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
+import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
 
 class StaffAccessScreen extends StatefulWidget {
   const StaffAccessScreen({super.key});
@@ -34,127 +37,134 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
     if (loc == null) {
       print(
           '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
+      return const Scaffold(
         body: Center(child: Text('Localization missing! [debug]')),
       );
     }
-    final user = Provider.of<UserProfileNotifier>(context).user;
+
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
 
-    if (!UserPermissions.canManageStaff(user)) {
-      return AdminUnauthorizedWidget(
-        title: loc.staffAccessTitle,
-        message: loc.unauthorizedAdminMessage,
-        buttonText: loc.returnToHomeButton,
-        onReturnHome: () =>
-            Navigator.of(context).pushNamedAndRemoveUntil('/', (_) => false),
-      );
-    }
-
-    return Scaffold(
-      backgroundColor: DesignTokens.backgroundColor,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: DesignTokens.primaryColor,
-        tooltip: loc.staffAddStaffTooltip,
-        child: const Icon(Icons.person_add),
-        onPressed: () => _showAddStaffDialog(context, firestoreService, loc),
-      ),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 11,
-            child: Padding(
-              padding:
-                  const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          loc.staffAccessTitle,
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 22,
-                          ),
-                        ),
-                        const Spacer(),
-                        FloatingActionButton(
-                          heroTag: "addStaffBtn",
-                          mini: true,
-                          backgroundColor: DesignTokens.primaryColor,
-                          child: const Icon(Icons.person_add),
-                          tooltip: loc.staffAddStaffTooltip,
-                          onPressed: () => _showAddStaffDialog(
-                              context, firestoreService, loc),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: StreamBuilder<List<admin_user.User>>(
-                      stream: firestoreService.getStaffUsers(franchiseId),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const LoadingShimmerWidget();
-                        }
-                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return EmptyStateWidget(
-                            title: loc.staffNoStaffTitle,
-                            message: loc.staffNoStaffMessage,
-                            imageAsset: BrandingConfig.adminEmptyStateImage,
-                            isAdmin: true,
-                          );
-                        }
-                        final staff = snapshot.data!;
-                        return ListView.separated(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: staff.length,
-                          separatorBuilder: (_, __) => const Divider(),
-                          itemBuilder: (context, i) {
-                            final user = staff[i];
-                            return ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: DesignTokens.secondaryColor,
-                                child: Text(
-                                  user.name.isNotEmpty ? user.name[0] : '?',
-                                  style: const TextStyle(color: Colors.white),
-                                ),
+    return RoleGuard(
+      allowedRoles: const [
+        'platform_owner',
+        'hq_owner',
+        'manager',
+        'developer',
+        'admin'
+      ],
+      featureName: 'staff_access_screen',
+      screen: 'StaffAccessScreen',
+      child: SubscriptionAccessGuard(
+        child: Scaffold(
+          backgroundColor: DesignTokens.backgroundColor,
+          floatingActionButton: FloatingActionButton(
+            backgroundColor: DesignTokens.primaryColor,
+            tooltip: loc.staffAddStaffTooltip,
+            child: const Icon(Icons.person_add),
+            onPressed: () =>
+                _showAddStaffDialog(context, firestoreService, loc),
+          ),
+          body: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 11,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const GracePeriodBanner(),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              loc.staffAccessTitle,
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 22,
                               ),
-                              title: Text(user.name,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
-                              subtitle: Text(
-                                  '${user.email} • ${user.roles.join(", ")}'),
-                              trailing: IconButton(
-                                icon:
-                                    const Icon(Icons.delete, color: Colors.red),
-                                tooltip: loc.staffRemoveTooltip,
-                                onPressed: () => _confirmRemoveStaff(
-                                    context, firestoreService, user, loc),
-                              ),
+                            ),
+                            const Spacer(),
+                            FloatingActionButton(
+                              heroTag: "addStaffBtn",
+                              mini: true,
+                              backgroundColor: DesignTokens.primaryColor,
+                              child: const Icon(Icons.person_add),
+                              tooltip: loc.staffAddStaffTooltip,
+                              onPressed: () => _showAddStaffDialog(
+                                  context, firestoreService, loc),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: StreamBuilder<List<admin_user.User>>(
+                          stream: firestoreService.getStaffUsers(franchiseId),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const LoadingShimmerWidget();
+                            }
+                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                              return EmptyStateWidget(
+                                title: loc.staffNoStaffTitle,
+                                message: loc.staffNoStaffMessage,
+                                imageAsset: BrandingConfig.adminEmptyStateImage,
+                                isAdmin: true,
+                              );
+                            }
+                            final staff = snapshot.data!;
+                            return ListView.separated(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: staff.length,
+                              separatorBuilder: (_, __) => const Divider(),
+                              itemBuilder: (context, i) {
+                                final user = staff[i];
+                                return ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor:
+                                        DesignTokens.secondaryColor,
+                                    child: Text(
+                                      user.name.isNotEmpty ? user.name[0] : '?',
+                                      style:
+                                          const TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                  title: Text(user.name,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  subtitle: Text(
+                                      '${user.email} • ${user.roles.join(", ")}'),
+                                  trailing: IconButton(
+                                    icon: const Icon(Icons.delete,
+                                        color: Colors.red),
+                                    tooltip: loc.staffRemoveTooltip,
+                                    onPressed: () => _confirmRemoveStaff(
+                                        context, firestoreService, user, loc),
+                                  ),
+                                );
+                              },
                             );
                           },
-                        );
-                      },
-                    ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+              Expanded(
+                flex: 9,
+                child: Container(),
+              ),
+            ],
           ),
-          Expanded(
-            flex: 9,
-            child: Container(),
-          ),
-        ],
+        ),
       ),
     );
   }

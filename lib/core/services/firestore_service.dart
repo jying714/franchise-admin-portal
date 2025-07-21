@@ -3315,6 +3315,35 @@ class FirestoreService {
     }
   }
 
+  Future<void> savePlatformInvoiceFromWebhook(
+    Map<String, dynamic> eventData,
+    String invoiceId,
+  ) async {
+    try {
+      final invoice = PlatformInvoice.fromStripeWebhook(eventData, invoiceId);
+      final ref = firestore.FirebaseFirestore.instance
+          .collection('platform_invoices')
+          .doc(invoiceId);
+
+      await ref.set(invoice.toMap(), firestore.SetOptions(merge: true));
+
+      print('[FirestoreService] Invoice $invoiceId saved from webhook.');
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to save platform invoice from webhook: $e',
+        stack: stack.toString(),
+        source: 'FirestoreService',
+        screen: 'webhook_invoice_handler',
+        severity: 'error',
+        contextData: {
+          'invoiceId': invoiceId,
+          'eventType': eventData['type'],
+        },
+      );
+      rethrow;
+    }
+  }
+
   Future<List<PlatformInvoice>> getPlatformInvoicesForFranchisee(
       String franchiseeId) async {
     try {
@@ -3495,36 +3524,6 @@ class FirestoreService {
         severity: 'error',
       );
       return [];
-    }
-  }
-
-  static Future<PlatformPlan?> getPlatformPlanById(String id) async {
-    try {
-      final doc = await _db.collection('platform_plans').doc(id).get();
-
-      if (doc.exists) {
-        return PlatformPlan.fromFirestore(doc);
-      } else {
-        ErrorLogger.log(
-          message: 'PlatformPlan not found for ID: $id',
-          stack: '',
-          source: 'FirestoreService',
-          screen: 'firestore_service.dart',
-          severity: 'warning',
-          contextData: {'missingId': id},
-        );
-        return null;
-      }
-    } catch (e, stack) {
-      ErrorLogger.log(
-        message: 'Error fetching PlatformPlan by ID: $id',
-        stack: stack.toString(),
-        source: 'FirestoreService',
-        screen: 'firestore_service.dart',
-        severity: 'error',
-        contextData: {'exception': e.toString(), 'id': id},
-      );
-      return null;
     }
   }
 

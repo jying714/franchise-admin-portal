@@ -3,15 +3,21 @@ import 'package:intl/intl.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
+import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
 import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_subscription_provider.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/widgets/role_guard.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/tight_section_card.dart';
 
-class ActivePlanBanner extends StatelessWidget {
+class ActivePlanBanner extends StatefulWidget {
   const ActivePlanBanner({Key? key}) : super(key: key);
+
+  @override
+  State<ActivePlanBanner> createState() => _ActivePlanBannerState();
+}
+
+class _ActivePlanBannerState extends State<ActivePlanBanner> {
+  bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -19,20 +25,39 @@ class ActivePlanBanner extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final subscriptionNotifier = context.watch<FranchiseSubscriptionNotifier>();
+
     if (!subscriptionNotifier.hasLoaded) {
-      debugPrint('[ActivePlanBanner] Waiting for subscription to load...');
       return const LinearProgressIndicator();
     }
-    final subscription = subscriptionNotifier.currentSubscription;
 
-    debugPrint('[ActivePlanBanner] Build called');
-    if (subscription == null) {
-      debugPrint('[ActivePlanBanner] No current subscription found.');
-    } else {
-      debugPrint('[ActivePlanBanner] Subscription found: '
-          'planId=${subscription.platformPlanId}, '
-          'billingInterval=${subscription.billingInterval}');
+    final subscription = subscriptionNotifier.currentSubscription;
+    final plan = subscriptionNotifier.activePlatformPlan;
+
+    if (subscription == null || subscription.platformPlanId.isEmpty) {
+      return RoleGuard(
+        allowedRoles: const ['hq_owner', 'platform_owner', 'developer'],
+        child: TightSectionCard(
+          title: loc.currentPlatformPlan,
+          icon: Icons.verified,
+          builder: (context) => Text(
+            loc.noActivePlatformPlan,
+            style: textTheme.bodyMedium,
+          ),
+        ),
+      );
     }
+
+    final snapshot = subscription.planSnapshot ?? {};
+    final name = snapshot['name'] ?? plan?.name ?? loc.unknownPlan;
+    final price = snapshot['price'] ?? plan?.price ?? 0;
+    final interval =
+        snapshot['billingInterval'] ?? plan?.billingInterval ?? 'monthly';
+    final features =
+        List<String>.from(snapshot['features'] ?? plan?.includedFeatures ?? []);
+    final formattedNextBilling =
+        DateFormat.yMMMMd().format(subscription.nextBillingDate);
+    final formattedStartDate =
+        DateFormat.yMMMMd().format(subscription.startDate);
 
     return RoleGuard(
       allowedRoles: const ['hq_owner', 'platform_owner', 'developer'],
@@ -40,154 +65,133 @@ class ActivePlanBanner extends StatelessWidget {
         title: loc.currentPlatformPlan,
         icon: Icons.verified,
         builder: (context) {
-          if (subscription == null || subscription.platformPlanId.isEmpty) {
-            debugPrint('[ActivePlanBanner] subscription null or planId empty');
-            return Text(
-              loc.noActivePlatformPlan,
-              style: textTheme.bodyMedium,
-            );
-          }
-
-          final planSnapshot = subscription.planSnapshot;
-          debugPrint('[ActivePlanBanner] Snapshot: $planSnapshot');
-
-          if (planSnapshot != null && planSnapshot.isNotEmpty) {
-            final name = planSnapshot['name'] ?? 'Unnamed Plan';
-            final interval = subscription.billingInterval ?? 'monthly';
-            final features = List<String>.from(planSnapshot['features'] ?? []);
-            final formattedDate =
-                DateFormat.yMMMMd().format(subscription.nextBillingDate);
-
-            debugPrint('[ActivePlanBanner] Rendering from snapshot: $name');
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$name – $interval',
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  loc.nextBillingDate(formattedDate),
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: -4,
-                  children: features.map((f) {
-                    return Chip(
-                      label: Text(f, style: textTheme.labelSmall),
-                      backgroundColor: colorScheme.surfaceVariant,
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                    );
-                  }).toList(),
-                ),
-              ],
-            );
-          }
-
-          // Fallback to Firestore fetch
-          debugPrint(
-              '[ActivePlanBanner] Snapshot missing. Fetching plan from Firestore for ID: ${subscription.platformPlanId}');
-
-          return FutureBuilder<PlatformPlan?>(
-            future: _fetchPlan(subscription.platformPlanId),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                debugPrint('[ActivePlanBanner] Waiting for Firestore fetch...');
-                return const LinearProgressIndicator();
-              }
-
-              if (snapshot.hasError || !snapshot.hasData) {
-                debugPrint('[ActivePlanBanner] Fetch error or no data');
-                ErrorLogger.log(
-                  message: 'Failed to fetch platform plan',
-                  source: 'ActivePlanBanner',
-                  screen: 'available_platform_plans_screen',
-                  severity: 'warning',
-                  contextData: {
-                    'error': snapshot.error.toString(),
-                    'planId': subscription.platformPlanId
-                  },
-                );
-                return Text(
-                  loc.errorLoadingPlan,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.error,
-                  ),
-                );
-              }
-
-              final plan = snapshot.data!;
-              final formattedDate =
-                  DateFormat.yMMMMd().format(subscription.nextBillingDate);
-
-              debugPrint(
-                  '[ActivePlanBanner] Successfully fetched plan: ${plan.name}');
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Row: Plan name + price + interval + chevron
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '${plan.name} – ${subscription.billingInterval ?? plan.billingInterval}',
+                    '$name – \$${price.toStringAsFixed(2)} / $interval',
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    loc.nextBillingDate(formattedDate),
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: -4,
-                    children: plan.includedFeatures.map((f) {
-                      return Chip(
-                        label: Text(f, style: textTheme.labelSmall),
-                        backgroundColor: colorScheme.surfaceVariant,
-                        visualDensity: VisualDensity.compact,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                      );
-                    }).toList(),
+                  IconButton(
+                    icon: Icon(_isExpanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down),
+                    onPressed: () {
+                      setState(() => _isExpanded = !_isExpanded);
+                    },
                   ),
                 ],
-              );
-            },
+              ),
+
+              const SizedBox(height: 8),
+              Text(
+                loc.nextBillingDate(formattedNextBilling),
+                style: textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: -4,
+                children: features.map((f) {
+                  return Chip(
+                    label: Text(f, style: textTheme.labelSmall),
+                    backgroundColor: colorScheme.surfaceVariant,
+                    visualDensity: VisualDensity.compact,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  );
+                }).toList(),
+              ),
+
+              if (_isExpanded) ...[
+                const SizedBox(height: 12),
+                Divider(
+                    thickness: 1, color: colorScheme.outline.withOpacity(0.1)),
+                Text(
+                  '${loc.subscriptionStartDate(formattedStartDate)}',
+                  style: textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${loc.status}: ${subscription.status}',
+                  style: textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${loc.autoRenewLabel}: ${subscription.autoRenew ? loc.yes : loc.no}',
+                  style: textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${loc.cancelAtPeriodEndLabel}: ${subscription.cancelAtPeriodEnd ? loc.yes : loc.no}',
+                  style: textTheme.bodyMedium,
+                ),
+                if (subscription.hasOverdueInvoice)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      loc.overduePaymentWarning,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.error,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                if (subscription.paymentStatus != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '${loc.paymentStatusLabel}: ${subscription.paymentStatus}',
+                    style: textTheme.bodyMedium,
+                  ),
+                ],
+                if (subscription.cardLast4 != null &&
+                    subscription.cardBrand != null &&
+                    subscription.paymentTokenId != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '${loc.cardOnFileLabel}: ${subscription.cardBrand} •••• ${subscription.cardLast4}',
+                    style: textTheme.bodyMedium,
+                  ),
+                ],
+                if (subscription.receiptUrl != null &&
+                    subscription.receiptUrl!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  GestureDetector(
+                    onTap: () {
+                      // Ideally you use `url_launcher` to open the receipt
+                    },
+                    child: Text(
+                      loc.viewLastReceipt,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.primary,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
+                if (subscription.gracePeriodEndsAt != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    '${loc.gracePeriodEndsAtLabel}: ${DateFormat.yMMMMd().format(subscription.gracePeriodEndsAt!)}',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.error,
+                    ),
+                  ),
+                ],
+              ],
+            ],
           );
         },
       ),
     );
-  }
-
-  Future<PlatformPlan?> _fetchPlan(String planId) async {
-    try {
-      debugPrint(
-          '[ActivePlanBanner] Calling FirestoreService.getPlatformPlanById($planId)');
-      return await FirestoreService.getPlatformPlanById(planId);
-    } catch (e, stack) {
-      debugPrint('[ActivePlanBanner] Exception in _fetchPlan: $e');
-      ErrorLogger.log(
-        message: 'Error fetching plan by ID: $planId',
-        stack: stack.toString(),
-        source: 'ActivePlanBanner',
-        screen: 'available_platform_plans_screen',
-        severity: 'error',
-        contextData: {'exception': e.toString()},
-      );
-      return null;
-    }
   }
 }

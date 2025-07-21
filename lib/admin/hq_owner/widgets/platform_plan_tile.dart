@@ -242,6 +242,7 @@ class _PlatformPlanTileState extends State<PlatformPlanTile> {
     try {
       final now = DateTime.now();
       final nextBilling = now.add(const Duration(days: 30));
+      final billingCycleInDays = _selectedInterval == 'yearly' ? 365 : 30;
 
       final subscription = FranchiseSubscription(
         id: franchiseId,
@@ -250,6 +251,7 @@ class _PlatformPlanTileState extends State<PlatformPlanTile> {
         status: 'active',
         startDate: now,
         nextBillingDate: nextBilling,
+        billingCycleInDays: billingCycleInDays,
         isTrial: false,
         discountPercent: 0,
         priceAtSubscription: widget.plan.price,

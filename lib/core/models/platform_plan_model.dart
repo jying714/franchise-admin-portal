@@ -12,6 +12,7 @@ class PlatformPlan {
   final bool isCustom;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String? planVersion;
 
   PlatformPlan({
     required this.id,
@@ -25,6 +26,7 @@ class PlatformPlan {
     required this.isCustom,
     this.createdAt,
     this.updatedAt,
+    this.planVersion,
   });
 
   factory PlatformPlan.fromMap(String id, Map<String, dynamic> data) {
@@ -43,6 +45,7 @@ class PlatformPlan {
       isCustom: data['isCustom'] ?? false,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+      planVersion: data['planVersion'] ?? 'v1',
     );
   }
 
@@ -58,6 +61,7 @@ class PlatformPlan {
       'isCustom': isCustom,
       'createdAt': createdAt ?? FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
+      'planVersion': planVersion ?? 'v1',
     };
   }
 
@@ -72,6 +76,7 @@ class PlatformPlan {
     bool? isCustom,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? planVersion,
   }) {
     return PlatformPlan(
       id: id,
@@ -85,6 +90,7 @@ class PlatformPlan {
       isCustom: isCustom ?? this.isCustom,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      planVersion: planVersion ?? this.planVersion,
     );
   }
 

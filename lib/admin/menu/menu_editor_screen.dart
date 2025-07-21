@@ -30,6 +30,8 @@ import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/role_guard.dart';
 import 'package:franchise_admin_portal/core/utils/user_permissions.dart';
+import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
+import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
 
 const menuItemColumns = [
   {"key": "image", "width": 56.0, "header": "Image"},
@@ -537,6 +539,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
     final loc = AppLocalizations.of(context);
     debugPrint(
         '[MenuEditorScreen] Current user: ${user?.email}, roles: ${user?.roles}, franchiseId: $franchiseId');
+
     if (loc == null) {
       print(
           '[${runtimeType}] loc is null! Localization not available for this context.');
@@ -544,401 +547,430 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
         body: Center(child: Text('Localization missing! [debug]')),
       );
     }
-    final colorScheme = Theme.of(context).colorScheme;
 
     if (user == null) {
       debugPrint(
           '[MenuEditorScreen] No user loaded – returning unauthorized scaffold');
       return _unauthorizedScaffold();
     }
-    if (!UserPermissions.canAccessMenuEditor(user))
-      return _unauthorizedScaffold();
 
-    final canEdit = UserPermissions.canEditMenu(user);
-    final canDeleteOrExport = UserPermissions.canDeleteMenu(user);
+    final colorScheme = Theme.of(context).colorScheme;
+    final canEdit = true;
+    final canDeleteOrExport = true;
 
-    return Scaffold(
-      backgroundColor: colorScheme.background,
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 11,
-            child: StreamBuilder<List<Category>>(
-              stream: firestore.getCategories(franchiseId),
-              builder: (context, catSnapshot) {
-                return DelayedLoadingShimmer(
-                  loading:
-                      catSnapshot.connectionState == ConnectionState.waiting,
-                  child: Builder(
-                    builder: (context) {
-                      if (catSnapshot.hasError) {
-                        return EmptyStateWidget(
-                          title: AppLocalizations.of(context)!
-                              .errorLoadingCategories,
-                          message: catSnapshot.error.toString(),
-                        );
-                      }
-                      final categories = catSnapshot.data ?? [];
-                      if (categories.isEmpty) {
-                        return EmptyStateWidget(
-                          title: AppLocalizations.of(context)!.noCategories,
-                          message:
-                              AppLocalizations.of(context)!.noCategoriesMsg,
-                        );
-                      }
-                      return StreamBuilder<List<MenuItem>>(
-                        stream: firestore.getMenuItems(franchiseId),
-                        builder: (context, itemSnapshot) {
-                          return DelayedLoadingShimmer(
-                            loading: itemSnapshot.connectionState ==
-                                ConnectionState.waiting,
-                            child: Builder(builder: (context) {
-                              if (itemSnapshot.hasError) {
-                                return EmptyStateWidget(
-                                  title: AppLocalizations.of(context)!
-                                      .errorLoadingMenu,
-                                  message: itemSnapshot.error.toString(),
-                                );
-                              }
-                              var items = itemSnapshot.data ?? [];
-                              if (_categoryFilter != null &&
-                                  _categoryFilter!.isNotEmpty) {
-                                items = items
-                                    .where((i) => i.category == _categoryFilter)
-                                    .toList();
-                              }
-                              if (_search.isNotEmpty) {
-                                items = items
-                                    .where((i) =>
-                                        i.name
-                                            .toLowerCase()
-                                            .contains(_search.toLowerCase()) ||
-                                        (i.sku?.toLowerCase().contains(
-                                                _search.toLowerCase()) ??
-                                            false))
-                                    .toList();
-                              }
-                              if (_sortKey != null) {
-                                items.sort((a, b) {
-                                  int cmp = 0;
-                                  switch (_sortKey) {
-                                    case 'name':
-                                      cmp = a.name.compareTo(b.name);
-                                      break;
-                                    case 'category':
-                                      cmp = a.category.compareTo(b.category);
-                                      break;
-                                    case 'price':
-                                      cmp = a.price.compareTo(b.price);
-                                      break;
-                                    default:
-                                      cmp = 0;
-                                  }
-                                  return _sortAsc ? cmp : -cmp;
-                                });
-                              }
+    return RoleGuard(
+      allowedRoles: const [
+        'platform_owner',
+        'hq_owner',
+        'manager',
+        'developer',
+        'admin'
+      ],
+      featureName: 'menu_editor_screen',
+      screen: 'MenuEditorScreen',
+      child: SubscriptionAccessGuard(
+        child: Scaffold(
+          backgroundColor: colorScheme.background,
+          body: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 11,
+                child: StreamBuilder<List<Category>>(
+                  stream: firestore.getCategories(franchiseId),
+                  builder: (context, catSnapshot) {
+                    return DelayedLoadingShimmer(
+                      loading: catSnapshot.connectionState ==
+                          ConnectionState.waiting,
+                      child: Builder(
+                        builder: (context) {
+                          if (catSnapshot.hasError) {
+                            return EmptyStateWidget(
+                              title: AppLocalizations.of(context)!
+                                  .errorLoadingCategories,
+                              message: catSnapshot.error.toString(),
+                            );
+                          }
+                          final categories = catSnapshot.data ?? [];
+                          if (categories.isEmpty) {
+                            return EmptyStateWidget(
+                              title: AppLocalizations.of(context)!.noCategories,
+                              message:
+                                  AppLocalizations.of(context)!.noCategoriesMsg,
+                            );
+                          }
 
-                              // --- UI Start ---
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        top: 24,
-                                        left: 16,
-                                        right: 8,
-                                        bottom: 12),
-                                    child: Row(
+                          return StreamBuilder<List<MenuItem>>(
+                            stream: firestore.getMenuItems(franchiseId),
+                            builder: (context, itemSnapshot) {
+                              return DelayedLoadingShimmer(
+                                loading: itemSnapshot.connectionState ==
+                                    ConnectionState.waiting,
+                                child: Builder(
+                                  builder: (context) {
+                                    if (itemSnapshot.hasError) {
+                                      return EmptyStateWidget(
+                                        title: AppLocalizations.of(context)!
+                                            .errorLoadingMenu,
+                                        message: itemSnapshot.error.toString(),
+                                      );
+                                    }
+
+                                    var items = itemSnapshot.data ?? [];
+
+                                    if (_categoryFilter != null &&
+                                        _categoryFilter!.isNotEmpty) {
+                                      items = items
+                                          .where((i) =>
+                                              i.category == _categoryFilter)
+                                          .toList();
+                                    }
+
+                                    if (_search.isNotEmpty) {
+                                      items = items
+                                          .where((i) =>
+                                              i.name.toLowerCase().contains(
+                                                  _search.toLowerCase()) ||
+                                              (i.sku?.toLowerCase().contains(
+                                                      _search.toLowerCase()) ??
+                                                  false))
+                                          .toList();
+                                    }
+
+                                    if (_sortKey != null) {
+                                      items.sort((a, b) {
+                                        int cmp = 0;
+                                        switch (_sortKey) {
+                                          case 'name':
+                                            cmp = a.name.compareTo(b.name);
+                                            break;
+                                          case 'category':
+                                            cmp = a.category
+                                                .compareTo(b.category);
+                                            break;
+                                          case 'price':
+                                            cmp = a.price.compareTo(b.price);
+                                            break;
+                                          default:
+                                            cmp = 0;
+                                        }
+                                        return _sortAsc ? cmp : -cmp;
+                                      });
+                                    }
+
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
                                       children: [
-                                        Text(
-                                          AppLocalizations.of(context)!
-                                              .menuEditorTitle,
-                                          style: TextStyle(
-                                            color: colorScheme.onBackground,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 22,
+                                        const GracePeriodBanner(),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              top: 24,
+                                              left: 16,
+                                              right: 8,
+                                              bottom: 12),
+                                          child: Row(
+                                            children: [
+                                              Text(
+                                                AppLocalizations.of(context)!
+                                                    .menuEditorTitle,
+                                                style: TextStyle(
+                                                  color:
+                                                      colorScheme.onBackground,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 22,
+                                                ),
+                                              ),
+                                              const Spacer(),
+                                              AdminMenuEditorPopupMenu(
+                                                showDeleted: _showDeleted,
+                                                canDeleteOrExport:
+                                                    canDeleteOrExport,
+                                                onShowColumns:
+                                                    _showChooseColumnsDialog,
+                                                onBulkUpload: () async {
+                                                  final cats = await firestore
+                                                      .getCategories(
+                                                          franchiseId)
+                                                      .first;
+                                                  _bulkUpload(franchiseId,
+                                                      context, cats, user);
+                                                },
+                                                onToggleShowDeleted: () {
+                                                  setState(() => _showDeleted =
+                                                      !_showDeleted);
+                                                },
+                                                onExportCSV: () {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (_) =>
+                                                        const ExportMenuDialog(),
+                                                  );
+                                                },
+                                                columnsLabel: loc.colColumns,
+                                                importCSVLabel: loc.importCSV,
+                                                showDeletedLabel:
+                                                    loc.showDeleted,
+                                                exportCSVLabel: loc.exportCSV,
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                        const Spacer(),
-                                        AdminMenuEditorPopupMenu(
-                                          showDeleted: _showDeleted,
-                                          canDeleteOrExport: canDeleteOrExport,
-                                          onShowColumns:
-                                              _showChooseColumnsDialog,
-                                          onBulkUpload: () async {
-                                            final cats = await firestore
-                                                .getCategories(franchiseId)
-                                                .first;
-                                            _bulkUpload(franchiseId, context,
-                                                cats, user);
-                                          },
-                                          onToggleShowDeleted: () {
-                                            setState(() =>
-                                                _showDeleted = !_showDeleted);
-                                          },
-                                          onExportCSV: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (_) =>
-                                                  const ExportMenuDialog(),
-                                            );
-                                          },
-                                          columnsLabel: loc.colColumns,
-                                          importCSVLabel: loc.importCSV,
-                                          showDeletedLabel: loc.showDeleted,
-                                          exportCSVLabel: loc.exportCSV,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  // Search and category filter
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8.0),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: TextField(
-                                            controller: _searchController,
-                                            decoration: InputDecoration(
-                                              hintText:
-                                                  AppLocalizations.of(context)!
-                                                      .adminSearchHint,
-                                              prefixIcon:
-                                                  const Icon(Icons.search),
-                                              border: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(24),
-                                                borderSide: BorderSide.none,
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8.0),
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: TextField(
+                                                  controller: _searchController,
+                                                  decoration: InputDecoration(
+                                                    hintText:
+                                                        AppLocalizations.of(
+                                                                context)!
+                                                            .adminSearchHint,
+                                                    prefixIcon: const Icon(
+                                                        Icons.search),
+                                                    border: OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              24),
+                                                      borderSide:
+                                                          BorderSide.none,
+                                                    ),
+                                                    filled: true,
+                                                    fillColor:
+                                                        colorScheme.surface,
+                                                    contentPadding:
+                                                        const EdgeInsets
+                                                            .symmetric(
+                                                            horizontal: 16,
+                                                            vertical: 0),
+                                                  ),
+                                                  style: TextStyle(
+                                                      color: colorScheme
+                                                          .onSurface),
+                                                  onChanged: (q) {
+                                                    setState(() {
+                                                      _search = q;
+                                                    });
+                                                  },
+                                                ),
                                               ),
-                                              filled: true,
-                                              fillColor: colorScheme.surface,
-                                              contentPadding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 16,
-                                                      vertical: 0),
-                                            ),
-                                            style: TextStyle(
-                                              color: colorScheme.onSurface,
-                                            ),
-                                            onChanged: (q) {
-                                              setState(() {
-                                                _search = q;
-                                              });
+                                              const SizedBox(width: 12),
+                                              FilterDropdown<String>(
+                                                label: AppLocalizations.of(
+                                                        context)!
+                                                    .colCategory,
+                                                options: [''] +
+                                                    categories
+                                                        .map((cat) => cat.id)
+                                                        .toList(),
+                                                value: _categoryFilter ?? '',
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    _categoryFilter = (value !=
+                                                                null &&
+                                                            value.isNotEmpty)
+                                                        ? value
+                                                        : null;
+                                                  });
+                                                },
+                                                getLabel: (catId) {
+                                                  if (catId == '')
+                                                    return AppLocalizations.of(
+                                                            context)!
+                                                        .all;
+                                                  final match =
+                                                      categories.where(
+                                                          (c) => c.id == catId);
+                                                  return match.isNotEmpty
+                                                      ? match.first.name
+                                                      : catId;
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        buildMenuHeaderRow(context),
+                                        const Divider(height: 1),
+                                        Expanded(
+                                          child: ValueListenableBuilder<
+                                              List<String>>(
+                                            valueListenable: _selectedIds,
+                                            builder: (context, selectedIds, _) {
+                                              if (items.isEmpty) {
+                                                return EmptyStateWidget(
+                                                  title: AppLocalizations.of(
+                                                          context)!
+                                                      .noMenuItems,
+                                                  message: AppLocalizations.of(
+                                                          context)!
+                                                      .noMenuItemsMsg,
+                                                );
+                                              }
+                                              return ListView.separated(
+                                                itemCount: items.length,
+                                                separatorBuilder: (_, __) =>
+                                                    Divider(
+                                                        height: 1,
+                                                        color: colorScheme
+                                                            .surface
+                                                            .withOpacity(0.6)),
+                                                itemBuilder: (ctx, idx) {
+                                                  final item = items[idx];
+                                                  final isSelected = selectedIds
+                                                      .contains(item.id);
+                                                  return buildMenuDataRow(
+                                                    franchiseId,
+                                                    ctx,
+                                                    item,
+                                                    categories,
+                                                    user,
+                                                    isSelected,
+                                                    canEdit,
+                                                    canDeleteOrExport,
+                                                  );
+                                                },
+                                              );
                                             },
                                           ),
                                         ),
-                                        const SizedBox(width: 12),
-                                        FilterDropdown<String>(
-                                          label: AppLocalizations.of(context)!
-                                              .colCategory,
-                                          options: [''] +
-                                              categories
-                                                  .map((cat) => cat.id)
-                                                  .toList(),
-                                          value: _categoryFilter ?? '',
-                                          onChanged: (value) {
-                                            setState(() {
-                                              _categoryFilter =
-                                                  (value != null &&
-                                                          value.isNotEmpty)
-                                                      ? value
-                                                      : null;
-                                            });
-                                          },
-                                          getLabel: (catId) {
-                                            if (catId == '')
-                                              return AppLocalizations.of(
-                                                      context)!
-                                                  .all;
-                                            final match = categories
-                                                .where((c) => c.id == catId);
-                                            return match.isNotEmpty
-                                                ? match.first.name
-                                                : catId;
+                                        ValueListenableBuilder<List<String>>(
+                                          valueListenable: _selectedIds,
+                                          builder: (context, selectedIds, _) {
+                                            return (selectedIds.isNotEmpty &&
+                                                    canDeleteOrExport)
+                                                ? SafeArea(
+                                                    minimum:
+                                                        const EdgeInsets.only(
+                                                            bottom: 8),
+                                                    child: Padding(
+                                                      padding: EdgeInsets.only(
+                                                        bottom: MediaQuery.of(
+                                                                context)
+                                                            .viewPadding
+                                                            .bottom,
+                                                      ),
+                                                      child:
+                                                          AdminBulkSelectionToolbar(
+                                                        selectedCount:
+                                                            selectedIds.length,
+                                                        onDelete: () {
+                                                          final selectedItems = items
+                                                              .where((i) =>
+                                                                  selectedIds
+                                                                      .contains(
+                                                                          i.id))
+                                                              .toList();
+                                                          _deleteMenuItems(
+                                                            franchiseId,
+                                                            context,
+                                                            selectedItems,
+                                                            user,
+                                                          );
+                                                        },
+                                                        onClearSelection:
+                                                            _clearSelection,
+                                                        deleteLabel:
+                                                            AppLocalizations.of(
+                                                                    context)!
+                                                                .bulkDelete,
+                                                        clearSelectionTooltip:
+                                                            AppLocalizations.of(
+                                                                    context)!
+                                                                .clearSelection,
+                                                        selectedLabel:
+                                                            AppLocalizations.of(
+                                                                    context)!
+                                                                .bulkActionsSelected(
+                                                          selectedIds.length,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  )
+                                                : const SizedBox.shrink();
                                           },
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  // TABLE HEADER
-                                  buildMenuHeaderRow(context),
-                                  const Divider(height: 1),
-                                  // TABLE BODY
-                                  Expanded(
-                                    child: ValueListenableBuilder<List<String>>(
-                                      valueListenable: _selectedIds,
-                                      builder: (context, selectedIds, _) {
-                                        if (items.isEmpty) {
-                                          return EmptyStateWidget(
-                                            title: AppLocalizations.of(context)!
-                                                .noMenuItems,
-                                            message:
-                                                AppLocalizations.of(context)!
-                                                    .noMenuItemsMsg,
-                                          );
-                                        }
-                                        return ListView.separated(
-                                          itemCount: items.length,
-                                          separatorBuilder: (_, __) => Divider(
-                                              height: 1,
-                                              color: colorScheme.surface
-                                                  .withOpacity(0.6)),
-                                          itemBuilder: (ctx, idx) {
-                                            final item = items[idx];
-                                            final isSelected =
-                                                selectedIds.contains(item.id);
-                                            return buildMenuDataRow(
-                                              franchiseId,
-                                              ctx,
-                                              item,
-                                              categories,
-                                              user,
-                                              isSelected,
-                                              canEdit,
-                                              canDeleteOrExport,
-                                            );
-                                          },
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                  ValueListenableBuilder<List<String>>(
-                                    valueListenable: _selectedIds,
-                                    builder: (context, selectedIds, _) {
-                                      return (selectedIds.isNotEmpty &&
-                                              canDeleteOrExport)
-                                          ? SafeArea(
-                                              minimum: const EdgeInsets.only(
-                                                  bottom: 8),
-                                              child: Padding(
-                                                padding: EdgeInsets.only(
-                                                  bottom: MediaQuery.of(context)
-                                                      .viewPadding
-                                                      .bottom,
+                                        if (canEdit)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                right: 16, bottom: 16, top: 8),
+                                            child: Align(
+                                              alignment: Alignment.bottomRight,
+                                              child:
+                                                  FloatingActionButton.extended(
+                                                backgroundColor:
+                                                    Theme.of(context)
+                                                                .brightness ==
+                                                            Brightness.dark
+                                                        ? Colors.white
+                                                        : colorScheme.primary,
+                                                foregroundColor:
+                                                    Theme.of(context)
+                                                                .brightness ==
+                                                            Brightness.dark
+                                                        ? Colors.black
+                                                        : colorScheme.onPrimary,
+                                                icon: Icon(Icons.add),
+                                                label: Text(
+                                                  AppLocalizations.of(context)!
+                                                      .addItem,
+                                                  style: TextStyle(
+                                                    color: Theme.of(context)
+                                                                .brightness ==
+                                                            Brightness.dark
+                                                        ? Colors.black
+                                                        : colorScheme.onPrimary,
+                                                  ),
                                                 ),
-                                                child:
-                                                    AdminBulkSelectionToolbar(
-                                                  selectedCount:
-                                                      selectedIds.length,
-                                                  onDelete: () {
-                                                    final selectedItems = items
-                                                        .where((i) =>
-                                                            selectedIds
-                                                                .contains(i.id))
-                                                        .toList();
-                                                    _deleteMenuItems(
-                                                        franchiseId,
-                                                        context,
-                                                        selectedItems,
-                                                        user);
-                                                  },
-                                                  onClearSelection:
-                                                      _clearSelection,
-                                                  deleteLabel:
-                                                      AppLocalizations.of(
-                                                              context)!
-                                                          .bulkDelete,
-                                                  clearSelectionTooltip:
-                                                      AppLocalizations.of(
-                                                              context)!
-                                                          .clearSelection,
-                                                  selectedLabel:
-                                                      AppLocalizations.of(
-                                                              context)!
-                                                          .bulkActionsSelected(
-                                                              selectedIds
-                                                                  .length),
-                                                ),
+                                                onPressed: () =>
+                                                    _addOrEditMenuItemPanel(
+                                                        item: null),
                                               ),
-                                            )
-                                          : const SizedBox.shrink();
-                                    },
-                                  ),
-                                  if (canEdit)
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                          right: 16, bottom: 16, top: 8),
-                                      child: Align(
-                                        alignment: Alignment.bottomRight,
-                                        child: FloatingActionButton.extended(
-                                          backgroundColor:
-                                              Theme.of(context).brightness ==
-                                                      Brightness.dark
-                                                  ? Colors.white
-                                                  : colorScheme.primary,
-                                          foregroundColor:
-                                              Theme.of(context).brightness ==
-                                                      Brightness.dark
-                                                  ? Colors.black
-                                                  : colorScheme.onPrimary,
-                                          icon: Icon(Icons.add),
-                                          label: Text(
-                                            AppLocalizations.of(context)!
-                                                .addItem,
-                                            style: TextStyle(
-                                              color: Theme.of(context)
-                                                          .brightness ==
-                                                      Brightness.dark
-                                                  ? Colors.black
-                                                  : colorScheme.onPrimary,
                                             ),
                                           ),
-                                          onPressed: () =>
-                                              _addOrEditMenuItemPanel(
-                                                  item: null),
-                                        ),
-                                      ),
-                                    ),
-                                ],
+                                      ],
+                                    );
+                                  },
+                                ),
                               );
-                              // --- UI End ---
-                            }),
+                            },
                           );
                         },
-                      );
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Expanded(
+                flex: 9,
+                child: Offstage(
+                  offstage: !_showEditorPanel,
+                  child: MenuItemEditorPanel(
+                    isOpen: _showEditorPanel,
+                    initialCategoryId: _selectedCategoryForEditor,
+                    onClose: _saveOrCloseEditor,
+                    onCategoryCleared: _onCategoryCleared,
+                    onCategorySelected: (category) {
+                      setState(() {
+                        _editingMenuItem = null;
+                        _selectedCategoryForEditor = category;
+                        _showEditorPanel = true;
+                      });
                     },
                   ),
-                );
-              },
-            ),
-          ),
-          // Always keep the editor panel in the widget tree, only show when needed.
-          Expanded(
-            flex: 9,
-            child: Offstage(
-              offstage: !_showEditorPanel,
-              child: MenuItemEditorPanel(
-                isOpen: _showEditorPanel,
-                initialCategoryId: _selectedCategoryForEditor,
-                onClose: _saveOrCloseEditor,
-                onCategoryCleared: _onCategoryCleared,
-                onCategorySelected: (category) {
-                  setState(() {
-                    _editingMenuItem =
-                        null; // Clear editing item to show category picker
-                    _selectedCategoryForEditor =
-                        category; // Track selected category
-                    _showEditorPanel = true; // Keep panel open
-                  });
-                },
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _unauthorizedScaffold() {
-    return AdminUnauthorizedWidget(
-      title: AppLocalizations.of(context)!.menuEditorTitle,
-      message: AppLocalizations.of(context)!.unauthorizedMessage,
-      buttonText: AppLocalizations.of(context)!.returnHome,
-    );
-  }
+  Widget _unauthorizedScaffold() => const SizedBox.shrink();
 }
 
 // Extension to safely localize static header keys, fallback to the given string

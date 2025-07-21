@@ -1656,7 +1656,20 @@
   "paymentValidated": "Payment Validated",
   "completePaymentToContinue": "Complete payment to continue",
   "selectBillingIntervalFirst": "Please select a billing interval first",
-  "unnamedPlan": "Unnamed Plan"
+  "unnamedPlan": "Unnamed Plan",
+  "subscriptionStartDate": "Start Date: {date}",
+  "autoRenewLabel": "Auto-Renew",
+  "cancelAtPeriodEndLabel": "Cancel at Period End",
+  "overduePaymentWarning": "⚠️ Your subscription has an overdue invoice.",
+  "unknownPlan": "Unknown Plan",
+  "paymentStatusLabel": "Payment Status",
+  "cardOnFileLabel": "Card on File",
+  "viewLastReceipt": "View Last Receipt",
+  "gracePeriodEndsAtLabel": "Grace Period Ends",
+  "billingEmail": "Billing Email",
+  "gracePeriodWarning": "Payment overdue. Grace period ends on {date}.",
+  "gracePeriodExpired": "Payment overdue. Your access may be limited until resolved.",
+  "manageSubscription": "Manage Subscription"
 
 
   }

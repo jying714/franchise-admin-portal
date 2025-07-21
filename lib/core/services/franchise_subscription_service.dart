@@ -40,16 +40,33 @@ class FranchiseSubscriptionService {
           '[🔥DEBUG] Creating new subscription for franchiseId=$franchiseId with planId=${plan.id}');
       debugPrint('[🔥DEBUG] Subscription document ID: ${newRef.id}');
 
+      final now = Timestamp.now();
+      final billingCycleDays = plan.billingInterval == 'yearly' ? 365 : 30;
+
       final newSubscriptionData = {
+        // 🔑 Identifiers & links
         'franchiseId': franchiseId,
         'platformPlanId': plan.id,
+
+        // 🕒 Timestamps & state
         'subscribedAt': FieldValue.serverTimestamp(),
         'startDate': FieldValue.serverTimestamp(),
+        'nextBillingDate': Timestamp.fromDate(
+            DateTime.now().add(Duration(days: billingCycleDays))),
+
+        // 🔁 Billing logic
+        'billingCycleInDays': billingCycleDays,
+        'billingInterval': plan.billingInterval,
+        'autoRenew': true,
+
+        // 💳 Price tracking
+        'priceAtSubscription': plan.price,
+
+        // 📌 State tracking
         'active': true,
         'status': 'active',
-        'autoRenew': true,
-        'priceAtSubscription': plan.price,
-        'billingInterval': plan.billingInterval,
+
+        // 📦 Immutable plan snapshot at signup time
         'planSnapshot': {
           'name': plan.name,
           'description': plan.description,
@@ -58,7 +75,16 @@ class FranchiseSubscriptionService {
           'price': plan.price,
           'billingInterval': plan.billingInterval,
           'isCustom': plan.isCustom,
+          'planVersion': plan.planVersion ?? 'v1', // Optional default
         },
+        // 💳 Merchant service metadata (placeholder defaults until real values assigned)
+        'paymentProviderCustomerId': null,
+        'cardLast4': null,
+        'cardBrand': null,
+        'paymentMethodId': null,
+        'billingEmail': null,
+        'paymentStatus': null,
+        'receiptUrl': null,
       };
 
       debugPrint(
@@ -237,6 +263,39 @@ class FranchiseSubscriptionService {
       );
       // Return an empty stream with null
       return Stream.value(null);
+    }
+  }
+
+  Future<PlatformPlan?> getPlatformPlanById(String planId) async {
+    try {
+      final doc = await _db.collection('platform_plans').doc(planId).get();
+
+      if (!doc.exists) {
+        await ErrorLogger.log(
+          message: 'PlatformPlan not found for ID: $planId',
+          source: 'FranchiseSubscriptionService',
+          screen: 'plan_resolution_fallback',
+          severity: 'warning',
+          contextData: {'missingId': planId},
+          stack: '',
+        );
+        return null;
+      }
+
+      return PlatformPlan.fromFirestore(doc);
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Error fetching PlatformPlan by ID: $planId',
+        source: 'FranchiseSubscriptionService',
+        screen: 'plan_resolution_fallback',
+        stack: stack.toString(),
+        severity: 'error',
+        contextData: {
+          'exception': e.toString(),
+          'planId': planId,
+        },
+      );
+      return null;
     }
   }
 }
