@@ -44,6 +44,7 @@ import 'package:franchise_admin_portal/core/providers/franchise_subscription_pro
 import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
 import 'package:franchise_admin_portal/admin/owner/screens/full_franchise_subscription_list_screen.dart';
 import 'package:franchise_admin_portal/admin/devtools/billing/billing_subscription_tools_screen.dart';
+import 'package:franchise_admin_portal/admin/devtools/subscriptions/subscription_dev_tools_screen.dart';
 import 'dart:html' as html;
 
 /// Returns initial unauth route and optional invite token, e.g. ('/invite-accept', 'abc123').
@@ -479,6 +480,13 @@ class _FranchiseAuthenticatedRootState
               print('[main.dart] Routing to BillingSubscriptionToolsScreen');
               return MaterialPageRoute(
                 builder: (context) => const BillingSubscriptionToolsScreen(),
+              );
+            }
+
+            if (uri.path == '/developer/tools/subscriptions') {
+              print('[main.dart] Routing to SubscriptionDevToolsScreen');
+              return MaterialPageRoute(
+                builder: (context) => const SubscriptionDevToolsScreen(),
               );
             }
 

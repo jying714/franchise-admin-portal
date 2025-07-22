@@ -298,4 +298,61 @@ class FranchiseSubscriptionService {
       return null;
     }
   }
+
+  Stream<List<FranchiseSubscription>> watchAllFranchiseSubscriptions() {
+    return _db
+        .collection('franchise_subscriptions')
+        .orderBy('subscribedAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => FranchiseSubscription.fromMap(doc.id, doc.data()))
+            .toList());
+  }
+
+  Future<void> updateFranchiseSubscription({
+    required String documentId,
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      final docRef = _db.collection('franchise_subscriptions').doc(documentId);
+      await docRef.set(data, SetOptions(merge: true));
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to update franchise subscription',
+        stack: stack.toString(),
+        source: 'FranchiseSubscriptionService',
+        screen: 'updateFranchiseSubscription',
+        severity: 'error',
+        contextData: {'exception': e.toString(), 'inputData': data},
+      );
+      rethrow;
+    }
+  }
+
+  // Platform plans
+  Future<List<PlatformPlan>> getAllPlatformPlans() async {
+    try {
+      debugPrint(
+          '[FranchiseSubscriptionService] getAllPlatformPlans: Fetching...');
+      final snap = await _db.collection('platform_plans').get();
+
+      final plans = snap.docs.map((doc) {
+        final plan = PlatformPlan.fromMap(doc.id, doc.data());
+        debugPrint('[FranchiseSubscriptionService] Loaded plan: ${plan.name}');
+        return plan;
+      }).toList();
+
+      debugPrint('[FranchiseSubscriptionService] Total plans: ${plans.length}');
+      return plans;
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Error loading platform plans: $e',
+        stack: stack.toString(),
+        source: 'FranchiseSubscriptionService',
+        screen: 'getAllPlatformPlans',
+        severity: 'error',
+      );
+      return [];
+    }
+  }
 }

@@ -74,6 +74,7 @@ class BillingSubscriptionToolsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Billing & Subscription Tools'),
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline),

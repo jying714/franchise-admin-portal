@@ -3616,31 +3616,6 @@ class FirestoreService {
     }
   }
 
-  /// 🔁 Updates the current franchise subscription document with new plan data.
-  static Future<void> updateFranchiseSubscription({
-    required Map<String, dynamic> data,
-  }) async {
-    try {
-      final franchiseId = data['franchiseId'];
-      if (franchiseId == null) {
-        throw Exception('Missing franchiseId in subscription data payload.');
-      }
-
-      final docRef = _db.collection('franchise_subscriptions').doc(franchiseId);
-      await docRef.set(data, firestore.SetOptions(merge: true));
-    } catch (e, stack) {
-      ErrorLogger.log(
-        message: 'Failed to update franchise subscription',
-        stack: stack.toString(),
-        source: 'FirestoreService',
-        screen: 'firestore_service.dart',
-        severity: 'error',
-        contextData: {'exception': e.toString(), 'inputData': data},
-      );
-      rethrow;
-    }
-  }
-
   static Future<List<FranchiseSubscription>> getFranchiseSubscriptions() async {
     try {
       final snap = await firestore.FirebaseFirestore.instance

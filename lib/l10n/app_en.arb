@@ -1673,7 +1673,18 @@
   "noMatchingInvoices": "No matching invoices found.",
   "downloadPdf": "Download PDF",
   "receipt": "Receipt",
-  "paymentMethod": "Payment Method"
-
+  "paymentMethod": "Payment Method",
+  "manualSubscriptionInjectorTitle": "Manual Subscription Injector",
+  "selectFranchise": "Select Franchise",
+  "selectStatus": "Select Status",
+  "injectSubscription": "Inject Subscription",
+  "subscriptionInjectionSuccess": "Subscription injected successfully",
+  "subscriptionInjectionFailed": "Failed to inject subscription",
+  "pleaseSelectFranchiseAndPlan": "Please select both a franchise and a plan",
+  "genericSavedSuccess": "Changes saved successfully",
+  "nextBillingDateLabel": "Next Billing Date",
+  "swap": "Swap",
+  "toggleSubscriptionTitle": "Toggle Subscription Status",
+  "planSwapperTitle": "Swap Franchise Plan"
 
   }

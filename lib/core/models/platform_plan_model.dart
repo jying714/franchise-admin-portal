@@ -101,4 +101,14 @@ class PlatformPlan {
 
   /// ✅ Derived property: should not be stored
   bool get requiresPayment => !isCustom && price > 0;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PlatformPlan &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }
