@@ -27,7 +27,7 @@ class _ManualSubscriptionInjectorState
   @override
   void initState() {
     super.initState();
-    platformPlansFuture = FirestoreService.getPlatformPlans();
+    platformPlansFuture = FranchiseSubscriptionService().getPlatformPlans();
   }
 
   Future<void> _submit(BuildContext context) async {

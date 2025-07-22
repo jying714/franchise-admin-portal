@@ -8,6 +8,7 @@ import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
+import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
 
 class PlatformPlansSection extends StatefulWidget {
   const PlatformPlansSection({super.key});
@@ -27,7 +28,8 @@ class _PlatformPlansSectionState extends State<PlatformPlansSection> {
 
   Future<List<PlatformPlan>> _loadPlans() async {
     try {
-      return await FirestoreService.getPlatformPlans();
+      final service = FranchiseSubscriptionService();
+      return await service.getPlatformPlans();
     } catch (e, stack) {
       ErrorLogger.log(
         message: "platform_plans_load_error",
