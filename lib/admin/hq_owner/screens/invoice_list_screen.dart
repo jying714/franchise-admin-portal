@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/models/invoice.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:franchise_admin_portal/core/models/platform_invoice.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
@@ -9,18 +10,6 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_search_bar.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_empty_state_widget.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/invoice_search_bar.dart';
-
-/// InvoiceListScreen
-/// Displays a searchable, filterable list of invoices for the selected franchise(s).
-/// Supports CSV export via ExportUtils (not shown here, call from UI as needed).
-///
-/// Features:
-/// - Uses FirestoreService to stream invoice data.
-/// - Includes error logging.
-/// - Responsive UI with theming from DesignTokens.
-/// - Localization for all user-visible strings.
-/// - Modular and extensible for future feature additions.
-/// - Role-guarded at routing level (not shown here).
 
 class InvoiceListScreen extends StatefulWidget {
   const InvoiceListScreen({Key? key}) : super(key: key);
@@ -64,35 +53,27 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
     super.dispose();
   }
 
-  /// Filters the list of invoices client-side based on _searchTerm.
-  /// For large datasets, prefer server-side filtering.
-  List<Invoice> _applySearchFilter(List<Invoice> invoices) {
-    List<Invoice> filtered = invoices;
+  List<PlatformInvoice> _applySearchFilter(List<PlatformInvoice> invoices) {
+    List<PlatformInvoice> filtered = invoices;
 
     if (_searchTerm != null && _searchTerm!.isNotEmpty) {
       final lowerSearch = _searchTerm!.toLowerCase();
       filtered = filtered.where((inv) {
         return inv.invoiceNumber.toLowerCase().contains(lowerSearch) ||
-            inv.status
-                .toString()
-                .split('.')
-                .last
-                .toLowerCase()
-                .contains(lowerSearch);
+            inv.status.toLowerCase().contains(lowerSearch);
       }).toList();
     }
 
-    // Sort invoices based on _selectedSortOrder
     filtered.sort((a, b) {
       switch (_selectedSortOrder) {
         case InvoiceSortOrder.dateAsc:
-          return a.issuedAt?.compareTo(b.issuedAt ?? DateTime.now()) ?? 0;
+          return a.createdAt.compareTo(b.createdAt);
         case InvoiceSortOrder.dateDesc:
-          return b.issuedAt?.compareTo(a.issuedAt ?? DateTime.now()) ?? 0;
+          return b.createdAt.compareTo(a.createdAt);
         case InvoiceSortOrder.totalAsc:
-          return a.total.compareTo(b.total);
+          return a.amount.compareTo(b.amount);
         case InvoiceSortOrder.totalDesc:
-          return b.total.compareTo(a.total);
+          return b.amount.compareTo(a.amount);
       }
     });
 
@@ -103,8 +84,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[InvoiceListScreen] loc is null! Localization not available for this context.');
+      print('[InvoiceListScreen] loc is null!');
       return const SizedBox.shrink();
     }
     final franchiseId = _franchiseProvider.franchiseId;
@@ -112,7 +92,6 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
         '[InvoiceListScreen] build called with franchiseId=$franchiseId, searchTerm=$_searchTerm, statusFilter=$_statusFilter');
 
     if (franchiseId == null) {
-      print('[InvoiceListScreen] No franchise selected.');
       return Center(child: Text(loc.noFranchiseSelected));
     }
 
@@ -149,9 +128,9 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
             ),
             const SizedBox(height: DesignTokens.paddingMd),
             Expanded(
-              child: StreamBuilder<List<Invoice>>(
-                stream: _firestoreService.invoicesStream(
-                  franchiseId: franchiseId,
+              child: StreamBuilder<List<PlatformInvoice>>(
+                stream: _firestoreService.platformInvoicesStream(
+                  franchiseeId: franchiseId,
                   status: _statusFilter,
                 ),
                 builder: (context, snapshot) {
@@ -166,23 +145,16 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                     return Center(child: Text(loc.errorLoadingInvoices));
                   }
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    print(
-                        '[InvoiceListScreen] StreamBuilder waiting for data...');
                     return const Center(child: CircularProgressIndicator());
                   }
-                  print(
-                      '[InvoiceListScreen] StreamBuilder received ${snapshot.data?.length ?? 0} invoices');
 
                   final invoices = _applySearchFilter(snapshot.data ?? []);
-                  print(
-                      '[InvoiceListScreen] After applying search & sort, ${invoices.length} invoices remain');
-
                   if (invoices.isEmpty) {
-                    print(
-                        '[InvoiceListScreen] No invoices to show after filtering');
                     return AdminEmptyStateWidget(
                       title: loc.noInvoices,
-                      message: loc.noInvoicesFound,
+                      message: _searchTerm != null || _statusFilter != null
+                          ? loc.noMatchingInvoices
+                          : loc.noInvoicesFound,
                     );
                   }
                   return _buildInvoiceListView(invoices, loc);
@@ -195,7 +167,8 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
     );
   }
 
-  Widget _buildInvoiceListView(List<Invoice> invoices, AppLocalizations loc) {
+  Widget _buildInvoiceListView(
+      List<PlatformInvoice> invoices, AppLocalizations loc) {
     return ListView.separated(
       itemCount: invoices.length,
       separatorBuilder: (_, __) => const Divider(),
@@ -203,11 +176,50 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
         final invoice = invoices[index];
         return ListTile(
           title: Text('${loc.invoiceNumber}: ${invoice.invoiceNumber}'),
-          subtitle: Text(
-            '${loc.status}: ${invoice.status}, ${loc.total}: ${invoice.total.toStringAsFixed(2)} ${invoice.currency}',
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${loc.status}: ${invoice.status}, ${loc.total}: ${invoice.amount.toStringAsFixed(2)} ${invoice.currency}',
+              ),
+              if (invoice.paymentMethod != null)
+                Text(
+                  '${loc.paymentMethod}: ${invoice.paymentMethod}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              if (invoice.receiptUrl != null)
+                Text(
+                  '${loc.receipt}: ${invoice.receiptUrl}',
+                  style: const TextStyle(
+                      fontSize: 12, fontStyle: FontStyle.italic),
+                ),
+            ],
           ),
-          trailing:
-              _buildStatusChip(invoice.status.toString().split('.').last, loc),
+          trailing: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _buildStatusChip(invoice.status, loc, dueDate: invoice.dueDate),
+              if (invoice.pdfUrl != null)
+                TextButton(
+                  onPressed: () async {
+                    final url = invoice.pdfUrl!;
+                    if (await canLaunchUrl(Uri.parse(url))) {
+                      await launchUrl(Uri.parse(url),
+                          mode: LaunchMode.externalApplication);
+                    } else {
+                      ErrorLogger.log(
+                        message: 'Could not launch PDF: $url',
+                        source: 'InvoiceListScreen',
+                        screen: '_buildInvoiceListView',
+                      );
+                    }
+                  },
+                  child: Text(loc.downloadPdf,
+                      style: const TextStyle(fontSize: 12)),
+                ),
+            ],
+          ),
           onTap: () {
             Navigator.of(context)
                 .pushNamed('/hq/invoice_detail', arguments: invoice.id);
@@ -217,8 +229,9 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
     );
   }
 
-  Widget _buildStatusChip(String status, AppLocalizations loc) {
-    final color = _statusColor(status);
+  Widget _buildStatusChip(String status, AppLocalizations loc,
+      {DateTime? dueDate}) {
+    final color = _statusColor(status, dueDate: dueDate);
     final label = _localizedStatus(status, loc);
     return Chip(
       label: Text(label),
@@ -227,23 +240,25 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
     );
   }
 
-  Color _statusColor(String status) {
+  Color _statusColor(String status, {DateTime? dueDate}) {
+    final now = DateTime.now();
+    if (status.toLowerCase() == 'unpaid' &&
+        dueDate != null &&
+        dueDate.isBefore(now)) {
+      return Colors.redAccent;
+    }
+
     switch (status.toLowerCase()) {
       case 'paid':
         return Colors.green;
       case 'overdue':
         return Colors.red;
-      case 'sent':
-        return Colors.blue;
-      case 'draft':
-        return Colors.grey;
-      case 'refunded':
+      case 'partial':
         return Colors.orange;
-      case 'voided':
-      case 'failed':
-        return Colors.black45;
-      default:
+      case 'unpaid':
         return Colors.grey;
+      default:
+        return Colors.blueGrey;
     }
   }
 
@@ -253,16 +268,10 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
         return loc.paid;
       case 'overdue':
         return loc.overdue;
-      case 'sent':
-        return loc.sent;
-      case 'draft':
-        return loc.draft;
-      case 'refunded':
-        return loc.refunded;
-      case 'voided':
-        return loc.voided;
-      case 'failed':
-        return loc.failed;
+      case 'partial':
+        return loc.partial;
+      case 'unpaid':
+        return loc.unpaid;
       default:
         return status;
     }

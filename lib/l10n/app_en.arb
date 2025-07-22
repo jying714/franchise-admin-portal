@@ -1669,7 +1669,11 @@
   "billingEmail": "Billing Email",
   "gracePeriodWarning": "Payment overdue. Grace period ends on {date}.",
   "gracePeriodExpired": "Payment overdue. Your access may be limited until resolved.",
-  "manageSubscription": "Manage Subscription"
+  "manageSubscription": "Manage Subscription",
+  "noMatchingInvoices": "No matching invoices found.",
+  "downloadPdf": "Download PDF",
+  "receipt": "Receipt",
+  "paymentMethod": "Payment Method"
 
 
   }

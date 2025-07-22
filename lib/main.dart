@@ -26,8 +26,8 @@ import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.da
 import 'package:franchise_admin_portal/admin/developer/developer_dashboard_screen.dart';
 import 'package:franchise_admin_portal/admin/franchise/franchise_selector_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/owner_hq_dashboard_screen.dart';
-import 'package:franchise_admin_portal/widgets/financials/invoice_list_screen.dart';
-import 'package:franchise_admin_portal/widgets/financials/invoice_detail_screen.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/screens/invoice_list_screen.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/screens/invoice_detail_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/payout_list_screen.dart';
 import 'package:franchise_admin_portal/core/providers/payout_filter_provider.dart';
 import 'package:franchise_admin_portal/admin/owner/platform_owner_dashboard_screen.dart';
@@ -43,6 +43,7 @@ import 'package:franchise_admin_portal/core/providers/platform_plan_selection_pr
 import 'package:franchise_admin_portal/core/providers/franchise_subscription_provider.dart';
 import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
 import 'package:franchise_admin_portal/admin/owner/screens/full_franchise_subscription_list_screen.dart';
+import 'package:franchise_admin_portal/admin/devtools/dev_tools_screen.dart';
 import 'dart:html' as html;
 
 /// Returns initial unauth route and optional invite token, e.g. ('/invite-accept', 'abc123').
@@ -469,6 +470,12 @@ class _FranchiseAuthenticatedRootState
               return MaterialPageRoute(
                 builder: (context) =>
                     const FullFranchiseSubscriptionListScreen(),
+              );
+            }
+            if (uri.path == '/developer/dev-tools') {
+              print('[main.dart] Routing to DevToolsScreen');
+              return MaterialPageRoute(
+                builder: (context) => const DevToolsScreen(),
               );
             }
 

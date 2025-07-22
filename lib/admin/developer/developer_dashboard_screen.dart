@@ -20,6 +20,7 @@ import 'package:franchise_admin_portal/widgets/developer/audit_trail_section.dar
 import 'package:franchise_admin_portal/admin/hq_owner/owner_hq_dashboard_screen.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:franchise_admin_portal/admin/devtools/dev_tools_screen.dart';
 
 class DeveloperDashboardScreen extends StatefulWidget {
   const DeveloperDashboardScreen({Key? key}) : super(key: key);
@@ -253,6 +254,13 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
           franchiseId: getFranchiseOrNull(context),
         ),
         sidebarOrder: 6,
+      ),
+      DashboardSection(
+        key: 'devTools',
+        title: 'Dev Tools',
+        icon: Icons.build_outlined,
+        builder: (context) => const DevToolsScreen(),
+        sidebarOrder: 7,
       ),
     ];
   }

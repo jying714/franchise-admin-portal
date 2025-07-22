@@ -43,7 +43,7 @@ class FirestoreService {
   static final firestore.FirebaseFirestore _db =
       firestore.FirebaseFirestore.instance;
   static final fb_auth.FirebaseAuth auth = fb_auth.FirebaseAuth.instance;
-
+  firestore.FirebaseFirestore get db => _db;
   // --- [NEW]: Ingredient Metadata Caching ---
   List<IngredientMetadata>? _cachedIngredientMetadata;
   DateTime? _lastIngredientMetadataFetch;
@@ -1123,6 +1123,19 @@ class FirestoreService {
     return query.docs
         .map((doc) => FranchiseInfo.fromFirestore(doc.data(), doc.id))
         .toList();
+  }
+
+  Future<List<FranchiseInfo>> getAllFranchises() async {
+    final snapshot = await firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .get();
+    return snapshot.docs.map((doc) {
+      return FranchiseInfo(
+        id: doc.id,
+        name: doc.data()['displayName'] ?? doc.id,
+        logoUrl: doc.data()['logoUrl'],
+      );
+    }).toList();
   }
 
   // --- PAYOUTS ---
@@ -3249,32 +3262,99 @@ class FirestoreService {
   }
 
   // Platform billing methods
-  Future<List<Map<String, dynamic>>> getPlatformInvoicesForUser(
+  /// Streams platform-issued invoices for the given franchisee.
+  /// Optionally filters by status ('paid', 'unpaid', 'overdue', etc).
+  Stream<List<PlatformInvoice>> platformInvoicesStream({
+    required String franchiseeId,
+    String? status,
+  }) {
+    try {
+      firestore.Query query = _db
+          .collection('platform_invoices')
+          .where('franchiseeId', isEqualTo: franchiseeId);
+
+      if (status != null && status.isNotEmpty) {
+        query = query.where('status', isEqualTo: status);
+      }
+
+      return query
+          .orderBy('dueDate', descending: true)
+          .snapshots()
+          .map((snapshot) {
+        return snapshot.docs
+            .map((doc) {
+              try {
+                return PlatformInvoice.fromMap(
+                    doc.id, doc.data() as Map<String, dynamic>);
+              } catch (e, stack) {
+                ErrorLogger.log(
+                  message: 'Failed to parse PlatformInvoice from Firestore: $e',
+                  stack: stack.toString(),
+                  source: 'FirestoreService',
+                  screen: 'platformInvoicesStream',
+                  contextData: {'docId': doc.id},
+                );
+                return null;
+              }
+            })
+            .whereType<PlatformInvoice>()
+            .toList();
+      });
+    } catch (e, stack) {
+      ErrorLogger.log(
+        message: 'Exception in platformInvoicesStream: $e',
+        stack: stack.toString(),
+        source: 'FirestoreService',
+        screen: 'platformInvoicesStream',
+        contextData: {'franchiseeId': franchiseeId, 'status': status},
+      );
+      return const Stream.empty();
+    }
+  }
+
+  Future<List<PlatformInvoice>> getPlatformInvoicesForUser(
       String userId) async {
     try {
       debugPrint(
           '[FirestoreService] getPlatformInvoicesForUser called for userId=$userId');
 
-      final query = await _db
+      final querySnapshot = await _db
           .collection('platform_invoices')
           .where('franchiseeId', isEqualTo: userId)
+          .orderBy('dueDate', descending: true)
           .get();
 
-      final result = query.docs.map((d) => {...d.data(), 'id': d.id}).toList();
-      debugPrint(
-          '[FirestoreService] platform_invoices results for $userId: ${result.length} docs');
-      for (var doc in result) {
-        debugPrint('[FirestoreService] Invoice doc: $doc');
-      }
+      final invoices = querySnapshot.docs
+          .map((doc) {
+            try {
+              return PlatformInvoice.fromMap(
+                doc.id,
+                doc.data() as Map<String, dynamic>,
+              );
+            } catch (e, stack) {
+              ErrorLogger.log(
+                message: 'Failed to parse invoice doc: $e',
+                stack: stack.toString(),
+                source: 'FirestoreService.getPlatformInvoicesForUser',
+                screen: 'universal_profile_screen',
+                contextData: {'invoiceId': doc.id},
+              );
+              return null;
+            }
+          })
+          .whereType<PlatformInvoice>()
+          .toList();
 
-      return result;
+      debugPrint(
+          '[FirestoreService] Loaded ${invoices.length} invoices for user $userId');
+      return invoices;
     } catch (e, stack) {
       debugPrint('[FirestoreService] ERROR in getPlatformInvoicesForUser: $e');
       await ErrorLogger.log(
         message: 'Failed to load platform invoices: $e',
         stack: stack.toString(),
-        source: 'FirestoreService',
-        screen: 'getPlatformInvoicesForUser',
+        source: 'FirestoreService.getPlatformInvoicesForUser',
+        screen: 'universal_profile_screen',
         severity: 'error',
         contextData: {'userId': userId},
       );
@@ -3752,6 +3832,111 @@ class FirestoreService {
         .where('storeOwnerId', isEqualTo: userId)
         .get();
     return query.docs.map((d) => {...d.data(), 'id': d.id}).toList();
+  }
+
+  /// MERCHANT SIMULATION
+  /// Simulates a Stripe webhook event for testing.
+  /// Triggers the savePlatformInvoiceFromWebhook() logic with mock data.
+  Future<void> simulateWebhookEvent({
+    required String invoiceId,
+    required String eventType,
+    String status = 'paid',
+    double amount = 0.0,
+    String currency = 'USD',
+    String? planId,
+    String? subscriptionId,
+    String? receiptUrl,
+    DateTime? paidAt,
+    String paymentMethod = 'mock_card',
+    String paymentProvider = 'developer',
+  }) async {
+    try {
+      final timestamp = DateTime.now();
+      final paidAtMillis =
+          paidAt?.millisecondsSinceEpoch ?? timestamp.millisecondsSinceEpoch;
+
+      final eventData = {
+        'type': eventType,
+        'data': {
+          'object': {
+            'id': invoiceId,
+            'status': status,
+            'amount_due': (amount * 100).toInt(), // Simulate Stripe cents
+            'currency': currency.toLowerCase(),
+            'created': (timestamp.millisecondsSinceEpoch / 1000).round(),
+            'due_date': (timestamp
+                        .add(const Duration(days: 30))
+                        .millisecondsSinceEpoch /
+                    1000)
+                .round(),
+            'invoice_pdf': 'https://example.com/invoices/mock_$invoiceId.pdf',
+            'hosted_invoice_url':
+                receiptUrl ?? 'https://example.com/receipt/mock_$invoiceId',
+            'livemode': false,
+            'metadata': {
+              'franchiseeId': auth.currentUser?.uid ?? 'test_user',
+              if (planId != null) 'planId': planId,
+            },
+            'payment_intent': 'pi_mock_$invoiceId',
+            'subscription': subscriptionId,
+            'payment_settings': {
+              'payment_method_types': [paymentMethod],
+            },
+            'status_transitions': {
+              'paid_at': (paidAtMillis / 1000).round(),
+            },
+            'number': 'MOCK-$invoiceId',
+            'description': 'Simulated invoice for testing',
+          }
+        }
+      };
+
+      await savePlatformInvoiceFromWebhook(eventData, invoiceId);
+
+      debugPrint(
+          '[FirestoreService] Simulated webhook event "$eventType" for invoice $invoiceId');
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to simulate webhook event: $e',
+        stack: stack.toString(),
+        source: 'FirestoreService.simulateWebhookEvent',
+        screen: 'admin_webhook_simulator',
+        contextData: {
+          'invoiceId': invoiceId,
+          'eventType': eventType,
+        },
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> logSimulatedWebhookEvent(Map<String, dynamic> data) async {
+    await _db.collection('platform_webhooks_log').add(data);
+  }
+
+  Future<List<PlatformInvoice>> getTestPlatformInvoices({
+    required String franchiseeId,
+  }) async {
+    try {
+      var query = _db
+          .collection('platform_invoices')
+          .where('isTest', isEqualTo: true)
+          .where('franchiseeId', isEqualTo: franchiseeId);
+
+      final snapshot = await query.get();
+
+      return snapshot.docs
+          .map((doc) => PlatformInvoice.fromMap(doc.id, doc.data()))
+          .toList();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to fetch test invoices: $e',
+        stack: stack.toString(),
+        source: 'FirestoreService.getTestPlatformInvoices',
+        screen: 'admin_webhook_simulator',
+      );
+      return [];
+    }
   }
 }
 
