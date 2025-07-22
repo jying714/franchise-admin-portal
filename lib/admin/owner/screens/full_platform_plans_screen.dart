@@ -9,6 +9,7 @@ import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
 
 class FullPlatformPlansScreen extends StatefulWidget {
   const FullPlatformPlansScreen({super.key});
@@ -29,7 +30,7 @@ class _FullPlatformPlansScreenState extends State<FullPlatformPlansScreen> {
 
   Future<List<PlatformPlan>> _loadPlans() async {
     try {
-      return await FirestoreService.getPlatformPlans();
+      return await FranchiseSubscriptionService().getPlatformPlans();
     } catch (e, stack) {
       await ErrorLogger.log(
         message: 'load_platform_plans_failed',

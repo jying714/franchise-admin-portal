@@ -9,6 +9,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
 
 class PlatformPlansSummaryCard extends StatelessWidget {
   const PlatformPlansSummaryCard({super.key});
@@ -25,7 +26,7 @@ class PlatformPlansSummaryCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return FutureBuilder<List<PlatformPlan>>(
-      future: FirestoreService.getPlatformPlans(),
+      future: FranchiseSubscriptionService().getPlatformPlans(),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());
