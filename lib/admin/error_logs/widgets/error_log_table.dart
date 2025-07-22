@@ -389,8 +389,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
     print('ErrorLogTable received logs: ${widget.logs.length}');
     final colorScheme = Theme.of(context).colorScheme;
     if (widget.logs.isEmpty) return _emptyState();

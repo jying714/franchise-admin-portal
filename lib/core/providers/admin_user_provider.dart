@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/core/models/franchise_info.dart';
 
 class AdminUserProvider extends ChangeNotifier {
   admin_user.User? _user;
@@ -33,7 +35,11 @@ class AdminUserProvider extends ChangeNotifier {
   Object? _lastError;
   Object? get lastError => _lastError;
 
-  void listenToAdminUser(FirestoreService firestoreService, String? uid) {
+  void listenToAdminUser(
+    FirestoreService firestoreService,
+    String? uid,
+    FranchiseProvider franchiseProvider,
+  ) {
     _sub?.cancel();
     _loading = true;
     _lastError = null;
@@ -47,8 +53,30 @@ class AdminUserProvider extends ChangeNotifier {
     }
 
     _sub = firestoreService.userStream(uid).listen(
-      (userDoc) {
+      (userDoc) async {
         _user = userDoc;
+
+        // ✅ Inject the user into FranchiseProvider so it can compute viewableFranchises
+        franchiseProvider.setAdminUser(_user);
+
+        // ✅ Fetch allowed franchises immediately after user loads
+        try {
+          List<FranchiseInfo> fList;
+
+          if (_user?.isPlatformOwner == true || _user?.isDeveloper == true) {
+            fList = await firestoreService.getAllFranchises(); // 🧠 must exist
+          } else {
+            fList = await firestoreService
+                .getFranchisesByIds(_user?.franchiseIds ?? []);
+          }
+
+          franchiseProvider.setAllFranchises(fList);
+          print(
+              '[AdminUserProvider] Loaded ${fList.length} franchises for user.');
+        } catch (e, st) {
+          print('[AdminUserProvider] Failed to fetch franchise list: $e\n$st');
+        }
+
         _loading = false;
         notifyListeners();
       },

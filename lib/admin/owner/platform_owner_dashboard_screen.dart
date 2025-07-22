@@ -42,7 +42,6 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     print('[PlatformOwnerDashboardScreen] user: $user');
     print('[PlatformOwnerDashboardScreen] loc: $loc');
-    print('[PlatformOwnerDashboardScreen] colorScheme: $colorScheme');
     if (user == null) {
       print('[PlatformOwnerDashboardScreen] user is null! Returning error.');
       return Scaffold(

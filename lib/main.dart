@@ -324,7 +324,10 @@ class _FranchiseAuthenticatedRootState
       print(
           '[FranchiseAuthenticatedRoot] (didChangeDependencies) Scheduling listenToAdminUser for UID: ${fbUser.uid}');
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        adminUserProvider.listenToAdminUser(firestoreService, fbUser.uid);
+        final franchiseProvider =
+            Provider.of<FranchiseProvider>(context, listen: false);
+        adminUserProvider.listenToAdminUser(
+            firestoreService, fbUser.uid, franchiseProvider);
       });
     }
   }

@@ -24,8 +24,7 @@ class PayoutStatusCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final theme = Theme.of(context);
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
     final colorScheme = theme.colorScheme;
 
     // 🧑‍💻 Developer-only access guard (example: show only for owners/managers/dev)

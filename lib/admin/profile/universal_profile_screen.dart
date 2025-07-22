@@ -16,6 +16,7 @@ import 'package:franchise_admin_portal/widgets/financials/franchisee_payment_lis
 import 'package:franchise_admin_portal/core/models/platform_payment.dart';
 import 'package:franchise_admin_portal/core/models/platform_invoice.dart';
 import 'package:franchise_admin_portal/widgets/financials/pay_invoice_dialog.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 // FUTURE: Modular import for payment methods and plan management
 // import 'package:franchise_admin_portal/widgets/financials/payment_method_manager.dart';
@@ -162,6 +163,7 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
             provider.listenToAdminUser(
               Provider.of<FirestoreService>(context, listen: false),
               user.id,
+              Provider.of<FranchiseProvider>(context, listen: false),
             );
           },
         ),

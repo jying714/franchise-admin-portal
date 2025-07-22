@@ -25,7 +25,7 @@ class FranchiseProvider extends ChangeNotifier {
   }
 
   /// Set the logged-in admin user context
-  void setAdminUser(admin_user.User user) {
+  void setAdminUser(admin_user.User? user) {
     _adminUser = user;
     notifyListeners();
   }
@@ -149,5 +149,19 @@ class FranchiseProvider extends ChangeNotifier {
         '[FranchiseProvider] Initialized franchiseId=$_franchiseId for user=${user.email}');
     print(
         '[FranchiseProvider] Final state: franchiseId=$_franchiseId, user roles=${user.roles}');
+  }
+
+  /// Filtered viewable franchises based on current user access
+  List<FranchiseInfo> get viewableFranchises {
+    if (_adminUser == null) return [];
+
+    // Platform Owner and Developer can see all
+    if (_adminUser!.isPlatformOwner || _adminUser!.isDeveloper) {
+      return _allFranchises;
+    }
+
+    // Everyone else is filtered to their allowed franchise IDs
+    final allowedIds = _adminUser!.franchiseIds;
+    return _allFranchises.where((f) => allowedIds.contains(f.id)).toList();
   }
 }

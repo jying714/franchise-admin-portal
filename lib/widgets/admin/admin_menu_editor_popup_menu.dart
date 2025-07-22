@@ -94,28 +94,29 @@ class AdminMenuEditorPopupMenu extends StatelessWidget {
         ),
         PopupMenuItem<int>(
           value: 2,
-          child: Container(
-            color: showDeleted ? Colors.blue.withOpacity(0.1) : null,
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14.0, vertical: 4.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(width: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    showDeletedLabel,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: showDeleted
-                          ? Theme.of(context).colorScheme.primary
-                          : Colors.black87,
-                      fontSize: 16,
-                    ),
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14.0, vertical: 4.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.delete_outline,
+                    size: 18,
+                    color: showDeleted
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.black54),
+                const SizedBox(width: 8),
+                Text(
+                  showDeletedLabel,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: showDeleted
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.black87,
+                    fontSize: 16,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

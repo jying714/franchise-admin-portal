@@ -10,10 +10,16 @@ import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class CategoryFormDialog extends StatefulWidget {
+  final String franchiseId;
   final Category? category;
   final Future<void> Function(Category category) onSaved;
 
-  const CategoryFormDialog({super.key, this.category, required this.onSaved});
+  const CategoryFormDialog({
+    super.key,
+    required this.franchiseId,
+    this.category,
+    required this.onSaved,
+  });
 
   @override
   State<CategoryFormDialog> createState() => _CategoryFormDialogState();
@@ -72,8 +78,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+    final franchiseId = widget.franchiseId;
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       print(

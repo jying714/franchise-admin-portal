@@ -69,8 +69,7 @@ class _AdminErrorLogsScreenState extends State<AdminErrorLogsScreen> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      final franchiseId =
-          Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+      final franchiseId = context.watch<FranchiseProvider>().franchiseId;
       await ErrorLogger.log(
         message: 'Failed to fetch admin error logs: $e',
         stack: stack.toString(),

@@ -30,8 +30,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     final userProfileNotifier = Provider.of<UserProfileNotifier>(context);
     final userRoles = userProfileNotifier.user?.roles ?? <String>[];
 
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
     final analyticsService =
         Provider.of<AnalyticsService>(context, listen: false);
     final firestoreService =

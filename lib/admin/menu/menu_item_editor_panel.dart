@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/admin/menu/dynamic_menu_item_editor_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:provider/provider.dart';
 
 class MenuItemEditorPanel extends StatefulWidget {
   final bool isOpen;
@@ -120,23 +122,22 @@ class _MenuItemEditorPanelState extends State<MenuItemEditorPanel> {
                     constraints: const BoxConstraints(maxWidth: 600),
                     child: DynamicMenuItemEditorScreen(
                       key: ValueKey(_categoryId),
+                      franchiseId:
+                          Provider.of<FranchiseProvider>(context, listen: false)
+                              .franchiseId,
                       initialCategoryId: _categoryId,
                       onCategorySelected: (selectedCategory) {
                         setState(() {
                           _categoryId = selectedCategory;
                         });
-                        if (widget.onCategorySelected != null) {
-                          widget.onCategorySelected!(selectedCategory);
-                        }
+                        widget.onCategorySelected?.call(selectedCategory);
                       },
                       onCancel: () {
                         if (_categoryId != null) {
                           setState(() {
-                            _categoryId = null; // Back to category picker
+                            _categoryId = null;
                           });
-                          if (widget.onCategoryCleared != null) {
-                            widget.onCategoryCleared!();
-                          }
+                          widget.onCategoryCleared?.call();
                         } else {
                           widget.onClose();
                         }

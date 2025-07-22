@@ -11,12 +11,14 @@ import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class DynamicMenuItemEditorScreen extends StatefulWidget {
+  final String franchiseId;
   final String? initialCategoryId;
   final VoidCallback? onCancel;
   final ValueChanged<String>? onCategorySelected; // <-- Add this line
 
   const DynamicMenuItemEditorScreen(
       {super.key,
+      required this.franchiseId,
       this.initialCategoryId,
       this.onCancel,
       this.onCategorySelected});
@@ -37,8 +39,7 @@ class _DynamicMenuItemEditorScreenState
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_selectedCategoryId != null && _schema == null) {
-      final franchiseId =
-          Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+      final franchiseId = widget.franchiseId;
       _loadSchema(franchiseId, _selectedCategoryId!);
     }
   }
@@ -150,8 +151,7 @@ class _DynamicMenuItemEditorScreenState
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+    final franchiseId = widget.franchiseId;
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       print(
@@ -213,9 +213,7 @@ class _DynamicMenuItemEditorScreenState
                     if (v != null) {
                       print('Category selected: $v');
                       widget.onCategorySelected?.call(v);
-                      final franchiseId =
-                          Provider.of<FranchiseProvider>(context, listen: false)
-                              .franchiseId;
+                      final franchiseId = widget.franchiseId;
                       _loadSchema(franchiseId, v);
                     }
                   },

@@ -42,8 +42,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
       );
     }
 
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
 
     return RoleGuard(
       allowedRoles: const [

@@ -1114,14 +1114,26 @@ class FirestoreService {
   Future<List<FranchiseInfo>> fetchFranchiseList() async {
     final snapshot = await _db.collection('franchises').get();
     return snapshot.docs.map((doc) {
-      return FranchiseInfo.fromFirestore(doc.data(), doc.id);
+      return FranchiseInfo.fromMap(doc.data(), doc.id);
     }).toList();
+  }
+
+  Future<List<FranchiseInfo>> getFranchisesByIds(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    final snapshot = await firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .where(firestore.FieldPath.documentId, whereIn: ids)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => FranchiseInfo.fromMap(doc.data(), doc.id))
+        .toList();
   }
 
   Future<List<FranchiseInfo>> getFranchises() async {
     final query = await _db.collection('franchises').get();
     return query.docs
-        .map((doc) => FranchiseInfo.fromFirestore(doc.data(), doc.id))
+        .map((doc) => FranchiseInfo.fromMap(doc.data(), doc.id))
         .toList();
   }
 
@@ -1129,13 +1141,10 @@ class FirestoreService {
     final snapshot = await firestore.FirebaseFirestore.instance
         .collection('franchises')
         .get();
-    return snapshot.docs.map((doc) {
-      return FranchiseInfo(
-        id: doc.id,
-        name: doc.data()['displayName'] ?? doc.id,
-        logoUrl: doc.data()['logoUrl'],
-      );
-    }).toList();
+
+    return snapshot.docs
+        .map((doc) => FranchiseInfo.fromMap(doc.data(), doc.id))
+        .toList();
   }
 
   // --- PAYOUTS ---

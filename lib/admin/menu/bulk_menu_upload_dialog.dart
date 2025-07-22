@@ -6,11 +6,13 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 class BulkMenuUploadDialog extends StatefulWidget {
   final List<Category> categories;
   final VoidCallback onComplete;
+  final String franchiseId;
 
   const BulkMenuUploadDialog({
     super.key,
     required this.categories,
     required this.onComplete,
+    required this.franchiseId,
   });
 
   @override

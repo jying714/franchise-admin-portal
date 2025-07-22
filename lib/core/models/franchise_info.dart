@@ -17,7 +17,7 @@ class FranchiseInfo {
     this.businessEmail,
   });
 
-  factory FranchiseInfo.fromFirestore(Map<String, dynamic> data, String id) {
+  factory FranchiseInfo.fromMap(Map<String, dynamic> data, String id) {
     return FranchiseInfo(
       id: id,
       name: data['name'] ?? 'Unnamed Franchise',

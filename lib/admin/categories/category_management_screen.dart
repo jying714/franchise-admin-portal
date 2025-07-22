@@ -94,12 +94,13 @@ class _CategoryManagementScreenContentState
   }
 
   Future<void> _openCategoryDialog({Category? category}) async {
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<FranchiseProvider>().franchiseId;
     if (!_canManage || _isLoading || _bulkLoading) return;
 
     await showDialog<Category>(
       context: context,
       builder: (_) => CategoryFormDialog(
+        franchiseId: franchiseId, // ✅ REQUIRED FIX
         category: category,
         onSaved: (Category saved) async {
           setState(() => _isLoading = true);
@@ -240,9 +241,11 @@ class _CategoryManagementScreenContentState
 
   void _showBulkUploadDialog() async {
     if (!_canManage || _isLoading || _bulkLoading) return;
+    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+
     final uploaded = await showDialog<bool>(
       context: context,
-      builder: (_) => const BulkUploadDialog(),
+      builder: (_) => BulkUploadDialog(franchiseId: franchiseId),
     );
     if (uploaded == true) {
       ScaffoldMessenger.of(context).showSnackBar(

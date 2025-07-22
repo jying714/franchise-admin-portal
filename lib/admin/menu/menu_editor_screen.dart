@@ -156,6 +156,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
       context: context,
       builder: (_) => BulkMenuUploadDialog(
         categories: categories,
+        franchiseId: context.read<FranchiseProvider>().franchiseId,
         onComplete: () => Navigator.of(context).pop(true),
       ),
     );
@@ -532,8 +533,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
     final firestore = Provider.of<FirestoreService>(context, listen: false);
     final user = Provider.of<UserProfileNotifier>(context).user;
     final loc = AppLocalizations.of(context);

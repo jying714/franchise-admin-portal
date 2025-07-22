@@ -20,8 +20,7 @@ class _ChatReplyDialogState extends State<ChatReplyDialog> {
     final reply = _controller.text.trim();
     if (reply.isEmpty) return;
     setState(() => isSending = true);
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
     await FirestoreService().sendMessage(
       franchiseId,
       chatId: widget.chatId,

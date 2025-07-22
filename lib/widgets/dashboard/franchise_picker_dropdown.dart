@@ -18,14 +18,8 @@ class FranchisePickerDropdown extends StatelessWidget {
     final user = Provider.of<AdminUserProvider>(context).user;
     final loc = AppLocalizations.of(context);
 
-    final allFranchises = franchiseProvider.allFranchises;
-    final allowedFranchiseIds = user?.franchiseIds ?? [];
-
-    // ✅ Filter only franchises the user is allowed to access
-    final franchises = allFranchises
-        ?.where((f) => allowedFranchiseIds.contains(f.id))
-        .toList();
-
+    final franchises = franchiseProvider.viewableFranchises;
+    print('[FranchisePickerDropdown] All franchises: $franchises');
     final currentId = selectedFranchiseId ?? franchiseProvider.franchiseId;
 
     if (franchises == null || franchises.isEmpty) {
@@ -49,6 +43,13 @@ class FranchisePickerDropdown extends StatelessWidget {
         dropdownColor: Theme.of(context).colorScheme.surface,
         onChanged: (String? newValue) {
           if (newValue != null && newValue != currentFranchise.id) {
+            print(
+                '[FranchisePickerDropdown] Selected new franchise ID: $newValue');
+            final selectedFranchise = franchises.firstWhere(
+                (f) => f.id == newValue,
+                orElse: () => FranchiseInfo(id: newValue, name: 'Unknown'));
+            print(
+                '[FranchisePickerDropdown] Selected franchise name: ${selectedFranchise.name}');
             franchiseProvider.setFranchiseId(newValue);
           }
         },

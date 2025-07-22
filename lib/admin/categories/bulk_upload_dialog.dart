@@ -9,7 +9,12 @@ import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class BulkUploadDialog extends StatefulWidget {
-  const BulkUploadDialog({super.key});
+  final String franchiseId;
+
+  const BulkUploadDialog({
+    super.key,
+    required this.franchiseId,
+  });
 
   @override
   State<BulkUploadDialog> createState() => _BulkUploadDialogState();
@@ -47,8 +52,7 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+    final franchiseId = widget.franchiseId;
 
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
