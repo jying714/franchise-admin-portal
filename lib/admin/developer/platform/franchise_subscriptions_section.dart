@@ -11,6 +11,7 @@ import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
 import 'package:franchise_admin_portal/admin/developer/platform/franchise_subscription_editor_dialog.dart';
 import 'package:franchise_admin_portal/admin/categories/bulk_action_bar.dart';
+import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
 
 final DashboardSection franchiseSubscriptionsSection = DashboardSection(
   key: 'franchiseSubscriptions',
@@ -80,7 +81,7 @@ class _FranchiseSubscriptionsSectionState
 
     if (confirmed == true) {
       try {
-        await FirestoreService.deleteFranchiseSubscription(subId);
+        await FranchiseSubscriptionService().deleteFranchiseSubscription(subId);
         setState(() => _subsFuture = _loadSubscriptions());
       } catch (e, st) {
         await ErrorLogger.log(
@@ -102,7 +103,9 @@ class _FranchiseSubscriptionsSectionState
     final subsToRestore = [..._subs.where((s) => idsToDelete.contains(s.id))];
 
     try {
-      await FirestoreService.deleteManyFranchiseSubscriptions(idsToDelete);
+      await FranchiseSubscriptionService()
+          .deleteManyFranchiseSubscriptions(idsToDelete);
+
       setState(() {
         _subsFuture = _loadSubscriptions();
         _selectedIds.clear();
@@ -115,7 +118,8 @@ class _FranchiseSubscriptionsSectionState
           label: loc.undo,
           onPressed: () async {
             for (final sub in subsToRestore) {
-              await FirestoreService().saveFranchiseSubscription(sub);
+              await FranchiseSubscriptionService()
+                  .saveFranchiseSubscription(sub);
             }
             setState(() => _subsFuture = _loadSubscriptions());
           },

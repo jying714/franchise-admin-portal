@@ -12,6 +12,10 @@ class FranchiseSubscriptionService {
   FranchiseSubscriptionService({FirebaseFirestore? firestoreInstance})
       : _db = firestoreInstance ?? FirebaseFirestore.instance;
 
+  // ===========================================================================
+  // 🔥 Franchise Subscription – Core Lifecycle
+  // ===========================================================================
+
   /// Subscribe a franchise to a new platform plan. Deactivates any active subscription first.
   Future<void> subscribeFranchiseToPlan({
     required String franchiseId,
@@ -123,7 +127,106 @@ class FranchiseSubscriptionService {
     }
   }
 
-  /// Fetch all franchise subscriptions (platform-wide, admin access).
+  /// Update an existing franchise subscription (merge)
+  Future<void> updateFranchiseSubscription({
+    required String documentId,
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      final docRef = _db.collection('franchise_subscriptions').doc(documentId);
+      await docRef.set(data, SetOptions(merge: true));
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to update franchise subscription',
+        stack: stack.toString(),
+        source: 'FranchiseSubscriptionService',
+        screen: 'updateFranchiseSubscription',
+        severity: 'error',
+        contextData: {'exception': e.toString(), 'inputData': data},
+      );
+      rethrow;
+    }
+  }
+
+  /// Save (create or overwrite) a subscription (move from FirestoreService)
+  Future<void> saveFranchiseSubscription(
+      FranchiseSubscription subscription) async {
+    try {
+      final docRef = subscription.id.isNotEmpty
+          ? _db.collection('franchise_subscriptions').doc(subscription.id)
+          : _db
+              .collection('franchise_subscriptions')
+              .doc(); // Will generate new ID
+
+      await docRef.set(
+        subscription.toFirestore(),
+        SetOptions(merge: true),
+      );
+
+      debugPrint(
+          '[FranchiseSubscriptionService] Saved subscription: ${docRef.id}');
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to save franchise subscription',
+        stack: stack.toString(),
+        source: 'FranchiseSubscriptionService',
+        screen: 'saveFranchiseSubscription',
+        severity: 'error',
+        contextData: {
+          'subscriptionId': subscription.id,
+          'franchiseId': subscription.franchiseId,
+        },
+      );
+      rethrow;
+    }
+  }
+
+  /// Delete a specific franchise subscription
+  Future<void> deleteFranchiseSubscription(String id) async {
+    try {
+      await _db.collection('franchise_subscriptions').doc(id).delete();
+    } catch (e, st) {
+      await ErrorLogger.log(
+        message: 'Failed to delete franchise_subscription $id',
+        stack: st.toString(),
+        source: 'FranchiseSubscriptionService',
+        screen: 'deleteFranchiseSubscription',
+        severity: 'error',
+        contextData: {'subscriptionId': id, 'exception': e.toString()},
+      );
+      rethrow;
+    }
+  }
+
+  /// Batch delete multiple franchise subscriptions (move from FirestoreService)
+  Future<void> deleteManyFranchiseSubscriptions(List<String> ids) async {
+    final batch = _db.batch();
+
+    try {
+      for (final id in ids) {
+        final docRef = _db.collection('franchise_subscriptions').doc(id);
+        batch.delete(docRef);
+      }
+
+      await batch.commit();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to delete multiple franchise subscriptions',
+        stack: stack.toString(),
+        source: 'FranchiseSubscriptionService',
+        screen: 'deleteManyFranchiseSubscriptions',
+        severity: 'error',
+        contextData: {'ids': ids, 'exception': e.toString()},
+      );
+      rethrow;
+    }
+  }
+
+  // ===========================================================================
+  // 🔎 Franchise Subscription – Queries
+  // ===========================================================================
+
+  /// Get all subscriptions (admin/global access)
   Future<List<FranchiseSubscription>> getAllFranchiseSubscriptions() async {
     try {
       final snap = await _db.collection('franchise_subscriptions').get();
@@ -146,34 +249,18 @@ class FranchiseSubscriptionService {
     }
   }
 
-  /// Fetch the active subscription for a specific franchise
-  Future<FranchiseSubscription?> getActiveSubscriptionForFranchise(
-      String franchiseId) async {
-    try {
-      final snap = await _db
-          .collection('franchise_subscriptions')
-          .where('franchiseId', isEqualTo: franchiseId)
-          .where('active', isEqualTo: true)
-          .limit(1)
-          .get();
-
-      if (snap.docs.isEmpty) return null;
-
-      final doc = snap.docs.first;
-      return FranchiseSubscription.fromMap(doc.id, doc.data());
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to get active subscription for franchise',
-        source: 'FranchiseSubscriptionService',
-        screen: 'franchise_subscription_check',
-        severity: 'warning',
-        stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId},
-      );
-      return null;
-    }
+  /// Stream all subscriptions in real-time (for dev tools UI)
+  Stream<List<FranchiseSubscription>> watchAllFranchiseSubscriptions() {
+    return _db
+        .collection('franchise_subscriptions')
+        .orderBy('subscribedAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) => FranchiseSubscription.fromMap(doc.id, doc.data()))
+            .toList());
   }
 
+  /// Get current (active) subscription for franchise
   Future<FranchiseSubscription?> getCurrentSubscription(
       String franchiseId) async {
     try {
@@ -213,7 +300,35 @@ class FranchiseSubscriptionService {
     }
   }
 
-  /// 🔄 Real-time stream of current subscription for a franchise
+  /// Get active subscription (older alt logic with `.active`)
+  Future<FranchiseSubscription?> getActiveSubscriptionForFranchise(
+      String franchiseId) async {
+    try {
+      final snap = await _db
+          .collection('franchise_subscriptions')
+          .where('franchiseId', isEqualTo: franchiseId)
+          .where('active', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      if (snap.docs.isEmpty) return null;
+
+      final doc = snap.docs.first;
+      return FranchiseSubscription.fromMap(doc.id, doc.data());
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to get active subscription for franchise',
+        source: 'FranchiseSubscriptionService',
+        screen: 'franchise_subscription_check',
+        severity: 'warning',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId},
+      );
+      return null;
+    }
+  }
+
+  /// Stream active subscription for a franchise
   Stream<FranchiseSubscription?> watchCurrentSubscription(String franchiseId) {
     try {
       print(
@@ -266,6 +381,13 @@ class FranchiseSubscriptionService {
     }
   }
 
+  /// Get subscription by Firestore document ID
+
+  // ===========================================================================
+  // 📦 Platform Plans – Management + Resolution
+  // ===========================================================================
+
+  /// Get a platform plan by ID
   Future<PlatformPlan?> getPlatformPlanById(String planId) async {
     try {
       final doc = await _db.collection('platform_plans').doc(planId).get();
@@ -299,37 +421,7 @@ class FranchiseSubscriptionService {
     }
   }
 
-  Stream<List<FranchiseSubscription>> watchAllFranchiseSubscriptions() {
-    return _db
-        .collection('franchise_subscriptions')
-        .orderBy('subscribedAt', descending: true)
-        .snapshots()
-        .map((snap) => snap.docs
-            .map((doc) => FranchiseSubscription.fromMap(doc.id, doc.data()))
-            .toList());
-  }
-
-  Future<void> updateFranchiseSubscription({
-    required String documentId,
-    required Map<String, dynamic> data,
-  }) async {
-    try {
-      final docRef = _db.collection('franchise_subscriptions').doc(documentId);
-      await docRef.set(data, SetOptions(merge: true));
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to update franchise subscription',
-        stack: stack.toString(),
-        source: 'FranchiseSubscriptionService',
-        screen: 'updateFranchiseSubscription',
-        severity: 'error',
-        contextData: {'exception': e.toString(), 'inputData': data},
-      );
-      rethrow;
-    }
-  }
-
-  // Platform plans
+  /// Get all platform plans
   Future<List<PlatformPlan>> getAllPlatformPlans() async {
     try {
       debugPrint(
@@ -350,6 +442,36 @@ class FranchiseSubscriptionService {
         stack: stack.toString(),
         source: 'FranchiseSubscriptionService',
         screen: 'getAllPlatformPlans',
+        severity: 'error',
+      );
+      return [];
+    }
+  }
+
+  Future<List<PlatformPlan>> getPlatformPlans() async {
+    try {
+      debugPrint(
+          '[FranchiseSubscriptionService] getPlatformPlans: Fetching all plans...');
+      final snap = await _db.collection('platform_plans').get();
+
+      debugPrint(
+          '[FranchiseSubscriptionService] Retrieved ${snap.docs.length} documents');
+
+      final plans = snap.docs.map((doc) {
+        final plan = PlatformPlan.fromMap(doc.id, doc.data());
+        debugPrint(
+            '[FranchiseSubscriptionService] Plan loaded: ${plan.name} (active: ${plan.active})');
+        return plan;
+      }).toList();
+
+      debugPrint('[FranchiseSubscriptionService] Parsed ${plans.length} plans');
+      return plans;
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Error loading platform plans: $e',
+        stack: stack.toString(),
+        source: 'FranchiseSubscriptionService',
+        screen: 'getPlatformPlans',
         severity: 'error',
       );
       return [];

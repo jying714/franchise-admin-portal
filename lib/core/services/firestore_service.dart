@@ -3581,41 +3581,6 @@ class FirestoreService {
     }
   }
 
-  static Future<List<PlatformPlan>> getPlatformPlans() async {
-    try {
-      print('[FirestoreService] getPlatformPlans: Fetching all plans...');
-      final snap = await firestore.FirebaseFirestore.instance
-          .collection('platform_plans')
-          .get();
-
-      print(
-          '[FirestoreService] getPlatformPlans: Retrieved ${snap.docs.length} documents');
-      for (var doc in snap.docs) {
-        print('[FirestoreService] Raw doc ${doc.id}: ${doc.data()}');
-      }
-
-      final plans = snap.docs.map((doc) {
-        final plan = PlatformPlan.fromMap(doc.id, doc.data());
-        print(
-            '[FirestoreService] Plan loaded: ${plan.name} (active: ${plan.active})');
-        return plan;
-      }).toList();
-      print(
-          '[FirestoreService] getPlatformPlans: Parsed ${plans.length} plans');
-      return plans;
-    } catch (e, stack) {
-      print('[FirestoreService] getPlatformPlans: ERROR $e\n$stack');
-      await ErrorLogger.log(
-        message: 'Error loading platform plans: $e',
-        stack: stack.toString(),
-        source: 'FirestoreService',
-        screen: 'getPlatformPlans',
-        severity: 'error',
-      );
-      return [];
-    }
-  }
-
   static Future<List<FranchiseSubscription>> getFranchiseSubscriptions() async {
     try {
       final snap = await firestore.FirebaseFirestore.instance
@@ -3674,70 +3639,6 @@ class FirestoreService {
         },
       );
       return null;
-    }
-  }
-
-  Future<void> saveFranchiseSubscription(
-      FranchiseSubscription subscription) async {
-    try {
-      final docRef = subscription.id.isNotEmpty
-          ? _db.collection('franchise_subscriptions').doc(subscription.id)
-          : _db.collection('franchise_subscriptions').doc();
-
-      await docRef.set(
-          subscription.toFirestore(), firestore.SetOptions(merge: true));
-    } catch (e, st) {
-      await ErrorLogger.log(
-        message: 'Failed to save franchise subscription',
-        stack: st.toString(),
-        source: 'FirestoreService',
-        screen: 'saveFranchiseSubscription',
-        severity: 'error',
-      );
-      rethrow;
-    }
-  }
-
-  static Future<void> deleteFranchiseSubscription(String id) async {
-    try {
-      await firestore.FirebaseFirestore.instance
-          .collection('franchise_subscriptions')
-          .doc(id)
-          .delete();
-    } catch (e, st) {
-      await ErrorLogger.log(
-        message: 'Failed to delete franchise_subscription $id',
-        stack: st.toString(),
-        source: 'FirestoreService',
-        screen: 'deleteFranchiseSubscription',
-        severity: 'error',
-      );
-      rethrow;
-    }
-  }
-
-  static Future<void> deleteManyFranchiseSubscriptions(List<String> ids) async {
-    final batch = firestore.FirebaseFirestore.instance.batch();
-
-    try {
-      for (final id in ids) {
-        final docRef = firestore.FirebaseFirestore.instance
-            .collection('franchise_subscriptions')
-            .doc(id);
-        batch.delete(docRef);
-      }
-
-      await batch.commit();
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to delete multiple franchise subscriptions',
-        stack: stack.toString(),
-        source: 'FirestoreService',
-        screen: 'franchise_subscriptions_section',
-        severity: 'error',
-        contextData: {'ids': ids, 'exception': e.toString()},
-      );
-      rethrow;
     }
   }
 

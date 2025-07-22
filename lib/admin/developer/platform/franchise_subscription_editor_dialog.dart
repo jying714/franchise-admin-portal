@@ -9,6 +9,7 @@ import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
 import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/widgets/role_guard.dart';
+import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
 
 class FranchiseSubscriptionEditorDialog extends StatefulWidget {
   final FranchiseSubscription? subscription; // null if creating new
@@ -74,7 +75,7 @@ class _FranchiseSubscriptionEditorDialogState
 
   Future<void> _loadPlans() async {
     try {
-      final plans = await FirestoreService.getPlatformPlans();
+      final plans = await FranchiseSubscriptionService().getPlatformPlans();
       String? validSelectedId = _selectedPlanId;
 
       final planIds = plans.map((p) => p.id).toSet();
@@ -112,7 +113,7 @@ class _FranchiseSubscriptionEditorDialogState
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     final loc = AppLocalizations.of(context)!;
-    final fs = context.read<FirestoreService>();
+    final fs = FranchiseSubscriptionService();
 
     try {
       final selectedPlan = _plans.firstWhere((p) => p.id == _selectedPlanId);
