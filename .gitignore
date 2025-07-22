@@ -52,3 +52,4 @@ package-lock.json
 serviceAccountKey.json
 setCustomClaim.js
 send_test_email.js
+checkClaims.js

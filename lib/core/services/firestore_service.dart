@@ -3911,7 +3911,7 @@ class FirestoreService {
   }
 
   Future<void> logSimulatedWebhookEvent(Map<String, dynamic> data) async {
-    await _db.collection('platform_webhooks_log').add(data);
+    await _db.collection('simulated_webhooks').add(data);
   }
 
   Future<List<PlatformInvoice>> getTestPlatformInvoices({
