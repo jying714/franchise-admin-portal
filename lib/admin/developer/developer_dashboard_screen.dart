@@ -20,7 +20,8 @@ import 'package:franchise_admin_portal/widgets/developer/audit_trail_section.dar
 import 'package:franchise_admin_portal/admin/hq_owner/owner_hq_dashboard_screen.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/admin/devtools/dev_tools_screen.dart';
+import 'package:franchise_admin_portal/admin/devtools/billing/billing_subscription_tools_screen.dart';
+import 'package:franchise_admin_portal/admin/devtools/widgets/dev_tools_sidebar_group.dart';
 
 class DeveloperDashboardScreen extends StatefulWidget {
   const DeveloperDashboardScreen({Key? key}) : super(key: key);
@@ -128,9 +129,20 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
               color: colorScheme.surface.withOpacity(0.97),
               child: SafeArea(
                 child: AdminSidebar(
-                  sections: _sections,
+                  sections: _sections.where((s) => s.sidebarOrder < 7).toList(),
                   selectedIndex: _selectedIndex,
                   onSelect: (i) => setState(() => _selectedIndex = i),
+                  extraWidgets: [
+                    DevToolsSidebarGroup(
+                      label: 'Dev Tools',
+                      icon: Icons.build_outlined,
+                      tools:
+                          _sections.where((s) => s.sidebarOrder >= 7).toList(),
+                      selectedIndex: _selectedIndex,
+                      startIndexOffset: 0,
+                      onSelect: (i) => setState(() => _selectedIndex = i),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -255,11 +267,12 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         ),
         sidebarOrder: 6,
       ),
+      // --- DEV TOOLS GROUP ---
       DashboardSection(
-        key: 'devTools',
-        title: 'Dev Tools',
-        icon: Icons.build_outlined,
-        builder: (context) => const DevToolsScreen(),
+        key: 'billingSubscriptionTools',
+        title: 'Billing & Subscription Tools',
+        icon: Icons.receipt_long_outlined,
+        builder: (context) => const BillingSubscriptionToolsScreen(),
         sidebarOrder: 7,
       ),
     ];

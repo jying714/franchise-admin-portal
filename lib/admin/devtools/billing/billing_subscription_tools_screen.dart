@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/admin/devtools/admin_webhook_simulator.dart';
-import 'package:franchise_admin_portal/admin/devtools/mock_payment_editor.dart';
-import 'package:franchise_admin_portal/admin/devtools/test_invoice_generator.dart';
-import 'package:franchise_admin_portal/admin/devtools/test_invoice_cleaner.dart';
-import 'package:franchise_admin_portal/admin/devtools/clear_all_test_invoices_button.dart';
-import 'package:franchise_admin_portal/admin/devtools/mock_payment_tester.dart';
+import 'package:franchise_admin_portal/admin/devtools/billing/admin_webhook_simulator.dart';
+import 'package:franchise_admin_portal/admin/devtools/billing/mock_payment_editor.dart';
+import 'package:franchise_admin_portal/admin/devtools/billing/test_invoice_generator.dart';
+import 'package:franchise_admin_portal/admin/devtools/billing/test_invoice_cleaner.dart';
+import 'package:franchise_admin_portal/admin/devtools/billing/clear_all_test_invoices_button.dart';
+import 'package:franchise_admin_portal/admin/devtools/billing/mock_payment_tester.dart';
 
-class DevToolsScreen extends StatelessWidget {
-  const DevToolsScreen({super.key});
+class BillingSubscriptionToolsScreen extends StatelessWidget {
+  const BillingSubscriptionToolsScreen({super.key});
 
   void _showDevGuide(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('🛠 Developer Tools Guide'),
+        title: const Text('🧾 Billing & Subscription Dev Guide'),
         content: SizedBox(
           width: double.maxFinite,
           child: SingleChildScrollView(
@@ -73,11 +73,11 @@ class DevToolsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Developer Tools'),
+        title: const Text('Billing & Subscription Tools'),
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline),
-            tooltip: 'Dev Tools Guide',
+            tooltip: 'Tool Guide',
             onPressed: () => _showDevGuide(context),
           ),
         ],
