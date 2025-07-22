@@ -131,13 +131,6 @@ final List<DashboardSection> sectionRegistry = [
   //   sidebarOrder: 11,
   //   showInSidebar: true,
   // ),
-  DashboardSection(
-    key: 'platform_plans_section',
-    title: 'Platform Plans', // Use a static string here
-    icon: Icons.payment,
-    sidebarOrder: 60,
-    builder: (context) => const PlatformPlansSection(),
-  ),
 ];
 
 /// Easily sort or filter sections for the sidebar/nav.

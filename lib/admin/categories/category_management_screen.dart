@@ -94,8 +94,7 @@ class _CategoryManagementScreenContentState
   }
 
   Future<void> _openCategoryDialog({Category? category}) async {
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
     if (!_canManage || _isLoading || _bulkLoading) return;
 
     await showDialog<Category>(
@@ -154,8 +153,7 @@ class _CategoryManagementScreenContentState
 
   Future<void> _deleteCategory(Category category,
       {bool showUndo = true}) async {
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
     if (!_canManage || _isLoading || _bulkLoading) return;
     final loc = AppLocalizations.of(context)!;
     final userId =
@@ -282,8 +280,7 @@ class _CategoryManagementScreenContentState
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
     final loc = AppLocalizations.of(context)!;
     final isMobile = MediaQuery.of(context).size.width < 600;
     final colorScheme = Theme.of(context).colorScheme;

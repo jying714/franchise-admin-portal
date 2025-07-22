@@ -20,6 +20,8 @@ import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_selector.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:franchise_admin_portal/widgets/role_guard.dart';
+import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({Key? key}) : super(key: key);
@@ -60,8 +62,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     // Always listen for user profile changes
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
 
     final userNotifier = Provider.of<UserProfileNotifier>(context);
     final appUser = userNotifier.user;
@@ -145,17 +146,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
               ),
             const Spacer(),
-            DashboardSwitcherDropdown(currentScreen: 'admin'),
-            // --- SWITCH FRANCHISE BUTTON (DEVELOPER ONLY) ---
-            if (isDeveloper)
-              Padding(
+            // --- SWITCH FRANCHISE BUTTON (By ROLE) ---
+            RoleGuard(
+              requireAnyRole: ['developer', 'platform_owner', 'hq_owner'],
+              featureName: 'franchise_picker_dropdown',
+              child: Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: IconButton(
-                  icon: Icon(Icons.swap_horiz, color: colorScheme.primary),
-                  tooltip: "Switch Franchise",
-                  onPressed: () => _showFranchiseSelectorDialog(context),
+                child: SizedBox(
+                  child: FranchisePickerDropdown(),
                 ),
               ),
+            ),
+            const SizedBox(width: 8),
+            DashboardSwitcherDropdown(currentScreen: 'admin'),
             NotificationsIconButton(),
             const SizedBox(width: 8),
             HelpIconButton(),
