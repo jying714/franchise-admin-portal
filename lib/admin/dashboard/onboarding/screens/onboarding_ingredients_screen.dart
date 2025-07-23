@@ -28,9 +28,10 @@ class OnboardingIngredientsScreen extends StatefulWidget {
 
 class _OnboardingIngredientsScreenState
     extends State<OnboardingIngredientsScreen> {
+  bool _hasLoaded = false;
   late FirestoreService firestoreService;
   late AppLocalizations loc;
-
+  bool _hasLoadedIngredients = false;
   List<IngredientMetadata> _ingredients = [];
   bool _isLoading = false;
 
@@ -38,18 +39,40 @@ class _OnboardingIngredientsScreenState
   void initState() {
     super.initState();
     firestoreService = Provider.of<FirestoreService>(context, listen: false);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchIngredients());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final franchiseProvider = context.watch<FranchiseInfoProvider>();
+
+    if (!_hasLoadedIngredients &&
+        !franchiseProvider.loading &&
+        franchiseProvider.franchise != null) {
+      _hasLoadedIngredients = true;
+      Future.microtask(() => _fetchIngredients());
+    }
   }
 
   Future<void> _fetchIngredients() async {
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+    final franchise = context.read<FranchiseInfoProvider>().franchise;
+    final franchiseId = franchise?.id ?? '';
+
+    print('[FETCH INGREDIENTS] called — franchiseId = "$franchiseId"');
+
+    if (franchiseId.isEmpty) {
+      print('❌ Missing franchiseId from FranchiseInfoProvider');
+      return;
+    }
 
     setState(() => _isLoading = true);
 
     try {
       final stream = firestoreService.streamIngredients(franchiseId);
+      print('[FETCH INGREDIENTS] subscribing to stream...');
       stream.listen((data) {
+        print('[FETCH INGREDIENTS] received ${data.length} ingredients');
         if (mounted) {
           setState(() {
             _ingredients = data;
@@ -57,28 +80,26 @@ class _OnboardingIngredientsScreenState
           });
         }
       }, onError: (error, stack) async {
+        print('[FETCH INGREDIENTS] stream error: $error');
         await ErrorLogger.log(
           message: 'Stream error in onboarding_ingredients_screen: $error',
           stack: stack.toString(),
           source: 'onboarding_ingredients_screen',
           screen: 'OnboardingIngredientsScreen',
           severity: 'error',
-          contextData: {
-            'franchiseId': franchiseId,
-          },
+          contextData: {'franchiseId': franchiseId},
         );
         if (mounted) setState(() => _isLoading = false);
       });
     } catch (e, stack) {
+      print('[FETCH INGREDIENTS] try/catch error: $e');
       await ErrorLogger.log(
         message: 'onboarding_ingredients_screen error: $e',
         stack: stack.toString(),
         source: 'onboarding_ingredients_screen',
         screen: 'OnboardingIngredientsScreen',
         severity: 'error',
-        contextData: {
-          'franchiseId': franchiseId,
-        },
+        contextData: {'franchiseId': franchiseId},
       );
       if (mounted) {
         setState(() => _isLoading = false);
@@ -160,6 +181,7 @@ class _OnboardingIngredientsScreenState
         icon: const Icon(Icons.add),
         label: Text(loc.addIngredient),
         backgroundColor: DesignTokens.primaryColor,
+        heroTag: 'onboarding_ingredients_fab',
       ),
       body: _isLoading
           ? const LoadingShimmerWidget()

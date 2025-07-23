@@ -114,20 +114,6 @@ class GlassHero extends StatelessWidget {
           isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (BrandingConfig.logoUrl.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 24),
-            child: Image.network(
-              BrandingConfig.logoUrl,
-              height: 68,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => Image.asset(
-                BrandingConfig.logoMain,
-                height: 68,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
         Text(
           "The Modern Franchise Platform",
           style: TextStyle(

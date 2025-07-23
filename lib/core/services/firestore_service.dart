@@ -3930,10 +3930,19 @@ extension IngredientOnboardingMethods on FirestoreService {
           .collection('ingredient_metadata')
           .orderBy('name');
       return ref.snapshots().map((snapshot) {
-        return snapshot.docs.map((doc) {
-          final data = doc.data();
-          return IngredientMetadata.fromMap(data);
-        }).toList();
+        print(
+            '📥 Fetched ${snapshot.docs.length} ingredient docs from Firestore');
+        return snapshot.docs
+            .map((doc) {
+              try {
+                return IngredientMetadata.fromMap(doc.data());
+              } catch (e) {
+                print('❌ Error parsing doc ${doc.id}: $e');
+                return null;
+              }
+            })
+            .whereType<IngredientMetadata>()
+            .toList();
       });
     } catch (e, stack) {
       ErrorLogger.log(

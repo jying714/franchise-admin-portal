@@ -1713,6 +1713,7 @@
   "deleteIngredient": "Delete Ingredient",
   "confirmDeleteIngredient": "Are you sure you want to delete this ingredient?",
   "errorDeletingIngredient": "Error deleting ingredient",
-  "addIngredient": "Add Ingredient"
+  "addIngredient": "Add Ingredient",
+  "selectAFranchiseFirst": "Please select a franchise first."
 
   }

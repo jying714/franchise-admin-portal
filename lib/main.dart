@@ -37,7 +37,6 @@ import 'package:franchise_admin_portal/admin/profile/universal_profile_screen.da
 import 'package:franchise_admin_portal/admin/auth/invite_accept_screen.dart';
 import 'package:franchise_admin_portal/admin/profile/franchise_onboarding_screen.dart';
 import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
-import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/screens/available_platform_plans_screen.dart';
 import 'package:franchise_admin_portal/core/providers/platform_plan_selection_provider.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_subscription_provider.dart';
@@ -47,7 +46,10 @@ import 'package:franchise_admin_portal/admin/devtools/billing/billing_subscripti
 import 'package:franchise_admin_portal/admin/devtools/subscriptions/subscription_dev_tools_screen.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_info_provider.dart';
 import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider.dart';
+import 'package:franchise_admin_portal/core/section_registry.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_screen.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredients_screen.dart';
+import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
 import 'dart:html' as html;
 
 /// Returns initial unauth route and optional invite token, e.g. ('/invite-accept', 'abc123').
@@ -594,14 +596,32 @@ class _FranchiseAuthenticatedRootState
                 builder: (context) => const OnboardingMenuScreen(),
               );
             }
-            /////////////////// PLACE HOLDERS below
-            if (uri.path == '/onboarding/ingredients') {
-              return MaterialPageRoute(
+            if (uri.path == '/dashboard' &&
+                uri.queryParameters.containsKey('section')) {
+              final sectionKey = uri.queryParameters['section'];
+              print('[main.dart] Routing to dashboard section: $sectionKey');
+              print('[DEBUG] Route name from settings: ${settings.name}');
+
+              final section =
+                  [...sectionRegistry, ...onboardingSteps].firstWhere(
+                (s) => s.key == sectionKey,
+                orElse: () => DashboardSection(
+                  key: 'notFound',
+                  title: 'Not Found',
+                  icon: Icons.error,
+                  sidebarOrder: 999, // required argument
                   builder: (_) => const Scaffold(
-                        body:
-                            Center(child: Text('Ingredients Step Placeholder')),
-                      ));
+                    body: Center(child: Text('Section not found')),
+                  ),
+                ),
+              );
+
+              return MaterialPageRoute(
+                builder: (context) =>
+                    FranchiseGate(child: section.builder(context)),
+              );
             }
+            /////////////////// PLACE HOLDERS below
             if (uri.path == '/onboarding/categories') {
               return MaterialPageRoute(
                   builder: (_) => const Scaffold(

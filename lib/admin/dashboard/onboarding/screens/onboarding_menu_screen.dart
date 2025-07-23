@@ -38,6 +38,18 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
     print('[OnboardingMenuScreen] initState');
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final newFranchiseId = context.watch<FranchiseProvider>().franchiseId;
+    if (newFranchiseId != franchiseId) {
+      setState(() {
+        franchiseId = newFranchiseId;
+      });
+      print('[OnboardingMenuScreen] Detected new franchiseId: $franchiseId');
+    }
+  }
+
   void _markStepComplete(String key) {
     setState(() {
       _stepCompletion[key] = true;
@@ -109,8 +121,19 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     title: loc.stepIngredients,
                     subtitle: loc.stepIngredientsDesc,
                     completed: progress['ingredients'] == true,
-                    onTap: () => Navigator.of(context)
-                        .pushNamed('/onboarding/ingredients'),
+                    onTap: () {
+                      final franchiseId =
+                          context.read<FranchiseProvider>().franchiseId;
+                      if (franchiseId.isEmpty || franchiseId == 'unknown') {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(loc.selectAFranchiseFirst)),
+                        );
+                        return;
+                      }
+
+                      Navigator.of(context).pushNamed(Uri.encodeFull(
+                          '/dashboard?section=onboardingIngredients'));
+                    },
                   ),
                   OnboardingStepCard(
                     stepNumber: 2,
