@@ -73,6 +73,8 @@ class BrandingConfig {
       'https://via.placeholder.com/256x64.png?text=Logo';
   static const String primaryContact =
       'support@doughboyspizzeria.com'; // or your real contact email
+  static const String ingredientPlaceholder =
+      'assets/images/ingredient_placeholder.png';
 
   // ======================
   // === FUTURE TOKENS ====

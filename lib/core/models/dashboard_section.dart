@@ -6,6 +6,7 @@ class DashboardSection {
   final IconData icon;
   final WidgetBuilder builder;
   final int sidebarOrder;
+  final bool showInSidebar;
 
   const DashboardSection({
     required this.key,
@@ -13,5 +14,6 @@ class DashboardSection {
     required this.icon,
     required this.builder,
     required this.sidebarOrder,
+    this.showInSidebar = true,
   });
 }

@@ -14,6 +14,7 @@ class DesignTokens {
   static const Color secondaryColor = Color(0xFF506A48); // Olive green
   static const Color accentColor = Color(0xFF00A7A7); // Teal
   static const Color errorColor = Color(0xFFE53935);
+  static const Color dangerColor = errorColor;
   static const Color successColor = Colors.green;
 
   static const Color backgroundColor = Color(0xFFF9F9F9); // App bg

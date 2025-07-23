@@ -45,6 +45,9 @@ import 'package:franchise_admin_portal/core/services/franchise_subscription_serv
 import 'package:franchise_admin_portal/admin/owner/screens/full_franchise_subscription_list_screen.dart';
 import 'package:franchise_admin_portal/admin/devtools/billing/billing_subscription_tools_screen.dart';
 import 'package:franchise_admin_portal/admin/devtools/subscriptions/subscription_dev_tools_screen.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_info_provider.dart';
+import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_screen.dart';
 import 'dart:html' as html;
 
 /// Returns initial unauth route and optional invite token, e.g. ('/invite-accept', 'abc123').
@@ -90,6 +93,11 @@ Map<String, dynamic> getInitialUnauthRoute() {
 }
 
 void main() {
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint('[GLOBAL ERROR] ${details.exceptionAsString()}');
+    debugPrintStack(stackTrace: details.stack);
+  };
   print('[main.dart] main(): Starting runZonedGuarded.');
   runZonedGuarded(() async {
     print('[main.dart] runZonedGuarded: Initializing Flutter bindings.');
@@ -276,6 +284,42 @@ class FranchiseAppRootSplit extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => PlatformPlanSelectionProvider()),
         Provider<FirestoreService>.value(value: FirestoreService()),
+        ChangeNotifierProxyProvider2<FranchiseProvider, FirestoreService,
+            FranchiseInfoProvider>(
+          create: (_) => FranchiseInfoProvider(
+            firestore: Provider.of<FirestoreService>(_, listen: false),
+            franchiseProvider: Provider.of<FranchiseProvider>(_, listen: false),
+          ),
+          update: (_, franchiseProvider, firestoreService, previous) {
+            final provider = previous ??
+                FranchiseInfoProvider(
+                  firestore: firestoreService,
+                  franchiseProvider: franchiseProvider,
+                );
+            provider.loadFranchiseInfo(); // reload on any change
+            return provider;
+          },
+        ),
+        ChangeNotifierProxyProvider2<FirestoreService, FranchiseProvider,
+            OnboardingProgressProvider>(
+          create: (_) => OnboardingProgressProvider(
+            firestore: Provider.of<FirestoreService>(_, listen: false),
+            franchiseId: '', // will be set on update
+          ),
+          update: (_, firestoreService, franchiseProvider, previous) {
+            final fid = franchiseProvider.franchiseId ?? '';
+            final provider = previous ??
+                OnboardingProgressProvider(
+                    firestore: firestoreService, franchiseId: fid);
+
+            if (fid.isNotEmpty && fid != provider.franchiseId) {
+              return OnboardingProgressProvider(
+                  firestore: firestoreService, franchiseId: fid);
+            }
+
+            return provider;
+          },
+        ),
         Provider(create: (_) => AnalyticsService()),
         StreamProvider<fb_auth.User?>.value(
           value: fb_auth.FirebaseAuth.instance.authStateChanges(),
@@ -544,6 +588,41 @@ class _FranchiseAuthenticatedRootState
               return MaterialPageRoute(
                   builder: (context) => const UniversalProfileScreen());
             }
+            if (uri.path == '/onboarding/menu') {
+              print('[main.dart] Routing to OnboardingMenuScreen');
+              return MaterialPageRoute(
+                builder: (context) => const OnboardingMenuScreen(),
+              );
+            }
+            /////////////////// PLACE HOLDERS below
+            if (uri.path == '/onboarding/ingredients') {
+              return MaterialPageRoute(
+                  builder: (_) => const Scaffold(
+                        body:
+                            Center(child: Text('Ingredients Step Placeholder')),
+                      ));
+            }
+            if (uri.path == '/onboarding/categories') {
+              return MaterialPageRoute(
+                  builder: (_) => const Scaffold(
+                        body:
+                            Center(child: Text('Categories Step Placeholder')),
+                      ));
+            }
+            if (uri.path == '/onboarding/menu_items') {
+              return MaterialPageRoute(
+                  builder: (_) => const Scaffold(
+                        body:
+                            Center(child: Text('Menu Items Step Placeholder')),
+                      ));
+            }
+            if (uri.path == '/onboarding/review') {
+              return MaterialPageRoute(
+                  builder: (_) => const Scaffold(
+                        body: Center(child: Text('Review Step Placeholder')),
+                      ));
+            }
+            /////////////////// PLACE HOLDERS Above
             if (uri.path == '/invite-accept') {
               final args = settings.arguments as Map?;
               final token = args?['token'] as String?;

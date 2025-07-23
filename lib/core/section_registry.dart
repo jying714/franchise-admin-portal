@@ -14,26 +14,14 @@ import 'package:franchise_admin_portal/admin/chat/chat_management_screen.dart';
 import 'package:franchise_admin_portal/admin/error_logs/error_logs_screen.dart';
 import 'package:franchise_admin_portal/admin/developer/platform/platform_plans_section.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_categories_screen.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredients_screen.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_items_screen.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_screen.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_review_screen.dart';
+import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
+
 // Any new (plugin/module) screens can be imported and registered here
-
-class DashboardSection {
-  final String key;
-  final String title;
-  final IconData icon;
-  final WidgetBuilder builder;
-  final bool showInSidebar;
-  final int sidebarOrder;
-  // For plugin/franchise logic: you might add more config fields in the future
-
-  DashboardSection({
-    required this.key,
-    required this.title,
-    required this.icon,
-    required this.builder,
-    this.showInSidebar = true,
-    this.sidebarOrder = 100, // Used for drag/sort or plugin injection
-  });
-}
 
 // Central registry. Add or remove screens here to affect ALL navigation/dashboards.
 final List<DashboardSection> sectionRegistry = [
@@ -129,6 +117,84 @@ final List<DashboardSection> sectionRegistry = [
   //   icon: Icons.card_membership,
   //   builder: (_) => const LoyaltyProgramScreen(),
   //   sidebarOrder: 11,
+  //   showInSidebar: true,
+  // ),
+  // DashboardSection(
+  //   key: 'onboardingMenu',
+  //   title: 'Overview',
+  //   icon: Icons.list_alt_outlined,
+  //   builder: (_) => const OnboardingMenuScreen(),
+  //   sidebarOrder: 20,
+  // ),
+  // DashboardSection(
+  //   key: 'onboardingIngredients',
+  //   title: 'Step 1: Ingredients',
+  //   icon: Icons.kitchen_outlined,
+  //   builder: (_) => const OnboardingIngredientsScreen(),
+  //   sidebarOrder: 21,
+  // ),
+  // DashboardSection(
+  //   key: 'onboardingCategories',
+  //   title: 'Step 2: Categories',
+  //   icon: Icons.category_outlined,
+  //   builder: (_) => const OnboardingCategoriesScreen(),
+  //   sidebarOrder: 22,
+  // ),
+  // DashboardSection(
+  //   key: 'onboardingMenuItems',
+  //   title: 'Step 3: Menu Items',
+  //   icon: Icons.local_pizza_outlined,
+  //   builder: (_) => const OnboardingMenuItemsScreen(),
+  //   sidebarOrder: 23,
+  // ),
+  // DashboardSection(
+  //   key: 'onboardingReview',
+  //   title: 'Final Review',
+  //   icon: Icons.check_circle_outline,
+  //   builder: (_) => const OnboardingReviewScreen(),
+  //   sidebarOrder: 24,
+  // ),
+];
+
+final List<DashboardSection> onboardingSteps = [
+  DashboardSection(
+    key: 'onboardingMenu',
+    title: 'Overview',
+    icon: Icons.list_alt_outlined,
+    builder: (_) => const OnboardingMenuScreen(),
+    sidebarOrder: 0,
+    showInSidebar: true,
+  ),
+  DashboardSection(
+    key: 'onboardingIngredients',
+    title: 'Ingredients',
+    icon: Icons.kitchen_outlined,
+    builder: (_) => const OnboardingIngredientsScreen(),
+    sidebarOrder: 1,
+    showInSidebar: true,
+  ),
+  // DashboardSection(
+  //   key: 'onboardingCategories',
+  //   title: 'Categories',
+  //   icon: Icons.category_outlined,
+  //   builder: (_) => const OnboardingCategoriesScreen(),
+  //   sidebarOrder: 2,
+  //   showInSidebar: true,
+  // ),
+  // DashboardSection(
+  //   key: 'onboardingMenuItems',
+  //   title: 'Menu Items',
+  //   icon: Icons.local_pizza_outlined,
+  //   builder: (_) => const OnboardingMenuItemsScreen(),
+  //   sidebarOrder: 3,
+  //   showInSidebar: true,
+  // ),
+  // DashboardSection(
+  //   key: 'onboardingReview',
+  //   title: 'Review',
+  //   icon: Icons.check_circle_outline,
+  //   builder: (_) => const OnboardingReviewScreen(),
+  //   sidebarOrder: 4,
   //   showInSidebar: true,
   // ),
 ];

@@ -1073,12 +1073,17 @@ class FirestoreService {
     return _db
         .collection('users')
         .where('franchiseIds', arrayContains: franchiseId)
-        .where('roles',
-            arrayContainsAny: ['staff', 'manager', 'admin', 'hq_owner'])
         .snapshots()
-        .map((snap) => snap.docs
-            .map((doc) => app_user.User.fromFirestore(doc.data(), doc.id))
-            .toList());
+        .map((snap) {
+      return snap.docs
+          .map((doc) => app_user.User.fromFirestore(doc.data(), doc.id))
+          .where((user) =>
+              user.roles.contains('staff') ||
+              user.roles.contains('manager') ||
+              user.roles.contains('admin') ||
+              user.roles.contains('hq_owner'))
+          .toList();
+    });
   }
 
   /// Add a staff/admin user (invite or onboarding logic should use this)
@@ -3719,6 +3724,96 @@ class FirestoreService {
     return query.docs.map((d) => {...d.data(), 'id': d.id}).toList();
   }
 
+  /// Returns a typed FranchiseInfo object for a given franchise ID.
+  Future<FranchiseInfo?> getFranchiseInfo(String franchiseId) async {
+    try {
+      final doc = await _db.collection('franchises').doc(franchiseId).get();
+      if (!doc.exists) {
+        await ErrorLogger.log(
+          message: 'Franchise document not found: $franchiseId',
+          source: 'FirestoreService.getFranchiseInfo',
+          screen: 'onboarding_menu_screen',
+          severity: 'warning',
+          contextData: {'franchiseId': franchiseId},
+        );
+        return null;
+      }
+      return FranchiseInfo.fromMap(doc.data()!, franchiseId);
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to fetch franchise info: $e',
+        stack: stack.toString(),
+        source: 'FirestoreService.getFranchiseInfo',
+        screen: 'onboarding_menu_screen',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return null;
+    }
+  }
+
+  /// ONBOARDING PROCESS
+  /// Get onboarding progress for a franchise
+  Future<Map<String, dynamic>?> getOnboardingProgress(
+      String franchiseId) async {
+    try {
+      final doc =
+          await _db.collection('onboarding_progress').doc(franchiseId).get();
+      if (!doc.exists) return null;
+      return doc.data();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to fetch onboarding progress for $franchiseId',
+        stack: stack.toString(),
+        source: 'FirestoreService.getOnboardingProgress',
+        screen: 'onboarding_menu_screen',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return null;
+    }
+  }
+
+  /// Update onboarding step completion (merge true/false flag)
+  Future<void> updateOnboardingStep({
+    required String franchiseId,
+    required String stepKey,
+    required bool completed,
+  }) async {
+    try {
+      final docRef = _db.collection('onboarding_progress').doc(franchiseId);
+      await docRef.set({
+        stepKey: completed,
+        'updatedAt': firestore.FieldValue.serverTimestamp(),
+      }, firestore.SetOptions(merge: true));
+
+      // If all steps are complete, add final timestamp
+      if (_isFinalStep(stepKey, completed)) {
+        await docRef.set({
+          'completedAt': firestore.FieldValue.serverTimestamp(),
+        }, firestore.SetOptions(merge: true));
+      }
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to update onboarding step "$stepKey"',
+        stack: stack.toString(),
+        source: 'FirestoreService.updateOnboardingStep',
+        screen: 'onboarding_menu_screen',
+        severity: 'error',
+        contextData: {
+          'franchiseId': franchiseId,
+          'stepKey': stepKey,
+          'completed': completed,
+        },
+      );
+    }
+  }
+
+  /// (Optional) Custom logic to determine if all final steps are complete
+  bool _isFinalStep(String key, bool completed) {
+    return key == 'review' && completed == true;
+  }
+
   /// MERCHANT SIMULATION
   /// Simulates a Stripe webhook event for testing.
   /// Triggers the savePlatformInvoiceFromWebhook() logic with mock data.
@@ -3821,6 +3916,122 @@ class FirestoreService {
         screen: 'admin_webhook_simulator',
       );
       return [];
+    }
+  }
+}
+
+extension IngredientOnboardingMethods on FirestoreService {
+  /// Stream all ingredient metadata for a franchise
+  Stream<List<IngredientMetadata>> streamIngredients(String franchiseId) {
+    try {
+      final ref = FirestoreService._db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_metadata')
+          .orderBy('name');
+      return ref.snapshots().map((snapshot) {
+        return snapshot.docs.map((doc) {
+          final data = doc.data();
+          return IngredientMetadata.fromMap(data);
+        }).toList();
+      });
+    } catch (e, stack) {
+      ErrorLogger.log(
+        message: 'Failed to stream ingredients: $e',
+        source: 'FirestoreService',
+        screen: 'IngredientOnboarding',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId},
+      );
+      return const Stream.empty();
+    }
+  }
+
+  /// Add or update an ingredient (create if not exists)
+  Future<void> saveIngredient({
+    required String franchiseId,
+    required IngredientMetadata ingredient,
+  }) async {
+    try {
+      final docRef = FirestoreService._db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_metadata')
+          .doc(ingredient.id);
+
+      await docRef.set(ingredient.toMap(), firestore.SetOptions(merge: true));
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to save ingredient: $e',
+        source: 'FirestoreService',
+        screen: 'IngredientOnboarding',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {
+          'franchiseId': franchiseId,
+          'ingredientId': ingredient.id,
+        },
+      );
+      rethrow;
+    }
+  }
+
+  /// Delete an ingredient by ID
+  Future<void> deleteIngredient({
+    required String franchiseId,
+    required String ingredientId,
+  }) async {
+    try {
+      final docRef = FirestoreService._db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_metadata')
+          .doc(ingredientId);
+
+      await docRef.delete();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to delete ingredient: $e',
+        source: 'FirestoreService',
+        screen: 'IngredientOnboarding',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {
+          'franchiseId': franchiseId,
+          'ingredientId': ingredientId,
+        },
+      );
+      rethrow;
+    }
+  }
+
+  /// Creates or updates an ingredient_metadata document for the current franchise.
+  Future<void> createOrUpdateIngredientMetadata({
+    required String franchiseId,
+    required IngredientMetadata ingredient,
+  }) async {
+    try {
+      final docRef = db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection(_ingredientMetadata)
+          .doc(ingredient.id);
+
+      await docRef.set(ingredient.toMap(), firestore.SetOptions(merge: true));
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to create/update ingredient metadata',
+        stack: stack.toString(),
+        source: 'FirestoreService',
+        screen: 'ingredient_onboarding',
+        severity: 'error',
+        contextData: {
+          'franchiseId': franchiseId,
+          'ingredientId': ingredient.id,
+        },
+      );
+      rethrow;
     }
   }
 }
