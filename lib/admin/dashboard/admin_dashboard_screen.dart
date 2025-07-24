@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/services/auth_service.dart';
 import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
 import 'package:franchise_admin_portal/core/section_registry.dart';
-import 'package:franchise_admin_portal/widgets/dashboard/global_search_bar.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/role_badge.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/maintenance_banner.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/notifications_panel.dart';
@@ -21,7 +20,7 @@ import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_selector.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/widgets/role_guard.dart';
+import 'package:franchise_admin_portal/core/utils/role_guard.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/onboarding_sidebar_group.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_sidebar.dart';
@@ -126,12 +125,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
             ),
             const SizedBox(width: 20),
-            if (!isMobile)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: SizedBox(width: 260, child: GlobalSearchBar()),
-              ),
-            const Spacer(),
+            if (!isMobile) const Spacer(),
             RoleGuard(
               requireAnyRole: ['developer', 'platform_owner', 'hq_owner'],
               featureName: 'franchise_picker_dropdown',

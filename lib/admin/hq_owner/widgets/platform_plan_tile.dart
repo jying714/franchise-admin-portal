@@ -5,7 +5,7 @@ import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/tight_section_card.dart';
-import 'package:franchise_admin_portal/widgets/role_guard.dart';
+import 'package:franchise_admin_portal/core/utils/role_guard.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'mock_payment_form.dart';

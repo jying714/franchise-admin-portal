@@ -10,7 +10,7 @@ import 'package:franchise_admin_portal/core/providers/franchise_info_provider.da
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/ingredient_type_management_screen.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_intredient_type_screen.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_sortable_grid.dart';

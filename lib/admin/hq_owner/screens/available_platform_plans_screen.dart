@@ -13,7 +13,7 @@ import 'package:franchise_admin_portal/core/providers/franchise_subscription_pro
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/active_plan_banner.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/platform_plan_tile.dart';
-import 'package:franchise_admin_portal/widgets/role_guard.dart';
+import 'package:franchise_admin_portal/core/utils/role_guard.dart';
 
 class AvailablePlatformPlansScreen extends StatefulWidget {
   const AvailablePlatformPlansScreen({super.key});

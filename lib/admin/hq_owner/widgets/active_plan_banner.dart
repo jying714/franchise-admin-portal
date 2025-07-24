@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
 import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_subscription_provider.dart';
-import 'package:franchise_admin_portal/widgets/role_guard.dart';
+import 'package:franchise_admin_portal/core/utils/role_guard.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/tight_section_card.dart';
 
 class ActivePlanBanner extends StatefulWidget {

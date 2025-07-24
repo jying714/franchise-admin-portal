@@ -9,7 +9,6 @@ import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/formatting.dart'
     as formatting;
-import 'package:franchise_admin_portal/core/utils/role_guards.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 
 class FranchiseFinancialKpiCard extends StatefulWidget {

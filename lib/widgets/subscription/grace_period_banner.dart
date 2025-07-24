@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import 'package:franchise_admin_portal/core/providers/franchise_subscription_provider.dart';
-import 'package:franchise_admin_portal/widgets/role_guard.dart';
+import 'package:franchise_admin_portal/core/utils/role_guard.dart';
 
 /// A banner widget that alerts HQ owners or developers if their subscription is overdue or in grace period.
 class GracePeriodBanner extends StatelessWidget {

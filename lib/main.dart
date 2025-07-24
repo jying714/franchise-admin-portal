@@ -49,7 +49,7 @@ import 'package:franchise_admin_portal/core/providers/onboarding_progress_provid
 import 'package:franchise_admin_portal/core/section_registry.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredients_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/ingredient_type_management_screen.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_intredient_type_screen.dart';
 import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
 import 'dart:html' as html;
