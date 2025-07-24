@@ -12,6 +12,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_info_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/onboarding_step_card.dart';
 import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/ingredient_type_management_screen.dart';
 
 class OnboardingMenuScreen extends StatefulWidget {
   const OnboardingMenuScreen({Key? key}) : super(key: key);
@@ -95,8 +96,9 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                 color: colorScheme.onSurface,
               ),
         ),
-        backgroundColor: colorScheme.surface,
-        elevation: 1,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       backgroundColor: colorScheme.background,
       body: Padding(
@@ -118,25 +120,32 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                 children: [
                   OnboardingStepCard(
                     stepNumber: 1,
-                    title: loc.stepIngredients,
-                    subtitle: loc.stepIngredientsDesc,
-                    completed: progress['ingredients'] == true,
+                    title: loc.stepIngredientTypes,
+                    subtitle: loc.stepIngredientTypesDesc,
+                    completed: progress['ingredientTypes'] == true,
                     onTap: () {
-                      final franchiseId =
-                          context.read<FranchiseProvider>().franchiseId;
-                      if (franchiseId.isEmpty || franchiseId == 'unknown') {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(loc.selectAFranchiseFirst)),
-                        );
-                        return;
-                      }
-
-                      Navigator.of(context).pushNamed(Uri.encodeFull(
-                          '/dashboard?section=onboardingIngredients'));
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/dashboard?section=onboardingIngredientTypes',
+                        (route) => false,
+                      );
                     },
                   ),
                   OnboardingStepCard(
                     stepNumber: 2,
+                    title: loc.stepIngredients,
+                    subtitle: loc.stepIngredientsDesc,
+                    completed: progress['ingredients'] == true,
+                    onTap: () {
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/dashboard?section=onboardingIngredients',
+                        (route) => false,
+                      );
+                    },
+                  ),
+                  OnboardingStepCard(
+                    stepNumber: 3,
                     title: loc.stepCategories,
                     subtitle: loc.stepCategoriesDesc,
                     completed: progress['categories'] == true,
@@ -144,7 +153,7 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                         .pushNamed('/onboarding/categories'),
                   ),
                   OnboardingStepCard(
-                    stepNumber: 3,
+                    stepNumber: 4,
                     title: loc.stepMenuItems,
                     subtitle: loc.stepMenuItemsDesc,
                     completed: progress['menuItems'] == true,
@@ -152,7 +161,7 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                         .pushNamed('/onboarding/menu_items'),
                   ),
                   OnboardingStepCard(
-                    stepNumber: 4,
+                    stepNumber: 5,
                     title: loc.stepReview,
                     subtitle: loc.stepReviewDesc,
                     completed: progress['review'] == true,

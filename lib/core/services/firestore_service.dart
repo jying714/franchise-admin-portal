@@ -38,6 +38,7 @@ import 'package:franchise_admin_portal/core/models/platform_payment.dart';
 import 'package:flutter/foundation.dart';
 import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
 import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
+import 'package:franchise_admin_portal/core/models/ingredient_type_model.dart';
 
 class FirestoreService {
   static final firestore.FirebaseFirestore _db =
@@ -3918,6 +3919,146 @@ class FirestoreService {
       return [];
     }
   }
+
+  // ONBOARDING TEMPLATE
+  static Future<void> copyIngredientTypesFromTemplate({
+    required String franchiseId,
+    required String templateId,
+  }) async {
+    final sourceRef = FirestoreService._db
+        .collection('onboarding_templates')
+        .doc(templateId)
+        .collection('ingredient_types');
+
+    final destRef = FirestoreService._db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('ingredient_types');
+
+    try {
+      final snapshot = await sourceRef.get();
+
+      if (snapshot.docs.isEmpty) {
+        throw Exception('No ingredient types found in template "$templateId"');
+      }
+
+      final batch = FirestoreService._db.batch();
+      final now = firestore.FieldValue.serverTimestamp();
+
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+
+        // Ensure overwrite-safe keys and inject created/updated
+        final destDoc = destRef.doc(doc.id);
+        batch.set(destDoc, {
+          ...data,
+          'createdAt': now,
+          'updatedAt': now,
+        });
+      }
+
+      await batch.commit();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'copyIngredientTypesFromTemplate failed',
+        stack: stack.toString(),
+        severity: 'error',
+        screen: 'ingredient_type_management_screen',
+        source: 'FirestoreService.copyIngredientTypesFromTemplate',
+        contextData: {
+          'franchiseId': franchiseId,
+          'templateId': templateId,
+        },
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> updateIngredientTypeSortOrders({
+    required String franchiseId,
+    required List<Map<String, dynamic>> sortedUpdates,
+  }) async {
+    final batch = _db.batch();
+
+    try {
+      for (final update in sortedUpdates) {
+        final String? id = update['id'];
+        final int? sortOrder = update['sortOrder'];
+
+        if (id == null || sortOrder == null) {
+          throw ArgumentError(
+              'Each update must include non-null "id" and "sortOrder".');
+        }
+
+        final docRef = _db
+            .collection('franchises')
+            .doc(franchiseId)
+            .collection('ingredient_types')
+            .doc(id);
+
+        batch.update(docRef, {
+          'sortOrder': sortOrder,
+          'updatedAt': firestore.FieldValue.serverTimestamp(),
+        });
+      }
+
+      await batch.commit();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to update ingredient type sort orders',
+        stack: stack.toString(),
+        severity: 'error',
+        source: 'firestore_service.dart',
+        contextData: {
+          'franchiseId': franchiseId,
+          'updatesAttempted': sortedUpdates,
+          'errorType': e.runtimeType.toString(),
+        },
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> replaceIngredientTypesFromJson({
+    required String franchiseId,
+    required List<IngredientType> items,
+  }) async {
+    final batch = _db.batch();
+    final collectionRef = _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('ingredient_types');
+
+    try {
+      // Fetch all existing docs to delete
+      final existingSnap = await collectionRef.get();
+      for (final doc in existingSnap.docs) {
+        batch.delete(doc.reference);
+      }
+
+      // Insert all new docs
+      for (final type in items) {
+        final docRef =
+            collectionRef.doc(type.id ?? _db.collection('').doc().id);
+        batch.set(docRef, type.toMap());
+      }
+
+      await batch.commit();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to replace ingredient types from JSON',
+        source: 'FirestoreService',
+        screen: 'ingredient_type_management_screen',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {
+          'franchiseId': franchiseId,
+          'incomingItemCount': items.length,
+        },
+      );
+      rethrow;
+    }
+  }
 }
 
 extension IngredientOnboardingMethods on FirestoreService {
@@ -4038,6 +4179,83 @@ extension IngredientOnboardingMethods on FirestoreService {
         contextData: {
           'franchiseId': franchiseId,
           'ingredientId': ingredient.id,
+        },
+      );
+      rethrow;
+    }
+  }
+
+  // Onboarding ingredients
+  static Future<List<IngredientType>> getIngredientTypes(
+      String franchiseId) async {
+    try {
+      final snapshot = await FirestoreService._db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_types')
+          .orderBy('sortOrder')
+          .get();
+
+      return snapshot.docs
+          .map((doc) => IngredientType.fromFirestore(doc))
+          .toList();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to fetch ingredient types',
+        source: 'IngredientTypeService',
+        screen: 'onboarding_ingredients_screen',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId},
+      );
+      return [];
+    }
+  }
+
+  static Future<void> addIngredientType(
+      String franchiseId, IngredientType type) async {
+    try {
+      await FirestoreService._db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_types')
+          .add(type.toMap());
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to add ingredient type',
+        source: 'IngredientTypeService',
+        screen: 'onboarding_ingredients_screen',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {
+          'franchiseId': franchiseId,
+          'ingredientType': type.toMap(),
+        },
+      );
+      rethrow;
+    }
+  }
+
+  static Future<void> updateIngredientType(
+      String franchiseId, String typeId, Map<String, dynamic> data) async {
+    try {
+      await FirestoreService._db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_types')
+          .doc(typeId)
+          .update(data);
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to update ingredient type',
+        source: 'IngredientTypeService',
+        screen: 'onboarding_ingredients_screen',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {
+          'franchiseId': franchiseId,
+          'typeId': typeId,
+          'updateData': data,
         },
       );
       rethrow;

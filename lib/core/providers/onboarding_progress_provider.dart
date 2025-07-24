@@ -27,13 +27,20 @@ class OnboardingProgressProvider extends ChangeNotifier {
       notifyListeners();
 
       final data = await firestore.getOnboardingProgress(franchiseId);
-      if (data != null) {
-        _stepStatus = {
-          for (final entry in data.entries)
-            if (entry.key != 'updatedAt' && entry.key != 'completedAt')
-              entry.key: entry.value == true
-        };
-      }
+      // Define the canonical onboarding steps here:
+      final defaultSteps = [
+        'ingredientTypes', // <-- New Step 1
+        'ingredients', // Step 2
+        'categories', // Step 3
+        'menuItems', // Step 4
+        'review', // Step 5
+      ];
+
+      // Always include all default steps, mark true if present/true in Firestore
+      _stepStatus = {
+        for (final step in defaultSteps)
+          step: data != null && data[step] == true
+      };
     } catch (e, stack) {
       await ErrorLogger.log(
         message: 'Failed to load onboarding progress',

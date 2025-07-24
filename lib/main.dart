@@ -49,7 +49,9 @@ import 'package:franchise_admin_portal/core/providers/onboarding_progress_provid
 import 'package:franchise_admin_portal/core/section_registry.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredients_screen.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/ingredient_type_management_screen.dart';
 import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
 import 'dart:html' as html;
 
 /// Returns initial unauth route and optional invite token, e.g. ('/invite-accept', 'abc123').
@@ -322,6 +324,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
             return provider;
           },
         ),
+        ChangeNotifierProvider(create: (_) => IngredientTypeProvider()),
         Provider(create: (_) => AnalyticsService()),
         StreamProvider<fb_auth.User?>.value(
           value: fb_auth.FirebaseAuth.instance.authStateChanges(),
@@ -591,9 +594,11 @@ class _FranchiseAuthenticatedRootState
                   builder: (context) => const UniversalProfileScreen());
             }
             if (uri.path == '/onboarding/menu') {
-              print('[main.dart] Routing to OnboardingMenuScreen');
               return MaterialPageRoute(
-                builder: (context) => const OnboardingMenuScreen(),
+                builder: (context) => FranchiseGate(
+                  child:
+                      AdminDashboardScreen(initialSectionKey: 'onboardingMenu'),
+                ),
               );
             }
             if (uri.path == '/dashboard' &&
@@ -617,8 +622,13 @@ class _FranchiseAuthenticatedRootState
               );
 
               return MaterialPageRoute(
-                builder: (context) =>
-                    FranchiseGate(child: section.builder(context)),
+                builder: (context) => FranchiseGate(
+                    child: AdminDashboardScreen(initialSectionKey: sectionKey)),
+              );
+            }
+            if (uri.path == '/onboarding/ingredient-types') {
+              return MaterialPageRoute(
+                builder: (context) => const IngredientTypeManagementScreen(),
               );
             }
             /////////////////// PLACE HOLDERS below

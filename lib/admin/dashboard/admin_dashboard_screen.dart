@@ -27,7 +27,10 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/onboar
 import 'package:franchise_admin_portal/widgets/admin/admin_sidebar.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({Key? key}) : super(key: key);
+  final String? initialSectionKey;
+
+  const AdminDashboardScreen({Key? key, this.initialSectionKey})
+      : super(key: key);
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
@@ -42,6 +45,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   void initState() {
     super.initState();
     _sections = getSidebarSections();
+
+    final allSections = [..._sections, ...onboardingSteps];
+    if (widget.initialSectionKey != null) {
+      final matchIndex = allSections.indexWhere(
+        (s) => s.key == widget.initialSectionKey,
+      );
+      if (matchIndex != -1) {
+        _selectedIndex = matchIndex;
+      }
+    }
   }
 
   @override

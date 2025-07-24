@@ -10,13 +10,13 @@ import 'package:franchise_admin_portal/core/providers/franchise_info_provider.da
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/ingredient_type_management_screen.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_sortable_grid.dart';
-
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredient_form_card.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredient_list_tile.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_form_card.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_list_tile.dart';
 
 class OnboardingIngredientsScreen extends StatefulWidget {
   const OnboardingIngredientsScreen({super.key});
@@ -34,7 +34,8 @@ class _OnboardingIngredientsScreenState
   bool _hasLoadedIngredients = false;
   List<IngredientMetadata> _ingredients = [];
   bool _isLoading = false;
-
+  bool get hasValidIngredients =>
+      _ingredients.any((i) => i.typeId?.isNotEmpty == true);
   @override
   void initState() {
     super.initState();
@@ -108,12 +109,19 @@ class _OnboardingIngredientsScreenState
   }
 
   Future<void> _markComplete() async {
+    if (!hasValidIngredients) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.pleaseAddIngredientTypesFirst)),
+      );
+      return;
+    }
     final onboardingProvider =
         Provider.of<OnboardingProgressProvider>(context, listen: false);
     await onboardingProvider.markStepComplete('ingredients');
     if (mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(loc.stepMarkedComplete)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.stepMarkedComplete)),
+      );
     }
   }
 
@@ -154,7 +162,7 @@ class _OnboardingIngredientsScreenState
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black), // <- this line
+        iconTheme: const IconThemeData(color: Colors.black),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
@@ -164,11 +172,29 @@ class _OnboardingIngredientsScreenState
           loc.onboardingIngredients,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Colors.black, // <- optional: for consistency
+                color: Colors.black,
               ),
         ),
         centerTitle: false,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.tune),
+            tooltip: loc.manageIngredientTypes,
+            onPressed: () async {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) =>
+                    const Center(child: CircularProgressIndicator()),
+              );
+
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/dashboard?section=onboardingIngredientTypes',
+                (route) => false,
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.check_circle_outline),
             tooltip: loc.markAsComplete,
@@ -189,7 +215,7 @@ class _OnboardingIngredientsScreenState
               ? EmptyStateWidget(
                   title: loc.noIngredientsFound,
                   message: loc.noIngredientsMessage,
-                  imageAsset: BrandingConfig.ingredientPlaceholder,
+                  // imageAsset: BrandingConfig.ingredientPlaceholder,
                 )
               : Padding(
                   padding: DesignTokens.gridPadding,

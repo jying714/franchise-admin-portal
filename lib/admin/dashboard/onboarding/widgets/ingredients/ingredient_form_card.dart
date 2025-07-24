@@ -6,7 +6,7 @@ import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_info_provider.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredient_tag_selector.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_tag_selector.dart';
 
 class IngredientFormCard extends StatefulWidget {
   final IngredientMetadata? initialData;

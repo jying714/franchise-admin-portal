@@ -20,7 +20,7 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboar
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_review_screen.dart';
 import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
-
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/ingredient_type_management_screen.dart';
 // Any new (plugin/module) screens can be imported and registered here
 
 // Central registry. Add or remove screens here to affect ALL navigation/dashboards.
@@ -166,11 +166,19 @@ final List<DashboardSection> onboardingSteps = [
     showInSidebar: true,
   ),
   DashboardSection(
+    key: 'onboardingIngredientTypes',
+    title: 'Step 1: Ingredient Types',
+    icon: Icons.category_outlined,
+    builder: (_) => const IngredientTypeManagementScreen(),
+    sidebarOrder: 1,
+    showInSidebar: true,
+  ),
+  DashboardSection(
     key: 'onboardingIngredients',
-    title: 'Ingredients',
+    title: 'Step 2: Ingredients',
     icon: Icons.kitchen_outlined,
     builder: (_) => const OnboardingIngredientsScreen(),
-    sidebarOrder: 1,
+    sidebarOrder: 2,
     showInSidebar: true,
   ),
   // DashboardSection(

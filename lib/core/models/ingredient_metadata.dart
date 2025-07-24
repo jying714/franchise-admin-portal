@@ -44,9 +44,13 @@ class IngredientMetadata {
   /// List of amount options (e.g., ["Light", "Regular", "Extra"])
   final List<String>? amountOptions;
 
+  /// Ingredient type for onboarding
+  final String? typeId;
+
   const IngredientMetadata({
     required this.id,
     required this.name,
+    this.typeId,
     required this.type,
     required this.allergens,
     required this.removable,
@@ -65,6 +69,7 @@ class IngredientMetadata {
     return IngredientMetadata(
       id: data['id'] as String,
       name: data['name'] as String,
+      typeId: data['typeId'] as String?,
       type: data['type'] as String,
       allergens: data['allergens'] is List
           ? List<String>.from(data['allergens'])
@@ -93,6 +98,7 @@ class IngredientMetadata {
     return {
       'id': id,
       'name': name,
+      if (typeId != null) 'typeId': typeId,
       'type': type,
       'allergens': allergens,
       'removable': removable,
@@ -111,6 +117,7 @@ class IngredientMetadata {
   IngredientMetadata copyWith({
     String? id,
     String? name,
+    String? typeId,
     String? type,
     List<String>? allergens,
     bool? removable,
@@ -126,6 +133,7 @@ class IngredientMetadata {
     return IngredientMetadata(
       id: id ?? this.id,
       name: name ?? this.name,
+      typeId: typeId ?? this.typeId,
       type: type ?? this.type,
       allergens: allergens ?? List<String>.from(this.allergens),
       removable: removable ?? this.removable,
@@ -148,6 +156,7 @@ class IngredientMetadata {
           runtimeType == other.runtimeType &&
           id == other.id &&
           name == other.name &&
+          typeId == other.typeId &&
           type == other.type &&
           listEquals(allergens, other.allergens) &&
           removable == other.removable &&
@@ -164,6 +173,7 @@ class IngredientMetadata {
   int get hashCode =>
       id.hashCode ^
       name.hashCode ^
+      typeId.hashCode ^
       type.hashCode ^
       allergens.hashCode ^
       removable.hashCode ^
