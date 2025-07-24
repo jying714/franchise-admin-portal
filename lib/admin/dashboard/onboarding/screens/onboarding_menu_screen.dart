@@ -12,7 +12,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_info_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/onboarding_step_card.dart';
 import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_intredient_type_screen.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredient_type_screen.dart';
 
 class OnboardingMenuScreen extends StatefulWidget {
   const OnboardingMenuScreen({Key? key}) : super(key: key);

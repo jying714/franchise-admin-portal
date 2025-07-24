@@ -1,28 +1,29 @@
-// lib/admin/dashboard/onboarding/widgets/ingredients/ingredient_type_json_import_export_dialog.dart
+// lib/admin/dashboard/onboarding/widgets/ingredients/ingredient_metadata_json_import_export_dialog.dart
 
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/ingredient_type_model.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+
 import 'package:franchise_admin_portal/core/utils/schema_templates.dart';
+import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:franchise_admin_portal/core/models/ingredient_metadata.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/widgets/scrolling_json_editor.dart';
 
-import 'ingredient_type_json_preview_table.dart';
+import 'ingredient_metadata_json_preview_table.dart';
 
-class IngredientTypeJsonImportExportDialog extends StatefulWidget {
-  const IngredientTypeJsonImportExportDialog({super.key});
+class IngredientMetadataJsonImportExportDialog extends StatefulWidget {
+  const IngredientMetadataJsonImportExportDialog({super.key});
 
   static Future<void> show(BuildContext context) async {
     await showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: 'Import Export Ingredient Types',
+      barrierLabel: 'Import Export Ingredient Metadata',
       transitionDuration: const Duration(milliseconds: 200),
       pageBuilder: (_, __, ___) => Center(
         child: Material(
@@ -30,7 +31,7 @@ class IngredientTypeJsonImportExportDialog extends StatefulWidget {
           child: SizedBox(
             width: 1400,
             height: 680,
-            child: const IngredientTypeJsonImportExportDialog(),
+            child: const IngredientMetadataJsonImportExportDialog(),
           ),
         ),
       ),
@@ -38,42 +39,37 @@ class IngredientTypeJsonImportExportDialog extends StatefulWidget {
   }
 
   @override
-  State<IngredientTypeJsonImportExportDialog> createState() =>
-      _IngredientTypeJsonImportExportDialogState();
+  State<IngredientMetadataJsonImportExportDialog> createState() =>
+      _IngredientMetadataJsonImportExportDialogState();
 }
 
-class _IngredientTypeJsonImportExportDialogState
-    extends State<IngredientTypeJsonImportExportDialog> {
+class _IngredientMetadataJsonImportExportDialogState
+    extends State<IngredientMetadataJsonImportExportDialog> {
   late TextEditingController _jsonController;
   String? _errorMessage;
-  List<IngredientType>? _previewTypes;
-  late String _jsonInput;
-  List<IngredientType>? _parsedPreview;
+  List<IngredientMetadata>? _previewIngredients;
 
   @override
   void initState() {
     super.initState();
-
-    // Load the hardcoded template from schema_templates.dart as JSON string
     final formattedJson = const JsonEncoder.withIndent('  ')
-        .convert(pizzaShopIngredientTypesTemplate);
-
-    _jsonInput = formattedJson;
-    _jsonController = TextEditingController(text: _jsonInput);
+        .convert(pizzaShopIngredientMetadataTemplate);
+    _jsonController = TextEditingController(text: formattedJson);
     _parsePreview();
   }
 
-  List<IngredientType>? _tryParseJson(String val) {
+  List<IngredientMetadata>? _tryParseJson(String val) {
     try {
       final decoded = json.decode(val);
       if (decoded is! List) return null;
-      return decoded.map((e) => IngredientType.fromMap(e)).toList();
+      return decoded.map((e) => IngredientMetadata.fromMap(e)).toList();
     } catch (e, stack) {
       ErrorLogger.log(
-        message: 'Error parsing preview JSON in dialog',
-        source: 'ingredient_type_json_import_export_dialog.dart',
+        message:
+            'Error parsing preview JSON in ingredient_metadata_json_import_export_dialog.dart',
+        source: 'ingredient_metadata_json_import_export_dialog.dart',
         severity: 'warning',
-        screen: 'ingredient_type_management_screen',
+        screen: 'onboarding_ingredients_screen',
         stack: stack.toString(),
         contextData: {'input': val},
       );
@@ -88,22 +84,21 @@ class _IngredientTypeJsonImportExportDialogState
         final decoded = jsonDecode(_jsonController.text);
         if (decoded is! List) {
           _errorMessage = AppLocalizations.of(context)!.invalidJsonFormat;
-          _previewTypes = null;
+          _previewIngredients = null;
           return;
         }
-        _previewTypes = decoded.map((e) => IngredientType.fromMap(e)).toList();
+        _previewIngredients =
+            decoded.map((e) => IngredientMetadata.fromMap(e)).toList();
       });
     } catch (e, stack) {
-      setState(() => _previewTypes = null);
+      setState(() => _previewIngredients = null);
       ErrorLogger.log(
         message: 'JSON import preview parse error',
-        source: 'ingredient_type_json_import_export_dialog.dart',
+        source: 'ingredient_metadata_json_import_export_dialog.dart',
         severity: 'warning',
-        screen: 'ingredient_type_management_screen',
+        screen: 'onboarding_ingredients_screen',
         stack: stack.toString(),
-        contextData: {
-          'input': _jsonController.text,
-        },
+        contextData: {'input': _jsonController.text},
       );
       setState(() {
         _errorMessage = AppLocalizations.of(context)!.jsonParseError;
@@ -114,23 +109,22 @@ class _IngredientTypeJsonImportExportDialogState
   Future<void> _saveImport() async {
     final loc = AppLocalizations.of(context)!;
     final franchiseId = context.read<FranchiseProvider>().franchiseId;
-    final provider = context.read<IngredientTypeProvider>();
+    final provider = context.read<IngredientMetadataProvider>();
 
-    if (_previewTypes == null || franchiseId.isEmpty) return;
+    if (_previewIngredients == null || franchiseId.isEmpty) return;
 
     try {
-      await provider.bulkReplaceIngredientTypes(franchiseId, _previewTypes!);
+      await provider.bulkReplaceIngredientMetadata(
+          franchiseId, _previewIngredients!);
       if (mounted) Navigator.of(context).pop();
     } catch (e, stack) {
       await ErrorLogger.log(
-        message: 'Failed to save imported ingredient types',
-        source: 'ingredient_type_json_import_export_dialog.dart',
+        message: 'Failed to save imported ingredient metadata',
+        source: 'ingredient_metadata_json_import_export_dialog.dart',
         severity: 'error',
-        screen: 'ingredient_type_management_screen',
+        screen: 'onboarding_ingredients_screen',
         stack: stack.toString(),
-        contextData: {
-          'franchiseId': franchiseId,
-        },
+        contextData: {'franchiseId': franchiseId},
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -143,18 +137,18 @@ class _IngredientTypeJsonImportExportDialogState
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Dialog(
       insetPadding: const EdgeInsets.all(24),
       child: SizedBox(
-        width: 1400, // Wider panel
+        width: 1400,
         height: 680,
         child: Column(
           children: [
             AppBar(
-              title: Text(loc.importExportIngredientTypes),
+              title: Text(loc.importExportIngredientMetadata),
               backgroundColor: colorScheme.primary,
               foregroundColor: Colors.white,
               automaticallyImplyLeading: false,
@@ -208,9 +202,9 @@ class _IngredientTypeJsonImportExportDialogState
                             child: Scrollbar(
                               thumbVisibility: true,
                               child: SingleChildScrollView(
-                                child: IngredientTypeJsonPreviewTable(
+                                child: IngredientMetadataJsonPreviewTable(
                                   rawJson: _jsonController.text,
-                                  previewTypes: _previewTypes,
+                                  previewIngredients: _previewIngredients,
                                 ),
                               ),
                             ),
@@ -233,7 +227,7 @@ class _IngredientTypeJsonImportExportDialogState
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
-                    onPressed: _previewTypes != null ? _saveImport : null,
+                    onPressed: _previewIngredients != null ? _saveImport : null,
                     child: Text(loc.importChanges),
                   ),
                 ],

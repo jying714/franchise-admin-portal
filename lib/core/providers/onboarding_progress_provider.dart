@@ -76,4 +76,25 @@ class OnboardingProgressProvider extends ChangeNotifier {
       );
     }
   }
+
+  Future<void> markStepIncomplete(String stepKey) async {
+    try {
+      await firestore.updateOnboardingStep(
+        franchiseId: franchiseId,
+        stepKey: stepKey,
+        completed: false,
+      );
+      _stepStatus[stepKey] = false;
+      notifyListeners();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to mark onboarding step "$stepKey" incomplete',
+        stack: stack.toString(),
+        source: 'OnboardingProgressProvider',
+        screen: 'onboarding_menu_screen',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId, 'stepKey': stepKey},
+      );
+    }
+  }
 }

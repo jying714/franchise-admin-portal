@@ -15,12 +15,20 @@ class IngredientListTile extends StatelessWidget {
   final VoidCallback onRefresh;
   final VoidCallback? onEdited;
 
+  // New parameters for bulk select
+  final bool isSelectable;
+  final bool isSelected;
+  final ValueChanged<bool?>? onSelectChanged;
+
   const IngredientListTile({
     super.key,
     required this.ingredient,
     required this.franchiseId,
     required this.onRefresh,
     this.onEdited,
+    this.isSelectable = false,
+    this.isSelected = false,
+    this.onSelectChanged,
   });
 
   @override
@@ -38,7 +46,11 @@ class IngredientListTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Ingredient Image (optional)
+            if (isSelectable)
+              Checkbox(
+                value: isSelected,
+                onChanged: onSelectChanged,
+              ),
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: SizedBox(
@@ -55,8 +67,6 @@ class IngredientListTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-
-            // Main Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,8 +111,6 @@ class IngredientListTile extends StatelessWidget {
                 ],
               ),
             ),
-
-            // Action Buttons
             IconButton(
               icon: const Icon(Icons.edit_outlined),
               tooltip: t.edit,

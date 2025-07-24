@@ -49,9 +49,10 @@ import 'package:franchise_admin_portal/core/providers/onboarding_progress_provid
 import 'package:franchise_admin_portal/core/section_registry.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredients_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_intredient_type_screen.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredient_type_screen.dart';
 import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
 import 'dart:html' as html;
 
 /// Returns initial unauth route and optional invite token, e.g. ('/invite-accept', 'abc123').
@@ -319,6 +320,30 @@ class FranchiseAppRootSplit extends StatelessWidget {
             if (fid.isNotEmpty && fid != provider.franchiseId) {
               return OnboardingProgressProvider(
                   firestore: firestoreService, franchiseId: fid);
+            }
+
+            return provider;
+          },
+        ),
+        ChangeNotifierProxyProvider2<FirestoreService, FranchiseInfoProvider,
+            IngredientMetadataProvider>(
+          create: (_) => IngredientMetadataProvider(
+            firestoreService: Provider.of<FirestoreService>(_, listen: false),
+            franchiseId: '', // will be replaced in update
+          ),
+          update: (_, firestore, franchiseInfo, previous) {
+            final franchiseId = franchiseInfo.franchise?.id ?? '';
+            final provider = previous ??
+                IngredientMetadataProvider(
+                  firestoreService: firestore,
+                  franchiseId: franchiseId,
+                );
+
+            if (franchiseId.isNotEmpty && franchiseId != provider.franchiseId) {
+              return IngredientMetadataProvider(
+                firestoreService: firestore,
+                franchiseId: franchiseId,
+              )..load();
             }
 
             return provider;

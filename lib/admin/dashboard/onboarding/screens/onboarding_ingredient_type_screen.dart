@@ -77,11 +77,38 @@ class _IngredientTypeManagementScreenState
       return;
     }
 
-    await onboardingProvider.markStepComplete('ingredientTypes');
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.stepMarkedComplete)),
+    final isCompleted = onboardingProvider.isStepComplete('ingredientTypes');
+
+    try {
+      if (isCompleted) {
+        await onboardingProvider.markStepIncomplete('ingredientTypes');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(loc.stepMarkedIncomplete)),
+          );
+        }
+      } else {
+        await onboardingProvider.markStepComplete('ingredientTypes');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(loc.stepMarkedComplete)),
+          );
+        }
+      }
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to toggle onboarding step "ingredientTypes"',
+        stack: stack.toString(),
+        source: 'OnboardingIngredientTypeScreen',
+        screen: 'onboarding_ingredient_type_screen',
+        severity: 'error',
+        contextData: {'error': e.toString()},
       );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(loc.errorGeneric)),
+        );
+      }
     }
   }
 
@@ -138,17 +165,17 @@ class _IngredientTypeManagementScreenState
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.download),
-            tooltip: loc.loadDefaultTypes,
-            onPressed: () {
-              IngredientTypeTemplatePickerDialog.show(context);
-            },
-          ),
-          IconButton(
             icon: const Icon(Icons.data_object),
             tooltip: loc.importExport,
             onPressed: () {
               IngredientTypeJsonImportExportDialog.show(context);
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.library_add),
+            tooltip: loc.loadDefaultTypes,
+            onPressed: () {
+              IngredientTypeTemplatePickerDialog.show(context);
             },
           ),
           IconButton(

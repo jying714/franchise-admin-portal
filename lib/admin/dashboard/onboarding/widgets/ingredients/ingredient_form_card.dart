@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/models/ingredient_metadata.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_info_provider.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_tag_selector.dart';
 
 class IngredientFormCard extends StatefulWidget {
@@ -63,19 +62,7 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
   Future<void> _saveIngredient() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final firestore = context.read<FirestoreService>();
-    final franchiseId = context.read<FranchiseInfoProvider>().franchise?.id;
     final l10n = AppLocalizations.of(context)!;
-
-    if (franchiseId == null || franchiseId.isEmpty) {
-      await ErrorLogger.log(
-        message: 'Franchise ID missing during ingredient save',
-        source: 'IngredientFormCard',
-        screen: 'OnboardingIngredientsScreen',
-        severity: 'error',
-      );
-      return;
-    }
 
     final ingredient = IngredientMetadata(
       id: widget.initialData?.id ??
@@ -94,33 +81,34 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
       imageUrl: null,
       amountSelectable: false,
       amountOptions: null,
+      typeId: null,
     );
 
     try {
       setState(() => _isSaving = true);
-      await firestore.createOrUpdateIngredientMetadata(
-        franchiseId: franchiseId,
-        ingredient: ingredient,
-      );
+
+      context.read<IngredientMetadataProvider>().updateIngredient(ingredient);
+
       if (widget.onSaved != null) widget.onSaved!();
-      Navigator.of(context).pop();
+
+      if (context.mounted) Navigator.of(context).pop();
     } catch (e, stack) {
       await ErrorLogger.log(
-        message: 'Failed to save ingredient: $e',
+        message: 'Failed to update ingredient (local only): $e',
         stack: stack.toString(),
         source: 'IngredientFormCard',
         screen: 'OnboardingIngredientsScreen',
         severity: 'error',
-        contextData: {
-          'franchiseId': franchiseId,
-          'ingredientName': ingredient.name
-        },
+        contextData: {'ingredientName': ingredient.name},
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.errorSavingIngredient)),
-      );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorSavingIngredient)),
+        );
+      }
     } finally {
-      setState(() => _isSaving = false);
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -130,93 +118,100 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = theme.colorScheme;
 
-    return Card(
-      elevation: 4,
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: l10n.ingredientName,
-                  border: const OutlineInputBorder(),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: 500,
+          maxHeight: 725,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _nameController,
+                  decoration: InputDecoration(
+                    labelText: l10n.ingredientName,
+                    border: const OutlineInputBorder(),
+                  ),
+                  validator: (value) => (value == null || value.isEmpty)
+                      ? l10n.requiredField
+                      : null,
                 ),
-                validator: (value) => (value == null || value.isEmpty)
-                    ? l10n.requiredField
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _typeController,
-                decoration: InputDecoration(
-                  labelText: l10n.ingredientType,
-                  border: const OutlineInputBorder(),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _typeController,
+                  decoration: InputDecoration(
+                    labelText: l10n.ingredientType,
+                    border: const OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              IngredientTagSelector(
-                selectedTags: _allergens,
-                onChanged: (tags) => setState(() => _allergens = tags),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _notesController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: l10n.ingredientDescription,
-                  border: const OutlineInputBorder(),
+                const SizedBox(height: 12),
+                IngredientTagSelector(
+                  selectedTags: _allergens,
+                  onChanged: (tags) => setState(() => _allergens = tags),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 12,
-                runSpacing: 8,
-                children: [
-                  CheckboxListTile(
-                    value: _removable,
-                    onChanged: (v) => setState(() => _removable = v ?? true),
-                    title: Text(l10n.removable),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _notesController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: l10n.ingredientDescription,
+                    border: const OutlineInputBorder(),
                   ),
-                  CheckboxListTile(
-                    value: _supportsExtra,
-                    onChanged: (v) =>
-                        setState(() => _supportsExtra = v ?? false),
-                    title: Text(l10n.supportsExtra),
-                  ),
-                  CheckboxListTile(
-                    value: _sidesAllowed,
-                    onChanged: (v) =>
-                        setState(() => _sidesAllowed = v ?? false),
-                    title: Text(l10n.sidesAllowed),
-                  ),
-                  CheckboxListTile(
-                    value: _outOfStock,
-                    onChanged: (v) => setState(() => _outOfStock = v ?? false),
-                    title: Text(l10n.outOfStock),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isSaving ? null : _saveIngredient,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: DesignTokens.primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: _isSaving
-                      ? const CircularProgressIndicator(strokeWidth: 2)
-                      : Text(l10n.saveIngredient),
                 ),
-              )
-            ],
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 8,
+                  children: [
+                    CheckboxListTile(
+                      value: _removable,
+                      onChanged: (v) => setState(() => _removable = v ?? true),
+                      title: Text(l10n.removable),
+                    ),
+                    CheckboxListTile(
+                      value: _supportsExtra,
+                      onChanged: (v) =>
+                          setState(() => _supportsExtra = v ?? false),
+                      title: Text(l10n.supportsExtra),
+                    ),
+                    CheckboxListTile(
+                      value: _sidesAllowed,
+                      onChanged: (v) =>
+                          setState(() => _sidesAllowed = v ?? false),
+                      title: Text(l10n.sidesAllowed),
+                    ),
+                    CheckboxListTile(
+                      value: _outOfStock,
+                      onChanged: (v) =>
+                          setState(() => _outOfStock = v ?? false),
+                      title: Text(l10n.outOfStock),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isSaving ? null : _saveIngredient,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: DesignTokens.primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: _isSaving
+                        ? const CircularProgressIndicator(strokeWidth: 2)
+                        : Text(l10n.saveIngredient),
+                  ),
+                )
+              ],
+            ),
           ),
         ),
       ),

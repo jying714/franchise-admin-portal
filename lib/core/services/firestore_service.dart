@@ -4059,6 +4059,87 @@ class FirestoreService {
       rethrow;
     }
   }
+
+  Future<List<IngredientMetadata>> getIngredientMetadataTemplate(
+      String templateId) async {
+    try {
+      final snapshot = await _db
+          .collection('onboarding_templates')
+          .doc(templateId)
+          .collection('ingredient_metadata')
+          .get();
+
+      return snapshot.docs
+          .map((doc) => IngredientMetadata.fromMap(doc.data()))
+          .toList();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'ingredient_metadata_template_load_error',
+        source: 'FirestoreService',
+        stack: stack.toString(),
+        severity: 'error',
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> importIngredientMetadataTemplate({
+    required String templateId,
+    required String franchiseId,
+  }) async {
+    try {
+      final templateDocs = await getIngredientMetadataTemplate(templateId);
+      final destRef = _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_metadata');
+      final batch = _db.batch();
+
+      for (final item in templateDocs) {
+        batch.set(destRef.doc(item.id), item.toMap());
+      }
+
+      await batch.commit();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'importIngredientMetadataTemplate_failed',
+        source: 'FirestoreService',
+        screen: 'firestore_service.dart',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {
+          'templateId': templateId,
+          'franchiseId': franchiseId,
+        },
+      );
+      rethrow;
+    }
+  }
+
+  Future<List<IngredientMetadata>> fetchIngredientMetadata(
+      String franchiseId) async {
+    try {
+      final snapshot = await _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_metadata')
+          .get();
+
+      return snapshot.docs
+          .map((doc) => IngredientMetadata.fromMap(doc.data()))
+          .toList();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'fetchIngredientMetadata failed',
+        stack: stack.toString(),
+        source: 'FirestoreService',
+        screen: 'firestore_service.dart',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      rethrow;
+    }
+  }
 }
 
 extension IngredientOnboardingMethods on FirestoreService {

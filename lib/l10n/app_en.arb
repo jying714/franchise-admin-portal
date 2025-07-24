@@ -1734,7 +1734,7 @@
   "pizzaShopTemplateSubtitle": "Includes cheeses, meats, sauces, and more",
   "wingBarTemplateLabel": "Wing Bar Starter (Coming Soon)",
   "wingBarTemplateSubtitle": "Includes dips, sauces, and portion logic",
-  "loadDefaultTypes": "Load Default Types",
+  "loadDefaultTypes": "Select Ingredient Type Template",
   "deletionBlocked": "Deletion Blocked",
   "ingredientTypeInUseError": "This ingredient type is currently used by one or more ingredients and cannot be deleted.",
   "ingredientTypeName": "Name",
@@ -1752,7 +1752,31 @@
   "editJsonBelow": "Edit the JSON below to import or adjust ingredient types.",
   "jsonInput": "JSON Input",
   "preview": "Preview",
-  "importExport": "Import / Export"
+  "importExport": "Import / Export",
+  "selectIngredientTemplate": "Select Ingredient Template",
+  "loadDefaultIngredients": "Load Default Ingredients",
+  "confirmLoadTemplate": "Confirm Template Load",
+  "overwriteWarning": "This will overwrite existing ingredients. Continue?",
+  "templateLoaded": "Template loaded successfully!",
+  "changesSaved": "Changes Saved",
+  "noDataToPreview": "No Data To Preview",
+  "none": "None",
+  "importExportIngredientMetadata": "Import / Export Ingredient Metadata",
+  "importChanges": "Import",
+  "groupBy": "Group By",
+  "typeId": "Type ID",
+  "ascending": "Ascending",
+  "descending": "Descending",
+  "ungrouped": "Ungrouped",
+  "confirmDeletion": "Confirm Deletion",
+  "bulkDeleteConfirmation": "Are you sure you want to delete {count} selected ingredients? This action cannot be undone.",
+  "@bulkDeleteConfirmation": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "bulkDeleteIngredientsSuccess": "Bulk Delete Ingredients Success",
+  "stepMarkedIncomplete": "Step marked as incomplete."
 
 
   }

@@ -5,6 +5,7 @@ import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
 import 'dart:convert';
+import 'package:franchise_admin_portal/core/models/ingredient_metadata.dart';
 
 class IngredientTypeProvider with ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
@@ -263,6 +264,38 @@ class IngredientTypeProvider with ChangeNotifier {
           'franchiseId': franchiseId,
           'newTypeCount': newTypes.length,
         },
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> loadTemplateIngredients(
+      String templateId, String franchiseId) async {
+    try {
+      final firestoreService = FirestoreService();
+
+      // 🔹 Load ingredient_metadata from template
+      final List<IngredientMetadata> ingredients =
+          await firestoreService.getIngredientMetadataTemplate(templateId);
+
+      final batch = firestoreService.db.batch();
+      final destRef = firestoreService.db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_metadata');
+
+      for (final ingredient in ingredients) {
+        final docRef = destRef.doc(ingredient.id);
+        batch.set(docRef, ingredient.toMap());
+      }
+
+      await batch.commit();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'template_ingredient_metadata_import_failed',
+        source: 'IngredientTypeProvider',
+        stack: stack.toString(),
+        severity: 'error',
       );
       rethrow;
     }
