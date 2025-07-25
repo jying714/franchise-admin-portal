@@ -2243,8 +2243,11 @@ class FirestoreService {
         .toList());
   }
 
-  Future<void> addCategory(String franchiseId, model.Category category,
-      {String? userId}) async {
+  Future<void> addCategory({
+    required String franchiseId,
+    required model.Category category,
+    String? userId,
+  }) async {
     final doc = _db
         .collection('franchises')
         .doc(franchiseId)
@@ -2255,11 +2258,8 @@ class FirestoreService {
       name: category.name,
       description: category.description,
       image: category.image,
-      // Add other fields if your model has them!
     );
     await doc.set(categoryWithId.toFirestore());
-    // Optionally log this action for auditing:
-    // await AuditLogService().addLog(...);
   }
 
   Future<void> updateCategory(String franchiseId, model.Category category,
@@ -2274,16 +2274,36 @@ class FirestoreService {
     // await AuditLogService().addLog(...);
   }
 
-  Future<void> deleteCategory(String franchiseId, String id,
-      {String? userId}) async {
-    await _db
-        .collection('franchises')
-        .doc(franchiseId)
-        .collection(_categories)
-        .doc(id)
-        .delete();
-    // Optionally log this action for auditing:
-    // await AuditLogService().addLog(...);
+  Future<void> deleteCategory({
+    required String franchiseId,
+    required String categoryId,
+    String? userId,
+  }) async {
+    try {
+      await _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('categories')
+          .doc(categoryId)
+          .delete();
+
+      // Optional: Add future audit logging here if needed
+      // await AuditLogService().addLog(...);
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to delete category',
+        source: 'FirestoreService',
+        screen: 'firestore_service.dart',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {
+          'franchiseId': franchiseId,
+          'categoryId': categoryId,
+          if (userId != null) 'userId': userId,
+        },
+      );
+      rethrow;
+    }
   }
 
   // get categories schema
@@ -4136,6 +4156,132 @@ class FirestoreService {
         screen: 'firestore_service.dart',
         severity: 'error',
         contextData: {'franchiseId': franchiseId},
+      );
+      rethrow;
+    }
+  }
+
+  Future<List<String>> fetchIngredientTypeIds(String franchiseId) async {
+    final snapshot = await db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('ingredient_types')
+        .get();
+
+    return snapshot.docs.map((doc) => doc.id).toList();
+  }
+
+  /// Fetches all categories for a given franchise
+  Future<List<model.Category>> fetchCategories(String franchiseId) async {
+    try {
+      final snapshot = await _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('categories')
+          .get();
+
+      return snapshot.docs
+          .map((doc) => model.Category.fromFirestore(doc.data(), doc.id))
+          .toList();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to fetch categories',
+        source: 'FirestoreService',
+        screen: 'firestore_service.dart',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId},
+      );
+      rethrow;
+    }
+  }
+
+  /// Saves or updates a single category
+  Future<void> saveCategory(String franchiseId, model.Category category) async {
+    try {
+      await _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('categories')
+          .doc(category.id)
+          .set(category.toFirestore());
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to save category',
+        source: 'FirestoreService',
+        screen: 'firestore_service.dart',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {
+          'franchiseId': franchiseId,
+          'categoryId': category.id,
+          'categoryName': category.name,
+        },
+      );
+      rethrow;
+    }
+  }
+
+  /// Bulk replace all categories (destructive save)
+  Future<void> replaceAllCategories(
+      String franchiseId, List<model.Category> categories) async {
+    final batch = _db.batch();
+    final colRef =
+        _db.collection('franchises').doc(franchiseId).collection('categories');
+
+    try {
+      // Clear existing
+      final existing = await colRef.get();
+      for (final doc in existing.docs) {
+        batch.delete(doc.reference);
+      }
+
+      // Add new
+      for (final category in categories) {
+        batch.set(colRef.doc(category.id), category.toFirestore());
+      }
+
+      await batch.commit();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to bulk replace categories',
+        source: 'FirestoreService',
+        screen: 'firestore_service.dart',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {
+          'franchiseId': franchiseId,
+          'newCount': categories.length,
+        },
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> saveAllCategories(
+      String franchiseId, List<model.Category> categories) async {
+    final batch = _db.batch();
+    final colRef =
+        _db.collection('franchises').doc(franchiseId).collection('categories');
+
+    try {
+      for (final category in categories) {
+        final docRef = colRef.doc(category.id);
+        batch.set(docRef, category.toFirestore());
+      }
+
+      await batch.commit();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to batch save categories',
+        source: 'FirestoreService',
+        screen: 'firestore_service.dart',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {
+          'franchiseId': franchiseId,
+          'categoryCount': categories.length,
+        },
       );
       rethrow;
     }

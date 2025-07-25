@@ -53,6 +53,8 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboar
 import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_categories_screen.dart';
+import 'package:franchise_admin_portal/core/providers/category_provider.dart';
 import 'dart:html' as html;
 
 /// Returns initial unauth route and optional invite token, e.g. ('/invite-accept', 'abc123').
@@ -344,6 +346,27 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 firestoreService: firestore,
                 franchiseId: franchiseId,
               )..load();
+            }
+
+            return provider;
+          },
+        ),
+        ChangeNotifierProxyProvider2<FirestoreService, FranchiseProvider,
+            CategoryProvider>(
+          create: (_) => CategoryProvider(
+            firestore: Provider.of<FirestoreService>(_, listen: false),
+            franchiseId: '', // will be set in update
+          ),
+          update: (_, firestore, franchiseProvider, previous) {
+            final fid = franchiseProvider.franchiseId;
+            final provider = previous ??
+                CategoryProvider(
+                  firestore: firestore,
+                  franchiseId: fid,
+                );
+
+            if (fid.isNotEmpty && fid != provider.franchiseId) {
+              provider.updateFranchiseId(fid);
             }
 
             return provider;
@@ -656,14 +679,12 @@ class _FranchiseAuthenticatedRootState
                 builder: (context) => const IngredientTypeManagementScreen(),
               );
             }
-            /////////////////// PLACE HOLDERS below
             if (uri.path == '/onboarding/categories') {
               return MaterialPageRoute(
-                  builder: (_) => const Scaffold(
-                        body:
-                            Center(child: Text('Categories Step Placeholder')),
-                      ));
+                builder: (_) => const OnboardingCategoriesScreen(),
+              );
             }
+            /////////////////// PLACE HOLDERS below
             if (uri.path == '/onboarding/menu_items') {
               return MaterialPageRoute(
                   builder: (_) => const Scaffold(

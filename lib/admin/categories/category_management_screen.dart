@@ -110,7 +110,10 @@ class _CategoryManagementScreenContentState
                   ?.id;
           try {
             if (category == null) {
-              await firestoreService.addCategory(franchiseId, saved);
+              await firestoreService.addCategory(
+                franchiseId: franchiseId,
+                category: saved,
+              );
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content: Text(AppLocalizations.of(context)!.categoryAdded)),
@@ -184,7 +187,10 @@ class _CategoryManagementScreenContentState
     if (confirm == true) {
       setState(() => _isLoading = true);
       try {
-        await firestoreService.deleteCategory(franchiseId, category.id);
+        await firestoreService.deleteCategory(
+          franchiseId: franchiseId,
+          categoryId: category.id,
+        );
       } catch (e, stack) {
         await ErrorLogger.log(
           message: e.toString(),
@@ -211,7 +217,10 @@ class _CategoryManagementScreenContentState
           onUndo: () async {
             setState(() => _isLoading = true);
             try {
-              await firestoreService.addCategory(franchiseId, category);
+              await firestoreService.addCategory(
+                franchiseId: franchiseId,
+                category: category,
+              );
             } catch (e, stack) {
               await ErrorLogger.log(
                 message: e.toString(),

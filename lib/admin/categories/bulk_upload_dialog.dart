@@ -125,7 +125,10 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
                       ));
                     }
                     for (final cat in cats) {
-                      await firestoreService.addCategory(franchiseId, cat);
+                      await firestoreService.addCategory(
+                        franchiseId: franchiseId,
+                        category: cat,
+                      );
                     }
                     setState(() {
                       _uploadResult =

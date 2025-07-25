@@ -185,4 +185,8 @@ class IngredientMetadata {
       imageUrl.hashCode ^
       amountSelectable.hashCode ^
       amountOptions.hashCode;
+
+  bool isValid() {
+    return name.trim().isNotEmpty && (typeId?.trim().isNotEmpty ?? false);
+  }
 }

@@ -149,8 +149,13 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     title: loc.stepCategories,
                     subtitle: loc.stepCategoriesDesc,
                     completed: progress['categories'] == true,
-                    onTap: () => Navigator.of(context)
-                        .pushNamed('/onboarding/categories'),
+                    onTap: () {
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/dashboard?section=onboardingCategories',
+                        (route) => false,
+                      );
+                    },
                   ),
                   OnboardingStepCard(
                     stepNumber: 4,

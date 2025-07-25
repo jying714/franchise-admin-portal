@@ -72,3 +72,37 @@ const List<Map<String, dynamic>> pizzaShopIngredientTypesTemplate = [
   },
   // Add more ingredient type entries as needed...
 ];
+
+const List<Map<String, dynamic>> pizzaShopCategoriesTemplate = [
+  {
+    "id": "pizza",
+    "name": "Pizza",
+    "description":
+        "Our signature pizzas including build-your-own and specialties.",
+    "sortOrder": 0
+  },
+  {
+    "id": "calzones",
+    "name": "Calzones",
+    "description": "Stuffed calzones with various fillings.",
+    "sortOrder": 1
+  },
+  {
+    "id": "salads",
+    "name": "Salads",
+    "description": "Fresh salads with a variety of toppings and dressings.",
+    "sortOrder": 2
+  },
+  {
+    "id": "drinks",
+    "name": "Drinks",
+    "description": "Fountain drinks, bottled beverages, and more.",
+    "sortOrder": 3
+  },
+  {
+    "id": "desserts",
+    "name": "Desserts",
+    "description": "Sweet treats to complete your meal.",
+    "sortOrder": 4
+  },
+];

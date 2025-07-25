@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-
+import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/schema_templates.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/models/ingredient_metadata.dart';
@@ -114,6 +114,23 @@ class _IngredientMetadataJsonImportExportDialogState
     if (_previewIngredients == null || franchiseId.isEmpty) return;
 
     try {
+      final firestore = context.read<FirestoreService>();
+      final validTypeIds = await firestore.fetchIngredientTypeIds(franchiseId);
+
+// Filter invalid ingredients
+      final invalidIngredients = _previewIngredients!.where((ingredient) {
+        return ingredient.typeId == null ||
+            !validTypeIds.contains(ingredient.typeId);
+      }).toList();
+
+      if (invalidIngredients.isNotEmpty) {
+        final badIds = invalidIngredients.map((e) => e.id).join(', ');
+        setState(() {
+          _errorMessage = '${loc.invalidTypeIdError}: $badIds';
+        });
+        return;
+      }
+
       await provider.bulkReplaceIngredientMetadata(
           franchiseId, _previewIngredients!);
       if (mounted) Navigator.of(context).pop();

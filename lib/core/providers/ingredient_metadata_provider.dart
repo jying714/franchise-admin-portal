@@ -4,6 +4,7 @@ import 'package:franchise_admin_portal/core/models/ingredient_metadata.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:collection/collection.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class IngredientMetadataProvider extends ChangeNotifier {
   final FirestoreService _firestore;
@@ -205,6 +206,42 @@ class IngredientMetadataProvider extends ChangeNotifier {
         screen: 'ingredient_metadata_provider.dart',
         severity: 'error',
         contextData: {'franchiseId': franchiseId},
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> saveAllChanges(String franchiseId) async {
+    final batch = FirebaseFirestore.instance.batch();
+    final collectionRef = FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('ingredient_metadata');
+
+    try {
+      for (final entry in _current) {
+        if (!entry.isValid()) {
+          throw Exception('Invalid ingredient: ${entry.name}');
+        }
+        final docRef = collectionRef.doc(entry.id);
+        batch.set(docRef, entry.toMap());
+      }
+
+      await batch.commit();
+      _original = List.from(_current);
+      notifyListeners();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'ingredient_metadata_save_failed',
+        stack: stack.toString(),
+        source: 'ingredient_metadata_provider',
+        screen: 'onboarding_ingredients_screen',
+        severity: 'error',
+        contextData: {
+          'franchiseId': franchiseId,
+          'ingredientCount': _current.length,
+          'error': e.toString(),
+        },
       );
       rethrow;
     }

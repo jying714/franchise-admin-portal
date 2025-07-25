@@ -14,6 +14,7 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingred
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_metadata_json_import_export_dialog.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class OnboardingIngredientsScreen extends StatefulWidget {
   const OnboardingIngredientsScreen({super.key});
@@ -266,10 +267,31 @@ class _OnboardingIngredientsScreenState
                 children: [
                   ElevatedButton(
                     onPressed: () async {
-                      await provider.saveChanges();
-                      if (context.mounted) {
+                      final franchiseId =
+                          context.read<FranchiseProvider>().franchiseId;
+                      final metadataProvider =
+                          context.read<IngredientMetadataProvider>();
+                      final onboardingProvider =
+                          context.read<OnboardingProgressProvider>();
+
+                      try {
+                        await metadataProvider.saveAllChanges(franchiseId);
+                        await onboardingProvider
+                            .markStepComplete('ingredients');
+
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(loc.changesSaved)),
+                          SnackBar(content: Text(loc.saveSuccessful)),
+                        );
+                      } catch (e, stack) {
+                        await ErrorLogger.log(
+                          message: 'ingredient_save_error',
+                          stack: stack.toString(),
+                          source: 'onboarding_ingredients_screen',
+                          screen: 'onboarding_ingredients_screen',
+                          severity: 'error',
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(loc.saveFailed)),
                         );
                       }
                     },

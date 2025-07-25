@@ -181,14 +181,14 @@ final List<DashboardSection> onboardingSteps = [
     sidebarOrder: 2,
     showInSidebar: true,
   ),
-  // DashboardSection(
-  //   key: 'onboardingCategories',
-  //   title: 'Categories',
-  //   icon: Icons.category_outlined,
-  //   builder: (_) => const OnboardingCategoriesScreen(),
-  //   sidebarOrder: 2,
-  //   showInSidebar: true,
-  // ),
+  DashboardSection(
+    key: 'onboardingCategories',
+    title: 'Step 3: Categories',
+    icon: Icons.category_outlined,
+    builder: (_) => const OnboardingCategoriesScreen(),
+    sidebarOrder: 3,
+    showInSidebar: true,
+  ),
   // DashboardSection(
   //   key: 'onboardingMenuItems',
   //   title: 'Menu Items',
