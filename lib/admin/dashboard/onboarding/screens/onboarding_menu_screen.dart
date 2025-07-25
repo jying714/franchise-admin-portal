@@ -162,8 +162,13 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     title: loc.stepMenuItems,
                     subtitle: loc.stepMenuItemsDesc,
                     completed: progress['menuItems'] == true,
-                    onTap: () => Navigator.of(context)
-                        .pushNamed('/onboarding/menu_items'),
+                    onTap: () {
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/dashboard?section=onboardingMenuItems',
+                        (route) => false,
+                      );
+                    },
                   ),
                   OnboardingStepCard(
                     stepNumber: 5,

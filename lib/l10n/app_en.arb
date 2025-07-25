@@ -1791,7 +1791,24 @@
   "importExportInstruction": "Paste JSON data to import or edit it before saving.",
   "jsonData": "JSON Data",
   "import": "Import",
-  "selectCategoryTemplate": "Select a category template"
+  "selectCategoryTemplate": "Select a category template",
+  "categoryMarkedAsComplete": "Category step marked as complete.",
+  "sizes": "Sizes",
+  "deleteMenuItemConfirm": "Are you sure you want to delete {itemName}?",
+  "menuItemDeleted": "Menu item deleted successfully.",
+  "menuItemMarkedAsComplete": "Menu items step marked as complete.",
+  "onboardingMenuItems": "Onboarding: Menu Items",
+  "loadDefaultTemplates": "Load Default Templates",
+  "noMenuItemsFound": "No menu items found.",
+  "noMenuItemsMessage": "Start by adding at least one menu item.",
+  "editMenuItem": "Edit {itemName}",
+  "basePrice": "Base Price",
+  "importExportJson": "Import / Export JSON",
+  "pasteOrEditJson": "Paste or edit JSON for your menu items below.",
+  "noTemplatesFound": "No Templates Found"
+
+
+
 
 
 

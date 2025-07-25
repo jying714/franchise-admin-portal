@@ -2174,6 +2174,7 @@ class FirestoreService {
           .collection(_menuItems)
           .doc(id)
           .delete();
+
       await AuditLogService().addLog(
         franchiseId: franchiseId,
         action: 'delete_menu_item',
@@ -2181,11 +2182,27 @@ class FirestoreService {
         details: {'menuItemId': id},
       );
     } catch (e, stack) {
+      // 🔥 ErrorLogger integration
+      await ErrorLogger.log(
+        message: 'Failed to delete menu item',
+        source: 'FirestoreService',
+        screen: 'firestore_service.dart',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {
+          'franchiseId': franchiseId,
+          'menuItemId': id,
+          'userId': userId ?? currentUserId ?? 'unknown',
+        },
+      );
+
+      // Also logs to local console for dev environment debugging
       _logFirestoreError('deleteMenuItem', e, stack);
       rethrow;
     }
   }
 
+  /// Real-time listener for menu items (used in live UI).
   Stream<List<MenuItem>> getMenuItems(String franchiseId,
       {String? search, String? sortBy, bool descending = false}) {
     firestore.Query query =
@@ -4281,6 +4298,89 @@ class FirestoreService {
         contextData: {
           'franchiseId': franchiseId,
           'categoryCount': categories.length,
+        },
+      );
+      rethrow;
+    }
+  }
+
+  /// One-time fetch of menu items (used during onboarding load).
+  Future<List<MenuItem>> fetchMenuItemsOnce(String franchiseId) async {
+    try {
+      final snapshot = await _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('menu_items')
+          .orderBy('sortOrder', descending: false)
+          .get();
+
+      return snapshot.docs.map((doc) {
+        return MenuItem.fromFirestore(doc.data(), doc.id);
+      }).toList();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to fetch menu items',
+        source: 'FirestoreService',
+        screen: 'firestore_service.dart',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId},
+      );
+      return [];
+    }
+  }
+
+  Future<void> saveMenuItems(String franchiseId, List<MenuItem> items) async {
+    final batch = _db.batch();
+    final collection =
+        _db.collection('franchises').doc(franchiseId).collection('menu_items');
+
+    try {
+      for (int i = 0; i < items.length; i++) {
+        final item = items[i];
+        final ref = collection.doc(item.id);
+        final data = item.copyWith(sortOrder: i).toFirestore();
+        batch.set(ref, data, firestore.SetOptions(merge: true));
+      }
+
+      await batch.commit();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to batch save menu items',
+        source: 'FirestoreService',
+        screen: 'firestore_service.dart',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId, 'itemCount': items.length},
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> reorderMenuItems(
+      String franchiseId, List<MenuItem> ordered) async {
+    final batch = _db.batch();
+    final collection =
+        _db.collection('franchises').doc(franchiseId).collection('menu_items');
+
+    try {
+      for (int i = 0; i < ordered.length; i++) {
+        final item = ordered[i];
+        final ref = collection.doc(item.id);
+        batch.update(ref, {'sortOrder': i});
+      }
+
+      await batch.commit();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to reorder menu items',
+        source: 'FirestoreService',
+        screen: 'firestore_service.dart',
+        severity: 'warning',
+        stack: stack.toString(),
+        contextData: {
+          'franchiseId': franchiseId,
+          'itemCount': ordered.length,
         },
       );
       rethrow;

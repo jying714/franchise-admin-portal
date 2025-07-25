@@ -123,6 +123,7 @@ class MenuItem {
       'includedIngredients': includedIngredients,
       'optionalAddOns': optionalAddOns,
       'customizations': customizations.map((c) => c.toFirestore()).toList(),
+      'rawCustomizations': rawCustomizations,
       'maxFreeSauces': maxFreeSauces,
       'extraSauceUpcharge': extraSauceUpcharge,
       'extraCharges': extraCharges,
@@ -417,6 +418,7 @@ class MenuItem {
       if (bundleItems != null) 'bundleItems': bundleItems,
       if (bundleDiscount != null) 'bundleDiscount': bundleDiscount,
       if (highlightTags != null) 'highlightTags': highlightTags,
+      if (templateRefs != null) 'templateRefs': templateRefs,
       if (allowSpecialInstructions != null)
         'allowSpecialInstructions': allowSpecialInstructions,
       if (hideInMenu != null) 'hideInMenu': hideInMenu,
@@ -649,4 +651,7 @@ class MenuItem {
       templateRefs: templateRefs ?? this.templateRefs,
     );
   }
+
+  factory MenuItem.fromJson(Map<String, dynamic> data) =>
+      MenuItem.fromMap(data);
 }

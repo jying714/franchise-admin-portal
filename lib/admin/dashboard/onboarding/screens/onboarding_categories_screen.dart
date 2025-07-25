@@ -71,6 +71,45 @@ class _OnboardingCategoriesScreenState
     );
   }
 
+  Future<void> _markComplete() async {
+    final onboarding = context.read<OnboardingProgressProvider>();
+    final loc = AppLocalizations.of(context)!;
+
+    final isCompleted = onboarding.isStepComplete('categories');
+
+    try {
+      if (isCompleted) {
+        await onboarding.markStepIncomplete('categories');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(loc.stepMarkedIncomplete)),
+          );
+        }
+      } else {
+        await onboarding.markStepComplete('categories');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(loc.stepMarkedComplete)),
+          );
+        }
+      }
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'onboarding_mark_complete_toggle_failed',
+        source: 'onboarding_categories_screen.dart',
+        screen: 'onboarding_categories_screen',
+        severity: 'warning',
+        stack: stack.toString(),
+        contextData: {'step': 'categories'},
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(loc.errorGeneric)),
+        );
+      }
+    }
+  }
+
   Future<void> _saveChanges() async {
     final loc = AppLocalizations.of(context)!;
     final provider = context.read<CategoryProvider>();
@@ -79,7 +118,6 @@ class _OnboardingCategoriesScreenState
 
     try {
       await provider.saveCategories();
-      await onboarding.markStepComplete('categories');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(loc.saveSuccessful)),
@@ -177,30 +215,25 @@ class _OnboardingCategoriesScreenState
           ),
         ),
         actions: [
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.data_object),
-                tooltip: loc.importExportCategories,
-                onPressed: _openImportExportDialog,
-              ),
-              IconButton(
-                icon: const Icon(Icons.library_add),
-                tooltip: loc.selectCategoryTemplate,
-                onPressed: () async {
-                  await showDialog(
-                    context: context,
-                    builder: (_) => const CategoriesTemplatePickerDialog(),
-                  );
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.check_circle_outline),
-                tooltip: loc.saveChanges,
-                onPressed: _saveChanges,
-              ),
-              const SizedBox(width: 12),
-            ],
+          IconButton(
+            icon: const Icon(Icons.data_object),
+            tooltip: loc.importExportCategories,
+            onPressed: _openImportExportDialog,
+          ),
+          IconButton(
+            icon: const Icon(Icons.library_add),
+            tooltip: loc.selectCategoryTemplate,
+            onPressed: () async {
+              await showDialog(
+                context: context,
+                builder: (_) => const CategoriesTemplatePickerDialog(),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.check_circle_outline),
+            tooltip: loc.markAsComplete,
+            onPressed: _markComplete,
           ),
         ],
       ),

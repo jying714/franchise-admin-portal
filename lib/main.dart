@@ -55,6 +55,8 @@ import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.d
 import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_categories_screen.dart';
 import 'package:franchise_admin_portal/core/providers/category_provider.dart';
+import 'package:franchise_admin_portal/core/providers/menu_item_provider.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_items_screen.dart';
 import 'dart:html' as html;
 
 /// Returns initial unauth route and optional invite token, e.g. ('/invite-accept', 'abc123').
@@ -372,6 +374,23 @@ class FranchiseAppRootSplit extends StatelessWidget {
             return provider;
           },
         ),
+        ChangeNotifierProxyProvider2<FirestoreService, FranchiseProvider,
+            MenuItemProvider>(
+          create: (_) => MenuItemProvider(
+            firestoreService: Provider.of<FirestoreService>(_, listen: false),
+          ),
+          update: (_, firestoreService, franchiseProvider, previous) {
+            final fid = franchiseProvider.franchiseId;
+            final provider = previous ??
+                MenuItemProvider(firestoreService: firestoreService);
+
+            if (fid.isNotEmpty && fid != 'unknown') {
+              provider.loadMenuItems(fid);
+            }
+
+            return provider;
+          },
+        ),
         ChangeNotifierProvider(create: (_) => IngredientTypeProvider()),
         Provider(create: (_) => AnalyticsService()),
         StreamProvider<fb_auth.User?>.value(
@@ -684,14 +703,12 @@ class _FranchiseAuthenticatedRootState
                 builder: (_) => const OnboardingCategoriesScreen(),
               );
             }
-            /////////////////// PLACE HOLDERS below
             if (uri.path == '/onboarding/menu_items') {
               return MaterialPageRoute(
-                  builder: (_) => const Scaffold(
-                        body:
-                            Center(child: Text('Menu Items Step Placeholder')),
-                      ));
+                builder: (_) => const OnboardingMenuItemsScreen(),
+              );
             }
+            /////////////////// PLACE HOLDERS below
             if (uri.path == '/onboarding/review') {
               return MaterialPageRoute(
                   builder: (_) => const Scaffold(

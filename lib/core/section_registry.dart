@@ -189,14 +189,14 @@ final List<DashboardSection> onboardingSteps = [
     sidebarOrder: 3,
     showInSidebar: true,
   ),
-  // DashboardSection(
-  //   key: 'onboardingMenuItems',
-  //   title: 'Menu Items',
-  //   icon: Icons.local_pizza_outlined,
-  //   builder: (_) => const OnboardingMenuItemsScreen(),
-  //   sidebarOrder: 3,
-  //   showInSidebar: true,
-  // ),
+  DashboardSection(
+    key: 'onboardingMenuItems',
+    title: 'Step 4: Menu Items',
+    icon: Icons.local_pizza_outlined,
+    builder: (_) => const OnboardingMenuItemsScreen(),
+    sidebarOrder: 4,
+    showInSidebar: true,
+  ),
   // DashboardSection(
   //   key: 'onboardingReview',
   //   title: 'Review',
