@@ -102,6 +102,61 @@ class _OnboardingCategoriesScreenState
     }
   }
 
+  Future<void> _confirmBulkDelete() async {
+    final loc = AppLocalizations.of(context)!;
+    if (_selectedIds.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(loc.confirmDeletion),
+        content: Text(loc.bulkDeleteConfirmation(_selectedIds.length)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(loc.cancel),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(loc.delete),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final provider = context.read<CategoryProvider>();
+      final deletedCount = _selectedIds.length;
+
+      try {
+        await provider.bulkDeleteCategoriesFromFirestore(_selectedIds.toList());
+        _selectedIds.clear();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(loc.bulkDeleteSuccess(deletedCount))),
+          );
+        }
+      } catch (e, stack) {
+        await ErrorLogger.log(
+          message: 'bulk_delete_categories_failed',
+          stack: stack.toString(),
+          source: 'OnboardingCategoriesScreen',
+          screen: 'onboarding_categories_screen',
+          severity: 'error',
+          contextData: {'selectedCount': deletedCount},
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(loc.errorGeneric)),
+          );
+        }
+      }
+      setState(() {}); // Refresh UI selection state
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -174,6 +229,29 @@ class _OnboardingCategoriesScreenState
                 ],
               ),
             const SizedBox(height: 12),
+            if (_selectedIds.isNotEmpty)
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.delete_forever),
+                    label: Text(loc.deleteSelected),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                    ),
+                    onPressed: _confirmBulkDelete,
+                  ),
+                  const SizedBox(width: 12),
+                  OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedIds.clear();
+                      });
+                    },
+                    child: Text(loc.clearSelection),
+                  ),
+                ],
+              ),
+            const SizedBox(height: 12),
             Expanded(
               child: provider.categories.isEmpty
                   ? EmptyStateWidget(
@@ -200,9 +278,22 @@ class _OnboardingCategoriesScreenState
                               });
                             },
                             onEdit: () => _openCategoryForm(cat),
-                            onDelete: () => context
-                                .read<CategoryProvider>()
-                                .deleteCategory(cat.id),
+                            onDelete: () async {
+                              final provider = context.read<CategoryProvider>();
+                              final loc = AppLocalizations.of(context)!;
+                              final scaffold = ScaffoldMessenger.of(context);
+
+                              try {
+                                await provider.deleteCategory(cat.id);
+                                scaffold.showSnackBar(
+                                  SnackBar(content: Text(loc.categoryDeleted)),
+                                );
+                              } catch (_) {
+                                scaffold.showSnackBar(
+                                  SnackBar(content: Text(loc.errorGeneric)),
+                                );
+                              }
+                            },
                           ),
                       ],
                     ),

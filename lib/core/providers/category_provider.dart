@@ -84,10 +84,56 @@ class CategoryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void deleteCategory(String categoryId) {
-    _current.removeWhere((c) => c.id == categoryId);
-    _selectedCategoryIds.remove(categoryId);
-    notifyListeners();
+  Future<void> deleteCategory(String categoryId) async {
+    try {
+      await firestore.deleteCategory(
+          franchiseId: franchiseId, categoryId: categoryId);
+      await loadCategories(); // ⬅️ Forces Firestore re-fetch, like ingredients
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'category_deletion_failed',
+        stack: stack.toString(),
+        source: 'CategoryProvider',
+        screen: 'onboarding_categories_screen',
+        severity: 'error',
+        contextData: {
+          'franchiseId': franchiseId,
+          'categoryId': categoryId,
+        },
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> bulkDeleteCategoriesFromFirestore(List<String> ids) async {
+    try {
+      final batch = firestore.db.batch();
+      final colRef = firestore.db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('categories');
+
+      for (final id in ids) {
+        batch.delete(colRef.doc(id));
+      }
+
+      await batch.commit();
+
+      await loadCategories(); // 🔁 reload after deletion
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'bulk_delete_categories_failed',
+        stack: stack.toString(),
+        source: 'CategoryProvider',
+        screen: 'onboarding_categories_screen',
+        severity: 'error',
+        contextData: {
+          'franchiseId': franchiseId,
+          'deletedCount': ids.length,
+        },
+      );
+      rethrow;
+    }
   }
 
   void reorderCategories(int oldIndex, int newIndex) {
