@@ -21,6 +21,7 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboar
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_review_screen.dart';
 import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredient_type_screen.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_feature_setup_screen.dart';
 // Any new (plugin/module) screens can be imported and registered here
 
 // Central registry. Add or remove screens here to affect ALL navigation/dashboards.
@@ -166,35 +167,42 @@ final List<DashboardSection> onboardingSteps = [
     showInSidebar: true,
   ),
   DashboardSection(
-    key: 'onboardingIngredientTypes',
-    title: 'Step 1: Ingredient Types',
-    icon: Icons.category_outlined,
-    builder: (_) => const IngredientTypeManagementScreen(),
+    key: 'onboarding_feature_setup',
+    title: 'Step 1: Feature Setup',
+    icon: Icons.tune,
+    builder: (_) => OnboardingFeatureSetupScreen(),
     sidebarOrder: 1,
-    showInSidebar: true,
   ),
   DashboardSection(
-    key: 'onboardingIngredients',
-    title: 'Step 2: Ingredients',
-    icon: Icons.kitchen_outlined,
-    builder: (_) => const OnboardingIngredientsScreen(),
+    key: 'onboardingIngredientTypes',
+    title: 'Step 2: Ingredient Types',
+    icon: Icons.category_outlined,
+    builder: (_) => const IngredientTypeManagementScreen(),
     sidebarOrder: 2,
     showInSidebar: true,
   ),
   DashboardSection(
-    key: 'onboardingCategories',
-    title: 'Step 3: Categories',
-    icon: Icons.category_outlined,
-    builder: (_) => const OnboardingCategoriesScreen(),
+    key: 'onboardingIngredients',
+    title: 'Step 3: Ingredients',
+    icon: Icons.kitchen_outlined,
+    builder: (_) => const OnboardingIngredientsScreen(),
     sidebarOrder: 3,
     showInSidebar: true,
   ),
   DashboardSection(
+    key: 'onboardingCategories',
+    title: 'Step 4: Categories',
+    icon: Icons.category_outlined,
+    builder: (_) => const OnboardingCategoriesScreen(),
+    sidebarOrder: 4,
+    showInSidebar: true,
+  ),
+  DashboardSection(
     key: 'onboardingMenuItems',
-    title: 'Step 4: Menu Items',
+    title: 'Step 5: Menu Items',
     icon: Icons.local_pizza_outlined,
     builder: (_) => const OnboardingMenuItemsScreen(),
-    sidebarOrder: 4,
+    sidebarOrder: 5,
     showInSidebar: true,
   ),
   // DashboardSection(

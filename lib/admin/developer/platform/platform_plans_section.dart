@@ -145,7 +145,7 @@ class _PlatformPlansSectionState extends State<PlatformPlansSection> {
             Wrap(
               spacing: 6,
               runSpacing: 6,
-              children: plan.includedFeatures
+              children: plan.features
                   .map((feature) => Chip(
                         label: Text(AppConfig.featureDisplayName(feature)),
                         backgroundColor: theme.colorScheme.primaryContainer,

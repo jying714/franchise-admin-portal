@@ -53,7 +53,7 @@ class _ActivePlanBannerState extends State<ActivePlanBanner> {
     final interval =
         snapshot['billingInterval'] ?? plan?.billingInterval ?? 'monthly';
     final features =
-        List<String>.from(snapshot['features'] ?? plan?.includedFeatures ?? []);
+        List<String>.from(snapshot['features'] ?? plan?.features ?? []);
     final formattedNextBilling =
         DateFormat.yMMMMd().format(subscription.nextBillingDate);
     final formattedStartDate =

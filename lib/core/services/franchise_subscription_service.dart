@@ -25,6 +25,7 @@ class FranchiseSubscriptionService {
     final subscriptionsRef = _db.collection('franchise_subscriptions');
 
     try {
+      // 🔁 Cancel existing active subscriptionso
       final existing = await subscriptionsRef
           .where('franchiseId', isEqualTo: franchiseId)
           .where('active', isEqualTo: true)
@@ -33,55 +34,39 @@ class FranchiseSubscriptionService {
       for (final doc in existing.docs) {
         batch.update(doc.reference, {
           'active': false,
-          'status': 'cancelled', // 👈 Mark as no longer current
-          'cancelledAt': FieldValue.serverTimestamp(), // optional timestamp
+          'status': 'cancelled',
+          'cancelledAt': FieldValue.serverTimestamp(),
         });
       }
 
+      // 🆕 Create new subscription
       final newRef = subscriptionsRef.doc();
-
-      debugPrint(
-          '[🔥DEBUG] Creating new subscription for franchiseId=$franchiseId with planId=${plan.id}');
-      debugPrint('[🔥DEBUG] Subscription document ID: ${newRef.id}');
-
-      final now = Timestamp.now();
       final billingCycleDays = plan.billingInterval == 'yearly' ? 365 : 30;
 
       final newSubscriptionData = {
-        // 🔑 Identifiers & links
         'franchiseId': franchiseId,
         'platformPlanId': plan.id,
-
-        // 🕒 Timestamps & state
         'subscribedAt': FieldValue.serverTimestamp(),
         'startDate': FieldValue.serverTimestamp(),
         'nextBillingDate': Timestamp.fromDate(
-            DateTime.now().add(Duration(days: billingCycleDays))),
-
-        // 🔁 Billing logic
+          DateTime.now().add(Duration(days: billingCycleDays)),
+        ),
         'billingCycleInDays': billingCycleDays,
         'billingInterval': plan.billingInterval,
         'autoRenew': true,
-
-        // 💳 Price tracking
         'priceAtSubscription': plan.price,
-
-        // 📌 State tracking
         'active': true,
         'status': 'active',
-
-        // 📦 Immutable plan snapshot at signup time
         'planSnapshot': {
           'name': plan.name,
           'description': plan.description,
-          'features': plan.includedFeatures,
+          'features': plan.features,
           'currency': plan.currency,
           'price': plan.price,
           'billingInterval': plan.billingInterval,
           'isCustom': plan.isCustom,
-          'planVersion': plan.planVersion ?? 'v1', // Optional default
+          'planVersion': plan.planVersion ?? 'v1',
         },
-        // 💳 Merchant service metadata (placeholder defaults until real values assigned)
         'paymentProviderCustomerId': null,
         'cardLast4': null,
         'cardBrand': null,
@@ -92,13 +77,29 @@ class FranchiseSubscriptionService {
       };
 
       debugPrint(
-          '[🔥DEBUG] Writing subscription document with fields: $newSubscriptionData');
-
+          '[🔥DEBUG] Writing subscription for franchiseId=$franchiseId with planId=${plan.id}');
       batch.set(newRef, newSubscriptionData);
 
-      debugPrint('[🔥DEBUG] Committing batch write...');
+      // 🌱 Seed feature_metadata from plan features
+      final Map<String, dynamic> featureMetadata = {
+        'modules': {
+          for (final featureKey in plan.features)
+            featureKey: {
+              'enabled': true,
+              'features': {'enabled': true},
+            },
+        },
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      await updateFeatureMetadataForPlanChange(
+        franchiseId: franchiseId,
+        grantedFeatures: plan.features,
+      );
+
+      // 🧾 Commit both subscription and feature writes
       await batch.commit();
-      debugPrint('[🔥DEBUG] Batch commit complete ✅');
+      debugPrint('[🔥DEBUG] Subscription + feature metadata committed ✅');
 
       await ErrorLogger.log(
         message: 'Franchise subscribed to platform plan',
@@ -135,6 +136,20 @@ class FranchiseSubscriptionService {
     try {
       final docRef = _db.collection('franchise_subscriptions').doc(documentId);
       await docRef.set(data, SetOptions(merge: true));
+
+      // 🔍 Optional logic: sync feature metadata if features or plan changed
+      final franchiseId = data['franchiseId'];
+      final planSnapshot = data['planSnapshot'];
+      final updatedFeatures = planSnapshot?['features'];
+
+      if (franchiseId != null &&
+          updatedFeatures is List &&
+          updatedFeatures.isNotEmpty) {
+        await updateFeatureMetadataForPlanChange(
+          franchiseId: franchiseId,
+          grantedFeatures: List<String>.from(updatedFeatures),
+        );
+      }
     } catch (e, stack) {
       await ErrorLogger.log(
         message: 'Failed to update franchise subscription',
@@ -146,6 +161,29 @@ class FranchiseSubscriptionService {
       );
       rethrow;
     }
+  }
+
+  Future<void> updateFeatureMetadataForPlanChange({
+    required String franchiseId,
+    required List<String> grantedFeatures,
+  }) async {
+    final docRef = _db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('feature_metadata')
+        .doc(franchiseId);
+
+    // ⛔ Features are GRANTED, but disabled by default
+    final Map<String, dynamic> newMetadata = {
+      for (final featureKey in grantedFeatures)
+        featureKey: {
+          'enabled': false, // <- toggled during onboarding
+          'features': {},
+        },
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    await docRef.set(newMetadata);
   }
 
   /// Save (create or overwrite) a subscription (move from FirestoreService)

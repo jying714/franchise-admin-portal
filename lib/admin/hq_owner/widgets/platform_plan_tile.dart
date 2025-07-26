@@ -202,7 +202,7 @@ class _PlatformPlanTileState extends State<PlatformPlanTile> {
     return Wrap(
       spacing: 6,
       runSpacing: -4,
-      children: widget.plan.includedFeatures
+      children: widget.plan.features
           .map((feature) => Chip(
                 visualDensity: VisualDensity.compact,
                 label: Text(feature, style: textTheme.labelSmall),
@@ -260,7 +260,7 @@ class _PlatformPlanTileState extends State<PlatformPlanTile> {
           'name': widget.plan.name,
           'price': widget.plan.price,
           'billingInterval': widget.plan.billingInterval,
-          'features': widget.plan.includedFeatures,
+          'features': widget.plan.features,
           'isCustom': widget.plan.isCustom,
           'maskedCardString': _paymentInfo?.maskedCardString ?? '',
         },

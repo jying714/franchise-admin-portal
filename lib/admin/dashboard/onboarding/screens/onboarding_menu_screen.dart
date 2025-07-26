@@ -120,6 +120,19 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                 children: [
                   OnboardingStepCard(
                     stepNumber: 1,
+                    title: loc.stepFeatureSetup,
+                    subtitle: loc.stepFeatureSetupDesc,
+                    completed: progress['feature_setup'] == true,
+                    onTap: () {
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/dashboard?section=onboarding_feature_setup',
+                        (route) => false,
+                      );
+                    },
+                  ),
+                  OnboardingStepCard(
+                    stepNumber: 2,
                     title: loc.stepIngredientTypes,
                     subtitle: loc.stepIngredientTypesDesc,
                     completed: progress['ingredientTypes'] == true,
@@ -132,7 +145,7 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     },
                   ),
                   OnboardingStepCard(
-                    stepNumber: 2,
+                    stepNumber: 3,
                     title: loc.stepIngredients,
                     subtitle: loc.stepIngredientsDesc,
                     completed: progress['ingredients'] == true,
@@ -145,7 +158,7 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     },
                   ),
                   OnboardingStepCard(
-                    stepNumber: 3,
+                    stepNumber: 4,
                     title: loc.stepCategories,
                     subtitle: loc.stepCategoriesDesc,
                     completed: progress['categories'] == true,
@@ -158,7 +171,7 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     },
                   ),
                   OnboardingStepCard(
-                    stepNumber: 4,
+                    stepNumber: 5,
                     title: loc.stepMenuItems,
                     subtitle: loc.stepMenuItemsDesc,
                     completed: progress['menuItems'] == true,
@@ -171,7 +184,7 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     },
                   ),
                   OnboardingStepCard(
-                    stepNumber: 5,
+                    stepNumber: 6,
                     title: loc.stepReview,
                     subtitle: loc.stepReviewDesc,
                     completed: progress['review'] == true,

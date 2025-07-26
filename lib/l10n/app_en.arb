@@ -1688,13 +1688,13 @@
   "planSwapperTitle": "Swap Franchise Plan",
   "onboardingMenuTitle": "Franchise Onboarding",
   "onboardingFor": "Onboarding for",
-  "stepIngredients": "Step 2: Ingredients",
+  "stepIngredients": "Step 3: Ingredients",
   "stepIngredientsDesc": "Define all ingredients like toppings, sauces, and sides.",
-  "stepCategories": "Step 3: Categories",
+  "stepCategories": "Step 4: Categories",
   "stepCategoriesDesc": "Organize your menu into logical sections (e.g. Pizzas, Drinks).",
-  "stepMenuItems": "Step 4: Menu Items",
+  "stepMenuItems": "Step 5: Menu Items",
   "stepMenuItemsDesc": "Create actual items customers can order, using ingredients and categories.",
-  "stepReview": "Step 5: Final Review",
+  "stepReview": "Step 6: Final Review",
   "stepReviewDesc": "Validate all required data before going live.",
   "progressComingSoon": "Progress tracking and automation coming soon.",
   "stepMarkedComplete": "Step marked complete!",
@@ -1725,7 +1725,7 @@
   "sortOrder": "Sort Order",
   "manageIngredientTypes": "Manage Ingredient Types",
   "pleaseAddIngredientTypesFirst": "Please add at least one ingredient with a type before marking this step complete.",
-  "stepIngredientTypes": "Step 1: Ingredient Types",
+  "stepIngredientTypes": "Step 2: Ingredient Types",
   "stepIngredientTypesDesc": "Create logical ingredient type tags like toppings, sauces, and sides.",
   "errorGeneric": "Something went wrong. Please try again.",
   "selectIngredientTypeTemplate": "Select a Starter Template",
@@ -1805,9 +1805,17 @@
   "basePrice": "Base Price",
   "importExportJson": "Import / Export JSON",
   "pasteOrEditJson": "Paste or edit JSON for your menu items below.",
-  "noTemplatesFound": "No Templates Found"
-
-
+  "noTemplatesFound": "No Templates Found",
+  "toggleFeatureError": "Failed to update feature toggle. Please try again.",
+  "featureSetupTitle": "Select Enabled Features",
+  "featureSetupDescription": "Choose which optional features this franchise should have access to. These are constrained by their current platform plan.",
+  "featureSetupToggleSection": "Available Features",
+  "saving": "Saving...",
+  "saveSuccess": "Features saved successfully.",
+  "saveErrorTitle": "Save Failed",
+  "saveErrorBody": "Unable to save your feature selections. Please try again.",
+  "stepFeatureSetup": "Step 1: Feature Setup",
+  "stepFeatureSetupDesc": "Choose which modules and features this franchise will use."
 
 
 

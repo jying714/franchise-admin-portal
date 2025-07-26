@@ -7,7 +7,7 @@ class PlatformPlan {
   final double price;
   final String currency;
   final String billingInterval; // e.g. 'monthly', 'annual'
-  final List<String> includedFeatures;
+  final List<String> features;
   final bool active;
   final bool isCustom;
   final DateTime? createdAt;
@@ -21,7 +21,7 @@ class PlatformPlan {
     required this.price,
     required this.currency,
     required this.billingInterval,
-    required this.includedFeatures,
+    required this.features,
     required this.active,
     required this.isCustom,
     this.createdAt,
@@ -38,9 +38,15 @@ class PlatformPlan {
       price: (data['price'] ?? 0).toDouble(),
       currency: data['currency'] ?? 'USD',
       billingInterval: data['billingInterval'] ?? 'monthly',
-      includedFeatures: List<String>.from(
-        data['includedFeatures'] ?? data['features'] ?? [],
-      ),
+      features: (() {
+        if (data['includedFeatures'] is List) {
+          return List<String>.from(data['includedFeatures']);
+        } else if (data['features'] is List) {
+          return List<String>.from(data['features']);
+        } else {
+          return <String>[];
+        }
+      })(),
       active: data['active'] ?? false,
       isCustom: data['isCustom'] ?? false,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
@@ -56,7 +62,7 @@ class PlatformPlan {
       'price': price,
       'currency': currency,
       'billingInterval': billingInterval,
-      'includedFeatures': includedFeatures,
+      'features': features,
       'active': active,
       'isCustom': isCustom,
       'createdAt': createdAt ?? FieldValue.serverTimestamp(),
@@ -71,7 +77,7 @@ class PlatformPlan {
     double? price,
     String? currency,
     String? billingInterval,
-    List<String>? includedFeatures,
+    List<String>? features,
     bool? active,
     bool? isCustom,
     DateTime? createdAt,
@@ -85,7 +91,7 @@ class PlatformPlan {
       price: price ?? this.price,
       currency: currency ?? this.currency,
       billingInterval: billingInterval ?? this.billingInterval,
-      includedFeatures: includedFeatures ?? this.includedFeatures,
+      features: features ?? this.features,
       active: active ?? this.active,
       isCustom: isCustom ?? this.isCustom,
       createdAt: createdAt ?? this.createdAt,

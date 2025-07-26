@@ -135,7 +135,7 @@ class _FullPlatformPlansScreenState extends State<FullPlatformPlansScreen> {
                       Wrap(
                         spacing: 6,
                         runSpacing: 6,
-                        children: plan.includedFeatures
+                        children: plan.features
                             .map(
                               (feature) => Chip(
                                 label:

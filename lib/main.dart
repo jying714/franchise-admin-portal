@@ -57,6 +57,9 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboar
 import 'package:franchise_admin_portal/core/providers/category_provider.dart';
 import 'package:franchise_admin_portal/core/providers/menu_item_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_items_screen.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_feature_provider.dart';
+import 'package:franchise_admin_portal/core/services/franchise_feature_service.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_feature_setup_screen.dart';
 import 'dart:html' as html;
 
 /// Returns initial unauth route and optional invite token, e.g. ('/invite-accept', 'abc123').
@@ -306,6 +309,28 @@ class FranchiseAppRootSplit extends StatelessWidget {
                   franchiseProvider: franchiseProvider,
                 );
             provider.loadFranchiseInfo(); // reload on any change
+            return provider;
+          },
+        ),
+        ChangeNotifierProxyProvider2<FranchiseProvider, FirestoreService,
+            FranchiseFeatureProvider>(
+          create: (_) => FranchiseFeatureProvider(
+            service: FranchiseFeatureService(),
+            franchiseId: '', // will be updated below
+          ),
+          update: (_, franchiseProvider, firestoreService, previous) {
+            final fid = franchiseProvider.franchiseId;
+
+            final provider = previous ??
+                FranchiseFeatureProvider(
+                  service: FranchiseFeatureService(),
+                  franchiseId: fid,
+                );
+
+            if (fid.isNotEmpty && fid != provider.currentFranchiseId) {
+              provider.setFranchiseId(fid);
+            }
+
             return provider;
           },
         ),
@@ -706,6 +731,11 @@ class _FranchiseAuthenticatedRootState
             if (uri.path == '/onboarding/menu_items') {
               return MaterialPageRoute(
                 builder: (_) => const OnboardingMenuItemsScreen(),
+              );
+            }
+            if (uri.path == '/onboarding/feature_setup') {
+              return MaterialPageRoute(
+                builder: (_) => const OnboardingFeatureSetupScreen(),
               );
             }
             /////////////////// PLACE HOLDERS below
