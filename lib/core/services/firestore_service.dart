@@ -39,6 +39,7 @@ import 'package:flutter/foundation.dart';
 import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
 import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
 import 'package:franchise_admin_portal/core/models/ingredient_type_model.dart';
+import 'dart:convert';
 
 class FirestoreService {
   static final firestore.FirebaseFirestore _db =
@@ -4384,6 +4385,29 @@ class FirestoreService {
         },
       );
       rethrow;
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> decodeJsonList(String input) async {
+    try {
+      final parsed = jsonDecode(input);
+      if (parsed is! List) {
+        throw FormatException('Input JSON must be a list of objects.');
+      }
+
+      return List<Map<String, dynamic>>.from(parsed);
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to decode JSON input for feature/plans import',
+        severity: 'error',
+        stack: stack.toString(),
+        source: 'FirestoreService.decodeJsonList',
+        contextData: {
+          'inputSnippet': input.length > 300 ? input.substring(0, 300) : input,
+          'error': e.toString(),
+        },
+      );
+      rethrow; // Allow UI or caller to handle
     }
   }
 }

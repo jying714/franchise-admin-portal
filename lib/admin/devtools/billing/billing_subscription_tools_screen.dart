@@ -5,6 +5,7 @@ import 'package:franchise_admin_portal/admin/devtools/billing/test_invoice_gener
 import 'package:franchise_admin_portal/admin/devtools/billing/test_invoice_cleaner.dart';
 import 'package:franchise_admin_portal/admin/devtools/billing/clear_all_test_invoices_button.dart';
 import 'package:franchise_admin_portal/admin/devtools/billing/mock_payment_tester.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class BillingSubscriptionToolsScreen extends StatelessWidget {
   const BillingSubscriptionToolsScreen({super.key});
@@ -71,10 +72,20 @@ class BillingSubscriptionToolsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Billing & Subscription Tools'),
+        title: Text(
+          loc.billingTools,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+        ),
         automaticallyImplyLeading: false,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline),

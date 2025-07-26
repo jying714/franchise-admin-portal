@@ -3,13 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/constants/feature_metadata.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_feature_provider.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_info_provider.dart';
 import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/feature_toggle_tile.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OnboardingFeatureSetupScreen extends StatefulWidget {
   const OnboardingFeatureSetupScreen({super.key});
@@ -22,6 +22,7 @@ class OnboardingFeatureSetupScreen extends StatefulWidget {
 class _OnboardingFeatureSetupScreenState
     extends State<OnboardingFeatureSetupScreen> {
   bool _isSaving = false;
+  List<Map<String, dynamic>> _featureMetadata = [];
 
   @override
   void initState() {
@@ -29,8 +30,29 @@ class _OnboardingFeatureSetupScreenState
     Future.microtask(() async {
       final provider = context.read<FranchiseFeatureProvider>();
       await provider.initialize();
-      debugPrint(
-          '[FeatureSetup] Granted features: ${provider.allGrantedFeatures}');
+
+      try {
+        final snapshot = await FirebaseFirestore.instance
+            .collection('platform_features')
+            .orderBy('name')
+            .get();
+
+        _featureMetadata = snapshot.docs
+            .map((doc) => {'id': doc.id, ...doc.data()})
+            .where((f) => f['deprecated'] != true)
+            .toList();
+
+        debugPrint(
+            '[FeatureSetup] Loaded ${_featureMetadata.length} features from Firestore.');
+      } catch (e, st) {
+        await ErrorLogger.log(
+          message: 'Failed to fetch platform_features from Firestore',
+          stack: st.toString(),
+          source: 'onboarding_feature_setup_screen.dart',
+          screen: 'OnboardingFeatureSetupScreen',
+        );
+      }
+
       if (mounted) setState(() {});
     });
   }
@@ -76,16 +98,15 @@ class _OnboardingFeatureSetupScreenState
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: kFeatureMetadataList
-                        .where((f) => f.visibleInUI)
+                    children: _featureMetadata
+                        .where((meta) =>
+                            meta['deprecated'] != true &&
+                            meta['developerOnly'] != true)
                         .map((meta) {
-                      final moduleKey = meta.key;
-                      final title = meta.label;
-                      final description = meta.description;
-
+                      final moduleKey = meta['key'];
+                      final title = meta['name'] ?? moduleKey;
+                      final description = meta['description'] ?? '';
                       final isLocked = !featureProvider.hasFeature(moduleKey);
-                      final isEnabled =
-                          featureProvider.isModuleEnabled(moduleKey);
 
                       return FeatureToggleTile(
                         moduleKey: moduleKey,

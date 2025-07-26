@@ -81,16 +81,16 @@ class FranchiseSubscriptionService {
       batch.set(newRef, newSubscriptionData);
 
       // 🌱 Seed feature_metadata from plan features
-      final Map<String, dynamic> featureMetadata = {
-        'modules': {
-          for (final featureKey in plan.features)
-            featureKey: {
-              'enabled': true,
-              'features': {'enabled': true},
-            },
-        },
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
+      // final Map<String, dynamic> featureMetadata = {
+      //   'modules': {
+      //     for (final featureKey in plan.features)
+      //       featureKey: {
+      //         'enabled': true,
+      //         'features': {'enabled': true},
+      //       },
+      //   },
+      //   'updatedAt': FieldValue.serverTimestamp(),
+      // };
 
       await updateFeatureMetadataForPlanChange(
         franchiseId: franchiseId,

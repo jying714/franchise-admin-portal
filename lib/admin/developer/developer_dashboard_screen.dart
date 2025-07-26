@@ -23,6 +23,7 @@ import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/admin/devtools/billing/billing_subscription_tools_screen.dart';
 import 'package:franchise_admin_portal/admin/devtools/widgets/dev_tools_sidebar_group.dart';
 import 'package:franchise_admin_portal/admin/devtools/subscriptions/subscription_dev_tools_screen.dart';
+import 'package:franchise_admin_portal/admin/devtools/platform/platform_feature_plan_tools_screen.dart';
 
 class DeveloperDashboardScreen extends StatefulWidget {
   const DeveloperDashboardScreen({Key? key}) : super(key: key);
@@ -271,7 +272,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
       // --- DEV TOOLS GROUP ---
       DashboardSection(
         key: 'billingSubscriptionTools',
-        title: 'Billing & Subscription Tools',
+        title: 'Billing Tools',
         icon: Icons.receipt_long_outlined,
         builder: (context) => const BillingSubscriptionToolsScreen(),
         sidebarOrder: 7,
@@ -282,6 +283,13 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         icon: Icons.subscriptions_outlined,
         builder: (context) => const SubscriptionDevToolsScreen(),
         sidebarOrder: 8,
+      ),
+      DashboardSection(
+        key: 'platformFeaturePlanTools',
+        title: 'Platform Feature & Plan Tools',
+        icon: Icons.tune_outlined,
+        builder: (context) => const PlatformFeaturePlanToolsScreen(),
+        sidebarOrder: 9,
       ),
     ];
   }

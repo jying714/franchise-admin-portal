@@ -1,5 +1,5 @@
 // File: lib/admin/developer/subscriptions/subscription_dev_tools_screen.dart
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/admin/devtools/subscriptions/manual_subscription_injector.dart';
 import 'package:franchise_admin_portal/admin/devtools/subscriptions/subscription_state_toggler.dart';
@@ -72,10 +72,20 @@ class SubscriptionDevToolsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Subscription Tools'),
+        title: Text(
+          loc.subscriptionTools,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+        ),
         automaticallyImplyLeading: false,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline),
