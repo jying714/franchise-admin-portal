@@ -112,6 +112,7 @@ class _AdminErrorLogsScreenState extends State<AdminErrorLogsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('[admin_error_logs_screen] Loaded');
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       print(

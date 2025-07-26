@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 
 class ErrorLog {
   final String id;
@@ -82,11 +83,14 @@ class ErrorLog {
 
   factory ErrorLog.fromMap(Map<String, dynamic> data, String id) {
     DateTime parseTimestamp(dynamic ts) {
-      if (ts == null) throw Exception('Missing timestamp');
+      if (ts == null) {
+        throw Exception(
+            '[ErrorLog] Missing required "timestamp" field in log: $id');
+      }
       if (ts is Timestamp) return ts.toDate();
       if (ts is DateTime) return ts;
       if (ts is String) return DateTime.tryParse(ts) ?? DateTime.now();
-      throw Exception('Unknown timestamp type');
+      throw Exception('[ErrorLog] Unrecognized timestamp format in log: $id');
     }
 
     List<Map<String, dynamic>> parseComments(dynamic val) {
@@ -100,7 +104,14 @@ class ErrorLog {
       return [];
     }
 
-    final DateTime timestamp = parseTimestamp(data['timestamp']);
+    final dynamic ts = data['timestamp'] ?? data['createdAt'];
+    if (ts == null) {
+      debugPrint(
+          '⚠️ Skipping ErrorLog "$id" due to missing timestamp or createdAt');
+      throw Exception('Missing timestamp in ErrorLog "$id"');
+    }
+
+    final DateTime timestamp = parseTimestamp(ts);
 
     return ErrorLog(
       id: id,

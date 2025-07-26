@@ -39,6 +39,7 @@ import 'package:flutter/foundation.dart';
 import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
 import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
 import 'package:franchise_admin_portal/core/models/ingredient_type_model.dart';
+import 'package:franchise_admin_portal/widgets/developer/error_logs_section.dart';
 import 'dart:convert';
 
 class FirestoreService {
@@ -751,26 +752,146 @@ class FirestoreService {
   }
 
   // Stream all global error logs (optionally filtered)
-  Stream<List<ErrorLog>> errorLogsStreamGlobal({
+  Stream<List<ErrorLog>> streamErrorLogsGlobal({
     String? franchiseId,
     String? userId,
     String? severity,
-    String? status,
     String? platform,
+    String? screen,
+    DateTime? start,
+    DateTime? end,
+    int limit = 100,
   }) {
     firestore.Query query = _db.collection('error_logs');
-    if (franchiseId != null)
+
+    if (franchiseId != null && franchiseId != 'all') {
+      debugPrint('🔎 Filtering by franchiseId = $franchiseId');
       query = query.where('franchiseId', isEqualTo: franchiseId);
-    if (userId != null) query = query.where('userId', isEqualTo: userId);
-    if (severity != null) query = query.where('severity', isEqualTo: severity);
-    if (status != null) query = query.where('status', isEqualTo: status);
-    if (platform != null) query = query.where('platform', isEqualTo: platform);
-    return query.orderBy('timestamp', descending: true).snapshots().map(
-          (snap) => snap.docs
-              .map((doc) =>
-                  ErrorLog.fromMap(doc.data() as Map<String, dynamic>, doc.id))
-              .toList(),
-        );
+    } else {
+      debugPrint('🪟 No franchise filter applied');
+    }
+
+    if (userId != null) {
+      query = query.where('userId', isEqualTo: userId);
+    }
+    if (severity != null) {
+      query = query.where('severity', isEqualTo: severity);
+    }
+    if (screen != null) {
+      query = query.where('screen', isEqualTo: screen);
+    }
+
+    if (start != null) {
+      query = query.where(
+        'createdAt',
+        isGreaterThanOrEqualTo: firestore.Timestamp.fromDate(start),
+      );
+    }
+    if (end != null) {
+      final adjustedEnd = end.add(const Duration(days: 1));
+      query = query.where(
+        'createdAt',
+        isLessThan: firestore.Timestamp.fromDate(adjustedEnd),
+      );
+    }
+
+    // Always sort by createdAt for consistent ordering
+    query = query.orderBy('createdAt', descending: true);
+    query = query.limit(limit);
+
+    return query.snapshots().map((snap) {
+      final validDocs = snap.docs.where((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        return data.containsKey('createdAt') && data['createdAt'] != null;
+      }).toList();
+
+      debugPrint(
+          '📦 Filtered ErrorLog snapshot: ${validDocs.length} logs returned');
+
+      return validDocs
+          .map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            try {
+              return ErrorLog.fromMap(data, doc.id);
+            } catch (e) {
+              debugPrint('❌ Failed to parse ErrorLog: ${doc.id} - $e');
+              return null;
+            }
+          })
+          .whereType<ErrorLog>()
+          .toList();
+    });
+  }
+
+  Future<List<ErrorLogSummary>> getErrorLogSummaries() async {
+    final snap = await _db
+        .collection('error_logs')
+        .limit(250)
+        .get(); // 🔥 remove ordering limit entirely for now
+
+    print('📦 Filtered ErrorLog snapshot: ${snap.docs.length} logs returned');
+
+    final logs = snap.docs
+        .map((doc) {
+          final data = doc.data() as Map<String, dynamic>?;
+
+          if (data == null) {
+            print('⛔️ Skipped log ${doc.id} – null data');
+            return null;
+          }
+          final tsRaw = data['timestamp'] ?? data['createdAt'];
+          if (tsRaw == null) {
+            print('⛔️ Skipped log ${doc.id} – missing timestamp/createdAt');
+            return null;
+          }
+          if (tsRaw is! firestore.Timestamp) {
+            print(
+                '⛔️ Skipped log ${doc.id} – invalid timestamp type: ${tsRaw.runtimeType}');
+            return null;
+          }
+
+          return ErrorLogSummary(
+            id: doc.id,
+            timestamp: tsRaw.toDate(),
+            message: data['message'] ?? '[No message]',
+            severity: data['severity'] ?? 'unknown',
+            screen: data['screen'] ?? 'unknown',
+            franchiseId: _extractFranchiseId(data['franchiseId']),
+          );
+        })
+        .whereType<ErrorLogSummary>()
+        .toList();
+
+    logs.sort((a, b) {
+      final cmp =
+          _severityScore(b.severity).compareTo(_severityScore(a.severity));
+      if (cmp != 0) return cmp;
+      return b.timestamp.compareTo(a.timestamp);
+    });
+
+    return logs.take(5).toList();
+  }
+
+  int _severityScore(String severity) {
+    switch (severity) {
+      case 'fatal':
+        return 4;
+      case 'error':
+        return 3;
+      case 'warning':
+        return 2;
+      case 'info':
+        return 1;
+      default:
+        return 0;
+    }
+  }
+
+  String? _extractFranchiseId(dynamic raw) {
+    // Handle cases where Firestore returns a DocumentReference
+    if (raw is String) return raw;
+    if (raw is firestore.DocumentReference) return raw.id;
+    return null;
   }
 
   Stream<List<ErrorLog>> streamErrorLogs(
@@ -830,71 +951,6 @@ class FirestoreService {
 
   Future<void> deleteErrorLogGlobal(String logId) async {
     await _db.collection('error_logs').doc(logId).delete();
-  }
-
-  // Add an error log (franchise-specific)
-  Future<void> addErrorLogFranchise(String franchiseId, ErrorLog log) async {
-    await _db
-        .collection('franchises')
-        .doc(franchiseId)
-        .collection('error_logs')
-        .add(log.toFirestore());
-  }
-
-  // Update a franchise error log
-  Future<void> updateErrorLogFranchise(
-      String franchiseId, String logId, Map<String, dynamic> updates) async {
-    await _db
-        .collection('franchises')
-        .doc(franchiseId)
-        .collection('error_logs')
-        .doc(logId)
-        .update(updates);
-  }
-
-  // Get a franchise error log by ID
-  Future<ErrorLog?> getErrorLogFranchise(
-      String franchiseId, String logId) async {
-    final doc = await _db
-        .collection('franchises')
-        .doc(franchiseId)
-        .collection('error_logs')
-        .doc(logId)
-        .get();
-    if (!doc.exists) return null;
-    return ErrorLog.fromMap(doc.data() as Map<String, dynamic>, doc.id);
-  }
-
-  // Stream all franchise error logs (optionally filtered)
-  Stream<List<ErrorLog>> errorLogsStreamFranchise(
-    String franchiseId, {
-    String? userId,
-    String? severity,
-    String? status,
-    String? platform,
-  }) {
-    firestore.Query query = _db
-        .collection('error_logs')
-        .where('franchiseId', isEqualTo: franchiseId);
-    if (userId != null) query = query.where('userId', isEqualTo: userId);
-    if (severity != null) query = query.where('severity', isEqualTo: severity);
-    if (status != null) query = query.where('status', isEqualTo: status);
-    if (platform != null) query = query.where('platform', isEqualTo: platform);
-    return query.orderBy('timestamp', descending: true).snapshots().map(
-          (snap) => snap.docs
-              .map((doc) =>
-                  ErrorLog.fromMap(doc.data() as Map<String, dynamic>, doc.id))
-              .toList(),
-        );
-  }
-
-  Future<void> deleteErrorLogFranchise(String franchiseId, String logId) async {
-    await _db
-        .collection('franchises')
-        .doc(franchiseId)
-        .collection('error_logs')
-        .doc(logId)
-        .delete();
   }
 
   /// Log schema error (template/menu-specific error)

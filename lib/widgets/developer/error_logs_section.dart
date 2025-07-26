@@ -41,56 +41,37 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
       _loading = true;
       _errorMsg = null;
     });
+
     try {
-      // TODO: Replace with real FirestoreService error log summary query (by franchiseId/severity)
-      await Future.delayed(const Duration(milliseconds: 400));
-      // Placeholder error log summaries; replace with real data
-      _logs = [
-        ErrorLogSummary(
-          id: '1',
-          timestamp: DateTime.now().subtract(const Duration(minutes: 12)),
-          message: 'Menu bulk upload failed: Missing required field',
-          severity: 'error',
-          screen: 'MenuBulkUpload',
-          franchiseId: widget.franchiseId == 'all'
-              ? 'doughboyspizzeria'
-              : widget.franchiseId,
-        ),
-        ErrorLogSummary(
-          id: '2',
-          timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-          message: 'Payment gateway timeout',
-          severity: 'warning',
-          screen: 'CheckoutScreen',
-          franchiseId:
-              widget.franchiseId == 'all' ? 'joes_pizza' : widget.franchiseId,
-        ),
-        ErrorLogSummary(
-          id: '3',
-          timestamp: DateTime.now().subtract(const Duration(days: 1, hours: 2)),
-          message: 'App crash: null is not a subtype',
-          severity: 'fatal',
-          screen: 'OrderScreen',
-          franchiseId: widget.franchiseId == 'all'
-              ? 'doughboyspizzeria'
-              : widget.franchiseId,
-        ),
-      ];
-      setState(() => _loading = false);
+      final allLogs = await FirestoreService().getErrorLogSummaries();
+
+      print('✅ Retrieved ${allLogs.length} logs from Firestore');
+      for (final log in allLogs) {
+        print(
+            '[DEBUG] Log => ${log.timestamp} | ${log.severity} | ${log.message}');
+      }
+
+      final filteredLogs = _filterSeverity == null
+          ? allLogs
+          : allLogs.where((log) => log.severity == _filterSeverity).toList();
+      print('👀 Setting logs: ${filteredLogs.length} logs');
+      setState(() {
+        _logs = filteredLogs;
+        _loading = false;
+      });
     } catch (e, stack) {
       setState(() {
         _errorMsg = e.toString();
         _loading = false;
       });
+
       await ErrorLogger.log(
         message: 'Failed to load error logs: $e',
         stack: stack.toString(),
         source: 'ErrorLogsSection',
         screen: 'DeveloperDashboardScreen',
         severity: 'warning',
-        contextData: {
-          'franchiseId': widget.franchiseId,
-        },
+        contextData: {'franchiseId': widget.franchiseId},
       );
     }
   }
@@ -99,10 +80,12 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
     setState(() {
       _filterSeverity = newValue;
     });
+    _fetchLogs(); // Refetch based on new severity filter
   }
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('Loaded error_logs_section');
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       print(
@@ -130,96 +113,101 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
     }
 
     final isAllFranchises = widget.franchiseId == 'all';
+    final titleFranchiseLabel = isAllFranchises
+        ? (loc.allFranchisesLabel ?? "All Franchises")
+        : (widget.franchiseId ?? "Unknown Franchise");
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            isAllFranchises
-                ? '${loc.errorLogsSectionTitle} — ${loc.allFranchisesLabel ?? "All Franchises"}'
-                : '${loc.errorLogsSectionTitle} — ${widget.franchiseId}',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            loc.errorLogsSectionDesc,
-            style: theme.textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 18),
-          _buildFilterRow(loc, colorScheme, theme),
-          const SizedBox(height: 18),
-          if (_loading)
-            Center(child: CircularProgressIndicator(color: colorScheme.primary))
-          else if (_errorMsg != null)
-            Card(
-              color: colorScheme.errorContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    Icon(Icons.error, color: colorScheme.error),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        '${loc.errorLogsSectionError}\n$_errorMsg',
-                        style: theme.textTheme.bodyMedium
-                            ?.copyWith(color: colorScheme.error),
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.refresh, color: colorScheme.primary),
-                      tooltip: loc.reload,
-                      onPressed: _fetchLogs,
-                    ),
-                  ],
-                ),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${loc.errorLogsSectionTitle} — $titleFranchiseLabel',
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: colorScheme.primary,
+                fontWeight: FontWeight.bold,
               ),
-            )
-          else ...[
-            if (_logs.isEmpty) Center(child: Text(loc.errorLogsSectionEmpty)),
-            if (_logs.isNotEmpty)
+            ),
+            const SizedBox(height: 14),
+            Text(
+              loc.errorLogsSectionDesc,
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 18),
+            _buildFilterRow(loc, colorScheme, theme),
+            const SizedBox(height: 18),
+            if (_loading)
+              Center(
+                  child: CircularProgressIndicator(color: colorScheme.primary))
+            else if (_errorMsg != null)
+              Card(
+                color: colorScheme.errorContainer,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error, color: colorScheme.error),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          '${loc.errorLogsSectionError}\n$_errorMsg',
+                          style: theme.textTheme.bodyMedium
+                              ?.copyWith(color: colorScheme.error),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.refresh, color: colorScheme.primary),
+                        tooltip: loc.reload,
+                        onPressed: _fetchLogs,
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else ...[
+              if (_logs.isEmpty) Center(child: Text(loc.errorLogsSectionEmpty)),
               _ErrorLogList(
                 logs: _logs,
                 filterSeverity: _filterSeverity,
                 colorScheme: colorScheme,
                 loc: loc,
               ),
-            const SizedBox(height: 16),
-            Align(
-              alignment: Alignment.centerRight,
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.open_in_new),
-                label: Text(loc.errorLogsSectionViewAll),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (_) => const DeveloperErrorLogsScreen()),
-                  );
-                },
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.open_in_new),
+                  label: Text(loc.errorLogsSectionViewAll),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const DeveloperErrorLogsScreen(),
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-            const SizedBox(height: 32),
-            _ComingSoonCard(
-              icon: Icons.query_stats,
-              title: loc.errorLogsSectionAnalyticsComingSoon,
-              subtitle: loc.errorLogsSectionAnalyticsDesc,
-              colorScheme: colorScheme,
-              theme: theme,
-            ),
-            _ComingSoonCard(
-              icon: Icons.lightbulb_outline,
-              title: loc.errorLogsSectionAIInsightsComingSoon,
-              subtitle: loc.errorLogsSectionAIInsightsDesc,
-              colorScheme: colorScheme,
-              theme: theme,
-            ),
+              const SizedBox(height: 32),
+              _ComingSoonCard(
+                icon: Icons.query_stats,
+                title: loc.errorLogsSectionAnalyticsComingSoon,
+                subtitle: loc.errorLogsSectionAnalyticsDesc,
+                colorScheme: colorScheme,
+                theme: theme,
+              ),
+              _ComingSoonCard(
+                icon: Icons.lightbulb_outline,
+                title: loc.errorLogsSectionAIInsightsComingSoon,
+                subtitle: loc.errorLogsSectionAIInsightsDesc,
+                colorScheme: colorScheme,
+                theme: theme,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -258,6 +246,32 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
   }
 }
 
+IconData _iconForSeverity(String severity) {
+  switch (severity) {
+    case 'error':
+      return Icons.error;
+    case 'warning':
+      return Icons.warning;
+    case 'fatal':
+      return Icons.dangerous;
+    default:
+      return Icons.bug_report;
+  }
+}
+
+Color _colorForSeverity(String severity) {
+  switch (severity) {
+    case 'error':
+      return Colors.red;
+    case 'warning':
+      return Colors.orange;
+    case 'fatal':
+      return Colors.deepPurple;
+    default:
+      return Colors.grey;
+  }
+}
+
 class _ErrorLogList extends StatelessWidget {
   final List<ErrorLogSummary> logs;
   final String? filterSeverity;
@@ -289,21 +303,13 @@ class _ErrorLogList extends StatelessWidget {
           final log = filtered[idx];
           return ListTile(
             leading: Icon(
-              log.severity == 'error'
-                  ? Icons.error
-                  : log.severity == 'warning'
-                      ? Icons.warning
-                      : Icons.dangerous,
-              color: log.severity == 'error'
-                  ? Colors.red
-                  : log.severity == 'warning'
-                      ? Colors.orange
-                      : Colors.deepPurple,
+              _iconForSeverity(log.severity),
+              color: _colorForSeverity(log.severity),
             ),
             title: Text(log.message),
             subtitle: Text(
               '${loc.errorLogsSectionAt} ${log.screen} — ${_formatDateTime(log.timestamp)}'
-              '${log.franchiseId != null ? " [${log.franchiseId}]" : ""}',
+              '${log.franchiseId != null ? " — Franchise: ${log.franchiseId}" : ""}',
             ),
             trailing: const Icon(Icons.chevron_right),
             shape: RoundedRectangleBorder(

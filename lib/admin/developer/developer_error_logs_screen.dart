@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:franchise_admin_portal/core/models/error_log.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class DeveloperErrorLogsScreen extends StatefulWidget {
   const DeveloperErrorLogsScreen({Key? key}) : super(key: key);
@@ -16,100 +16,10 @@ class DeveloperErrorLogsScreen extends StatefulWidget {
 }
 
 class _DeveloperErrorLogsScreenState extends State<DeveloperErrorLogsScreen> {
-  bool _loading = true;
-  String? _errorMsg;
-  List<DevErrorLog> _logs = [];
   String? _franchiseId;
   String? _severity;
-  String? _user;
+  String? _userEmail;
   DateTimeRange? _dateRange;
-
-  @override
-  void initState() {
-    super.initState();
-    final provider = Provider.of<FranchiseProvider>(context, listen: false);
-    _franchiseId = provider.franchiseId;
-    _fetchLogs();
-  }
-
-  Future<void> _fetchLogs() async {
-    setState(() {
-      _loading = true;
-      _errorMsg = null;
-    });
-    try {
-      // TODO: Replace with real FirestoreService error log query, using filter fields below.
-      await Future.delayed(const Duration(milliseconds: 600));
-      _logs = [
-        DevErrorLog(
-          id: '1',
-          timestamp: DateTime.now().subtract(const Duration(minutes: 16)),
-          message: 'Null pointer in menu renderer',
-          severity: 'error',
-          screen: 'MenuScreen',
-          franchiseId: _franchiseId ?? 'doughboyspizzeria',
-          userEmail: 'jane@doughboys.com',
-          stackTrace: 'StackTrace: ...menu_renderer.dart:89\n...',
-          deviceInfo: 'Chrome 124, Windows 11',
-        ),
-        DevErrorLog(
-          id: '2',
-          timestamp:
-              DateTime.now().subtract(const Duration(hours: 1, minutes: 20)),
-          message: 'Firestore permission-denied error',
-          severity: 'fatal',
-          screen: 'CheckoutScreen',
-          franchiseId: 'all',
-          userEmail: 'owner@doughboys.com',
-          stackTrace: 'StackTrace: ...firestore_service.dart:102\n...',
-          deviceInfo: 'Safari 17, macOS',
-        ),
-        DevErrorLog(
-          id: '3',
-          timestamp: DateTime.now().subtract(const Duration(days: 2)),
-          message: 'Image asset not found: /assets/logo.png',
-          severity: 'warning',
-          screen: 'AppBarWidget',
-          franchiseId: 'doughboyspizzeria',
-          userEmail: 'dev@doughboys.com',
-          stackTrace: 'StackTrace: ...asset_loader.dart:24\n...',
-          deviceInfo: 'iPhone 14, iOS 17',
-        ),
-      ];
-      setState(() => _loading = false);
-    } catch (e, stack) {
-      setState(() {
-        _errorMsg = e.toString();
-        _loading = false;
-      });
-      await ErrorLogger.log(
-        message: 'Failed to fetch developer error logs: $e',
-        stack: stack.toString(),
-        source: 'DeveloperErrorLogsScreen',
-        screen: 'DeveloperErrorLogsScreen',
-        severity: 'warning',
-        contextData: {
-          'franchiseId': _franchiseId ?? 'unknown',
-        },
-      );
-    }
-  }
-
-  List<DevErrorLog> get _filteredLogs {
-    return _logs.where((log) {
-      final franchiseOk = _franchiseId == null ||
-          _franchiseId == 'all' ||
-          log.franchiseId == _franchiseId;
-      final severityOk = _severity == null || log.severity == _severity;
-      final userOk = _user == null || log.userEmail == _user;
-      final dateOk = _dateRange == null ||
-          (log.timestamp.isAfter(
-                  _dateRange!.start.subtract(const Duration(seconds: 1))) &&
-              log.timestamp
-                  .isBefore(_dateRange!.end.add(const Duration(days: 1))));
-      return franchiseOk && severityOk && userOk && dateOk;
-    }).toList();
-  }
 
   void _pickDateRange() async {
     final initial = _dateRange ??
@@ -119,33 +29,39 @@ class _DeveloperErrorLogsScreenState extends State<DeveloperErrorLogsScreen> {
         );
     final picked = await showDateRangePicker(
       context: context,
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now().add(const Duration(days: 1)),
       initialDateRange: initial,
+      firstDate: DateTime(2024),
+      lastDate: DateTime(2026),
+      builder: (context, child) {
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 400, // You can adjust this value as needed
+              maxHeight: 600, // This limits vertical expansion
+            ),
+            child: Material(
+              type: MaterialType.card,
+              elevation: 4,
+              borderRadius: BorderRadius.circular(12),
+              child: child!,
+            ),
+          ),
+        );
+      },
     );
     if (picked != null) setState(() => _dateRange = picked);
   }
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context);
-    if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
-      );
-    }
+    final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final adminUser = Provider.of<AdminUserProvider>(context).user;
-    final isDeveloper = adminUser?.roles.contains('developer') ?? false;
 
-    if (!isDeveloper) {
+    if (!(adminUser?.isDeveloper ?? false)) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(loc.developerErrorLogsScreenTitle),
-        ),
+        appBar: AppBar(title: Text(loc.developerErrorLogsScreenTitle)),
         body: Center(
           child: Text(
             loc.unauthorizedAccess,
@@ -158,83 +74,108 @@ class _DeveloperErrorLogsScreenState extends State<DeveloperErrorLogsScreen> {
       );
     }
 
-    // Gather distinct values for filters
-    final allFranchises = {'all', ..._logs.map((e) => e.franchiseId)}.toList();
-    final severities = _logs.map((e) => e.severity).toSet().toList();
-    final users = _logs.map((e) => e.userEmail).toSet().toList();
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(loc.developerErrorLogsScreenTitle),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: loc.reload,
-            onPressed: _fetchLogs,
-          ),
-        ],
-      ),
+      appBar: AppBar(title: Text(loc.developerErrorLogsScreenTitle)),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildFilterRow(
-                loc, allFranchises, severities, users, theme, colorScheme),
-            const SizedBox(height: 10),
-            if (_loading)
-              Center(
-                  child: CircularProgressIndicator(color: colorScheme.primary))
-            else if (_errorMsg != null)
-              Card(
-                color: colorScheme.errorContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      Icon(Icons.error, color: colorScheme.error),
-                      const SizedBox(width: 12),
+        child: Consumer<FranchiseProvider>(
+          builder: (context, franchiseProvider, _) {
+            final options = franchiseProvider.viewableFranchises;
+            final selectedFranchiseId =
+                (_franchiseId == null || _franchiseId == 'all')
+                    ? null
+                    : _franchiseId;
+
+            return StreamBuilder<List<ErrorLog>>(
+              stream: FirestoreService().streamErrorLogsGlobal(
+                franchiseId: selectedFranchiseId,
+                severity: _severity,
+                userId: null,
+                start: _dateRange?.start,
+                end: _dateRange?.end,
+                limit: 250,
+              ),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  debugPrint(
+                      '❌ Firestore error in streamErrorLogsGlobal: ${snapshot.error}');
+                  return Center(child: Text('Failed to load logs.'));
+                }
+                if (!snapshot.hasData) {
+                  return Center(child: CircularProgressIndicator());
+                }
+
+                final logs = snapshot.data ?? [];
+
+                final filtered = logs.where((log) {
+                  final userEmail = log.contextData?['userEmail'] ??
+                      log.contextData?['email'];
+                  return _userEmail == null || _userEmail == userEmail;
+                }).toList();
+
+                final allFranchiseIds = {
+                  for (final e in logs)
+                    if ((e.contextData?['franchiseId'] ?? '')
+                        .toString()
+                        .isNotEmpty)
+                      e.contextData!['franchiseId']
+                }.cast<String>();
+
+                final allFranchises = ['all', ...allFranchiseIds.toSet()]
+                  ..sort();
+                final severities = logs.map((e) => e.severity).toSet().toList()
+                  ..sort();
+                final userEmails = logs
+                    .map((e) => e.contextData?['userEmail'])
+                    .whereType<String>()
+                    .toSet()
+                    .toList()
+                  ..sort();
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildFilterRow(loc, options, severities, userEmails, theme,
+                        colorScheme),
+                    const SizedBox(height: 10),
+                    if (snapshot.connectionState == ConnectionState.waiting)
+                      Center(
+                          child: CircularProgressIndicator(
+                              color: colorScheme.primary))
+                    else if (filtered.isEmpty)
+                      Center(child: Text(loc.developerErrorLogsScreenEmpty))
+                    else
                       Expanded(
-                        child: Text(
-                          '${loc.developerErrorLogsScreenError}\n$_errorMsg',
-                          style: theme.textTheme.bodyMedium
-                              ?.copyWith(color: colorScheme.error),
+                        child: _DevErrorLogList(
+                          logs: filtered,
+                          colorScheme: colorScheme,
+                          loc: loc,
+                          theme: theme,
+                          franchises: {
+                            for (var f in options) f.id: f.name ?? f.id
+                          },
                         ),
                       ),
-                      IconButton(
-                        icon: Icon(Icons.refresh, color: colorScheme.primary),
-                        tooltip: loc.reload,
-                        onPressed: _fetchLogs,
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else if (_filteredLogs.isEmpty)
-              Center(child: Text(loc.developerErrorLogsScreenEmpty))
-            else
-              Expanded(
-                  child: _DevErrorLogList(
-                      logs: _filteredLogs,
+                    const SizedBox(height: 18),
+                    _ComingSoonCard(
+                      icon: Icons.analytics_outlined,
+                      title: loc.developerErrorLogsScreenTrendsComingSoon,
+                      subtitle: loc.developerErrorLogsScreenTrendsDesc,
                       colorScheme: colorScheme,
-                      loc: loc,
-                      theme: theme)),
-            const SizedBox(height: 18),
-            _ComingSoonCard(
-              icon: Icons.analytics_outlined,
-              title: loc.developerErrorLogsScreenTrendsComingSoon,
-              subtitle: loc.developerErrorLogsScreenTrendsDesc,
-              colorScheme: colorScheme,
-              theme: theme,
-            ),
-            _ComingSoonCard(
-              icon: Icons.lightbulb_outline,
-              title: loc.developerErrorLogsScreenAIInsightsComingSoon,
-              subtitle: loc.developerErrorLogsScreenAIInsightsDesc,
-              colorScheme: colorScheme,
-              theme: theme,
-            ),
-          ],
+                      theme: theme,
+                    ),
+                    _ComingSoonCard(
+                      icon: Icons.lightbulb_outline,
+                      title: loc.developerErrorLogsScreenAIInsightsComingSoon,
+                      subtitle: loc.developerErrorLogsScreenAIInsightsDesc,
+                      colorScheme: colorScheme,
+                      theme: theme,
+                    ),
+                  ],
+                );
+              },
+            );
+          },
         ),
       ),
     );
@@ -242,18 +183,12 @@ class _DeveloperErrorLogsScreenState extends State<DeveloperErrorLogsScreen> {
 
   Widget _buildFilterRow(
     AppLocalizations loc,
-    List<String> franchises,
+    List franchises,
     List<String> severities,
     List<String> users,
     ThemeData theme,
     ColorScheme colorScheme,
   ) {
-    // Defensive: Ensure _franchiseId is in franchises list to prevent DropdownButton assertion
-    String? safeFranchiseId = _franchiseId;
-    if (safeFranchiseId != null && !franchises.contains(safeFranchiseId)) {
-      safeFranchiseId = null;
-    }
-
     return Card(
       margin: EdgeInsets.zero,
       color: colorScheme.surfaceVariant,
@@ -264,66 +199,42 @@ class _DeveloperErrorLogsScreenState extends State<DeveloperErrorLogsScreen> {
           runSpacing: 10,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            // Franchise filter
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('${loc.developerErrorLogsScreenFranchise}: ',
                     style: theme.textTheme.titleMedium),
                 DropdownButton<String>(
-                  value: safeFranchiseId,
+                  value: _franchiseId ?? 'all',
                   hint: Text(loc.allFranchisesLabel),
-                  items: franchises.map((id) {
-                    return DropdownMenuItem(
-                      value: id,
-                      child: Text(id == 'all' ? loc.allFranchisesLabel : id),
-                    );
-                  }).toList(),
-                  onChanged: (id) => setState(() => _franchiseId = id),
-                ),
-              ],
-            ),
-            // Severity filter
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('${loc.developerErrorLogsScreenSeverity}: ',
-                    style: theme.textTheme.titleMedium),
-                DropdownButton<String>(
-                  value: _severity,
-                  hint: Text(loc.developerErrorLogsScreenFilterAny),
                   items: [
                     DropdownMenuItem(
-                        value: null,
-                        child: Text(loc.developerErrorLogsScreenFilterAny)),
-                    ...severities
-                        .map((s) => DropdownMenuItem(value: s, child: Text(s))),
+                        value: 'all', child: Text(loc.allFranchisesLabel)),
+                    ...franchises.map((f) => DropdownMenuItem(
+                          value: f.id,
+                          child: Text(f.name ?? f.id),
+                        )),
                   ],
-                  onChanged: (s) => setState(() => _severity = s),
+                  onChanged: (val) => setState(() => _franchiseId = val),
                 ),
               ],
             ),
-            // User filter
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('${loc.developerErrorLogsScreenUser}: ',
-                    style: theme.textTheme.titleMedium),
-                DropdownButton<String>(
-                  value: _user,
-                  hint: Text(loc.developerErrorLogsScreenFilterAny),
-                  items: [
-                    DropdownMenuItem(
-                        value: null,
-                        child: Text(loc.developerErrorLogsScreenFilterAny)),
-                    ...users
-                        .map((u) => DropdownMenuItem(value: u, child: Text(u))),
-                  ],
-                  onChanged: (u) => setState(() => _user = u),
-                ),
-              ],
+            _buildDropdown(
+              label: loc.developerErrorLogsScreenSeverity,
+              value: _severity,
+              options: severities,
+              onChanged: (val) => setState(() => _severity = val),
+              hint: loc.developerErrorLogsScreenFilterAny,
+              theme: theme,
             ),
-            // Date range
+            _buildDropdown(
+              label: loc.developerErrorLogsScreenUser,
+              value: _userEmail,
+              options: users,
+              onChanged: (val) => setState(() => _userEmail = val),
+              hint: loc.developerErrorLogsScreenFilterAny,
+              theme: theme,
+            ),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -343,19 +254,48 @@ class _DeveloperErrorLogsScreenState extends State<DeveloperErrorLogsScreen> {
       ),
     );
   }
+
+  Widget _buildDropdown({
+    required String label,
+    required String? value,
+    required List<String> options,
+    required void Function(String?) onChanged,
+    required String hint,
+    required ThemeData theme,
+  }) {
+    final safeValue = value != null && options.contains(value) ? value : null;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('$label: ', style: theme.textTheme.titleMedium),
+        DropdownButton<String>(
+          value: safeValue,
+          hint: Text(hint),
+          items: [
+            DropdownMenuItem(value: null, child: Text(hint)),
+            ...options.map((e) => DropdownMenuItem(value: e, child: Text(e))),
+          ],
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
 }
 
 class _DevErrorLogList extends StatelessWidget {
-  final List<DevErrorLog> logs;
+  final List<ErrorLog> logs;
   final ColorScheme colorScheme;
   final AppLocalizations loc;
   final ThemeData theme;
+  final Map<String, String> franchises;
 
   const _DevErrorLogList({
     required this.logs,
     required this.colorScheme,
     required this.loc,
     required this.theme,
+    required this.franchises,
   });
 
   @override
@@ -365,6 +305,14 @@ class _DevErrorLogList extends StatelessWidget {
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (context, idx) {
         final log = logs[idx];
+        final email = log.contextData?['userEmail'] ?? '—';
+        final device = log.deviceInfo?['deviceModel'] ??
+            log.contextData?['device'] ??
+            'unknown';
+        final franchiseId = log.contextData?['franchiseId'];
+        final franchiseLabel = franchises[franchiseId] ?? franchiseId ?? '—';
+        final ts = log.timestamp;
+
         return ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 10),
           leading: Icon(
@@ -381,37 +329,37 @@ class _DevErrorLogList extends StatelessWidget {
           ),
           title: Text(log.message),
           subtitle: Text(
-            '${loc.developerErrorLogsScreenAt}: ${log.screen}\n${_formatDateTime(log.timestamp)}',
+            '${loc.developerErrorLogsScreenAt}: ${log.screen}\n${ts != null ? _formatDateTime(ts) : '—'}',
             style: const TextStyle(fontSize: 13),
           ),
           trailing: Icon(Icons.expand_more, color: colorScheme.outline),
           children: [
             ListTile(
               dense: true,
-              leading: Icon(Icons.account_circle, color: colorScheme.outline),
-              title:
-                  Text('${loc.developerErrorLogsScreenUser}: ${log.userEmail}'),
-              subtitle: Text(
-                  '${loc.developerErrorLogsScreenDevice}: ${log.deviceInfo}'),
+              leading: Icon(Icons.store, color: colorScheme.outline),
+              title: Text(
+                  '${loc.developerErrorLogsScreenFranchise}: $franchiseLabel'),
+              subtitle: Text('${loc.developerErrorLogsScreenUser}: $email'),
             ),
             ListTile(
               dense: true,
-              leading: Icon(Icons.bug_report, color: colorScheme.outline),
-              title: Text(loc.developerErrorLogsScreenStackTrace),
-              subtitle: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Text(
-                  log.stackTrace,
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+              leading: Icon(Icons.devices, color: colorScheme.outline),
+              title: Text('${loc.developerErrorLogsScreenDevice}: $device'),
+            ),
+            if (log.stackTrace != null && log.stackTrace!.isNotEmpty)
+              ListTile(
+                dense: true,
+                leading: Icon(Icons.bug_report, color: colorScheme.outline),
+                title: Text(loc.developerErrorLogsScreenStackTrace),
+                subtitle: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Text(
+                    log.stackTrace!,
+                    style:
+                        const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                  ),
                 ),
               ),
-            ),
-            ListTile(
-              dense: true,
-              leading: Icon(Icons.account_tree, color: colorScheme.outline),
-              title: Text(
-                  '${loc.developerErrorLogsScreenFranchise}: ${log.franchiseId}'),
-            ),
           ],
         );
       },
@@ -477,28 +425,4 @@ class _ComingSoonCard extends StatelessWidget {
       ),
     );
   }
-}
-
-class DevErrorLog {
-  final String id;
-  final DateTime timestamp;
-  final String message;
-  final String severity;
-  final String screen;
-  final String franchiseId;
-  final String userEmail;
-  final String stackTrace;
-  final String deviceInfo;
-
-  DevErrorLog({
-    required this.id,
-    required this.timestamp,
-    required this.message,
-    required this.severity,
-    required this.screen,
-    required this.franchiseId,
-    required this.userEmail,
-    required this.stackTrace,
-    required this.deviceInfo,
-  });
 }
