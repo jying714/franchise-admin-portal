@@ -7,10 +7,13 @@ import 'package:franchise_admin_portal/core/providers/menu_item_provider.dart';
 import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_form_dialog.dart';
+import 'package:franchise_admin_portal/core/utils/features/feature_guard.dart';
+import 'package:franchise_admin_portal/core/utils/features/feature_gate_banner.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_editor_sheet.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_items_list_tile.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_json_import_export_dialog.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_template_picker_dialog.dart';
+import 'package:franchise_admin_portal/core/models/menu_item.dart';
 
 class OnboardingMenuItemsScreen extends StatefulWidget {
   const OnboardingMenuItemsScreen({super.key});
@@ -23,6 +26,7 @@ class OnboardingMenuItemsScreen extends StatefulWidget {
 class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
   bool _hasInitialized = false;
   final Set<String> _selectedIds = {};
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -63,6 +67,24 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     }
   }
 
+  void _openEditor({MenuItem? item}) {
+    showModalBottomSheet(
+      isScrollControlled: true,
+      context: context,
+      builder: (_) => MenuItemEditorSheet(
+        existing: item,
+        onSave: (updatedItem) async {
+          final provider = context.read<MenuItemProvider>();
+          provider.addOrUpdateMenuItem(updatedItem);
+          Navigator.of(context).pop();
+        },
+        onCancel: () {
+          Navigator.of(context).pop();
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -101,7 +123,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => MenuItemFormDialog.show(context),
+        onPressed: () => _openEditor(),
         icon: const Icon(Icons.add),
         label: Text(loc.addMenuItem),
         backgroundColor: DesignTokens.primaryColor,
@@ -109,22 +131,35 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
       body: Padding(
         padding: DesignTokens.gridPadding,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (provider.isDirty)
-              Row(
-                children: [
-                  ElevatedButton(
-                    onPressed: provider.persistChanges,
-                    child: Text(loc.saveChanges),
-                  ),
-                  const SizedBox(width: 12),
-                  OutlinedButton(
-                    onPressed: provider.revertChanges,
-                    child: Text(loc.revertChanges),
-                  ),
-                ],
+            FeatureGateBanner(
+              module: 'menu_item_customization',
+              child: Container(
+                width: double.infinity,
+                height: 60,
+                color: Colors.yellow.shade50,
+                alignment: Alignment.center,
+                child: Text('Menu Item Customization is a premium feature.'),
               ),
-            const SizedBox(height: 12),
+            ),
+            if (provider.isDirty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  children: [
+                    ElevatedButton(
+                      onPressed: provider.persistChanges,
+                      child: Text(loc.saveChanges),
+                    ),
+                    const SizedBox(width: 12),
+                    OutlinedButton(
+                      onPressed: provider.revertChanges,
+                      child: Text(loc.revertChanges),
+                    ),
+                  ],
+                ),
+              ),
             Expanded(
               child: provider.menuItems.isEmpty
                   ? EmptyStateWidget(
@@ -154,12 +189,8 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                 }
                               });
                             },
-                            onEdit: () => MenuItemFormDialog.show(
-                              context,
-                              initialItem: item,
-                            ),
+                            onEdit: () => _openEditor(item: item),
                             onDelete: () async {
-                              final loc = AppLocalizations.of(context)!;
                               final confirm = await showDialog<bool>(
                                 context: context,
                                 builder: (ctx) => AlertDialog(
@@ -174,20 +205,21 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                     ),
                                     ElevatedButton(
                                       style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.red),
+                                        backgroundColor: Colors.red,
+                                      ),
                                       onPressed: () => Navigator.pop(ctx, true),
                                       child: Text(loc.delete),
                                     ),
                                   ],
                                 ),
                               );
-
                               if (confirm == true) {
                                 await provider.deleteFromFirestore(item.id);
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                        content: Text(loc.menuItemDeleted)),
+                                      content: Text(loc.menuItemDeleted),
+                                    ),
                                   );
                                 }
                               }

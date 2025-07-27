@@ -196,6 +196,12 @@ class MenuItem {
 
   // --- Firestore/JSON/Map Serialization ---
 
+  /// Convenience: returns true if this item is marked unavailable
+  bool get outOfStock => !availability;
+
+  /// Convenience: returns a non-null image string
+  String get imageUrl => image ?? '';
+
   factory MenuItem.fromFirestore(Map<String, dynamic> data, String id) {
     //print('[DEBUG] Raw Firestore doc: $data');
     //print('[DEBUG] doc id: $id');

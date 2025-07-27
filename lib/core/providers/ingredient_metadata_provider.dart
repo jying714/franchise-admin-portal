@@ -34,6 +34,12 @@ class IngredientMetadataProvider extends ChangeNotifier {
   bool get isDirty => !listEquals(_original, _current);
   List<IngredientMetadata> get ingredients => _current;
 
+  // ✅ Used by widgets like MultiIngredientSelector to check loading state
+  bool get isInitialized => _hasLoaded;
+
+  // ✅ Exposes all current ingredients as read-only
+  List<IngredientMetadata> get allIngredients => List.unmodifiable(_current);
+
   String get sortKey => _sortKey;
   bool get ascending => _ascending;
   String? get groupByKey => _groupByKey;

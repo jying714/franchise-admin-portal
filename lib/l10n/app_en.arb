@@ -1852,7 +1852,17 @@
   "devtoolsValidationMissingFields": "Key and Name are required.",
   "uploadViaJson": "Upload via JSON",
   "devtoolsDeletePlatformFeaturesTitle": "Delete Platform Feature",
-  "devtoolsSelectFeature": "Select a feature to delete"
+  "devtoolsSelectFeature": "Select a feature to delete",
+  "noIngredientsConfigured": "No ingredients have been configured yet. Please add or import ingredients to continue.",
+  "customizationGroupLabel": "Group Label",
+  "selectionLimit": "Selection Limit",
+  "removeGroup": "Remove Group",
+  "addCustomizationGroup": "Add Customization Group",
+  "editNutrition": "Edit Nutrition Info",
+  "calories": "Calories",
+  "fat": "Fat",
+  "carbohydrates": "Carbohydrates",
+  "protein": "Protein"
 
 
 

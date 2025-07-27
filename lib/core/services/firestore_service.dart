@@ -41,6 +41,7 @@ import 'package:franchise_admin_portal/core/models/franchise_subscription_model.
 import 'package:franchise_admin_portal/core/models/ingredient_type_model.dart';
 import 'package:franchise_admin_portal/widgets/developer/error_logs_section.dart';
 import 'dart:convert';
+import 'package:franchise_admin_portal/core/models/menu_template_ref.dart';
 
 class FirestoreService {
   static final firestore.FirebaseFirestore _db =
@@ -4442,6 +4443,16 @@ class FirestoreService {
       );
       rethrow;
     }
+  }
+
+  // Add to FirestoreService
+  Future<List<MenuTemplateRef>> fetchMenuTemplateRefs() async {
+    final snapshot = await firestore.FirebaseFirestore.instance
+        .collection('menu_templates')
+        .get();
+    return snapshot.docs
+        .map((doc) => MenuTemplateRef.fromFirestore(doc.data()))
+        .toList();
   }
 
   static Future<List<Map<String, dynamic>>> decodeJsonList(String input) async {

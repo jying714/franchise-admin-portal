@@ -156,4 +156,9 @@ class FranchiseFeatureProvider with ChangeNotifier {
       metadata: _featureMetadata,
     );
   }
+
+  /// Returns all subfeatures (with enabled state) for a given module.
+  Map<String, bool> getSubfeatures(String moduleKey) {
+    return _featureMetadata.modules[moduleKey]?.features ?? {};
+  }
 }

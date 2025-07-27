@@ -2,14 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/core/models/menu_item.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:franchise_admin_portal/core/models/menu_template_ref.dart';
 
 class MenuItemProvider extends ChangeNotifier {
   final FirestoreService _firestoreService;
+  List<MenuTemplateRef> _templateRefs = [];
+  bool _templateRefsLoading = false;
+  String? _templateRefsError;
   List<MenuItem> _original = [];
   List<MenuItem> _working = [];
 
   bool _isLoading = false;
   String? _franchiseId;
+
+  List<MenuTemplateRef> get templateRefs => _templateRefs;
+  bool get templateRefsLoading => _templateRefsLoading;
+  String? get templateRefsError => _templateRefsError;
 
   MenuItemProvider({required FirestoreService firestoreService})
       : _firestoreService = firestoreService;
@@ -124,6 +132,27 @@ class MenuItemProvider extends ChangeNotifier {
         stack: stack.toString(),
         contextData: {'franchiseId': _franchiseId},
       );
+    }
+  }
+
+  Future<void> loadTemplateRefs() async {
+    _templateRefsLoading = true;
+    _templateRefsError = null;
+    notifyListeners();
+    try {
+      _templateRefs = await _firestoreService.fetchMenuTemplateRefs();
+    } catch (e, stack) {
+      _templateRefsError = e.toString();
+      await ErrorLogger.log(
+        message: 'Failed to load menu template refs',
+        source: 'MenuItemProvider',
+        screen: 'menu_item_provider',
+        severity: 'error',
+        stack: stack.toString(),
+      );
+    } finally {
+      _templateRefsLoading = false;
+      notifyListeners();
     }
   }
 }
