@@ -25,7 +25,7 @@ class DrinksFlavorSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = menuItem.sizes?.first ?? '';
+    final size = menuItem.sizes?.first.label ?? '';
     final price = menuItem.sizePrices != null &&
             menuItem.sizes != null &&
             menuItem.sizes!.isNotEmpty

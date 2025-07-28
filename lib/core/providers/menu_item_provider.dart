@@ -3,12 +3,42 @@ import 'package:franchise_admin_portal/core/models/menu_item.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/core/models/menu_template_ref.dart';
+import 'package:franchise_admin_portal/core/models/size_template.dart';
 
 class MenuItemProvider extends ChangeNotifier {
   final FirestoreService _firestoreService;
   List<MenuTemplateRef> _templateRefs = [];
   bool _templateRefsLoading = false;
   String? _templateRefsError;
+
+  // 🔢 Size Templates (Dropdown + Preview)
+  List<SizeTemplate> _sizeTemplates = [];
+  String? _selectedSizeTemplateId;
+
+  List<SizeTemplate> get sizeTemplates => _sizeTemplates;
+  String? get selectedSizeTemplateId => _selectedSizeTemplateId;
+
+  void setSelectedSizeTemplateId(String? id) {
+    _selectedSizeTemplateId = id;
+    notifyListeners();
+  }
+
+  Future<void> loadSizeTemplates(String restaurantType) async {
+    try {
+      _sizeTemplates =
+          await _firestoreService.getSizeTemplatesForTemplate(restaurantType);
+      notifyListeners();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to load size templates',
+        source: 'MenuItemProvider',
+        screen: 'menu_item_provider',
+        severity: 'error',
+        stack: stack.toString(),
+      );
+    }
+  }
+
   List<MenuItem> _original = [];
   List<MenuItem> _working = [];
 

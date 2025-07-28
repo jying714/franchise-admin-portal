@@ -109,7 +109,7 @@ class _IngredientTypeTemplatePickerDialogState
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildTemplateTile(
-                  id: 'pizza_shop',
+                  id: 'pizzeria',
                   icon: '🍕',
                   label: loc.pizzaShopTemplateLabel,
                   subtitle: loc.pizzaShopTemplateSubtitle,

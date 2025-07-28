@@ -15,6 +15,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/core/providers/restaurant_type_provider.dart';
+import 'package:franchise_admin_portal/core/models/restaurant_type.dart';
 
 String roleToDashboardRoute(List<String> roles) {
   if (roles.contains('platform_owner')) return '/platform-owner/dashboard';
@@ -63,7 +65,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
     super.didChangeDependencies();
     if (_didLoadToken) return;
     _didLoadToken = true;
-
+    Provider.of<RestaurantTypeProvider>(context, listen: false).loadTypes();
     _effectiveToken = widget.inviteToken;
     if (_effectiveToken == null) {
       final args = (ModalRoute.of(context)?.settings.arguments as Map?) ?? {};
@@ -482,13 +484,32 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        TextFormField(
-          controller: _categoryController,
-          decoration: InputDecoration(
-            labelText: loc.businessType ?? "Business Category",
-            prefixIcon: const Icon(Icons.category),
-          ),
+        Consumer<RestaurantTypeProvider>(
+          builder: (context, typeProvider, _) {
+            final types = typeProvider.types;
+            final selectedType = _categoryController.text;
+
+            return DropdownButtonFormField<String>(
+              value: selectedType.isNotEmpty ? selectedType : null,
+              decoration: InputDecoration(
+                labelText: loc.businessType ?? "Business Category",
+                prefixIcon: const Icon(Icons.category),
+              ),
+              items: types
+                  .map((type) => DropdownMenuItem<String>(
+                        value: type.name,
+                        child: Text(type.name),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _categoryController.text = value ?? '';
+                });
+              },
+            );
+          },
         ),
+
         const SizedBox(height: 24),
         Text(loc.hours ?? "Business Hours",
             style: Theme.of(context)

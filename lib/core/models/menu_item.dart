@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'nutrition_info.dart';
 import 'customization.dart';
+import 'package:franchise_admin_portal/core/models/size_template.dart';
 
 extension IterableFirstOrNull<T> on Iterable<T> {
   T? get firstOrNull => isEmpty ? null : first;
@@ -36,7 +37,7 @@ class MenuItem {
   final String? exportId;
 
   // --- Dynamic pricing / multi-size ---
-  final List<String>? sizes; // ['Small', 'Medium', 'Large']
+  final List<SizeData>? sizes; // ['Small', 'Medium', 'Large']
   final Map<String, double>? sizePrices; // {'Small': 10.99, 'Large': 13.99}
 
   /// Per-size upcharges for additional toppings (e.g., { 'Large': 2.25, 'Small': 0.85 })
@@ -118,7 +119,7 @@ class MenuItem {
       'taxCategory': taxCategory,
       'notes': notes,
       'nutrition': nutrition?.toJson(),
-      'sizes': sizes,
+      'sizes': sizes?.map((s) => s.toMap()).toList(),
       'sizePrices': sizePrices,
       'includedIngredients': includedIngredients,
       'optionalAddOns': optionalAddOns,
@@ -267,7 +268,11 @@ class MenuItem {
       lastModifiedBy: data['lastModifiedBy'],
       archived: data['archived'] ?? false,
       exportId: data['exportId'],
-      sizes: data['sizes'] == null ? null : List<String>.from(data['sizes']),
+      sizes: data['sizes'] == null
+          ? null
+          : (data['sizes'] as List)
+              .map((e) => SizeData.fromMap(Map<String, dynamic>.from(e)))
+              .toList(),
       sizePrices: data['sizePrices'] != null
           ? Map<String, double>.from(
               (data['sizePrices'] as Map).map(
@@ -397,7 +402,7 @@ class MenuItem {
       //customization groups
       if (customizationGroups != null)
         'customizationGroups': customizationGroups,
-      if (sizes != null) 'sizes': sizes,
+      if (sizes != null) 'sizes': sizes!.map((s) => s.toMap()).toList(),
       if (sizePrices != null) 'sizePrices': sizePrices,
       if (additionalToppingPrices != null)
         'additionalToppingPrices': additionalToppingPrices,
@@ -556,7 +561,7 @@ class MenuItem {
     String? lastModifiedBy,
     bool? archived,
     String? exportId,
-    List<String>? sizes,
+    List<SizeData>? sizes,
     Map<String, double>? sizePrices,
     Map<String, double>? additionalToppingPrices,
     List<Map<String, dynamic>>? includedIngredients,

@@ -26,6 +26,7 @@ import 'package:franchise_admin_portal/widgets/customization/topping_cost_label.
 import 'package:franchise_admin_portal/widgets/customization/current_ingredients.dart';
 import 'package:franchise_admin_portal/widgets/customization/header.dart';
 import 'package:franchise_admin_portal/widgets/customization/bottom_bar.dart';
+import 'package:franchise_admin_portal/core/models/size_template.dart';
 
 const MAX_DOUBLES = 4;
 const DOUGH_IDS = {'dough_calzone', 'dough_pizza', 'dough'};
@@ -101,7 +102,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
   late Map<String, Set<String>> _groupSelections;
   late Set<String> _selectedAddOns;
   late Map<String, String?> _radioSelections;
-  String? _selectedSize;
+  SizeData? _selectedSize;
   String? _error;
   late Map<String, IngredientMetadata> _ingredientMetadata;
 
@@ -619,7 +620,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
   double _getToppingUpcharge() {
     final prices = widget.menuItem.additionalToppingPrices;
-    final key = _normalizeSizeKey(_selectedSize);
+    final key = _normalizeSizeKey(_selectedSize?.label);
     if (prices != null && key != null && prices[key] != null) {
       return (prices[key] as num).toDouble();
     }
@@ -638,7 +639,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
     // Use freeSauceCount for sauces, and fallback to 2 if missing
     final value = widget.menuItem.freeSauceCount;
     if (value is Map) {
-      final key = _normalizeSizeKey(_selectedSize);
+      final key = _normalizeSizeKey(_selectedSize?.label);
+
       return (key != null && value[key] != null) ? value[key] as int : 0;
     }
     if (value is int) return value;
@@ -654,7 +656,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
     final value =
         widget.menuItem.freeDressingCount ?? widget.menuItem.freeSauceCount;
     if (value is Map) {
-      final key = _normalizeSizeKey(_selectedSize);
+      final key = _normalizeSizeKey(_selectedSize?.label);
+
       return (key != null && value[key] != null) ? value[key] as int : 0;
     }
     if (value is int) return value;
@@ -669,7 +672,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
   double _getSaladToppingUpcharge() {
     final prices = widget.menuItem.additionalToppingPrices;
-    final key = _normalizeSizeKey(_selectedSize);
+    final key = _normalizeSizeKey(_selectedSize?.label);
+
     if (prices != null && key != null && prices[key] != null) {
       return (prices[key] as num).toDouble();
     }
@@ -793,7 +797,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   double get _basePrice {
-    final key = _normalizeSizeKey(_selectedSize);
+    final key = _normalizeSizeKey(_selectedSize?.label);
+
     if (key != null &&
         widget.menuItem.sizePrices != null &&
         widget.menuItem.sizePrices![key] != null) {
@@ -1033,10 +1038,13 @@ class _CustomizationModalState extends State<CustomizationModal> {
                           widget.menuItem.sizes!.isNotEmpty)
                         SizeDropdown(
                           menuItem: widget.menuItem,
-                          selectedSize: _selectedSize,
-                          onChanged: (newSize) {
+                          selectedSize: _selectedSize?.label,
+                          onChanged: (String? newLabel) {
                             setState(() {
-                              _selectedSize = newSize;
+                              _selectedSize = widget.menuItem.sizes?.firstWhere(
+                                (s) => s.label == newLabel,
+                                orElse: () => widget.menuItem.sizes!.first,
+                              );
                             });
                           },
                           toppingCostLabel: _isPizzaOrCalzone()
@@ -1049,12 +1057,13 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               : null,
                           normalizeSizeKey: _normalizeSizeKey,
                         ),
+
                       if (_isWings()) ...[
                         WingsPortionSelector(
                           menuItem: widget.menuItem,
                           theme: theme,
                           loc: loc,
-                          selectedSize: _selectedSize,
+                          selectedSize: _selectedSize?.label,
                           ingredientMetadata: _ingredientMetadata,
                           selectedDippedSauces: Map.fromEntries(
                             _selectedDippedSauces.entries
@@ -1893,7 +1902,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                 onConfirm: widget.onConfirm,
                 drinkFlavorCounts: _drinkFlavorCounts,
                 sizePrices: widget.menuItem.sizePrices,
-                sizes: widget.menuItem.sizes,
+                sizes: widget.menuItem.sizes?.map((s) => s.label).toList(),
                 menuItemPrice: widget.menuItem.price,
                 drinkMaxPerFlavor: _drinkMaxPerFlavor,
               ),

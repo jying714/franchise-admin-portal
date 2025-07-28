@@ -41,6 +41,7 @@ import 'package:franchise_admin_portal/core/models/franchise_subscription_model.
 import 'package:franchise_admin_portal/core/models/ingredient_type_model.dart';
 import 'package:franchise_admin_portal/widgets/developer/error_logs_section.dart';
 import 'dart:convert';
+import 'package:franchise_admin_portal/core/models/size_template.dart';
 import 'package:franchise_admin_portal/core/models/menu_template_ref.dart';
 
 class FirestoreService {
@@ -4396,6 +4397,23 @@ class FirestoreService {
     try {
       for (int i = 0; i < items.length; i++) {
         final item = items[i];
+
+        // 🚨 Skip if item.id is null or empty
+        if (item.id.isEmpty) {
+          await ErrorLogger.log(
+            message: 'MenuItem missing ID, skipping save',
+            source: 'FirestoreService',
+            screen: 'firestore_service.dart',
+            severity: 'warning',
+            contextData: {
+              'index': i,
+              'franchiseId': franchiseId,
+              'item': item.toMap(),
+            },
+          );
+          continue;
+        }
+
         final ref = collection.doc(item.id);
         final data = item.copyWith(sortOrder: i).toFirestore();
         batch.set(ref, data, firestore.SetOptions(merge: true));
@@ -4476,6 +4494,17 @@ class FirestoreService {
       );
       rethrow; // Allow UI or caller to handle
     }
+  }
+
+  Future<List<SizeTemplate>> getSizeTemplatesForTemplate(
+      String restaurantType) async {
+    final snapshot = await _db
+        .collection('onboarding_templates')
+        .doc(restaurantType)
+        .collection('sizes')
+        .get();
+
+    return snapshot.docs.map((doc) => SizeTemplate.fromFirestore(doc)).toList();
   }
 }
 

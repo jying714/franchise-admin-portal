@@ -16,7 +16,7 @@ class DesignTokens {
   static const Color errorColor = Color(0xFFE53935);
   static const Color dangerColor = errorColor;
   static const Color successColor = Colors.green;
-
+  static const Color highlightColor = primaryColor;
   static const Color backgroundColor = Color(0xFFF9F9F9); // App bg
   static const Color surfaceColor = Colors.white;
 

@@ -60,6 +60,7 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboar
 import 'package:franchise_admin_portal/core/providers/franchise_feature_provider.dart';
 import 'package:franchise_admin_portal/core/services/franchise_feature_service.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_feature_setup_screen.dart';
+import 'package:franchise_admin_portal/core/providers/restaurant_type_provider.dart';
 import 'dart:html' as html;
 
 /// Returns initial unauth route and optional invite token, e.g. ('/invite-accept', 'abc123').
@@ -429,6 +430,9 @@ class FranchiseAppRootSplit extends StatelessWidget {
               firestoreService: Provider.of<FirestoreService>(_, listen: false),
             ),
           ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => RestaurantTypeProvider(),
         ),
       ],
       child: const FranchiseAuthenticatedRoot(),

@@ -31,7 +31,7 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
       content: FutureBuilder<QuerySnapshot>(
         future: FirebaseFirestore.instance
             .collection('onboarding_templates')
-            .doc('pizza_shop') // future: make dynamic based on cuisine
+            .doc('pizzeria') // future: make dynamic based on cuisine
             .collection('menu_items')
             .get(),
         builder: (context, snapshot) {

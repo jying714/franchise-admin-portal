@@ -53,9 +53,9 @@ class SizeDropdown extends StatelessWidget {
                 value: selectedSize,
                 items: sizes
                     .map((size) => DropdownMenuItem<String>(
-                          value: size,
+                          value: size.label,
                           child: Text(
-                            size,
+                            size.label,
                             style: theme.textTheme.bodyLarge,
                           ),
                         ))

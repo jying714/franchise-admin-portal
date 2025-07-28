@@ -6,6 +6,7 @@ class FranchiseInfo {
   final String? ownerName;
   final String? phone;
   final String? businessEmail;
+  final String? restaurantType;
 
   FranchiseInfo({
     required this.id,
@@ -15,6 +16,7 @@ class FranchiseInfo {
     this.ownerName,
     this.phone,
     this.businessEmail,
+    this.restaurantType,
   });
 
   factory FranchiseInfo.fromMap(Map<String, dynamic> data, String id) {
@@ -26,6 +28,7 @@ class FranchiseInfo {
       ownerName: data['ownerName'],
       phone: data['phone'],
       businessEmail: data['businessEmail'],
+      restaurantType: data['restaurantType'] as String?,
     );
   }
 
@@ -37,6 +40,7 @@ class FranchiseInfo {
       if (ownerName != null) 'ownerName': ownerName,
       if (phone != null) 'phone': phone,
       if (businessEmail != null) 'businessEmail': businessEmail,
+      if (restaurantType != null) 'restaurantType': restaurantType,
     };
   }
 }
