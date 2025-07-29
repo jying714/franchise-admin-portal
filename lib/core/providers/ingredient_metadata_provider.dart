@@ -65,6 +65,34 @@ class IngredientMetadataProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> createIngredient(IngredientMetadata newIngredient) async {
+    final colRef = _firestore.db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('ingredient_metadata');
+    await colRef.doc(newIngredient.id).set(newIngredient.toMap());
+    updateIngredient(newIngredient);
+  }
+
+  /// Adds multiple new ingredients (e.g. after mapping or create-new from sidebar)
+  void addIngredients(List<IngredientMetadata> newItems) {
+    for (final item in newItems) {
+      updateIngredient(item);
+    }
+    notifyListeners();
+  }
+
+  /// Returns all ingredient IDs missing from the current provider (for repair UI)
+  List<String> missingIngredientIds(List<String> ids) {
+    final currentIds = allIngredientIds.toSet();
+    return ids.where((id) => !currentIds.contains(id)).toList();
+  }
+
+  /// Reloads ingredients from Firestore (useful after repair or add-new)
+  Future<void> reload() async {
+    await load();
+  }
+
   /// Loads ingredient metadata from Firestore and sets as original
   Future<void> load() async {
     // Remove the early return to always fetch fresh data

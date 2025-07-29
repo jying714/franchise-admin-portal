@@ -35,6 +35,34 @@ class CategoryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> createCategory(Category newCategory) async {
+    final colRef = firestore.db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('categories');
+    await colRef.doc(newCategory.id).set(newCategory.toFirestore());
+    addOrUpdateCategory(newCategory);
+  }
+
+  /// Adds or updates multiple new categories (for repair/add-new)
+  void addOrUpdateCategories(List<Category> newCategories) {
+    for (final cat in newCategories) {
+      addOrUpdateCategory(cat);
+    }
+    notifyListeners();
+  }
+
+  /// Returns all category IDs missing from the current provider (for repair UI)
+  List<String> missingCategoryIds(List<String> ids) {
+    final currentIds = allCategoryIds.toSet();
+    return ids.where((id) => !currentIds.contains(id)).toList();
+  }
+
+  /// Reload categories from Firestore (useful after mapping or create-new in repair UI)
+  Future<void> reload() async {
+    await loadCategories();
+  }
+
   Future<void> loadCategories() async {
     _loading = true;
     notifyListeners();

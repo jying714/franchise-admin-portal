@@ -80,6 +80,14 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
           final index = entry.key;
           final group = entry.value;
 
+          // Validation
+          final duplicateLabel = _groups
+                  .where((g) =>
+                      g.label.trim().toLowerCase() ==
+                      group.label.trim().toLowerCase())
+                  .length >
+              1;
+
           return Card(
             margin: const EdgeInsets.symmetric(vertical: 8),
             elevation: 2,
@@ -99,6 +107,26 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
                       group.copyWith(label: val),
                     ),
                   ),
+
+                  // Validation after label
+                  if (group.label.trim().isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, bottom: 0),
+                      child: Text(
+                        'Group label required',
+                        style:
+                            TextStyle(color: Colors.red.shade600, fontSize: 12),
+                      ),
+                    ),
+                  if (duplicateLabel)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, bottom: 0),
+                      child: Text(
+                        'Duplicate group label',
+                        style:
+                            TextStyle(color: Colors.red.shade600, fontSize: 12),
+                      ),
+                    ),
 
                   const SizedBox(height: 8),
 
@@ -139,6 +167,17 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
                           index, group.copyWith(ingredients: ingredients));
                     },
                   ),
+
+                  // Validation after ingredient selection
+                  if (group.ingredients.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, bottom: 0),
+                      child: Text(
+                        'Select at least one ingredient',
+                        style:
+                            TextStyle(color: Colors.red.shade600, fontSize: 12),
+                      ),
+                    ),
 
                   const SizedBox(height: 12),
 

@@ -35,7 +35,22 @@ class IngredientReference extends Equatable {
     final name = data['name'] ?? '';
     final typeId = data['typeId'] ?? data['type'] ?? '';
     final isRemovable = data['isRemovable'] ?? data['removable'] ?? true;
-    final upcharge = (data['upcharge'] ?? data['price']) as num?;
+    double? upcharge;
+    final rawUpcharge = data['upcharge'] ?? data['price'];
+    if (rawUpcharge is num) {
+      upcharge = rawUpcharge.toDouble();
+    } else if (rawUpcharge is String) {
+      upcharge = double.tryParse(rawUpcharge);
+    } else if (rawUpcharge is Map) {
+      // If you want to pick a default size, for example "Large"
+      upcharge = (rawUpcharge['Large'] as num?)?.toDouble() ??
+          rawUpcharge.values
+              .cast<num?>()
+              .firstWhere((v) => v != null, orElse: () => null)
+              ?.toDouble();
+    } else {
+      upcharge = null;
+    }
     final doubled = data['doubled'] as bool?;
     final side = data['side'] as String?;
 
@@ -50,7 +65,7 @@ class IngredientReference extends Equatable {
       typeId: typeId,
       doubled: doubled,
       isRemovable: isRemovable,
-      upcharge: upcharge?.toDouble(),
+      upcharge: upcharge,
       side: side,
     );
   }

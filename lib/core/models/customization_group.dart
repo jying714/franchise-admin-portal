@@ -43,9 +43,26 @@ class CustomizationGroup extends Equatable {
       id: map['id'] ?? '',
       label: map['label'] ?? '',
       selectionLimit: map['selectionLimit'] ?? 1,
-      ingredients: (map['ingredients'] as List<dynamic>?)
-              ?.map((e) => IngredientReference.fromMap(e))
-              .toList() ??
+      ingredients: (map['ingredients'] as List?)
+              ?.where((e) => e != null)
+              .map((e) {
+            print(
+                '[DEBUG] Ingredient entry type: ${e.runtimeType} | value: $e');
+
+            if (e is IngredientReference) return e;
+            if (e is Map)
+              return IngredientReference.fromMap(Map<String, dynamic>.from(e));
+            if (e is String) {
+              // Defensive: convert string id to IngredientReference
+              return IngredientReference(
+                id: e,
+                name: e,
+                typeId: '',
+                isRemovable: true,
+              );
+            }
+            throw Exception("Invalid ingredient entry: $e");
+          }).toList() ??
           [],
     );
   }

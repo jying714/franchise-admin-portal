@@ -9,6 +9,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:franchise_admin_portal/core/providers/franchise_info_provider.dart';
 import 'package:collection/collection.dart';
+import 'package:franchise_admin_portal/core/providers/category_provider.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
 
 class MenuItemProvider extends ChangeNotifier {
   final FirestoreService _firestoreService;
@@ -108,6 +111,7 @@ class MenuItemProvider extends ChangeNotifier {
   }
 
   void addOrUpdateMenuItem(MenuItem item) {
+    print('[DEBUG] addOrUpdateMenuItem called with id=${item.id}');
     final index = _working.indexWhere((i) => i.id == item.id);
     if (index == -1) {
       _working.add(item);
@@ -301,6 +305,45 @@ class MenuItemProvider extends ChangeNotifier {
     );
   }
 
+  /// Returns a list of missing required fields for a given MenuItem (used by onboarding/repair UI)
+  List<String> getMissingRequiredFields(MenuItem item) {
+    final missing = <String>[];
+    if (item.name.isEmpty) missing.add('name');
+    if (item.description.isEmpty) missing.add('description');
+    if (item.categoryId.isEmpty) missing.add('categoryId');
+    if (item.category.isEmpty) missing.add('category');
+    if (item.price == 0.0 &&
+        (item.sizePrices == null || item.sizePrices!.isEmpty))
+      missing.add('price');
+    if (item.includedIngredients == null || item.includedIngredients!.isEmpty)
+      missing.add('includedIngredients');
+    if (item.customizationGroups == null || item.customizationGroups!.isEmpty)
+      missing.add('customizationGroups');
+    if (item.sizes != null &&
+        item.sizes!.isNotEmpty &&
+        (item.sizePrices == null || item.sizePrices!.isEmpty))
+      missing.add('sizePrices');
+    // Add more as your onboarding requires
+    return missing;
+  }
+
+  Future<MenuItem> repairMenuItemReferences(MenuItem item,
+      {required Map<String, String> ingredientIdMap,
+      required Map<String, String> categoryIdMap}) async {
+    // Implement logic to map/repair all invalid IDs based on mappings from UI
+    // Return the fixed MenuItem
+    // (Useful for bulk import/fixes, not required for single-item UI)
+    return item;
+  }
+
+  void updateWorkingMenuItem(MenuItem item) {
+    final idx = _working.indexWhere((m) => m.id == item.id);
+    if (idx != -1) {
+      _working[idx] = item;
+      notifyListeners();
+    }
+  }
+
   String _safeStringify(dynamic v) {
     if (v is Timestamp) return v.toDate().toIso8601String();
     if (v is Map)
@@ -322,6 +365,47 @@ class MenuItemProvider extends ChangeNotifier {
   MenuItem? getByIdCaseInsensitive(String id) {
     return menuItems
         .firstWhereOrNull((m) => m.id.toLowerCase() == id.toLowerCase());
+  }
+
+  Future<void> logRepairAction({
+    required String menuItemId,
+    required String field,
+    required String oldValue,
+    required String newValue,
+    required String user,
+  }) async {
+    await ErrorLogger.log(
+      message: 'MenuItem repair',
+      source: 'MenuItemProvider',
+      screen: 'onboarding/repair',
+      severity: 'info',
+      contextData: {
+        'menuItemId': menuItemId,
+        'field': field,
+        'oldValue': oldValue,
+        'newValue': newValue,
+        'user': user,
+      },
+    );
+  }
+
+  Future<void> refreshAllProviders({
+    required CategoryProvider categoryProvider,
+    required IngredientMetadataProvider ingredientProvider,
+    required IngredientTypeProvider ingredientTypeProvider,
+    String? franchiseId,
+  }) async {
+    final fid =
+        franchiseId ?? _franchiseId ?? _franchiseInfoProvider.franchise?.id;
+    if (fid == null || fid.isEmpty) return;
+
+    await Future.wait([
+      _franchiseInfoProvider.reload(),
+      categoryProvider.reload(),
+      ingredientProvider.reload(),
+      ingredientTypeProvider.reload(fid),
+    ]);
+    notifyListeners();
   }
 
   /// Returns all unique category IDs referenced by current menu items.

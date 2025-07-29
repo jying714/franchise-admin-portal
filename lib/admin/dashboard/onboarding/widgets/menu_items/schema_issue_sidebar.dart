@@ -114,6 +114,12 @@ class SchemaIssueSidebar extends StatelessWidget {
                           onRepair: (newValue) =>
                               _handleRepair(context, issue, newValue),
                         );
+                      case MenuItemSchemaIssueType.missingField:
+                        return _MissingFieldRepairTile(
+                          issue: issue,
+                          onRepair: (newValue) =>
+                              _handleRepair(context, issue, newValue),
+                        );
                       default:
                         return ListTile(
                           leading: const Icon(Icons.error_outline,
@@ -351,6 +357,33 @@ class _IngredientTypeRepairTile extends StatelessWidget {
               duration: Duration(seconds: 2),
             ),
           );
+        },
+      ),
+    );
+  }
+}
+
+class _MissingFieldRepairTile extends StatelessWidget {
+  final MenuItemSchemaIssue issue;
+  final ValueChanged<String> onRepair;
+
+  const _MissingFieldRepairTile({
+    Key? key,
+    required this.issue,
+    required this.onRepair,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.edit_note_rounded, color: Colors.blueAccent),
+      title: Text(issue.displayMessage),
+      subtitle: TextFormField(
+        decoration: InputDecoration(
+          labelText: 'Enter ${issue.label ?? issue.field}',
+        ),
+        onFieldSubmitted: (value) {
+          if (value.isNotEmpty) onRepair(value);
         },
       ),
     );

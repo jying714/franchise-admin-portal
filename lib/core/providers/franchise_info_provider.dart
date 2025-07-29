@@ -51,4 +51,9 @@ class FranchiseInfoProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Reload franchise info (useful after sidebar repair/add-new flows)
+  Future<void> reload() async {
+    await loadFranchiseInfo();
+  }
 }

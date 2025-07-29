@@ -47,6 +47,39 @@ class IngredientTypeProvider with ChangeNotifier {
     }
   }
 
+  /// Reload ingredient types from Firestore (used after sidebar repair/add-new)
+  Future<void> reload(String franchiseId) async {
+    await loadIngredientTypes(franchiseId);
+  }
+
+  /// Returns all type IDs missing from the current provider (for repair UI)
+  List<String> missingTypeIds(List<String> ids) {
+    final currentIds = allTypeIds.toSet();
+    return ids.where((id) => !currentIds.contains(id)).toList();
+  }
+
+  /// Adds or updates multiple ingredient types (for repair/add-new flows)
+  void addOrUpdateTypes(List<IngredientType> newTypes) {
+    for (final t in newTypes) {
+      final idx = _ingredientTypes.indexWhere((e) => e.id == t.id);
+      if (idx != -1) {
+        _ingredientTypes[idx] = t;
+      } else {
+        _ingredientTypes.add(t);
+      }
+    }
+    notifyListeners();
+  }
+
+  Future<void> createType(String franchiseId, IngredientType type) async {
+    final colRef = _firestoreService.db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('ingredient_types');
+    await colRef.doc(type.id).set(type.toMap(includeTimestamps: true));
+    await loadIngredientTypes(franchiseId);
+  }
+
   /// Reorders ingredient types and persists updated sortOrder to Firestore
   /// Reorders ingredient types and updates their sortOrder in Firestore
   Future<void> reorderIngredientTypes(

@@ -31,6 +31,9 @@ class OnboardingMenuItemsScreen extends StatefulWidget {
 class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
   bool _hasInitialized = false;
   final Set<String> _selectedIds = {};
+  bool showSchemaSidebar = false;
+  List<MenuItemSchemaIssue> schemaIssues = [];
+  MenuItem? itemPendingRepair;
 
   @override
   void didChangeDependencies() {
@@ -72,35 +75,36 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     }
   }
 
-  void _openEditor({MenuItem? item}) {
-    showModalBottomSheet(
-      isScrollControlled: true,
-      context: context,
-      builder: (_) => MenuItemEditorSheet(
-        existing: item,
-        onSave: (updatedItem) async {
-          final provider = context.read<MenuItemProvider>();
-          provider.addOrUpdateMenuItem(updatedItem);
-          Navigator.of(context).pop();
-        },
-        onCancel: () {
-          Navigator.of(context).pop();
-        },
-      ),
-    );
-  }
+  // void _openEditor({MenuItem? item}) {
+  //   showModalBottomSheet(
+  //     isScrollControlled: true,
+  //     context: context,
+  //     builder: (_) => MenuItemEditorSheet(
+  //       existing: item,
+  //       onSave: (updatedItem) async {
+  //         final provider = context.read<MenuItemProvider>();
+  //         print(
+  //             '[DEBUG] Before add/update: ${provider.menuItems.map((m) => m.toJson())}');
+  //         provider.addOrUpdateMenuItem(updatedItem);
+  //         print(
+  //             '[DEBUG] After add/update: ${provider.menuItems.map((m) => m.toJson())}');
+  //         Navigator.of(context).pop();
+  //       },
+  //       onCancel: () {
+  //         Navigator.of(context).pop();
+  //       },
+  //     ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final provider = context.watch<MenuItemProvider>();
+    print(
+        '[DEBUG] MenuItems in screen: ${provider.menuItems.map((m) => m.toJson())}');
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-
-    // State for the sidebar and issues
-    bool showSchemaSidebar = false;
-    List<MenuItemSchemaIssue> schemaIssues = [];
-    MenuItem? itemPendingRepair;
 
     // Helper to check and maybe show schema sidebar
     void checkForSchemaIssues(MenuItem menuItem) {
@@ -130,13 +134,8 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
         builder: (_) => MenuItemEditorSheet(
           existing: item,
           onSave: (updatedItem) async {
-            // After save, check for schema issues
-            checkForSchemaIssues(updatedItem);
-            if (!showSchemaSidebar) {
-              provider.addOrUpdateMenuItem(updatedItem);
-              Navigator.of(context).pop();
-            }
-            // If issues, sidebar will appear and user must repair/resolve
+            provider.addOrUpdateMenuItem(updatedItem);
+            Navigator.of(context).pop();
           },
           onCancel: () => Navigator.of(context).pop(),
         ),
@@ -155,8 +154,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
           repaired = repaired.copyWith(categoryId: newValue);
           break;
         case MenuItemSchemaIssueType.ingredient:
-          // You will likely need to update includedIngredients/optionalAddOns, etc.
-          // Example: Replace ingredientId in includedIngredients with newValue
           final updatedIncluded =
               (repaired.includedIngredients ?? []).map((ing) {
             if ((ing['ingredientId'] ?? ing['id']) == issue.missingReference) {
@@ -167,7 +164,26 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
           repaired = repaired.copyWith(includedIngredients: updatedIncluded);
           break;
         case MenuItemSchemaIssueType.ingredientType:
-          // Update the appropriate field in ingredient references or metadata
+          // (add your logic here as needed)
+          break;
+        case MenuItemSchemaIssueType.missingField:
+          // Repair missing fields by field name
+          switch (issue.field) {
+            case 'name':
+              repaired = repaired.copyWith(name: newValue);
+              break;
+            case 'description':
+              repaired = repaired.copyWith(description: newValue);
+              break;
+            case 'price':
+              repaired =
+                  repaired.copyWith(price: double.tryParse(newValue) ?? 0.0);
+              break;
+            case 'categoryId':
+              repaired = repaired.copyWith(categoryId: newValue);
+              break;
+            // Add additional fields as needed
+          }
           break;
       }
 

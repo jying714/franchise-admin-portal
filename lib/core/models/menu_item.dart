@@ -348,10 +348,49 @@ class MenuItem {
         lastModifiedBy: data['lastModifiedBy'],
         archived: data['archived'] ?? false,
         exportId: data['exportId'],
-        sizes: (data['sizes'] as List?)
-            ?.whereType<Map>()
-            .map((e) => SizeData.fromMap(Map<String, dynamic>.from(e)))
-            .toList(),
+        sizes: (() {
+          final sizesRaw = data['sizes'];
+          final pricesRaw = data['sizePrices'];
+          final toppingPricesRaw = data['additionalToppingPrices'];
+
+          if (sizesRaw is List && sizesRaw.isNotEmpty) {
+            // If list of maps, use as is (standard app save)
+            if (sizesRaw.first is Map) {
+              return sizesRaw
+                  .map((e) => SizeData.fromMap(Map<String, dynamic>.from(e)))
+                  .toList();
+            }
+            // If list of strings, pair with price maps
+            if (sizesRaw.first is String || sizesRaw.first is! Map) {
+              final sizeLabels = sizesRaw.map((e) => e.toString()).toList();
+
+              Map<String, double> priceMap = {};
+              if (pricesRaw is Map) {
+                priceMap = pricesRaw.map(
+                  (k, v) =>
+                      MapEntry(k.toString(), (v as num?)?.toDouble() ?? 0.0),
+                );
+              }
+
+              Map<String, double> toppingMap = {};
+              if (toppingPricesRaw is Map) {
+                toppingMap = toppingPricesRaw.map(
+                  (k, v) =>
+                      MapEntry(k.toString(), (v as num?)?.toDouble() ?? 0.0),
+                );
+              }
+
+              return sizeLabels
+                  .map((size) => SizeData(
+                        label: size,
+                        basePrice: priceMap[size] ?? 0.0,
+                        toppingPrice: toppingMap[size] ?? 0.0,
+                      ))
+                  .toList();
+            }
+          }
+          return <SizeData>[];
+        })(),
         sizePrices: data['sizePrices'] != null
             ? Map<String, double>.from((data['sizePrices'] as Map)
                 .map((key, value) => MapEntry(key, (value as num).toDouble())))
@@ -490,6 +529,132 @@ class MenuItem {
       );
       rethrow;
     }
+  }
+
+  /// Creates a MenuItem for onboarding from a raw template map.
+  /// Ensures all model fields are present and ready for mapping/repair UI.
+  /// Fields not present in the template are set to '' (String), 0.0 (double), or null/empty for advanced fields.
+  /// Use this to create the initial onboarding state for a menu item from template.
+  factory MenuItem.fromTemplate(Map<String, dynamic> template,
+      {String? idOverride}) {
+    // Safely unwrap and initialize all model fields.
+    return MenuItem(
+      id: idOverride ?? template['id'] ?? '',
+      name: template['name'] ?? '',
+      description: template['description'] ?? '',
+      price: (template['price'] is num)
+          ? (template['price'] as num).toDouble()
+          : 0.0,
+      category: template['category'] ?? '',
+      categoryId: template['categoryId'] ?? '',
+      image: template['image'],
+      available: template['available'] ?? true,
+      availability: template['availability'] ?? template['available'] ?? true,
+      notes: template['notes'],
+      taxCategory: template['taxCategory'] ?? '',
+      sku: template['sku'],
+      dietaryTags: List<String>.from(template['dietaryTags'] ?? []),
+      allergens: List<String>.from(template['allergens'] ?? []),
+      prepTime: template['prepTime'],
+      nutrition: template['nutrition'] != null
+          ? NutritionInfo.fromFirestore(
+              Map<String, dynamic>.from(template['nutrition']))
+          : null,
+      sortOrder: template['sortOrder'],
+      lastModified: null,
+      lastModifiedBy: null,
+      archived: template['archived'] ?? false,
+      exportId: template['exportId'],
+      sizes: (template['sizes'] as List?)
+          ?.whereType<Map>()
+          .map((e) => SizeData.fromMap(Map<String, dynamic>.from(e)))
+          .toList(),
+      sizePrices: template['sizePrices'] != null
+          ? Map<String, double>.from((template['sizePrices'] as Map)
+              .map((key, value) => MapEntry(key, (value as num).toDouble())))
+          : null,
+      additionalToppingPrices: template['additionalToppingPrices'] != null
+          ? Map<String, double>.from((template['additionalToppingPrices']
+                  as Map)
+              .map((key, value) => MapEntry(key, (value as num).toDouble())))
+          : null,
+      includedIngredients: (template['includedIngredients'] as List?)
+          ?.whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      customizationGroups: (template['customizationGroups'] as List?)
+          ?.whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      optionalAddOns: (template['optionalAddOns'] as List?)
+          ?.whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      customizations: (template['customizations'] as List?)
+              ?.map((e) =>
+                  Customization.fromFirestore(Map<String, dynamic>.from(e)))
+              .toList() ??
+          [],
+      rawCustomizations: (template['rawCustomizations'] as List?)
+          ?.whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
+      crustTypes: template['crustTypes'] == null
+          ? null
+          : List<String>.from(template['crustTypes']),
+      cookTypes: template['cookTypes'] == null
+          ? null
+          : List<String>.from(template['cookTypes']),
+      cutStyles: template['cutStyles'] == null
+          ? null
+          : List<String>.from(template['cutStyles']),
+      sauceOptions: template['sauceOptions'] == null
+          ? null
+          : List<String>.from(template['sauceOptions']),
+      dressingOptions: template['dressingOptions'] == null
+          ? null
+          : List<String>.from(template['dressingOptions']),
+      maxFreeToppings: template['maxFreeToppings'],
+      maxFreeSauces: template['maxFreeSauces'],
+      maxFreeDressings: template['maxFreeDressings'],
+      maxToppings: template['maxToppings'],
+      customizationsUpdatedAt: null,
+      createdAt: null,
+      comboId: template['comboId'],
+      bundleItems: template['bundleItems'] == null
+          ? null
+          : List<String>.from(template['bundleItems']),
+      bundleDiscount: (template['bundleDiscount'] as num?)?.toDouble(),
+      highlightTags: template['highlightTags'] == null
+          ? null
+          : List<String>.from(template['highlightTags']),
+      allowSpecialInstructions: template['allowSpecialInstructions'],
+      hideInMenu: template['hideInMenu'],
+      freeSauceCount: template['freeSauceCount'],
+      extraSauceUpcharge: (template['extraSauceUpcharge'] as num?)?.toDouble(),
+      freeDressingCount: template['freeDressingCount'],
+      extraDressingUpcharge:
+          (template['extraDressingUpcharge'] as num?)?.toDouble(),
+      dippingSauceOptions: template['dippingSauceOptions'] == null
+          ? null
+          : List<String>.from(template['dippingSauceOptions']),
+      dippingSplits: template['dippingSplits'] == null
+          ? null
+          : Map<String, int>.from(template['dippingSplits']),
+      sideDipSauceOptions: template['sideDipSauceOptions'] == null
+          ? null
+          : List<String>.from(template['sideDipSauceOptions']),
+      freeDipCupCount: template['freeDipCupCount'] == null
+          ? null
+          : Map<String, int>.from(template['freeDipCupCount']),
+      sideDipUpcharge: template['sideDipUpcharge'] == null
+          ? null
+          : Map<String, double>.from(template['sideDipUpcharge']),
+      templateRefs: template['templateRefs'] == null
+          ? null
+          : List<String>.from(template['templateRefs']),
+      extraCharges: template['extraCharges'],
+    );
   }
 
   Map<String, dynamic> toFirestore() {
@@ -867,5 +1032,56 @@ class MenuItem {
       return "MenuItem missing required id, name, or categoryId: id='$id', name='$name', categoryId='$categoryId'";
     }
     return null;
+  }
+
+  /// Returns a list of all required or critical fields missing from onboarding/template import.
+  /// Used to block Save and drive the repair UI.
+  /// Update this list as your onboarding requirements evolve!
+  List<String> missingRequiredFields() {
+    final missing = <String>[];
+
+    // Core fields
+    if (name.isEmpty) missing.add('name');
+    if (description.isEmpty) missing.add('description');
+    if (categoryId.isEmpty) missing.add('categoryId');
+    if (category.isEmpty) missing.add('category');
+    if (image == null || image!.isEmpty) missing.add('image');
+    if (taxCategory.isEmpty) missing.add('taxCategory');
+    if (price == 0.0 && (sizePrices == null || sizePrices!.isEmpty))
+      missing.add('price');
+    if (availability != true && available != true) missing.add('available');
+
+    // Ingredient/Customization structure
+    if (includedIngredients == null || includedIngredients!.isEmpty)
+      missing.add('includedIngredients');
+    if (customizationGroups == null || customizationGroups!.isEmpty)
+      missing.add('customizationGroups');
+
+    // Add-ons (optional, but commonly required for certain categories)
+    // if (optionalAddOns == null || optionalAddOns!.isEmpty) missing.add('optionalAddOns');
+
+    // Sizing (for multi-size items)
+    if ((sizePrices != null && sizePrices!.isNotEmpty) &&
+        (sizes == null || sizes!.isEmpty)) missing.add('sizes');
+
+    // Customizations
+    if (customizations.isEmpty) missing.add('customizations');
+
+    // Advanced/Meta fields (optional—uncomment if needed for your workflow)
+    // if (sku == null || sku!.isEmpty) missing.add('sku');
+    // if (prepTime == null) missing.add('prepTime');
+    // if (nutrition == null) missing.add('nutrition');
+    // if (notes == null || notes!.isEmpty) missing.add('notes');
+
+    // Advanced upcharge fields (required for certain categories like pizza/wings)
+    // if (additionalToppingPrices == null) missing.add('additionalToppingPrices');
+    // if (freeSauceCount == null) missing.add('freeSauceCount');
+
+    // Required fields for your platform
+    // if (templateRefs == null || templateRefs!.isEmpty) missing.add('templateRefs');
+
+    // Add any other logic as needed for your onboarding flow
+
+    return missing;
   }
 }
