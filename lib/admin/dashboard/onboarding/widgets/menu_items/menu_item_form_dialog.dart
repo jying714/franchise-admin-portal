@@ -61,6 +61,7 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
     try {
       final menuItem = MenuItem(
         id: widget.initialItem?.id ?? UniqueKey().toString(),
+        available: true,
         name: _nameController.text.trim(),
         description: _descController.text.trim(),
         price: double.tryParse(_priceController.text.trim()) ?? 0.0,

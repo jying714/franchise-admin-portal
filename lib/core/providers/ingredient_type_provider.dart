@@ -315,4 +315,29 @@ class IngredientTypeProvider with ChangeNotifier {
 
   Future<void> deleteType(String franchiseId, String typeId) =>
       deleteIngredientType(franchiseId, typeId);
+
+  /// Returns a map of all type IDs to names.
+  Map<String, String> get typeIdToName => Map.fromEntries(
+      types.where((t) => t.id != null).map((t) => MapEntry(t.id!, t.name)));
+
+  /// Returns a list of all available type IDs.
+  List<String> get allTypeIds => types
+      .where((t) => t.id != null && t.id!.isNotEmpty)
+      .map((t) => t.id!)
+      .toList();
+
+  /// Returns a list of all available type names.
+  List<String> get allTypeNames => types.map((t) => t.name).toList();
+
+  /// Find a type by name (case-insensitive, trimmed).
+  IngredientType? getByName(String name) {
+    return types.firstWhereOrNull(
+        (t) => t.name.trim().toLowerCase() == name.trim().toLowerCase());
+  }
+
+  /// Find a type by systemTag (case-insensitive).
+  IngredientType? getBySystemTag(String tag) {
+    return types.firstWhereOrNull((t) =>
+        t.systemTag != null && t.systemTag!.toLowerCase() == tag.toLowerCase());
+  }
 }

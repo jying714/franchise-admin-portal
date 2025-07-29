@@ -4464,13 +4464,34 @@ class FirestoreService {
   }
 
   // Add to FirestoreService
-  Future<List<MenuTemplateRef>> fetchMenuTemplateRefs() async {
-    final snapshot = await firestore.FirebaseFirestore.instance
-        .collection('menu_templates')
-        .get();
-    return snapshot.docs
-        .map((doc) => MenuTemplateRef.fromFirestore(doc.data()))
-        .toList();
+  Future<List<MenuTemplateRef>> fetchMenuTemplateRefs({
+    required String restaurantType,
+  }) async {
+    try {
+      final snapshot = await firestore.FirebaseFirestore.instance
+          .collection('onboarding_templates')
+          .doc(restaurantType)
+          .collection('menu_items')
+          .get();
+
+      print('[DEBUG] 🔍 menu_items docs found: ${snapshot.docs.length}');
+
+      return snapshot.docs
+          .map((doc) => MenuTemplateRef.fromFirestore(doc.data()))
+          .toList();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to fetch menu template refs',
+        source: 'FirestoreService',
+        screen: 'firestore_service.dart',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {
+          'restaurantType': restaurantType,
+        },
+      );
+      rethrow;
+    }
   }
 
   static Future<List<Map<String, dynamic>>> decodeJsonList(String input) async {

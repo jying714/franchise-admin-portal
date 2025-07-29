@@ -1862,7 +1862,9 @@
   "calories": "Calories",
   "fat": "Fat",
   "carbohydrates": "Carbohydrates",
-  "protein": "Protein"
+  "protein": "Protein",
+  "chooseTemplate": "Choose Template",
+  "template": "Template"
 
 
 

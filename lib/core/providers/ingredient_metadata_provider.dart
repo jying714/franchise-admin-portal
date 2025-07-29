@@ -391,4 +391,38 @@ class IngredientMetadataProvider extends ChangeNotifier {
     _current = List.from(_original);
     notifyListeners();
   }
+
+  /// Returns a map of all ingredient IDs to names.
+  Map<String, String> get ingredientIdToName =>
+      Map.fromEntries(ingredients.map((i) => MapEntry(i.id, i.name)));
+
+  /// Returns a list of all available ingredient IDs.
+  List<String> get allIngredientIds => ingredients.map((i) => i.id).toList();
+
+  /// Returns a list of all available ingredient names.
+  List<String> get allIngredientNames =>
+      ingredients.map((i) => i.name).toList();
+
+  /// Find an ingredient by name (case-insensitive, trimmed).
+  IngredientMetadata? getByName(String name) {
+    return ingredients.firstWhereOrNull(
+        (i) => i.name.trim().toLowerCase() == name.trim().toLowerCase());
+  }
+
+  /// Find an ingredient by ID (case-insensitive).
+  IngredientMetadata? getByIdCaseInsensitive(String id) {
+    return ingredients
+        .firstWhereOrNull((i) => i.id.toLowerCase() == id.toLowerCase());
+  }
+
+  /// Find all unique typeIds in the current ingredient set.
+  List<String> get allIngredientTypeIds {
+    final ids = <String>{};
+    for (final i in ingredients) {
+      if (i.typeId != null && i.typeId!.isNotEmpty) {
+        ids.add(i.typeId!);
+      }
+    }
+    return ids.toList();
+  }
 }

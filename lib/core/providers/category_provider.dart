@@ -230,4 +230,26 @@ class CategoryProvider extends ChangeNotifier {
       rethrow;
     }
   }
+
+  /// Returns a map of all category IDs to names.
+  Map<String, String> get categoryIdToName =>
+      Map.fromEntries(categories.map((c) => MapEntry(c.id, c.name)));
+
+  /// Returns a list of all available category IDs.
+  List<String> get allCategoryIds => categories.map((c) => c.id).toList();
+
+  /// Returns a list of all available category names.
+  List<String> get allCategoryNames => categories.map((c) => c.name).toList();
+
+  /// Find a category by name (case-insensitive, trimmed).
+  Category? getByName(String name) {
+    return categories.firstWhereOrNull(
+        (c) => c.name.trim().toLowerCase() == name.trim().toLowerCase());
+  }
+
+  /// Find a category by ID (case-insensitive).
+  Category? getByIdCaseInsensitive(String id) {
+    return categories
+        .firstWhereOrNull((c) => c.id.toLowerCase() == id.toLowerCase());
+  }
 }

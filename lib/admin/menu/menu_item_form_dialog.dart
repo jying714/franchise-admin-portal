@@ -419,6 +419,7 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
                         );
                         final menuItem = MenuItem(
                           id: widget.initialItem?.id ?? '',
+                          available: _availability,
                           category: _category,
                           categoryId: selectedCategory.id,
                           name: _name.trim(),

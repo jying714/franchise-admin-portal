@@ -1,5 +1,5 @@
 // lib/core/models/ingredient_metadata.dart
-
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 
 @immutable
@@ -189,4 +189,46 @@ class IngredientMetadata {
   bool isValid() {
     return name.trim().isNotEmpty && (typeId?.trim().isNotEmpty ?? false);
   }
+
+  /// Checks if this ingredient matches the given ID (case-insensitive).
+  bool matchesId(String? otherId) =>
+      otherId != null && id.toLowerCase() == otherId.toLowerCase();
+
+  /// Checks if this ingredient matches the given name (case-insensitive, trimmed).
+  bool matchesName(String? otherName) =>
+      otherName != null &&
+      name.trim().toLowerCase() == otherName.trim().toLowerCase();
+
+  /// Checks if this ingredient matches the given typeId (case-insensitive, trimmed).
+  bool matchesTypeId(String? otherTypeId) =>
+      otherTypeId != null &&
+      (typeId?.trim().toLowerCase() ?? '') == otherTypeId.trim().toLowerCase();
+
+  /// Static utility: resolve an ingredient by id or name from a list.
+  static IngredientMetadata? resolveFromReference(List<IngredientMetadata> all,
+      {String? id, String? name}) {
+    // By id
+    final byId = all.firstWhereOrNull(
+      (ing) => ing.matchesId(id),
+    );
+    if (byId != null) return byId;
+
+    // By name
+    final byName = all.firstWhereOrNull(
+      (ing) => ing.matchesName(name),
+    );
+    return byName;
+  }
+
+  /// Warn if critical fields are missing.
+  String? get schemaWarning {
+    if (id.isEmpty || name.isEmpty || type.isEmpty) {
+      return "IngredientMetadata missing required field: id='$id', name='$name', type='$type'";
+    }
+    return null;
+  }
+
+  /// Batch utility: extract all IDs from a list.
+  static List<String> extractIds(List<IngredientMetadata> all) =>
+      all.map((e) => e.id).where((id) => id.isNotEmpty).toList();
 }

@@ -400,15 +400,24 @@ class FranchiseAppRootSplit extends StatelessWidget {
             return provider;
           },
         ),
-        ChangeNotifierProxyProvider2<FirestoreService, FranchiseProvider,
-            MenuItemProvider>(
+        ChangeNotifierProxyProvider3<FirestoreService, FranchiseProvider,
+            FranchiseInfoProvider, MenuItemProvider>(
           create: (_) => MenuItemProvider(
             firestoreService: Provider.of<FirestoreService>(_, listen: false),
+            franchiseInfoProvider:
+                Provider.of<FranchiseInfoProvider>(_, listen: false),
           ),
-          update: (_, firestoreService, franchiseProvider, previous) {
+          update: (_, firestoreService, franchiseProvider,
+              franchiseInfoProvider, previous) {
             final fid = franchiseProvider.franchiseId;
             final provider = previous ??
-                MenuItemProvider(firestoreService: firestoreService);
+                MenuItemProvider(
+                  firestoreService: firestoreService,
+                  franchiseInfoProvider: franchiseInfoProvider,
+                );
+
+            // Refresh franchiseInfoProvider instance if needed
+            provider.franchiseInfoProvider = franchiseInfoProvider;
 
             if (fid.isNotEmpty && fid != 'unknown') {
               provider.loadMenuItems(fid);

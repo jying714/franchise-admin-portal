@@ -2,6 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'nutrition_info.dart';
 import 'customization.dart';
 import 'package:franchise_admin_portal/core/models/size_template.dart';
+import 'dart:convert';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:flutter/material.dart';
 
 extension IterableFirstOrNull<T> on Iterable<T> {
   T? get firstOrNull => isEmpty ? null : first;
@@ -16,6 +19,7 @@ enum CutStyle { square, pie }
 
 class MenuItem {
   final String id;
+  final bool available;
   final String category;
   final String categoryId;
   final String name;
@@ -134,6 +138,7 @@ class MenuItem {
 
   MenuItem({
     required this.id,
+    required this.available,
     required this.category,
     required this.categoryId,
     required this.name,
@@ -204,175 +209,288 @@ class MenuItem {
   String get imageUrl => image ?? '';
 
   factory MenuItem.fromFirestore(Map<String, dynamic> data, String id) {
-    //print('[DEBUG] Raw Firestore doc: $data');
-    //print('[DEBUG] doc id: $id');
-    double resolvedPrice = 0.0;
-    Map<String, double>? resolvedSizePrices;
+    try {
+      double resolvedPrice = 0.0;
+      Map<String, double>? resolvedSizePrices;
 
-    final priceField = data['price'];
-    if (priceField is num) {
-      resolvedPrice = priceField.toDouble();
-    } else if (priceField is Map) {
-      resolvedSizePrices = (priceField as Map).map(
-        (key, value) => MapEntry(key.toString(), (value as num).toDouble()),
+      Map<String, double>? parseStringDoubleMap(dynamic raw) {
+        try {
+          if (raw == null) return null;
+          if (raw is Map) {
+            return raw.map((k, v) => MapEntry(
+                k.toString(),
+                (v is num)
+                    ? v.toDouble()
+                    : double.tryParse(v.toString()) ?? 0));
+          }
+          if (raw is String) {
+            final parsed = jsonDecode(raw);
+            if (parsed is Map) {
+              return parsed.map((k, v) => MapEntry(
+                  k.toString(),
+                  (v is num)
+                      ? v.toDouble()
+                      : double.tryParse(v.toString()) ?? 0));
+            }
+          }
+        } catch (e, st) {
+          debugPrint('[MenuItem] Failed to parse string-double map: $e');
+          ErrorLogger.log(
+            message: 'Failed to parse string-double map',
+            stack: st.toString(),
+            source: 'MenuItem.fromFirestore',
+            screen: 'MenuItem',
+            contextData: {'raw': raw.toString()},
+          );
+        }
+        return null;
+      }
+
+      final priceField = data['price'];
+      if (priceField is num) {
+        resolvedPrice = priceField.toDouble();
+      } else if (priceField is Map) {
+        resolvedSizePrices = (priceField as Map).map(
+          (key, value) => MapEntry(key.toString(), (value as num).toDouble()),
+        );
+        resolvedPrice = resolvedSizePrices['Large'] ??
+            resolvedSizePrices['large'] ??
+            resolvedSizePrices.values.firstOrNull ??
+            0.0;
+      }
+
+      List<Customization> customizations = [];
+      if (data['customizations'] is List) {
+        try {
+          customizations = (data['customizations'] as List)
+              .map((e) =>
+                  Customization.fromFirestore(Map<String, dynamic>.from(e)))
+              .toList();
+        } catch (e, st) {
+          ErrorLogger.log(
+            message: 'Malformed customization entry',
+            stack: st.toString(),
+            source: 'MenuItem.fromFirestore',
+            screen: 'MenuItem',
+          );
+        }
+      }
+
+      final safeGroups = <Map<String, dynamic>>[];
+      for (final g in (data['customizationGroups'] as List?) ?? []) {
+        if (g is Map) {
+          safeGroups.add(Map<String, dynamic>.from(g));
+        } else {
+          debugPrint('[MenuItem] Skipped invalid customizationGroup: $g');
+          ErrorLogger.log(
+            message: 'Skipped malformed customizationGroup entry',
+            source: 'MenuItem.fromFirestore',
+            screen: 'MenuItem',
+            contextData: {'entry': g.toString()},
+          );
+        }
+      }
+
+      final safeAddOns = <Map<String, dynamic>>[];
+      for (final o in (data['optionalAddOns'] as List?) ?? []) {
+        if (o is Map) {
+          safeAddOns.add(Map<String, dynamic>.from(o));
+        } else {
+          debugPrint('[MenuItem] Skipped invalid optionalAddOn: $o');
+          ErrorLogger.log(
+            message: 'Skipped malformed optionalAddOn entry',
+            source: 'MenuItem.fromFirestore',
+            screen: 'MenuItem',
+            contextData: {'entry': o.toString()},
+          );
+        }
+      }
+
+      final safeIncluded = <Map<String, dynamic>>[];
+      for (final i in (data['includedIngredients'] as List?) ?? []) {
+        if (i is Map) {
+          safeIncluded.add(Map<String, dynamic>.from(i));
+        } else {
+          debugPrint('[MenuItem] Skipped invalid includedIngredient: $i');
+          ErrorLogger.log(
+            message: 'Skipped malformed includedIngredient entry',
+            source: 'MenuItem.fromFirestore',
+            screen: 'MenuItem',
+            contextData: {'entry': i.toString()},
+          );
+        }
+      }
+
+      return MenuItem(
+        id: id,
+        available: data['available'] ?? true,
+        category: data['category'] ?? '',
+        categoryId: data['categoryId'] ?? '',
+        name: data['name'] ?? '',
+        price: resolvedPrice,
+        description: data['description'] ?? '',
+        notes: data['notes'],
+        image: data['image'],
+        taxCategory: data['taxCategory'] ?? '',
+        availability: data['availability'] ?? data['available'] ?? true,
+        sku: data['sku'],
+        dietaryTags: List<String>.from(data['dietaryTags'] ?? []),
+        allergens: List<String>.from(data['allergens'] ?? []),
+        prepTime: data['prepTime'],
+        nutrition: data['nutrition'] != null
+            ? NutritionInfo.fromFirestore(
+                Map<String, dynamic>.from(data['nutrition']))
+            : null,
+        sortOrder: data['sortOrder'],
+        lastModified: (data['lastModified'] is Timestamp)
+            ? (data['lastModified'] as Timestamp).toDate()
+            : null,
+        lastModifiedBy: data['lastModifiedBy'],
+        archived: data['archived'] ?? false,
+        exportId: data['exportId'],
+        sizes: (data['sizes'] as List?)
+            ?.whereType<Map>()
+            .map((e) => SizeData.fromMap(Map<String, dynamic>.from(e)))
+            .toList(),
+        sizePrices: data['sizePrices'] != null
+            ? Map<String, double>.from((data['sizePrices'] as Map)
+                .map((key, value) => MapEntry(key, (value as num).toDouble())))
+            : resolvedSizePrices,
+        additionalToppingPrices:
+            parseStringDoubleMap(data['additionalToppingPrices']),
+        includedIngredients: safeIncluded.isEmpty ? null : safeIncluded,
+        customizationGroups: safeGroups.isEmpty ? null : safeGroups,
+        optionalAddOns: safeAddOns.isEmpty ? null : safeAddOns,
+        customizations: customizations,
+        crustTypes: data['crustTypes'] == null
+            ? null
+            : List<String>.from(data['crustTypes']),
+        cookTypes: data['cookTypes'] == null
+            ? null
+            : List<String>.from(data['cookTypes']),
+        cutStyles: data['cutStyles'] == null
+            ? null
+            : List<String>.from(data['cutStyles']),
+        sauceOptions: data['sauceOptions'] == null
+            ? null
+            : List<String>.from(data['sauceOptions']),
+        dressingOptions: data['dressingOptions'] == null
+            ? null
+            : List<String>.from(data['dressingOptions']),
+        maxFreeToppings: data['maxFreeToppings'],
+        maxFreeSauces: data['maxFreeSauces'],
+        maxFreeDressings: data['maxFreeDressings'],
+        maxToppings: data['maxToppings'],
+        customizationsUpdatedAt: data['customizationsUpdatedAt'] is Timestamp
+            ? (data['customizationsUpdatedAt'] as Timestamp).toDate()
+            : null,
+        createdAt: data['createdAt'] is Timestamp
+            ? (data['createdAt'] as Timestamp).toDate()
+            : null,
+        comboId: data['comboId'],
+        bundleItems: (data['bundleItems'] is List)
+            ? List<String>.from(data['bundleItems'])
+            : null,
+        bundleDiscount: (data['bundleDiscount'] as num?)?.toDouble(),
+        highlightTags: data['highlightTags'] == null
+            ? null
+            : List<String>.from(data['highlightTags']),
+        allowSpecialInstructions: data['allowSpecialInstructions'],
+        hideInMenu: data['hideInMenu'],
+        freeSauceCount: (data['freeSauceCount'] is Map)
+            ? Map.fromEntries(
+                (data['freeSauceCount'] as Map)
+                    .entries
+                    .where((e) => e.key != null && e.value != null)
+                    .map((e) {
+                  final parsed = int.tryParse(e.value.toString());
+                  return MapEntry(e.key.toString(), parsed ?? 0);
+                }),
+              )
+            : null,
+        extraSauceUpcharge: (data['extraSauceUpcharge'] as num?)?.toDouble(),
+        freeDressingCount: data['freeDressingCount'],
+        extraDressingUpcharge:
+            (data['extraDressingUpcharge'] as num?)?.toDouble(),
+        dippingSauceOptions: data['dippingSauceOptions'] == null
+            ? null
+            : List<String>.from(data['dippingSauceOptions']),
+        dippingSplits: (data['dippingSplits'] is Map)
+            ? Map.fromEntries(
+                (data['dippingSplits'] as Map)
+                    .entries
+                    .where((e) => e.key != null && e.value != null)
+                    .map((e) {
+                  final parsed = int.tryParse(e.value.toString());
+                  return MapEntry(e.key.toString(), parsed ?? 0);
+                }),
+              )
+            : null,
+        sideDipSauceOptions: data['sideDipSauceOptions'] == null
+            ? null
+            : List<String>.from(data['sideDipSauceOptions']),
+        freeDipCupCount: (data['freeDipCupCount'] is Map)
+            ? Map.fromEntries(
+                (data['freeDipCupCount'] as Map)
+                    .entries
+                    .where((e) => e.key != null && e.value != null)
+                    .map((e) {
+                  final parsed = int.tryParse(e.value.toString());
+                  return MapEntry(e.key.toString(), parsed ?? 0);
+                }),
+              )
+            : null,
+        sideDipUpcharge: (data['sideDipUpcharge'] is Map)
+            ? Map.fromEntries(
+                (data['sideDipUpcharge'] as Map)
+                    .entries
+                    .where((e) => e.key != null && e.value != null)
+                    .map((e) {
+                  final parsed = double.tryParse(e.value.toString());
+                  return MapEntry(e.key.toString(), parsed ?? 0.0);
+                }),
+              )
+            : null,
+        templateRefs:
+            (data['templateRefs'] as List?)?.map((e) => e.toString()).toList(),
       );
-      resolvedPrice = resolvedSizePrices['Large'] ??
-          resolvedSizePrices['large'] ??
-          resolvedSizePrices.values.firstOrNull ??
-          0.0;
-    }
-
-    List<Customization> customizations = [];
-    if (data['customizations'] != null) {
-      customizations = (data['customizations'] as List)
-          .map((e) => Customization.fromFirestore(Map<String, dynamic>.from(e)))
-          .toList();
-    }
-
-    List<Map<String, dynamic>>? customizationGroups;
-    if (data['customizationGroups'] != null) {
-      customizationGroups = List<Map<String, dynamic>>.from(
-        data['customizationGroups'].map((g) => Map<String, dynamic>.from(g)),
+    } catch (e, st) {
+      ErrorLogger.log(
+        message: 'MenuItem.fromFirestore threw exception',
+        source: 'MenuItem.fromFirestore',
+        screen: 'menu_item_provider.dart',
+        severity: 'error',
+        stack: st.toString(),
+        contextData: {
+          'id': id,
+          'rawData': data.map((k, v) => MapEntry(
+              k, v is Timestamp ? v.toDate().toIso8601String() : v.toString())),
+          'error': e.toString(),
+        },
       );
+      rethrow;
     }
-
-    // print(
-    //     '[DEBUG] after parse, sideDipSauceOptions: ${data['sideDipSauceOptions']}');
-    return MenuItem(
-      id: id,
-      category: data['category'] ?? '',
-      categoryId: data['categoryId'] ?? '',
-      name: data['name'] ?? '',
-      price: resolvedPrice,
-      description: data['description'] ?? '',
-      notes: data['notes'],
-      image: data['image'],
-      taxCategory: data['taxCategory'] ?? '',
-      availability: data['availability'] ?? data['available'] ?? true,
-      sku: data['sku'],
-      dietaryTags: data['dietaryTags'] == null
-          ? []
-          : List<String>.from(data['dietaryTags'] as List),
-      allergens: data['allergens'] == null
-          ? []
-          : List<String>.from(data['allergens'] as List),
-      prepTime: data['prepTime'],
-      nutrition: data['nutrition'] != null
-          ? NutritionInfo.fromFirestore(
-              Map<String, dynamic>.from(data['nutrition']))
-          : null,
-      sortOrder: data['sortOrder'],
-      lastModified: (data['lastModified'] is Timestamp)
-          ? (data['lastModified'] as Timestamp).toDate()
-          : null,
-      lastModifiedBy: data['lastModifiedBy'],
-      archived: data['archived'] ?? false,
-      exportId: data['exportId'],
-      sizes: data['sizes'] == null
-          ? null
-          : (data['sizes'] as List)
-              .map((e) => SizeData.fromMap(Map<String, dynamic>.from(e)))
-              .toList(),
-      sizePrices: data['sizePrices'] != null
-          ? Map<String, double>.from(
-              (data['sizePrices'] as Map).map(
-                (key, value) => MapEntry(key, (value as num).toDouble()),
-              ),
-            )
-          : resolvedSizePrices,
-      additionalToppingPrices: data['additionalToppingPrices'] != null
-          ? Map<String, double>.from(
-              (data['additionalToppingPrices'] as Map).map(
-                (key, value) => MapEntry(key, (value as num).toDouble()),
-              ),
-            )
-          : null,
-      includedIngredients: data['includedIngredients'] == null
-          ? null
-          : List<Map<String, dynamic>>.from(
-              (data['includedIngredients'] as List)
-                  .map((e) => Map<String, dynamic>.from(e))),
-      customizationGroups: data['customizationGroups'] == null
-          ? null
-          : List<Map<String, dynamic>>.from(
-              (data['customizationGroups'] as List)
-                  .map((e) => Map<String, dynamic>.from(e))),
-      optionalAddOns: data['optionalAddOns'] == null
-          ? null
-          : List<Map<String, dynamic>>.from((data['optionalAddOns'] as List)
-              .map((e) => Map<String, dynamic>.from(e))),
-      customizations: customizations,
-      crustTypes: data['crustTypes'] == null
-          ? null
-          : List<String>.from(data['crustTypes']),
-      cookTypes: data['cookTypes'] == null
-          ? null
-          : List<String>.from(data['cookTypes']),
-      cutStyles: data['cutStyles'] == null
-          ? null
-          : List<String>.from(data['cutStyles']),
-      sauceOptions: data['sauceOptions'] == null
-          ? null
-          : List<String>.from(data['sauceOptions']),
-      dressingOptions: data['dressingOptions'] == null
-          ? null
-          : List<String>.from(data['dressingOptions']),
-      maxFreeToppings: data['maxFreeToppings'],
-      maxFreeSauces: data['maxFreeSauces'],
-      maxFreeDressings: data['maxFreeDressings'],
-      maxToppings: data['maxToppings'],
-      customizationsUpdatedAt: data['customizationsUpdatedAt'] is Timestamp
-          ? (data['customizationsUpdatedAt'] as Timestamp).toDate()
-          : null,
-      createdAt: data['createdAt'] is Timestamp
-          ? (data['createdAt'] as Timestamp).toDate()
-          : null,
-      comboId: data['comboId'],
-      bundleItems: data['bundleItems'] == null
-          ? null
-          : List<String>.from(data['bundleItems']),
-      bundleDiscount: (data['bundleDiscount'] as num?)?.toDouble(),
-      highlightTags: data['highlightTags'] == null
-          ? null
-          : List<String>.from(data['highlightTags']),
-      allowSpecialInstructions: data['allowSpecialInstructions'],
-      hideInMenu: data['hideInMenu'],
-      // NEW
-      freeSauceCount: data['freeSauceCount'],
-      extraSauceUpcharge: (data['extraSauceUpcharge'] as num?)?.toDouble(),
-      freeDressingCount: data['freeDressingCount'],
-      extraDressingUpcharge:
-          (data['extraDressingUpcharge'] as num?)?.toDouble(),
-      // Wings fields
-      dippingSauceOptions: data['dippingSauceOptions'] == null
-          ? null
-          : List<String>.from(data['dippingSauceOptions']),
-      dippingSplits: data['dippingSplits'] == null
-          ? null
-          : Map<String, int>.from((data['dippingSplits'] as Map).map(
-              (key, value) => MapEntry(key, (value as num).toInt()),
-            )),
-      sideDipSauceOptions: data['sideDipSauceOptions'] == null
-          ? null
-          : List<String>.from(data['sideDipSauceOptions']),
-      freeDipCupCount: data['freeDipCupCount'] == null
-          ? null
-          : Map<String, int>.from((data['freeDipCupCount'] as Map).map(
-              (key, value) => MapEntry(key, (value as num).toInt()),
-            )),
-      sideDipUpcharge: data['sideDipUpcharge'] == null
-          ? null
-          : Map<String, double>.from((data['sideDipUpcharge'] as Map).map(
-              (key, value) => MapEntry(key, (value as num).toDouble()),
-            )),
-      // NEW: raw customizations
-      templateRefs:
-          (data['templateRefs'] as List?)?.map((e) => e.toString()).toList(),
-    );
   }
 
-  factory MenuItem.fromMap(Map<String, dynamic> data, [String? id]) =>
-      MenuItem.fromFirestore(data, id ?? data['id'] ?? '');
+  factory MenuItem.fromMap(Map<String, dynamic> data, [String? id]) {
+    try {
+      return MenuItem.fromFirestore(data, id ?? data['id'] ?? '');
+    } catch (e, stack) {
+      ErrorLogger.log(
+        message: 'MenuItem.fromMap failed',
+        source: 'MenuItem.fromMap',
+        screen: 'menu_item_provider.dart',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {
+          'id': id ?? data['id'] ?? '',
+          'rawData': data.map((k, v) => MapEntry(k, v.toString())),
+          'error': e.toString(),
+        },
+      );
+      rethrow;
+    }
+  }
 
   Map<String, dynamic> toFirestore() {
     final priceField =
@@ -400,8 +518,6 @@ class MenuItem {
       'archived': archived,
       'exportId': exportId,
       //customization groups
-      if (customizationGroups != null)
-        'customizationGroups': customizationGroups,
       if (sizes != null) 'sizes': sizes!.map((s) => s.toMap()).toList(),
       if (sizePrices != null) 'sizePrices': sizePrices,
       if (additionalToppingPrices != null)
@@ -542,6 +658,7 @@ class MenuItem {
 
   MenuItem copyWith({
     String? id,
+    bool? available,
     String? category,
     String? categoryId,
     String? name,
@@ -601,6 +718,7 @@ class MenuItem {
   }) {
     return MenuItem(
       id: id ?? this.id,
+      available: available ?? this.available,
       category: category ?? this.category,
       categoryId: categoryId ?? this.categoryId,
       name: name ?? this.name,
@@ -665,4 +783,89 @@ class MenuItem {
 
   factory MenuItem.fromJson(Map<String, dynamic> data) =>
       MenuItem.fromMap(data);
+
+  /// Checks if this menu item references a given categoryId (case-insensitive).
+  bool matchesCategoryId(String? otherCategoryId) =>
+      otherCategoryId != null &&
+      categoryId.toLowerCase() == otherCategoryId.toLowerCase();
+
+  /// Checks if this menu item references a given category name (case-insensitive, trimmed).
+  bool matchesCategoryName(String? otherName) =>
+      otherName != null &&
+      category.trim().toLowerCase() == otherName.trim().toLowerCase();
+
+  /// Returns a list of all ingredient IDs referenced by this item (included, add-ons, customization groups).
+  List<String> get allReferencedIngredientIds {
+    final ids = <String>{};
+    ids.addAll(includedIngredientIds);
+    ids.addAll(optionalAddOnIds);
+    ids.addAll(allGroupIngredientIds);
+    return ids.toList();
+  }
+
+  /// Returns all referenced ingredient type IDs, if present.
+  List<String> get allReferencedIngredientTypeIds {
+    // Checks includedIngredients and optionalAddOns for 'typeId'
+    final ids = <String>{};
+    if (includedIngredients != null) {
+      for (final e in includedIngredients!) {
+        if (e.containsKey('typeId') &&
+            e['typeId'] is String &&
+            (e['typeId'] as String).isNotEmpty) {
+          ids.add(e['typeId']);
+        }
+      }
+    }
+    if (optionalAddOns != null) {
+      for (final e in optionalAddOns!) {
+        if (e.containsKey('typeId') &&
+            e['typeId'] is String &&
+            (e['typeId'] as String).isNotEmpty) {
+          ids.add(e['typeId']);
+        }
+      }
+    }
+    return ids.toList();
+  }
+
+  /// Utility: Checks for missing references by comparing to schema lists.
+  /// Returns a map of schema element type to list of missing values.
+  Map<String, List<String>> findSchemaIssues({
+    required List<String> validCategoryIds,
+    required List<String> validIngredientIds,
+    required List<String> validIngredientTypeIds,
+  }) {
+    final issues = <String, List<String>>{};
+
+    // Category
+    if (!validCategoryIds.any((id) => matchesCategoryId(id))) {
+      issues['categoryId'] = [categoryId];
+    }
+
+    // Ingredients
+    final missingIngredients = allReferencedIngredientIds
+        .where((id) => !validIngredientIds.contains(id))
+        .toList();
+    if (missingIngredients.isNotEmpty) {
+      issues['ingredients'] = missingIngredients;
+    }
+
+    // Ingredient Types
+    final missingTypes = allReferencedIngredientTypeIds
+        .where((id) => !validIngredientTypeIds.contains(id))
+        .toList();
+    if (missingTypes.isNotEmpty) {
+      issues['ingredientTypes'] = missingTypes;
+    }
+
+    return issues;
+  }
+
+  /// Warn if critical fields are missing (for onboarding/mapping/debugging).
+  String? get schemaWarning {
+    if (id.isEmpty || name.isEmpty || categoryId.isEmpty) {
+      return "MenuItem missing required id, name, or categoryId: id='$id', name='$name', categoryId='$categoryId'";
+    }
+    return null;
+  }
 }

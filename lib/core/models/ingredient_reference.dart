@@ -30,16 +30,32 @@ class IngredientReference extends Equatable {
 
   /// Deserialize from Firestore
   factory IngredientReference.fromMap(Map<String, dynamic> data) {
+    // Support both admin export and runtime keys:
+    final id = data['id'] ?? data['ingredientId'] ?? '';
+    final name = data['name'] ?? '';
+    final typeId = data['typeId'] ?? data['type'] ?? '';
+    final isRemovable = data['isRemovable'] ?? data['removable'] ?? true;
+    final upcharge = (data['upcharge'] ?? data['price']) as num?;
+    final doubled = data['doubled'] as bool?;
+    final side = data['side'] as String?;
+
+    if (id == '' || name == '' || typeId == '') {
+      print(
+          '[IngredientReference.fromMap] WARNING: missing required fields! map=$data');
+    }
+
     return IngredientReference(
-      id: data['id'] as String,
-      name: data['name'] as String,
-      typeId: data['typeId'] as String,
-      doubled: data['doubled'] as bool?,
-      isRemovable: data['isRemovable'] as bool?,
-      upcharge: (data['upcharge'] as num?)?.toDouble(),
-      side: data['side'] as String?,
+      id: id,
+      name: name,
+      typeId: typeId,
+      doubled: doubled,
+      isRemovable: isRemovable,
+      upcharge: upcharge?.toDouble(),
+      side: side,
     );
   }
+
+  bool get isValid => id.isNotEmpty && name.isNotEmpty && typeId.isNotEmpty;
 
   /// Serialize to Firestore
   Map<String, dynamic> toMap() {
@@ -81,4 +97,21 @@ class IngredientReference extends Equatable {
 
   @override
   String toString() => 'IngredientReference($name - $typeId)';
+
+  /// Checks if this ingredient reference matches an ID (case-insensitive).
+  bool matchesId(String? otherId) =>
+      otherId != null && id.toLowerCase() == otherId.toLowerCase();
+
+  /// Checks if this ingredient reference matches a name (case-insensitive, trimmed).
+  bool matchesName(String? otherName) =>
+      otherName != null &&
+      name.trim().toLowerCase() == otherName.trim().toLowerCase();
+
+  /// Checks if this reference matches a typeId (case-insensitive).
+  bool matchesTypeId(String? otherTypeId) =>
+      otherTypeId != null && typeId.toLowerCase() == otherTypeId.toLowerCase();
+
+  /// Batch utility: returns all referenced IDs from a list of IngredientReferences.
+  static List<String> extractIds(List<IngredientReference> refs) =>
+      refs.map((e) => e.id).where((id) => id.isNotEmpty).toList();
 }
