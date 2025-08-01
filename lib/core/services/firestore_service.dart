@@ -3853,6 +3853,8 @@ class FirestoreService {
   /// Get onboarding progress for a franchise
   Future<Map<String, dynamic>?> getOnboardingProgress(
       String franchiseId) async {
+    print(
+        '[DEBUG][FirestoreService.getOnboardingProgress] Called with franchiseId="$franchiseId"');
     try {
       final doc =
           await _db.collection('onboarding_progress').doc(franchiseId).get();

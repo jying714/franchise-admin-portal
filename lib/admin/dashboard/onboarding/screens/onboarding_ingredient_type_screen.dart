@@ -190,6 +190,7 @@ class _IngredientTypeManagementScreenState
       ),
       backgroundColor: colorScheme.background,
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'onboarding_ingredient_type_fab',
         onPressed: () => _showFormDialog(),
         label: Text(loc.addIngredientType),
         icon: const Icon(Icons.add),

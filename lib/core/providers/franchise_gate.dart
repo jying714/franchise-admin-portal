@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'franchise_selector.dart';
 import 'franchise_provider.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 class FranchiseGate extends StatelessWidget {
   final Widget child;
@@ -12,35 +12,41 @@ class FranchiseGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final franchiseProvider = Provider.of<FranchiseProvider>(context);
-    final user = Provider.of<UserProfileNotifier>(context).user;
-    print('[FranchiseGate] build called with child=${child.runtimeType}');
+    final user = Provider.of<AdminUserProvider>(context).user;
 
-    // Wait for provider to finish loading franchiseId from storage
-    if (franchiseProvider.loading) {
-      return const MaterialApp(
-        home: Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        ),
+    if (user == null) {
+      print('[FranchiseGate] ⏳ Admin user not yet available.');
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    // Determine roles
-    final roles = user?.roles ?? [];
-    final isHqOrDev = roles.contains('hq_owner') ||
-        roles.contains('hq_manager') ||
-        roles.contains('developer');
+    final roles = user.roles;
+    final isFranchiseOptionalRole = roles.contains('platform_owner') ||
+        roles.contains('developer') ||
+        roles.contains('hq_owner');
 
-    // Only force franchise selection for users that MUST select a franchise
-    if (!franchiseProvider.isFranchiseSelected && !isHqOrDev) {
-      return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: FranchiseSelector(
+    print('[FranchiseGate] build() for ${child.runtimeType}');
+    print('[FranchiseGate] Roles: $roles');
+    print(
+        '[FranchiseGate] Franchise selected: ${franchiseProvider.isFranchiseSelected}');
+    print(
+        '[FranchiseGate] FranchiseProvider loading: ${franchiseProvider.loading}');
+
+    if (franchiseProvider.loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (!franchiseProvider.isFranchiseSelected && !isFranchiseOptionalRole) {
+      return Scaffold(
+        body: FranchiseSelector(
           onSelected: (id) => franchiseProvider.setFranchiseId(id),
         ),
       );
     }
 
-    // All good: render the protected child
     return child;
   }
 }

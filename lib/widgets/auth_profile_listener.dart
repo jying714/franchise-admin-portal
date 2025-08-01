@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';

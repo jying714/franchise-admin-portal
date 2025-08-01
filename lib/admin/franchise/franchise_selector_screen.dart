@@ -6,7 +6,7 @@ import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_sidebar.dart';
 import 'package:franchise_admin_portal/widgets/admin/franchise_selector.dart';
 import 'package:franchise_admin_portal/core/models/franchise_info.dart';
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/utils/franchise_utils.dart';
 
 class FranchiseSelectorScreen extends StatefulWidget {

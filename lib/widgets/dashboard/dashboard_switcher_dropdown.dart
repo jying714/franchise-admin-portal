@@ -1,31 +1,33 @@
-// widgets/dashboard/dashboard_switcher_dropdown.dart
-
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/core/models/user.dart' as app;
 
 class DashboardSwitcherDropdown extends StatelessWidget {
   final String currentScreen;
+  final app.User user;
 
-  const DashboardSwitcherDropdown({super.key, required this.currentScreen});
+  const DashboardSwitcherDropdown({
+    super.key,
+    required this.currentScreen,
+    required this.user,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<UserProfileNotifier>(context).user;
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
+          '[DashboardSwitcherDropdown] loc is null! Localization not available.');
+      return const Scaffold(
         body: Center(child: Text('Localization missing! [debug]')),
       );
     }
-    print(
-        '[DashboardSwitcherDropdown] build called with roles=${user?.roles}, currentScreen="$currentScreen"');
-    final roles = user?.roles ?? [];
 
-    // Only allow for hq_owner, hq_manager, developer
+    final roles = user.roles;
+    print(
+        '[DashboardSwitcherDropdown] build called with roles=$roles, currentScreen="$currentScreen"');
+
+    // Only allow access if one of the supported roles is present
     if (!roles.any((r) => [
           'platform_owner',
           'hq_owner',
@@ -35,24 +37,23 @@ class DashboardSwitcherDropdown extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // Build the list of dashboards available to this user
     final options = <_DashboardTarget>[
       _DashboardTarget(
         key: 'admin',
         label: loc.adminDashboardTitle ?? 'Admin Dashboard',
-        route: '/admin/dashboard', // <-- matches your route
+        route: '/admin/dashboard',
       ),
       if (roles.contains('developer'))
         _DashboardTarget(
           key: 'developer',
           label: loc.developerDashboardTitle ?? 'Developer Dashboard',
-          route: '/developer/dashboard', // <-- matches your route
+          route: '/developer/dashboard',
         ),
       if (roles.contains('hq_owner') || roles.contains('hq_manager'))
         _DashboardTarget(
           key: 'hq',
           label: loc.ownerHQDashboardTitle ?? 'HQ Dashboard',
-          route: '/hq-owner/dashboard', // <-- matches your route
+          route: '/hq-owner/dashboard',
         ),
       if (roles.contains('platform_owner'))
         _DashboardTarget(
@@ -74,14 +75,13 @@ class DashboardSwitcherDropdown extends StatelessWidget {
         color: Theme.of(context).colorScheme.primary,
         fontWeight: FontWeight.w600,
       ),
-      underline: SizedBox.shrink(),
+      underline: const SizedBox.shrink(),
       onChanged: (selected) {
         if (selected == null) return;
-        if (selected.route == ModalRoute.of(context)?.settings.name)
-          return; // already here
-        print(
-            '[DEBUG-NAV] FROM DASHBOARD SWITCHER DOPDOWN Attempting to navigate to /developer/select-franchise from <filename>:<linenumber>');
+        if (selected.route == ModalRoute.of(context)?.settings.name) return;
 
+        print(
+            '[DEBUG-NAV] FROM DASHBOARD SWITCHER DROPDOWN → Navigating to ${selected.route}');
         Navigator.of(context).pushReplacementNamed(selected.route);
       },
       items: options.map((opt) {
@@ -98,6 +98,10 @@ class _DashboardTarget {
   final String key;
   final String label;
   final String route;
-  _DashboardTarget(
-      {required this.key, required this.label, required this.route});
+
+  _DashboardTarget({
+    required this.key,
+    required this.label,
+    required this.route,
+  });
 }

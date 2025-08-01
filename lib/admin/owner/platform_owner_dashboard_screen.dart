@@ -7,7 +7,7 @@ import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as app;
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 import 'package:franchise_admin_portal/core/providers/franchisee_invitation_provider.dart';
 import 'package:franchise_admin_portal/widgets/financials/franchisee_invitation_service.dart';
@@ -23,7 +23,12 @@ import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_s
 import 'package:franchise_admin_portal/admin/owner/sections/quick_links_card.dart';
 
 class PlatformOwnerDashboardScreen extends StatelessWidget {
-  const PlatformOwnerDashboardScreen({Key? key}) : super(key: key);
+  final String currentScreen;
+
+  const PlatformOwnerDashboardScreen({
+    Key? key,
+    required this.currentScreen,
+  }) : super(key: key);
 
   bool _isPlatformOwner(app.User? user) {
     // Adjust this logic as needed; assumes you have a 'platform_owner' or similar role.
@@ -152,7 +157,9 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
             ),
             actions: [
               DashboardSwitcherDropdown(
-                  currentScreen: '/platform-owner/dashboard'),
+                currentScreen: '/platform-owner/dashboard',
+                user: user,
+              ),
               Padding(
                 padding: const EdgeInsets.only(right: 16),
                 child: Chip(

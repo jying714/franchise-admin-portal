@@ -126,6 +126,10 @@ class IngredientReference extends Equatable {
   bool matchesTypeId(String? otherTypeId) =>
       otherTypeId != null && typeId.toLowerCase() == otherTypeId.toLowerCase();
 
+  /// Checks if this reference matches the given label (case-insensitive, trimmed).
+  bool matchesLabel(String? label) =>
+      label != null && name.trim().toLowerCase() == label.trim().toLowerCase();
+
   /// Batch utility: returns all referenced IDs from a list of IngredientReferences.
   static List<String> extractIds(List<IngredientReference> refs) =>
       refs.map((e) => e.id).where((id) => id.isNotEmpty).toList();

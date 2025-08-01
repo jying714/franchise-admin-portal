@@ -238,6 +238,7 @@ class _OnboardingCategoriesScreenState
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'onboarding_categories_fab',
         onPressed: () => _openCategoryForm(),
         icon: const Icon(Icons.add),
         label: Text(loc.addCategory),

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
 import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
@@ -18,36 +19,78 @@ class FranchiseSubscriptionNotifier extends ChangeNotifier {
   bool _hasLoaded = false;
   bool get hasLoaded => _hasLoaded;
 
+  String get franchiseId => _franchiseId;
+
   StreamSubscription<FranchiseSubscription?>? _subscriptionStream;
+
+  // Guards
+  bool _planResolved = false;
+  bool _resolvingPlan = false;
+
+  // Role handling
+  List<String> _userRoles = [];
+  void setUserRoles(List<String> roles) {
+    _userRoles = roles;
+  }
 
   FranchiseSubscriptionNotifier({
     required FranchiseSubscriptionService service,
     required String franchiseId,
   })  : _service = service,
         _franchiseId = franchiseId {
-    if (franchiseId.isNotEmpty) {
+    if (_shouldTrackSubscription(franchiseId)) {
       _initSubscription(franchiseId);
     }
   }
 
+  bool _shouldTrackSubscription(String franchiseId) {
+    return franchiseId.isNotEmpty &&
+        franchiseId != 'unknown' &&
+        !_userRoles.contains('platform_owner') &&
+        !_userRoles.contains('developer');
+  }
+
   void _initSubscription(String franchiseId) {
-    _subscriptionStream?.cancel(); // Clear prior stream
+    _subscriptionStream?.cancel();
+
+    if (!_shouldTrackSubscription(franchiseId)) {
+      if (kDebugMode) {
+        debugPrint(
+            '[FranchiseSubscriptionNotifier] ⛔ Subscription tracking skipped for roles: $_userRoles');
+      }
+      return;
+    }
+
+    if (kDebugMode) {
+      debugPrint(
+          '[FranchiseSubscriptionNotifier] 📡 Listening to franchiseId: $franchiseId');
+    }
 
     _subscriptionStream =
         _service.watchCurrentSubscription(franchiseId).listen((sub) async {
-      print('[FranchiseSubscriptionNotifier] Received: ${sub?.platformPlanId}');
+      if (kDebugMode) {
+        debugPrint(
+            '[FranchiseSubscriptionNotifier] 📥 Stream emitted subscription: ${sub?.platformPlanId}');
+      }
 
       if (sub == null) {
-        print(
-            '[FranchiseSubscriptionNotifier] Stream null, fallback to getCurrentSubscription()');
+        if (kDebugMode) {
+          debugPrint(
+              '[FranchiseSubscriptionNotifier] ⚠️ Stream returned null. Attempting fallback via getCurrentSubscription().');
+        }
+
         try {
           final fallback = await _service.getCurrentSubscription(franchiseId);
           _currentSubscription = fallback;
           _hasLoaded = true;
           notifyListeners();
-          print(
-              '[FranchiseSubscriptionNotifier] Fallback subscription loaded.');
-          await resolveActivePlan(); // resolve after fallback
+          if (kDebugMode) {
+            debugPrint(
+                '[FranchiseSubscriptionNotifier] ✅ Fallback subscription loaded.');
+          }
+          if (!_planResolved) {
+            await resolveActivePlan();
+          }
         } catch (e, stack) {
           await ErrorLogger.log(
             message: 'Fallback getCurrentSubscription failed: $e',
@@ -62,22 +105,43 @@ class FranchiseSubscriptionNotifier extends ChangeNotifier {
         _currentSubscription = sub;
         _hasLoaded = true;
         notifyListeners();
-        print('[FranchiseSubscriptionNotifier] Notified listeners.');
-        await resolveActivePlan(); // resolve after real-time update
+        if (kDebugMode) {
+          debugPrint(
+              '[FranchiseSubscriptionNotifier] ✅ Subscription received and listeners notified.');
+        }
+        if (!_planResolved) {
+          await resolveActivePlan();
+        }
       }
     });
   }
 
   Future<void> resolveActivePlan() async {
+    if (_planResolved || _resolvingPlan) return;
+
+    if (_userRoles.contains('platform_owner') ||
+        _userRoles.contains('developer')) {
+      if (kDebugMode) {
+        debugPrint(
+            '[FranchiseSubscriptionNotifier] ⛔ resolveActivePlan skipped for roles: $_userRoles');
+      }
+      return;
+    }
+
     final planId = _currentSubscription?.platformPlanId;
     if (planId == null || planId.isEmpty) return;
+
+    _resolvingPlan = true;
 
     try {
       final plan = await _service.getPlatformPlanById(planId);
       _activePlatformPlan = plan;
+      _planResolved = true;
       notifyListeners();
-      print(
-          '[FranchiseSubscriptionNotifier] Resolved active plan: ${plan?.name}');
+      if (kDebugMode) {
+        debugPrint(
+            '[FranchiseSubscriptionNotifier] ✅ Resolved active plan: ${plan?.name}');
+      }
     } catch (e, stack) {
       await ErrorLogger.log(
         message: 'Failed to fetch active platform plan: $e',
@@ -87,15 +151,47 @@ class FranchiseSubscriptionNotifier extends ChangeNotifier {
         severity: 'warning',
         contextData: {'planId': planId},
       );
+    } finally {
+      _resolvingPlan = false;
     }
   }
 
   void updateFranchiseId(String newId) {
-    if (newId.isNotEmpty && _franchiseId != newId) {
-      _franchiseId = newId;
-      _hasLoaded = false;
-      _initSubscription(newId);
+    if (newId.isEmpty || newId == _franchiseId) return;
+
+    if (kDebugMode) {
+      debugPrint(
+          '[FranchiseSubscriptionNotifier] 🔁 Updating franchiseId to: $newId');
     }
+
+    _franchiseId = newId;
+    _hasLoaded = false;
+    _planResolved = false;
+    _resolvingPlan = false;
+
+    if (_shouldTrackSubscription(newId)) {
+      _initSubscription(newId);
+    } else {
+      if (kDebugMode) {
+        debugPrint(
+            '[FranchiseSubscriptionNotifier] Skipped initSubscription for $newId due to role or id constraints.');
+      }
+    }
+  }
+
+  // === Subscription Status Flags ===
+  bool get isTrialExpired {
+    final expiry = _currentSubscription?.trialEndsAt;
+    return expiry != null && DateTime.now().isAfter(expiry);
+  }
+
+  bool get isOverdue {
+    final status = _currentSubscription?.status.toLowerCase();
+    return status == 'overdue' || status == 'past_due' || status == 'unpaid';
+  }
+
+  bool get isActivePlanCustom {
+    return _activePlatformPlan?.isCustom ?? false;
   }
 
   @override

@@ -158,3 +158,5 @@ FeatureGate(
 * Integrate feature toggle config with Firestore `/franchise_features`.
 * Build dev-only screen to inspect all franchise plans + feature state.
 * Wire these into onboarding flow to dynamically hide or show modules.
+
+---

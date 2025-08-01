@@ -23,6 +23,18 @@ class UserProfileNotifier extends ChangeNotifier {
   FirestoreService? _lastFirestoreService;
   String? _lastUid;
 
+  void loadUser() {
+    final firebaseUser = fb_auth.FirebaseAuth.instance.currentUser;
+    if (firebaseUser != null) {
+      listenToUser(
+        FirestoreService(),
+        firebaseUser.uid,
+      );
+    } else {
+      debugPrint('[UserProfileNotifier] loadUser: firebaseUser is null');
+    }
+  }
+
   void listenToUser(FirestoreService firestoreService, String? uid,
       [FranchiseProvider? franchiseProvider]) {
     print('[UserProfileNotifier] listenToUser called for uid=$uid');
@@ -38,10 +50,15 @@ class UserProfileNotifier extends ChangeNotifier {
       _user = null;
       _loading = false;
       _lastError = null;
+
+      if (franchiseProvider != null) {
+        franchiseProvider.clearFranchiseContext(); // ✅ Clear franchise state
+      }
+
+      _lastFranchiseProvider = null; // ✅ Only clear when uid is null
       _deferNotifyListeners();
       return;
     }
-
     print(
         '[UserProfileNotifier] Attempting to subscribe: uid=$uid, firestoreService=$firestoreService');
     _loading = true;

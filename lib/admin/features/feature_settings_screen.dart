@@ -7,8 +7,9 @@ import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 class FeatureSettingsScreen extends StatefulWidget {
   const FeatureSettingsScreen({super.key});
@@ -117,7 +118,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
         body: Center(child: Text('Localization missing! [debug]')),
       );
     }
-    final user = Provider.of<UserProfileNotifier>(context).user;
+    final user = Provider.of<AdminUserProvider>(context, listen: false).user;
 
     // Not logged in
     if (user == null) {

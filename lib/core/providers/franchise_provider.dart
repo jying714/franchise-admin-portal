@@ -20,6 +20,9 @@ class FranchiseProvider extends ChangeNotifier {
   admin_user.User? get adminUser => _adminUser;
   bool get isDeveloper => _adminUser?.isDeveloper ?? false;
 
+  bool get hasValidFranchise =>
+      _franchiseId.isNotEmpty && _franchiseId != 'unknown';
+
   FranchiseProvider() {
     _loadFranchiseId();
   }
@@ -163,5 +166,12 @@ class FranchiseProvider extends ChangeNotifier {
     // Everyone else is filtered to their allowed franchise IDs
     final allowedIds = _adminUser!.franchiseIds;
     return _allFranchises.where((f) => allowedIds.contains(f.id)).toList();
+  }
+
+  void clearFranchiseContext() {
+    _franchiseId = '';
+    _allFranchises = [];
+    _adminUser = null;
+    notifyListeners();
   }
 }

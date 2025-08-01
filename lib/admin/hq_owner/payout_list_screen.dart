@@ -7,7 +7,7 @@ import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
 import 'package:franchise_admin_portal/core/models/alert_model.dart';
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/financials/payouts_filter_bar.dart';

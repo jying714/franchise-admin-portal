@@ -9,13 +9,14 @@ import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
 import 'package:franchise_admin_portal/core/models/chat.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/core/utils/user_permissions.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
-import 'package:franchise_admin_portal/core/utils/role_guard.dart';
+import 'package:franchise_admin_portal/core/providers/role_guard.dart';
+import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 class ChatManagementScreen extends StatelessWidget {
   const ChatManagementScreen({super.key});
@@ -25,7 +26,7 @@ class ChatManagementScreen extends StatelessWidget {
     final franchiseId = context.watch<FranchiseProvider>().franchiseId;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
-    final user = Provider.of<UserProfileNotifier>(context).user;
+    final user = Provider.of<AdminUserProvider>(context, listen: false).user;
 
     return RoleGuard(
       allowedRoles: const [

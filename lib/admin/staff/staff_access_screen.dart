@@ -8,11 +8,11 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/utils/role_guard.dart';
+import 'package:franchise_admin_portal/core/providers/role_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
 
@@ -58,6 +58,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
         child: Scaffold(
           backgroundColor: DesignTokens.backgroundColor,
           floatingActionButton: FloatingActionButton(
+            heroTag: 'staff_access_fab',
             backgroundColor: DesignTokens.primaryColor,
             tooltip: loc.staffAddStaffTooltip,
             child: const Icon(Icons.person_add),

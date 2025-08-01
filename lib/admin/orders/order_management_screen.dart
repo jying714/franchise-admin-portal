@@ -8,12 +8,13 @@ import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
-import 'package:franchise_admin_portal/core/utils/role_guard.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/role_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 class OrderManagementScreen extends StatelessWidget {
   const OrderManagementScreen({super.key});
@@ -197,17 +198,27 @@ class _OrderManagementScreenContentState
   @override
   Widget build(BuildContext context) {
     final franchiseId = context.watch<FranchiseProvider>().franchiseId;
-    final userNotifier = Provider.of<UserProfileNotifier>(context);
-    final user = userNotifier.user;
-    final loading = userNotifier.loading;
+    final userProvider = context.watch<AdminUserProvider>();
+    final user = userProvider.user;
+    final loading = userProvider.loading;
+
+    debugPrint(
+        '[OrderManagementScreen] User: ${user?.email}, roles: ${user?.roles}');
+    debugPrint('[OrderManagementScreen] Loading: $loading');
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context);
 
-    if (loading || user == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+    if (user == null) {
+      if (loading) {
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      } else {
+        return const Scaffold(
+          body: Center(child: Text('Unauthorized — No admin user')),
+        );
+      }
     }
 
     return RoleGuard(

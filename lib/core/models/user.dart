@@ -144,4 +144,7 @@ class User {
       onboardingComplete: onboardingComplete ?? this.onboardingComplete,
     );
   }
+
+  bool get isFranchiseRequired =>
+      !(isPlatformOwner || isDeveloper || isHqOwner);
 }

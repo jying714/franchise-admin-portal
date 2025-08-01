@@ -5,8 +5,8 @@ import 'package:franchise_admin_portal/core/models/franchise_info.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
-import 'package:franchise_admin_portal/core/utils/role_guard.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/role_guard.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_info_provider.dart';
@@ -124,10 +124,11 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     subtitle: loc.stepFeatureSetupDesc,
                     completed: progress['feature_setup'] == true,
                     onTap: () {
-                      Navigator.pushNamedAndRemoveUntil(
+                      print(
+                          '[OnboardingMenuScreen] Navigating to onboarding_feature_setup');
+                      Navigator.pushNamed(
                         context,
                         '/dashboard?section=onboarding_feature_setup',
-                        (route) => false,
                       );
                     },
                   ),
@@ -137,10 +138,11 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     subtitle: loc.stepIngredientTypesDesc,
                     completed: progress['ingredientTypes'] == true,
                     onTap: () {
-                      Navigator.pushNamedAndRemoveUntil(
+                      print(
+                          '[OnboardingMenuScreen] Navigating to onboardingIngredientTypes');
+                      Navigator.pushNamed(
                         context,
                         '/dashboard?section=onboardingIngredientTypes',
-                        (route) => false,
                       );
                     },
                   ),
@@ -150,10 +152,11 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     subtitle: loc.stepIngredientsDesc,
                     completed: progress['ingredients'] == true,
                     onTap: () {
-                      Navigator.pushNamedAndRemoveUntil(
+                      print(
+                          '[OnboardingMenuScreen] Navigating to onboardingIngredients');
+                      Navigator.pushNamed(
                         context,
                         '/dashboard?section=onboardingIngredients',
-                        (route) => false,
                       );
                     },
                   ),
@@ -163,10 +166,11 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     subtitle: loc.stepCategoriesDesc,
                     completed: progress['categories'] == true,
                     onTap: () {
-                      Navigator.pushNamedAndRemoveUntil(
+                      print(
+                          '[OnboardingMenuScreen] Navigating to onboardingCategories');
+                      Navigator.pushNamed(
                         context,
                         '/dashboard?section=onboardingCategories',
-                        (route) => false,
                       );
                     },
                   ),
@@ -176,10 +180,11 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     subtitle: loc.stepMenuItemsDesc,
                     completed: progress['menuItems'] == true,
                     onTap: () {
-                      Navigator.pushNamedAndRemoveUntil(
+                      print(
+                          '[OnboardingMenuScreen] Navigating to onboardingMenuItems');
+                      Navigator.pushNamed(
                         context,
                         '/dashboard?section=onboardingMenuItems',
-                        (route) => false,
                       );
                     },
                   ),

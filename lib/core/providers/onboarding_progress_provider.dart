@@ -22,21 +22,37 @@ class OnboardingProgressProvider extends ChangeNotifier {
   bool isStepComplete(String stepKey) => _stepStatus[stepKey] == true;
 
   Future<void> _loadProgress() async {
+    print(
+        '[DEBUG][OnboardingProgressProvider] Loading for franchiseId: "$franchiseId"');
+    if (franchiseId.isEmpty) {
+      print(
+          '[ERROR][OnboardingProgressProvider] FranchiseId is empty! Skipping progress load.');
+      await ErrorLogger.log(
+        message: 'Failed to load onboarding progress for empty franchiseId',
+        stack: '',
+        source: 'OnboardingProgressProvider',
+        screen: 'onboarding_menu_screen',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      _stepStatus = {};
+      _loading = false;
+      notifyListeners();
+      return;
+    }
     try {
       _loading = true;
       notifyListeners();
 
       final data = await firestore.getOnboardingProgress(franchiseId);
-      // Define the canonical onboarding steps here:
       final defaultSteps = [
-        'ingredientTypes', // <-- New Step 1
-        'ingredients', // Step 2
-        'categories', // Step 3
-        'menuItems', // Step 4
-        'review', // Step 5
+        'ingredientTypes',
+        'ingredients',
+        'categories',
+        'menuItems',
+        'review',
       ];
 
-      // Always include all default steps, mark true if present/true in Firestore
       _stepStatus = {
         for (final step in defaultSteps)
           step: data != null && data[step] == true
@@ -57,6 +73,20 @@ class OnboardingProgressProvider extends ChangeNotifier {
   }
 
   Future<void> markStepComplete(String stepKey) async {
+    if (franchiseId.isEmpty) {
+      print(
+          '[ERROR][OnboardingProgressProvider] Cannot mark step complete: franchiseId is empty!');
+      await ErrorLogger.log(
+        message:
+            'Failed to mark onboarding step "$stepKey" complete: franchiseId is empty',
+        stack: '',
+        source: 'OnboardingProgressProvider',
+        screen: 'onboarding_menu_screen',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId, 'stepKey': stepKey},
+      );
+      return;
+    }
     try {
       await firestore.updateOnboardingStep(
         franchiseId: franchiseId,
@@ -78,6 +108,20 @@ class OnboardingProgressProvider extends ChangeNotifier {
   }
 
   Future<void> markStepIncomplete(String stepKey) async {
+    if (franchiseId.isEmpty) {
+      print(
+          '[ERROR][OnboardingProgressProvider] Cannot mark step incomplete: franchiseId is empty!');
+      await ErrorLogger.log(
+        message:
+            'Failed to mark onboarding step "$stepKey" incomplete: franchiseId is empty',
+        stack: '',
+        source: 'OnboardingProgressProvider',
+        screen: 'onboarding_menu_screen',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId, 'stepKey': stepKey},
+      );
+      return;
+    }
     try {
       await firestore.updateOnboardingStep(
         franchiseId: franchiseId,

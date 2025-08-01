@@ -9,7 +9,7 @@ import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
 import 'package:franchise_admin_portal/core/models/alert_model.dart';
 import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
 
 /// Dashboard card: At-a-glance payout summary + live payout-related alerts.
 class PayoutStatusCard extends StatelessWidget {

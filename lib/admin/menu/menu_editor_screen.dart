@@ -2,7 +2,7 @@ import 'package:franchise_admin_portal/admin/menu/menu_item_editor_panel.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_dialog.dart';
 import 'package:franchise_admin_portal/widgets/delayed_loading_shimmer.dart';
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/admin/menu/dynamic_menu_item_editor_screen.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_menu_editor_popup_menu.dart';
 import 'package:franchise_admin_portal/widgets/header/franchise_app_bar.dart';
@@ -28,10 +28,11 @@ import 'package:franchise_admin_portal/admin/menu/customization_types.dart'
     as ct;
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/utils/role_guard.dart';
+import 'package:franchise_admin_portal/core/providers/role_guard.dart';
 import 'package:franchise_admin_portal/core/utils/user_permissions.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
+import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 const menuItemColumns = [
   {"key": "image", "width": 56.0, "header": "Image"},
@@ -48,18 +49,7 @@ class MenuEditorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RoleGuard(
-      requireAnyRole: [
-        'platform_owner',
-        'hq_owner',
-        'manager',
-        'developer',
-        'admin',
-      ],
-      featureName: 'menu_editor_screen',
-      screen: 'MenuEditorScreen',
-      child: const MenuEditorScreenContent(),
-    );
+    return const MenuEditorScreenContent();
   }
 }
 
@@ -535,23 +525,37 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
   Widget build(BuildContext context) {
     final franchiseId = context.watch<FranchiseProvider>().franchiseId;
     final firestore = Provider.of<FirestoreService>(context, listen: false);
-    final user = Provider.of<UserProfileNotifier>(context).user;
+    final user = Provider.of<AdminUserProvider>(context).user;
+    final isLoading = context.watch<AdminUserProvider>().loading;
     final loc = AppLocalizations.of(context);
+
+    debugPrint('[MenuEditorScreen] 🧭 Route Loaded');
+    debugPrint('[MenuEditorScreen] Franchise ID: $franchiseId');
+    debugPrint('[MenuEditorScreen] AdminUserProvider loading: $isLoading');
     debugPrint(
-        '[MenuEditorScreen] Current user: ${user?.email}, roles: ${user?.roles}, franchiseId: $franchiseId');
+        '[MenuEditorScreen] Current user: ${user?.email}, roles: ${user?.roles}');
 
     if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
+      debugPrint(
+          '[MenuEditorScreen] ❗ Localization is null — returning fallback UI');
+      return const Scaffold(
+        body: Center(child: Text('Localization missing!')),
       );
     }
 
     if (user == null) {
-      debugPrint(
-          '[MenuEditorScreen] No user loaded – returning unauthorized scaffold');
-      return _unauthorizedScaffold();
+      if (isLoading) {
+        debugPrint('[MenuEditorScreen] ⏳ Admin user loading...');
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      } else {
+        debugPrint(
+            '[MenuEditorScreen] ❌ No admin user loaded — aborting screen.');
+        return const Scaffold(
+          body: Center(child: Text('Unauthorized — No admin user')),
+        );
+      }
     }
 
     final colorScheme = Theme.of(context).colorScheme;
@@ -901,6 +905,8 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
                                               alignment: Alignment.bottomRight,
                                               child:
                                                   FloatingActionButton.extended(
+                                                heroTag:
+                                                    'menu_editor_add_item_fab',
                                                 backgroundColor:
                                                     Theme.of(context)
                                                                 .brightness ==

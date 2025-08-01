@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_subscription_provider.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 class SubscriptionAccessGuard extends StatelessWidget {
   final Widget child;
@@ -9,6 +11,16 @@ class SubscriptionAccessGuard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.read<AdminUserProvider>().user;
+
+    // Bypass check for privileged roles
+    final roles = user?.roles ?? [];
+    final isBypass =
+        roles.contains('platform_owner') || roles.contains('developer');
+    debugPrint('[SubscriptionAccessGuard] User roles: ${user?.roles}');
+    debugPrint('[SubscriptionAccessGuard] isBypass: $isBypass');
+    if (isBypass) return child;
+
     final sub =
         context.watch<FranchiseSubscriptionNotifier>().currentSubscription;
 

@@ -23,10 +23,21 @@ class FranchiseInfoProvider extends ChangeNotifier {
 
   /// Call this whenever the franchiseId changes.
   Future<void> loadFranchiseInfo() async {
-    final id = franchiseProvider.franchiseId;
-    if (id == null || id.isEmpty) {
-      _franchise = null;
-      notifyListeners();
+    final fid = franchiseProvider.franchiseId;
+
+    if (fid == null || fid.isEmpty || fid == 'unknown') {
+      debugPrint(
+          '[FranchiseInfoProvider] Skipping load — invalid franchiseId: "$fid"');
+
+      if (_franchise != null) {
+        _franchise = null;
+        notifyListeners();
+      }
+      return;
+    }
+
+    if (_franchise?.id == fid) {
+      // Already loaded — skip
       return;
     }
 
@@ -34,7 +45,8 @@ class FranchiseInfoProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final info = await firestore.getFranchiseInfo(id);
+      debugPrint('[FranchiseInfoProvider] Loading franchise info for id=$fid');
+      final info = await firestore.getFranchiseInfo(fid);
       _franchise = info;
     } catch (e, stack) {
       await ErrorLogger.log(
@@ -43,7 +55,7 @@ class FranchiseInfoProvider extends ChangeNotifier {
         source: 'FranchiseInfoProvider',
         screen: 'global',
         severity: 'error',
-        contextData: {'franchiseId': id},
+        contextData: {'franchiseId': fid},
       );
       _franchise = null;
     } finally {
@@ -55,5 +67,11 @@ class FranchiseInfoProvider extends ChangeNotifier {
   /// Reload franchise info (useful after sidebar repair/add-new flows)
   Future<void> reload() async {
     await loadFranchiseInfo();
+  }
+
+  void clear() {
+    _franchise = null;
+    _loading = false;
+    notifyListeners();
   }
 }

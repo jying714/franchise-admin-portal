@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/widgets/financials/dashboard_stat_card.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/financials/revenue_stat_card.dart';
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 
 class DashboardHomeScreen extends StatelessWidget {

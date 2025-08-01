@@ -87,9 +87,9 @@ class MenuItemProvider extends ChangeNotifier {
   }
 
   Future<void> loadMenuItems(String franchiseId) async {
+    _franchiseId = franchiseId; // ✅ Assign here so persistChanges works
     _isLoading = true;
-    _franchiseId = franchiseId;
-    notifyListeners();
+    Future.microtask(() => notifyListeners());
 
     try {
       final items = await _firestoreService.fetchMenuItemsOnce(franchiseId);
@@ -106,7 +106,7 @@ class MenuItemProvider extends ChangeNotifier {
       );
     } finally {
       _isLoading = false;
-      notifyListeners();
+      Future.microtask(() => notifyListeners());
     }
   }
 
@@ -118,7 +118,7 @@ class MenuItemProvider extends ChangeNotifier {
     } else {
       _working[index] = item;
     }
-    notifyListeners();
+    notifyListeners(); // ✅ Needed for UI to react to dirty state
   }
 
   void deleteMenuItem(String id) {
@@ -127,12 +127,19 @@ class MenuItemProvider extends ChangeNotifier {
   }
 
   Future<void> persistChanges() async {
-    if (_franchiseId == null || !isDirty) return;
+    print('[DEBUG] persistChanges called');
+    if (_franchiseId == null || !isDirty) {
+      print(
+          '[DEBUG] Aborting persistChanges: isDirty=$isDirty, franchiseId=$_franchiseId');
+      return;
+    }
 
     try {
+      print('[DEBUG] Saving ${_working.length} items...');
       await _firestoreService.saveMenuItems(_franchiseId!, _working);
       _original = _working.map((e) => e.copyWith()).toList();
       notifyListeners();
+      print('[DEBUG] Save complete, isDirty=${isDirty}');
     } catch (e, stack) {
       await ErrorLogger.log(
         message: 'Failed to persist menu item changes',

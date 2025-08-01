@@ -48,6 +48,7 @@ class AdminUserProvider extends ChangeNotifier {
     if (uid == null) {
       _user = null;
       _loading = false;
+      franchiseProvider.clearFranchiseContext(); // Ensure state is reset
       notifyListeners();
       return;
     }

@@ -7,7 +7,7 @@ import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/role_badge.dart';
 import 'package:franchise_admin_portal/admin/developer/developer_dashboard_screen.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
@@ -29,11 +29,17 @@ import 'package:franchise_admin_portal/widgets/financials/payout_status_card.dar
 import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
 import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
 import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
+import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 /// Developer/HQ-only: Entry-point for HQ/Owner dashboard.
 /// Add this to your DashboardSection registry for 'hq_owner'.
 class OwnerHQDashboardScreen extends StatelessWidget {
-  const OwnerHQDashboardScreen({super.key});
+  final String currentScreen;
+
+  const OwnerHQDashboardScreen({
+    super.key,
+    required this.currentScreen,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +63,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
           franchiseProvider.allFranchises.isNotEmpty) {
         String initialId;
         final user =
-            Provider.of<UserProfileNotifier>(context, listen: false).user;
+            Provider.of<AdminUserProvider>(context, listen: false).user;
         if (user != null &&
             user.defaultFranchise != null &&
             user.defaultFranchise!.isNotEmpty) {
@@ -77,7 +83,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
       );
     }
     final colorScheme = Theme.of(context).colorScheme;
-    final user = Provider.of<UserProfileNotifier>(context).user;
+    final user = Provider.of<AdminUserProvider>(context).user;
     final franchiseId = Provider.of<FranchiseProvider>(context).franchiseId;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
@@ -172,7 +178,12 @@ class OwnerHQDashboardScreen extends StatelessWidget {
             // --- ADD DEVELOPER DASHBOARD SWITCH IF USER IS DEVELOPER ---
             FranchisePickerDropdown(),
             const SizedBox(width: 14), // Optional: space before other controls
-            DashboardSwitcherDropdown(currentScreen: 'hq'),
+            DashboardSwitcherDropdown(
+              currentScreen: '/hq-owner/dashboard',
+              user:
+                  Provider.of<AdminUserProvider>(context, listen: false).user!,
+            ),
+
             RoleBadge(
                 role: user.roles.isNotEmpty ? user.roles.first : "hq_owner"),
             const SizedBox(width: 8),

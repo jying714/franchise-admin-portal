@@ -6,7 +6,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 // Optionally: If your user profile notifier/provider is named differently, update this import.
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class CategoryFormDialog extends StatefulWidget {

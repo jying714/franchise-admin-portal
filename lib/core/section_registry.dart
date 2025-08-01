@@ -22,16 +22,19 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboar
 import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredient_type_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_feature_setup_screen.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/menu_item_editor_screen.dart';
 // Any new (plugin/module) screens can be imported and registered here
 
-// Central registry. Add or remove screens here to affect ALL navigation/dashboards.
+// ==== UNIFIED SECTION REGISTRY (ALL MAIN + ONBOARDING) ====
 final List<DashboardSection> sectionRegistry = [
+  // ---- Core dashboard sections ----
   DashboardSection(
     key: 'dashboardHome',
     title: 'Dashboard',
     icon: Icons.dashboard,
     builder: (_) => const DashboardHomeScreen(),
     sidebarOrder: 0,
+    showInSidebar: true,
   ),
   DashboardSection(
     key: 'menuEditor',
@@ -39,6 +42,7 @@ final List<DashboardSection> sectionRegistry = [
     icon: Icons.local_pizza,
     builder: (_) => const MenuEditorScreen(),
     sidebarOrder: 1,
+    showInSidebar: true,
   ),
   DashboardSection(
     key: 'categoryManagement',
@@ -46,6 +50,7 @@ final List<DashboardSection> sectionRegistry = [
     icon: Icons.category_outlined,
     builder: (_) => const CategoryManagementScreen(),
     sidebarOrder: 2,
+    showInSidebar: true,
   ),
   DashboardSection(
     key: 'inventoryManagement',
@@ -53,6 +58,7 @@ final List<DashboardSection> sectionRegistry = [
     icon: Icons.inventory,
     builder: (_) => const InventoryScreen(),
     sidebarOrder: 3,
+    showInSidebar: true,
   ),
   DashboardSection(
     key: 'orderAnalytics',
@@ -60,6 +66,7 @@ final List<DashboardSection> sectionRegistry = [
     icon: Icons.analytics_outlined,
     builder: (_) => const AnalyticsScreen(),
     sidebarOrder: 4,
+    showInSidebar: true,
   ),
   DashboardSection(
     key: 'orderManagement',
@@ -67,6 +74,7 @@ final List<DashboardSection> sectionRegistry = [
     icon: Icons.receipt_long_outlined,
     builder: (_) => const OrderManagementScreen(),
     sidebarOrder: 5,
+    showInSidebar: true,
   ),
   DashboardSection(
     key: 'feedbackManagement',
@@ -74,6 +82,7 @@ final List<DashboardSection> sectionRegistry = [
     icon: Icons.feedback_outlined,
     builder: (_) => const FeedbackManagementScreen(),
     sidebarOrder: 6,
+    showInSidebar: true,
   ),
   DashboardSection(
     key: 'promoManagement',
@@ -81,6 +90,7 @@ final List<DashboardSection> sectionRegistry = [
     icon: Icons.card_giftcard_outlined,
     builder: (_) => const PromoManagementScreen(),
     sidebarOrder: 7,
+    showInSidebar: true,
   ),
   DashboardSection(
     key: 'staffAccess',
@@ -88,82 +98,33 @@ final List<DashboardSection> sectionRegistry = [
     icon: Icons.people_outline,
     builder: (_) => const StaffAccessScreen(),
     sidebarOrder: 8,
+    showInSidebar: true,
   ),
-  // DashboardSection(
-  //   key: 'featureSettings',
-  //   title: 'Feature Toggles',
-  //   icon: Icons.toggle_on_outlined,
-  //   builder: (_) => const FeatureSettingsScreen(),
-  //   sidebarOrder: 9,
-  // ),
   DashboardSection(
     key: 'chatManagement',
     title: 'Support Chat',
     icon: Icons.chat_bubble_outline,
     builder: (_) => const ChatManagementScreen(),
     sidebarOrder: 10,
+    showInSidebar: true,
   ),
-  // DashboardSection(
-  //   key: 'errorLogs',
-  //   title: 'Error Logs',
-  //   icon: Icons.bug_report,
-  //   builder: (_) => const ErrorLogsScreen(),
-  //   sidebarOrder: 11,
-  //   showInSidebar: true,
-  // ),
-  // ---- Plugin or Franchise-specific Section Example ----
-  // DashboardSection(
-  //   key: 'customPluginSection',
-  //   title: 'Loyalty Program',
-  //   icon: Icons.card_membership,
-  //   builder: (_) => const LoyaltyProgramScreen(),
-  //   sidebarOrder: 11,
-  //   showInSidebar: true,
-  // ),
-  // DashboardSection(
-  //   key: 'onboardingMenu',
-  //   title: 'Overview',
-  //   icon: Icons.list_alt_outlined,
-  //   builder: (_) => const OnboardingMenuScreen(),
-  //   sidebarOrder: 20,
-  // ),
-  // DashboardSection(
-  //   key: 'onboardingIngredients',
-  //   title: 'Step 1: Ingredients',
-  //   icon: Icons.kitchen_outlined,
-  //   builder: (_) => const OnboardingIngredientsScreen(),
-  //   sidebarOrder: 21,
-  // ),
-  // DashboardSection(
-  //   key: 'onboardingCategories',
-  //   title: 'Step 2: Categories',
-  //   icon: Icons.category_outlined,
-  //   builder: (_) => const OnboardingCategoriesScreen(),
-  //   sidebarOrder: 22,
-  // ),
-  // DashboardSection(
-  //   key: 'onboardingMenuItems',
-  //   title: 'Step 3: Menu Items',
-  //   icon: Icons.local_pizza_outlined,
-  //   builder: (_) => const OnboardingMenuItemsScreen(),
-  //   sidebarOrder: 23,
-  // ),
-  // DashboardSection(
-  //   key: 'onboardingReview',
-  //   title: 'Final Review',
-  //   icon: Icons.check_circle_outline,
-  //   builder: (_) => const OnboardingReviewScreen(),
-  //   sidebarOrder: 24,
-  // ),
-];
+  // Hidden editor screen (utility, not in sidebar)
+  DashboardSection(
+    key: 'menuItemEditor',
+    title: 'Menu Item Editor',
+    icon: Icons.edit_note_rounded,
+    builder: (_) => const MenuItemEditorScreen(),
+    sidebarOrder: 11,
+    showInSidebar: false,
+  ),
 
-final List<DashboardSection> onboardingSteps = [
+  // ---- Onboarding Steps (now unified, sidebarOrder >= 100 for grouping) ----
   DashboardSection(
     key: 'onboardingMenu',
     title: 'Overview',
     icon: Icons.list_alt_outlined,
     builder: (_) => const OnboardingMenuScreen(),
-    sidebarOrder: 0,
+    sidebarOrder: 100,
     showInSidebar: true,
   ),
   DashboardSection(
@@ -171,14 +132,15 @@ final List<DashboardSection> onboardingSteps = [
     title: 'Step 1: Feature Setup',
     icon: Icons.tune,
     builder: (_) => OnboardingFeatureSetupScreen(),
-    sidebarOrder: 1,
+    sidebarOrder: 101,
+    showInSidebar: true,
   ),
   DashboardSection(
     key: 'onboardingIngredientTypes',
     title: 'Step 2: Ingredient Types',
     icon: Icons.category_outlined,
     builder: (_) => const IngredientTypeManagementScreen(),
-    sidebarOrder: 2,
+    sidebarOrder: 102,
     showInSidebar: true,
   ),
   DashboardSection(
@@ -186,7 +148,7 @@ final List<DashboardSection> onboardingSteps = [
     title: 'Step 3: Ingredients',
     icon: Icons.kitchen_outlined,
     builder: (_) => const OnboardingIngredientsScreen(),
-    sidebarOrder: 3,
+    sidebarOrder: 103,
     showInSidebar: true,
   ),
   DashboardSection(
@@ -194,7 +156,7 @@ final List<DashboardSection> onboardingSteps = [
     title: 'Step 4: Categories',
     icon: Icons.category_outlined,
     builder: (_) => const OnboardingCategoriesScreen(),
-    sidebarOrder: 4,
+    sidebarOrder: 104,
     showInSidebar: true,
   ),
   DashboardSection(
@@ -202,20 +164,19 @@ final List<DashboardSection> onboardingSteps = [
     title: 'Step 5: Menu Items',
     icon: Icons.local_pizza_outlined,
     builder: (_) => const OnboardingMenuItemsScreen(),
-    sidebarOrder: 5,
+    sidebarOrder: 105,
     showInSidebar: true,
   ),
-  // DashboardSection(
-  //   key: 'onboardingReview',
-  //   title: 'Review',
-  //   icon: Icons.check_circle_outline,
-  //   builder: (_) => const OnboardingReviewScreen(),
-  //   sidebarOrder: 4,
-  //   showInSidebar: true,
-  // ),
+  // Add further onboarding/future steps here...
 ];
 
-/// Easily sort or filter sections for the sidebar/nav.
+// ---- Sidebar and Section List Utilities ----
+
+/// Only sections with showInSidebar==true, sorted by sidebarOrder.
 List<DashboardSection> getSidebarSections() =>
     sectionRegistry.where((s) => s.showInSidebar).toList()
       ..sort((a, b) => a.sidebarOrder.compareTo(b.sidebarOrder));
+
+/// All sections (for routing, content stack, and selection), sorted by sidebarOrder.
+List<DashboardSection> getAllDashboardSections() => sectionRegistry.toList()
+  ..sort((a, b) => a.sidebarOrder.compareTo(b.sidebarOrder));

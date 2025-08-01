@@ -9,7 +9,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
 import '../core/services/firestore_service.dart';
 import '../core/providers/admin_user_provider.dart';
-import '../widgets/user_profile_notifier.dart';
+import '../core/providers/user_profile_notifier.dart';
 import '../config/design_tokens.dart';
 import '../config/branding_config.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
@@ -44,23 +44,35 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      print(
-          '[ProfileGateScreen] initState: Triggering UserProfileNotifier.reload()');
       _profileNotifier =
           Provider.of<UserProfileNotifier>(context, listen: false);
       _firestoreService = Provider.of<FirestoreService>(context, listen: false);
-
-      // Defensive: Always start user profile stream if Firebase user exists and not yet started
       final fbUser = fb_auth.FirebaseAuth.instance.currentUser;
-      if (fbUser != null && _profileNotifier.user == null) {
-        _profileNotifier.listenToUser(_firestoreService, fbUser.uid);
-      } else {
-        _profileNotifier.reload();
-      }
 
-      // Start profile load timeout after initiating reload/listen
-      _startTimeout();
+      print('[ProfileGateScreen] initState START');
+      print('[ProfileGateScreen] Firebase user: $fbUser');
+      print('[ProfileGateScreen] Current profile: ${_profileNotifier.user}');
+      print('[ProfileGateScreen] Is loading: ${_profileNotifier.loading}');
+
+      // Defensive: Avoid triggering reload if already loading or loaded
+      if (fbUser != null) {
+        if (_profileNotifier.user == null && !_profileNotifier.loading) {
+          print(
+              '[ProfileGateScreen] ⏳ No user loaded, starting listenToUser...');
+          _profileNotifier.listenToUser(_firestoreService, fbUser.uid);
+          _startTimeout();
+        } else if (_profileNotifier.user != null) {
+          print(
+              '[ProfileGateScreen] ✅ User already loaded. No need to reload.');
+        } else if (_profileNotifier.loading) {
+          print('[ProfileGateScreen] ⏳ Already loading. No action taken.');
+        }
+      } else {
+        print(
+            '[ProfileGateScreen] ⚠️ Firebase user is null. Cannot load profile.');
+      }
     });
   }
 
@@ -115,6 +127,8 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
   // Modular dashboard section handler
   Future<void> _navigateToDashboard(
       admin_user.User user, AppLocalizations loc) async {
+    print(
+        '[ProfileGateScreen] Navigating with user: ${user.email} -> ${user.roles}');
     final roles = user.roles ?? <String>[];
     print(
         '[ProfileGateScreen] _navigateToDashboard: roles=$roles, status=${user.status}');
@@ -202,6 +216,16 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
 
     // === Defensive Fix: Wait for roles if user is active but claims not yet applied ===
     final roles = user?.roles ?? [];
+    final currentRoute = ModalRoute.of(context)?.settings.name ?? '';
+    final isAlreadyAtDashboard = [
+      '/admin/dashboard',
+      '/platform-owner/dashboard',
+      '/hq-owner/dashboard',
+      '/developer/dashboard',
+    ].any((r) => currentRoute.startsWith(r));
+
+    print('[ProfileGateScreen] Current route: $currentRoute');
+    print('[ProfileGateScreen] isAlreadyAtDashboard: $isAlreadyAtDashboard');
     final hasRoles = roles.isNotEmpty;
 
     if (user != null && user.status == 'active') {
@@ -227,17 +251,24 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
           '[ProfileGateScreen] User loaded: email=${user.email}, roles=$roles, isActive=${user.isActive}');
 
       if (roles.contains('platform_owner')) {
-        print(
-            '[ProfileGateScreen] Detected platform_owner role, routing to /platform-owner/dashboard');
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          Navigator.of(context)
-              .pushReplacementNamed('/platform-owner/dashboard');
-        });
-        return _loadingScreen(
-            loc.redirectingToPlatformOwnerDashboard ?? "Redirecting...",
-            theme,
-            colorScheme,
-            showSpinner: true);
+        final route = ModalRoute.of(context)?.settings.name;
+        final isOnCorrectDashboard =
+            route != null && route.startsWith('/platform-owner/dashboard');
+
+        print('[ProfileGateScreen] Detected platform_owner. '
+            'currentRoute=$route, isOnCorrectDashboard=$isOnCorrectDashboard');
+
+        if (!isOnCorrectDashboard) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.of(context)
+                .pushReplacementNamed('/platform-owner/dashboard');
+          });
+          return _loadingScreen(
+              loc.redirectingToPlatformOwnerDashboard ?? "Redirecting...",
+              theme,
+              colorScheme,
+              showSpinner: true);
+        }
       } else if (roles.contains('hq_owner') || roles.contains('hq_manager')) {
         print(
             '[ProfileGateScreen] Detected hq_owner/hq_manager role, routing to /hq-owner/dashboard');

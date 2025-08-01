@@ -28,24 +28,34 @@ import 'package:flutter/foundation.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/schema_issue_sidebar.dart';
 import 'package:franchise_admin_portal/core/models/menu_item_schema_issue.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
+// --- Utilities ---
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_utility.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
 
 class MenuItemEditorSheet extends StatefulWidget {
   final MenuItem? existing;
   final void Function(MenuItem item) onSave;
   final VoidCallback onCancel;
+  final void Function(List<MenuItemSchemaIssue> issues)? onSchemaIssuesChanged;
+  final FirebaseFirestore firestore;
+  final String franchiseId;
 
   const MenuItemEditorSheet({
     Key? key,
     this.existing,
-    required this.onSave,
     required this.onCancel,
+    required this.onSave,
+    required this.onSchemaIssuesChanged,
+    required this.firestore,
+    required this.franchiseId,
   }) : super(key: key);
 
   @override
-  State<MenuItemEditorSheet> createState() => _MenuItemEditorSheetState();
+  State<MenuItemEditorSheet> createState() => MenuItemEditorSheetState();
 }
 
-class _MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
+class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
   late TextEditingController _priceController;
@@ -149,24 +159,26 @@ class _MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
             .read<MenuItemProvider>()
             .loadSizeTemplates(franchise!.restaurantType!);
       }
+      await context
+          .read<IngredientTypeProvider>()
+          .loadIngredientTypes(widget.franchiseId);
     });
   }
 
-  void _checkForSchemaIssues() {
+  List<MenuItemSchemaIssue> validateMenuItem({
+    required BuildContext context,
+    required String menuItemId,
+  }) {
     final categories = context.read<CategoryProvider>().categories;
     final ingredients =
         context.read<IngredientMetadataProvider>().allIngredients;
     final ingredientTypes =
         context.read<IngredientTypeProvider>().ingredientTypes;
 
-    // Construct a temporary MenuItem using the current editor values
-    final tempItem = MenuItem(
-      id: widget.existing?.id ?? '',
-      available: !outOfStock,
-      availability: !outOfStock,
-      category:
-          categories.firstWhereOrNull((cat) => cat.id == categoryId)?.name ??
-              '',
+    final menuItem = constructMenuItemFromEditorFields(
+      id: menuItemId,
+      outOfStock: outOfStock,
+      categoryName: categoryId ?? '',
       categoryId: categoryId ?? '',
       name: name,
       price: price,
@@ -179,15 +191,14 @@ class _MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       sortOrder: sortOrder,
       taxCategory: taxCategory,
       exportId: exportId,
-      customizationGroups: customizationGroups.map((g) => g.toMap()).toList(),
-      includedIngredients: includedIngredients.map((i) => i.toMap()).toList(),
-      optionalAddOns: optionalAddOns.map((i) => i.toMap()).toList(),
+      customizationGroups: customizationGroups,
+      includedIngredients: includedIngredients,
+      optionalAddOns: optionalAddOns,
       customizations: customizations,
-      image: imageUrl,
+      imageUrl: imageUrl,
       nutrition: nutrition,
-      templateRefs: selectedTemplateRefs,
-      sizes: sizeData,
-      // --- Advanced Fields ---
+      selectedTemplateRefs: selectedTemplateRefs,
+      sizeData: sizeData,
       crustTypes: crustTypes,
       cookTypes: cookTypes,
       cutStyles: cutStyles,
@@ -218,18 +229,293 @@ class _MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       rawCustomizations: rawCustomizations,
     );
 
-    // Use the unified robust detection for *all* possible issues (ingredient, type, etc)
-    final issues = MenuItemSchemaIssue.detectAllIssues(
-      menuItem: tempItem,
+    return MenuItemSchemaIssue.detectAllIssues(
+      menuItem: menuItem,
       categories: categories,
       ingredients: ingredients,
       ingredientTypes: ingredientTypes,
     );
+  }
+
+  void repairSchemaIssue(MenuItemSchemaIssue issue, String newValue) {
+    print(
+      '[MenuItemEditorSheet] repairSchemaIssue: ${issue.displayMessage}, newValue=$newValue',
+    );
 
     setState(() {
-      _schemaIssues = issues;
-      _showSchemaSidebar = issues.isNotEmpty;
+      switch (issue.field) {
+        case 'categoryId':
+          categoryId = newValue;
+          break;
+
+        case 'price':
+          price = double.tryParse(newValue) ?? 0.0;
+          _priceController.text = price.toString();
+          break;
+
+        case 'description':
+          description = newValue;
+          _descriptionController.text = newValue;
+          break;
+
+        case 'includedIngredients':
+        case 'optionalAddOns':
+        case 'customizationGroups':
+        case 'customizationGroups.options':
+          _repairIngredientOrType(issue, newValue);
+          break;
+
+        default:
+          print('[WARNING] Unhandled schema repair field: ${issue.field}');
+      }
     });
+
+    Future.delayed(const Duration(milliseconds: 50), () {
+      print('[MenuItemEditorSheet] Revalidating schema after repair...');
+
+      final freshItem = buildMenuItemForSchemaCheck(
+        existing: widget.existing,
+        name: name,
+        description: description,
+        price: price,
+        categoryId: categoryId,
+        outOfStock: outOfStock,
+        imageUrl: imageUrl,
+        customizationGroups: customizationGroups,
+        includedIngredients: includedIngredients,
+        optionalAddOns: optionalAddOns,
+        customizations: customizations,
+        nutrition: nutrition,
+        selectedTemplateRefs: selectedTemplateRefs,
+        sizeData: sizeData,
+        categories: context.read<CategoryProvider>().categories,
+        notes: notes,
+        sku: sku,
+        dietaryTags: dietaryTags,
+        allergens: allergens,
+        prepTime: prepTime,
+        sortOrder: sortOrder,
+        taxCategory: taxCategory,
+        exportId: exportId,
+        crustTypes: crustTypes,
+        cookTypes: cookTypes,
+        cutStyles: cutStyles,
+        sauceOptions: sauceOptions,
+        dressingOptions: dressingOptions,
+        maxFreeToppings: maxFreeToppings,
+        maxFreeSauces: maxFreeSauces,
+        maxFreeDressings: maxFreeDressings,
+        maxToppings: maxToppings,
+        customizationsUpdatedAt: customizationsUpdatedAt,
+        createdAt: createdAt,
+        comboId: comboId,
+        bundleItems: bundleItems,
+        bundleDiscount: bundleDiscount,
+        highlightTags: highlightTags,
+        allowSpecialInstructions: allowSpecialInstructions,
+        hideInMenu: hideInMenu,
+        freeSauceCount: freeSauceCount,
+        extraSauceUpcharge: extraSauceUpcharge,
+        freeDressingCount: freeDressingCount,
+        extraDressingUpcharge: extraDressingUpcharge,
+        dippingSauceOptions: dippingSauceOptions,
+        dippingSplits: dippingSplits,
+        sideDipSauceOptions: sideDipSauceOptions,
+        freeDipCupCount: freeDipCupCount,
+        sideDipUpcharge: sideDipUpcharge,
+        extraCharges: extraCharges,
+        rawCustomizations: rawCustomizations,
+      );
+
+      final freshIssues = MenuItemSchemaIssue.detectAllIssues(
+        menuItem: freshItem,
+        categories: context.read<CategoryProvider>().categories,
+        ingredients: context.read<IngredientMetadataProvider>().allIngredients,
+        ingredientTypes: context.read<IngredientTypeProvider>().ingredientTypes,
+      );
+
+      final updatedIssues = <MenuItemSchemaIssue>[];
+
+      for (final newIssue in freshIssues) {
+        final existing = _schemaIssues.firstWhere(
+          (e) =>
+              e.type == newIssue.type &&
+              e.missingReference == newIssue.missingReference &&
+              e.field == newIssue.field &&
+              e.context == newIssue.context,
+          orElse: () => newIssue,
+        );
+
+        final resolved = existing.resolved;
+        updatedIssues.add(resolved ? newIssue.markResolved(true) : newIssue);
+      }
+
+// Add any new issues that weren't in the original list
+      for (final newIssue in freshIssues) {
+        if (!updatedIssues.any((i) =>
+            i.type == newIssue.type &&
+            i.missingReference == newIssue.missingReference &&
+            i.field == newIssue.field &&
+            i.context == newIssue.context)) {
+          updatedIssues.add(newIssue);
+        }
+      }
+
+      print(
+          '[MenuItemEditorSheet] repairSchemaIssue -> updated ${updatedIssues.length} issue(s):');
+      for (final i in updatedIssues) {
+        print('  - ${i.displayMessage} | resolved=${i.resolved}');
+      }
+
+      setState(() {
+        _schemaIssues = updatedIssues;
+        _showSchemaSidebar = updatedIssues.any((i) => !i.resolved);
+      });
+
+      widget.onSchemaIssuesChanged?.call(updatedIssues);
+    });
+  }
+
+  void _repairIngredientOrType(MenuItemSchemaIssue issue, String newValue) {
+    IngredientReference updateEntry(IngredientReference entry) {
+      final matchesId =
+          entry.id.toLowerCase() == issue.missingReference.toLowerCase();
+      final matchesName = issue.label != null &&
+          entry.name.trim().toLowerCase() == issue.label!.trim().toLowerCase();
+
+      if (issue.type == MenuItemSchemaIssueType.ingredient &&
+          (matchesId || matchesName)) {
+        return entry.copyWith(id: newValue);
+      }
+
+      if (issue.type == MenuItemSchemaIssueType.ingredientType &&
+          (matchesName || entry.typeId.isEmpty)) {
+        return entry.copyWith(typeId: newValue);
+      }
+
+      return entry;
+    }
+
+    if (issue.field == 'includedIngredients') {
+      includedIngredients = includedIngredients.map(updateEntry).toList();
+    } else if (issue.field == 'optionalAddOns') {
+      optionalAddOns = optionalAddOns.map(updateEntry).toList();
+    } else if (issue.field.startsWith('customizationGroups')) {
+      customizationGroups = customizationGroups.map((group) {
+        final updated = group.ingredients.map(updateEntry).toList();
+        return group.copyWith(ingredients: updated);
+      }).toList();
+    }
+  }
+
+  void _checkForSchemaIssues() {
+    final categories = context.read<CategoryProvider>().categories;
+    final ingredients =
+        context.read<IngredientMetadataProvider>().allIngredients;
+    final ingredientTypes =
+        context.read<IngredientTypeProvider>().ingredientTypes;
+
+    final tempItem = buildMenuItemForSchemaCheck(
+      existing: widget.existing,
+      name: name,
+      description: description,
+      price: price,
+      categoryId: categoryId,
+      outOfStock: outOfStock,
+      imageUrl: imageUrl,
+      customizationGroups: customizationGroups,
+      includedIngredients: includedIngredients,
+      optionalAddOns: optionalAddOns,
+      customizations: customizations,
+      nutrition: nutrition,
+      selectedTemplateRefs: selectedTemplateRefs,
+      sizeData: sizeData,
+      categories: categories,
+      notes: notes,
+      sku: sku,
+      dietaryTags: dietaryTags,
+      allergens: allergens,
+      prepTime: prepTime,
+      sortOrder: sortOrder,
+      taxCategory: taxCategory,
+      exportId: exportId,
+      crustTypes: crustTypes,
+      cookTypes: cookTypes,
+      cutStyles: cutStyles,
+      sauceOptions: sauceOptions,
+      dressingOptions: dressingOptions,
+      maxFreeToppings: maxFreeToppings,
+      maxFreeSauces: maxFreeSauces,
+      maxFreeDressings: maxFreeDressings,
+      maxToppings: maxToppings,
+      customizationsUpdatedAt: customizationsUpdatedAt,
+      createdAt: createdAt,
+      comboId: comboId,
+      bundleItems: bundleItems,
+      bundleDiscount: bundleDiscount,
+      highlightTags: highlightTags,
+      allowSpecialInstructions: allowSpecialInstructions,
+      hideInMenu: hideInMenu,
+      freeSauceCount: freeSauceCount,
+      extraSauceUpcharge: extraSauceUpcharge,
+      freeDressingCount: freeDressingCount,
+      extraDressingUpcharge: extraDressingUpcharge,
+      dippingSauceOptions: dippingSauceOptions,
+      dippingSplits: dippingSplits,
+      sideDipSauceOptions: sideDipSauceOptions,
+      freeDipCupCount: freeDipCupCount,
+      sideDipUpcharge: sideDipUpcharge,
+      extraCharges: extraCharges,
+      rawCustomizations: rawCustomizations,
+    );
+
+    final freshIssues = MenuItemSchemaIssue.detectAllIssues(
+      menuItem: tempItem,
+      categories: context.read<CategoryProvider>().categories,
+      ingredients: context.read<IngredientMetadataProvider>().allIngredients,
+      ingredientTypes: context.read<IngredientTypeProvider>().ingredientTypes,
+    );
+
+    // Preserve resolved state
+    final updatedIssues = <MenuItemSchemaIssue>[];
+
+    for (final newIssue in freshIssues) {
+      final existing = _schemaIssues.firstWhere(
+        (e) =>
+            e.type == newIssue.type &&
+            e.missingReference == newIssue.missingReference &&
+            e.field == newIssue.field &&
+            e.context == newIssue.context,
+        orElse: () => newIssue,
+      );
+
+      final resolved = existing.resolved;
+      updatedIssues.add(resolved ? newIssue.markResolved(true) : newIssue);
+    }
+
+// Add any new issues that weren't in the original list
+    for (final newIssue in freshIssues) {
+      if (!updatedIssues.any((i) =>
+          i.type == newIssue.type &&
+          i.missingReference == newIssue.missingReference &&
+          i.field == newIssue.field &&
+          i.context == newIssue.context)) {
+        updatedIssues.add(newIssue);
+      }
+    }
+
+    print(
+        '[MenuItemEditorSheet] _checkForSchemaIssues found ${updatedIssues.length} issue(s):');
+    for (final i in updatedIssues) {
+      print(' - ${i.displayMessage} | resolved=${i.resolved}');
+    }
+
+    setState(() {
+      _schemaIssues = updatedIssues;
+      _showSchemaSidebar = updatedIssues.any((e) => !e.resolved);
+    });
+
+    widget.onSchemaIssuesChanged?.call(_schemaIssues);
   }
 
   void _applyTemplate(MenuItem item) {
@@ -238,151 +524,79 @@ class _MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
         'customizationGroups=${item.customizationGroups?.length ?? 0}');
     print('[MenuItemEditorSheet] Template data dump: ${item.toJson()}');
     try {
-      setState(() {
-        // --- Update controllers for user-editable fields ---
-        _nameController.text = item.name ?? '';
-        name = item.name ?? '';
+      final allIngredients =
+          context.read<IngredientMetadataProvider>().allIngredients;
+      final fieldMap = extractTemplateFieldsForEditor(item, allIngredients);
 
-        _descriptionController.text = item.description ?? '';
-        description = item.description ?? '';
-
-        _priceController.text = (item.price ?? 0.0).toString();
-        price = item.price ?? 0.0;
-
-        categoryId = item.categoryId ?? '';
-        imageUrl = item.imageUrl ?? '';
-        nutrition = item.nutrition;
-        includedIngredients = (item.includedIngredients ?? [])
-            .map((e) => e is IngredientReference
-                ? e
-                : IngredientReference.fromMap(Map<String, dynamic>.from(e)))
-            .toList()
-            .cast<IngredientReference>();
-        optionalAddOns = (item.optionalAddOns ?? [])
-            .map((e) => e is IngredientReference
-                ? e
-                : IngredientReference.fromMap(Map<String, dynamic>.from(e)))
-            .toList()
-            .cast<IngredientReference>();
-        customizations = List.from(item.customizations ?? []);
-        final sizesValue = item.sizes;
-        if (sizesValue != null &&
-            sizesValue is List<SizeData> &&
-            sizesValue.isNotEmpty) {
-          sizeData = List<SizeData>.from(sizesValue);
-        } else if (sizesValue != null &&
-            sizesValue is List &&
-            sizesValue.isNotEmpty &&
-            (item.sizePrices != null || item.additionalToppingPrices != null)) {
-          final basePriceMap = item.sizePrices ?? {};
-          final toppingPriceMap = item.additionalToppingPrices ?? {};
-          sizeData = sizesValue
-              .map((s) => SizeData(
-                    label: s.toString(),
-                    basePrice:
-                        (basePriceMap[s.toString()] as num?)?.toDouble() ?? 0.0,
-                    toppingPrice:
-                        (toppingPriceMap[s.toString()] as num?)?.toDouble() ??
-                            0.0,
-                  ))
-              .toList();
-        } else {
-          sizeData = [];
-        }
-
-        final ingredientMap = {
-          for (var ing
-              in context.read<IngredientMetadataProvider>().allIngredients)
-            ing.id: ing
-        };
-
-        customizationGroups = (item.customizationGroups ?? []).map((g) {
-          final groupMap = Map<String, dynamic>.from(g);
-
-          // 1. If group has 'ingredientIds' (legacy), generate 'ingredients'
-          if (groupMap['ingredientIds'] is List &&
-              groupMap['ingredientIds'].isNotEmpty) {
-            groupMap['ingredients'] =
-                (groupMap['ingredientIds'] as List).map((id) {
-              final meta = ingredientMap[id];
-              if (meta != null) return meta.toMap();
-              return {'id': id, 'name': id, 'typeId': '', 'isRemovable': true};
-            }).toList();
-          }
-
-          // 2. If 'ingredients' exists, ensure every entry is a Map
-          if (groupMap['ingredients'] is List) {
-            groupMap['ingredients'] =
-                (groupMap['ingredients'] as List).map((e) {
-              if (e is String) {
-                return {'id': e, 'name': e, 'typeId': '', 'isRemovable': true};
-              }
-              if (e is Map) return e;
-              print(
-                  '[DEBUG] Ingredient entry type: ${e.runtimeType} | value: $e');
-              if (e is IngredientReference) return e.toMap();
-              // Fallback for legacy/unknown
-              return {
-                'id': e.toString(),
-                'name': e.toString(),
-                'typeId': '',
-                'isRemovable': true
-              };
-            }).toList();
-          } else {
-            // 3. Defensive: If 'ingredients' is missing or not a List, create empty list
-            groupMap['ingredients'] = <Map<String, dynamic>>[];
-          }
-
-          // 4. Always remove 'ingredientIds' to prevent model confusion
-          groupMap.remove('ingredientIds');
-
-          // Now safe to call:
-          return CustomizationGroup.fromMap(groupMap);
-        }).toList();
-
-        selectedTemplateRefs = item.templateRefs ?? [];
-        notes = item.notes;
-        sku = item.sku;
-        dietaryTags = List<String>.from(item.dietaryTags ?? []);
-        allergens = List<String>.from(item.allergens ?? []);
-        prepTime = item.prepTime;
-        sortOrder = item.sortOrder;
-        taxCategory = item.taxCategory ?? 'standard';
-        exportId = item.exportId;
-        crustTypes = item.crustTypes;
-        cookTypes = item.cookTypes;
-        cutStyles = item.cutStyles;
-        sauceOptions = item.sauceOptions;
-        dressingOptions = item.dressingOptions;
-        maxFreeToppings = item.maxFreeToppings;
-        maxFreeSauces = item.maxFreeSauces;
-        maxFreeDressings = item.maxFreeDressings;
-        maxToppings = item.maxToppings;
-        customizationsUpdatedAt = item.customizationsUpdatedAt;
-        createdAt = item.createdAt;
-        comboId = item.comboId;
-        bundleItems = item.bundleItems;
-        bundleDiscount = item.bundleDiscount;
-        highlightTags = item.highlightTags;
-        allowSpecialInstructions = item.allowSpecialInstructions;
-        hideInMenu = item.hideInMenu;
-        freeSauceCount = item.freeSauceCount;
-        extraSauceUpcharge = item.extraSauceUpcharge;
-        freeDressingCount = item.freeDressingCount;
-        extraDressingUpcharge = item.extraDressingUpcharge;
-        dippingSauceOptions = item.dippingSauceOptions;
-        dippingSplits = item.dippingSplits;
-        sideDipSauceOptions = item.sideDipSauceOptions;
-        freeDipCupCount = item.freeDipCupCount;
-        sideDipUpcharge = item.sideDipUpcharge;
-        extraCharges = item.extraCharges;
-        rawCustomizations = item.rawCustomizations;
-        isDirty = true;
-        _checkForSchemaIssues();
-      });
-      // Trigger re-validation after UI updates
+      // DEFER ALL STATE UPDATES TO NEXT FRAME!
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          // --- Update controllers for user-editable fields ---
+          _nameController.text = fieldMap['name'] ?? '';
+          name = fieldMap['name'] ?? '';
+
+          _descriptionController.text = fieldMap['description'] ?? '';
+          description = fieldMap['description'] ?? '';
+
+          _priceController.text = (fieldMap['price'] ?? 0.0).toString();
+          price = fieldMap['price'] ?? 0.0;
+
+          categoryId = fieldMap['categoryId'] ?? '';
+          imageUrl = fieldMap['imageUrl'] ?? '';
+          nutrition = fieldMap['nutrition'];
+          includedIngredients = List<IngredientReference>.from(
+              fieldMap['includedIngredients'] ?? []);
+          optionalAddOns =
+              List<IngredientReference>.from(fieldMap['optionalAddOns'] ?? []);
+          customizations =
+              List<Customization>.from(fieldMap['customizations'] ?? []);
+          sizeData = List<SizeData>.from(fieldMap['sizeData'] ?? []);
+          customizationGroups = List<CustomizationGroup>.from(
+              fieldMap['customizationGroups'] ?? []);
+          selectedTemplateRefs =
+              List<String>.from(fieldMap['selectedTemplateRefs'] ?? []);
+          notes = fieldMap['notes'];
+          sku = fieldMap['sku'];
+          dietaryTags = List<String>.from(fieldMap['dietaryTags'] ?? []);
+          allergens = List<String>.from(fieldMap['allergens'] ?? []);
+          prepTime = fieldMap['prepTime'];
+          sortOrder = fieldMap['sortOrder'];
+          taxCategory = fieldMap['taxCategory'] ?? 'standard';
+          exportId = fieldMap['exportId'];
+          crustTypes = fieldMap['crustTypes'];
+          cookTypes = fieldMap['cookTypes'];
+          cutStyles = fieldMap['cutStyles'];
+          sauceOptions = fieldMap['sauceOptions'];
+          dressingOptions = fieldMap['dressingOptions'];
+          maxFreeToppings = fieldMap['maxFreeToppings'];
+          maxFreeSauces = fieldMap['maxFreeSauces'];
+          maxFreeDressings = fieldMap['maxFreeDressings'];
+          maxToppings = fieldMap['maxToppings'];
+          customizationsUpdatedAt = fieldMap['customizationsUpdatedAt'];
+          createdAt = fieldMap['createdAt'];
+          comboId = fieldMap['comboId'];
+          bundleItems = fieldMap['bundleItems'];
+          bundleDiscount = fieldMap['bundleDiscount'];
+          highlightTags = fieldMap['highlightTags'];
+          allowSpecialInstructions = fieldMap['allowSpecialInstructions'];
+          hideInMenu = fieldMap['hideInMenu'];
+          freeSauceCount = fieldMap['freeSauceCount'];
+          extraSauceUpcharge = fieldMap['extraSauceUpcharge'];
+          freeDressingCount = fieldMap['freeDressingCount'];
+          extraDressingUpcharge = fieldMap['extraDressingUpcharge'];
+          dippingSauceOptions = fieldMap['dippingSauceOptions'];
+          dippingSplits = fieldMap['dippingSplits'];
+          sideDipSauceOptions = fieldMap['sideDipSauceOptions'];
+          freeDipCupCount = fieldMap['freeDipCupCount'];
+          sideDipUpcharge = fieldMap['sideDipUpcharge'];
+          extraCharges = fieldMap['extraCharges'];
+          rawCustomizations = fieldMap['rawCustomizations'];
+          isDirty = true;
+          print(
+              '[MenuItemEditorSheet] Template applied. Triggered schema re-check.');
+          _checkForSchemaIssues();
+        });
+
         _formKey.currentState?.validate();
       });
     } catch (e, st) {
@@ -414,6 +628,7 @@ class _MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     name = _nameController.text.trim();
     description = _descriptionController.text.trim();
     price = double.tryParse(_priceController.text.trim()) ?? 0.0;
+    _schemaIssues.removeWhere((issue) => issue.resolved);
     _checkForSchemaIssues();
     print(
         '[DEBUG] Schema issues at save: ${_schemaIssues.map((e) => e.displayMessage).toList()}');
@@ -456,12 +671,12 @@ class _MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       );
       return;
     }
+
     print('[MenuItemEditorSheet] Constructing MenuItem for save...');
-    final item = MenuItem(
+    final item = constructMenuItemFromEditorFields(
       id: widget.existing?.id ?? const Uuid().v4(),
-      available: !outOfStock,
-      availability: !outOfStock, // Negate outOfStock for availability
-      category: categoryName,
+      outOfStock: outOfStock,
+      categoryName: categoryName,
       categoryId: categoryId!,
       name: name,
       price: price,
@@ -474,15 +689,14 @@ class _MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       sortOrder: sortOrder,
       taxCategory: taxCategory,
       exportId: exportId,
-      customizationGroups: customizationGroups.map((g) => g.toMap()).toList(),
-      includedIngredients: includedIngredients.map((i) => i.toMap()).toList(),
-      optionalAddOns: optionalAddOns.map((i) => i.toMap()).toList(),
+      customizationGroups: customizationGroups,
+      includedIngredients: includedIngredients,
+      optionalAddOns: optionalAddOns,
       customizations: customizations,
-      image: imageUrl,
+      imageUrl: imageUrl,
       nutrition: nutrition,
-      templateRefs: selectedTemplateRefs,
-      sizes: sizeData,
-      // --- ADVANCED FIELDS ---
+      selectedTemplateRefs: selectedTemplateRefs,
+      sizeData: sizeData,
       crustTypes: crustTypes,
       cookTypes: cookTypes,
       cutStyles: cutStyles,
@@ -805,69 +1019,19 @@ class _MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                               initiallyExpanded: false,
                               children: [
                                 PreviewMenuItemCard(
-                                  menuItem: MenuItem(
-                                    id: widget.existing?.id ??
-                                        const Uuid().v4(),
-                                    available: !outOfStock,
-                                    category: categoryId ?? '',
-                                    categoryId: categoryId ?? '',
+                                  menuItem: buildPreviewMenuItem(
+                                    existingId: widget.existing?.id,
+                                    outOfStock: outOfStock,
+                                    categoryId: categoryId,
                                     name: name,
                                     price: price,
                                     description: description,
-                                    notes: null,
-                                    customizationGroups: [],
-                                    image: imageUrl,
-                                    taxCategory: 'standard',
-                                    availability: !outOfStock,
-                                    sku: null,
-                                    dietaryTags: [],
-                                    allergens: [],
-                                    prepTime: null,
+                                    imageUrl: imageUrl,
                                     nutrition: nutrition,
-                                    sortOrder: null,
-                                    lastModified: null,
-                                    lastModifiedBy: null,
-                                    archived: false,
-                                    exportId: null,
-                                    sizes: null,
-                                    sizePrices: null,
-                                    additionalToppingPrices: null,
-                                    includedIngredients: includedIngredients
-                                        .map((e) => e.toMap())
-                                        .toList(),
-                                    optionalAddOns: optionalAddOns
-                                        .map((e) => e.toMap())
-                                        .toList(),
+                                    includedIngredients: includedIngredients,
+                                    optionalAddOns: optionalAddOns,
                                     customizations: customizations,
-                                    crustTypes: null,
-                                    cookTypes: null,
-                                    cutStyles: null,
-                                    sauceOptions: null,
-                                    dressingOptions: null,
-                                    maxFreeToppings: null,
-                                    maxFreeSauces: null,
-                                    maxFreeDressings: null,
-                                    maxToppings: null,
-                                    customizationsUpdatedAt: null,
-                                    createdAt: null,
-                                    comboId: null,
-                                    bundleItems: null,
-                                    bundleDiscount: null,
-                                    highlightTags: null,
-                                    allowSpecialInstructions: null,
-                                    hideInMenu: null,
-                                    freeSauceCount: null,
-                                    extraSauceUpcharge: null,
-                                    freeDressingCount: null,
-                                    extraDressingUpcharge: null,
-                                    dippingSauceOptions: null,
-                                    dippingSplits: null,
-                                    sideDipSauceOptions: null,
-                                    freeDipCupCount: null,
-                                    sideDipUpcharge: null,
-                                    extraCharges: null,
-                                    rawCustomizations: null,
-                                    templateRefs: selectedTemplateRefs,
+                                    selectedTemplateRefs: selectedTemplateRefs,
                                   ),
                                 ),
                               ],
@@ -900,88 +1064,36 @@ class _MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
             ),
           ),
         ),
-        if (_showSchemaSidebar)
-          Positioned(
-            top: 0,
-            right: 0,
-            bottom: 0,
-            child: SchemaIssueSidebar(
-              issues: _schemaIssues,
-              onRepair: (issue, newValue) {
-                setState(() {
-                  if (issue.type == MenuItemSchemaIssueType.category) {
-                    categoryId = newValue;
-                  } else if (issue.type == MenuItemSchemaIssueType.ingredient) {
-                    // Check all ingredient locations
-                    for (var i = 0; i < includedIngredients.length; i++) {
-                      if (includedIngredients[i].id == issue.missingReference) {
-                        includedIngredients[i] =
-                            includedIngredients[i].copyWith(id: newValue);
-                      }
-                    }
-                    for (var i = 0; i < optionalAddOns.length; i++) {
-                      if (optionalAddOns[i].id == issue.missingReference) {
-                        optionalAddOns[i] =
-                            optionalAddOns[i].copyWith(id: newValue);
-                      }
-                    }
-                    // Repair inside customizationGroups options
-                    for (var groupIdx = 0;
-                        groupIdx < customizationGroups.length;
-                        groupIdx++) {
-                      final group = customizationGroups[groupIdx];
-                      for (var ingIdx = 0;
-                          ingIdx < group.ingredients.length;
-                          ingIdx++) {
-                        if (group.ingredients[ingIdx].id ==
-                            issue.missingReference) {
-                          group.ingredients[ingIdx] =
-                              group.ingredients[ingIdx].copyWith(id: newValue);
-                        }
-                      }
-                    }
-                  } else if (issue.type ==
-                      MenuItemSchemaIssueType.ingredientType) {
-                    // FIX: Ingredient Type repair
-                    // Update typeId/type on all ingredient locations matching the label/missingReference
-                    for (var i = 0; i < includedIngredients.length; i++) {
-                      if (includedIngredients[i].name == issue.label ||
-                          includedIngredients[i].id == issue.missingReference) {
-                        includedIngredients[i] =
-                            includedIngredients[i].copyWith(typeId: newValue);
-                      }
-                    }
-                    for (var i = 0; i < optionalAddOns.length; i++) {
-                      if (optionalAddOns[i].name == issue.label ||
-                          optionalAddOns[i].id == issue.missingReference) {
-                        optionalAddOns[i] =
-                            optionalAddOns[i].copyWith(typeId: newValue);
-                      }
-                    }
-                    for (var group in customizationGroups) {
-                      for (var j = 0; j < group.ingredients.length; j++) {
-                        if (group.ingredients[j].name == issue.label ||
-                            group.ingredients[j].id == issue.missingReference) {
-                          group.ingredients[j] =
-                              group.ingredients[j].copyWith(typeId: newValue);
-                        }
-                      }
-                    }
-                  }
-                  // Mark issue as resolved
-                  _schemaIssues = _schemaIssues.map((e) {
-                    return e == issue ? e.markResolved(true) : e;
-                  }).toList();
-                  isDirty = true;
-                });
-                Future.delayed(
-                    const Duration(milliseconds: 100), _checkForSchemaIssues);
-              },
-              onClose: () {
-                setState(() => _showSchemaSidebar = false);
-              },
-            ),
-          ),
+        // if (_showSchemaSidebar)
+        //   Positioned(
+        //     top: 0,
+        //     right: 0,
+        //     bottom: 0,
+        //     child: SchemaIssueSidebar(
+        //       issues: _schemaIssues,
+        //       onRepair: (issue, newValue) {
+        //         setState(() {
+        //           repairMenuItemSchemaIssue(
+        //             issue: issue,
+        //             newValue: newValue,
+        //             updateCategoryId: (v) => categoryId = v,
+        //             includedIngredients: includedIngredients,
+        //             optionalAddOns: optionalAddOns,
+        //             customizationGroups: customizationGroups,
+        //           );
+        //           _schemaIssues = _schemaIssues.map((e) {
+        //             return e == issue ? e.markResolved(true) : e;
+        //           }).toList();
+        //           isDirty = true;
+        //         });
+        //         Future.delayed(
+        //             const Duration(milliseconds: 100), _checkForSchemaIssues);
+        //       },
+        //       onClose: () {
+        //         setState(() => _showSchemaSidebar = false);
+        //       },
+        //     ),
+        //   ),
       ],
     );
   }

@@ -27,167 +27,217 @@ class SchemaIssueSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasIssues = issues.isNotEmpty;
     final categoryProvider = context.watch<CategoryProvider>();
     final ingredientProvider = context.watch<IngredientMetadataProvider>();
     final ingredientTypeProvider = context.watch<IngredientTypeProvider>();
-
     final resolvedCount = issues.where((issue) => issue.resolved).length;
     final hasUnresolved = issues.any((issue) => !issue.resolved);
+    print(
+        '[SchemaIssueSidebar] Rendering... hasUnresolved=$hasUnresolved, resolvedCount=$resolvedCount/${issues.length}');
 
-    return Material(
-      elevation: 8,
-      color: Colors.white,
-      child: Container(
-        width: 420,
-        constraints: const BoxConstraints(maxWidth: 480, minWidth: 320),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
-              color: Colors.red.shade700.withOpacity(0.95),
-              child: Row(
-                children: [
-                  const Icon(Icons.warning_amber_rounded, color: Colors.white),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      hasUnresolved
-                          ? 'Schema Issues Detected'
-                          : 'All Issues Resolved',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          fontSize: 18),
-                    ),
-                  ),
-                  if (onClose != null)
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: onClose,
-                      tooltip: 'Close',
-                    ),
-                ],
-              ),
-            ),
-
-            // List of issues (scrollable)
-            if (issues.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(24.0),
-                child: Text(
-                  'No schema issues detected.',
-                  style: TextStyle(
-                      color: Colors.green, fontWeight: FontWeight.bold),
-                ),
-              )
-            else
-              Expanded(
-                child: ListView.separated(
-                  itemCount: issues.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final issue = issues[index];
-                    if (issue.resolved) {
-                      return _ResolvedIssueTile(issue: issue);
-                    }
-                    switch (issue.type) {
-                      case MenuItemSchemaIssueType.category:
-                        return _CategoryRepairTile(
-                          issue: issue,
-                          provider: categoryProvider,
-                          onRepair: (newValue) =>
-                              _handleRepair(context, issue, newValue),
-                        );
-                      case MenuItemSchemaIssueType.ingredient:
-                        return _IngredientRepairTile(
-                          issue: issue,
-                          provider: ingredientProvider,
-                          onRepair: (newValue) =>
-                              _handleRepair(context, issue, newValue),
-                        );
-                      case MenuItemSchemaIssueType.ingredientType:
-                        return _IngredientTypeRepairTile(
-                          issue: issue,
-                          provider: ingredientTypeProvider,
-                          onRepair: (newValue) =>
-                              _handleRepair(context, issue, newValue),
-                        );
-                      case MenuItemSchemaIssueType.missingField:
-                        return _MissingFieldRepairTile(
-                          issue: issue,
-                          onRepair: (newValue) =>
-                              _handleRepair(context, issue, newValue),
-                        );
-                      default:
-                        return ListTile(
-                          leading: const Icon(Icons.error_outline,
-                              color: Colors.red),
-                          title: Text(issue.displayMessage),
-                        );
-                    }
-                  },
-                ),
-              ),
-
-            // Status and actions
-            Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (hasUnresolved)
-                    Row(
-                      children: [
-                        Icon(Icons.error, color: Colors.red.shade700, size: 20),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            '$resolvedCount / ${issues.length} issues resolved',
-                            style: TextStyle(
-                                color: Colors.red.shade700,
-                                fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ],
-                    )
-                  else
-                    Row(
-                      children: [
-                        Icon(Icons.check_circle,
-                            color: Colors.green.shade700, size: 20),
-                        const SizedBox(width: 6),
-                        const Expanded(
-                          child: Text(
-                            'All issues resolved!',
-                            style: TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ],
-                    ),
-                  if (hasUnresolved) const SizedBox(height: 12),
-                  if (hasUnresolved)
-                    Text(
-                      'Please resolve all schema issues before saving this menu item.',
-                      style:
-                          TextStyle(color: Colors.red.shade600, fontSize: 13),
-                    ),
-                ],
-              ),
-            ),
-          ],
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      width: hasUnresolved ? 420 : 64,
+      constraints: BoxConstraints(
+        maxWidth: hasUnresolved ? 480 : 96,
+        minWidth: 56,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black12, blurRadius: 12, offset: Offset(-3, 0)),
+        ],
+        border: Border(
+          left: BorderSide(
+            color: Colors.grey.shade200,
+            width: 1,
+          ),
         ),
       ),
+      child: hasUnresolved
+          // ========== FULL SIDEBAR ========== //
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+                  color: Colors.red.shade700.withOpacity(0.95),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.warning_amber_rounded,
+                          color: Colors.white),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          hasUnresolved
+                              ? 'Schema Issues Detected'
+                              : 'All Issues Resolved',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: 18),
+                        ),
+                      ),
+                      if (onClose != null)
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white),
+                          onPressed: onClose,
+                          tooltip: 'Close',
+                        ),
+                    ],
+                  ),
+                ),
+                // List of issues (scrollable)
+                Expanded(
+                  child: ListView.separated(
+                    itemCount: issues.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final issue = issues[index];
+                      if (issue.resolved) {
+                        return _ResolvedIssueTile(issue: issue);
+                      }
+                      switch (issue.type) {
+                        case MenuItemSchemaIssueType.category:
+                          return _CategoryRepairTile(
+                            issue: issue,
+                            provider: categoryProvider,
+                            onRepair: (newValue) =>
+                                _handleRepair(context, issue, newValue),
+                          );
+                        case MenuItemSchemaIssueType.ingredient:
+                          return _IngredientRepairTile(
+                            issue: issue,
+                            provider: ingredientProvider,
+                            onRepair: (newValue) =>
+                                _handleRepair(context, issue, newValue),
+                          );
+                        case MenuItemSchemaIssueType.ingredientType:
+                          return _IngredientTypeRepairTile(
+                            issue: issue,
+                            provider: ingredientTypeProvider,
+                            onRepair: (newValue) =>
+                                _handleRepair(context, issue, newValue),
+                          );
+                        case MenuItemSchemaIssueType.missingField:
+                          return _MissingFieldRepairTile(
+                            issue: issue,
+                            onRepair: (newValue) =>
+                                _handleRepair(context, issue, newValue),
+                          );
+                        default:
+                          return ListTile(
+                            contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 12),
+                            leading: Container(
+                              width: 24,
+                              alignment: Alignment.center,
+                              child: const Icon(Icons.error_outline,
+                                  color: Colors.red),
+                            ),
+                            title: Text(
+                              issue.displayMessage.isNotEmpty
+                                  ? issue.displayMessage
+                                  : 'Unrecognized schema issue',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          );
+                      }
+                    },
+                  ),
+                ),
+                // Status and actions
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (hasUnresolved)
+                        Row(
+                          children: [
+                            Icon(Icons.error,
+                                color: Colors.red.shade700, size: 20),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                '$resolvedCount / ${issues.length} issues resolved',
+                                style: TextStyle(
+                                    color: Colors.red.shade700,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        Row(
+                          children: [
+                            Icon(Icons.check_circle,
+                                color: Colors.green.shade700, size: 20),
+                            const SizedBox(width: 6),
+                            const Expanded(
+                              child: Text(
+                                'All issues resolved!',
+                                style: TextStyle(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
+                      if (hasUnresolved) const SizedBox(height: 12),
+                      if (hasUnresolved)
+                        Text(
+                          'Please resolve all schema issues before saving this menu item.',
+                          style: TextStyle(
+                              color: Colors.red.shade600, fontSize: 13),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          // ========== COLLAPSED SIDEBAR (NO ISSUES) ========== //
+          : Center(
+              child: Tooltip(
+                message: "No schema issues detected",
+                preferBelow: false,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.check_circle, color: Colors.green, size: 36),
+                    SizedBox(height: 8),
+                    RotatedBox(
+                      quarterTurns: 3,
+                      child: Text(
+                        "No Issues",
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 
   void _handleRepair(
       BuildContext context, MenuItemSchemaIssue issue, String newValue) async {
     try {
-      onRepair(issue, newValue);
+      print(
+          '[SchemaIssueSidebar] _handleRepair triggered for issue: ${issue.displayMessage}, value: $newValue');
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        onRepair(issue, newValue);
+      });
     } catch (e, stack) {
       await ErrorLogger.log(
         message: 'schema_issue_sidebar_repair_failed',
@@ -231,35 +281,49 @@ class _CategoryRepairTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final allIds = provider.allCategoryIds;
     final allNames = provider.allCategoryNames;
-    return ListTile(
-      leading: const Icon(Icons.category, color: Colors.orange),
-      title: Text(issue.displayMessage),
-      subtitle: DropdownButtonFormField<String>(
-        value: null,
-        hint: const Text('Select Category'),
-        items: [
-          for (final id in allIds)
-            DropdownMenuItem(
-              value: id,
-              child: Text('${provider.categoryIdToName[id] ?? id}'),
-            ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.category, color: Colors.orange),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(issue.displayMessage,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add, color: Colors.blueGrey),
+                tooltip: 'Create Category',
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Category creation not implemented.'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: null,
+            hint: const Text('Select Category'),
+            items: [
+              for (final id in provider.allCategoryIds)
+                DropdownMenuItem(
+                  value: id,
+                  child: Text('${provider.categoryIdToName[id] ?? id}'),
+                ),
+            ],
+            onChanged: (value) {
+              if (value != null) onRepair(value);
+            },
+          ),
         ],
-        onChanged: (value) {
-          if (value != null) onRepair(value);
-        },
-      ),
-      trailing: IconButton(
-        icon: const Icon(Icons.add, color: Colors.blueGrey),
-        tooltip: 'Create Category',
-        onPressed: () {
-          // (Optional: Open dialog to add a new category)
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Category creation not implemented.'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
       ),
     );
   }
@@ -280,35 +344,55 @@ class _IngredientRepairTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final allIds = provider.allIngredientIds;
-    return ListTile(
-      leading: const Icon(Icons.egg_alt_rounded, color: Colors.brown),
-      title: Text(issue.displayMessage),
-      subtitle: DropdownButtonFormField<String>(
-        value: null,
-        hint: const Text('Select Ingredient'),
-        items: [
-          for (final id in allIds)
-            DropdownMenuItem(
-              value: id,
-              child: Text('${provider.ingredientIdToName[id] ?? id}'),
-            ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                alignment: Alignment.center,
+                child: const Icon(Icons.egg_alt_rounded, color: Colors.brown),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  issue.displayMessage,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add, color: Colors.blueGrey),
+                tooltip: 'Create Ingredient',
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Ingredient creation not implemented.'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            value: null,
+            hint: const Text('Select Ingredient'),
+            items: [
+              for (final id in allIds)
+                DropdownMenuItem(
+                  value: id,
+                  child: Text('${provider.ingredientIdToName[id] ?? id}'),
+                ),
+            ],
+            onChanged: (value) {
+              if (value != null) onRepair(value);
+            },
+          ),
         ],
-        onChanged: (value) {
-          if (value != null) onRepair(value);
-        },
-      ),
-      trailing: IconButton(
-        icon: const Icon(Icons.add, color: Colors.blueGrey),
-        tooltip: 'Create Ingredient',
-        onPressed: () {
-          // (Optional: Open dialog to add a new ingredient)
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ingredient creation not implemented.'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
       ),
     );
   }
@@ -329,35 +413,60 @@ class _IngredientTypeRepairTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final allIds = provider.allTypeIds;
-    return ListTile(
-      leading: const Icon(Icons.label_important, color: Colors.purple),
-      title: Text(issue.displayMessage),
-      subtitle: DropdownButtonFormField<String>(
-        value: null,
-        hint: const Text('Select Ingredient Type'),
-        items: [
-          for (final id in allIds)
-            DropdownMenuItem(
-              value: id,
-              child: Text('${provider.typeIdToName[id] ?? id}'),
-            ),
+    print(
+        '[DEBUG] IngredientTypeRepairTile rendered with ${allIds.length} items');
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                alignment: Alignment.center,
+                child: const Icon(Icons.label_important, color: Colors.purple),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  issue.displayMessage,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add, color: Colors.blueGrey),
+                tooltip: 'Create Ingredient Type',
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content:
+                          Text('Ingredient type creation not implemented.'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            isExpanded: true,
+            value: null,
+            hint: const Text('Select Ingredient Type'),
+            items: [
+              for (final id in allIds)
+                DropdownMenuItem(
+                  value: id,
+                  child: Text('${provider.typeIdToName[id] ?? id}'),
+                ),
+            ],
+            onChanged: (value) {
+              if (value != null) onRepair(value);
+            },
+          ),
         ],
-        onChanged: (value) {
-          if (value != null) onRepair(value);
-        },
-      ),
-      trailing: IconButton(
-        icon: const Icon(Icons.add, color: Colors.blueGrey),
-        tooltip: 'Create Ingredient Type',
-        onPressed: () {
-          // (Optional: Open dialog to add a new type)
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ingredient type creation not implemented.'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
       ),
     );
   }
@@ -375,16 +484,38 @@ class _MissingFieldRepairTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: const Icon(Icons.edit_note_rounded, color: Colors.blueAccent),
-      title: Text(issue.displayMessage),
-      subtitle: TextFormField(
-        decoration: InputDecoration(
-          labelText: 'Enter ${issue.label ?? issue.field}',
-        ),
-        onFieldSubmitted: (value) {
-          if (value.isNotEmpty) onRepair(value);
-        },
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                alignment: Alignment.center,
+                child: const Icon(Icons.edit_note_rounded,
+                    color: Colors.blueAccent),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  issue.displayMessage,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            decoration: InputDecoration(
+              labelText: 'Enter ${issue.label ?? issue.field}',
+            ),
+            onFieldSubmitted: (value) {
+              if (value.isNotEmpty) onRepair(value);
+            },
+          ),
+        ],
       ),
     );
   }
@@ -398,16 +529,41 @@ class _ResolvedIssueTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: const Icon(Icons.check_circle, color: Colors.green),
-      title: Text(
-        issue.displayMessage,
-        style: const TextStyle(
-            decoration: TextDecoration.lineThrough,
-            color: Colors.green,
-            fontStyle: FontStyle.italic),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                alignment: Alignment.center,
+                child: const Icon(Icons.check_circle, color: Colors.green),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  issue.displayMessage,
+                  style: const TextStyle(
+                    decoration: TextDecoration.lineThrough,
+                    color: Colors.green,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Padding(
+            padding: EdgeInsets.only(left: 40),
+            child: Text(
+              'Resolved',
+              style: TextStyle(color: Colors.grey),
+            ),
+          ),
+        ],
       ),
-      subtitle: const Text('Resolved'),
     );
   }
 }

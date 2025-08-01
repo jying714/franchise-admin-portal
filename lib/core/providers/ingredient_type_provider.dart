@@ -9,8 +9,8 @@ import 'package:franchise_admin_portal/core/models/ingredient_metadata.dart';
 
 class IngredientTypeProvider with ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
+  String franchiseId = '';
 
-  List<IngredientType> _types = [];
   bool _loading = false;
   String? _error;
 
@@ -20,7 +20,8 @@ class IngredientTypeProvider with ChangeNotifier {
   List<IngredientType> _ingredientTypes = [];
 
   /// Load all ingredient types for the given franchise
-  Future<void> loadIngredientTypes(String franchiseId) async {
+  Future<void> loadIngredientTypes(String newFranchiseId) async {
+    franchiseId = newFranchiseId;
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('franchises')
@@ -118,7 +119,7 @@ class IngredientTypeProvider with ChangeNotifier {
 
   /// Get a specific type by ID
   IngredientType? getById(String id) {
-    return _types.firstWhereOrNull((t) => t.id == id);
+    return _ingredientTypes.firstWhereOrNull((t) => t.id == id);
   }
 
   /// Add a new ingredient type to Firestore and local list

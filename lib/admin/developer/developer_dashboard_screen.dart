@@ -26,7 +26,12 @@ import 'package:franchise_admin_portal/admin/devtools/subscriptions/subscription
 import 'package:franchise_admin_portal/admin/devtools/platform/platform_feature_plan_tools_screen.dart';
 
 class DeveloperDashboardScreen extends StatefulWidget {
-  const DeveloperDashboardScreen({Key? key}) : super(key: key);
+  final String currentScreen;
+
+  const DeveloperDashboardScreen({
+    Key? key,
+    required this.currentScreen,
+  }) : super(key: key);
 
   @override
   State<DeveloperDashboardScreen> createState() =>
@@ -115,7 +120,10 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
       appBar: AppBar(
         title: Text(appBarTitle),
         actions: [
-          DashboardSwitcherDropdown(currentScreen: 'developer'),
+          DashboardSwitcherDropdown(
+            currentScreen: '/developer/dashboard',
+            user: appUser,
+          ),
           IconButton(
             icon: const Icon(Icons.sync_alt),
             tooltip: loc.switchFranchise,

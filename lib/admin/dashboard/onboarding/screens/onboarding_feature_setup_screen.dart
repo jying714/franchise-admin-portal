@@ -122,6 +122,7 @@ class _OnboardingFeatureSetupScreenState
           : const Center(child: CircularProgressIndicator()),
       floatingActionButton: isInitialized
           ? FloatingActionButton.extended(
+              heroTag: 'onboarding_feature_setup_fab',
               onPressed: _isSaving ? null : _handleSave,
               label: _isSaving
                   ? Text(localizations.saving)

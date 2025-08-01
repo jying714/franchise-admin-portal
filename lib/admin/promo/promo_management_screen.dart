@@ -9,13 +9,14 @@ import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/admin/promo/promo_form_dialog.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/utils/user_permissions.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
-import 'package:franchise_admin_portal/core/utils/role_guard.dart';
+import 'package:franchise_admin_portal/core/providers/role_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
+import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 class PromoManagementScreen extends StatelessWidget {
   const PromoManagementScreen({super.key});
@@ -25,19 +26,28 @@ class PromoManagementScreen extends StatelessWidget {
     final franchiseId = context.watch<FranchiseProvider>().franchiseId;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
-    final userNotifier = Provider.of<UserProfileNotifier>(context);
-    final user = userNotifier.user;
-    final loading = userNotifier.loading;
+    final userProvider = context.watch<AdminUserProvider>();
+    final user = userProvider.user;
+    final loading = userProvider.loading;
+
+    debugPrint('[PROMO SCREEN] User: ${user?.email}, roles: ${user?.roles}');
+    debugPrint('[PROMO SCREEN] Loading: $loading');
 
     print('[PROMO SCREEN] Build called');
     print(
         'Current user: $user, roles: ${user?.roles}, isDeveloper: ${user?.isDeveloper}, loading: $loading');
     print('[PROMO SCREEN] franchiseId: $franchiseId');
 
-    if (loading || user == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+    if (user == null) {
+      if (loading) {
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      } else {
+        return const Scaffold(
+          body: Center(child: Text('Unauthorized — No admin user')),
+        );
+      }
     }
 
     final canEdit = true;

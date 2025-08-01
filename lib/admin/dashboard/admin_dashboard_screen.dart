@@ -15,21 +15,24 @@ import 'package:franchise_admin_portal/core/models/user.dart' as app;
 import 'package:franchise_admin_portal/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_admin_portal/widgets/header/profile_icon_button.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_selector.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/utils/role_guard.dart';
+import 'package:franchise_admin_portal/core/providers/role_guard.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/onboarding_sidebar_group.dart';
-import 'package:franchise_admin_portal/widgets/admin/admin_sidebar.dart';
+import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final String? initialSectionKey;
+  final String currentScreen;
 
-  const AdminDashboardScreen({Key? key, this.initialSectionKey})
-      : super(key: key);
+  const AdminDashboardScreen({
+    Key? key,
+    this.initialSectionKey,
+    this.currentScreen = '/admin/dashboard',
+  }) : super(key: key);
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
@@ -37,34 +40,59 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   late final List<DashboardSection> _sections;
+  late final List<DashboardSection> _sidebarSections;
   int _selectedIndex = 0;
   bool _showMaintenanceBanner = false;
+  bool _initializedFromKey = false;
 
   @override
   void initState() {
     super.initState();
-    _sections = getSidebarSections();
 
-    final allSections = [..._sections, ...onboardingSteps];
+    _sections = getAllDashboardSections();
+    _sidebarSections = getSidebarSections();
+
     if (widget.initialSectionKey != null) {
-      final matchIndex = allSections.indexWhere(
-        (s) => s.key == widget.initialSectionKey,
-      );
-      if (matchIndex != -1) {
-        _selectedIndex = matchIndex;
+      final index =
+          _sections.indexWhere((s) => s.key == widget.initialSectionKey);
+      if (index != -1) {
+        _selectedIndex = index;
+        _initializedFromKey = true;
+        debugPrint(
+            '[DEBUG][AdminDashboardScreen] 🧭 Applied initialSectionKey: $_selectedIndex (${_sections[_selectedIndex].key})');
+      } else {
+        debugPrint(
+            '[WARN][AdminDashboardScreen] initialSectionKey "${widget.initialSectionKey}" not found in _sections');
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
-    final userNotifier = Provider.of<UserProfileNotifier>(context);
-    final appUser = userNotifier.user;
-    final mainSections = getSidebarSections();
-    final onboardingStartIndex = mainSections.length;
+    print(
+        '[DEBUG][AdminDashboardScreen][build] _selectedIndex: $_selectedIndex');
+    // Apply initialSectionKey safely once _sections are loaded
+    if (_sections.isEmpty) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
-    if (userNotifier.loading || appUser == null || appUser.roles.isEmpty) {
+    if (_sections.isNotEmpty) {
+      print(
+          '[DEBUG][AdminDashboardScreen][build] Section at selected index: ${_sections[_selectedIndex].key}');
+    }
+    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final adminUserProvider = Provider.of<AdminUserProvider>(context);
+    final appUser = adminUserProvider.user;
+
+    // Sidebar grouping
+    final mainSidebarSections =
+        _sidebarSections.where((s) => !s.key.startsWith('onboarding')).toList();
+    final onboardingSidebarSections =
+        _sidebarSections.where((s) => s.key.startsWith('onboarding')).toList();
+
+    if (adminUserProvider.loading || appUser == null || appUser.roles.isEmpty) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -82,8 +110,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       );
     }
 
-    final sections = _sections;
-    if (sections.isEmpty) {
+    if (_sections.isEmpty || _selectedIndex >= _sections.length) {
       ErrorLogger.log(
         message: "No dashboard sections registered.",
         source: "AdminDashboardScreen",
@@ -105,8 +132,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       );
     }
 
-    final onboardingSections =
-        sections.where((s) => s.key.startsWith('onboarding')).toList();
+    // GUARD: Don't build dashboard unless franchiseId is valid and loaded
+    if (franchiseId == null ||
+        franchiseId.isEmpty ||
+        franchiseId == 'unknown') {
+      print(
+          '[DEBUG][AdminDashboardScreen] franchiseId missing. Prompting user to select franchise.');
+      // Show dashboard shell and picker, but overlay a modal or banner if you want.
+      // Do NOT return/loading spinner here.
+    }
 
     return Scaffold(
       backgroundColor: colorScheme.background,
@@ -135,7 +169,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            DashboardSwitcherDropdown(currentScreen: 'admin'),
+            DashboardSwitcherDropdown(
+              currentScreen: widget.currentScreen,
+              user: appUser,
+            ),
             NotificationsIconButton(),
             const SizedBox(width: 8),
             HelpIconButton(),
@@ -151,21 +188,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       drawer: isMobile
           ? Drawer(
               child: SafeArea(
-                child: AdminSidebar(
-                  sections: mainSections,
-                  selectedIndex: _selectedIndex,
-                  onSelect: (i) {
-                    setState(() => _selectedIndex = i);
-                    Navigator.of(context).pop();
-                  },
-                  extraWidgets: [
-                    OnboardingSidebarGroup(
-                      steps: onboardingSteps, // ONLY onboarding steps
-                      selectedIndex: _selectedIndex,
-                      onSelect: (i) => setState(() => _selectedIndex = i),
-                      startIndexOffset: onboardingStartIndex,
-                    ),
-                  ],
+                child: _buildSidebar(
+                  context: context,
+                  mainSidebarSections: mainSidebarSections,
+                  onboardingSidebarSections: onboardingSidebarSections,
+                  colorScheme: colorScheme,
                 ),
               ),
             )
@@ -185,18 +212,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     width: 230,
                     color: colorScheme.surface.withOpacity(0.97),
                     child: SafeArea(
-                      child: AdminSidebar(
-                        sections: mainSections,
-                        selectedIndex: _selectedIndex,
-                        onSelect: (i) => setState(() => _selectedIndex = i),
-                        extraWidgets: [
-                          OnboardingSidebarGroup(
-                            steps: onboardingSteps,
-                            selectedIndex: _selectedIndex,
-                            onSelect: (i) => setState(() => _selectedIndex = i),
-                            startIndexOffset: onboardingStartIndex,
-                          ),
-                        ],
+                      child: _buildSidebar(
+                        context: context,
+                        mainSidebarSections: mainSidebarSections,
+                        onboardingSidebarSections: onboardingSidebarSections,
+                        colorScheme: colorScheme,
                       ),
                     ),
                   ),
@@ -210,11 +230,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ),
                         child: LayoutBuilder(
                           builder: (context, constraints) {
+                            if (_selectedIndex >= _sections.length) {
+                              print(
+                                  '[DEBUG] Invalid _selectedIndex ($_selectedIndex) for sections length ${_sections.length}. Resetting to 0.');
+                              _selectedIndex = 0;
+                            }
                             return IndexedStack(
                               index: _selectedIndex,
                               children: [
-                                // All main sections first
-                                for (final section in mainSections)
+                                for (final section in _sections)
                                   Builder(
                                     builder: (context) {
                                       try {
@@ -227,44 +251,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                         ErrorLogger.log(
                                           message:
                                               'Dashboard section error: $e',
-                                          source: 'AdminDashboardScreen',
-                                          screen: section.title,
-                                          stack: stack.toString(),
-                                          severity: 'error',
-                                          contextData: {
-                                            'franchiseId': franchiseId,
-                                            'sectionIndex': _selectedIndex,
-                                            'sectionTitle': section.title,
-                                            'errorType':
-                                                e.runtimeType.toString(),
-                                            'userId': appUser.id,
-                                          },
-                                        );
-                                        return Center(
-                                          child: Text(
-                                            'Section failed: $e',
-                                            style: const TextStyle(
-                                                color: Colors.red,
-                                                fontSize: 16),
-                                          ),
-                                        );
-                                      }
-                                    },
-                                  ),
-                                // Then all onboarding steps, in order
-                                for (final section in onboardingSteps)
-                                  Builder(
-                                    builder: (context) {
-                                      try {
-                                        return SizedBox(
-                                          width: constraints.maxWidth,
-                                          height: constraints.maxHeight,
-                                          child: section.builder(context),
-                                        );
-                                      } catch (e, stack) {
-                                        ErrorLogger.log(
-                                          message:
-                                              'Onboarding section error: $e',
                                           source: 'AdminDashboardScreen',
                                           screen: section.title,
                                           stack: stack.toString(),
@@ -302,6 +288,118 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // Sidebar builder with Franchise Onboarding group and main sections
+  Widget _buildSidebar({
+    required BuildContext context,
+    required List<DashboardSection> mainSidebarSections,
+    required List<DashboardSection> onboardingSidebarSections,
+    required ColorScheme colorScheme,
+  }) {
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        // Main sidebar sections
+        for (final section in mainSidebarSections)
+          _SidebarSectionTile(
+            section: section,
+            isSelected: _selectedIndex < _sections.length &&
+                _sections[_selectedIndex].key == section.key,
+            onTap: () {
+              final index = _sections.indexWhere((s) => s.key == section.key);
+              if (index != -1 && index != _selectedIndex) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              }
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
+            },
+            colorScheme: colorScheme,
+          ),
+
+        // Franchise Onboarding label and steps
+        if (onboardingSidebarSections.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.only(
+                top: 24.0, bottom: 4.0, left: 14.0, right: 10.0),
+            child: Text(
+              'Franchise Onboarding',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: colorScheme.primary,
+                letterSpacing: 0.7,
+              ),
+            ),
+          ),
+          for (final section in onboardingSidebarSections)
+            _SidebarSectionTile(
+              section: section,
+              isSelected: _selectedIndex < _sections.length &&
+                  _sections[_selectedIndex].key == section.key,
+              onTap: () {
+                final index = _sections.indexWhere((s) => s.key == section.key);
+                if (index != -1 && index != _selectedIndex) {
+                  setState(() {
+                    _selectedIndex = index;
+                  });
+                }
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+              },
+              colorScheme: colorScheme,
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+// Sidebar tile widget (icon, selection logic)
+class _SidebarSectionTile extends StatelessWidget {
+  final DashboardSection section;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final ColorScheme colorScheme;
+
+  const _SidebarSectionTile({
+    required this.section,
+    required this.isSelected,
+    required this.onTap,
+    required this.colorScheme,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(
+        section.icon,
+        color: isSelected
+            ? colorScheme.primary
+            : colorScheme.onSurface.withOpacity(0.65),
+      ),
+      title: Text(
+        section.title,
+        style: TextStyle(
+          color: isSelected
+              ? colorScheme.primary
+              : colorScheme.onSurface.withOpacity(0.9),
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      selected: isSelected,
+      selectedTileColor: colorScheme.primary.withOpacity(0.10),
+      onTap: onTap,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
     );
   }
 }

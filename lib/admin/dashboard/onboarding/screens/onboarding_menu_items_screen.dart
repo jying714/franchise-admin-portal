@@ -19,6 +19,7 @@ import 'package:franchise_admin_portal/core/providers/category_provider.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/schema_issue_sidebar.dart';
 import 'package:franchise_admin_portal/core/models/menu_item_schema_issue.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OnboardingMenuItemsScreen extends StatefulWidget {
   const OnboardingMenuItemsScreen({super.key});
@@ -75,34 +76,13 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     }
   }
 
-  // void _openEditor({MenuItem? item}) {
-  //   showModalBottomSheet(
-  //     isScrollControlled: true,
-  //     context: context,
-  //     builder: (_) => MenuItemEditorSheet(
-  //       existing: item,
-  //       onSave: (updatedItem) async {
-  //         final provider = context.read<MenuItemProvider>();
-  //         print(
-  //             '[DEBUG] Before add/update: ${provider.menuItems.map((m) => m.toJson())}');
-  //         provider.addOrUpdateMenuItem(updatedItem);
-  //         print(
-  //             '[DEBUG] After add/update: ${provider.menuItems.map((m) => m.toJson())}');
-  //         Navigator.of(context).pop();
-  //       },
-  //       onCancel: () {
-  //         Navigator.of(context).pop();
-  //       },
-  //     ),
-  //   );
-  // }
-
   @override
   Widget build(BuildContext context) {
+    print('[DEBUG][OnboardingMenuScreen] build called');
     final loc = AppLocalizations.of(context)!;
     final provider = context.watch<MenuItemProvider>();
-    print(
-        '[DEBUG] MenuItems in screen: ${provider.menuItems.map((m) => m.toJson())}');
+    // print(
+    //     '[DEBUG] MenuItems in screen: ${provider.menuItems.map((m) => m.toJson())}');
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -124,22 +104,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
       showSchemaSidebar = schemaIssues.isNotEmpty;
       itemPendingRepair = showSchemaSidebar ? menuItem : null;
       if (showSchemaSidebar) setState(() {}); // Redraw for the sidebar
-    }
-
-    // Reusable openEditor with schema checking logic
-    void openEditor({MenuItem? item}) {
-      showModalBottomSheet(
-        isScrollControlled: true,
-        context: context,
-        builder: (_) => MenuItemEditorSheet(
-          existing: item,
-          onSave: (updatedItem) async {
-            provider.addOrUpdateMenuItem(updatedItem);
-            Navigator.of(context).pop();
-          },
-          onCancel: () => Navigator.of(context).pop(),
-        ),
-      );
     }
 
     // Callback for repair sidebar
@@ -212,6 +176,86 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
       }
     }
 
+    // Reusable openEditor with schema checking logic
+    void openEditor({MenuItem? item}) {
+      final provider = context.read<MenuItemProvider>();
+
+      showModalBottomSheet(
+        isScrollControlled: true,
+        context: context,
+        backgroundColor: Colors.transparent,
+        builder: (context) {
+          // locally track your issues in the sheet
+          List<MenuItemSchemaIssue> issues = [];
+
+          return StatefulBuilder(
+            builder: (context, setModalState) {
+              final screenWidth = MediaQuery.of(context).size.width;
+              final modalWidth =
+                  screenWidth > 1280 ? 1080.0 : screenWidth * 0.92;
+
+              return Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: modalWidth,
+                    maxHeight: MediaQuery.of(context).size.height * 0.98,
+                  ),
+                  child: Material(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: MenuItemEditorSheet(
+                            existing: item,
+                            firestore: FirebaseFirestore.instance,
+                            franchiseId:
+                                context.read<FranchiseProvider>().franchiseId,
+                            onSave: (updatedItem) async {
+                              final provider = context.read<MenuItemProvider>();
+                              provider.addOrUpdateMenuItem(
+                                  updatedItem); // modifies local cache
+
+                              if (mounted) {
+                                Navigator.of(context).pop(); // dismiss sheet
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Item saved.')),
+                                );
+                              }
+                            },
+                            onCancel: () => Navigator.of(context).pop(),
+                            onSchemaIssuesChanged: (newIssues) {
+                              setModalState(() => issues = newIssues);
+                            },
+                          ),
+                        ),
+                        VerticalDivider(
+                          width: 1,
+                          thickness: 1,
+                          color: Colors.grey.shade300,
+                        ),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: issues.isEmpty ? 64 : 440,
+                          child: SchemaIssueSidebar(
+                            issues: issues,
+                            onRepair: handleSidebarRepair,
+                            onClose: () => setModalState(() => issues = []),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      );
+    }
+
     return Stack(
       children: [
         Scaffold(
@@ -245,7 +289,55 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => openEditor(),
+            heroTag: 'fab-onboarding-menu-items',
+            onPressed: () async {
+              print('[DEBUG][FAB] FloatingActionButton pressed.');
+              try {
+                print(
+                    '[DEBUG][FAB] About to navigate to /dashboard?section=menuItemEditor');
+
+                Navigator.pushNamed(
+                  context,
+                  '/dashboard?section=menuItemEditor',
+                ).then((result) {
+                  print('[DEBUG][FAB] Navigation pushNamed returned: $result');
+                  if (result is MenuItem) {
+                    context
+                        .read<MenuItemProvider>()
+                        .addOrUpdateMenuItem(result);
+                  }
+                }).catchError((err, st) async {
+                  print('[DEBUG][FAB] pushNamed threw error (async): $err');
+                  await ErrorLogger.log(
+                    message: 'Async error in pushNamed',
+                    stack: st.toString(),
+                    source: 'onboarding_menu_items_screen.dart',
+                    severity: 'error',
+                    screen: 'OnboardingMenuItemsScreen',
+                    contextData: {'exception': err.toString()},
+                  );
+                });
+              } catch (e, st) {
+                print('[DEBUG][FAB] Exception thrown in navigation: $e\n$st');
+                await ErrorLogger.log(
+                  message: 'Failed to navigate to MenuItemEditorScreen (sync)',
+                  stack: st.toString(),
+                  source: 'onboarding_menu_items_screen.dart',
+                  severity: 'error',
+                  screen: 'OnboardingMenuItemsScreen',
+                  contextData: {
+                    'exception': e.toString(),
+                  },
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                        'An error occurred while opening the menu item editor.'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
             icon: const Icon(Icons.add),
             label: Text(loc.addMenuItem),
             backgroundColor: DesignTokens.primaryColor,
@@ -357,30 +449,30 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
             ),
           ),
         ),
-        // === SCHEMA ISSUE SIDEBAR, overlays when there are schema issues after add/edit ===
-        if (showSchemaSidebar && itemPendingRepair != null)
-          Positioned(
-            top: 0,
-            right: 0,
-            bottom: 0,
-            width: 440,
-            child: Material(
-              elevation: 12,
-              color: Colors.white,
-              child: SchemaIssueSidebar(
-                issues: schemaIssues,
-                onRepair:
-                    handleSidebarRepair, // must match (MenuItemSchemaIssue, String)
-                onClose: () {
-                  setState(() {
-                    showSchemaSidebar = false;
-                    itemPendingRepair = null;
-                    schemaIssues = [];
-                  });
-                },
-              ),
-            ),
-          ),
+        // // === SCHEMA ISSUE SIDEBAR, overlays when there are schema issues after add/edit ===
+        // if (showSchemaSidebar && itemPendingRepair != null)
+        //   Positioned(
+        //     top: 0,
+        //     right: 0,
+        //     bottom: 0,
+        //     width: 440,
+        //     child: Material(
+        //       elevation: 12,
+        //       color: Colors.white,
+        //       child: SchemaIssueSidebar(
+        //         issues: schemaIssues,
+        //         onRepair:
+        //             handleSidebarRepair, // must match (MenuItemSchemaIssue, String)
+        //         onClose: () {
+        //           setState(() {
+        //             showSchemaSidebar = false;
+        //             itemPendingRepair = null;
+        //             schemaIssues = [];
+        //           });
+        //         },
+        //       ),
+        //     ),
+        //   ),
       ],
     );
   }

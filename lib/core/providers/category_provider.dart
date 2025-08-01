@@ -65,7 +65,7 @@ class CategoryProvider extends ChangeNotifier {
 
   Future<void> loadCategories() async {
     _loading = true;
-    notifyListeners();
+    Future.microtask(() => notifyListeners()); // <-- DEFERRED!
     try {
       _original = await firestore.fetchCategories(franchiseId);
       _current = List.from(_original);
@@ -80,7 +80,7 @@ class CategoryProvider extends ChangeNotifier {
       );
     } finally {
       _loading = false;
-      notifyListeners();
+      Future.microtask(() => notifyListeners()); // <-- DEFERRED!
     }
   }
 
@@ -207,7 +207,10 @@ class CategoryProvider extends ChangeNotifier {
   void updateFranchiseId(String newId) {
     if (newId != franchiseId && newId.isNotEmpty) {
       franchiseId = newId;
-      loadCategories(); // 🔁 Automatically load categories for the new franchise
+      // Defer to next frame to avoid build cycle errors
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        loadCategories();
+      });
     }
   }
 

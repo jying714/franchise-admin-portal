@@ -11,6 +11,7 @@ class PlatformFinancialsProvider extends ChangeNotifier {
   PlatformFinancialKpis? _kpis;
   bool _loading = false;
   String? _error;
+  bool _disposed = false;
 
   PlatformRevenueOverview? get overview => _overview;
   PlatformFinancialKpis? get kpis => _kpis;
@@ -21,7 +22,7 @@ class PlatformFinancialsProvider extends ChangeNotifier {
   Future<void> loadFinancials() async {
     _loading = true;
     _error = null;
-    notifyListeners();
+    if (!_disposed) notifyListeners();
     try {
       final results = await Future.wait([
         FirestoreService().fetchPlatformRevenueOverview(),
@@ -30,9 +31,8 @@ class PlatformFinancialsProvider extends ChangeNotifier {
       _overview = results[0] as PlatformRevenueOverview;
       _kpis = results[1] as PlatformFinancialKpis;
       _loading = false;
-      notifyListeners();
+      if (!_disposed) notifyListeners();
     } catch (e, stack) {
-      // Print the full Firestore error (including index URL) to your terminal:
       debugPrint('Firestore error in loadFinancials: $e');
       debugPrint('Stack trace: $stack');
       await ErrorLogger.log(
@@ -44,7 +44,7 @@ class PlatformFinancialsProvider extends ChangeNotifier {
       );
       _error = e.toString();
       _loading = false;
-      notifyListeners();
+      if (!_disposed) notifyListeners();
     }
   }
 
@@ -57,9 +57,12 @@ class PlatformFinancialsProvider extends ChangeNotifier {
     _kpis = null;
     _loading = false;
     _error = null;
-    notifyListeners();
+    if (!_disposed) notifyListeners();
   }
 
-  // 💡 Future Feature Placeholder:
-  // Add more advanced metrics/fields as your dashboard evolves!
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
 }

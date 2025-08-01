@@ -8,7 +8,7 @@ import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
 import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
 import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/utils/role_guard.dart';
+import 'package:franchise_admin_portal/core/providers/role_guard.dart';
 import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
 
 class FranchiseSubscriptionEditorDialog extends StatefulWidget {

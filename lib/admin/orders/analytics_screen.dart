@@ -1,4 +1,4 @@
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/services/analytics_service.dart';
@@ -14,6 +14,7 @@ import 'dart:io';
 import 'package:franchise_admin_portal/core/utils/export_utils.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -27,8 +28,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userProfileNotifier = Provider.of<UserProfileNotifier>(context);
-    final userRoles = userProfileNotifier.user?.roles ?? <String>[];
+    final userProvider = context.watch<AdminUserProvider>();
+    final userRoles = userProvider.user?.roles ?? <String>[];
+
+    debugPrint('[ANALYTICS SCREEN] User roles: $userRoles');
+    debugPrint('[ANALYTICS SCREEN] User: ${userProvider.user?.email}');
+    debugPrint('[ANALYTICS SCREEN] Loading: ${userProvider.loading}');
 
     final franchiseId = context.watch<FranchiseProvider>().franchiseId;
     final analyticsService =

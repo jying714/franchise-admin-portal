@@ -5,7 +5,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/mock_payment_data.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/tight_section_card.dart';
-import 'package:franchise_admin_portal/core/utils/role_guard.dart';
+import 'package:franchise_admin_portal/core/providers/role_guard.dart';
 import 'dart:math' as math;
 
 class MockPaymentForm extends StatefulWidget {

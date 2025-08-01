@@ -46,8 +46,8 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
     final loading = context.watch<MenuItemProvider>().templateRefsLoading;
 
     print('[DEBUG] selectedTemplateId: $_selectedTemplateId');
-    print(
-        '[DEBUG] Available templateRefs: ${templateRefs.map((t) => t.id).toList()}');
+    // print(
+    //     '[DEBUG] Available templateRefs: ${templateRefs.map((t) => t.id).toList()}');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

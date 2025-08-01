@@ -46,11 +46,23 @@ class FranchisePickerDropdown extends StatelessWidget {
             print(
                 '[FranchisePickerDropdown] Selected new franchise ID: $newValue');
             final selectedFranchise = franchises.firstWhere(
-                (f) => f.id == newValue,
-                orElse: () => FranchiseInfo(id: newValue, name: 'Unknown'));
+              (f) => f.id == newValue,
+              orElse: () => FranchiseInfo(id: newValue, name: 'Unknown'),
+            );
             print(
                 '[FranchisePickerDropdown] Selected franchise name: ${selectedFranchise.name}');
+
             franchiseProvider.setFranchiseId(newValue);
+
+            // 🧠 Defer route transition slightly to allow provider update to propagate
+            Future.microtask(() {
+              print(
+                  '[FranchisePickerDropdown] Navigating to Admin Dashboard after franchise selection...');
+              Navigator.pushNamed(
+                context,
+                '/admin/dashboard?section=onboardingMenu',
+              );
+            });
           }
         },
         items: franchises.map<DropdownMenuItem<String>>((f) {

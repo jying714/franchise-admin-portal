@@ -5,11 +5,12 @@ import 'package:franchise_admin_portal/core/models/error_log.dart';
 import 'widgets/paginated_error_log_table.dart';
 import 'widgets/error_log_filter_bar.dart';
 import 'widgets/error_log_stats_bar.dart';
-import 'package:franchise_admin_portal/widgets/user_profile_notifier.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/widgets/clear_filters_button.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_empty_state_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 
 class ErrorLogsScreen extends StatefulWidget {
   const ErrorLogsScreen({super.key});
@@ -70,8 +71,8 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
         body: Center(child: Text('Localization missing! [debug]')),
       );
     }
-    final userNotifier = Provider.of<UserProfileNotifier>(context);
-    final appUser = userNotifier.user;
+    final adminUserProvider = Provider.of<AdminUserProvider>(context);
+    final appUser = adminUserProvider.user;
 
     if (appUser == null) {
       return const Scaffold(
