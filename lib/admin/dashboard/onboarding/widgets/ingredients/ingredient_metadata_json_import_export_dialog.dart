@@ -17,24 +17,51 @@ import 'package:franchise_admin_portal/widgets/scrolling_json_editor.dart';
 import 'ingredient_metadata_json_preview_table.dart';
 
 class IngredientMetadataJsonImportExportDialog extends StatefulWidget {
-  const IngredientMetadataJsonImportExportDialog({super.key});
+  final AppLocalizations loc;
+
+  const IngredientMetadataJsonImportExportDialog({
+    super.key,
+    required this.loc,
+  });
 
   static Future<void> show(BuildContext context) async {
+    final loc = AppLocalizations.of(context);
+    final provider = context.read<IngredientMetadataProvider>();
+
+    if (loc == null) {
+      debugPrint(
+          '[IngredientMetadataJsonImportExportDialog] ERROR: loc is null!');
+      return;
+    }
+
     await showGeneralDialog(
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Import Export Ingredient Metadata',
       transitionDuration: const Duration(milliseconds: 200),
-      pageBuilder: (_, __, ___) => Center(
-        child: Material(
-          color: Colors.transparent,
-          child: SizedBox(
-            width: 1400,
-            height: 680,
-            child: const IngredientMetadataJsonImportExportDialog(),
+      pageBuilder: (ctx, _, __) {
+        return Localizations.override(
+          context: ctx,
+          child: Builder(
+            builder: (innerCtx) {
+              return ChangeNotifierProvider.value(
+                value: provider,
+                child: Center(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: SizedBox(
+                      width: 1400,
+                      height: 680,
+                      child:
+                          IngredientMetadataJsonImportExportDialog(loc: loc!),
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -83,7 +110,7 @@ class _IngredientMetadataJsonImportExportDialogState
         _errorMessage = null;
         final decoded = jsonDecode(_jsonController.text);
         if (decoded is! List) {
-          _errorMessage = AppLocalizations.of(context)!.invalidJsonFormat;
+          _errorMessage = widget.loc.invalidJsonFormat;
           _previewIngredients = null;
           return;
         }
@@ -101,13 +128,13 @@ class _IngredientMetadataJsonImportExportDialogState
         contextData: {'input': _jsonController.text},
       );
       setState(() {
-        _errorMessage = AppLocalizations.of(context)!.jsonParseError;
+        _errorMessage = widget.loc.jsonParseError;
       });
     }
   }
 
   Future<void> _saveImport() async {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.loc;
     final franchiseId = context.read<FranchiseProvider>().franchiseId;
     final provider = context.read<IngredientMetadataProvider>();
 
@@ -126,7 +153,7 @@ class _IngredientMetadataJsonImportExportDialogState
       if (invalidIngredients.isNotEmpty) {
         final badIds = invalidIngredients.map((e) => e.id).join(', ');
         setState(() {
-          _errorMessage = '${loc.invalidTypeIdError}: $badIds';
+          _errorMessage = '${widget.loc.invalidTypeIdError}: $badIds';
         });
         return;
       }
@@ -145,7 +172,7 @@ class _IngredientMetadataJsonImportExportDialogState
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(loc.errorGeneric)),
+          SnackBar(content: Text(widget.loc.errorGeneric)),
         );
       }
     }
@@ -153,7 +180,7 @@ class _IngredientMetadataJsonImportExportDialogState
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.loc;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -165,7 +192,7 @@ class _IngredientMetadataJsonImportExportDialogState
         child: Column(
           children: [
             AppBar(
-              title: Text(loc.importExportIngredientMetadata),
+              title: Text(widget.loc.importExportIngredientMetadata),
               backgroundColor: colorScheme.primary,
               foregroundColor: Colors.white,
               automaticallyImplyLeading: false,
@@ -189,7 +216,7 @@ class _IngredientMetadataJsonImportExportDialogState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(loc.editJsonBelow,
+                          Text(widget.loc.editJsonBelow,
                               style: theme.textTheme.titleMedium),
                           const SizedBox(height: 8),
                           Expanded(
@@ -201,6 +228,7 @@ class _IngredientMetadataJsonImportExportDialogState
                                   _parsePreview();
                                 });
                               },
+                              loc: loc,
                             ),
                           ),
                         ],
@@ -213,7 +241,8 @@ class _IngredientMetadataJsonImportExportDialogState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(loc.preview, style: theme.textTheme.titleMedium),
+                          Text(widget.loc.preview,
+                              style: theme.textTheme.titleMedium),
                           const SizedBox(height: 8),
                           Expanded(
                             child: Scrollbar(
@@ -222,6 +251,7 @@ class _IngredientMetadataJsonImportExportDialogState
                                 child: IngredientMetadataJsonPreviewTable(
                                   rawJson: _jsonController.text,
                                   previewIngredients: _previewIngredients,
+                                  loc: widget.loc,
                                 ),
                               ),
                             ),
@@ -240,12 +270,12 @@ class _IngredientMetadataJsonImportExportDialogState
                 children: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: Text(loc.cancel),
+                    child: Text(widget.loc.cancel),
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
                     onPressed: _previewIngredients != null ? _saveImport : null,
-                    child: Text(loc.importChanges),
+                    child: Text(widget.loc.importChanges),
                   ),
                 ],
               ),

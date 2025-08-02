@@ -8,6 +8,7 @@ import 'package:franchise_admin_portal/core/providers/menu_item_provider.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MenuItemJsonImportExportDialog {
   static Future<void> show(BuildContext context) async {
@@ -17,10 +18,17 @@ class MenuItemJsonImportExportDialog {
     final menuItemProvider = context.read<MenuItemProvider>();
     final franchiseId = context.read<FranchiseProvider>().franchiseId;
 
+    final itemsJson = menuItemProvider.menuItems.map((e) {
+      final map = e.toMap();
+      map.updateAll((key, value) {
+        if (value is Timestamp) return value.toDate().toIso8601String();
+        return value;
+      });
+      return map;
+    }).toList();
+
     final controller = TextEditingController(
-      text: const JsonEncoder.withIndent('  ').convert(
-        menuItemProvider.menuItems.map((e) => e.toMap()).toList(),
-      ),
+      text: const JsonEncoder.withIndent('  ').convert(itemsJson),
     );
 
     await showDialog(

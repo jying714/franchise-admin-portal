@@ -54,12 +54,34 @@ class _IngredientTypeManagementScreenState
   }
 
   void _showFormDialog({IngredientType? initial}) {
+    final loc = AppLocalizations.of(context);
+    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final ingredientTypeProvider = context.read<IngredientTypeProvider>();
+
+    print(
+        '[OnboardingIngredientTypeScreen] FAB pressed – loc: $loc, franchiseId: $franchiseId');
+
+    if (loc == null) return;
+
     showDialog(
       context: context,
-      builder: (context) => IngredientTypeFormDialog(
-        initial: initial,
-        franchiseId: franchiseId!,
-      ),
+      builder: (BuildContext dialogContext) {
+        return Localizations.override(
+          context: dialogContext,
+          child: Builder(
+            builder: (innerContext) {
+              return ChangeNotifierProvider.value(
+                value: ingredientTypeProvider,
+                child: IngredientTypeFormDialog(
+                  loc: loc,
+                  franchiseId: franchiseId,
+                  initial: initial,
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -175,7 +197,33 @@ class _IngredientTypeManagementScreenState
             icon: const Icon(Icons.library_add),
             tooltip: loc.loadDefaultTypes,
             onPressed: () {
-              IngredientTypeTemplatePickerDialog.show(context);
+              final parentLoc = AppLocalizations.of(context);
+              print(
+                  '[OnboardingIngredientTypeScreen] Opening template picker dialog...');
+              print(
+                  '[OnboardingIngredientTypeScreen] AppLocalizations.of(context): $parentLoc');
+              if (parentLoc == null) {
+                print(
+                    '[OnboardingIngredientTypeScreen] ERROR: Localization is null on this screen!');
+                return;
+              }
+
+              showDialog(
+                context: context,
+                builder: (BuildContext dialogContext) {
+                  return Localizations.override(
+                    context: context, // ✅ uses outer localization
+                    child: Builder(
+                      builder: (innerContext) {
+                        print(
+                            '[OnboardingIngredientTypeScreen] Using parentLoc passed from context');
+                        return IngredientTypeTemplatePickerDialog(
+                            loc: parentLoc);
+                      },
+                    ),
+                  );
+                },
+              );
             },
           ),
           IconButton(
@@ -335,11 +383,13 @@ class _IngredientTypeManagementScreenState
 class IngredientTypeFormDialog extends StatefulWidget {
   final IngredientType? initial;
   final String franchiseId;
+  final AppLocalizations loc;
 
   const IngredientTypeFormDialog({
     Key? key,
     this.initial,
     required this.franchiseId,
+    required this.loc,
   }) : super(key: key);
 
   @override
@@ -366,14 +416,14 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.loc;
     final colorScheme = Theme.of(context).colorScheme;
     final provider = context.read<IngredientTypeProvider>();
 
     return AlertDialog(
       title: Text(widget.initial == null
-          ? loc.addIngredientType
-          : loc.editIngredientType),
+          ? widget.loc.addIngredientType
+          : widget.loc.editIngredientType),
       content: Form(
         key: _formKey,
         child: SizedBox(
@@ -383,24 +433,25 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
             children: [
               TextFormField(
                 initialValue: name,
-                decoration: InputDecoration(labelText: loc.name),
-                validator: (val) =>
-                    (val == null || val.trim().isEmpty) ? loc.required : null,
+                decoration: InputDecoration(labelText: widget.loc.name),
+                validator: (val) => (val == null || val.trim().isEmpty)
+                    ? widget.loc.required
+                    : null,
                 onChanged: (val) => name = val,
               ),
               TextFormField(
                 initialValue: description,
-                decoration: InputDecoration(labelText: loc.description),
+                decoration: InputDecoration(labelText: widget.loc.description),
                 onChanged: (val) => description = val,
               ),
               TextFormField(
                 initialValue: systemTag,
-                decoration: InputDecoration(labelText: loc.systemTag),
+                decoration: InputDecoration(labelText: widget.loc.systemTag),
                 onChanged: (val) => systemTag = val,
               ),
               TextFormField(
                 initialValue: sortOrder.toString(),
-                decoration: InputDecoration(labelText: loc.sortOrder),
+                decoration: InputDecoration(labelText: widget.loc.sortOrder),
                 keyboardType: TextInputType.number,
                 onChanged: (val) => sortOrder = int.tryParse(val) ?? sortOrder,
               ),
@@ -412,7 +463,7 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text(loc.cancel),
+          child: Text(widget.loc.cancel),
         ),
         ElevatedButton(
           onPressed: () async {

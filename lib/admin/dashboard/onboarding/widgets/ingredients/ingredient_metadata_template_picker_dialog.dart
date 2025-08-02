@@ -9,12 +9,21 @@ import 'package:franchise_admin_portal/core/providers/onboarding_progress_provid
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class IngredientMetadataTemplatePickerDialog extends StatefulWidget {
-  const IngredientMetadataTemplatePickerDialog({super.key});
+  final AppLocalizations loc;
+
+  const IngredientMetadataTemplatePickerDialog({super.key, required this.loc});
 
   static Future<void> show(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    if (loc == null) {
+      debugPrint(
+          '[IngredientMetadataTemplatePickerDialog] ERROR: loc is null!');
+      return Future.value();
+    }
+
     return showDialog(
       context: context,
-      builder: (_) => const IngredientMetadataTemplatePickerDialog(),
+      builder: (_) => IngredientMetadataTemplatePickerDialog(loc: loc),
     );
   }
 
@@ -28,7 +37,7 @@ class _IngredientMetadataTemplatePickerDialogState
   bool _loading = false;
 
   Future<void> _loadTemplate(String templateId) async {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.loc;
     final provider = context.read<IngredientMetadataProvider>();
     final franchiseId = context.read<FranchiseProvider>().franchiseId;
 
@@ -42,7 +51,7 @@ class _IngredientMetadataTemplatePickerDialogState
     setState(() => _loading = true);
 
     try {
-      await provider.loadTemplate(templateId); // ✅ <— THIS is what was missing
+      await provider.loadTemplate(templateId);
 
       if (context.mounted) {
         Navigator.of(context).pop();
@@ -74,7 +83,7 @@ class _IngredientMetadataTemplatePickerDialogState
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.loc;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -112,7 +121,7 @@ class _IngredientMetadataTemplatePickerDialogState
                   icon: '🍗',
                   label: loc.wingBarTemplateLabel,
                   subtitle: loc.wingBarTemplateSubtitle,
-                  enabled: false, // Reserved for future
+                  enabled: false,
                 ),
               ],
             ),
@@ -140,20 +149,14 @@ class _IngredientMetadataTemplatePickerDialogState
       tileColor: enabled
           ? colorScheme.surfaceVariant.withOpacity(0.2)
           : Colors.grey.withOpacity(0.1),
-      leading: Text(
-        icon,
-        style: const TextStyle(fontSize: 28),
-      ),
+      leading: Text(icon, style: const TextStyle(fontSize: 28)),
       title: Text(
         label,
         style: theme.textTheme.titleSmall?.copyWith(
           fontWeight: FontWeight.w600,
         ),
       ),
-      subtitle: Text(
-        subtitle,
-        style: theme.textTheme.bodySmall,
-      ),
+      subtitle: Text(subtitle, style: theme.textTheme.bodySmall),
       onTap: enabled ? () => _loadTemplate(id) : null,
     );
   }

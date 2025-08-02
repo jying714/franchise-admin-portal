@@ -7,11 +7,13 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 class IngredientTagSelector extends StatelessWidget {
   final List<String> selectedTags;
   final ValueChanged<List<String>> onChanged;
+  final AppLocalizations loc;
 
   const IngredientTagSelector({
     Key? key,
     required this.selectedTags,
     required this.onChanged,
+    required this.loc,
   }) : super(key: key);
 
   static const List<String> _allTags = [
@@ -35,14 +37,13 @@ class IngredientTagSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final localization = AppLocalizations.of(context)!;
     final colorScheme = theme.colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          localization.allergenTags,
+          loc.allergenTags,
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w600,
             color: colorScheme.onSurface,

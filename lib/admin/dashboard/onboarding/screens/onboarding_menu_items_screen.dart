@@ -276,11 +276,11 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                 tooltip: loc.importExport,
                 onPressed: () => MenuItemJsonImportExportDialog.show(context),
               ),
-              IconButton(
-                icon: const Icon(Icons.library_add),
-                tooltip: loc.loadDefaultTemplates,
-                onPressed: () => MenuItemTemplatePickerDialog.show(context),
-              ),
+              // IconButton(
+              //   icon: const Icon(Icons.library_add),
+              //   tooltip: loc.loadDefaultTemplates,
+              //   onPressed: () => MenuItemTemplatePickerDialog.show(context),
+              // ),
               IconButton(
                 icon: const Icon(Icons.check_circle_outline),
                 tooltip: loc.markAsComplete,

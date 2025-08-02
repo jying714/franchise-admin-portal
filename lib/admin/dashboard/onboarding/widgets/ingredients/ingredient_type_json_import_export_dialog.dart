@@ -16,24 +16,45 @@ import 'package:franchise_admin_portal/widgets/scrolling_json_editor.dart';
 import 'ingredient_type_json_preview_table.dart';
 
 class IngredientTypeJsonImportExportDialog extends StatefulWidget {
-  const IngredientTypeJsonImportExportDialog({super.key});
+  final AppLocalizations loc;
+
+  const IngredientTypeJsonImportExportDialog({super.key, required this.loc});
 
   static Future<void> show(BuildContext context) async {
+    final loc = AppLocalizations.of(context);
+    print(
+        '[IngredientTypeJsonImportExportDialog] show() called with loc: $loc');
+
+    if (loc == null) {
+      print(
+          '[IngredientTypeJsonImportExportDialog] ERROR: AppLocalizations is null!');
+      return;
+    }
+
     await showGeneralDialog(
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Import Export Ingredient Types',
       transitionDuration: const Duration(milliseconds: 200),
-      pageBuilder: (_, __, ___) => Center(
-        child: Material(
-          color: Colors.transparent,
-          child: SizedBox(
-            width: 1400,
-            height: 680,
-            child: const IngredientTypeJsonImportExportDialog(),
+      pageBuilder: (_, __, ___) {
+        return Localizations.override(
+          context: context,
+          child: Builder(
+            builder: (innerContext) {
+              return Center(
+                child: Material(
+                  color: Colors.transparent,
+                  child: SizedBox(
+                    width: 1400,
+                    height: 680,
+                    child: IngredientTypeJsonImportExportDialog(loc: loc),
+                  ),
+                ),
+              );
+            },
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -87,7 +108,7 @@ class _IngredientTypeJsonImportExportDialogState
         _errorMessage = null;
         final decoded = jsonDecode(_jsonController.text);
         if (decoded is! List) {
-          _errorMessage = AppLocalizations.of(context)!.invalidJsonFormat;
+          _errorMessage = widget.loc.invalidJsonFormat;
           _previewTypes = null;
           return;
         }
@@ -106,13 +127,13 @@ class _IngredientTypeJsonImportExportDialogState
         },
       );
       setState(() {
-        _errorMessage = AppLocalizations.of(context)!.jsonParseError;
+        _errorMessage = widget.loc.jsonParseError;
       });
     }
   }
 
   Future<void> _saveImport() async {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.loc;
     final franchiseId = context.read<FranchiseProvider>().franchiseId;
     final provider = context.read<IngredientTypeProvider>();
 
@@ -142,7 +163,7 @@ class _IngredientTypeJsonImportExportDialogState
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.loc;
     final colorScheme = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
 
@@ -190,6 +211,7 @@ class _IngredientTypeJsonImportExportDialogState
                                   _parsePreview();
                                 });
                               },
+                              loc: loc,
                             ),
                           ),
                         ],

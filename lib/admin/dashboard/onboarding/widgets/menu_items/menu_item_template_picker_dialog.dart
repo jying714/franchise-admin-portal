@@ -10,18 +10,26 @@ import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_info_provider.dart';
 
 class MenuItemTemplatePickerDialog extends StatelessWidget {
-  const MenuItemTemplatePickerDialog({super.key});
+  final AppLocalizations loc;
+
+  const MenuItemTemplatePickerDialog({super.key, required this.loc});
 
   static Future<void> show(BuildContext context) async {
+    final loc = AppLocalizations.of(context);
+
+    if (loc == null) {
+      debugPrint('[MenuItemTemplatePickerDialog] ERROR: loc is null!');
+      return;
+    }
+
     await showDialog(
       context: context,
-      builder: (_) => const MenuItemTemplatePickerDialog(),
+      builder: (ctx) => MenuItemTemplatePickerDialog(loc: loc),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final franchiseId = context.read<FranchiseProvider>().franchiseId;
     final franchiseInfo = context.read<FranchiseInfoProvider>().franchise;
@@ -57,7 +65,7 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
       content: FutureBuilder<QuerySnapshot>(
         future: FirebaseFirestore.instance
             .collection('onboarding_templates')
-            .doc(restaurantType) // ✅ Dynamic restaurantType used
+            .doc(restaurantType)
             .collection('menu_items')
             .get(),
         builder: (context, snapshot) {
@@ -90,8 +98,9 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
                     onPressed: () async {
                       try {
                         final items = (data['items'] as List<dynamic>)
-                            .map((e) =>
-                                MenuItem.fromMap(Map<String, dynamic>.from(e)))
+                            .map((e) => MenuItem.fromMap(
+                                  Map<String, dynamic>.from(e),
+                                ))
                             .toList();
 
                         for (final item in items) {

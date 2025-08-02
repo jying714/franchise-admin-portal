@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -11,6 +10,7 @@ class ScrollingJsonEditor extends StatefulWidget {
   final void Function(String json) onChanged;
   final double height;
   final bool readOnly;
+  final AppLocalizations loc;
 
   const ScrollingJsonEditor({
     Key? key,
@@ -18,6 +18,7 @@ class ScrollingJsonEditor extends StatefulWidget {
     this.initialJson,
     this.height = 455,
     this.readOnly = false,
+    required this.loc,
   }) : super(key: key);
 
   @override
@@ -25,13 +26,15 @@ class ScrollingJsonEditor extends StatefulWidget {
 }
 
 class _ScrollingJsonEditorState extends State<ScrollingJsonEditor> {
-  late TextEditingController _controller;
+  late final TextEditingController _controller;
+  late final ScrollController _scrollController;
   String? _error;
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.initialJson ?? '');
+    _scrollController = ScrollController();
     _controller.addListener(_handleChange);
   }
 
@@ -46,13 +49,13 @@ class _ScrollingJsonEditorState extends State<ScrollingJsonEditor> {
 
       final parsed = json.decode(text);
       if (parsed is! Map && parsed is! List) {
-        throw FormatException('Invalid JSON structure');
+        throw const FormatException('Invalid JSON structure');
       }
+
       setState(() => _error = null);
       widget.onChanged(text);
     } catch (e, stack) {
-      setState(() => _error =
-          AppLocalizations.of(context)?.invalidJsonFormat ?? 'Invalid JSON');
+      setState(() => _error = widget.loc.invalidJsonFormat ?? 'Invalid JSON');
       ErrorLogger.log(
         message: 'Invalid JSON in ScrollingJsonEditor',
         source: 'scrolling_json_editor.dart',
@@ -71,6 +74,7 @@ class _ScrollingJsonEditorState extends State<ScrollingJsonEditor> {
   void dispose() {
     _controller.removeListener(_handleChange);
     _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -78,7 +82,7 @@ class _ScrollingJsonEditorState extends State<ScrollingJsonEditor> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.loc;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,15 +92,18 @@ class _ScrollingJsonEditorState extends State<ScrollingJsonEditor> {
           decoration: BoxDecoration(
             color: DesignTokens.surfaceColor,
             border: Border.all(
-                color: _error != null
-                    ? colorScheme.error
-                    : DesignTokens.cardBorderColor),
+              color: _error != null
+                  ? colorScheme.error
+                  : DesignTokens.cardBorderColor,
+            ),
             borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
           ),
           padding: const EdgeInsets.all(12),
           child: Scrollbar(
+            controller: _scrollController,
             thumbVisibility: true,
             child: SingleChildScrollView(
+              controller: _scrollController,
               scrollDirection: Axis.vertical,
               child: TextField(
                 controller: _controller,
@@ -104,7 +111,8 @@ class _ScrollingJsonEditorState extends State<ScrollingJsonEditor> {
                 readOnly: widget.readOnly,
                 style: theme.textTheme.bodyMedium,
                 decoration: const InputDecoration.collapsed(
-                    hintText: '{ "key": "value" }'),
+                  hintText: '{ "key": "value" }',
+                ),
                 keyboardType: TextInputType.multiline,
                 inputFormatters: [
                   FilteringTextInputFormatter.deny(RegExp(r'[\u0000]')),
@@ -117,10 +125,11 @@ class _ScrollingJsonEditorState extends State<ScrollingJsonEditor> {
           const SizedBox(height: 6),
           Text(
             _error!,
-            style:
-                theme.textTheme.bodySmall?.copyWith(color: colorScheme.error),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.error,
+            ),
           ),
-        ]
+        ],
       ],
     );
   }

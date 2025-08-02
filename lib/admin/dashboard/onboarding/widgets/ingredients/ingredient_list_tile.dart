@@ -115,15 +115,32 @@ class IngredientListTile extends StatelessWidget {
               icon: const Icon(Icons.edit_outlined),
               tooltip: t.edit,
               onPressed: () {
+                final loc = AppLocalizations.of(context);
+                if (loc == null) {
+                  debugPrint(
+                      '[IngredientListTile] ERROR: loc is null when opening IngredientFormCard');
+                  return;
+                }
+
                 showDialog(
                   context: context,
-                  builder: (_) => IngredientFormCard(
-                    initialData: ingredient,
-                    onSaved: () {
-                      onRefresh();
-                      if (onEdited != null) onEdited!();
-                    },
-                  ),
+                  builder: (dialogContext) {
+                    return Localizations.override(
+                      context: dialogContext,
+                      child: Builder(
+                        builder: (innerContext) {
+                          return IngredientFormCard(
+                            loc: loc,
+                            initialData: ingredient,
+                            onSaved: () {
+                              onRefresh();
+                              if (onEdited != null) onEdited!();
+                            },
+                          );
+                        },
+                      ),
+                    );
+                  },
                 );
               },
             ),

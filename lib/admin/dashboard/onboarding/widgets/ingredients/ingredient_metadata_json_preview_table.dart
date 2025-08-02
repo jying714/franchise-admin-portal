@@ -1,23 +1,22 @@
-// lib/admin/dashboard/onboarding/widgets/ingredients/ingredient_metadata_json_preview_table.dart
-
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/models/ingredient_metadata.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:franchise_admin_portal/core/models/ingredient_metadata.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class IngredientMetadataJsonPreviewTable extends StatelessWidget {
   final String rawJson;
   final List<IngredientMetadata>? previewIngredients;
+  final AppLocalizations loc;
 
   const IngredientMetadataJsonPreviewTable({
     super.key,
     required this.rawJson,
     required this.previewIngredients,
+    required this.loc,
   });
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -55,42 +54,48 @@ class IngredientMetadataJsonPreviewTable extends StatelessWidget {
         child: DataTable(
           columnSpacing: 24,
           headingRowColor: MaterialStateProperty.all(
-              colorScheme.surfaceVariant.withOpacity(0.3)),
+            colorScheme.surfaceVariant.withOpacity(0.3),
+          ),
           columns: [
             DataColumn(
               label: Text(
                 loc.ingredientName,
-                style: theme.textTheme.labelLarge
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             DataColumn(
               label: Text(
                 loc.ingredientType,
-                style: theme.textTheme.labelLarge
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             DataColumn(
               label: Text(
                 loc.allergens,
-                style: theme.textTheme.labelLarge
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             DataColumn(
               label: Text(
                 loc.removable,
-                style: theme.textTheme.labelLarge
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               numeric: false,
             ),
             DataColumn(
               label: Text(
                 loc.outOfStock,
-                style: theme.textTheme.labelLarge
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               numeric: false,
             ),
@@ -105,14 +110,18 @@ class IngredientMetadataJsonPreviewTable extends StatelessWidget {
                 DataCell(Text(ingredient.name)),
                 DataCell(Text(ingredient.type)),
                 DataCell(Text(allergensStr)),
-                DataCell(Icon(
-                  ingredient.removable ? Icons.check_circle : Icons.cancel,
-                  color: ingredient.removable ? Colors.green : Colors.red,
-                )),
-                DataCell(Icon(
-                  ingredient.outOfStock ? Icons.cancel : Icons.check_circle,
-                  color: ingredient.outOfStock ? Colors.red : Colors.green,
-                )),
+                DataCell(
+                  Icon(
+                    ingredient.removable ? Icons.check_circle : Icons.cancel,
+                    color: ingredient.removable ? Colors.green : Colors.red,
+                  ),
+                ),
+                DataCell(
+                  Icon(
+                    ingredient.outOfStock ? Icons.cancel : Icons.check_circle,
+                    color: ingredient.outOfStock ? Colors.red : Colors.green,
+                  ),
+                ),
               ],
             );
           }).toList(),

@@ -9,12 +9,31 @@ import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class IngredientTypeTemplatePickerDialog extends StatefulWidget {
-  const IngredientTypeTemplatePickerDialog({super.key});
+  final AppLocalizations loc;
+
+  const IngredientTypeTemplatePickerDialog({super.key, required this.loc});
 
   static Future<void> show(BuildContext context) {
+    print(
+        '[IngredientTypeTemplatePickerDialog.show] Invoked with context: $context');
     return showDialog(
       context: context,
-      builder: (_) => const IngredientTypeTemplatePickerDialog(),
+      builder: (BuildContext dialogContext) {
+        print(
+            '[IngredientTypeTemplatePickerDialog.show] Inside builder with dialogContext: $dialogContext');
+        final loc = AppLocalizations.of(dialogContext);
+        print(
+            '[IngredientTypeTemplatePickerDialog.show] AppLocalizations.of(dialogContext): $loc');
+        if (loc == null) {
+          print(
+              '[IngredientTypeTemplatePickerDialog] ERROR: AppLocalizations is null!');
+          return const AlertDialog(
+            content: Text(
+                'Localization missing – IngredientTypeTemplatePickerDialog'),
+          );
+        }
+        return IngredientTypeTemplatePickerDialog(loc: loc);
+      },
     );
   }
 
@@ -28,7 +47,10 @@ class _IngredientTypeTemplatePickerDialogState
   bool _loading = false;
 
   Future<void> _loadTemplate(String templateId) async {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.loc;
+    print(
+        '[IngredientTypeTemplatePickerDialog] _loadTemplate() triggered for: $templateId');
+    print('[IngredientTypeTemplatePickerDialog] Using loc: $loc');
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
 
@@ -82,7 +104,8 @@ class _IngredientTypeTemplatePickerDialogState
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.loc;
+    print('[IngredientTypeTemplatePickerDialog] build() called with loc: $loc');
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 

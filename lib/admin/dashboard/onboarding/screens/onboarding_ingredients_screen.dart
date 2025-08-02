@@ -33,12 +33,36 @@ class _OnboardingIngredientsScreenState
   final Set<String> _selectedIngredientIds = {};
 
   void _openIngredientForm([IngredientMetadata? ingredient]) {
+    final loc = AppLocalizations.of(context);
+    final provider = context.read<IngredientMetadataProvider>();
+
+    if (loc == null) {
+      print('[OnboardingIngredientsScreen] ERROR: loc is null in FAB');
+      return;
+    }
+
     showDialog(
       context: context,
-      builder: (_) => IngredientFormCard(
-        initialData: ingredient,
-        onSaved: () => context.read<IngredientMetadataProvider>().load(),
-      ),
+      builder: (dialogContext) {
+        return Localizations.override(
+          context: dialogContext,
+          child: Builder(
+            builder: (innerContext) {
+              return ChangeNotifierProvider.value(
+                value: provider,
+                child: IngredientFormCard(
+                  initialData: ingredient,
+                  onSaved: () {
+                    provider.load();
+                    Navigator.of(innerContext).pop();
+                  },
+                  loc: loc, // ✅ Add this line to satisfy the required parameter
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -234,9 +258,8 @@ class _OnboardingIngredientsScreenState
           IconButton(
             icon: const Icon(Icons.data_object),
             tooltip: loc.importExport,
-            onPressed: () {
-              IngredientMetadataJsonImportExportDialog.show(context);
-            },
+            onPressed: () =>
+                IngredientMetadataJsonImportExportDialog.show(context),
           ),
           IconButton(
             icon: const Icon(Icons.library_add),
@@ -251,12 +274,23 @@ class _OnboardingIngredientsScreenState
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openIngredientForm(),
-        icon: const Icon(Icons.add),
-        label: Text(loc.addIngredient),
-        backgroundColor: DesignTokens.primaryColor,
-        heroTag: 'onboarding_ingredients_fab',
+      floatingActionButton: Builder(
+        builder: (context) {
+          final loc = AppLocalizations.of(context);
+          if (loc == null) {
+            debugPrint(
+                '[OnboardingIngredientsScreen] ERROR: loc is null in FAB');
+            return const SizedBox.shrink(); // Prevents crash
+          }
+
+          return FloatingActionButton.extended(
+            onPressed: () => _openIngredientForm(),
+            icon: const Icon(Icons.add),
+            label: Text(loc.addIngredient),
+            backgroundColor: DesignTokens.primaryColor,
+            heroTag: 'onboarding_ingredients_fab',
+          );
+        },
       ),
       body: Padding(
         padding: DesignTokens.gridPadding,

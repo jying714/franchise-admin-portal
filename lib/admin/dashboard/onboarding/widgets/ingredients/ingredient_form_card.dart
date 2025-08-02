@@ -10,11 +10,13 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingred
 class IngredientFormCard extends StatefulWidget {
   final IngredientMetadata? initialData;
   final VoidCallback? onSaved;
+  final AppLocalizations loc;
 
   const IngredientFormCard({
     Key? key,
     this.initialData,
     this.onSaved,
+    required this.loc,
   }) : super(key: key);
 
   @override
@@ -62,8 +64,6 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
   Future<void> _saveIngredient() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final l10n = AppLocalizations.of(context)!;
-
     final ingredient = IngredientMetadata(
       id: widget.initialData?.id ??
           _nameController.text.trim().toLowerCase().replaceAll(' ', '_'),
@@ -104,7 +104,7 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.errorSavingIngredient)),
+          SnackBar(content: Text(widget.loc.errorSavingIngredient)),
         );
       }
     } finally {
@@ -115,7 +115,7 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
+    final loc = widget.loc;
     final colorScheme = theme.colorScheme;
 
     return Dialog(
@@ -136,18 +136,18 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    labelText: l10n.ingredientName,
+                    labelText: loc.ingredientName,
                     border: const OutlineInputBorder(),
                   ),
                   validator: (value) => (value == null || value.isEmpty)
-                      ? l10n.requiredField
+                      ? loc.requiredField
                       : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _typeController,
                   decoration: InputDecoration(
-                    labelText: l10n.ingredientType,
+                    labelText: loc.ingredientType,
                     border: const OutlineInputBorder(),
                   ),
                 ),
@@ -155,13 +155,14 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
                 IngredientTagSelector(
                   selectedTags: _allergens,
                   onChanged: (tags) => setState(() => _allergens = tags),
+                  loc: loc,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _notesController,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    labelText: l10n.ingredientDescription,
+                    labelText: loc.ingredientDescription,
                     border: const OutlineInputBorder(),
                   ),
                 ),
@@ -173,25 +174,25 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
                     CheckboxListTile(
                       value: _removable,
                       onChanged: (v) => setState(() => _removable = v ?? true),
-                      title: Text(l10n.removable),
+                      title: Text(loc.removable),
                     ),
                     CheckboxListTile(
                       value: _supportsExtra,
                       onChanged: (v) =>
                           setState(() => _supportsExtra = v ?? false),
-                      title: Text(l10n.supportsExtra),
+                      title: Text(loc.supportsExtra),
                     ),
                     CheckboxListTile(
                       value: _sidesAllowed,
                       onChanged: (v) =>
                           setState(() => _sidesAllowed = v ?? false),
-                      title: Text(l10n.sidesAllowed),
+                      title: Text(loc.sidesAllowed),
                     ),
                     CheckboxListTile(
                       value: _outOfStock,
                       onChanged: (v) =>
                           setState(() => _outOfStock = v ?? false),
-                      title: Text(l10n.outOfStock),
+                      title: Text(loc.outOfStock),
                     ),
                   ],
                 ),
@@ -207,7 +208,7 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
                     ),
                     child: _isSaving
                         ? const CircularProgressIndicator(strokeWidth: 2)
-                        : Text(l10n.saveIngredient),
+                        : Text(loc.saveIngredient),
                   ),
                 )
               ],
