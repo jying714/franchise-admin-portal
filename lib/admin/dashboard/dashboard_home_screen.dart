@@ -16,6 +16,7 @@ class DashboardHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('Loaded Admin Dashboard Home screen');
     final franchiseId = context.watch<FranchiseProvider>().franchiseId;
     final isMobile = MediaQuery.of(context).size.width < 800;
     final gridColumns = isMobile ? 1 : 4;

@@ -9,11 +9,11 @@ import 'package:franchise_admin_portal/widgets/dashboard/maintenance_banner.dart
 import 'package:franchise_admin_portal/widgets/dashboard/notifications_panel.dart';
 import 'package:franchise_admin_portal/widgets/header/settings_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/help_icon_button.dart';
+import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/models/user.dart' as app;
 import 'package:franchise_admin_portal/widgets/header/franchise_app_bar.dart';
-import 'package:franchise_admin_portal/widgets/header/profile_icon_button.dart';
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
@@ -23,6 +23,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/providers/role_guard.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final String? initialSectionKey;
@@ -146,7 +147,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       backgroundColor: colorScheme.background,
       appBar: AppBar(
         elevation: 1,
-        backgroundColor: colorScheme.surface,
+        automaticallyImplyLeading: false,
         titleSpacing: 0,
         title: Row(
           children: [
@@ -173,15 +174,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               currentScreen: widget.currentScreen,
               user: appUser,
             ),
+            const SizedBox(width: 8),
             NotificationsIconButton(),
             const SizedBox(width: 8),
             HelpIconButton(),
             const SizedBox(width: 8),
             SettingsIconButton(),
-            const SizedBox(width: 12),
-            RoleBadge(role: appUser.roles.join(', ')),
             const SizedBox(width: 8),
-            ProfileIconButton(),
+            UserAvatarMenu(),
+            const SizedBox(width: 8),
           ],
         ),
       ),
@@ -400,70 +401,6 @@ class _SidebarSectionTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-    );
-  }
-}
-
-class NotificationsIconButton extends StatefulWidget {
-  const NotificationsIconButton({Key? key}) : super(key: key);
-
-  @override
-  State<NotificationsIconButton> createState() =>
-      _NotificationsIconButtonState();
-}
-
-class _NotificationsIconButtonState extends State<NotificationsIconButton> {
-  bool _panelOpen = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final int notificationCount = 0; // Replace with live state
-
-    return SizedBox(
-      width: 48,
-      height: 48,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned.fill(
-            child: IconButton(
-              tooltip: "Notifications",
-              icon: Icon(Icons.notifications_none_outlined,
-                  color: colorScheme.primary),
-              onPressed: () async {
-                setState(() => _panelOpen = !_panelOpen);
-                if (_panelOpen) {
-                  await showDialog(
-                    context: context,
-                    builder: (_) => Dialog(
-                      backgroundColor: colorScheme.background,
-                      child: const SizedBox(
-                        width: 340,
-                        // child: NotificationsPanel(notifications: []),
-                      ),
-                    ),
-                  );
-                  setState(() => _panelOpen = false);
-                }
-              },
-            ),
-          ),
-          if (notificationCount > 0)
-            Positioned(
-              right: 8,
-              top: 10,
-              child: Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: colorScheme.error,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-        ],
-      ),
     );
   }
 }

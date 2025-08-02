@@ -17,6 +17,7 @@ import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
 import 'package:franchise_admin_portal/core/providers/role_guard.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ChatManagementScreen extends StatelessWidget {
   const ChatManagementScreen({super.key});
@@ -27,6 +28,8 @@ class ChatManagementScreen extends StatelessWidget {
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final user = Provider.of<AdminUserProvider>(context, listen: false).user;
+    final loc = AppLocalizations.of(context)!;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return RoleGuard(
       allowedRoles: const [
@@ -40,7 +43,7 @@ class ChatManagementScreen extends StatelessWidget {
       screen: 'ChatManagementScreen',
       child: SubscriptionAccessGuard(
         child: Scaffold(
-          backgroundColor: DesignTokens.backgroundColor,
+          backgroundColor: colorScheme.background,
           body: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -57,16 +60,16 @@ class ChatManagementScreen extends StatelessWidget {
                         padding: const EdgeInsets.only(bottom: 12.0),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
-                          children: const [
+                          children: [
                             Text(
-                              "Chat Management",
+                              loc.chatManagementTitle,
                               style: TextStyle(
-                                color: Colors.black,
+                                color: colorScheme.onBackground,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 22,
                               ),
                             ),
-                            Spacer(),
+                            const Spacer(),
                           ],
                         ),
                       ),
@@ -79,26 +82,49 @@ class ChatManagementScreen extends StatelessWidget {
                               return const LoadingShimmerWidget();
                             }
                             if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                              return const EmptyStateWidget(
-                                title: "No Chats",
-                                message: "No support chats yet.",
+                              return EmptyStateWidget(
+                                title: loc.noChatsTitle,
+                                message: loc.noChatsMessage,
                                 imageAsset: 'assets/images/admin_empty.png',
+                                isAdmin: true,
                               );
                             }
                             final chats = snapshot.data!;
                             return ListView.separated(
                               itemCount: chats.length,
-                              separatorBuilder: (_, __) => const Divider(),
+                              separatorBuilder: (_, __) => Divider(
+                                color:
+                                    colorScheme.surfaceVariant.withOpacity(0.3),
+                              ),
                               itemBuilder: (context, i) {
                                 final chat = chats[i];
                                 return ListTile(
-                                  title: Text(chat.userName ?? 'Unknown User'),
-                                  subtitle: Text(chat.lastMessage),
+                                  title: Text(
+                                    chat.userName ?? loc.unknownUser,
+                                    style: TextStyle(
+                                      color: colorScheme.onBackground,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    chat.lastMessage,
+                                    style: TextStyle(
+                                      color: colorScheme.onBackground
+                                          .withOpacity(0.75),
+                                    ),
+                                  ),
                                   trailing: IconButton(
-                                    icon: const Icon(Icons.delete,
-                                        color: Colors.red),
-                                    onPressed: () => _confirmDelete(context,
-                                        firestoreService, chat.id, user!),
+                                    icon: Icon(Icons.delete,
+                                        color: colorScheme.error),
+                                    tooltip: loc.deleteChatTooltip,
+                                    onPressed: () => _confirmDelete(
+                                      context,
+                                      firestoreService,
+                                      chat.id,
+                                      user!,
+                                      loc,
+                                      colorScheme,
+                                    ),
                                   ),
                                   onTap: () {
                                     showDialog(
@@ -107,7 +133,7 @@ class ChatManagementScreen extends StatelessWidget {
                                         franchiseId: franchiseId,
                                         chatId: chat.id,
                                         userName:
-                                            chat.userName ?? 'Unknown User',
+                                            chat.userName ?? loc.unknownUser,
                                       ),
                                     );
                                   },
@@ -121,7 +147,7 @@ class ChatManagementScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              Expanded(flex: 9, child: Container()),
+              const Expanded(flex: 9, child: SizedBox()),
             ],
           ),
         ),
@@ -129,22 +155,41 @@ class ChatManagementScreen extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, FirestoreService service,
-      String chatId, admin_user.User user) {
+  void _confirmDelete(
+    BuildContext context,
+    FirestoreService service,
+    String chatId,
+    admin_user.User user,
+    AppLocalizations loc,
+    ColorScheme colorScheme,
+  ) {
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Delete Chat"),
-        content:
-            const Text("Are you sure you want to delete this chat thread?"),
+        backgroundColor: colorScheme.background,
+        title: Text(
+          loc.deleteChatTitle,
+          style: TextStyle(
+            color: colorScheme.onBackground,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          loc.deleteChatConfirmMessage,
+          style: TextStyle(color: colorScheme.onBackground),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            child: Text(loc.cancelButton),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.error,
+              foregroundColor: colorScheme.onError,
+            ),
             onPressed: () async {
               await service.deleteSupportChat(franchiseId, chatId);
               await AuditLogService().addLog(
@@ -157,7 +202,7 @@ class ChatManagementScreen extends StatelessWidget {
               );
               if (context.mounted) Navigator.pop(context);
             },
-            child: const Text("Delete"),
+            child: Text(loc.deleteButton),
           ),
         ],
       ),

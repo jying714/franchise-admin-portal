@@ -6,10 +6,14 @@ class HelpIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return IconButton(
       tooltip: 'Help & Support',
-      icon: Icon(Icons.help_outline, color: colorScheme.primary),
+      icon: Icon(
+        Icons.help_outline,
+        color: isDark ? Colors.white : Colors.black,
+      ),
       onPressed: () => showDialog(
         context: context,
         builder: (_) => const HelpDialog(),

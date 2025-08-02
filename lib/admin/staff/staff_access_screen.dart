@@ -15,6 +15,7 @@ import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/providers/role_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
+import 'package:franchise_admin_portal/widgets/staff/show_add_staff_dialog.dart';
 
 class StaffAccessScreen extends StatefulWidget {
   const StaffAccessScreen({super.key});
@@ -24,25 +25,19 @@ class StaffAccessScreen extends StatefulWidget {
 }
 
 class _StaffAccessScreenState extends State<StaffAccessScreen> {
-  final _formKey = GlobalKey<FormState>();
-  String _name = '';
-  String _email = '';
-  String _role = 'staff';
-
   @override
   Widget build(BuildContext context) {
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
       return const Scaffold(
         body: Center(child: Text('Localization missing! [debug]')),
       );
     }
 
     final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return RoleGuard(
       allowedRoles: const [
@@ -56,15 +51,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
       screen: 'StaffAccessScreen',
       child: SubscriptionAccessGuard(
         child: Scaffold(
-          backgroundColor: DesignTokens.backgroundColor,
-          floatingActionButton: FloatingActionButton(
-            heroTag: 'staff_access_fab',
-            backgroundColor: DesignTokens.primaryColor,
-            tooltip: loc.staffAddStaffTooltip,
-            child: const Icon(Icons.person_add),
-            onPressed: () =>
-                _showAddStaffDialog(context, firestoreService, loc),
-          ),
+          backgroundColor: colorScheme.background,
           body: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -84,8 +71,8 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                           children: [
                             Text(
                               loc.staffAccessTitle,
-                              style: const TextStyle(
-                                color: Colors.black,
+                              style: TextStyle(
+                                color: colorScheme.onBackground,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 22,
                               ),
@@ -94,11 +81,61 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                             FloatingActionButton(
                               heroTag: "addStaffBtn",
                               mini: true,
-                              backgroundColor: DesignTokens.primaryColor,
+                              backgroundColor: colorScheme.primary,
                               child: const Icon(Icons.person_add),
                               tooltip: loc.staffAddStaffTooltip,
-                              onPressed: () => _showAddStaffDialog(
-                                  context, firestoreService, loc),
+                              onPressed: () async {
+                                final parentLoc = AppLocalizations.of(context);
+                                if (parentLoc == null) {
+                                  await ErrorLogger.log(
+                                    message:
+                                        'AppLocalizations.of(context) returned null.',
+                                    source: 'staff_access_screen',
+                                    screen: 'StaffAccessScreen',
+                                    severity: 'error',
+                                    contextData: {
+                                      'widget': 'FloatingActionButton',
+                                      'event': 'open_add_staff_dialog',
+                                    },
+                                  );
+                                  return;
+                                }
+
+                                await showDialog(
+                                  context: context,
+                                  barrierDismissible: true,
+                                  builder: (BuildContext dialogContext) {
+                                    return Localizations.override(
+                                      context: context,
+                                      child: Builder(
+                                        builder: (innerContext) {
+                                          final loc =
+                                              AppLocalizations.of(innerContext);
+                                          if (loc == null) {
+                                            ErrorLogger.log(
+                                              message:
+                                                  'Localization still null after Localizations.override.',
+                                              source: 'staff_access_screen',
+                                              screen: 'StaffAccessScreen',
+                                              severity: 'error',
+                                              contextData: {
+                                                'widget': 'AddStaffDialog',
+                                                'issue':
+                                                    'AppLocalizations.of(innerContext) returned null',
+                                              },
+                                            );
+                                            return const AlertDialog(
+                                              content: Text(
+                                                  'Localization failed [AddStaffDialog]'),
+                                            );
+                                          }
+                                          return AddStaffDialog(loc: loc);
+                                        },
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
                             ),
                           ],
                         ),
@@ -128,22 +165,29 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                                 final user = staff[i];
                                 return ListTile(
                                   leading: CircleAvatar(
-                                    backgroundColor:
-                                        DesignTokens.secondaryColor,
+                                    backgroundColor: colorScheme.secondary,
                                     child: Text(
                                       user.name.isNotEmpty ? user.name[0] : '?',
-                                      style:
-                                          const TextStyle(color: Colors.white),
+                                      style: TextStyle(
+                                          color: colorScheme.onSecondary),
                                     ),
                                   ),
-                                  title: Text(user.name,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold)),
+                                  title: Text(
+                                    user.name,
+                                    style: TextStyle(
+                                      color: colorScheme.onBackground,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                   subtitle: Text(
-                                      '${user.email} • ${user.roles.join(", ")}'),
+                                    '${user.email} • ${user.roles.join(", ")}',
+                                    style: TextStyle(
+                                        color: colorScheme.onBackground
+                                            .withOpacity(0.75)),
+                                  ),
                                   trailing: IconButton(
-                                    icon: const Icon(Icons.delete,
-                                        color: Colors.red),
+                                    icon: Icon(Icons.delete,
+                                        color: colorScheme.error),
                                     tooltip: loc.staffRemoveTooltip,
                                     onPressed: () => _confirmRemoveStaff(
                                         context, firestoreService, user, loc),
@@ -158,10 +202,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                   ),
                 ),
               ),
-              Expanded(
-                flex: 9,
-                child: Container(),
-              ),
+              const Expanded(flex: 9, child: SizedBox()),
             ],
           ),
         ),
@@ -169,98 +210,9 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
     );
   }
 
-  void _showAddStaffDialog(
-      BuildContext context, FirestoreService service, AppLocalizations loc) {
-    showDialog(
-      context: context,
-      builder: (_) {
-        return AlertDialog(
-          title: Text(loc.staffAddStaffDialogTitle),
-          content: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  decoration: InputDecoration(labelText: loc.staffNameLabel),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? loc.staffNameRequired
-                      : null,
-                  onSaved: (v) => _name = v!.trim(),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  decoration: InputDecoration(labelText: loc.staffEmailLabel),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? loc.staffEmailRequired
-                      : null,
-                  onSaved: (v) => _email = v!.trim(),
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  value: _role,
-                  decoration: InputDecoration(labelText: loc.staffRoleLabel),
-                  items: [
-                    DropdownMenuItem(
-                        value: 'owner', child: Text(loc.staffRoleOwner)),
-                    DropdownMenuItem(
-                        value: 'manager', child: Text(loc.staffRoleManager)),
-                    DropdownMenuItem(
-                        value: 'staff', child: Text(loc.staffRoleStaff)),
-                  ],
-                  onChanged: (v) => setState(() => _role = v!),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(loc.cancelButton)),
-            ElevatedButton(
-              onPressed: () async {
-                final franchiseId =
-                    Provider.of<FranchiseProvider>(context, listen: false)
-                        .franchiseId;
-                if (_formKey.currentState!.validate()) {
-                  _formKey.currentState!.save();
-                  try {
-                    await service.addStaffUser(
-                      name: _name,
-                      email: _email,
-                      roles: [_role],
-                      franchiseIds: [franchiseId],
-                    );
-                    Navigator.of(context).pop();
-                  } catch (e, stack) {
-                    await ErrorLogger.log(
-                      message: e.toString(),
-                      stack: stack.toString(),
-                      source: 'staff_access_screen',
-                      screen: 'StaffAccessScreen',
-                      severity: 'error',
-                      contextData: {
-                        'franchiseId': franchiseId,
-                        'name': _name,
-                        'email': _email,
-                        'role': _role,
-                        'operation': 'add_staff'
-                      },
-                    );
-                  }
-                }
-              },
-              child: Text(loc.staffAddButton),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   void _confirmRemoveStaff(BuildContext context, FirestoreService service,
       admin_user.User user, AppLocalizations loc) {
+    final colorScheme = Theme.of(context).colorScheme;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -269,15 +221,21 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
             Text('${loc.staffRemoveDialogBody}\n${user.name} (${user.email})'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(loc.cancelButton)),
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(loc.cancelButton),
+          ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.error,
+              foregroundColor: colorScheme.onError,
+            ),
             onPressed: () async {
               final franchiseId =
                   Provider.of<FranchiseProvider>(context, listen: false)
                       .franchiseId;
               try {
                 await service.removeStaffUser(user.id);
+                if (!context.mounted) return;
                 Navigator.of(context).pop();
               } catch (e, stack) {
                 await ErrorLogger.log(
@@ -291,7 +249,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                     'userId': user.id,
                     'name': user.name,
                     'email': user.email,
-                    'operation': 'remove_staff'
+                    'operation': 'remove_staff',
                   },
                 );
               }

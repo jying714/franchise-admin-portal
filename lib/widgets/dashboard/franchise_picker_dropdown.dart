@@ -21,7 +21,7 @@ class FranchisePickerDropdown extends StatelessWidget {
     final franchises = franchiseProvider.viewableFranchises;
     print('[FranchisePickerDropdown] All franchises: $franchises');
     final currentId = selectedFranchiseId ?? franchiseProvider.franchiseId;
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (franchises == null || franchises.isEmpty) {
       return Tooltip(
         message: loc?.noFranchisesAvailable ?? 'No franchises found',
@@ -70,17 +70,20 @@ class FranchisePickerDropdown extends StatelessWidget {
             value: f.id,
             child: Row(
               children: [
-                Icon(Icons.store_mall_directory,
-                    color: f.id == currentFranchise.id
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.grey.shade600),
+                Icon(
+                  Icons.store_mall_directory,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
                 const SizedBox(width: 8),
-                Text(f.name,
-                    style: TextStyle(
-                      fontWeight: f.id == currentFranchise.id
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    )),
+                Text(
+                  f.name,
+                  style: TextStyle(
+                    fontWeight: f.id == currentFranchise.id
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
               ],
             ),
           );

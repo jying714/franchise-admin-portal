@@ -68,11 +68,16 @@ class DashboardSwitcherDropdown extends StatelessWidget {
       orElse: () => options.first,
     );
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return DropdownButton<_DashboardTarget>(
       value: current,
-      icon: const Icon(Icons.keyboard_arrow_down),
+      icon: Icon(
+        Icons.keyboard_arrow_down,
+        color: isDark ? Colors.white : Colors.black,
+      ),
       style: TextStyle(
-        color: Theme.of(context).colorScheme.primary,
+        color: isDark ? Colors.white : Colors.black,
         fontWeight: FontWeight.w600,
       ),
       underline: const SizedBox.shrink(),

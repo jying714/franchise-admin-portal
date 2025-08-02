@@ -227,6 +227,8 @@ class FranchiseAppRootSplit extends StatelessWidget {
           final String inviteToken = initial['token'] as String;
           print(
               '[main.dart][FranchiseAppRootSplit] Unauthed initialRoute: $initialRoute, inviteToken: $inviteToken');
+          debugPrint(
+              'AppLocalizations.supportedLocales: ${AppLocalizations.supportedLocales}');
 
           return MaterialApp(
             navigatorKey: navigatorKey,
@@ -597,6 +599,9 @@ class _FranchiseAuthenticatedRootState
     // Roles missing
     if (adminUserProvider.user?.roles == null) {
       print('[FranchiseAuthenticatedRoot] ❌ User roles missing. Unauthorized.');
+      debugPrint(
+          'AppLocalizations.supportedLocales: ${AppLocalizations.supportedLocales}');
+
       return MaterialApp(
         home: Scaffold(
           appBar: AppBar(title: const Text('Unauthorized')),

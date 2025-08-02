@@ -24,6 +24,11 @@ import 'package:franchise_admin_portal/admin/devtools/billing/billing_subscripti
 import 'package:franchise_admin_portal/admin/devtools/widgets/dev_tools_sidebar_group.dart';
 import 'package:franchise_admin_portal/admin/devtools/subscriptions/subscription_dev_tools_screen.dart';
 import 'package:franchise_admin_portal/admin/devtools/platform/platform_feature_plan_tools_screen.dart';
+import 'package:franchise_admin_portal/widgets/header/settings_icon_button.dart';
+import 'package:franchise_admin_portal/widgets/header/help_icon_button.dart';
+import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.dart';
+import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
+import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
 
 class DeveloperDashboardScreen extends StatefulWidget {
   final String currentScreen;
@@ -117,18 +122,30 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         : loc.developerDashboardTitle;
 
     return Scaffold(
+      backgroundColor: colorScheme.background,
       appBar: AppBar(
         title: Text(appBarTitle),
         actions: [
+          FranchisePickerDropdown(),
+          const SizedBox(width: 8),
           DashboardSwitcherDropdown(
             currentScreen: '/developer/dashboard',
             user: appUser,
           ),
-          IconButton(
-            icon: const Icon(Icons.sync_alt),
-            tooltip: loc.switchFranchise,
-            onPressed: () => _selectFranchiseDialog(context),
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.sync_alt),
+          //   tooltip: loc.switchFranchise,
+          //   onPressed: () => _selectFranchiseDialog(context),
+          // ),
+          const SizedBox(width: 8),
+          NotificationsIconButton(),
+          const SizedBox(width: 8),
+          HelpIconButton(),
+          const SizedBox(width: 8),
+          SettingsIconButton(),
+          const SizedBox(width: 8),
+          UserAvatarMenu(),
+          const SizedBox(width: 8),
         ],
       ),
       body: Row(

@@ -1864,10 +1864,14 @@
   "carbohydrates": "Carbohydrates",
   "protein": "Protein",
   "chooseTemplate": "Choose Template",
-  "template": "Template"
-
-
-
+  "template": "Template",
+  "noChatsTitle": "No Chats",
+  "noChatsMessage": "No support chats yet.",
+  "unknownUser": "Unknown User",
+  "deleteChatTitle": "Delete Chat",
+  "deleteChatConfirmMessage": "Are you sure you want to delete this chat thread?",
+  "deleteChatTooltip": "Delete this chat",
+  "deleteButton": "Delete"
 
 
   }

@@ -21,6 +21,9 @@ import 'package:franchise_admin_portal/admin/owner/sections/platform_plans_summa
 import 'package:franchise_admin_portal/admin/owner/sections/franchise_subscription_summary_card.dart';
 import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
 import 'package:franchise_admin_portal/admin/owner/sections/quick_links_card.dart';
+import 'package:franchise_admin_portal/widgets/header/settings_icon_button.dart';
+import 'package:franchise_admin_portal/widgets/header/help_icon_button.dart';
+import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.dart';
 
 class PlatformOwnerDashboardScreen extends StatelessWidget {
   final String currentScreen;
@@ -127,7 +130,6 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
         child: Scaffold(
           backgroundColor: colorScheme.background,
           appBar: AppBar(
-            backgroundColor: colorScheme.surface,
             titleSpacing: 0,
             elevation: 1,
             title: Row(
@@ -160,21 +162,27 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
                 currentScreen: '/platform-owner/dashboard',
                 user: user,
               ),
-              Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: Chip(
-                  label: Text(
-                    loc.platformOwner,
-                    style: TextStyle(
-                      color: colorScheme.onPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  backgroundColor: colorScheme.primary,
-                  avatar: const Icon(Icons.verified_user,
-                      color: Colors.white, size: 20),
-                ),
-              ),
+              // Padding(
+              //   padding: const EdgeInsets.only(right: 16),
+              //   child: Chip(
+              //     label: Text(
+              //       loc.platformOwner,
+              //       style: TextStyle(
+              //         color: colorScheme.onPrimary,
+              //         fontWeight: FontWeight.w600,
+              //       ),
+              //     ),
+              //     backgroundColor: colorScheme.primary,
+              //     avatar: const Icon(Icons.verified_user,
+              //         color: Colors.white, size: 20),
+              //   ),
+              // ),
+              const SizedBox(width: 8),
+              NotificationsIconButton(),
+              const SizedBox(width: 8),
+              HelpIconButton(),
+              const SizedBox(width: 8),
+              SettingsIconButton(),
               const SizedBox(width: 8),
               UserAvatarMenu(size: 36),
               const SizedBox(width: 8),

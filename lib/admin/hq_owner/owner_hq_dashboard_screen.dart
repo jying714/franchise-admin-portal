@@ -30,6 +30,9 @@ import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
 import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
 import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:franchise_admin_portal/widgets/header/settings_icon_button.dart';
+import 'package:franchise_admin_portal/widgets/header/help_icon_button.dart';
+import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.dart';
 
 /// Developer/HQ-only: Entry-point for HQ/Owner dashboard.
 /// Add this to your DashboardSection registry for 'hq_owner'.
@@ -163,7 +166,6 @@ class OwnerHQDashboardScreen extends StatelessWidget {
       backgroundColor: colorScheme.background,
       appBar: AppBar(
         elevation: 1,
-        backgroundColor: colorScheme.surface,
         title: Row(
           children: [
             const SizedBox(width: 8),
@@ -183,11 +185,15 @@ class OwnerHQDashboardScreen extends StatelessWidget {
               user:
                   Provider.of<AdminUserProvider>(context, listen: false).user!,
             ),
-
-            RoleBadge(
-                role: user.roles.isNotEmpty ? user.roles.first : "hq_owner"),
             const SizedBox(width: 8),
-            const UserAvatarMenu(size: 36),
+            NotificationsIconButton(),
+            const SizedBox(width: 8),
+            HelpIconButton(),
+            const SizedBox(width: 8),
+            SettingsIconButton(),
+            const SizedBox(width: 8),
+            UserAvatarMenu(),
+            const SizedBox(width: 8),
           ],
         ),
       ),

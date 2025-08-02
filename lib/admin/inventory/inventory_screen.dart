@@ -153,23 +153,35 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(loc.deleteInventoryTitle),
-        content: Text(loc.deleteInventoryPrompt(item.name)),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: Text(
+          loc.deleteInventoryTitle,
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+        ),
+        content: Text(
+          loc.deleteInventoryPrompt(item.name),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(loc.cancel),
+            child: Text(
+              loc.cancel,
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
             ),
             child: Text(loc.delete),
           ),
         ],
       ),
     );
+
     if (confirm == true) {
       await firestore.deleteInventory(franchiseId, item.id);
       if (!mounted) return;
@@ -198,6 +210,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final franchiseId = context.watch<FranchiseProvider>().franchiseId;
     final firestore = Provider.of<FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     if (loc == null) {
       print(
           '[${runtimeType}] loc is null! Localization not available for this context.');
@@ -219,7 +233,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       screen: 'InventoryScreen',
       child: SubscriptionAccessGuard(
         child: Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: colorScheme.background,
           body: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -241,16 +255,20 @@ class _InventoryScreenState extends State<InventoryScreen> {
                           children: [
                             Text(
                               loc.inventory,
-                              style: const TextStyle(
-                                color: Colors.black,
+                              style: TextStyle(
+                                color:
+                                    Theme.of(context).colorScheme.onBackground,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 22,
                               ),
                             ),
                             const Spacer(),
                             IconButton(
-                              icon:
-                                  const Icon(Icons.add, color: Colors.black87),
+                              icon: Icon(Icons.add,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onBackground
+                                      .withOpacity(0.87)),
                               tooltip: loc.addInventory,
                               onPressed: canEdit
                                   ? () =>
@@ -326,24 +344,41 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                           ? Icons.check_circle
                                           : Icons.cancel,
                                       color: item.available
-                                          ? Colors.green
-                                          : Colors.red,
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                          : Theme.of(context).colorScheme.error,
                                     ),
-                                    title: Text(item.name,
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold)),
+                                    title: Text(
+                                      item.name,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onBackground,
+                                      ),
+                                    ),
                                     subtitle: Text(
                                       '${loc.sku}: ${item.sku}\n'
                                       '${loc.stock}: ${item.stock}\n'
                                       '${loc.threshold}: ${item.threshold}\n'
                                       '${loc.unitType}: ${item.unitType}',
+                                      style: TextStyle(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onBackground
+                                            .withOpacity(0.8),
+                                      ),
                                     ),
                                     trailing: canEdit
                                         ? Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               IconButton(
-                                                icon: const Icon(Icons.edit),
+                                                icon: Icon(Icons.edit,
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .secondary),
                                                 tooltip: loc.edit,
                                                 onPressed: () =>
                                                     _addOrEditInventory(
@@ -351,8 +386,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                                         item: item),
                                               ),
                                               IconButton(
-                                                icon: const Icon(Icons.delete,
-                                                    color: Colors.red),
+                                                icon: Icon(Icons.delete,
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .error),
                                                 tooltip: loc.delete,
                                                 onPressed: () =>
                                                     _deleteInventory(

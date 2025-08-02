@@ -23,6 +23,8 @@ class PromoManagementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final franchiseId = context.watch<FranchiseProvider>().franchiseId;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
@@ -30,23 +32,12 @@ class PromoManagementScreen extends StatelessWidget {
     final user = userProvider.user;
     final loading = userProvider.loading;
 
-    debugPrint('[PROMO SCREEN] User: ${user?.email}, roles: ${user?.roles}');
-    debugPrint('[PROMO SCREEN] Loading: $loading');
-
-    print('[PROMO SCREEN] Build called');
-    print(
-        'Current user: $user, roles: ${user?.roles}, isDeveloper: ${user?.isDeveloper}, loading: $loading');
-    print('[PROMO SCREEN] franchiseId: $franchiseId');
-
     if (user == null) {
       if (loading) {
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
       } else {
         return const Scaffold(
-          body: Center(child: Text('Unauthorized — No admin user')),
-        );
+            body: Center(child: Text('Unauthorized — No admin user')));
       }
     }
 
@@ -64,7 +55,7 @@ class PromoManagementScreen extends StatelessWidget {
       screen: 'PromoManagementScreen',
       child: SubscriptionAccessGuard(
         child: Scaffold(
-          backgroundColor: DesignTokens.backgroundColor,
+          backgroundColor: colorScheme.background,
           body: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -82,10 +73,10 @@ class PromoManagementScreen extends StatelessWidget {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               "Promo Management",
                               style: TextStyle(
-                                color: Colors.black,
+                                color: colorScheme.onBackground,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 22,
                               ),
@@ -93,8 +84,8 @@ class PromoManagementScreen extends StatelessWidget {
                             const Spacer(),
                             if (canEdit)
                               IconButton(
-                                icon: const Icon(Icons.add,
-                                    color: Colors.black87),
+                                icon: Icon(Icons.add,
+                                    color: colorScheme.onSurface),
                                 tooltip: "Add Promotion",
                                 onPressed: () {
                                   showDialog(
@@ -157,14 +148,23 @@ class PromoManagementScreen extends StatelessWidget {
                             final promos = snapshot.data!;
                             return ListView.separated(
                               itemCount: promos.length,
-                              separatorBuilder: (_, __) => const Divider(),
+                              separatorBuilder: (_, __) =>
+                                  Divider(color: colorScheme.outline),
                               itemBuilder: (context, i) {
                                 final promo = promos[i];
                                 return ListTile(
-                                  title: Text(promo.name.isNotEmpty
-                                      ? promo.name
-                                      : 'Untitled Promo'),
-                                  subtitle: Text(promo.description),
+                                  title: Text(
+                                    promo.name.isNotEmpty
+                                        ? promo.name
+                                        : 'Untitled Promo',
+                                    style:
+                                        TextStyle(color: colorScheme.onSurface),
+                                  ),
+                                  subtitle: Text(
+                                    promo.description,
+                                    style: TextStyle(
+                                        color: colorScheme.onSurfaceVariant),
+                                  ),
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
@@ -221,10 +221,11 @@ class PromoManagementScreen extends StatelessWidget {
                                           icon: const Icon(Icons.delete,
                                               color: Colors.red),
                                           onPressed: () => _confirmDelete(
-                                              context,
-                                              firestoreService,
-                                              promo.id,
-                                              user),
+                                            context,
+                                            firestoreService,
+                                            promo.id,
+                                            user,
+                                          ),
                                         ),
                                     ],
                                   ),
@@ -238,10 +239,7 @@ class PromoManagementScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              Expanded(
-                flex: 9,
-                child: Container(),
-              ),
+              const Expanded(flex: 9, child: SizedBox()),
             ],
           ),
         ),
@@ -251,15 +249,19 @@ class PromoManagementScreen extends StatelessWidget {
 
   void _confirmDelete(BuildContext context, FirestoreService service,
       String promoId, admin_user.User user) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Delete Promotion"),
-        content: const Text("Are you sure you want to delete this promotion?"),
+        title: Text("Delete Promotion",
+            style: TextStyle(color: colorScheme.onSurface)),
+        content: Text("Are you sure you want to delete this promotion?",
+            style: TextStyle(color: colorScheme.onSurfaceVariant)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            child: Text("Cancel", style: TextStyle(color: colorScheme.primary)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -293,6 +295,7 @@ class PromoManagementScreen extends StatelessWidget {
               if (!context.mounted) return;
               Navigator.pop(context);
             },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text("Delete"),
           ),
         ],

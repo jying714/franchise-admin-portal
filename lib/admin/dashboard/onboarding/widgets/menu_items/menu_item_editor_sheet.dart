@@ -32,6 +32,7 @@ import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.d
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_utility.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class MenuItemEditorSheet extends StatefulWidget {
   final MenuItem? existing;
@@ -754,20 +755,35 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     final hasIngredients =
         context.read<IngredientMetadataProvider>().allIngredients.isNotEmpty;
 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final loc = AppLocalizations.of(context)!;
     return Stack(
       children: [
         Scaffold(
           appBar: AppBar(
+            backgroundColor: theme.scaffoldBackgroundColor,
+            elevation: 0,
+            iconTheme: const IconThemeData(color: Colors.black),
             title: Text(
-                widget.existing == null ? 'Add Menu Item' : 'Edit Menu Item'),
+              '${widget.existing == null ? loc.addMenuItem : loc.editMenuItem}',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+            ),
             actions: [
-              TextButton(
-                onPressed: (!(_showSchemaSidebar && _schemaIssues.isNotEmpty) &&
-                        (_schemaIssues.isEmpty || isDirty))
-                    ? _saveItem
-                    : null,
-                child: const Text('Save'),
-              )
+              // Optional save button logic can be re-enabled here
+              // TextButton(
+              //   onPressed: (!(_showSchemaSidebar && _schemaIssues.isNotEmpty) &&
+              //           (_schemaIssues.isEmpty || isDirty))
+              //       ? _saveItem
+              //       : null,
+              //   child: Text(
+              //     loc.save,
+              //     style: TextStyle(color: colorScheme.primary),
+              //   ),
+              // ),
             ],
           ),
           body: SafeArea(

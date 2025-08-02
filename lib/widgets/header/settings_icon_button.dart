@@ -6,10 +6,14 @@ class SettingsIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return IconButton(
       tooltip: 'Settings',
-      icon: Icon(Icons.settings, color: colorScheme.primary),
+      icon: Icon(
+        Icons.settings,
+        color: isDark ? Colors.white : Colors.black,
+      ),
       onPressed: () => showDialog(
         context: context,
         builder: (_) => const SettingsDialog(),

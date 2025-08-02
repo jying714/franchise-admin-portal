@@ -15,22 +15,23 @@ import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:franchise_admin_portal/widgets/orders/order_detail_dialog.dart';
 
 class OrderManagementScreen extends StatelessWidget {
   const OrderManagementScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return RoleGuard(
+    return const RoleGuard(
       allowedRoles: [
         'platform_owner',
         'hq_owner',
         'manager',
         'developer',
-        'admin'
+        'admin',
       ],
       featureName: 'OrderManagementScreen',
-      child: const _OrderManagementScreenContent(),
+      child: _OrderManagementScreenContent(),
     );
   }
 }
@@ -53,7 +54,8 @@ class _OrderManagementScreenContentState
 
   Future<void> _updateOrderStatus(String franchiseId, order_model.Order order,
       String newStatus, admin_user.User user) async {
-    await Provider.of<FirestoreService>(context, listen: false)
+    await context
+        .read<FirestoreService>()
         .updateOrderStatus(franchiseId, order.id, newStatus);
     await AuditLogService().addLog(
       franchiseId: franchiseId,
@@ -67,7 +69,8 @@ class _OrderManagementScreenContentState
 
   Future<void> _processRefund(String franchiseId, order_model.Order order,
       double amount, admin_user.User user) async {
-    await Provider.of<FirestoreService>(context, listen: false)
+    await context
+        .read<FirestoreService>()
         .refundOrder(franchiseId, order.id, amount: amount);
     await AuditLogService().addLog(
       franchiseId: franchiseId,
@@ -80,10 +83,10 @@ class _OrderManagementScreenContentState
   }
 
   void _showRefundDialog(order_model.Order order, admin_user.User user) {
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+    final franchiseId = context.read<FranchiseProvider>().franchiseId;
     final controller =
         TextEditingController(text: order.total.toStringAsFixed(2));
+    final colorScheme = Theme.of(context).colorScheme;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -96,7 +99,7 @@ class _OrderManagementScreenContentState
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Cancel"),
+            child: Text("Cancel", style: TextStyle(color: colorScheme.outline)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -106,6 +109,8 @@ class _OrderManagementScreenContentState
                 _processRefund(franchiseId, order, amount, user);
               }
             },
+            style:
+                ElevatedButton.styleFrom(backgroundColor: colorScheme.primary),
             child: const Text("Refund"),
           ),
         ],
@@ -114,9 +119,8 @@ class _OrderManagementScreenContentState
   }
 
   void _showStatusDialog(order_model.Order order, admin_user.User user) {
-    final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
-    final List<String> allowedStatuses = [
+    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    const allowedStatuses = [
       'Placed',
       'Preparing',
       'Ready',
@@ -159,8 +163,7 @@ class _OrderManagementScreenContentState
     );
   }
 
-  List<order_model.Order> _filterOrders(
-      List<order_model.Order> orders, admin_user.User user) {
+  List<order_model.Order> _filterOrders(List<order_model.Order> orders) {
     return orders.where((o) {
       if (!_showRefunded && o.status == 'Refunded') return false;
       if (_filterStatus != null && o.status != _filterStatus) return false;
@@ -191,303 +194,219 @@ class _OrderManagementScreenContentState
       targetId: '',
       details: {'count': orders.length},
     );
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Exported orders (CSV download logic goes here).')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+          content: Text('Exported orders (CSV download logic goes here).')),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final franchiseId = context.watch<FranchiseProvider>().franchiseId;
-    final userProvider = context.watch<AdminUserProvider>();
-    final user = userProvider.user;
-    final loading = userProvider.loading;
-
-    debugPrint(
-        '[OrderManagementScreen] User: ${user?.email}, roles: ${user?.roles}');
-    debugPrint('[OrderManagementScreen] Loading: $loading');
-    final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
-    final loc = AppLocalizations.of(context);
+    final user = context.watch<AdminUserProvider>().user;
+    final loading = context.watch<AdminUserProvider>().loading;
+    final firestoreService = context.read<FirestoreService>();
+    final colorScheme = Theme.of(context).colorScheme;
 
     if (user == null) {
-      if (loading) {
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
-      } else {
-        return const Scaffold(
-          body: Center(child: Text('Unauthorized — No admin user')),
-        );
-      }
+      return Scaffold(
+        body: Center(
+          child: loading
+              ? const CircularProgressIndicator()
+              : const Text('Unauthorized — No admin user'),
+        ),
+      );
     }
 
     return RoleGuard(
       allowedRoles: ['hq_owner', 'manager', 'developer'],
       child: SubscriptionAccessGuard(
         child: Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: colorScheme.background,
           body: Column(
             children: [
               const GracePeriodBanner(),
               Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 11,
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                            top: 24.0, left: 24.0, right: 24.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12.0),
-                              child: Row(
-                                children: [
-                                  const Text(
-                                    "Order Management",
-                                    style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  const Spacer(),
-                                  IconButton(
-                                    icon: const Icon(Icons.download),
-                                    tooltip: "Export Orders",
-                                    onPressed: () async {
-                                      try {
-                                        _showExportDialog(
-                                            franchiseId, _lastOrders, user);
-                                      } catch (e, stack) {
-                                        await ErrorLogger.log(
-                                          message: 'Export failed: $e',
-                                          stack: stack.toString(),
-                                          screen:
-                                              'order_management_screen.dart',
-                                          source: 'export',
-                                          contextData: {
-                                            'franchiseId': franchiseId
-                                          },
-                                        );
-                                      }
-                                    },
-                                  ),
-                                ],
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text("Order Management",
+                              style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onBackground)),
+                          const Spacer(),
+                          IconButton(
+                            icon: Icon(Icons.download,
+                                color: colorScheme.primary),
+                            tooltip: "Export Orders",
+                            onPressed: () => _showExportDialog(
+                                franchiseId, _lastOrders, user),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              decoration: InputDecoration(
+                                labelText: "Search by Order ID or Name",
+                                prefixIcon: const Icon(Icons.search),
+                                border: const OutlineInputBorder(),
                               ),
+                              onChanged: (val) =>
+                                  setState(() => _searchText = val.trim()),
                             ),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    decoration: const InputDecoration(
-                                      labelText: "Search by Order ID or Name",
-                                      prefixIcon: Icon(Icons.search),
+                          ),
+                          const SizedBox(width: 12),
+                          DropdownButton<String>(
+                            value: _filterStatus,
+                            hint: const Text("Status"),
+                            items: [
+                              null,
+                              'Placed',
+                              'Preparing',
+                              'Ready',
+                              'Out for Delivery',
+                              'Delivered',
+                              'Picked Up',
+                              'Refunded'
+                            ]
+                                .map((s) => DropdownMenuItem(
+                                    value: s, child: Text(s ?? "All")))
+                                .toList(),
+                            onChanged: (val) =>
+                                setState(() => _filterStatus = val),
+                          ),
+                          const SizedBox(width: 12),
+                          IconButton(
+                            icon: const Icon(Icons.calendar_today),
+                            onPressed: () async {
+                              final range = await showDateRangePicker(
+                                context: context,
+                                firstDate: DateTime.now()
+                                    .subtract(const Duration(days: 365)),
+                                lastDate:
+                                    DateTime.now().add(const Duration(days: 1)),
+                              );
+                              if (range != null)
+                                setState(() => _dateRange = range);
+                            },
+                          ),
+                          Checkbox(
+                            value: _showRefunded,
+                            onChanged: (val) =>
+                                setState(() => _showRefunded = val ?? true),
+                          ),
+                          const Text("Show Refunded"),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: StreamBuilder<List<order_model.Order>>(
+                          stream:
+                              firestoreService.getAllOrdersStream(franchiseId),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const LoadingShimmerWidget();
+                            }
+                            final orders = snapshot.data ?? [];
+                            final filtered = _filterOrders(orders);
+                            _lastOrders = filtered;
+
+                            if (filtered.isEmpty) {
+                              return const EmptyStateWidget(
+                                title: "No Orders",
+                                message: "No orders found.",
+                                iconData: Icons.receipt_long,
+                              );
+                            }
+
+                            return ListView.builder(
+                              itemCount: filtered.length,
+                              itemBuilder: (ctx, i) {
+                                final order = filtered[i];
+                                return Card(
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 6),
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundColor:
+                                          order.status == 'Refunded'
+                                              ? Colors.redAccent
+                                              : DesignTokens.adminPrimaryColor,
+                                      child: Text(
+                                          order.userNameDisplay.isNotEmpty
+                                              ? order.userNameDisplay[0]
+                                                  .toUpperCase()
+                                              : '#'),
                                     ),
-                                    onChanged: (val) => setState(
-                                        () => _searchText = val.trim()),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                DropdownButton<String>(
-                                  value: _filterStatus,
-                                  hint: const Text("Status"),
-                                  items: [
-                                    null,
-                                    'Placed',
-                                    'Preparing',
-                                    'Ready',
-                                    'Out for Delivery',
-                                    'Delivered',
-                                    'Picked Up',
-                                    'Refunded'
-                                  ]
-                                      .map((s) => DropdownMenuItem<String>(
-                                            value: s,
-                                            child: Text(s ?? "All"),
-                                          ))
-                                      .toList(),
-                                  onChanged: (val) =>
-                                      setState(() => _filterStatus = val),
-                                ),
-                                const SizedBox(width: 8),
-                                IconButton(
-                                  icon: const Icon(Icons.calendar_today),
-                                  tooltip: "Filter by Date",
-                                  onPressed: () async {
-                                    final range = await showDateRangePicker(
+                                    title: Text(
+                                        "${order.id} — ${order.userNameDisplay}",
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                            "Status: ${order.status} | \$${order.total.toStringAsFixed(2)}"),
+                                        Text("Placed: ${order.timestamp}"),
+                                        if (order.refundStatus != null)
+                                          Text("Refund: ${order.refundStatus}"),
+                                      ],
+                                    ),
+                                    trailing: PopupMenuButton<String>(
+                                      onSelected: (value) {
+                                        if (value == 'status') {
+                                          _showStatusDialog(order, user);
+                                        } else if (value == 'refund') {
+                                          _showRefundDialog(order, user);
+                                        }
+                                      },
+                                      itemBuilder: (context) {
+                                        final items =
+                                            <PopupMenuEntry<String>>[];
+                                        if (user.isOwner || user.isManager) {
+                                          items.add(const PopupMenuItem(
+                                              value: 'status',
+                                              child: Text("Update Status")));
+                                          if (order.status != 'Refunded') {
+                                            items.add(const PopupMenuItem(
+                                                value: 'refund',
+                                                child: Text("Process Refund")));
+                                          }
+                                        }
+                                        return items;
+                                      },
+                                    ),
+                                    onTap: () => showDialog(
                                       context: context,
-                                      firstDate: DateTime.now()
-                                          .subtract(const Duration(days: 365)),
-                                      lastDate: DateTime.now()
-                                          .add(const Duration(days: 1)),
-                                    );
-                                    if (range != null) {
-                                      setState(() => _dateRange = range);
-                                    }
-                                  },
-                                ),
-                                Checkbox(
-                                  value: _showRefunded,
-                                  onChanged: (val) => setState(
-                                      () => _showRefunded = val ?? true),
-                                ),
-                                const Text("Show Refunded"),
-                              ],
-                            ),
-                            Expanded(
-                              child: StreamBuilder<List<order_model.Order>>(
-                                stream: firestoreService
-                                    .getAllOrdersStream(franchiseId),
-                                builder: (context, snapshot) {
-                                  if (snapshot.connectionState ==
-                                      ConnectionState.waiting) {
-                                    return const LoadingShimmerWidget();
-                                  }
-                                  if (!snapshot.hasData ||
-                                      snapshot.data!.isEmpty) {
-                                    return const EmptyStateWidget(
-                                      title: "No Orders",
-                                      message: "No orders found.",
-                                      iconData: Icons.receipt_long,
-                                    );
-                                  }
-                                  final orders =
-                                      _filterOrders(snapshot.data!, user);
-                                  _lastOrders = orders;
-                                  return ListView.builder(
-                                    itemCount: orders.length,
-                                    itemBuilder: (ctx, i) {
-                                      final order = orders[i];
-                                      return Card(
-                                        elevation: 2,
-                                        margin: const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 6),
-                                        child: ListTile(
-                                          leading: CircleAvatar(
-                                            backgroundColor:
-                                                order.status == 'Refunded'
-                                                    ? Colors.redAccent
-                                                    : DesignTokens
-                                                        .adminPrimaryColor,
-                                            child: Text(
-                                              order.userNameDisplay.isNotEmpty
-                                                  ? order.userNameDisplay[0]
-                                                      .toUpperCase()
-                                                  : '#',
-                                            ),
-                                          ),
-                                          title: Text(
-                                            "${order.id} — ${order.userNameDisplay}",
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                          subtitle: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                  "Status: ${order.status} | \$${order.total.toStringAsFixed(2)}"),
-                                              Text(
-                                                  "Placed: ${order.timestamp}"),
-                                              if (order.refundStatus != null)
-                                                Text(
-                                                    "Refund: ${order.refundStatus}"),
-                                            ],
-                                          ),
-                                          trailing: PopupMenuButton<String>(
-                                            onSelected: (value) {
-                                              if (value == 'status') {
-                                                _showStatusDialog(order, user);
-                                              } else if (value == 'refund') {
-                                                _showRefundDialog(order, user);
-                                              }
-                                            },
-                                            itemBuilder: (context) {
-                                              final items =
-                                                  <PopupMenuEntry<String>>[];
-                                              if (user.isOwner ||
-                                                  user.isManager) {
-                                                items.add(
-                                                    const PopupMenuItem<String>(
-                                                  value: 'status',
-                                                  child: Text("Update Status"),
-                                                ));
-                                                if (order.status !=
-                                                    'Refunded') {
-                                                  items.add(const PopupMenuItem<
-                                                      String>(
-                                                    value: 'refund',
-                                                    child:
-                                                        Text("Process Refund"),
-                                                  ));
-                                                }
-                                              }
-                                              return items;
-                                            },
-                                          ),
-                                          onTap: () => showDialog(
-                                            context: context,
-                                            builder: (_) =>
-                                                OrderDetailDialog(order: order),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
+                                      builder: (_) =>
+                                          OrderDetailDialog(order: order),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
                         ),
                       ),
-                    ),
-                    Expanded(flex: 9, child: Container()),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-class OrderDetailDialog extends StatelessWidget {
-  final order_model.Order order;
-  const OrderDetailDialog({required this.order, super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text("Order #${order.id}"),
-      content: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Customer: ${order.userNameDisplay}"),
-            const SizedBox(height: 8),
-            const Text("Items:"),
-            ...order.items.map((item) => Text(
-                  "- ${item.name} x${item.quantity} (\$${(item.price * item.quantity).toStringAsFixed(2)})",
-                  style: const TextStyle(fontSize: 15),
-                )),
-            const SizedBox(height: 8),
-            Text("Total: \$${order.total.toStringAsFixed(2)}"),
-            Text("Status: ${order.status}"),
-            Text("Placed: ${order.timestamp}"),
-            if (order.refundStatus != null)
-              Text("Refund: ${order.refundStatus}"),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text("Close"),
-        )
-      ],
     );
   }
 }
