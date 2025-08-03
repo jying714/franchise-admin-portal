@@ -10,6 +10,10 @@ import 'package:franchise_admin_portal/core/models/category.dart';
 import 'package:franchise_admin_portal/core/models/ingredient_metadata.dart';
 import 'package:franchise_admin_portal/core/models/ingredient_type_model.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/ingredient_creation_dialog.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/ingredient_type_creation_dialog.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/category_creation_dialog.dart';
 
 /// Sidebar for displaying and resolving schema issues for a MenuItem during onboarding.
 /// All repairs are applied via the passed-in callback.
@@ -103,25 +107,31 @@ class SchemaIssueSidebar extends StatelessWidget {
                       }
                       switch (issue.type) {
                         case MenuItemSchemaIssueType.category:
+                          final loc = AppLocalizations.of(context)!;
                           return _CategoryRepairTile(
                             issue: issue,
                             provider: categoryProvider,
                             onRepair: (newValue) =>
                                 _handleRepair(context, issue, newValue),
+                            loc: loc,
                           );
                         case MenuItemSchemaIssueType.ingredient:
+                          final loc = AppLocalizations.of(context)!;
                           return _IngredientRepairTile(
                             issue: issue,
                             provider: ingredientProvider,
                             onRepair: (newValue) =>
                                 _handleRepair(context, issue, newValue),
+                            loc: loc,
                           );
                         case MenuItemSchemaIssueType.ingredientType:
+                          final loc = AppLocalizations.of(context)!;
                           return _IngredientTypeRepairTile(
                             issue: issue,
                             provider: ingredientTypeProvider,
                             onRepair: (newValue) =>
                                 _handleRepair(context, issue, newValue),
+                            loc: loc,
                           );
                         case MenuItemSchemaIssueType.missingField:
                           return _MissingFieldRepairTile(
@@ -269,18 +279,63 @@ class _CategoryRepairTile extends StatelessWidget {
   final MenuItemSchemaIssue issue;
   final CategoryProvider provider;
   final ValueChanged<String> onRepair;
+  final AppLocalizations loc;
 
   const _CategoryRepairTile({
     Key? key,
     required this.issue,
     required this.provider,
     required this.onRepair,
+    required this.loc,
   }) : super(key: key);
+
+  Future<void> _handleCreateCategory(BuildContext context) async {
+    final newCategory = await showDialog<Category>(
+      context: context,
+      builder: (ctx) => CategoryCreationDialog(
+        loc: loc,
+        suggestedName: issue.context ?? issue.label ?? issue.missingReference,
+      ),
+    );
+
+    if (newCategory != null) {
+      try {
+        provider.stageCategory(newCategory);
+        onRepair(newCategory.id);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              loc.categoryStagedSuccessfully(newCategory.name),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } catch (e, stack) {
+        await ErrorLogger.log(
+          message: 'category_stage_failed',
+          stack: stack.toString(),
+          source: '_CategoryRepairTile',
+          screen: 'schema_issue_sidebar.dart',
+          severity: 'error',
+          contextData: {
+            'categoryName': newCategory.name,
+            'issueContext':
+                issue.context ?? issue.label ?? issue.missingReference,
+          },
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(loc.genericErrorMessage),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final allIds = provider.allCategoryIds;
-    final allNames = provider.allCategoryNames;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6),
       child: Column(
@@ -291,32 +346,28 @@ class _CategoryRepairTile extends StatelessWidget {
               const Icon(Icons.category, color: Colors.orange),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(issue.displayMessage,
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                child: Text(
+                  issue.displayMessage,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.add, color: Colors.blueGrey),
-                tooltip: 'Create Category',
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Category creation not implemented.'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
+                tooltip: loc.createNewCategory,
+                onPressed: () => _handleCreateCategory(context),
               ),
             ],
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             value: null,
-            hint: const Text('Select Category'),
+            isExpanded: true,
+            hint: Text(loc.selectCategory),
             items: [
               for (final id in provider.allCategoryIds)
                 DropdownMenuItem(
                   value: id,
-                  child: Text('${provider.categoryIdToName[id] ?? id}'),
+                  child: Text(provider.categoryIdToName[id] ?? id),
                 ),
             ],
             onChanged: (value) {
@@ -333,17 +384,75 @@ class _IngredientRepairTile extends StatelessWidget {
   final MenuItemSchemaIssue issue;
   final IngredientMetadataProvider provider;
   final ValueChanged<String> onRepair;
+  final AppLocalizations loc;
 
   const _IngredientRepairTile({
     Key? key,
     required this.issue,
     required this.provider,
     required this.onRepair,
+    required this.loc,
   }) : super(key: key);
+
+  Future<void> _handleCreateIngredient(BuildContext context) async {
+    final newIngredient = await showDialog<IngredientMetadata>(
+      context: context,
+      builder: (ctx) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(
+            value: context.read<IngredientTypeProvider>(),
+          ),
+          ChangeNotifierProvider.value(
+            value: context.read<IngredientMetadataProvider>(),
+          ),
+        ],
+        child: IngredientCreationDialog(
+          loc: loc,
+          suggestedName: issue.context ?? issue.label ?? issue.missingReference,
+        ),
+      ),
+    );
+
+    if (newIngredient != null) {
+      try {
+        provider.stageIngredient(newIngredient); // 🔄 stage it, don’t save
+        Future.microtask(() => onRepair(newIngredient.id));
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              loc.ingredientStagedSuccessfully(newIngredient.name),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } catch (e, stack) {
+        await ErrorLogger.log(
+          message: 'ingredient_stage_failed',
+          stack: stack.toString(),
+          source: '_IngredientRepairTile',
+          screen: 'schema_issue_sidebar.dart',
+          severity: 'error',
+          contextData: {
+            'ingredientName': newIngredient.name,
+            'issueContext':
+                issue.context ?? issue.label ?? issue.missingReference,
+          },
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(loc.genericErrorMessage),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final allIds = provider.allIngredientIds;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6),
       child: Column(
@@ -365,22 +474,16 @@ class _IngredientRepairTile extends StatelessWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.add, color: Colors.blueGrey),
-                tooltip: 'Create Ingredient',
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Ingredient creation not implemented.'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
+                tooltip: loc.createNewIngredient,
+                onPressed: () => _handleCreateIngredient(context),
               ),
             ],
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
             value: null,
-            hint: const Text('Select Ingredient'),
+            isExpanded: true,
+            hint: Text(loc.selectIngredient),
             items: [
               for (final id in allIds)
                 DropdownMenuItem(
@@ -402,19 +505,68 @@ class _IngredientTypeRepairTile extends StatelessWidget {
   final MenuItemSchemaIssue issue;
   final IngredientTypeProvider provider;
   final ValueChanged<String> onRepair;
+  final AppLocalizations loc;
 
   const _IngredientTypeRepairTile({
     Key? key,
     required this.issue,
     required this.provider,
     required this.onRepair,
+    required this.loc,
   }) : super(key: key);
+
+  Future<void> _handleCreateIngredientType(BuildContext context) async {
+    final newType = await showDialog<IngredientType>(
+      context: context,
+      builder: (ctx) => ChangeNotifierProvider.value(
+        value: provider,
+        child: IngredientTypeCreationDialog(
+          loc: loc,
+          suggestedName: issue.context ?? issue.label ?? issue.missingReference,
+        ),
+      ),
+    );
+
+    if (newType != null) {
+      try {
+        provider.addOrUpdateTypes([newType]); // 🔄 stage locally only
+        onRepair(newType.id!);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              loc.ingredientTypeStagedSuccessfully(newType.name),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } catch (e, stack) {
+        await ErrorLogger.log(
+          message: 'ingredient_type_stage_failed',
+          stack: stack.toString(),
+          source: '_IngredientTypeRepairTile',
+          screen: 'schema_issue_sidebar.dart',
+          severity: 'error',
+          contextData: {
+            'typeName': newType.name,
+            'issueContext':
+                issue.context ?? issue.label ?? issue.missingReference,
+          },
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(loc.genericErrorMessage),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final allIds = provider.allTypeIds;
-    print(
-        '[DEBUG] IngredientTypeRepairTile rendered with ${allIds.length} items');
+    final typeIdToName = provider.typeIdToName;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6),
@@ -437,16 +589,8 @@ class _IngredientTypeRepairTile extends StatelessWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.add, color: Colors.blueGrey),
-                tooltip: 'Create Ingredient Type',
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content:
-                          Text('Ingredient type creation not implemented.'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
+                tooltip: loc.createNewIngredientType,
+                onPressed: () => _handleCreateIngredientType(context),
               ),
             ],
           ),
@@ -454,12 +598,12 @@ class _IngredientTypeRepairTile extends StatelessWidget {
           DropdownButtonFormField<String>(
             isExpanded: true,
             value: null,
-            hint: const Text('Select Ingredient Type'),
+            hint: Text(loc.selectIngredientType),
             items: [
               for (final id in allIds)
                 DropdownMenuItem(
                   value: id,
-                  child: Text('${provider.typeIdToName[id] ?? id}'),
+                  child: Text('${typeIdToName[id] ?? id}'),
                 ),
             ],
             onChanged: (value) {

@@ -1871,7 +1871,27 @@
   "deleteChatTitle": "Delete Chat",
   "deleteChatConfirmMessage": "Are you sure you want to delete this chat thread?",
   "deleteChatTooltip": "Delete this chat",
-  "deleteButton": "Delete"
+  "deleteButton": "Delete",
+  "genericErrorMessage": "Something went wrong. Please try again.",
+  "createNewIngredient": "Create New Ingredient",
+  "e_g_anchovies": "e.g. Anchovies",
+  "upchargeOptional": "Upcharge (optional)",
+  "selectIngredient": "Select Ingredient",
+  "ingredientCreatedSuccessfully": "{ingredientName} created successfully.",
+  "ingredientCreatedSuccessfullyTooltip": "Confirm ingredient creation",
+  "ingredientStagedSuccessfully": "Ingredient \"{name}\" staged successfully.",
+  "ingredientStagedSuccessfullyTooltip": "This ingredient has been added temporarily. Remember to save changes to finalize it.",
+  "createNewIngredientType": "Create New Ingredient Type",
+  "typeName": "Type Name",
+  "systemTagOptional": "System Tag (optional)",
+  "ingredientTypeStagedSuccessfully": "Ingredient type \"{name}\" staged successfully.",
+  "createNewIngredientType": "Create New Ingredient Type",
+  "selectIngredientType": "Select Ingredient Type",
+  "createNewCategory": "Create New Category",
+  "descriptionOptional": "Description (optional)",
+  "selectCategory": "Select Category",
+  "categoryStagedSuccessfully": "Category \"{categoryName}\" staged successfully."
+
 
 
   }

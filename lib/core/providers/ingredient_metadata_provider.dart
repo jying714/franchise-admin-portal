@@ -12,10 +12,11 @@ class IngredientMetadataProvider extends ChangeNotifier {
 
   List<IngredientMetadata> _original = [];
   List<IngredientMetadata> _current = [];
-
+  final List<IngredientMetadata> _stagedIngredients = [];
+  final List<IngredientMetadata> _ingredients = [];
   bool _hasLoaded = false;
   String? _loadedFranchiseId;
-
+  bool get hasStagedChanges => _stagedIngredients.isNotEmpty;
   final Set<String> _selectedIngredientIds = {};
 
   Set<String> get selectedIngredientIds =>
@@ -38,7 +39,10 @@ class IngredientMetadataProvider extends ChangeNotifier {
   bool get isInitialized => _hasLoaded;
 
   // ✅ Exposes all current ingredients as read-only
-  List<IngredientMetadata> get allIngredients => List.unmodifiable(_current);
+  List<IngredientMetadata> get allIngredients => List.unmodifiable([
+        ..._current,
+        ..._stagedIngredients,
+      ]);
 
   String get sortKey => _sortKey;
   bool get ascending => _ascending;
@@ -421,11 +425,12 @@ class IngredientMetadataProvider extends ChangeNotifier {
   }
 
   /// Returns a map of all ingredient IDs to names.
-  Map<String, String> get ingredientIdToName =>
-      Map.fromEntries(ingredients.map((i) => MapEntry(i.id, i.name)));
+  Map<String, String> get ingredientIdToName => Map.fromEntries(
+      [..._current, ..._stagedIngredients].map((i) => MapEntry(i.id, i.name)));
 
   /// Returns a list of all available ingredient IDs.
-  List<String> get allIngredientIds => ingredients.map((i) => i.id).toList();
+  List<String> get allIngredientIds =>
+      [..._current, ..._stagedIngredients].map((i) => i.id).toSet().toList();
 
   /// Returns a list of all available ingredient names.
   List<String> get allIngredientNames =>
@@ -452,5 +457,57 @@ class IngredientMetadataProvider extends ChangeNotifier {
       }
     }
     return ids.toList();
+  }
+
+  /// Method to stage a new ingredient for schema issue sidebar to be added
+  void stageIngredient(IngredientMetadata ingredient) {
+    _stagedIngredients.add(ingredient);
+    _ingredients.add(ingredient);
+    ingredientIdToName[ingredient.id] = ingredient.name;
+    notifyListeners();
+  }
+
+  /// Method to commit staged ingredients (invoked in onboarding save logic):
+  Future<void> saveStagedIngredients() async {
+    if (_stagedIngredients.isEmpty) return;
+
+    try {
+      final batch = _firestore.db.batch();
+      final colRef = _firestore.db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_metadata');
+
+      for (final ingredient in _stagedIngredients) {
+        batch.set(colRef.doc(ingredient.id), ingredient.toMap());
+      }
+
+      await batch.commit();
+      _ingredients.addAll(_stagedIngredients);
+      _stagedIngredients.clear();
+      notifyListeners();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'ingredient_metadata_batch_save_failed',
+        stack: stack.toString(),
+        source: 'IngredientMetadataProvider',
+        screen: 'ingredient_metadata_provider.dart',
+        severity: 'error',
+        contextData: {
+          'franchiseId': franchiseId,
+          'stagedCount': _stagedIngredients.length,
+          'stagedIds': _stagedIngredients.map((e) => e.id).toList(),
+        },
+      );
+      rethrow;
+    }
+  }
+
+  /// Optional method to revert staged ingredients:
+  void discardStagedIngredients() {
+    if (_stagedIngredients.isNotEmpty) {
+      _stagedIngredients.clear();
+      notifyListeners();
+    }
   }
 }

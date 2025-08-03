@@ -12,6 +12,7 @@ import 'package:collection/collection.dart';
 import 'package:franchise_admin_portal/core/providers/category_provider.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
+import 'package:provider/provider.dart';
 
 class MenuItemProvider extends ChangeNotifier {
   final FirestoreService _firestoreService;
@@ -19,6 +20,10 @@ class MenuItemProvider extends ChangeNotifier {
   bool _templateRefsLoading = false;
   String? _templateRefsError;
   FranchiseInfoProvider _franchiseInfoProvider;
+
+  late IngredientMetadataProvider _ingredientProvider;
+  late CategoryProvider _categoryProvider;
+  late IngredientTypeProvider _typeProvider;
 
   // 🔢 Size Templates
   List<SizeTemplate> _sizeTemplates = [];
@@ -34,6 +39,16 @@ class MenuItemProvider extends ChangeNotifier {
     if (newType != null && newType.isNotEmpty && newType != oldType) {
       loadTemplateRefs();
     }
+  }
+
+  void injectDependencies({
+    required IngredientMetadataProvider ingredientProvider,
+    required CategoryProvider categoryProvider,
+    required IngredientTypeProvider typeProvider,
+  }) {
+    _ingredientProvider = ingredientProvider;
+    _categoryProvider = categoryProvider;
+    _typeProvider = typeProvider;
   }
 
   void setSelectedSizeTemplateId(String? id) {
@@ -134,21 +149,92 @@ class MenuItemProvider extends ChangeNotifier {
       return;
     }
 
+    if (_ingredientProvider == null ||
+        _categoryProvider == null ||
+        _typeProvider == null) {
+      throw StateError('Dependencies not injected into MenuItemProvider.');
+    }
+
     try {
-      print('[DEBUG] Saving ${_working.length} items...');
+      // --- 1. Save menu items ---
+      print('[DEBUG] Saving ${_working.length} menu items...');
       await _firestoreService.saveMenuItems(_franchiseId!, _working);
+      print('[DEBUG] Menu items saved');
+
+      // --- 2. Save staged ingredients ---
+      if (_ingredientProvider.hasStagedChanges) {
+        try {
+          print('[DEBUG] Saving staged ingredients...');
+          await _ingredientProvider.saveStagedIngredients();
+          print('[DEBUG] Staged ingredients saved');
+        } catch (e, stack) {
+          await ErrorLogger.log(
+            message: 'Failed to save staged ingredients',
+            source: 'MenuItemProvider',
+            screen: 'menu_item_provider.dart',
+            severity: 'error',
+            stack: stack.toString(),
+            contextData: {'franchiseId': _franchiseId},
+          );
+        }
+      }
+
+      // --- 3. Save staged categories ---
+      if (_categoryProvider.hasStagedCategoryChanges) {
+        try {
+          print('[DEBUG] Saving staged categories...');
+          await _categoryProvider.saveStagedCategories();
+          print('[DEBUG] Staged categories saved');
+        } catch (e, stack) {
+          await ErrorLogger.log(
+            message: 'Failed to save staged categories',
+            source: 'MenuItemProvider',
+            screen: 'menu_item_provider.dart',
+            severity: 'error',
+            stack: stack.toString(),
+            contextData: {'franchiseId': _franchiseId},
+          );
+        }
+      }
+
+      // --- 4. Save staged ingredient types ---
+      if (_typeProvider.hasStagedTypeChanges) {
+        try {
+          print('[DEBUG] Saving staged ingredient types...');
+          await _typeProvider.saveStagedIngredientTypes();
+          print('[DEBUG] Staged ingredient types saved');
+        } catch (e, stack) {
+          await ErrorLogger.log(
+            message: 'Failed to save staged ingredient types',
+            source: 'MenuItemProvider',
+            screen: 'menu_item_provider.dart',
+            severity: 'error',
+            stack: stack.toString(),
+            contextData: {'franchiseId': _franchiseId},
+          );
+        }
+      }
+
+      // --- 5. Clear staged memory (regardless of error) ---
+      _ingredientProvider.discardStagedIngredients();
+      _categoryProvider.discardStagedCategories();
+      _typeProvider.discardStagedIngredientTypes();
+      print('[DEBUG] All staged data discarded');
+
+      // --- 6. Mark menu items clean ---
       _original = _working.map((e) => e.copyWith()).toList();
       notifyListeners();
-      print('[DEBUG] Save complete, isDirty=${isDirty}');
+      print('[DEBUG] Save complete, isDirty=$isDirty');
     } catch (e, stack) {
       await ErrorLogger.log(
         message: 'Failed to persist menu item changes',
         source: 'MenuItemProvider',
-        screen: 'menu_item_provider',
+        screen: 'menu_item_provider.dart',
         severity: 'error',
         stack: stack.toString(),
         contextData: {'franchiseId': _franchiseId},
       );
+      rethrow;
     }
   }
 

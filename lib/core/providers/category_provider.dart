@@ -30,6 +30,11 @@ class CategoryProvider extends ChangeNotifier {
 
   Set<String> get selectedCategoryIds => _selectedCategoryIds;
 
+  /// Schema issue sidebar
+  final List<Category> _stagedCategories = [];
+
+  /// End
+
   set groupByVisible(bool val) {
     _groupByVisible = val;
     notifyListeners();
@@ -283,4 +288,54 @@ class CategoryProvider extends ChangeNotifier {
     return categories
         .firstWhereOrNull((c) => c.id.toLowerCase() == id.toLowerCase());
   }
+
+  /// schema issue sidebar methods to add, discard and stage categories
+  void stageCategory(Category category) {
+    final exists = _stagedCategories.any((c) => c.id == category.id);
+    if (!exists) {
+      _stagedCategories.add(category);
+      _current.add(category);
+      notifyListeners();
+    }
+  }
+
+  Future<void> saveStagedCategories() async {
+    try {
+      final colRef = firestore.db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('categories');
+
+      final batch = firestore.db.batch();
+
+      for (final category in _stagedCategories) {
+        batch.set(colRef.doc(category.id), category.toFirestore());
+      }
+
+      await batch.commit();
+      _original = List.from(_current);
+      _stagedCategories.clear();
+      notifyListeners();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'category_stage_save_failed',
+        stack: stack.toString(),
+        source: 'CategoryProvider',
+        screen: 'onboarding_categories_screen',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      rethrow;
+    }
+  }
+
+  void discardStagedCategories() {
+    for (final cat in _stagedCategories) {
+      _current.removeWhere((c) => c.id == cat.id);
+    }
+    _stagedCategories.clear();
+    notifyListeners();
+  }
+
+  bool get hasStagedCategoryChanges => _stagedCategories.isNotEmpty;
 }

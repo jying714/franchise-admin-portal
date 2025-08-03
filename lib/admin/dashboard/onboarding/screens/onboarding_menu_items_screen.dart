@@ -81,6 +81,11 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     print('[DEBUG][OnboardingMenuScreen] build called');
     final loc = AppLocalizations.of(context)!;
     final provider = context.watch<MenuItemProvider>();
+    provider.injectDependencies(
+      ingredientProvider: context.read<IngredientMetadataProvider>(),
+      categoryProvider: context.read<CategoryProvider>(),
+      typeProvider: context.read<IngredientTypeProvider>(),
+    );
     // print(
     //     '[DEBUG] MenuItems in screen: ${provider.menuItems.map((m) => m.toJson())}');
     final theme = Theme.of(context);
@@ -364,7 +369,17 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                     child: Row(
                       children: [
                         ElevatedButton(
-                          onPressed: provider.persistChanges,
+                          onPressed: () async {
+                            provider.injectDependencies(
+                              ingredientProvider:
+                                  context.read<IngredientMetadataProvider>(),
+                              categoryProvider:
+                                  context.read<CategoryProvider>(),
+                              typeProvider:
+                                  context.read<IngredientTypeProvider>(),
+                            );
+                            await provider.persistChanges();
+                          },
                           child: Text(loc.saveChanges),
                         ),
                         const SizedBox(width: 12),
@@ -449,30 +464,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
             ),
           ),
         ),
-        // // === SCHEMA ISSUE SIDEBAR, overlays when there are schema issues after add/edit ===
-        // if (showSchemaSidebar && itemPendingRepair != null)
-        //   Positioned(
-        //     top: 0,
-        //     right: 0,
-        //     bottom: 0,
-        //     width: 440,
-        //     child: Material(
-        //       elevation: 12,
-        //       color: Colors.white,
-        //       child: SchemaIssueSidebar(
-        //         issues: schemaIssues,
-        //         onRepair:
-        //             handleSidebarRepair, // must match (MenuItemSchemaIssue, String)
-        //         onClose: () {
-        //           setState(() {
-        //             showSchemaSidebar = false;
-        //             itemPendingRepair = null;
-        //             schemaIssues = [];
-        //           });
-        //         },
-        //       ),
-        //     ),
-        //   ),
       ],
     );
   }

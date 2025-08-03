@@ -19,6 +19,10 @@ class IngredientTypeProvider with ChangeNotifier {
   String? get error => _error;
   List<IngredientType> _ingredientTypes = [];
 
+  /// Ingredient type staging for schema issue sidebar
+  final List<IngredientType> _stagedTypes = [];
+  List<IngredientType> get stagedTypes => List.unmodifiable(_stagedTypes);
+
   /// Load all ingredient types for the given franchise
   Future<void> loadIngredientTypes(String newFranchiseId) async {
     franchiseId = newFranchiseId;
@@ -374,4 +378,51 @@ class IngredientTypeProvider with ChangeNotifier {
     return types.firstWhereOrNull((t) =>
         t.systemTag != null && t.systemTag!.toLowerCase() == tag.toLowerCase());
   }
+
+  /// Methods for ingredient type in schema issue sidebar
+  void stageIngredientType(IngredientType type) {
+    final exists = _stagedTypes.any((t) => t.id == type.id);
+    if (!exists) {
+      _stagedTypes.add(type);
+      notifyListeners();
+    }
+  }
+
+  Future<void> saveStagedIngredientTypes() async {
+    final collectionRef = _firestoreService.db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('ingredient_types');
+
+    try {
+      final batch = _firestoreService.db.batch();
+
+      for (final type in _stagedTypes) {
+        batch.set(
+            collectionRef.doc(type.id), type.toMap(includeTimestamps: true));
+      }
+
+      await batch.commit();
+      _stagedTypes.clear();
+      await loadIngredientTypes(franchiseId);
+      notifyListeners();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'ingredient_type_save_failed',
+        stack: stack.toString(),
+        source: 'IngredientTypeProvider',
+        screen: 'ingredient_type_provider.dart',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      rethrow;
+    }
+  }
+
+  void discardStagedIngredientTypes() {
+    _stagedTypes.clear();
+    notifyListeners();
+  }
+
+  bool get hasStagedTypeChanges => _stagedTypes.isNotEmpty;
 }
