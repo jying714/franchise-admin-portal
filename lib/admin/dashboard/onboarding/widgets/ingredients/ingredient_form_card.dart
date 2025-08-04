@@ -6,17 +6,21 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_tag_selector.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
+import 'package:franchise_admin_portal/core/models/ingredient_type_model.dart';
 
 class IngredientFormCard extends StatefulWidget {
   final IngredientMetadata? initialData;
   final VoidCallback? onSaved;
   final AppLocalizations loc;
+  final BuildContext parentContext;
 
   const IngredientFormCard({
     Key? key,
     this.initialData,
     this.onSaved,
     required this.loc,
+    required this.parentContext,
   }) : super(key: key);
 
   @override
@@ -24,6 +28,7 @@ class IngredientFormCard extends StatefulWidget {
 }
 
 class _IngredientFormCardState extends State<IngredientFormCard> {
+  String? _selectedTypeId;
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _typeController = TextEditingController();
@@ -44,6 +49,7 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
     if (data != null) {
       _nameController.text = data.name;
       _typeController.text = data.type;
+      _selectedTypeId = data.typeId;
       _notesController.text = data.notes ?? '';
       _allergens = List.from(data.allergens);
       _removable = data.removable;
@@ -81,7 +87,7 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
       imageUrl: null,
       amountSelectable: false,
       amountOptions: null,
-      typeId: null,
+      typeId: _selectedTypeId,
     );
 
     try {
@@ -89,9 +95,12 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
 
       context.read<IngredientMetadataProvider>().updateIngredient(ingredient);
 
-      if (widget.onSaved != null) widget.onSaved!();
-
-      if (context.mounted) Navigator.of(context).pop();
+      // Only pop here if onSaved is not provided, otherwise rely on onSaved to pop
+      if (widget.onSaved != null) {
+        widget.onSaved!();
+      } else if (context.mounted) {
+        Navigator.of(context).pop();
+      }
     } catch (e, stack) {
       await ErrorLogger.log(
         message: 'Failed to update ingredient (local only): $e',
@@ -102,8 +111,8 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
         contextData: {'ingredientName': ingredient.name},
       );
 
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (widget.parentContext.mounted) {
+        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
           SnackBar(content: Text(widget.loc.errorSavingIngredient)),
         );
       }
@@ -117,7 +126,13 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
     final theme = Theme.of(context);
     final loc = widget.loc;
     final colorScheme = theme.colorScheme;
+    final ingredientTypes =
+        context.watch<IngredientTypeProvider>().ingredientTypes;
 
+    if (_selectedTypeId == null && ingredientTypes.isNotEmpty) {
+      _selectedTypeId = ingredientTypes.first.id;
+      _typeController.text = ingredientTypes.first.name;
+    }
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -144,12 +159,30 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
                       : null,
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
-                  controller: _typeController,
+                DropdownButtonFormField<String>(
+                  value: _selectedTypeId,
+                  isExpanded: true,
                   decoration: InputDecoration(
                     labelText: loc.ingredientType,
                     border: const OutlineInputBorder(),
                   ),
+                  items: ingredientTypes.map((type) {
+                    return DropdownMenuItem(
+                      value: type.id,
+                      child: Text(type.name),
+                    );
+                  }).toList(),
+                  validator: (val) => val == null ? loc.requiredField : null,
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedTypeId = val;
+                      final type = ingredientTypes.firstWhere(
+                          (t) => t.id == val,
+                          orElse: () => IngredientType(id: '', name: ''));
+                      _typeController.text =
+                          type.name; // Keep type name in sync
+                    });
+                  },
                 ),
                 const SizedBox(height: 12),
                 IngredientTagSelector(

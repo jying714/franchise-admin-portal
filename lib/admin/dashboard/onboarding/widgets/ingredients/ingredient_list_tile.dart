@@ -136,6 +136,7 @@ class IngredientListTile extends StatelessWidget {
                               onRefresh();
                               if (onEdited != null) onEdited!();
                             },
+                            parentContext: context,
                           );
                         },
                       ),

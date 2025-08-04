@@ -156,51 +156,12 @@ class MenuItemProvider extends ChangeNotifier {
     }
 
     try {
-      // --- 1. Save menu items ---
-      print('[DEBUG] Saving ${_working.length} menu items...');
-      await _firestoreService.saveMenuItems(_franchiseId!, _working);
-      print('[DEBUG] Menu items saved');
-
-      // --- 2. Save staged ingredients ---
-      if (_ingredientProvider.hasStagedChanges) {
-        try {
-          print('[DEBUG] Saving staged ingredients...');
-          await _ingredientProvider.saveStagedIngredients();
-          print('[DEBUG] Staged ingredients saved');
-        } catch (e, stack) {
-          await ErrorLogger.log(
-            message: 'Failed to save staged ingredients',
-            source: 'MenuItemProvider',
-            screen: 'menu_item_provider.dart',
-            severity: 'error',
-            stack: stack.toString(),
-            contextData: {'franchiseId': _franchiseId},
-          );
-        }
-      }
-
-      // --- 3. Save staged categories ---
-      if (_categoryProvider.hasStagedCategoryChanges) {
-        try {
-          print('[DEBUG] Saving staged categories...');
-          await _categoryProvider.saveStagedCategories();
-          print('[DEBUG] Staged categories saved');
-        } catch (e, stack) {
-          await ErrorLogger.log(
-            message: 'Failed to save staged categories',
-            source: 'MenuItemProvider',
-            screen: 'menu_item_provider.dart',
-            severity: 'error',
-            stack: stack.toString(),
-            contextData: {'franchiseId': _franchiseId},
-          );
-        }
-      }
-
-      // --- 4. Save staged ingredient types ---
+      // --- 1. Save staged ingredient types FIRST ---
       if (_typeProvider.hasStagedTypeChanges) {
         try {
           print('[DEBUG] Saving staged ingredient types...');
+          print('[DEBUG] Staged Ingredient Types to save: '
+              '${_typeProvider.stagedTypes.map((t) => t.id).toList()}');
           await _typeProvider.saveStagedIngredientTypes();
           print('[DEBUG] Staged ingredient types saved');
         } catch (e, stack) {
@@ -212,8 +173,56 @@ class MenuItemProvider extends ChangeNotifier {
             stack: stack.toString(),
             contextData: {'franchiseId': _franchiseId},
           );
+          rethrow; // 🚨 BLOCK SAVE if fail!
         }
       }
+
+      // --- 2. Save staged ingredients SECOND ---
+      if (_ingredientProvider.hasStagedChanges) {
+        try {
+          print('[DEBUG] Saving staged ingredients...');
+          print('[DEBUG] Staged Ingredients to save: '
+              '${_ingredientProvider.stagedIngredients.map((e) => e.id).toList()}');
+          await _ingredientProvider.saveStagedIngredients();
+          print('[DEBUG] Staged ingredients saved');
+        } catch (e, stack) {
+          await ErrorLogger.log(
+            message: 'Failed to save staged ingredients',
+            source: 'MenuItemProvider',
+            screen: 'menu_item_provider.dart',
+            severity: 'error',
+            stack: stack.toString(),
+            contextData: {'franchiseId': _franchiseId},
+          );
+          rethrow; // 🚨 BLOCK SAVE if fail!
+        }
+      }
+
+      // --- 3. Save staged categories THIRD ---
+      if (_categoryProvider.hasStagedCategoryChanges) {
+        try {
+          print('[DEBUG] Saving staged categories...');
+          print('[DEBUG] Staged Categories to save: '
+              '${_categoryProvider.stagedCategories.map((c) => c.id).toList()}');
+          await _categoryProvider.saveStagedCategories();
+          print('[DEBUG] Staged categories saved');
+        } catch (e, stack) {
+          await ErrorLogger.log(
+            message: 'Failed to save staged categories',
+            source: 'MenuItemProvider',
+            screen: 'menu_item_provider.dart',
+            severity: 'error',
+            stack: stack.toString(),
+            contextData: {'franchiseId': _franchiseId},
+          );
+          rethrow; // 🚨 BLOCK SAVE if fail!
+        }
+      }
+
+      // --- 4. Save menu items LAST ---
+      print('[DEBUG] Saving ${_working.length} menu items...');
+      await _firestoreService.saveMenuItems(_franchiseId!, _working);
+      print('[DEBUG] Menu items saved');
 
       // --- 5. Clear staged memory (regardless of error) ---
       _ingredientProvider.discardStagedIngredients();
@@ -235,24 +244,6 @@ class MenuItemProvider extends ChangeNotifier {
         contextData: {'franchiseId': _franchiseId},
       );
       rethrow;
-    }
-  }
-
-  Future<void> deleteFromFirestore(String id) async {
-    if (_franchiseId == null) return;
-
-    try {
-      await _firestoreService.deleteMenuItem(_franchiseId!, id);
-      deleteMenuItem(id);
-    } catch (e, stack) {
-      await ErrorLogger.log(
-        message: 'Failed to delete menu item from Firestore',
-        source: 'MenuItemProvider',
-        screen: 'menu_item_provider',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'franchiseId': _franchiseId, 'menuItemId': id},
-      );
     }
   }
 
@@ -526,5 +517,23 @@ class MenuItemProvider extends ChangeNotifier {
       ids.addAll(item.allReferencedIngredientTypeIds);
     }
     return ids.toList();
+  }
+
+  Future<void> deleteFromFirestore(String id) async {
+    if (_franchiseId == null) return;
+
+    try {
+      await _firestoreService.deleteMenuItem(_franchiseId!, id);
+      deleteMenuItem(id);
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to delete menu item from Firestore',
+        source: 'MenuItemProvider',
+        screen: 'menu_item_provider',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': _franchiseId, 'menuItemId': id},
+      );
+    }
   }
 }

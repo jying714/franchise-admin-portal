@@ -15,6 +15,7 @@ import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_metadata_json_import_export_dialog.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
 
 class OnboardingIngredientsScreen extends StatefulWidget {
   const OnboardingIngredientsScreen({super.key});
@@ -34,7 +35,8 @@ class _OnboardingIngredientsScreenState
 
   void _openIngredientForm([IngredientMetadata? ingredient]) {
     final loc = AppLocalizations.of(context);
-    final provider = context.read<IngredientMetadataProvider>();
+    final provider =
+        Provider.of<IngredientMetadataProvider>(context, listen: false);
 
     if (loc == null) {
       print('[OnboardingIngredientsScreen] ERROR: loc is null in FAB');
@@ -44,22 +46,26 @@ class _OnboardingIngredientsScreenState
     showDialog(
       context: context,
       builder: (dialogContext) {
-        return Localizations.override(
-          context: dialogContext,
-          child: Builder(
-            builder: (innerContext) {
-              return ChangeNotifierProvider.value(
-                value: provider,
-                child: IngredientFormCard(
-                  initialData: ingredient,
-                  onSaved: () {
-                    provider.load();
-                    Navigator.of(innerContext).pop();
-                  },
-                  loc: loc, // ✅ Add this line to satisfy the required parameter
-                ),
-              );
+        // Get the providers from the parent context
+        final ingredientProvider =
+            Provider.of<IngredientMetadataProvider>(context, listen: false);
+        final typeProvider =
+            Provider.of<IngredientTypeProvider>(context, listen: false);
+
+        return MultiProvider(
+          providers: [
+            ChangeNotifierProvider<IngredientMetadataProvider>.value(
+                value: ingredientProvider),
+            ChangeNotifierProvider<IngredientTypeProvider>.value(
+                value: typeProvider),
+          ],
+          child: IngredientFormCard(
+            initialData: ingredient,
+            onSaved: () {
+              Navigator.of(dialogContext).pop();
             },
+            loc: loc,
+            parentContext: context,
           ),
         );
       },
@@ -205,28 +211,31 @@ class _OnboardingIngredientsScreenState
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_hasInitialized) return;
-    final franchise = context.read<FranchiseInfoProvider>().franchise;
-    final firestore = context.read<FirestoreService>();
 
-    if (franchise != null) {
-      final metadataProvider = IngredientMetadataProvider(
-        firestoreService: firestore,
-        franchiseId: franchise.id,
-      );
-      metadataProvider.load();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Provider.of<IngredientMetadataProvider>(context, listen: false).load();
-      });
-      _hasInitialized = true;
-    }
+    // Just trigger load on the existing provider in the tree
+    final provider = context.read<IngredientMetadataProvider>();
+    provider.load();
+
+    _hasInitialized = true;
   }
 
   @override
   Widget build(BuildContext context) {
+    try {
+      final p = Provider.of<IngredientMetadataProvider>(context, listen: false);
+      print(
+          '[OnboardingIngredientsScreen] build() provider hashCode=${p.hashCode}');
+    } catch (e) {
+      print('[OnboardingIngredientsScreen] build() NO PROVIDER: $e');
+    }
     loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final provider = context.watch<IngredientMetadataProvider>();
+    print(
+        '[OnboardingIngredientsScreen] build() provider hashCode=${provider.hashCode}');
+    print(
+        '[Screen] build: provider.ingredients.length = ${provider.ingredients.length}');
 
     final groupedIngredients = provider.groupedIngredients;
     final allIngredientsFlat = provider.ingredients;
@@ -255,22 +264,33 @@ class _OnboardingIngredientsScreenState
         ),
         centerTitle: false,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.data_object),
-            tooltip: loc.importExport,
-            onPressed: () =>
-                IngredientMetadataJsonImportExportDialog.show(context),
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.data_object),
+              tooltip: loc.importExport,
+              onPressed: () {
+                final provider = Provider.of<IngredientMetadataProvider>(
+                    context,
+                    listen: false);
+                IngredientMetadataJsonImportExportDialog.show(
+                    context, provider);
+              },
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.library_add),
-            tooltip: loc.selectIngredientTemplate,
-            onPressed: () =>
-                IngredientMetadataTemplatePickerDialog.show(context),
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.library_add),
+              tooltip: loc.selectIngredientTemplate,
+              onPressed: () =>
+                  IngredientMetadataTemplatePickerDialog.show(context),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.check_circle_outline),
-            tooltip: loc.markAsComplete,
-            onPressed: _markComplete,
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.check_circle_outline),
+              tooltip: loc.markAsComplete,
+              onPressed: _markComplete,
+            ),
           ),
         ],
       ),

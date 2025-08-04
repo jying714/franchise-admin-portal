@@ -7,12 +7,28 @@ import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class CategoriesTemplatePickerDialog extends StatefulWidget {
-  const CategoriesTemplatePickerDialog({super.key});
+  final AppLocalizations loc;
+  final BuildContext parentContext;
 
-  static Future<void> show(BuildContext context) {
+  const CategoriesTemplatePickerDialog({
+    super.key,
+    required this.loc,
+    required this.parentContext, // <-- required param
+  });
+
+  static Future<void> show(BuildContext parentContext) {
+    final loc = AppLocalizations.of(parentContext)!;
+    final provider =
+        Provider.of<CategoryProvider>(parentContext, listen: false);
+
     return showDialog(
-      context: context,
-      builder: (_) => const CategoriesTemplatePickerDialog(),
+      context: parentContext,
+      builder: (dialogContext) =>
+          ChangeNotifierProvider<CategoryProvider>.value(
+        value: provider,
+        child: CategoriesTemplatePickerDialog(
+            loc: loc, parentContext: parentContext), // add param
+      ),
     );
   }
 
@@ -26,14 +42,16 @@ class _CategoriesTemplatePickerDialogState
   bool _loading = false;
 
   Future<void> _loadTemplate(String templateId) async {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.loc;
     final provider = context.read<CategoryProvider>();
     final franchiseId = context.read<FranchiseProvider>().franchiseId;
 
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.selectAFranchiseFirst)),
-      );
+      if (widget.parentContext.mounted) {
+        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+          SnackBar(content: Text(loc.selectAFranchiseFirst)),
+        );
+      }
       return;
     }
 
@@ -44,9 +62,11 @@ class _CategoriesTemplatePickerDialogState
 
       if (context.mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(loc.templateLoadedSuccessfully)),
-        );
+        if (widget.parentContext.mounted) {
+          ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+            SnackBar(content: Text(loc.templateLoadedSuccessfully)),
+          );
+        }
       }
     } catch (e, stack) {
       await ErrorLogger.log(
@@ -60,8 +80,8 @@ class _CategoriesTemplatePickerDialogState
           'franchiseId': franchiseId,
         },
       );
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (widget.parentContext.mounted) {
+        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
           SnackBar(content: Text(loc.errorGeneric)),
         );
       }
@@ -72,7 +92,7 @@ class _CategoriesTemplatePickerDialogState
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.loc;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 

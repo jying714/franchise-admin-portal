@@ -13,12 +13,42 @@ import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 class CategoryFormDialog extends StatefulWidget {
   final Category? initialCategory;
   final String franchiseId;
+  final AppLocalizations loc;
 
   const CategoryFormDialog({
     super.key,
     this.initialCategory,
     required this.franchiseId,
+    required this.loc,
   });
+
+  static Future<Category?> show({
+    required BuildContext parentContext,
+    Category? initialCategory,
+    required String franchiseId,
+  }) {
+    final loc = AppLocalizations.of(parentContext)!;
+    final categoryProvider =
+        Provider.of<CategoryProvider>(parentContext, listen: false);
+    final franchiseProvider =
+        Provider.of<FranchiseProvider>(parentContext, listen: false);
+
+    return showDialog<Category>(
+      context: parentContext,
+      builder: (dialogContext) =>
+          ChangeNotifierProvider<FranchiseProvider>.value(
+        value: franchiseProvider,
+        child: ChangeNotifierProvider<CategoryProvider>.value(
+          value: categoryProvider,
+          child: CategoryFormDialog(
+            initialCategory: initialCategory,
+            franchiseId: franchiseId,
+            loc: loc,
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   State<CategoryFormDialog> createState() => _CategoryFormDialogState();
@@ -47,7 +77,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
   }
 
   Future<void> _submitForm() async {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.loc;
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _loading = true);
@@ -66,13 +96,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
     );
 
     try {
-      await firestore.addCategory(
-        franchiseId: franchiseId,
-        category: category,
-      );
-
-      categoryProvider.addOrUpdateCategory(category);
-      if (context.mounted) Navigator.of(context).pop();
+      if (context.mounted) Navigator.of(context).pop(category);
     } catch (e, stack) {
       await ErrorLogger.log(
         message: 'Failed to save category',
@@ -100,7 +124,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.loc;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 

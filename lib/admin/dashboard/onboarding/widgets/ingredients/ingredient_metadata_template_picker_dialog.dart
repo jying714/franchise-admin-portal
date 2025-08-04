@@ -21,9 +21,17 @@ class IngredientMetadataTemplatePickerDialog extends StatefulWidget {
       return Future.value();
     }
 
+    final provider =
+        Provider.of<IngredientMetadataProvider>(context, listen: false);
+
     return showDialog(
       context: context,
-      builder: (_) => IngredientMetadataTemplatePickerDialog(loc: loc),
+      builder: (dialogContext) {
+        return ChangeNotifierProvider<IngredientMetadataProvider>.value(
+          value: provider,
+          child: IngredientMetadataTemplatePickerDialog(loc: loc),
+        );
+      },
     );
   }
 
@@ -83,6 +91,13 @@ class _IngredientMetadataTemplatePickerDialogState
 
   @override
   Widget build(BuildContext context) {
+    try {
+      final p = Provider.of<IngredientMetadataProvider>(context, listen: false);
+      print(
+          '[IngredientMetadataTemplatePickerDialog] build() provider hashCode=${p.hashCode}');
+    } catch (e) {
+      print('[IngredientMetadataTemplatePickerDialog] build() NO PROVIDER: $e');
+    }
     final loc = widget.loc;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;

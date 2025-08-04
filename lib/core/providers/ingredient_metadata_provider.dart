@@ -33,10 +33,18 @@ class IngredientMetadataProvider extends ChangeNotifier {
   }) : _firestore = firestoreService;
 
   bool get isDirty => !listEquals(_original, _current);
-  List<IngredientMetadata> get ingredients => _current;
+  List<IngredientMetadata> get ingredients {
+    print('[Provider] get ingredients: ${_current.length}');
+    return _current;
+  }
 
   // ✅ Used by widgets like MultiIngredientSelector to check loading state
   bool get isInitialized => _hasLoaded;
+
+  /// getter for staged ingredients count
+  int get stagedIngredientCount => _stagedIngredients.length;
+  List<IngredientMetadata> get stagedIngredients =>
+      List.unmodifiable(_stagedIngredients);
 
   // ✅ Exposes all current ingredients as read-only
   List<IngredientMetadata> get allIngredients => List.unmodifiable([
@@ -203,9 +211,13 @@ class IngredientMetadataProvider extends ChangeNotifier {
     final index = _current.indexWhere((e) => e.id == newData.id);
     if (index != -1) {
       _current[index] = newData;
+      print('[Provider] Updated ingredient: ${newData.id}');
     } else {
       _current.add(newData);
+      print('[Provider] Added ingredient: ${newData.id}');
     }
+    print(
+        '[Provider] isDirty after update: $isDirty, _current: ${_current.length}, _original: ${_original.length}');
     notifyListeners();
   }
 
@@ -266,7 +278,8 @@ class IngredientMetadataProvider extends ChangeNotifier {
       }
 
       await batch.commit();
-      _original = List.from(_current);
+      // After saving, reload from Firestore to reset _original and _current
+      await load(); // <<--- Add this line!
       notifyListeners();
     } catch (e, stack) {
       await ErrorLogger.log(
@@ -414,6 +427,10 @@ class IngredientMetadataProvider extends ChangeNotifier {
   /// Marks provider as dirty to enable SaveChangesBanner.
   Future<void> bulkReplaceIngredientMetadata(
       String franchiseId, List<IngredientMetadata> newItems) async {
+    print(
+        '[Provider] bulkReplaceIngredientMetadata (hashCode: ${this.hashCode})');
+    print(
+        '[Provider] bulkReplaceIngredientMetadata: replacing with ${newItems.length} items');
     _current = List.from(newItems);
     notifyListeners();
   }
@@ -461,9 +478,29 @@ class IngredientMetadataProvider extends ChangeNotifier {
 
   /// Method to stage a new ingredient for schema issue sidebar to be added
   void stageIngredient(IngredientMetadata ingredient) {
+    final alreadyStaged = _stagedIngredients.any((e) => e.id == ingredient.id);
+    final alreadyInIngredients = _ingredients.any((e) => e.id == ingredient.id);
+    final alreadyInCurrent = _current.any((e) => e.id == ingredient.id);
+
+    debugPrint('[IngredientMetadataProvider] stageIngredient called: '
+        'id=${ingredient.id}, name=${ingredient.name}, '
+        'alreadyStaged=$alreadyStaged, alreadyInIngredients=$alreadyInIngredients, alreadyInCurrent=$alreadyInCurrent');
+
+    if (alreadyStaged || alreadyInIngredients || alreadyInCurrent) {
+      debugPrint('[IngredientMetadataProvider] Not staging: already exists.');
+      return;
+    }
+
     _stagedIngredients.add(ingredient);
     _ingredients.add(ingredient);
+    _current.add(ingredient); // Ensures presence for dropdown/save
+
     ingredientIdToName[ingredient.id] = ingredient.name;
+
+    debugPrint('[IngredientMetadataProvider] Staged new ingredient: '
+        'id=${ingredient.id}, name=${ingredient.name}. '
+        'StagedIngredients=${_stagedIngredients.length}, '
+        'Ingredients=${_ingredients.length}, Current=${_current.length}');
     notifyListeners();
   }
 
@@ -481,6 +518,8 @@ class IngredientMetadataProvider extends ChangeNotifier {
       for (final ingredient in _stagedIngredients) {
         batch.set(colRef.doc(ingredient.id), ingredient.toMap());
       }
+      print(
+          '[IngredientMetadataProvider] Persisting ${_stagedIngredients.length} ingredients');
 
       await batch.commit();
       _ingredients.addAll(_stagedIngredients);
@@ -507,7 +546,44 @@ class IngredientMetadataProvider extends ChangeNotifier {
   void discardStagedIngredients() {
     if (_stagedIngredients.isNotEmpty) {
       _stagedIngredients.clear();
+      print('[ProviderName] Discarded staged items: '
+          'count=${_stagedIngredients.length} before clearing');
+
       notifyListeners();
     }
+  }
+
+  /// Returns the full Ingredient by ID from staged or loaded ingredients.
+  IngredientMetadata? getById(String id) {
+    return _stagedIngredients.firstWhereOrNull((e) => e.id == id) ??
+        _ingredients.firstWhereOrNull((e) => e.id == id);
+  }
+
+  /// Adds the ingredient to staging if it's not already present.
+  bool stageIfNew({required String id, required String name}) {
+    final alreadyExists = _ingredients.any((e) => e.id == id) ||
+        _stagedIngredients.any((e) => e.id == id);
+
+    if (!alreadyExists) {
+      final newIngredient = IngredientMetadata(
+        id: id,
+        name: name,
+        type: '', // default blank, since no type available
+        allergens: [],
+        removable: true,
+        supportsExtra: false,
+        sidesAllowed: false,
+        outOfStock: false,
+        amountSelectable: false,
+      );
+      _stagedIngredients.add(newIngredient);
+      notifyListeners();
+      debugPrint('[IngredientMetadataProvider] Staged new ingredient: '
+          'id=${newIngredient.id}, name=${newIngredient.name}, '
+          'typeId=${newIngredient.typeId}, type=${newIngredient.type}');
+
+      return true;
+    }
+    return false;
   }
 }

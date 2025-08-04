@@ -20,7 +20,8 @@ class IngredientTypeJsonImportExportDialog extends StatefulWidget {
 
   const IngredientTypeJsonImportExportDialog({super.key, required this.loc});
 
-  static Future<void> show(BuildContext context) async {
+  static Future<void> show(
+      BuildContext context, IngredientTypeProvider provider) async {
     final loc = AppLocalizations.of(context);
     print(
         '[IngredientTypeJsonImportExportDialog] show() called with loc: $loc');
@@ -39,19 +40,22 @@ class IngredientTypeJsonImportExportDialog extends StatefulWidget {
       pageBuilder: (_, __, ___) {
         return Localizations.override(
           context: context,
-          child: Builder(
-            builder: (innerContext) {
-              return Center(
-                child: Material(
-                  color: Colors.transparent,
-                  child: SizedBox(
-                    width: 1400,
-                    height: 680,
-                    child: IngredientTypeJsonImportExportDialog(loc: loc),
+          child: ChangeNotifierProvider<IngredientTypeProvider>.value(
+            value: provider,
+            child: Builder(
+              builder: (innerContext) {
+                return Center(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: SizedBox(
+                      width: 1400,
+                      height: 680,
+                      child: IngredientTypeJsonImportExportDialog(loc: loc),
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         );
       },

@@ -65,6 +65,7 @@ flutter:
     - assets/images/menu_item_placeholder.png
     - assets/images/ingredient_placeholder.png
     - assets/images/admin_empty.png
+    - assets/images/
 
 flutter_icons:
   android: false

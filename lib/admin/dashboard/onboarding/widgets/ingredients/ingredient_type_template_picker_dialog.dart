@@ -7,6 +7,7 @@ import 'package:franchise_admin_portal/core/providers/onboarding_progress_provid
 import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
 
 class IngredientTypeTemplatePickerDialog extends StatefulWidget {
   final AppLocalizations loc;
@@ -14,25 +15,25 @@ class IngredientTypeTemplatePickerDialog extends StatefulWidget {
   const IngredientTypeTemplatePickerDialog({super.key, required this.loc});
 
   static Future<void> show(BuildContext context) {
-    print(
-        '[IngredientTypeTemplatePickerDialog.show] Invoked with context: $context');
     return showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        print(
-            '[IngredientTypeTemplatePickerDialog.show] Inside builder with dialogContext: $dialogContext');
-        final loc = AppLocalizations.of(dialogContext);
-        print(
-            '[IngredientTypeTemplatePickerDialog.show] AppLocalizations.of(dialogContext): $loc');
-        if (loc == null) {
-          print(
-              '[IngredientTypeTemplatePickerDialog] ERROR: AppLocalizations is null!');
-          return const AlertDialog(
-            content: Text(
-                'Localization missing – IngredientTypeTemplatePickerDialog'),
-          );
-        }
-        return IngredientTypeTemplatePickerDialog(loc: loc);
+        return Localizations.override(
+          context: dialogContext,
+          child: Builder(
+            builder: (innerContext) {
+              final loc = AppLocalizations.of(innerContext);
+              if (loc == null) {
+                return const AlertDialog(
+                  content: Text('Localization unavailable'),
+                );
+              }
+              return ScaffoldMessenger(
+                child: IngredientTypeTemplatePickerDialog(loc: loc),
+              );
+            },
+          ),
+        );
       },
     );
   }
@@ -48,9 +49,6 @@ class _IngredientTypeTemplatePickerDialogState
 
   Future<void> _loadTemplate(String templateId) async {
     final loc = widget.loc;
-    print(
-        '[IngredientTypeTemplatePickerDialog] _loadTemplate() triggered for: $templateId');
-    print('[IngredientTypeTemplatePickerDialog] Using loc: $loc');
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
 
@@ -69,17 +67,19 @@ class _IngredientTypeTemplatePickerDialogState
         templateId: templateId,
       );
 
-      // Mark step complete if provider is present
-      final progressProvider =
-          Provider.of<OnboardingProgressProvider>(context, listen: false);
-      await progressProvider.markStepComplete('ingredients');
+      // ✅ Immediately close dialog before triggering UI changes
+      if (context.mounted) Navigator.of(context).pop();
 
-      if (context.mounted) {
-        Navigator.of(context).pop();
+      // ✅ Reload types after closing
+      await Provider.of<IngredientTypeProvider>(context, listen: false)
+          .loadTypes(franchiseId);
+
+      // ✅ Show snackbar after frame settles
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(loc.templateLoadedSuccessfully)),
         );
-      }
+      });
     } catch (e, stack) {
       await ErrorLogger.log(
         message: 'ingredient_type_template_load_failed',

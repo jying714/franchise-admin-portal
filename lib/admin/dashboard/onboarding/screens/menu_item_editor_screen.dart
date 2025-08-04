@@ -48,7 +48,6 @@ class _MenuItemEditorScreenState extends State<MenuItemEditorScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       print(
           '[MenuItemEditorScreen] Repair requested for: ${issue.displayMessage}, newValue=$newValue');
-
       sheet?.repairSchemaIssue(issue, newValue);
     });
   }
@@ -60,85 +59,32 @@ class _MenuItemEditorScreenState extends State<MenuItemEditorScreen> {
 
     final sidebarWidth = showSidebar ? 420.0 : 64.0;
 
-    // Don't use a Scaffold. Just the content body:
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => IngredientTypeProvider()),
-        ChangeNotifierProxyProvider2<FirestoreService, FranchiseProvider,
-            CategoryProvider>(
-          create: (_) => CategoryProvider(
-            firestore: Provider.of<FirestoreService>(_, listen: false),
-            franchiseId: '',
+    // USE ONLY global/singleton context providers. No local MultiProvider.
+    return Row(
+      children: [
+        Expanded(
+          flex: 3,
+          child: MenuItemEditorSheet(
+            key: _sheetKey,
+            existing: widget.item,
+            onCancel: () => Navigator.of(context).pop(),
+            onSave: (item) => Navigator.of(context).pop(item),
+            onSchemaIssuesChanged: _handleSchemaIssueUpdate,
+            firestore: FirebaseFirestore.instance,
+            franchiseId: context.read<FranchiseProvider>().franchiseId,
           ),
-          update: (_, firestore, franchiseProvider, previous) {
-            final fid = franchiseProvider.franchiseId;
-            final provider = previous ??
-                CategoryProvider(firestore: firestore, franchiseId: fid);
-
-            // Only call .loadCategories() if the franchiseId changed
-            if (fid.isNotEmpty && fid != provider.franchiseId) {
-              provider.franchiseId = fid; // Update the id, but don't load yet!
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                provider.loadCategories();
-              });
-            }
-            return provider;
-          },
         ),
-        ChangeNotifierProxyProvider2<FirestoreService, FranchiseInfoProvider,
-                IngredientMetadataProvider>(
-            create: (_) => IngredientMetadataProvider(
-                  firestoreService:
-                      Provider.of<FirestoreService>(_, listen: false),
-                  franchiseId: '',
-                ),
-            update: (_, firestore, franchiseInfo, previous) {
-              final fid = franchiseInfo.franchise?.id ?? '';
-              final provider = previous ??
-                  IngredientMetadataProvider(
-                    firestoreService: firestore,
-                    franchiseId: fid,
-                  );
-              if (fid.isNotEmpty && fid != provider.franchiseId) {
-                final newProvider = IngredientMetadataProvider(
-                  firestoreService: firestore,
-                  franchiseId: fid,
-                );
-                // Defer the load to next frame to avoid Provider build cycle error
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  newProvider.load();
-                });
-                return newProvider;
-              }
-              return provider;
-            }),
+        const VerticalDivider(width: 1),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          width: sidebarWidth,
+          child: SchemaIssueSidebar(
+            issues: _schemaIssues,
+            onRepair: _handleRepair,
+            onClose: () => setState(() => _schemaIssues.clear()),
+          ),
+        ),
       ],
-      child: Row(
-        children: [
-          Expanded(
-            flex: 3,
-            child: MenuItemEditorSheet(
-              key: _sheetKey,
-              existing: widget.item,
-              onCancel: () => Navigator.of(context).pop(),
-              onSave: (item) => Navigator.of(context).pop(item),
-              onSchemaIssuesChanged: _handleSchemaIssueUpdate,
-              firestore: FirebaseFirestore.instance,
-              franchiseId: context.read<FranchiseProvider>().franchiseId,
-            ),
-          ),
-          const VerticalDivider(width: 1),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            width: sidebarWidth,
-            child: SchemaIssueSidebar(
-              issues: _schemaIssues,
-              onRepair: _handleRepair,
-              onClose: () => setState(() => _schemaIssues.clear()),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

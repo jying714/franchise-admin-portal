@@ -11,6 +11,7 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingred
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/editable_ingredient_type_row.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/inline_add_ingredient_type_row.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_type_json_import_export_dialog.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
 
 class IngredientTypeManagementScreen extends StatefulWidget {
   const IngredientTypeManagementScreen({super.key});
@@ -190,40 +191,57 @@ class _IngredientTypeManagementScreenState
             icon: const Icon(Icons.data_object),
             tooltip: loc.importExport,
             onPressed: () {
-              IngredientTypeJsonImportExportDialog.show(context);
+              final typeProvider =
+                  Provider.of<IngredientTypeProvider>(context, listen: false);
+              IngredientTypeJsonImportExportDialog.show(context, typeProvider);
             },
           ),
           IconButton(
             icon: const Icon(Icons.library_add),
             tooltip: loc.loadDefaultTypes,
-            onPressed: () {
+            onPressed: () async {
               final parentLoc = AppLocalizations.of(context);
+              final ingredientTypeProvider =
+                  context.read<IngredientTypeProvider>();
+
               print(
                   '[OnboardingIngredientTypeScreen] Opening template picker dialog...');
               print(
                   '[OnboardingIngredientTypeScreen] AppLocalizations.of(context): $parentLoc');
+
               if (parentLoc == null) {
                 print(
                     '[OnboardingIngredientTypeScreen] ERROR: Localization is null on this screen!');
                 return;
               }
 
-              showDialog(
+              // Show the dialog
+              await showDialog(
                 context: context,
                 builder: (BuildContext dialogContext) {
                   return Localizations.override(
-                    context: context, // ✅ uses outer localization
+                    context: dialogContext,
                     child: Builder(
                       builder: (innerContext) {
-                        print(
-                            '[OnboardingIngredientTypeScreen] Using parentLoc passed from context');
-                        return IngredientTypeTemplatePickerDialog(
-                            loc: parentLoc);
+                        return ScaffoldMessenger(
+                          child: IngredientTypeTemplatePickerDialog(
+                              loc: parentLoc),
+                        );
                       },
                     ),
                   );
                 },
               );
+
+              // ✅ After dialog closes, reload provider
+              final franchiseId = context.read<FranchiseProvider>().franchiseId;
+              await ingredientTypeProvider.loadTypes(franchiseId);
+
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(parentLoc.templateLoadedSuccessfully)),
+                );
+              }
             },
           ),
           IconButton(

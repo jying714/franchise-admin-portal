@@ -122,8 +122,10 @@ class IngredientTypeProvider with ChangeNotifier {
   }
 
   /// Get a specific type by ID
+  /// Find an ingredient type by ID (searches both staged and loaded)
   IngredientType? getById(String id) {
-    return _ingredientTypes.firstWhereOrNull((t) => t.id == id);
+    return _stagedTypes.firstWhereOrNull((t) => t.id == id) ??
+        _ingredientTypes.firstWhereOrNull((t) => t.id == id);
   }
 
   /// Add a new ingredient type to Firestore and local list
@@ -381,11 +383,25 @@ class IngredientTypeProvider with ChangeNotifier {
 
   /// Methods for ingredient type in schema issue sidebar
   void stageIngredientType(IngredientType type) {
-    final exists = _stagedTypes.any((t) => t.id == type.id);
-    if (!exists) {
-      _stagedTypes.add(type);
-      notifyListeners();
+    final alreadyStaged = _stagedTypes.any((t) => t.id == type.id);
+    final alreadyLoaded = _ingredientTypes.any((t) => t.id == type.id);
+
+    debugPrint('[IngredientTypeProvider] stageIngredientType called: '
+        'id=${type.id}, name=${type.name}, '
+        'alreadyStaged=$alreadyStaged, alreadyLoaded=$alreadyLoaded');
+
+    if (alreadyStaged || alreadyLoaded) {
+      debugPrint('[IngredientTypeProvider] Not staging: already exists.');
+      return;
     }
+
+    _stagedTypes.add(type);
+    _ingredientTypes.add(type); // Ensure visible in all lists/dropdowns
+
+    debugPrint('[IngredientTypeProvider] Staged new ingredient type: '
+        'id=${type.id}, name=${type.name}. '
+        'StagedTypes=${_stagedTypes.length}, IngredientTypes=${_ingredientTypes.length}');
+    notifyListeners();
   }
 
   Future<void> saveStagedIngredientTypes() async {
@@ -401,6 +417,7 @@ class IngredientTypeProvider with ChangeNotifier {
         batch.set(
             collectionRef.doc(type.id), type.toMap(includeTimestamps: true));
       }
+      print('[IngredientTypeProvider] Persisting ${_stagedTypes.length} types');
 
       await batch.commit();
       _stagedTypes.clear();
@@ -421,8 +438,31 @@ class IngredientTypeProvider with ChangeNotifier {
 
   void discardStagedIngredientTypes() {
     _stagedTypes.clear();
+    print('[ProviderName] Discarded staged items: '
+        'count=${_stagedTypes.length} before clearing');
     notifyListeners();
   }
 
   bool get hasStagedTypeChanges => _stagedTypes.isNotEmpty;
+
+  /// Adds the ingredient type to staging if it's not already present.
+  /// Adds the ingredient type to staging if it's not already staged or in the main list
+  bool stageIfNew({required String id, required String name}) {
+    final alreadyExists = _ingredientTypes.any((t) => t.id == id) ||
+        _stagedTypes.any((t) => t.id == id); // ✅ use _stagedTypes
+
+    if (!alreadyExists) {
+      final staged = IngredientType(
+        id: id,
+        name: name,
+        visibleInApp: true,
+      );
+      _stagedTypes.add(staged); // ✅ use _stagedTypes
+      notifyListeners();
+      debugPrint('[IngredientTypeProvider] Staged new type: '
+          'id=${staged.id}, name=${staged.name}');
+      return true;
+    }
+    return false;
+  }
 }

@@ -32,6 +32,7 @@ class CategoryProvider extends ChangeNotifier {
 
   /// Schema issue sidebar
   final List<Category> _stagedCategories = [];
+  int get stagedCategoryCount => _stagedCategories.length;
 
   /// End
 
@@ -291,12 +292,25 @@ class CategoryProvider extends ChangeNotifier {
 
   /// schema issue sidebar methods to add, discard and stage categories
   void stageCategory(Category category) {
-    final exists = _stagedCategories.any((c) => c.id == category.id);
-    if (!exists) {
-      _stagedCategories.add(category);
-      _current.add(category);
-      notifyListeners();
+    final alreadyStaged = _stagedCategories.any((c) => c.id == category.id);
+    final alreadyInCurrent = _current.any((c) => c.id == category.id);
+
+    debugPrint('[CategoryProvider] stageCategory called: '
+        'id=${category.id}, name=${category.name}, '
+        'alreadyStaged=$alreadyStaged, alreadyInCurrent=$alreadyInCurrent');
+
+    if (alreadyStaged || alreadyInCurrent) {
+      debugPrint('[CategoryProvider] Not staging: already exists.');
+      return;
     }
+
+    _stagedCategories.add(category);
+    _current.add(category);
+
+    debugPrint('[CategoryProvider] Staged new category: '
+        'id=${category.id}, name=${category.name}. '
+        'StagedCategories=${_stagedCategories.length}, Current=${_current.length}');
+    notifyListeners();
   }
 
   Future<void> saveStagedCategories() async {
@@ -311,6 +325,8 @@ class CategoryProvider extends ChangeNotifier {
       for (final category in _stagedCategories) {
         batch.set(colRef.doc(category.id), category.toFirestore());
       }
+      print(
+          '[CategoryProvider] Persisting ${_stagedCategories.length} categories');
 
       await batch.commit();
       _original = List.from(_current);
@@ -334,8 +350,34 @@ class CategoryProvider extends ChangeNotifier {
       _current.removeWhere((c) => c.id == cat.id);
     }
     _stagedCategories.clear();
+    print('[ProviderName] Discarded staged items: '
+        'count=${_stagedCategories.length} before clearing');
+
     notifyListeners();
   }
 
   bool get hasStagedCategoryChanges => _stagedCategories.isNotEmpty;
+  List<Category> get stagedCategories => List.unmodifiable(_stagedCategories);
+
+  /// Attempts to stage a new category if it doesn't already exist in Firestore or staged memory.
+  /// Returns true if the category was staged, false if it already exists.
+  bool stageIfNew({required String id, required String name}) {
+    final alreadyExists = _current.any((c) => c.id == id) ||
+        _stagedCategories.any((c) => c.id == id);
+
+    if (!alreadyExists) {
+      final newCat = Category(
+        id: id,
+        name: name,
+        sortOrder: _current.length,
+      );
+      stageCategory(newCat);
+      debugPrint('[CategoryProvider] stageIfNew -> Staged new category: '
+          'id=${newCat.id}, name=${newCat.name}');
+      return true;
+    }
+
+    debugPrint('[CategoryProvider] Category already exists: $id');
+    return false;
+  }
 }

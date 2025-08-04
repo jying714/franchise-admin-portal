@@ -13,7 +13,7 @@ import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/widgets/scrolling_json_editor.dart';
-
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
 import 'ingredient_metadata_json_preview_table.dart';
 
 class IngredientMetadataJsonImportExportDialog extends StatefulWidget {
@@ -24,9 +24,10 @@ class IngredientMetadataJsonImportExportDialog extends StatefulWidget {
     required this.loc,
   });
 
-  static Future<void> show(BuildContext context) async {
+  static Future<void> show(
+      BuildContext context, IngredientMetadataProvider provider) async {
     final loc = AppLocalizations.of(context);
-    final provider = context.read<IngredientMetadataProvider>();
+    final typeProvider = context.read<IngredientTypeProvider>();
 
     if (loc == null) {
       debugPrint(
@@ -42,23 +43,21 @@ class IngredientMetadataJsonImportExportDialog extends StatefulWidget {
       pageBuilder: (ctx, _, __) {
         return Localizations.override(
           context: ctx,
-          child: Builder(
-            builder: (innerCtx) {
-              return ChangeNotifierProvider.value(
-                value: provider,
-                child: Center(
-                  child: Material(
-                    color: Colors.transparent,
-                    child: SizedBox(
-                      width: 1400,
-                      height: 680,
-                      child:
-                          IngredientMetadataJsonImportExportDialog(loc: loc!),
-                    ),
+          child: ChangeNotifierProvider<IngredientTypeProvider>.value(
+            value: typeProvider,
+            child: ChangeNotifierProvider<IngredientMetadataProvider>.value(
+              value: provider,
+              child: Center(
+                child: Material(
+                  color: Colors.transparent,
+                  child: SizedBox(
+                    width: 1400,
+                    height: 680,
+                    child: IngredientMetadataJsonImportExportDialog(loc: loc!),
                   ),
                 ),
-              );
-            },
+              ),
+            ),
           ),
         );
       },
@@ -73,6 +72,8 @@ class IngredientMetadataJsonImportExportDialog extends StatefulWidget {
 class _IngredientMetadataJsonImportExportDialogState
     extends State<IngredientMetadataJsonImportExportDialog> {
   late TextEditingController _jsonController;
+  late final ScrollController _jsonEditorScrollController;
+  late final ScrollController _previewTableScrollController;
   String? _errorMessage;
   List<IngredientMetadata>? _previewIngredients;
 
@@ -82,7 +83,17 @@ class _IngredientMetadataJsonImportExportDialogState
     final formattedJson = const JsonEncoder.withIndent('  ')
         .convert(pizzaShopIngredientMetadataTemplate);
     _jsonController = TextEditingController(text: formattedJson);
+    _jsonEditorScrollController = ScrollController();
+    _previewTableScrollController = ScrollController();
     _parsePreview();
+  }
+
+  @override
+  void dispose() {
+    _jsonController.dispose();
+    _jsonEditorScrollController.dispose();
+    _previewTableScrollController.dispose();
+    super.dispose();
   }
 
   List<IngredientMetadata>? _tryParseJson(String val) {
@@ -116,9 +127,12 @@ class _IngredientMetadataJsonImportExportDialogState
         }
         _previewIngredients =
             decoded.map((e) => IngredientMetadata.fromMap(e)).toList();
+        print(
+            '[Dialog] Parsed ${_previewIngredients!.length} preview ingredients');
       });
     } catch (e, stack) {
       setState(() => _previewIngredients = null);
+      print('[Dialog] JSON parse error');
       ErrorLogger.log(
         message: 'JSON import preview parse error',
         source: 'ingredient_metadata_json_import_export_dialog.dart',
@@ -134,34 +148,57 @@ class _IngredientMetadataJsonImportExportDialogState
   }
 
   Future<void> _saveImport() async {
+    print('[Dialog] _saveImport called');
     final loc = widget.loc;
     final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    print('[Dialog] got franchiseId: $franchiseId');
     final provider = context.read<IngredientMetadataProvider>();
+    print('[Dialog] got provider hashCode: ${provider.hashCode}');
 
-    if (_previewIngredients == null || franchiseId.isEmpty) return;
+    if (_previewIngredients == null || franchiseId.isEmpty) {
+      print('[Dialog] _saveImport exit: no preview or empty franchiseId');
+      return;
+    }
 
     try {
       final firestore = context.read<FirestoreService>();
+      print('[Dialog] got firestore');
       final validTypeIds = await firestore.fetchIngredientTypeIds(franchiseId);
+      print('[Dialog] validTypeIds: $validTypeIds');
 
-// Filter invalid ingredients
       final invalidIngredients = _previewIngredients!.where((ingredient) {
         return ingredient.typeId == null ||
             !validTypeIds.contains(ingredient.typeId);
       }).toList();
+      print('[Dialog] found invalid ingredients: $invalidIngredients');
 
       if (invalidIngredients.isNotEmpty) {
         final badIds = invalidIngredients.map((e) => e.id).join(', ');
+        // List available typeIds
+        final typeList = validTypeIds.isEmpty
+            ? '(none found for this franchise)'
+            : validTypeIds.join(', ');
         setState(() {
-          _errorMessage = '${widget.loc.invalidTypeIdError}: $badIds';
+          _errorMessage = '${widget.loc.invalidTypeIdError}: $badIds\n'
+              'Available typeIds: $typeList';
         });
+        print('[Dialog] Exiting, invalid ingredients');
         return;
       }
 
+      print(
+          '[Dialog] Provider before calling bulkReplaceIngredientMetadata hashCode: ${provider.hashCode}');
       await provider.bulkReplaceIngredientMetadata(
           franchiseId, _previewIngredients!);
-      if (mounted) Navigator.of(context).pop();
+
+      print('[Dialog] Called bulkReplaceIngredientMetadata');
+
+      if (mounted) {
+        Navigator.of(context).pop();
+        print('[Dialog] Navigator.pop called');
+      }
     } catch (e, stack) {
+      print('[Dialog] Caught exception: $e');
       await ErrorLogger.log(
         message: 'Failed to save imported ingredient metadata',
         source: 'ingredient_metadata_json_import_export_dialog.dart',
@@ -220,17 +257,35 @@ class _IngredientMetadataJsonImportExportDialogState
                               style: theme.textTheme.titleMedium),
                           const SizedBox(height: 8),
                           Expanded(
-                            child: ScrollingJsonEditor(
-                              initialJson: _jsonController.text,
-                              onChanged: (val) {
-                                setState(() {
-                                  _jsonController.text = val;
-                                  _parsePreview();
-                                });
-                              },
-                              loc: loc,
+                            child: Scrollbar(
+                              controller: _jsonEditorScrollController,
+                              thumbVisibility: true,
+                              child: TextField(
+                                controller: _jsonController,
+                                scrollController: _jsonEditorScrollController,
+                                maxLines: null,
+                                style: theme.textTheme.bodyMedium,
+                                decoration: const InputDecoration.collapsed(
+                                  hintText: '{ "key": "value" }',
+                                ),
+                                onChanged: (val) {
+                                  setState(() {
+                                    _jsonController.text = val;
+                                    _parsePreview();
+                                  });
+                                },
+                              ),
                             ),
                           ),
+                          if (_errorMessage != null) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              _errorMessage!,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.error,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -245,17 +300,13 @@ class _IngredientMetadataJsonImportExportDialogState
                               style: theme.textTheme.titleMedium),
                           const SizedBox(height: 8),
                           Expanded(
-                            child: Scrollbar(
-                              thumbVisibility: true,
-                              child: SingleChildScrollView(
-                                child: IngredientMetadataJsonPreviewTable(
-                                  rawJson: _jsonController.text,
-                                  previewIngredients: _previewIngredients,
-                                  loc: widget.loc,
-                                ),
-                              ),
+                            child: IngredientMetadataJsonPreviewTable(
+                              rawJson: _jsonController.text,
+                              previewIngredients: _previewIngredients,
+                              loc: widget.loc,
+                              scrollController: _previewTableScrollController,
                             ),
-                          ),
+                          )
                         ],
                       ),
                     ),
@@ -274,7 +325,12 @@ class _IngredientMetadataJsonImportExportDialogState
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
-                    onPressed: _previewIngredients != null ? _saveImport : null,
+                    onPressed: _previewIngredients != null
+                        ? () {
+                            print('[Dialog] Import button pressed');
+                            _saveImport();
+                          }
+                        : null,
                     child: Text(widget.loc.importChanges),
                   ),
                 ],

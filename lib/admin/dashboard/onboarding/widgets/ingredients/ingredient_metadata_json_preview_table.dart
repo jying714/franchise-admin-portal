@@ -7,12 +7,14 @@ class IngredientMetadataJsonPreviewTable extends StatelessWidget {
   final String rawJson;
   final List<IngredientMetadata>? previewIngredients;
   final AppLocalizations loc;
+  final ScrollController? scrollController;
 
   const IngredientMetadataJsonPreviewTable({
     super.key,
     required this.rawJson,
     required this.previewIngredients,
     required this.loc,
+    this.scrollController,
   });
 
   @override
@@ -48,8 +50,10 @@ class IngredientMetadataJsonPreviewTable extends StatelessWidget {
     }
 
     return Scrollbar(
+      controller: scrollController,
       thumbVisibility: true,
       child: SingleChildScrollView(
+        controller: scrollController,
         scrollDirection: Axis.horizontal,
         child: DataTable(
           columnSpacing: 24,

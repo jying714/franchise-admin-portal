@@ -48,12 +48,10 @@ class _OnboardingCategoriesScreenState
     final loc = AppLocalizations.of(context)!;
     final franchiseId = context.read<FranchiseProvider>().franchiseId;
 
-    final result = await showDialog<Category>(
-      context: context,
-      builder: (context) => CategoryFormDialog(
-        initialCategory: category,
-        franchiseId: franchiseId,
-      ),
+    final result = await CategoryFormDialog.show(
+      parentContext: context,
+      initialCategory: category,
+      franchiseId: franchiseId,
     );
 
     if (result != null) {
@@ -65,10 +63,8 @@ class _OnboardingCategoriesScreenState
   }
 
   Future<void> _openImportExportDialog() async {
-    await showDialog(
-      context: context,
-      builder: (context) => const CategoryJsonImportExportDialog(),
-    );
+    final loc = AppLocalizations.of(context)!;
+    await CategoryJsonImportExportDialog.show(context);
   }
 
   Future<void> _markComplete() async {
@@ -224,10 +220,8 @@ class _OnboardingCategoriesScreenState
             icon: const Icon(Icons.library_add),
             tooltip: loc.selectCategoryTemplate,
             onPressed: () async {
-              await showDialog(
-                context: context,
-                builder: (_) => const CategoriesTemplatePickerDialog(),
-              );
+              await CategoriesTemplatePickerDialog.show(
+                  context); // this is the screen context, not the dialog's context
             },
           ),
           IconButton(

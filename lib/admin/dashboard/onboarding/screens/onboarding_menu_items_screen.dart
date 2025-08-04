@@ -370,15 +370,31 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                       children: [
                         ElevatedButton(
                           onPressed: () async {
-                            provider.injectDependencies(
-                              ingredientProvider:
-                                  context.read<IngredientMetadataProvider>(),
-                              categoryProvider:
-                                  context.read<CategoryProvider>(),
-                              typeProvider:
-                                  context.read<IngredientTypeProvider>(),
+                            final ingredientProvider =
+                                context.read<IngredientMetadataProvider>();
+                            final categoryProvider =
+                                context.read<CategoryProvider>();
+                            final typeProvider =
+                                context.read<IngredientTypeProvider>();
+                            final menuItemProvider =
+                                context.read<MenuItemProvider>();
+
+                            // Inject dependencies
+                            menuItemProvider.injectDependencies(
+                              ingredientProvider: ingredientProvider,
+                              categoryProvider: categoryProvider,
+                              typeProvider: typeProvider,
                             );
-                            await provider.persistChanges();
+                            print('[DEBUG] --- Staged Data Snapshot ---');
+                            print(
+                                '[DEBUG] Staged Ingredients: ${ingredientProvider.stagedIngredientCount}');
+                            print(
+                                '[DEBUG] Staged Categories: ${categoryProvider.stagedCategoryCount}');
+                            print(
+                                '[DEBUG] Staged Ingredient Types: ${typeProvider.stagedTypes.length}');
+
+                            // Call persist once deps injected
+                            await menuItemProvider.persistChanges();
                           },
                           child: Text(loc.saveChanges),
                         ),

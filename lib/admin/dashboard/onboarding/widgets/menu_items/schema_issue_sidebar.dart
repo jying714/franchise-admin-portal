@@ -416,7 +416,7 @@ class _IngredientRepairTile extends StatelessWidget {
     if (newIngredient != null) {
       try {
         provider.stageIngredient(newIngredient); // 🔄 stage it, don’t save
-        Future.microtask(() => onRepair(newIngredient.id));
+        onRepair(newIngredient.id);
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -529,7 +529,7 @@ class _IngredientTypeRepairTile extends StatelessWidget {
 
     if (newType != null) {
       try {
-        provider.addOrUpdateTypes([newType]); // 🔄 stage locally only
+        provider.stageIngredientType(newType); // ✅ stage for persistence
         onRepair(newType.id!);
 
         ScaffoldMessenger.of(context).showSnackBar(

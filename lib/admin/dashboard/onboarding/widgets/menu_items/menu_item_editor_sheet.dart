@@ -33,6 +33,7 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_i
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/core/models/category.dart' as app_models;
 
 class MenuItemEditorSheet extends StatefulWidget {
   final MenuItem? existing;
@@ -240,30 +241,105 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
 
   void repairSchemaIssue(MenuItemSchemaIssue issue, String newValue) {
     print(
-      '[MenuItemEditorSheet] repairSchemaIssue: ${issue.displayMessage}, newValue=$newValue',
-    );
+        '[MenuItemEditorSheet] repairSchemaIssue: ${issue.displayMessage}, newValue=$newValue');
+
+    final ingredientProvider = context.read<IngredientMetadataProvider>();
+    final typeProvider = context.read<IngredientTypeProvider>();
+    final categoryProvider = context.read<CategoryProvider>();
 
     setState(() {
+      print('[repairSchemaIssue] Resolving issue: '
+          'field=${issue.field}, type=${issue.type}, '
+          'missingReference=${issue.missingReference}, label=${issue.label}, '
+          'newValue=$newValue');
+
       switch (issue.field) {
         case 'categoryId':
           categoryId = newValue;
+          print('[repairSchemaIssue] Assigned new categoryId: $categoryId');
+
+          final alreadyExists = categoryProvider.categories
+                  .any((c) => c.id == newValue) ||
+              categoryProvider.stagedCategories.any((c) => c.id == newValue);
+
+          print('[repairSchemaIssue] Category exists=$alreadyExists');
+
+          if (!alreadyExists) {
+            try {
+              categoryProvider.stageCategory(
+                app_models.Category(
+                  id: newValue,
+                  name: issue.label ?? 'Unnamed Category',
+                  sortOrder: 999,
+                ),
+              );
+              print('[repairSchemaIssue] Staged new category: $newValue');
+            } catch (e) {
+              print('[ERROR] Failed to stage category: $newValue → $e');
+            }
+          }
           break;
 
         case 'price':
           price = double.tryParse(newValue) ?? 0.0;
           _priceController.text = price.toString();
+          print('[repairSchemaIssue] Updated price: $price');
           break;
 
         case 'description':
           description = newValue;
           _descriptionController.text = newValue;
+          print('[repairSchemaIssue] Updated description');
           break;
 
         case 'includedIngredients':
         case 'optionalAddOns':
         case 'customizationGroups':
         case 'customizationGroups.options':
+          print('[repairSchemaIssue] Routing to _repairIngredientOrType...');
           _repairIngredientOrType(issue, newValue);
+
+          // if (issue.type == MenuItemSchemaIssueType.ingredient) {
+          //   final alreadyExists = ingredientProvider.allIngredients
+          //           .any((e) => e.id == newValue) ||
+          //       ingredientProvider.stagedIngredients
+          //           .any((e) => e.id == newValue);
+
+          //   print('[repairSchemaIssue] Ingredient exists=$alreadyExists');
+
+          //   if (!alreadyExists) {
+          //     final staged = ingredientProvider.stageIfNew(
+          //       id: newValue,
+          //       name: issue.label ?? 'Unnamed Ingredient',
+          //     );
+          //     if (staged) {
+          //       print('[repairSchemaIssue] Staged new ingredient: $newValue');
+          //     } else {
+          //       print('[WARNING] Failed to stage ingredient: $newValue');
+          //     }
+          //   }
+          // }
+
+          // if (issue.type == MenuItemSchemaIssueType.ingredientType) {
+          //   final alreadyExists =
+          //       typeProvider.ingredientTypes.any((t) => t.id == newValue) ||
+          //           typeProvider.stagedTypes.any((t) => t.id == newValue);
+
+          //   print('[repairSchemaIssue] Ingredient type exists=$alreadyExists');
+
+          //   if (!alreadyExists) {
+          //     final staged = typeProvider.stageIfNew(
+          //       id: newValue,
+          //       name: issue.label ?? 'Unnamed Type',
+          //     );
+          //     if (staged) {
+          //       print(
+          //           '[repairSchemaIssue] Staged new ingredient type: $newValue');
+          //     } else {
+          //       print('[WARNING] Failed to stage ingredient type: $newValue');
+          //     }
+          //   }
+          // }
           break;
 
         default:
@@ -289,7 +365,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
         nutrition: nutrition,
         selectedTemplateRefs: selectedTemplateRefs,
         sizeData: sizeData,
-        categories: context.read<CategoryProvider>().categories,
+        categories: categoryProvider.categories,
         notes: notes,
         sku: sku,
         dietaryTags: dietaryTags,
@@ -330,12 +406,14 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
 
       final freshIssues = MenuItemSchemaIssue.detectAllIssues(
         menuItem: freshItem,
-        categories: context.read<CategoryProvider>().categories,
-        ingredients: context.read<IngredientMetadataProvider>().allIngredients,
-        ingredientTypes: context.read<IngredientTypeProvider>().ingredientTypes,
+        categories: categoryProvider.categories,
+        ingredients: ingredientProvider.allIngredients,
+        ingredientTypes: typeProvider.ingredientTypes,
       );
 
       final updatedIssues = <MenuItemSchemaIssue>[];
+      print(
+          '[repairSchemaIssue] Found ${freshIssues.length} new issues after rebuild');
 
       for (final newIssue in freshIssues) {
         final existing = _schemaIssues.firstWhere(
@@ -351,7 +429,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
         updatedIssues.add(resolved ? newIssue.markResolved(true) : newIssue);
       }
 
-// Add any new issues that weren't in the original list
       for (final newIssue in freshIssues) {
         if (!updatedIssues.any((i) =>
             i.type == newIssue.type &&
@@ -359,13 +436,14 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
             i.field == newIssue.field &&
             i.context == newIssue.context)) {
           updatedIssues.add(newIssue);
+          print(
+              '[repairSchemaIssue] Appended new issue: ${newIssue.displayMessage}');
         }
       }
 
-      print(
-          '[MenuItemEditorSheet] repairSchemaIssue -> updated ${updatedIssues.length} issue(s):');
+      print('[MenuItemEditorSheet] Updated schema issues list:');
       for (final i in updatedIssues) {
-        print('  - ${i.displayMessage} | resolved=${i.resolved}');
+        print('  • ${i.displayMessage} | resolved=${i.resolved}');
       }
 
       setState(() {
@@ -378,6 +456,51 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
   }
 
   void _repairIngredientOrType(MenuItemSchemaIssue issue, String newValue) {
+    final ingredientProvider = context.read<IngredientMetadataProvider>();
+    final typeProvider = context.read<IngredientTypeProvider>();
+
+    final ingredientExists = ingredientProvider.getById(newValue) != null;
+    final typeExists = typeProvider.getById(newValue) != null;
+
+    print('[DEBUG] Lookup results: ingredientExists=$ingredientExists, '
+        'typeExists=$typeExists, issueType=${issue.type}');
+
+    // Attempt to stage ingredient if missing
+    if (issue.type == MenuItemSchemaIssueType.ingredient && !ingredientExists) {
+      final stagedName = issue.label ?? newValue;
+      print(
+          '[DEBUG] Attempting to stage new ingredient: id=$newValue, name=$stagedName');
+      final staged = ingredientProvider.stageIfNew(
+        id: newValue,
+        name: stagedName,
+      );
+      if (staged) {
+        print(
+            '[DEBUG] Successfully staged ingredient: id=$newValue, name=$stagedName');
+      } else {
+        print(
+            '[WARNING] Failed to stage ingredient (already exists?): id=$newValue');
+      }
+    }
+
+    // Attempt to stage ingredient type if missing
+    if (issue.type == MenuItemSchemaIssueType.ingredientType && !typeExists) {
+      final stagedName = issue.label ?? newValue;
+      print(
+          '[DEBUG] Attempting to stage new ingredient type: id=$newValue, name=$stagedName');
+      final staged = typeProvider.stageIfNew(
+        id: newValue,
+        name: stagedName,
+      );
+      if (staged) {
+        print(
+            '[DEBUG] Successfully staged ingredient type: id=$newValue, name=$stagedName');
+      } else {
+        print(
+            '[WARNING] Failed to stage ingredient type (already exists?): id=$newValue');
+      }
+    }
+
     IngredientReference updateEntry(IngredientReference entry) {
       final matchesId =
           entry.id.toLowerCase() == issue.missingReference.toLowerCase();
@@ -386,11 +509,21 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
 
       if (issue.type == MenuItemSchemaIssueType.ingredient &&
           (matchesId || matchesName)) {
+        print('[repairIngredientOrType] Matching entry: '
+            'id=${entry.id}, name=${entry.name}, typeId=${entry.typeId}, '
+            'issueType=${issue.type}, field=${issue.field}');
+        print('[repairIngredientOrType] Updated entry → '
+            'oldId=${entry.id}, newId=$newValue');
         return entry.copyWith(id: newValue);
       }
 
       if (issue.type == MenuItemSchemaIssueType.ingredientType &&
           (matchesName || entry.typeId.isEmpty)) {
+        print('[repairIngredientOrType] Matching entry: '
+            'id=${entry.id}, name=${entry.name}, typeId=${entry.typeId}, '
+            'issueType=${issue.type}, field=${issue.field}');
+        print('[repairIngredientOrType] Updated entry → '
+            'oldTypeId=${entry.typeId}, newTypeId=$newValue');
         return entry.copyWith(typeId: newValue);
       }
 
@@ -399,14 +532,23 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
 
     if (issue.field == 'includedIngredients') {
       includedIngredients = includedIngredients.map(updateEntry).toList();
+      print('[repairIngredientOrType] Updated includedIngredients entries: '
+          '${includedIngredients.length}');
     } else if (issue.field == 'optionalAddOns') {
       optionalAddOns = optionalAddOns.map(updateEntry).toList();
+      print('[repairIngredientOrType] Updated optionalAddOns entries: '
+          '${optionalAddOns.length}');
     } else if (issue.field.startsWith('customizationGroups')) {
       customizationGroups = customizationGroups.map((group) {
         final updated = group.ingredients.map(updateEntry).toList();
         return group.copyWith(ingredients: updated);
       }).toList();
+      print('[repairIngredientOrType] Updated customizationGroups entries: '
+          '${customizationGroups.length}');
     }
+
+    print(
+        '[DEBUG] _repairIngredientOrType completed. Issue type: ${issue.type}, newValue: $newValue');
   }
 
   void _checkForSchemaIssues() {
@@ -1080,36 +1222,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
             ),
           ),
         ),
-        // if (_showSchemaSidebar)
-        //   Positioned(
-        //     top: 0,
-        //     right: 0,
-        //     bottom: 0,
-        //     child: SchemaIssueSidebar(
-        //       issues: _schemaIssues,
-        //       onRepair: (issue, newValue) {
-        //         setState(() {
-        //           repairMenuItemSchemaIssue(
-        //             issue: issue,
-        //             newValue: newValue,
-        //             updateCategoryId: (v) => categoryId = v,
-        //             includedIngredients: includedIngredients,
-        //             optionalAddOns: optionalAddOns,
-        //             customizationGroups: customizationGroups,
-        //           );
-        //           _schemaIssues = _schemaIssues.map((e) {
-        //             return e == issue ? e.markResolved(true) : e;
-        //           }).toList();
-        //           isDirty = true;
-        //         });
-        //         Future.delayed(
-        //             const Duration(milliseconds: 100), _checkForSchemaIssues);
-        //       },
-        //       onClose: () {
-        //         setState(() => _showSchemaSidebar = false);
-        //       },
-        //     ),
-        //   ),
       ],
     );
   }

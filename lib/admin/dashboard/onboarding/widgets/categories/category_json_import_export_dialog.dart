@@ -12,9 +12,40 @@ import 'package:franchise_admin_portal/core/providers/franchise_info_provider.da
 import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider.dart';
 import 'package:franchise_admin_portal/core/models/category.dart';
 import 'package:franchise_admin_portal/core/utils/schema_templates.dart';
+import 'package:franchise_admin_portal/core/providers/category_provider.dart';
 
 class CategoryJsonImportExportDialog extends StatefulWidget {
-  const CategoryJsonImportExportDialog({super.key});
+  final AppLocalizations loc;
+  final BuildContext parentContext; // <-- add this line
+
+  const CategoryJsonImportExportDialog({
+    super.key,
+    required this.loc,
+    required this.parentContext, // <-- add this line
+  });
+
+  static Future<void> show(BuildContext parentContext) {
+    final loc = AppLocalizations.of(parentContext)!;
+    final categoryProvider =
+        Provider.of<CategoryProvider>(parentContext, listen: false);
+    final onboardingProvider =
+        Provider.of<OnboardingProgressProvider>(parentContext, listen: false);
+
+    return showDialog(
+      context: parentContext,
+      builder: (dialogContext) =>
+          ChangeNotifierProvider<OnboardingProgressProvider>.value(
+        value: onboardingProvider,
+        child: ChangeNotifierProvider<CategoryProvider>.value(
+          value: categoryProvider,
+          child: CategoryJsonImportExportDialog(
+            loc: loc,
+            parentContext: parentContext,
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   State<CategoryJsonImportExportDialog> createState() =>
@@ -42,7 +73,7 @@ class _CategoryJsonImportExportDialogState
   }
 
   Future<void> _importCategories() async {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.loc;
     final franchiseId = context.read<FranchiseProvider>().franchiseId;
     final firestore = context.read<FirestoreService>();
     final onboardingProgress =
@@ -64,7 +95,6 @@ class _CategoryJsonImportExportDialogState
         );
       }
 
-      // Optionally mark step as complete
       if (onboardingProgress['categories'] != true) {
         await context
             .read<OnboardingProgressProvider>()
@@ -74,6 +104,13 @@ class _CategoryJsonImportExportDialogState
       setState(() {
         _message = loc.importSuccess;
       });
+
+      // --- Success SnackBar (optional) ---
+      if (widget.parentContext.mounted) {
+        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+          SnackBar(content: Text(loc.importSuccess)),
+        );
+      }
     } catch (e, stack) {
       await ErrorLogger.log(
         message: 'category_json_import_error',
@@ -87,6 +124,13 @@ class _CategoryJsonImportExportDialogState
       setState(() {
         _message = loc.importError;
       });
+
+      // --- Error SnackBar ---
+      if (widget.parentContext.mounted) {
+        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+          SnackBar(content: Text(loc.importError)),
+        );
+      }
     } finally {
       setState(() {
         _isImporting = false;
@@ -96,7 +140,7 @@ class _CategoryJsonImportExportDialogState
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
+    final loc = widget.loc;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
