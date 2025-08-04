@@ -26,7 +26,10 @@ class OnboardingCategoriesScreen extends StatefulWidget {
 class _OnboardingCategoriesScreenState
     extends State<OnboardingCategoriesScreen> {
   bool _hasInitialized = false;
-  final Set<String> _selectedIds = {};
+
+  // Use _stagedForDelete and _showSelectAllBanner for robust staged delete/select-all.
+  final Set<String> _stagedForDelete = {};
+  bool _showSelectAllBanner = false;
 
   @override
   void didChangeDependencies() {
@@ -138,13 +141,13 @@ class _OnboardingCategoriesScreenState
 
   Future<void> _confirmBulkDelete() async {
     final loc = AppLocalizations.of(context)!;
-    if (_selectedIds.isEmpty) return;
+    if (_stagedForDelete.isEmpty) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(loc.confirmDeletion),
-        content: Text(loc.bulkDeleteConfirmation(_selectedIds.length)),
+        content: Text(loc.bulkDeleteConfirmation(_stagedForDelete.length)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -161,11 +164,12 @@ class _OnboardingCategoriesScreenState
 
     if (confirmed == true) {
       final provider = context.read<CategoryProvider>();
-      final deletedCount = _selectedIds.length;
+      final deletedCount = _stagedForDelete.length;
 
       try {
-        await provider.bulkDeleteCategoriesFromFirestore(_selectedIds.toList());
-        _selectedIds.clear();
+        await provider
+            .bulkDeleteCategoriesFromFirestore(_stagedForDelete.toList());
+        _stagedForDelete.clear();
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -257,7 +261,48 @@ class _OnboardingCategoriesScreenState
                 ],
               ),
             const SizedBox(height: 12),
-            if (_selectedIds.isNotEmpty)
+            if (_showSelectAllBanner)
+              Card(
+                color: Colors.amber[100],
+                margin: const EdgeInsets.symmetric(vertical: 6),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          loc.selectAllPrompt, // Add to .arb
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.select_all),
+                        label: Text(loc.selectAll), // Add to .arb
+                        onPressed: () {
+                          setState(() {
+                            _stagedForDelete.clear();
+                            _stagedForDelete.addAll(
+                              provider.categories.map((c) => c.id),
+                            );
+                            _showSelectAllBanner = false;
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton(
+                        child: Text(loc.cancel),
+                        onPressed: () {
+                          setState(() {
+                            _showSelectAllBanner = false;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            if (_stagedForDelete.isNotEmpty)
               Row(
                 children: [
                   ElevatedButton.icon(
@@ -272,10 +317,15 @@ class _OnboardingCategoriesScreenState
                   OutlinedButton(
                     onPressed: () {
                       setState(() {
-                        _selectedIds.clear();
+                        _stagedForDelete.clear();
                       });
                     },
                     child: Text(loc.clearSelection),
+                  ),
+                  const SizedBox(width: 24),
+                  Text(
+                    '${_stagedForDelete.length} ${loc.toDelete}',
+                    style: const TextStyle(color: Colors.red),
                   ),
                 ],
               ),
@@ -295,13 +345,16 @@ class _OnboardingCategoriesScreenState
                           CategoryListTile(
                             key: ValueKey(cat.id),
                             category: cat,
-                            isSelected: _selectedIds.contains(cat.id),
+                            isSelected: _stagedForDelete.contains(cat.id),
                             onSelect: (checked) {
                               setState(() {
                                 if (checked == true) {
-                                  _selectedIds.add(cat.id);
+                                  _stagedForDelete.add(cat.id);
+                                  if (_stagedForDelete.length == 1) {
+                                    _showSelectAllBanner = true;
+                                  }
                                 } else {
-                                  _selectedIds.remove(cat.id);
+                                  _stagedForDelete.remove(cat.id);
                                 }
                               });
                             },

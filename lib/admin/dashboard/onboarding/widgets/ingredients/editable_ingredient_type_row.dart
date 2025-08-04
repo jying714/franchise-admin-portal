@@ -14,6 +14,7 @@ class EditableIngredientTypeRow extends StatefulWidget {
   final VoidCallback onEditTapped;
   final VoidCallback onDeleteTapped;
   final VoidCallback onSaveTapped;
+  final Widget? trailing; // <-- Added trailing param
 
   const EditableIngredientTypeRow({
     super.key,
@@ -22,6 +23,7 @@ class EditableIngredientTypeRow extends StatefulWidget {
     required this.onEditTapped,
     required this.onDeleteTapped,
     required this.onSaveTapped,
+    this.trailing, // <-- Added trailing param
   });
 
   @override
@@ -56,7 +58,6 @@ class _EditableIngredientTypeRowState extends State<EditableIngredientTypeRow> {
     }
 
     if (oldWidget.isEditing != widget.isEditing && widget.isEditing) {
-      // Reset to current value again when switching into editing mode
       _nameController.text = updated.name;
       _sortOrderController.text = updated.sortOrder.toString();
     }
@@ -81,7 +82,7 @@ class _EditableIngredientTypeRowState extends State<EditableIngredientTypeRow> {
     );
 
     if (updated == widget.type) {
-      widget.onSaveTapped(); // 👈 Exit edit mode even if unchanged
+      widget.onSaveTapped();
       return;
     }
 
@@ -200,6 +201,10 @@ class _EditableIngredientTypeRowState extends State<EditableIngredientTypeRow> {
               icon: const Icon(Icons.delete_outline),
               onPressed: widget.onDeleteTapped,
             ),
+            if (widget.trailing != null) ...[
+              const SizedBox(width: 8),
+              widget.trailing!,
+            ],
           ],
         ),
       ),

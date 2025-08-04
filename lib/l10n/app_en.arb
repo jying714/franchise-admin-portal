@@ -1890,7 +1890,16 @@
   "createNewCategory": "Create New Category",
   "descriptionOptional": "Description (optional)",
   "selectCategory": "Select Category",
-  "categoryStagedSuccessfully": "Category \"{categoryName}\" staged successfully."
+  "categoryStagedSuccessfully": "Category \"{categoryName}\" staged successfully.",
+  "toDelete": "to delete",
+  "selectAllPrompt": "Select all ingredient types for delete?",
+  "selectAll": "Select All",
+  "missingMenuItemPrereqs": "Menu Item Step Blocked",
+  "menuItemsMissingPrerequisites": "You must complete the following steps before adding menu items: {steps}",
+  "goToStep": "Go to {step}",
+  "stepIngredientTypes": "Ingredient Types",
+  "stepIngredients": "Ingredients",
+  "stepCategories": "Categories"
 
 
 

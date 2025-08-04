@@ -24,6 +24,7 @@ class IngredientTypeManagementScreen extends StatefulWidget {
 class _IngredientTypeManagementScreenState
     extends State<IngredientTypeManagementScreen> {
   String? franchiseId;
+  bool _showSelectAllBanner = false;
   bool _hasLoaded = false;
   final Map<String, bool> _editingMap = {};
   bool _reorderChanged = false;
@@ -215,7 +216,6 @@ class _IngredientTypeManagementScreenState
                 return;
               }
 
-              // Show the dialog
               await showDialog(
                 context: context,
                 builder: (BuildContext dialogContext) {
@@ -233,7 +233,6 @@ class _IngredientTypeManagementScreenState
                 },
               );
 
-              // ✅ After dialog closes, reload provider
               final franchiseId = context.read<FranchiseProvider>().franchiseId;
               await ingredientTypeProvider.loadTypes(franchiseId);
 
@@ -269,7 +268,74 @@ class _IngredientTypeManagementScreenState
             : Column(
                 children: [
                   const InlineAddIngredientTypeRow(),
+                  if (_showSelectAllBanner)
+                    Card(
+                      color: Colors.amber[100],
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                loc.selectAllPrompt, // Add this to your .arb
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.select_all),
+                              label: Text(loc.selectAll),
+                              onPressed: () {
+                                final allIds =
+                                    provider.types.map((t) => t.id!).toList();
+                                for (final id in allIds) {
+                                  provider.stageTypeForDelete(id);
+                                }
+                                setState(() {
+                                  _showSelectAllBanner = false;
+                                });
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            TextButton(
+                              child: Text(loc.cancel),
+                              onPressed: () {
+                                setState(() {
+                                  _showSelectAllBanner = false;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 12),
+                  if (provider.hasStagedDeletes)
+                    Row(
+                      children: [
+                        ElevatedButton(
+                          onPressed: () async {
+                            await provider.commitStagedDeletes(franchiseId!);
+                            setState(() {});
+                          },
+                          child: Text(loc.saveChanges),
+                        ),
+                        const SizedBox(width: 12),
+                        OutlinedButton(
+                          onPressed: () {
+                            provider.clearStagedDeletes();
+                            setState(() {});
+                          },
+                          child: Text(loc.revertChanges),
+                        ),
+                        const SizedBox(width: 24),
+                        Text(
+                          '${provider.stagedForDelete.length} ${loc.toDelete}',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ],
+                    ),
                   if (_reorderChanged)
                     Row(
                       children: [
@@ -316,78 +382,100 @@ class _IngredientTypeManagementScreenState
                       itemCount: types.length,
                       itemBuilder: (_, index) {
                         final type = types[index];
+                        if (provider.stagedForDelete.contains(type.id)) {
+                          return Container(
+                            key: ValueKey('deleted_${type.id}'),
+                            color: Colors.red.withOpacity(0.07),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete, color: Colors.red),
+                                const SizedBox(width: 10),
+                                Text(
+                                  type.name,
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    decoration: TextDecoration.lineThrough,
+                                  ),
+                                ),
+                                const Spacer(),
+                                IconButton(
+                                  icon: Icon(Icons.undo),
+                                  tooltip: loc.undo,
+                                  onPressed: () => setState(() {
+                                    provider.unstageTypeForDelete(type.id!);
+                                  }),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
                         return ReorderableDragStartListener(
-                            key: ValueKey(type.id!),
-                            index: index,
-                            enabled: !_isEditingAny,
-                            child: EditableIngredientTypeRow(
-                              type: type,
-                              isEditing: _editingMap[type.id!] == true,
-                              onEditTapped: () {
-                                setState(() {
-                                  _editingMap[type.id!] = true;
-                                });
-                              },
-                              onDeleteTapped: () async {
-                                try {
-                                  final inUse =
-                                      await provider.isIngredientTypeInUse(
-                                    franchiseId: franchiseId!,
-                                    typeId: type.id!,
-                                  );
+                          key: ValueKey(type.id!),
+                          index: index,
+                          enabled: !_isEditingAny,
+                          child: EditableIngredientTypeRow(
+                            type: type,
+                            isEditing: _editingMap[type.id!] == true,
+                            onEditTapped: () {
+                              setState(() {
+                                _editingMap[type.id!] = true;
+                              });
+                            },
+                            onDeleteTapped: () async {
+                              final inUse =
+                                  await provider.isIngredientTypeInUse(
+                                franchiseId: franchiseId!,
+                                typeId: type.id!,
+                              );
 
-                                  if (inUse) {
-                                    if (!context.mounted) return;
-                                    await showDialog(
-                                      context: context,
-                                      builder: (_) => AlertDialog(
-                                        title: Text(loc.deletionBlocked),
-                                        content:
-                                            Text(loc.ingredientTypeInUseError),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context),
-                                            child: Text(loc.ok),
-                                          ),
-                                        ],
+                              if (inUse) {
+                                if (!context.mounted) return;
+                                await showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                    title: Text(loc.deletionBlocked),
+                                    content: Text(loc.ingredientTypeInUseError),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: Text(loc.ok),
                                       ),
-                                    );
-                                    return;
-                                  }
+                                    ],
+                                  ),
+                                );
+                                return;
+                              }
 
-                                  await provider.deleteType(
-                                      franchiseId!, type.id!);
-
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                            '${loc.ingredientTypeDeleted}: ${type.name}'),
-                                      ),
-                                    );
+                              provider.stageTypeForDelete(type.id!);
+                              setState(() {});
+                            },
+                            onSaveTapped: () async {
+                              await provider.loadTypes(franchiseId!);
+                              setState(() {
+                                _editingMap[type.id!] = false;
+                              });
+                            },
+                            trailing: Checkbox(
+                              value: provider.stagedForDelete.contains(type.id),
+                              onChanged: (selected) {
+                                if (selected == true) {
+                                  provider.stageTypeForDelete(type.id!);
+                                  // If this was the first selection, prompt for select all
+                                  if (provider.stagedForDelete.length == 1) {
+                                    setState(() {
+                                      _showSelectAllBanner = true;
+                                    });
                                   }
-                                } catch (e, stack) {
-                                  await ErrorLogger.log(
-                                    message: 'Failed to delete ingredient type',
-                                    source: 'IngredientTypeManagementScreen',
-                                    screen: 'ingredient_type_management_screen',
-                                    stack: stack.toString(),
-                                    severity: 'error',
-                                    contextData: {
-                                      'franchiseId': franchiseId,
-                                      'ingredientTypeId': type.id
-                                    },
-                                  );
+                                } else {
+                                  provider.unstageTypeForDelete(type.id!);
                                 }
+                                setState(() {});
                               },
-                              onSaveTapped: () async {
-                                await provider.loadTypes(franchiseId!);
-                                setState(() {
-                                  _editingMap[type.id!] = false;
-                                });
-                              },
-                            ));
+                            ),
+                          ),
+                        );
                       },
                     ),
                   ),

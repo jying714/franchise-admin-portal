@@ -23,6 +23,11 @@ class IngredientTypeProvider with ChangeNotifier {
   final List<IngredientType> _stagedTypes = [];
   List<IngredientType> get stagedTypes => List.unmodifiable(_stagedTypes);
 
+  // NEW: Staged for delete (IDs only)
+  final Set<String> _stagedForDelete = {};
+
+  Set<String> get stagedForDelete => Set.unmodifiable(_stagedForDelete);
+
   /// Load all ingredient types for the given franchise
   Future<void> loadIngredientTypes(String newFranchiseId) async {
     franchiseId = newFranchiseId;
@@ -464,5 +469,54 @@ class IngredientTypeProvider with ChangeNotifier {
       return true;
     }
     return false;
+  }
+
+  // Add/remove single or bulk
+  void stageTypeForDelete(String id) {
+    _stagedForDelete.add(id);
+    notifyListeners();
+  }
+
+  void unstageTypeForDelete(String id) {
+    _stagedForDelete.remove(id);
+    notifyListeners();
+  }
+
+  void clearStagedDeletes() {
+    _stagedForDelete.clear();
+    notifyListeners();
+  }
+
+  bool get hasStagedDeletes => _stagedForDelete.isNotEmpty;
+
+  // Commit staged deletes to Firestore
+  Future<void> commitStagedDeletes(String franchiseId) async {
+    try {
+      final batch = _firestoreService.db.batch();
+      for (final id in _stagedForDelete) {
+        final docRef = _firestoreService.db
+            .collection('franchises')
+            .doc(franchiseId)
+            .collection('ingredient_types')
+            .doc(id);
+        batch.delete(docRef);
+      }
+      await batch.commit();
+      _stagedForDelete.clear();
+      await loadIngredientTypes(franchiseId);
+      notifyListeners();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to commit staged ingredient type deletions',
+        source: 'ingredient_type_provider.dart',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {
+          'franchiseId': franchiseId,
+          'ids': _stagedForDelete.toList(),
+        },
+      );
+      rethrow;
+    }
   }
 }

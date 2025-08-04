@@ -126,12 +126,16 @@ class _InlineAddIngredientTypeRowState
             ),
             const SizedBox(width: 12),
             _submitting
-                ? const CircularProgressIndicator()
+                ? const SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: CircularProgressIndicator(strokeWidth: 3),
+                  )
                 : IconButton(
                     tooltip: loc.add,
                     icon: const Icon(Icons.add_circle_outline),
                     color: colorScheme.primary,
-                    onPressed: _submit,
+                    onPressed: _submitting ? null : _submit,
                   ),
           ],
         ),

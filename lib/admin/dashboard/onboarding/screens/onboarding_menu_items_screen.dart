@@ -91,6 +91,86 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    // === Robust dependency checks for required onboarding steps ===
+    final ingredientTypes =
+        context.watch<IngredientTypeProvider>().ingredientTypes;
+    final ingredients = context.watch<IngredientMetadataProvider>().ingredients;
+    final categories = context.watch<CategoryProvider>().categories;
+
+    final missingSteps = <String>[];
+    if (ingredientTypes.isEmpty) missingSteps.add(loc.stepIngredientTypes);
+    if (ingredients.isEmpty) missingSteps.add(loc.stepIngredients);
+    if (categories.isEmpty) missingSteps.add(loc.stepCategories);
+
+// If any dependencies are missing, return a clear EmptyState UI with actionable buttons
+    if (missingSteps.isNotEmpty) {
+      print(
+          '[OnboardingMenuItemsScreen] Blocked: Missing dependencies: $missingSteps');
+      // Show a SnackBar on first build, not every frame
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).removeCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  loc.menuItemsMissingPrerequisites(missingSteps.join(', '))),
+              backgroundColor: colorScheme.error,
+            ),
+          );
+        }
+      });
+      // Return an EmptyStateWidget that lists what to do next
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(loc.onboardingMenuItems),
+          backgroundColor: theme.scaffoldBackgroundColor,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.black),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              EmptyStateWidget(
+                iconData: Icons.warning_amber_rounded,
+                title: loc.missingMenuItemPrereqs,
+                message:
+                    loc.menuItemsMissingPrerequisites(missingSteps.join(', ')),
+              ),
+              const SizedBox(height: 24),
+              if (ingredientTypes.isEmpty)
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.list_alt),
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    '/dashboard?section=onboardingIngredientTypes',
+                  ),
+                  label: Text(loc.goToStep(loc.stepIngredientTypes)),
+                ),
+              if (ingredients.isEmpty)
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.egg),
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    '/dashboard?section=onboardingIngredients',
+                  ),
+                  label: Text(loc.goToStep(loc.stepIngredients)),
+                ),
+              if (categories.isEmpty)
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.category),
+                  onPressed: () => Navigator.pushNamed(
+                    context,
+                    '/dashboard?section=onboardingCategories',
+                  ),
+                  label: Text(loc.goToStep(loc.stepCategories)),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+
     // Helper to check and maybe show schema sidebar
     void checkForSchemaIssues(MenuItem menuItem) {
       final categories = context.read<CategoryProvider>().categories;
