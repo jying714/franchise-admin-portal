@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 /// Robust Error Logger for all app error logging.
 /// Routes unauth/public errors to logPublicError function.
@@ -21,6 +22,12 @@ class ErrorLogger {
     String? screen,
     Map<String, dynamic>? contextData,
   }) async {
+    if (Firebase.apps.isEmpty) {
+      print('[ErrorLogger] log() called before Firebase initialized!');
+      // Optionally: fallback to console-only log or queue for later, if needed.
+      return;
+    }
+
     final user = FirebaseAuth.instance.currentUser;
     final isAuthenticated = user != null;
 
@@ -51,12 +58,10 @@ class ErrorLogger {
 
       if (response.statusCode != 200) {
         // Log to console if the server endpoint failed
-        // (avoid infinite loop by not retrying failed logs)
         print(
             '[ErrorLogger] Failed to log error to $url: ${response.statusCode} ${response.body}');
       }
     } catch (e, st) {
-      // Log local failures (e.g., no network)
       print('[ErrorLogger] Exception during error log: $e\n$st');
     }
   }

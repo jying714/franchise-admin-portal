@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 class UserProfileNotifier extends ChangeNotifier {
   admin_user.User? _user;
@@ -23,7 +24,24 @@ class UserProfileNotifier extends ChangeNotifier {
   FirestoreService? _lastFirestoreService;
   String? _lastUid;
 
-  void loadUser() {
+  Future<void> loadUser() async {
+    if (Firebase.apps.isEmpty) {
+      final msg = '[UserProfileNotifier] loadUser: Firebase not initialized!';
+      debugPrint(msg);
+      await ErrorLogger.log(
+        message:
+            'UserProfileNotifier.loadUser called before Firebase initialized',
+        source: 'UserProfileNotifier',
+        severity: 'fatal',
+        screen: 'UserProfileNotifier',
+        contextData: {
+          'phase': 'loadUser',
+          'hint': 'Firebase.apps.isEmpty',
+          'widget': runtimeType.toString(),
+        },
+      );
+      return;
+    }
     final firebaseUser = fb_auth.FirebaseAuth.instance.currentUser;
     if (firebaseUser != null) {
       listenToUser(
@@ -32,6 +50,13 @@ class UserProfileNotifier extends ChangeNotifier {
       );
     } else {
       debugPrint('[UserProfileNotifier] loadUser: firebaseUser is null');
+      // You may want to log this as a warning as well if it's unexpected:
+      await ErrorLogger.log(
+        message: 'loadUser called but firebaseUser is null',
+        source: 'UserProfileNotifier',
+        severity: 'warning',
+        screen: 'UserProfileNotifier',
+      );
     }
   }
 

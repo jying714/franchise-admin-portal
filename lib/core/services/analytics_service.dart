@@ -8,7 +8,11 @@ import 'package:franchise_admin_portal/core/models/analytics_summary.dart';
 /// Used for logging admin/app events to Firebase Analytics,
 /// and for retrieving analytics metrics for the admin dashboard.
 class AnalyticsService {
-  final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+  late final FirebaseAnalytics _analytics;
+
+  AnalyticsService() {
+    _analytics = FirebaseAnalytics.instance;
+  }
   final Logger _logger = Logger('AnalyticsService');
 
   // --- Analytics Dashboard Methods ---

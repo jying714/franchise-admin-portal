@@ -85,7 +85,8 @@ class ChatManagementScreen extends StatelessWidget {
                               return EmptyStateWidget(
                                 title: loc.noChatsTitle,
                                 message: loc.noChatsMessage,
-                                imageAsset: 'assets/images/admin_empty.png',
+                                iconData: Icons
+                                    .forum_outlined, // or any icon you prefer!
                                 isAdmin: true,
                               );
                             }

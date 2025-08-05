@@ -4,7 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class FranchiseOnboardingService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  late final FirebaseFirestore _db;
+
+  FranchiseOnboardingService() {
+    _db = FirebaseFirestore.instance;
+  }
 
   /// Marks the franchise's onboarding status as completed.
   Future<void> markOnboardingComplete(String franchiseId) async {

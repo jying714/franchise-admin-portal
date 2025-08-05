@@ -3,7 +3,11 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
 
 class FirebaseStorageService {
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+  late final FirebaseStorage _storage;
+
+  FirebaseStorageService() {
+    _storage = FirebaseStorage.instance;
+  }
 
   /// Uploads the image to Firebase Storage under the franchise-specific path.
   /// Returns the public URL of the uploaded image.

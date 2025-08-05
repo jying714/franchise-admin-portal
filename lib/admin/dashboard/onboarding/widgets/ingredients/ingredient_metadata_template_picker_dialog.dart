@@ -7,13 +7,15 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:franchise_admin_portal/core/models/ingredient_metadata.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class IngredientMetadataTemplatePickerDialog extends StatefulWidget {
   final AppLocalizations loc;
 
   const IngredientMetadataTemplatePickerDialog({super.key, required this.loc});
 
-  static Future<void> show(BuildContext context) {
+  static Future<List<IngredientMetadata>?> show(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       debugPrint(
@@ -21,16 +23,10 @@ class IngredientMetadataTemplatePickerDialog extends StatefulWidget {
       return Future.value();
     }
 
-    final provider =
-        Provider.of<IngredientMetadataProvider>(context, listen: false);
-
-    return showDialog(
+    return showDialog<List<IngredientMetadata>>(
       context: context,
       builder: (dialogContext) {
-        return ChangeNotifierProvider<IngredientMetadataProvider>.value(
-          value: provider,
-          child: IngredientMetadataTemplatePickerDialog(loc: loc),
-        );
+        return IngredientMetadataTemplatePickerDialog(loc: loc);
       },
     );
   }
@@ -46,7 +42,6 @@ class _IngredientMetadataTemplatePickerDialogState
 
   Future<void> _loadTemplate(String templateId) async {
     final loc = widget.loc;
-    final provider = context.read<IngredientMetadataProvider>();
     final franchiseId = context.read<FranchiseProvider>().franchiseId;
 
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
@@ -59,10 +54,19 @@ class _IngredientMetadataTemplatePickerDialogState
     setState(() => _loading = true);
 
     try {
-      await provider.loadTemplate(templateId);
+      // Fetch template data directly, DO NOT inject to provider here
+      final snapshot = await FirebaseFirestore.instance
+          .collection('onboarding_templates')
+          .doc(templateId)
+          .collection('ingredient_metadata')
+          .get();
+
+      final newItems = snapshot.docs
+          .map((doc) => IngredientMetadata.fromMap(doc.data()))
+          .toList();
 
       if (context.mounted) {
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(newItems); // Return result!
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(loc.templateLoadedSuccessfully)),
         );
@@ -174,5 +178,11 @@ class _IngredientMetadataTemplatePickerDialogState
       subtitle: Text(subtitle, style: theme.textTheme.bodySmall),
       onTap: enabled ? () => _loadTemplate(id) : null,
     );
+  }
+
+  @override
+  void dispose() {
+    print('[Ingredient metadata template picker dialog] DISPOSED');
+    super.dispose();
   }
 }

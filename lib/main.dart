@@ -64,6 +64,8 @@ import 'package:franchise_admin_portal/core/providers/restaurant_type_provider.d
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/menu_item_editor_screen.dart';
 import 'dart:html' as html;
 
+// (Include ALL your other screen/provider/model imports here)
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 /// Returns initial unauth route and optional invite token, e.g. ('/invite-accept', 'abc123').
@@ -113,6 +115,10 @@ void main() {
     FlutterError.presentError(details);
     debugPrint('[GLOBAL ERROR] ${details.exceptionAsString()}');
     debugPrintStack(stackTrace: details.stack);
+    ErrorWidget.builder = (FlutterErrorDetails details) {
+      debugPrint('ErrorWidget: ${details.exceptionAsString()}');
+      return Center(child: Text('Error: ${details.exceptionAsString()}'));
+    };
   };
   print('[main.dart] main(): Starting runZonedGuarded.');
   runZonedGuarded(() async {
@@ -148,28 +154,24 @@ void main() {
     };
 
     final firestoreService = FirestoreService();
-    runApp(MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => UserProfileNotifier()),
-        ChangeNotifierProvider(
-            create: (_) => FranchiseProvider()), // ✅ REQUIRED
-        ChangeNotifierProvider(create: (_) => AuthService()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        Provider<FirestoreService>.value(value: firestoreService),
-        Provider(create: (_) => AnalyticsService()),
-        StreamProvider<fb_auth.User?>.value(
-          value: fb_auth.FirebaseAuth.instance.authStateChanges(),
-          initialData: null,
-        ),
-      ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData.light(), // Or your custom theme
-        darkTheme: ThemeData.dark(),
-        themeMode: ThemeMode.system,
-        home: FranchiseAppRootSplit(),
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => UserProfileNotifier()),
+          ChangeNotifierProvider(
+              create: (_) => FranchiseProvider()), // ✅ REQUIRED
+          ChangeNotifierProvider(create: (_) => AuthService()),
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          Provider<FirestoreService>.value(value: firestoreService),
+          Provider(create: (_) => AnalyticsService()),
+          StreamProvider<fb_auth.User?>.value(
+            value: fb_auth.FirebaseAuth.instance.authStateChanges(),
+            initialData: null,
+          ),
+        ],
+        child: const FranchiseAppRootSplit(),
       ),
-    ));
+    );
   }, (Object error, StackTrace stack) async {
     print('[main.dart] runZonedGuarded: Uncaught error: $error');
     await ErrorLogger.log(
@@ -308,11 +310,14 @@ class FranchiseAppRootSplit extends StatelessWidget {
           debugPrint(
               '[FranchiseAppRootSplit] user loading = ${userNotifier.loading}');
           debugPrint('[FranchiseAppRootSplit] franchiseId = $fid');
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+          return const MaterialApp(
+            home: Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            ),
           );
         }
 
+        // ========= FULL BUSINESS PROVIDER TREE =========
         return MultiProvider(
           providers: [
             ChangeNotifierProvider(create: (_) => AdminUserProvider()),
@@ -525,7 +530,6 @@ class FranchiseAuthenticatedRoot extends StatefulWidget {
 class _FranchiseAuthenticatedRootState
     extends State<FranchiseAuthenticatedRoot> {
   String? _lastUid;
-
   bool _initializingUser = false;
 
   @override
@@ -941,14 +945,14 @@ class _FranchiseAuthenticatedRootState
                 builder: (_) => const OnboardingFeatureSetupScreen(),
               );
             }
-            /////////////////// PLACE HOLDERS below
+            ///////////// Placeholder: Remove or fill in with real screen as needed
             if (uri.path == '/onboarding/review') {
               return MaterialPageRoute(
                   builder: (_) => const Scaffold(
                         body: Center(child: Text('Review Step Placeholder')),
                       ));
             }
-            /////////////////// PLACE HOLDERS Above
+            ///////////// Placeholder: Remove or fill in with real screen as needed
             if (uri.path == '/invite-accept') {
               final args = settings.arguments as Map?;
               final token = args?['token'] as String?;

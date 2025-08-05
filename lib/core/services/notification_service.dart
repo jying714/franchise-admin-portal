@@ -3,12 +3,13 @@ import 'package:logging/logging.dart';
 import 'package:franchise_admin_portal/config/feature_config.dart';
 
 class NotificationService {
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  late final FirebaseMessaging _messaging;
   final Logger _logger = Logger('NotificationService');
 
-  // Singleton pattern
   static final NotificationService _instance = NotificationService._internal();
-  NotificationService._internal();
+  NotificationService._internal() {
+    _messaging = FirebaseMessaging.instance;
+  }
 
   static NotificationService get instance => _instance;
 

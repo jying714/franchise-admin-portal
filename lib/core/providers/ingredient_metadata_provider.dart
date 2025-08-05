@@ -78,6 +78,21 @@ class IngredientMetadataProvider extends ChangeNotifier {
   }
 
   Future<void> createIngredient(IngredientMetadata newIngredient) async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientMetadataProvider: called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_metadata_provider.dart',
+        screen: 'ingredient_metadata_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
     final colRef = _firestore.db
         .collection('franchises')
         .doc(franchiseId)
@@ -94,6 +109,37 @@ class IngredientMetadataProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Adds a list of validated/imported ingredients to the current working set.
+  /// Will update if ID exists, add if new.
+  void addImportedIngredients(List<IngredientMetadata> imported) {
+    int skippedTypeId = 0;
+    int skippedType = 0;
+    final valid = <IngredientMetadata>[];
+    for (final item in imported) {
+      if (item.typeId == null || item.typeId!.isEmpty) {
+        print(
+            '[Provider][addImportedIngredients] SKIP: id=${item.id}, name="${item.name}" - NULL/EMPTY typeId');
+        skippedTypeId++;
+        continue;
+      }
+      if (item.type == null || item.type!.isEmpty) {
+        print(
+            '[Provider][addImportedIngredients] SKIP: id=${item.id}, name="${item.name}" - NULL/EMPTY type');
+        skippedType++;
+        continue;
+      }
+      print(
+          '[Provider][addImportedIngredients] ADD: id=${item.id}, name="${item.name}", typeId="${item.typeId}", type="${item.type}"');
+      valid.add(item);
+      updateIngredient(item);
+    }
+    if (skippedTypeId > 0 || skippedType > 0) {
+      print(
+          '[Provider][addImportedIngredients] --- SUMMARY: ${skippedTypeId + skippedType} SKIPPED (typeId: $skippedTypeId, type: $skippedType), ${valid.length} ADDED ---');
+    }
+    notifyListeners();
+  }
+
   /// Returns all ingredient IDs missing from the current provider (for repair UI)
   List<String> missingIngredientIds(List<String> ids) {
     final currentIds = allIngredientIds.toSet();
@@ -102,12 +148,41 @@ class IngredientMetadataProvider extends ChangeNotifier {
 
   /// Reloads ingredients from Firestore (useful after repair or add-new)
   Future<void> reload() async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientMetadataProvider: called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_metadata_provider.dart',
+        screen: 'ingredient_metadata_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
     await load();
   }
 
   /// Loads ingredient metadata from Firestore and sets as original
   Future<void> load() async {
-    // Remove the early return to always fetch fresh data
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientMetadataProvider: called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_metadata_provider.dart',
+        screen: 'ingredient_metadata_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
     try {
       _original = await _firestore.fetchIngredientMetadata(franchiseId);
       _current = List.from(_original);
@@ -128,6 +203,21 @@ class IngredientMetadataProvider extends ChangeNotifier {
   }
 
   Future<void> loadTemplate(String templateId) async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientMetadataProvider: called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_metadata_provider.dart',
+        screen: 'ingredient_metadata_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId, 'templateId': templateId},
+      );
+      return;
+    }
     try {
       final snapshot = await _firestore.db
           .collection('onboarding_templates')
@@ -149,7 +239,7 @@ class IngredientMetadataProvider extends ChangeNotifier {
         source: 'IngredientMetadataProvider',
         screen: 'ingredient_metadata_provider.dart',
         severity: 'error',
-        contextData: {'templateId': templateId},
+        contextData: {'templateId': templateId, 'franchiseId': franchiseId},
       );
       rethrow;
     }
@@ -189,9 +279,21 @@ class IngredientMetadataProvider extends ChangeNotifier {
     for (final item in sortedIngredients) {
       String groupKey;
       if (_groupByKey == 'type') {
-        groupKey = item.type ?? 'Unknown';
+        if (item.type == null || item.type!.isEmpty) {
+          print(
+              '[Provider][groupedIngredients] item with id=${item.id} has missing or empty type!');
+          groupKey = 'Unknown';
+        } else {
+          groupKey = item.type!;
+        }
       } else if (_groupByKey == 'typeId') {
-        groupKey = item.typeId ?? 'Unknown';
+        if (item.typeId == null || item.typeId!.isEmpty) {
+          print(
+              '[Provider][groupedIngredients] item with id=${item.id} has missing or empty typeId!');
+          groupKey = 'Unknown';
+        } else {
+          groupKey = item.typeId!;
+        }
       } else {
         groupKey = 'Unknown';
       }
@@ -208,16 +310,28 @@ class IngredientMetadataProvider extends ChangeNotifier {
 
   /// Add or update a single ingredient
   void updateIngredient(IngredientMetadata newData) {
+    if (newData.typeId == null || newData.typeId!.isEmpty) {
+      print(
+          '[Provider][updateIngredient] SKIP: id=${newData.id}, name="${newData.name}" - NULL/EMPTY typeId!');
+      return;
+    }
+    if (newData.type == null || newData.type!.isEmpty) {
+      print(
+          '[Provider][updateIngredient] SKIP: id=${newData.id}, name="${newData.name}" - NULL/EMPTY type!');
+      return;
+    }
+    print(
+        '[Provider][updateIngredient] ADD/UPDATE: id=${newData.id}, name="${newData.name}", typeId="${newData.typeId}", type="${newData.type}"');
     final index = _current.indexWhere((e) => e.id == newData.id);
     if (index != -1) {
       _current[index] = newData;
-      print('[Provider] Updated ingredient: ${newData.id}');
+      print('[Provider][updateIngredient] Updated ingredient: ${newData.id}');
     } else {
       _current.add(newData);
-      print('[Provider] Added ingredient: ${newData.id}');
+      print('[Provider][updateIngredient] Added ingredient: ${newData.id}');
     }
     print(
-        '[Provider] isDirty after update: $isDirty, _current: ${_current.length}, _original: ${_original.length}');
+        '[Provider][updateIngredient] isDirty after update: $isDirty, _current: ${_current.length}, _original: ${_original.length}');
     notifyListeners();
   }
 
@@ -234,6 +348,21 @@ class IngredientMetadataProvider extends ChangeNotifier {
 
   /// Push all current data to Firestore (overwrites existing)
   Future<void> saveChanges() async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientMetadataProvider: called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_metadata_provider.dart',
+        screen: 'ingredient_metadata_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
     try {
       final batch = _firestore.db.batch();
       final colRef = _firestore.db
@@ -262,6 +391,21 @@ class IngredientMetadataProvider extends ChangeNotifier {
   }
 
   Future<void> saveAllChanges(String franchiseId) async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientMetadataProvider: called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_metadata_provider.dart',
+        screen: 'onboarding_ingredients_screen',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
     final batch = FirebaseFirestore.instance.batch();
     final collectionRef = FirebaseFirestore.instance
         .collection('franchises')
@@ -285,7 +429,7 @@ class IngredientMetadataProvider extends ChangeNotifier {
       await ErrorLogger.log(
         message: 'ingredient_metadata_save_failed',
         stack: stack.toString(),
-        source: 'ingredient_metadata_provider',
+        source: 'ingredient_metadata_provider.dart',
         screen: 'onboarding_ingredients_screen',
         severity: 'error',
         contextData: {
@@ -377,6 +521,21 @@ class IngredientMetadataProvider extends ChangeNotifier {
 
   /// Bulk delete all selected ingredients and commit the changes to Firestore
   Future<void> bulkDeleteIngredients(List<String> ids) async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientMetadataProvider: called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_metadata_provider.dart',
+        screen: 'ingredient_metadata_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId, 'ids': ids},
+      );
+      return;
+    }
     try {
       _current.removeWhere((ingredient) => ids.contains(ingredient.id));
       _selectedIngredientIds.removeAll(ids);
@@ -388,13 +547,28 @@ class IngredientMetadataProvider extends ChangeNotifier {
         source: 'IngredientMetadataProvider',
         screen: 'ingredient_metadata_provider.dart',
         severity: 'error',
-        contextData: {'ids': ids},
+        contextData: {'ids': ids, 'franchiseId': franchiseId},
       );
       rethrow;
     }
   }
 
   Future<void> bulkDeleteIngredientsFromFirestore(List<String> ids) async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientMetadataProvider: called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_metadata_provider.dart',
+        screen: 'ingredient_metadata_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId, 'ids': ids},
+      );
+      return;
+    }
     try {
       final batch = _firestore.db.batch();
       final colRef = _firestore.db
@@ -417,7 +591,7 @@ class IngredientMetadataProvider extends ChangeNotifier {
         source: 'IngredientMetadataProvider',
         screen: 'ingredient_metadata_provider.dart',
         severity: 'error',
-        contextData: {'deletedCount': ids.length},
+        contextData: {'deletedCount': ids.length, 'franchiseId': franchiseId},
       );
       rethrow;
     }
@@ -426,12 +600,53 @@ class IngredientMetadataProvider extends ChangeNotifier {
   /// Replace the entire current ingredient metadata list locally (does NOT write to Firestore).
   /// Marks provider as dirty to enable SaveChangesBanner.
   Future<void> bulkReplaceIngredientMetadata(
-      String franchiseId, List<IngredientMetadata> newItems) async {
+    String franchiseId,
+    List<IngredientMetadata> newItems,
+  ) async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientMetadataProvider: called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_metadata_provider.dart',
+        screen: 'ingredient_metadata_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
     print(
         '[Provider] bulkReplaceIngredientMetadata (hashCode: ${this.hashCode})');
     print(
         '[Provider] bulkReplaceIngredientMetadata: replacing with ${newItems.length} items');
-    _current = List.from(newItems);
+    int skippedTypeId = 0;
+    int skippedType = 0;
+    final filtered = <IngredientMetadata>[];
+    for (final item in newItems) {
+      if (item.typeId == null || item.typeId!.isEmpty) {
+        print(
+            '[Provider][bulkReplaceIngredientMetadata] SKIP: id=${item.id}, name="${item.name}" - NULL/EMPTY typeId');
+        skippedTypeId++;
+        continue;
+      }
+      if (item.type == null || item.type!.isEmpty) {
+        print(
+            '[Provider][bulkReplaceIngredientMetadata] SKIP: id=${item.id}, name="${item.name}" - NULL/EMPTY type');
+        skippedType++;
+        continue;
+      }
+      print(
+          '[Provider][bulkReplaceIngredientMetadata] ADD: id=${item.id}, name="${item.name}", typeId="${item.typeId}", type="${item.type}"');
+      filtered.add(item);
+    }
+    if (skippedTypeId > 0 || skippedType > 0) {
+      print(
+          '[Provider][bulkReplaceIngredientMetadata] --- SUMMARY: ${skippedTypeId + skippedType} SKIPPED (typeId: $skippedTypeId, type: $skippedType), ${filtered.length} ADDED ---');
+    }
+    _current = List.from(filtered);
     notifyListeners();
   }
 
@@ -478,6 +693,17 @@ class IngredientMetadataProvider extends ChangeNotifier {
 
   /// Method to stage a new ingredient for schema issue sidebar to be added
   void stageIngredient(IngredientMetadata ingredient) {
+    if (ingredient.typeId == null || ingredient.typeId!.isEmpty) {
+      print(
+          '[IngredientMetadataProvider][stageIngredient] SKIP: Ingredient ${ingredient.id} (${ingredient.name}) has null or empty typeId!');
+      return;
+    }
+    if (ingredient.type == null || ingredient.type!.isEmpty) {
+      print(
+          '[IngredientMetadataProvider][stageIngredient] SKIP: Ingredient ${ingredient.id} (${ingredient.name}) has null or empty type!');
+      return;
+    }
+
     final alreadyStaged = _stagedIngredients.any((e) => e.id == ingredient.id);
     final alreadyInIngredients = _ingredients.any((e) => e.id == ingredient.id);
     final alreadyInCurrent = _current.any((e) => e.id == ingredient.id);
@@ -506,6 +732,21 @@ class IngredientMetadataProvider extends ChangeNotifier {
 
   /// Method to commit staged ingredients (invoked in onboarding save logic):
   Future<void> saveStagedIngredients() async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientMetadataProvider: called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_metadata_provider.dart',
+        screen: 'ingredient_metadata_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
     if (_stagedIngredients.isEmpty) return;
 
     try {
@@ -585,5 +826,11 @@ class IngredientMetadataProvider extends ChangeNotifier {
       return true;
     }
     return false;
+  }
+
+  @override
+  void dispose() {
+    print('[ingredient metadata provider] DISPOSED');
+    super.dispose();
   }
 }

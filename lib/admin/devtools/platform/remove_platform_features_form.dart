@@ -13,7 +13,7 @@ class RemovePlatformFeaturesForm extends StatefulWidget {
 
 class _RemovePlatformFeaturesFormState
     extends State<RemovePlatformFeaturesForm> {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  late final FirebaseFirestore _db;
   List<String> _featureKeys = [];
   String? _selectedFeatureKey;
   String? _statusMessage;
@@ -22,6 +22,7 @@ class _RemovePlatformFeaturesFormState
   @override
   void initState() {
     super.initState();
+    _db = FirebaseFirestore.instance;
     _loadFeatureKeys();
   }
 

@@ -49,6 +49,17 @@ class FranchiseFeatureService {
 
   /// 🔹 Load the feature metadata config for onboarding/use
   Future<FeatureState?> getFeatureMetadata(String franchiseId) async {
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      await ErrorLogger.log(
+        message: 'getFeatureMetadata called with blank/unknown franchiseId',
+        stack: '',
+        source: 'franchise_feature_service.dart',
+        screen: 'franchise_feature_service.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return null;
+    }
     try {
       final docRef = _firestore
           .collection('franchises')

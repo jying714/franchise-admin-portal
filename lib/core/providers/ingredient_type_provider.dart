@@ -31,6 +31,21 @@ class IngredientTypeProvider with ChangeNotifier {
   /// Load all ingredient types for the given franchise
   Future<void> loadIngredientTypes(String newFranchiseId) async {
     franchiseId = newFranchiseId;
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientTypeProvider] loadIngredientTypes called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientTypeProvider: loadIngredientTypes called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_type_provider.dart',
+        screen: 'ingredient_type_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('franchises')
@@ -59,6 +74,21 @@ class IngredientTypeProvider with ChangeNotifier {
 
   /// Reload ingredient types from Firestore (used after sidebar repair/add-new)
   Future<void> reload(String franchiseId) async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientTypeProvider] reload called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientTypeProvider: reload called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_type_provider.dart',
+        screen: 'ingredient_type_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
     await loadIngredientTypes(franchiseId);
   }
 
@@ -82,12 +112,43 @@ class IngredientTypeProvider with ChangeNotifier {
   }
 
   Future<void> createType(String franchiseId, IngredientType type) async {
-    final colRef = _firestoreService.db
-        .collection('franchises')
-        .doc(franchiseId)
-        .collection('ingredient_types');
-    await colRef.doc(type.id).set(type.toMap(includeTimestamps: true));
-    await loadIngredientTypes(franchiseId);
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientTypeProvider] createType called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientTypeProvider: createType called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_type_provider.dart',
+        screen: 'ingredient_type_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId, 'typeName': type.name},
+      );
+      return;
+    }
+    try {
+      final colRef = _firestoreService.db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_types');
+      await colRef.doc(type.id).set(type.toMap(includeTimestamps: true));
+      await loadIngredientTypes(franchiseId);
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to create ingredient type',
+        stack: stack.toString(),
+        source: 'ingredient_type_provider.dart',
+        screen: 'ingredient_type_provider.dart',
+        severity: 'error',
+        contextData: {
+          'franchiseId': franchiseId,
+          'typeName': type.name,
+          'errorType': e.runtimeType.toString(),
+        },
+      );
+      rethrow;
+    }
   }
 
   /// Reorders ingredient types and persists updated sortOrder to Firestore
@@ -96,6 +157,21 @@ class IngredientTypeProvider with ChangeNotifier {
     String franchiseId,
     List<IngredientType> newOrder,
   ) async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientTypeProvider] reorderIngredientTypes called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientTypeProvider: reorder called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_type_provider.dart',
+        screen: 'ingredient_type_management_screen',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
     try {
       final updates = newOrder.asMap().entries.map((entry) {
         return {
@@ -136,6 +212,20 @@ class IngredientTypeProvider with ChangeNotifier {
   /// Add a new ingredient type to Firestore and local list
   Future<void> addIngredientType(
       String franchiseId, IngredientType type) async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print('[IngredientTypeProvider] Called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientTypeProvider: called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_type_provider.dart',
+        screen: 'ingredient_type_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
     try {
       await FirebaseFirestore.instance
           .collection('franchises')
@@ -165,6 +255,21 @@ class IngredientTypeProvider with ChangeNotifier {
     String typeId,
     Map<String, dynamic> updatedFields,
   ) async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientTypeProvider] updateIngredientType called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientTypeProvider: update called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_type_provider.dart',
+        screen: 'ingredient_type_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId, 'typeId': typeId},
+      );
+      return;
+    }
     try {
       await FirebaseFirestore.instance
           .collection('franchises')
@@ -194,6 +299,21 @@ class IngredientTypeProvider with ChangeNotifier {
   }
 
   Future<void> deleteIngredientType(String franchiseId, String typeId) async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientTypeProvider] deleteIngredientType called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientTypeProvider: delete called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_type_provider.dart',
+        screen: 'ingredient_type_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId, 'typeId': typeId},
+      );
+      return;
+    }
     try {
       await FirebaseFirestore.instance
           .collection('franchises')
@@ -223,6 +343,21 @@ class IngredientTypeProvider with ChangeNotifier {
     required String franchiseId,
     required String typeId,
   }) async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientTypeProvider] isIngredientTypeInUse called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientTypeProvider: isInUse called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_type_provider.dart',
+        screen: 'ingredient_type_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId, 'typeId': typeId},
+      );
+      return true; // Defensive: treat as "in use"
+    }
     try {
       final querySnapshot = await FirebaseFirestore.instance
           .collection('franchises')
@@ -250,6 +385,21 @@ class IngredientTypeProvider with ChangeNotifier {
   }
 
   Future<String> exportTypesAsJson(String franchiseId) async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientTypeProvider] exportTypesAsJson called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientTypeProvider: exportTypesAsJson called with blank/unknown franchiseId',
+        stack: '',
+        source: 'IngredientTypeProvider',
+        screen: 'ingredient_type_management_screen',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return '[]';
+    }
     try {
       final exportable = types.map((type) => type.toMap()).toList();
       return const JsonEncoder.withIndent('  ').convert(exportable);
@@ -273,6 +423,21 @@ class IngredientTypeProvider with ChangeNotifier {
     String franchiseId,
     List<IngredientType> newTypes,
   ) async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientTypeProvider] bulkReplaceIngredientTypes called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientTypeProvider: bulkReplace called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_type_provider.dart',
+        screen: 'ingredient_type_json_import_export_dialog.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
     try {
       final batch = _firestoreService.db.batch();
       final collectionRef = _firestoreService.db
@@ -315,7 +480,24 @@ class IngredientTypeProvider with ChangeNotifier {
   }
 
   Future<void> loadTemplateIngredients(
-      String templateId, String franchiseId) async {
+    String templateId,
+    String franchiseId,
+  ) async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientTypeProvider] loadTemplateIngredients called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientTypeProvider: loadTemplateIngredients called with blank/unknown franchiseId',
+        stack: '',
+        source: 'IngredientTypeProvider',
+        screen: 'ingredient_metadata_template_picker_dialog',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId, 'templateId': templateId},
+      );
+      return;
+    }
     try {
       final firestoreService = FirestoreService();
 
@@ -341,6 +523,11 @@ class IngredientTypeProvider with ChangeNotifier {
         source: 'IngredientTypeProvider',
         stack: stack.toString(),
         severity: 'error',
+        screen: 'ingredient_metadata_template_picker_dialog',
+        contextData: {
+          'franchiseId': franchiseId,
+          'templateId': templateId,
+        },
       );
       rethrow;
     }
@@ -410,6 +597,21 @@ class IngredientTypeProvider with ChangeNotifier {
   }
 
   Future<void> saveStagedIngredientTypes() async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientTypeProvider] saveStagedIngredientTypes called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientTypeProvider: saveStagedIngredientTypes called with blank/unknown franchiseId',
+        stack: '',
+        source: 'IngredientTypeProvider',
+        screen: 'ingredient_type_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
     final collectionRef = _firestoreService.db
         .collection('franchises')
         .doc(franchiseId)
@@ -420,7 +622,9 @@ class IngredientTypeProvider with ChangeNotifier {
 
       for (final type in _stagedTypes) {
         batch.set(
-            collectionRef.doc(type.id), type.toMap(includeTimestamps: true));
+          collectionRef.doc(type.id),
+          type.toMap(includeTimestamps: true),
+        );
       }
       print('[IngredientTypeProvider] Persisting ${_stagedTypes.length} types');
 
@@ -491,6 +695,24 @@ class IngredientTypeProvider with ChangeNotifier {
 
   // Commit staged deletes to Firestore
   Future<void> commitStagedDeletes(String franchiseId) async {
+    // Defensive: Block blank or unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[IngredientTypeProvider] commitStagedDeletes called with blank/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'IngredientTypeProvider: commitStagedDeletes called with blank/unknown franchiseId',
+        stack: '',
+        source: 'ingredient_type_provider.dart',
+        screen: 'ingredient_type_provider.dart',
+        severity: 'warning',
+        contextData: {
+          'franchiseId': franchiseId,
+          'ids': _stagedForDelete.toList()
+        },
+      );
+      return;
+    }
     try {
       final batch = _firestoreService.db.batch();
       for (final id in _stagedForDelete) {
@@ -518,5 +740,11 @@ class IngredientTypeProvider with ChangeNotifier {
       );
       rethrow;
     }
+  }
+
+  @override
+  void dispose() {
+    print('[ingredient type provider] DISPOSED');
+    super.dispose();
   }
 }

@@ -8,13 +8,18 @@ import 'package:franchise_admin_portal/core/models/user.dart' as app;
 import 'dart:html' as html show window;
 
 class AuthService extends ChangeNotifier {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  late final FirebaseAuth _auth;
+  late final FirebaseFirestore _firestore;
   app.User? _profileUser; // Note: avoid name clash with Firebase User
   User? get currentUser => _auth.currentUser;
   Stream<User?> get authStateChanges => _auth.authStateChanges();
   app.User? get profileUser => _profileUser;
   String? _inviteToken;
+
+  AuthService() {
+    _auth = FirebaseAuth.instance;
+    _firestore = FirebaseFirestore.instance;
+  }
 
   /// EMAIL SIGN-IN (for admin)
   Future<User?> signInWithEmail(String email, String password) async {
@@ -125,10 +130,10 @@ class AuthService extends ChangeNotifier {
     Function? onError,
   }) async {
     try {
-      await FirebaseAuth.instance.verifyPhoneNumber(
+      await _auth.verifyPhoneNumber(
         phoneNumber: phoneNumber,
         verificationCompleted: (PhoneAuthCredential credential) async {
-          await FirebaseAuth.instance.signInWithCredential(credential);
+          await _auth.signInWithCredential(credential);
         },
         verificationFailed: (FirebaseAuthException e) {
           if (onError != null) onError(e);
@@ -146,7 +151,7 @@ class AuthService extends ChangeNotifier {
       verificationId: verificationId,
       smsCode: smsCode,
     );
-    final result = await FirebaseAuth.instance.signInWithCredential(credential);
+    final result = await _auth.signInWithCredential(credential);
     return result.user;
   }
 
@@ -155,7 +160,6 @@ class AuthService extends ChangeNotifier {
     _inviteToken = token;
     // Persist for reload/redirect flow, especially on web:
     if (token != null) {
-      // LocalStorage is web-only, safe to check kIsWeb
       if (kIsWeb) {
         print(
             '[auth_service.dart] saveInviteToken: saving token to localStorage');
@@ -191,7 +195,5 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  // Removed all franchise-specific profile logic from login flow.
-  // If you need to load a user profile after login (by franchise, etc),
-  // do it from your profile/provider logic, not from AuthService.
+  // All franchise-specific profile logic should be handled by a profile/provider class, not here.
 }

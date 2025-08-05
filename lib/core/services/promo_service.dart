@@ -3,8 +3,12 @@ import 'package:logging/logging.dart';
 import 'package:franchise_admin_portal/core/models/promo.dart';
 
 class PromoService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  late final FirebaseFirestore _db;
   final Logger _logger = Logger('PromoService');
+
+  PromoService() {
+    _db = FirebaseFirestore.instance;
+  }
 
   // Apply a promo to the cart
   Future<bool> applyPromo(String franchiseId, String promoId, String userId,

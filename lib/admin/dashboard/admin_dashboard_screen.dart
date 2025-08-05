@@ -24,6 +24,7 @@ import 'package:franchise_admin_portal/core/providers/role_guard.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
 import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final String? initialSectionKey;
@@ -70,6 +71,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    try {
+      final typeProvider =
+          Provider.of<IngredientTypeProvider>(context, listen: false);
+      print(
+          '[AdminDashboardScreen] IngredientTypeProvider FOUND: hashCode=${typeProvider.hashCode}');
+    } catch (e) {
+      print('[AdminDashboardScreen] IngredientTypeProvider NOT FOUND: $e');
+    }
+
     print(
         '[DEBUG][AdminDashboardScreen][build] _selectedIndex: $_selectedIndex');
     // Apply initialSectionKey safely once _sections are loaded

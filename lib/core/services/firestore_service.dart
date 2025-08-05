@@ -45,9 +45,15 @@ import 'package:franchise_admin_portal/core/models/size_template.dart';
 import 'package:franchise_admin_portal/core/models/menu_template_ref.dart';
 
 class FirestoreService {
-  static final firestore.FirebaseFirestore _db =
-      firestore.FirebaseFirestore.instance;
-  static final fb_auth.FirebaseAuth auth = fb_auth.FirebaseAuth.instance;
+  late final firestore.FirebaseFirestore _db;
+  late final fb_auth.FirebaseAuth auth;
+  late final FirebaseFunctions functions;
+
+  FirestoreService() {
+    _db = firestore.FirebaseFirestore.instance;
+    auth = fb_auth.FirebaseAuth.instance;
+    functions = FirebaseFunctions.instance;
+  }
   firestore.FirebaseFirestore get db => _db;
   // --- [NEW]: Ingredient Metadata Caching ---
   List<IngredientMetadata>? _cachedIngredientMetadata;
@@ -65,7 +71,6 @@ class FirestoreService {
   String get _inventory => AppConfig.inventoryCollection;
   String get _categories => AppConfig.categoriesCollection;
 
-  final functions = FirebaseFunctions.instance;
   firestore.CollectionReference get invitationCollection =>
       _db.collection('franchisee_invitations');
 
@@ -4023,12 +4028,14 @@ class FirestoreService {
     required String franchiseId,
     required String templateId,
   }) async {
-    final sourceRef = FirestoreService._db
+    final firestoreService = FirestoreService();
+
+    final sourceRef = firestoreService.db
         .collection('onboarding_templates')
         .doc(templateId)
         .collection('ingredient_types');
 
-    final destRef = FirestoreService._db
+    final destRef = firestoreService.db
         .collection('franchises')
         .doc(franchiseId)
         .collection('ingredient_types');
@@ -4040,7 +4047,7 @@ class FirestoreService {
         throw Exception('No ingredient types found in template "$templateId"');
       }
 
-      final batch = FirestoreService._db.batch();
+      final batch = firestoreService.db.batch();
       final now = firestore.FieldValue.serverTimestamp();
 
       for (final doc in snapshot.docs) {
@@ -4216,6 +4223,20 @@ class FirestoreService {
 
   Future<List<IngredientMetadata>> fetchIngredientMetadata(
       String franchiseId) async {
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[ERROR][fetchIngredientMetadata] Called with empty/unknown franchiseId!');
+      await ErrorLogger.log(
+        message:
+            'fetchIngredientMetadata called with blank/unknown franchiseId',
+        stack: '',
+        source: 'FirestoreService',
+        screen: 'firestore_service.dart',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return [];
+    }
     try {
       final snapshot = await _db
           .collection('franchises')
@@ -4535,7 +4556,8 @@ extension IngredientOnboardingMethods on FirestoreService {
   /// Stream all ingredient metadata for a franchise
   Stream<List<IngredientMetadata>> streamIngredients(String franchiseId) {
     try {
-      final ref = FirestoreService._db
+      final firestoreService = FirestoreService();
+      final ref = firestoreService.db
           .collection('franchises')
           .doc(franchiseId)
           .collection('ingredient_metadata')
@@ -4574,7 +4596,8 @@ extension IngredientOnboardingMethods on FirestoreService {
     required IngredientMetadata ingredient,
   }) async {
     try {
-      final docRef = FirestoreService._db
+      final firestoreService = FirestoreService();
+      final docRef = firestoreService.db
           .collection('franchises')
           .doc(franchiseId)
           .collection('ingredient_metadata')
@@ -4603,7 +4626,8 @@ extension IngredientOnboardingMethods on FirestoreService {
     required String ingredientId,
   }) async {
     try {
-      final docRef = FirestoreService._db
+      final firestoreService = FirestoreService();
+      final docRef = firestoreService.db
           .collection('franchises')
           .doc(franchiseId)
           .collection('ingredient_metadata')
@@ -4659,7 +4683,8 @@ extension IngredientOnboardingMethods on FirestoreService {
   static Future<List<IngredientType>> getIngredientTypes(
       String franchiseId) async {
     try {
-      final snapshot = await FirestoreService._db
+      final firestoreService = FirestoreService();
+      final snapshot = await firestoreService.db
           .collection('franchises')
           .doc(franchiseId)
           .collection('ingredient_types')
@@ -4685,7 +4710,8 @@ extension IngredientOnboardingMethods on FirestoreService {
   static Future<void> addIngredientType(
       String franchiseId, IngredientType type) async {
     try {
-      await FirestoreService._db
+      final firestoreService = FirestoreService();
+      await firestoreService.db
           .collection('franchises')
           .doc(franchiseId)
           .collection('ingredient_types')
@@ -4709,7 +4735,8 @@ extension IngredientOnboardingMethods on FirestoreService {
   static Future<void> updateIngredientType(
       String franchiseId, String typeId, Map<String, dynamic> data) async {
     try {
-      await FirestoreService._db
+      final firestoreService = FirestoreService();
+      await firestoreService.db
           .collection('franchises')
           .doc(franchiseId)
           .collection('ingredient_types')

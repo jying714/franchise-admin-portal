@@ -12,7 +12,7 @@ class RemovePlatformPlansForm extends StatefulWidget {
 }
 
 class _RemovePlatformPlansFormState extends State<RemovePlatformPlansForm> {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  late final FirebaseFirestore _db;
   List<String> _planIds = [];
   String? _selectedPlanId;
   String? _statusMessage;
@@ -21,6 +21,7 @@ class _RemovePlatformPlansFormState extends State<RemovePlatformPlansForm> {
   @override
   void initState() {
     super.initState();
+    _db = FirebaseFirestore.instance;
     _loadPlanIds();
   }
 

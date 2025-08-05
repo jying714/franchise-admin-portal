@@ -123,6 +123,15 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
 
   @override
   Widget build(BuildContext context) {
+    try {
+      final typeProvider =
+          Provider.of<IngredientTypeProvider>(context, listen: false);
+      print(
+          '[ingredient form card][Provider DEBUG] IngredientTypeProvider FOUND! hashCode=${typeProvider.hashCode}');
+    } catch (e) {
+      print(
+          '[ingredient form card][Provider DEBUG] IngredientTypeProvider NOT FOUND: $e');
+    }
     final theme = Theme.of(context);
     final loc = widget.loc;
     final colorScheme = theme.colorScheme;
