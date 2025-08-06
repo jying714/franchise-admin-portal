@@ -1900,7 +1900,13 @@
   "stepIngredientTypes": "Ingredient Types",
   "stepIngredients": "Ingredients",
   "stepCategories": "Categories",
-  "ingredientsImported": "Imported {count} ingredients."
+  "ingredientsImported": "Imported {count} ingredients.",
+  "onboardingReviewPublishTitle": "Review & Publish",
+  "onboardingReviewPublishDesc": "Check for any missing information or schema issues before going live. All critical issues must be resolved.",
+  "onboardingReviewFailed": "Review Failed",
+  "onboardingReviewReadyToPublish": "All required information is complete. Ready to publish.",
+  "onboardingReviewFixErrors": "Resolve all blocking issues before you can publish.",
+  "onboardingStepLabel": "Step {step} of {total}"
 
 
 

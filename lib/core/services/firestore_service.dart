@@ -3918,6 +3918,26 @@ class FirestoreService {
     return key == 'review' && completed == true;
   }
 
+  /// Marks onboarding as complete for a franchise, sets status to 'active', and logs the action.
+  Future<void> setOnboardingComplete({required String franchiseId}) async {
+    try {
+      await db.collection('franchises').doc(franchiseId).update({
+        'onboardingStatus': 'complete',
+        'onboardingCompletedAt': firestore.FieldValue.serverTimestamp(),
+        'status': 'active',
+      });
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to set onboarding complete for franchise',
+        stack: stack.toString(),
+        source: 'FirestoreService.setOnboardingComplete',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      rethrow;
+    }
+  }
+
   /// MERCHANT SIMULATION
   /// Simulates a Stripe webhook event for testing.
   /// Triggers the savePlatformInvoiceFromWebhook() logic with mock data.

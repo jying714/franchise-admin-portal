@@ -5,6 +5,7 @@ import 'package:franchise_admin_portal/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:collection/collection.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:franchise_admin_portal/core/models/onboarding_validation_issue.dart';
 
 class IngredientMetadataProvider extends ChangeNotifier {
   final FirestoreService _firestore;
@@ -828,9 +829,113 @@ class IngredientMetadataProvider extends ChangeNotifier {
     return false;
   }
 
-  @override
-  void dispose() {
-    print('[ingredient metadata provider] DISPOSED');
-    super.dispose();
+  Future<List<OnboardingValidationIssue>> validate({
+    List<String>? validTypeIds, // IngredientType IDs (for reference validation)
+    List<String>? referencedIngredientIds, // For orphan check if needed
+  }) async {
+    final issues = <OnboardingValidationIssue>[];
+    try {
+      final ingredientNames = <String>{};
+      for (final ing in _ingredients) {
+        // Name uniqueness
+        if (!ingredientNames.add(ing.name.trim().toLowerCase())) {
+          issues.add(OnboardingValidationIssue(
+            section: 'Ingredients',
+            itemId: ing.id,
+            itemDisplayName: ing.name,
+            severity: OnboardingIssueSeverity.critical,
+            code: 'DUPLICATE_INGREDIENT_NAME',
+            message: "Duplicate ingredient name: '${ing.name}'.",
+            affectedFields: ['name'],
+            isBlocking: true,
+            fixRoute: '/onboarding/ingredients',
+            itemLocator: ing.id,
+            resolutionHint: "Make all ingredient names unique.",
+            actionLabel: "Fix Now",
+            icon: Icons.label_important,
+            detectedAt: DateTime.now(),
+            contextData: {
+              'ingredient': ing.toMap(),
+            },
+          ));
+        }
+        // Missing required type
+        if ((ing.typeId?.isEmpty ?? true) ||
+            (validTypeIds != null && !validTypeIds.contains(ing.typeId))) {
+          issues.add(OnboardingValidationIssue(
+            section: 'Ingredients',
+            itemId: ing.id,
+            itemDisplayName: ing.name,
+            severity: OnboardingIssueSeverity.critical,
+            code: 'MISSING_INGREDIENT_TYPE',
+            message: "Ingredient '${ing.name}' has no valid type assigned.",
+            affectedFields: ['typeId'],
+            isBlocking: true,
+            fixRoute: '/onboarding/ingredients',
+            itemLocator: ing.id,
+            resolutionHint: "Assign a valid type to this ingredient.",
+            actionLabel: "Fix Now",
+            icon: Icons.link_off,
+            detectedAt: DateTime.now(),
+            contextData: {
+              'ingredient': ing.toMap(),
+            },
+          ));
+        }
+        // ... Add more field-level required checks as your model dictates (e.g., missing allergens, tag, etc)
+      }
+
+      // (Optional) Orphan ingredient warning
+      if (referencedIngredientIds != null) {
+        for (final ing in _ingredients) {
+          if (!referencedIngredientIds.contains(ing.id)) {
+            issues.add(OnboardingValidationIssue(
+              section: 'Ingredients',
+              itemId: ing.id,
+              itemDisplayName: ing.name,
+              severity: OnboardingIssueSeverity.warning,
+              code: 'UNUSED_INGREDIENT',
+              message: "Ingredient '${ing.name}' is not used by any menu item.",
+              affectedFields: [],
+              isBlocking: false,
+              fixRoute: '/onboarding/ingredients',
+              itemLocator: ing.id,
+              resolutionHint: "Consider removing unused ingredients.",
+              actionLabel: "Review",
+              icon: Icons.info_outline,
+              detectedAt: DateTime.now(),
+            ));
+          }
+        }
+      }
+
+      // At least one ingredient required
+      if (_ingredients.isEmpty) {
+        issues.add(OnboardingValidationIssue(
+          section: 'Ingredients',
+          itemId: '',
+          itemDisplayName: '',
+          severity: OnboardingIssueSeverity.critical,
+          code: 'NO_INGREDIENTS_DEFINED',
+          message: "At least one ingredient must be defined.",
+          affectedFields: ['ingredients'],
+          isBlocking: true,
+          fixRoute: '/onboarding/ingredients',
+          resolutionHint: "Add at least one ingredient.",
+          actionLabel: "Add Ingredient",
+          icon: Icons.add_box_outlined,
+          detectedAt: DateTime.now(),
+        ));
+      }
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'ingredient_metadata_validate_failed',
+        stack: stack.toString(),
+        source: 'IngredientMetadataProvider.validate',
+        severity: 'error',
+        contextData: {},
+      );
+    }
+    return issues;
   }
 }

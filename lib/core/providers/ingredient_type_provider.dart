@@ -6,6 +6,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
 import 'dart:convert';
 import 'package:franchise_admin_portal/core/models/ingredient_metadata.dart';
+import 'package:franchise_admin_portal/core/models/onboarding_validation_issue.dart';
+import 'package:flutter/material.dart';
 
 class IngredientTypeProvider with ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
@@ -742,9 +744,90 @@ class IngredientTypeProvider with ChangeNotifier {
     }
   }
 
-  @override
-  void dispose() {
-    print('[ingredient type provider] DISPOSED');
-    super.dispose();
+  Future<List<OnboardingValidationIssue>> validate({
+    List<String>?
+        referencedTypeIds, // Optionally pass in-use type IDs for orphan checks
+  }) async {
+    final issues = <OnboardingValidationIssue>[];
+    try {
+      final typeNames = <String>{};
+      for (final type in _ingredientTypes) {
+        // Uniqueness check
+        if (!typeNames.add(type.name.trim().toLowerCase())) {
+          issues.add(OnboardingValidationIssue(
+            section: 'Ingredient Types',
+            itemId: type.id ?? '',
+            itemDisplayName: type.name,
+            severity: OnboardingIssueSeverity.critical,
+            code: 'DUPLICATE_TYPE_NAME',
+            message:
+                "Duplicate ingredient type name: '${type.name}'. Names must be unique.",
+            affectedFields: ['name'],
+            isBlocking: true,
+            fixRoute: '/onboarding/ingredient-types',
+            itemLocator: type.id,
+            resolutionHint: "Change the type name to be unique.",
+            actionLabel: "Fix Now",
+            icon: Icons.label_important,
+            detectedAt: DateTime.now(),
+            contextData: {
+              'type': type.toMap(),
+            },
+          ));
+        }
+      }
+
+      // Required at least one type
+      if (_ingredientTypes.isEmpty) {
+        issues.add(OnboardingValidationIssue(
+          section: 'Ingredient Types',
+          itemId: '',
+          itemDisplayName: '',
+          severity: OnboardingIssueSeverity.critical,
+          code: 'NO_INGREDIENT_TYPES',
+          message: "At least one ingredient type must be defined.",
+          affectedFields: ['ingredient_types'],
+          isBlocking: true,
+          fixRoute: '/onboarding/ingredient-types',
+          resolutionHint: "Add an ingredient type before proceeding.",
+          actionLabel: "Add Type",
+          icon: Icons.add_box_outlined,
+          detectedAt: DateTime.now(),
+        ));
+      }
+
+      // (Optional) Orphan check: find types not referenced by any ingredient if referencedTypeIds provided
+      if (referencedTypeIds != null) {
+        for (final type in _ingredientTypes) {
+          if (!referencedTypeIds.contains(type.id)) {
+            issues.add(OnboardingValidationIssue(
+              section: 'Ingredient Types',
+              itemId: type.id ?? '',
+              itemDisplayName: type.name,
+              severity: OnboardingIssueSeverity.warning,
+              code: 'UNUSED_TYPE',
+              message: "Type '${type.name}' is not used by any ingredient.",
+              affectedFields: [],
+              isBlocking: false,
+              fixRoute: '/onboarding/ingredient-types',
+              itemLocator: type.id,
+              resolutionHint: "Consider removing unused types.",
+              actionLabel: "Review",
+              icon: Icons.info_outline,
+              detectedAt: DateTime.now(),
+            ));
+          }
+        }
+      }
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'ingredient_type_validate_failed',
+        stack: stack.toString(),
+        source: 'IngredientTypeProvider.validate',
+        severity: 'error',
+        contextData: {},
+      );
+    }
+    return issues;
   }
 }

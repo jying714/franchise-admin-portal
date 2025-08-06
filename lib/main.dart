@@ -62,6 +62,9 @@ import 'package:franchise_admin_portal/core/services/franchise_feature_service.d
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_feature_setup_screen.dart';
 import 'package:franchise_admin_portal/core/providers/restaurant_type_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/menu_item_editor_screen.dart';
+import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
+import 'package:franchise_admin_portal/core/providers/onboarding_review_provider.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_review_screen.dart';
 import 'dart:html' as html;
 
 // (Include ALL your other screen/provider/model imports here)
@@ -494,6 +497,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
               },
             ),
             Provider(create: (_) => AnalyticsService()),
+            Provider<AuditLogService>.value(value: AuditLogService()),
             StreamProvider<fb_auth.User?>.value(
               value: fb_auth.FirebaseAuth.instance.authStateChanges(),
               initialData: null,
@@ -943,16 +947,37 @@ class _FranchiseAuthenticatedRootState
             if (uri.path == '/onboarding/feature_setup') {
               return MaterialPageRoute(
                 builder: (_) => const OnboardingFeatureSetupScreen(),
+                settings: settings, // ← passes .arguments
               );
             }
-            ///////////// Placeholder: Remove or fill in with real screen as needed
             if (uri.path == '/onboarding/review') {
               return MaterialPageRoute(
-                  builder: (_) => const Scaffold(
-                        body: Center(child: Text('Review Step Placeholder')),
-                      ));
+                builder: (context) =>
+                    ChangeNotifierProvider<OnboardingReviewProvider>(
+                  create: (context) => OnboardingReviewProvider(
+                    franchiseFeatureProvider:
+                        Provider.of<FranchiseFeatureProvider>(context,
+                            listen: false),
+                    ingredientTypeProvider: Provider.of<IngredientTypeProvider>(
+                        context,
+                        listen: false),
+                    ingredientMetadataProvider:
+                        Provider.of<IngredientMetadataProvider>(context,
+                            listen: false),
+                    categoryProvider:
+                        Provider.of<CategoryProvider>(context, listen: false),
+                    menuItemProvider:
+                        Provider.of<MenuItemProvider>(context, listen: false),
+                    firestoreService:
+                        Provider.of<FirestoreService>(context, listen: false),
+                    auditLogService:
+                        Provider.of<AuditLogService>(context, listen: false),
+                  ),
+                  child:
+                      OnboardingReviewScreen(), // <-- Make this widget "dumb" (stateless or stateful)
+                ),
+              );
             }
-            ///////////// Placeholder: Remove or fill in with real screen as needed
             if (uri.path == '/invite-accept') {
               final args = settings.arguments as Map?;
               final token = args?['token'] as String?;

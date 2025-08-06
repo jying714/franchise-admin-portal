@@ -193,8 +193,14 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     title: loc.stepReview,
                     subtitle: loc.stepReviewDesc,
                     completed: progress['review'] == true,
-                    onTap: () =>
-                        Navigator.of(context).pushNamed('/onboarding/review'),
+                    onTap: () {
+                      print(
+                          '[OnboardingMenuScreen] Navigating to onboardingReview');
+                      Navigator.pushNamed(
+                        context,
+                        '/dashboard?section=onboardingReview',
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
                   Text(

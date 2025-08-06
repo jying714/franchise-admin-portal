@@ -13,6 +13,7 @@ import 'package:franchise_admin_portal/core/providers/category_provider.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:franchise_admin_portal/core/models/onboarding_validation_issue.dart';
 
 class MenuItemProvider extends ChangeNotifier {
   final FirestoreService _firestoreService;
@@ -535,5 +536,157 @@ class MenuItemProvider extends ChangeNotifier {
         contextData: {'franchiseId': _franchiseId, 'menuItemId': id},
       );
     }
+  }
+
+  Future<List<OnboardingValidationIssue>> validate({
+    required List<String> validCategoryIds,
+    required List<String> validIngredientIds,
+    required List<String> validTypeIds,
+  }) async {
+    final issues = <OnboardingValidationIssue>[];
+    try {
+      final menuItemNames = <String>{};
+      for (final item in _working) {
+        // Name uniqueness
+        if (!menuItemNames.add(item.name.trim().toLowerCase())) {
+          issues.add(OnboardingValidationIssue(
+            section: 'Menu Items',
+            itemId: item.id,
+            itemDisplayName: item.name,
+            severity: OnboardingIssueSeverity.critical,
+            code: 'DUPLICATE_MENU_ITEM_NAME',
+            message: "Duplicate menu item name: '${item.name}'.",
+            affectedFields: ['name'],
+            isBlocking: true,
+            fixRoute: '/onboarding/menu_items',
+            itemLocator: item.id,
+            resolutionHint: "Menu item names must be unique.",
+            actionLabel: "Fix Now",
+            icon: Icons.label_important,
+            detectedAt: DateTime.now(),
+            contextData: {
+              'menu_item': item.toMap(),
+            },
+          ));
+        }
+        // Category reference valid
+        if (!validCategoryIds.contains(item.categoryId)) {
+          issues.add(OnboardingValidationIssue(
+            section: 'Menu Items',
+            itemId: item.id,
+            itemDisplayName: item.name,
+            severity: OnboardingIssueSeverity.critical,
+            code: 'INVALID_CATEGORY_REFERENCE',
+            message:
+                "Menu item '${item.name}' references a missing or invalid category.",
+            affectedFields: ['categoryId'],
+            isBlocking: true,
+            fixRoute: '/onboarding/menu_items',
+            itemLocator: item.id,
+            resolutionHint: "Assign a valid category.",
+            actionLabel: "Fix Now",
+            icon: Icons.link_off,
+            detectedAt: DateTime.now(),
+          ));
+        }
+        // Ingredient references valid
+        for (final includedIng in item.includedIngredients ?? []) {
+          if (!validIngredientIds.contains(includedIng.ingredientId)) {
+            issues.add(OnboardingValidationIssue(
+              section: 'Menu Items',
+              itemId: item.id,
+              itemDisplayName: item.name,
+              severity: OnboardingIssueSeverity.critical,
+              code: 'INVALID_INGREDIENT_REFERENCE',
+              message:
+                  "Menu item '${item.name}' references a missing ingredient.",
+              affectedFields: ['includedIngredients'],
+              isBlocking: true,
+              fixRoute: '/onboarding/menu_items',
+              itemLocator: item.id,
+              resolutionHint: "Replace or remove invalid ingredient reference.",
+              actionLabel: "Fix Now",
+              icon: Icons.link_off,
+              detectedAt: DateTime.now(),
+              contextData: {
+                'missingIngredientId': includedIng.ingredientId,
+              },
+            ));
+          }
+          // Optional: Check included ingredient's type is valid
+          if (includedIng.typeId != null &&
+              !validTypeIds.contains(includedIng.typeId)) {
+            issues.add(OnboardingValidationIssue(
+              section: 'Menu Items',
+              itemId: item.id,
+              itemDisplayName: item.name,
+              severity: OnboardingIssueSeverity.critical,
+              code: 'INVALID_TYPE_REFERENCE',
+              message:
+                  "Menu item '${item.name}' includes an ingredient with an invalid type.",
+              affectedFields: ['includedIngredients.typeId'],
+              isBlocking: true,
+              fixRoute: '/onboarding/menu_items',
+              itemLocator: item.id,
+              resolutionHint: "Assign a valid type.",
+              actionLabel: "Fix Now",
+              icon: Icons.link_off,
+              detectedAt: DateTime.now(),
+              contextData: {
+                'includedIngredient': includedIng.toMap(),
+              },
+            ));
+          }
+        }
+        // Required fields check (e.g., price, sizePrices, etc)
+        // Check for each menu item required field as per your schema
+        if (item.price == null) {
+          issues.add(OnboardingValidationIssue(
+            section: 'Menu Items',
+            itemId: item.id,
+            itemDisplayName: item.name,
+            severity: OnboardingIssueSeverity.critical,
+            code: 'MISSING_REQUIRED_FIELD',
+            message:
+                "Menu item '${item.name}' is missing required field: price.",
+            affectedFields: ['price'],
+            isBlocking: true,
+            fixRoute: '/onboarding/menu_items',
+            itemLocator: item.id,
+            resolutionHint: "Enter a valid price.",
+            actionLabel: "Fix Now",
+            icon: Icons.price_change,
+            detectedAt: DateTime.now(),
+          ));
+        }
+        // ... Repeat for other schema-required fields (sizePrices, available, image, etc)
+      }
+      if (_working.isEmpty) {
+        issues.add(OnboardingValidationIssue(
+          section: 'Menu Items',
+          itemId: '',
+          itemDisplayName: '',
+          severity: OnboardingIssueSeverity.critical,
+          code: 'NO_MENU_ITEMS_DEFINED',
+          message: "At least one menu item must be defined.",
+          affectedFields: ['menu_items'],
+          isBlocking: true,
+          fixRoute: '/onboarding/menu_items',
+          resolutionHint: "Add at least one menu item.",
+          actionLabel: "Add Item",
+          icon: Icons.add_box_outlined,
+          detectedAt: DateTime.now(),
+        ));
+      }
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'menu_item_validate_failed',
+        stack: stack.toString(),
+        source: 'MenuItemProvider.validate',
+        severity: 'error',
+        contextData: {},
+      );
+    }
+    return issues;
   }
 }

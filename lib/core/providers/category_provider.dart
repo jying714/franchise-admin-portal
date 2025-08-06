@@ -1,5 +1,5 @@
 // lib/core/providers/category_provider.dart
-
+import 'package:franchise_admin_portal/core/models/onboarding_validation_issue.dart';
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import 'package:franchise_admin_portal/core/models/category.dart';
@@ -379,5 +379,89 @@ class CategoryProvider extends ChangeNotifier {
 
     debugPrint('[CategoryProvider] Category already exists: $id');
     return false;
+  }
+
+  Future<List<OnboardingValidationIssue>> validate({
+    List<String>? referencedCategoryIds, // For checking unused/in-use
+  }) async {
+    final issues = <OnboardingValidationIssue>[];
+    try {
+      final categoryNames = <String>{};
+      for (final cat in _current) {
+        // Uniqueness
+        if (!categoryNames.add(cat.name.trim().toLowerCase())) {
+          issues.add(OnboardingValidationIssue(
+            section: 'Categories',
+            itemId: cat.id,
+            itemDisplayName: cat.name,
+            severity: OnboardingIssueSeverity.critical,
+            code: 'DUPLICATE_CATEGORY_NAME',
+            message: "Duplicate category name: '${cat.name}'.",
+            affectedFields: ['name'],
+            isBlocking: true,
+            fixRoute: '/onboarding/categories',
+            itemLocator: cat.id,
+            resolutionHint: "All category names must be unique.",
+            actionLabel: "Fix Now",
+            icon: Icons.label_important,
+            detectedAt: DateTime.now(),
+            contextData: {
+              'category': cat.toFirestore(),
+            },
+          ));
+        }
+      }
+      // Required: at least one category
+      if (_current.isEmpty) {
+        issues.add(OnboardingValidationIssue(
+          section: 'Categories',
+          itemId: '',
+          itemDisplayName: '',
+          severity: OnboardingIssueSeverity.critical,
+          code: 'NO_CATEGORIES_DEFINED',
+          message: "At least one menu category must be defined.",
+          affectedFields: ['categories'],
+          isBlocking: true,
+          fixRoute: '/onboarding/categories',
+          resolutionHint: "Add at least one category.",
+          actionLabel: "Add Category",
+          icon: Icons.add_box_outlined,
+          detectedAt: DateTime.now(),
+        ));
+      }
+
+      // (Optional) Unused category warning
+      if (referencedCategoryIds != null) {
+        for (final cat in _current) {
+          if (!referencedCategoryIds.contains(cat.id)) {
+            issues.add(OnboardingValidationIssue(
+              section: 'Categories',
+              itemId: cat.id,
+              itemDisplayName: cat.name,
+              severity: OnboardingIssueSeverity.warning,
+              code: 'UNUSED_CATEGORY',
+              message: "Category '${cat.name}' is not used by any menu item.",
+              affectedFields: [],
+              isBlocking: false,
+              fixRoute: '/onboarding/categories',
+              itemLocator: cat.id,
+              resolutionHint: "Consider removing unused categories.",
+              actionLabel: "Review",
+              icon: Icons.info_outline,
+              detectedAt: DateTime.now(),
+            ));
+          }
+        }
+      }
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'category_validate_failed',
+        stack: stack.toString(),
+        source: 'CategoryProvider.validate',
+        severity: 'error',
+        contextData: {},
+      );
+    }
+    return issues;
   }
 }

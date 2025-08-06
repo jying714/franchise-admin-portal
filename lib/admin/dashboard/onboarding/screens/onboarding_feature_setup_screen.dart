@@ -1,3 +1,5 @@
+// File: lib/admin/dashboard/onboarding/screens/onboarding_feature_setup_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -23,6 +25,9 @@ class _OnboardingFeatureSetupScreenState
     extends State<OnboardingFeatureSetupScreen> {
   bool _isSaving = false;
   List<Map<String, dynamic>> _featureMetadata = [];
+  String?
+      _highlightFeatureKey; // Feature to highlight for deep-link error repair
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -55,6 +60,37 @@ class _OnboardingFeatureSetupScreenState
 
       if (mounted) setState(() {});
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Accept navigation/focus argument from schema repair or review screen
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map && args.containsKey('featureKey')) {
+      _highlightFeatureKey = args['featureKey'] as String?;
+      // Defer scroll until after the next build/layout pass
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToFeature(_highlightFeatureKey);
+      });
+    }
+  }
+
+  // Scrolls the list to the feature needing attention (for schema repair deep-link)
+  void _scrollToFeature(String? featureKey) {
+    if (featureKey == null) return;
+    final index =
+        _featureMetadata.indexWhere((meta) => meta['key'] == featureKey);
+    if (index != -1 && _scrollController.hasClients) {
+      // Each tile is roughly ~70-80px tall; tweak as needed for your UI
+      final scrollPos =
+          (index * 75.0).clamp(0.0, _scrollController.position.maxScrollExtent);
+      _scrollController.animateTo(
+        scrollPos,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   @override
@@ -97,6 +133,7 @@ class _OnboardingFeatureSetupScreenState
                 ),
                 Expanded(
                   child: ListView(
+                    controller: _scrollController,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     children: _featureMetadata
                         .where((meta) =>
@@ -107,12 +144,15 @@ class _OnboardingFeatureSetupScreenState
                       final title = meta['name'] ?? moduleKey;
                       final description = meta['description'] ?? '';
                       final isLocked = !featureProvider.hasFeature(moduleKey);
+                      final isHighlighted = moduleKey == _highlightFeatureKey;
 
                       return FeatureToggleTile(
                         moduleKey: moduleKey,
                         featureKey: 'enabled',
                         title: title,
                         description: description,
+                        highlight:
+                            isHighlighted, // Visually accent this tile if deep-linked
                       );
                     }).toList(),
                   ),
@@ -133,6 +173,7 @@ class _OnboardingFeatureSetupScreenState
     );
   }
 
+  /// Handles saving the current feature setup to Firestore and marking the onboarding step complete.
   Future<void> _handleSave() async {
     setState(() => _isSaving = true);
     final featureProvider = context.read<FranchiseFeatureProvider>();
@@ -152,7 +193,8 @@ class _OnboardingFeatureSetupScreenState
               content: Text(AppLocalizations.of(context)!.saveSuccess),
             ),
           );
-          Navigator.of(context).maybePop(); // go back or proceed
+          Navigator.of(context)
+              .maybePop(); // Go back or proceed to next onboarding step
         }
       } else {
         showDialog(
@@ -191,6 +233,7 @@ class _OnboardingFeatureSetupScreenState
     }
   }
 
+  /// Allows toggling the onboarding step as complete/incomplete for workflow enforcement.
   Future<void> _markComplete() async {
     final loc = AppLocalizations.of(context)!;
     final onboardingProvider =

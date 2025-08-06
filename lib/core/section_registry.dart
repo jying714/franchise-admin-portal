@@ -167,6 +167,14 @@ final List<DashboardSection> sectionRegistry = [
     sidebarOrder: 105,
     showInSidebar: true,
   ),
+  DashboardSection(
+    key: 'onboardingReview',
+    title: 'Review & Publish',
+    icon: Icons.check_circle_outline,
+    builder: (_) => const OnboardingReviewScreen(),
+    sidebarOrder: 106,
+    showInSidebar: true,
+  ),
   // Add further onboarding/future steps here...
 ];
 

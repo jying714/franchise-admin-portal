@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/core/models/audit_log.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 
 class AuditLogService {
   CollectionReference auditLogsRef() =>
@@ -88,5 +89,58 @@ class AuditLogService {
         .map((doc) =>
             AuditLog.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
         .toList();
+  }
+
+  /// Logs a publish event for onboarding (with snapshot) to the top-level audit_logs collection.
+  Future<void> logOnboardingPublishAudit({
+    required String franchiseId,
+    required String userId,
+    required Map<String, dynamic> exportSnapshot,
+    String? userEmail,
+  }) async {
+    try {
+      await addLog(
+        franchiseId: franchiseId,
+        userId: userId,
+        userEmail: userEmail,
+        action: 'onboarding_publish',
+        targetType: 'onboarding',
+        targetId: franchiseId,
+        details: exportSnapshot,
+      );
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to log onboarding publish audit',
+        stack: stack.toString(),
+        source: 'AuditLogService.logOnboardingPublishAudit',
+        severity: 'error',
+        contextData: {
+          'franchiseId': franchiseId,
+          'userId': userId,
+          'exportSnapshotKeys': exportSnapshot.keys.toList(),
+        },
+      );
+      rethrow;
+    }
+  }
+
+  /// Fetches only onboarding publish/cancel/edit audit logs for a franchise.
+  Future<List<AuditLog>> getOnboardingAuditLogs(String franchiseId) async {
+    try {
+      // Filter for onboarding-related actions (publish/cancel/edit etc)
+      final query = auditLogsRef()
+          .where('franchiseId', isEqualTo: franchiseId)
+          .where('targetType', isEqualTo: 'onboarding')
+          .orderBy('timestamp', descending: true);
+
+      final snapshot = await query.get();
+      return snapshot.docs
+          .map((doc) => AuditLog.fromFirestore(
+              doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+    } catch (e, stack) {
+      // Optionally: log with ErrorLogger if desired
+      rethrow;
+    }
   }
 }

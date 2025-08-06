@@ -3,6 +3,8 @@ import 'package:franchise_admin_portal/core/models/feature_metadata.dart'
     show FeatureState;
 import 'package:franchise_admin_portal/core/models/feature_module.dart';
 import 'package:franchise_admin_portal/core/services/franchise_feature_service.dart';
+import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:franchise_admin_portal/core/models/onboarding_validation_issue.dart';
 
 class FranchiseFeatureProvider with ChangeNotifier {
   final FranchiseFeatureService _service;
@@ -160,5 +162,50 @@ class FranchiseFeatureProvider with ChangeNotifier {
   /// Returns all subfeatures (with enabled state) for a given module.
   Map<String, bool> getSubfeatures(String moduleKey) {
     return _featureMetadata.modules[moduleKey]?.features ?? {};
+  }
+
+  /// getter for enabled modules
+  List<String> get enabledModuleKeys => _featureMetadata.modules.entries
+      .where((e) => e.value.enabled)
+      .map((e) => e.key)
+      .toList();
+
+  /// validate() method checking for enabled modules
+  Future<List<OnboardingValidationIssue>> validate() async {
+    final issues = <OnboardingValidationIssue>[];
+    try {
+      // Require Menu Management to be enabled
+      if (!enabledModuleKeys.contains('menu_management')) {
+        issues.add(OnboardingValidationIssue(
+          section: 'Features',
+          itemId: '',
+          itemDisplayName: '',
+          severity: OnboardingIssueSeverity.critical,
+          code: 'MISSING_MENU_MANAGEMENT_FEATURE',
+          message:
+              "Menu Management feature must be enabled to continue onboarding.",
+          affectedFields: ['menu_management'],
+          isBlocking: true,
+          fixRoute: '/onboarding/feature_setup',
+          resolutionHint: "Enable the Menu Management feature.",
+          actionLabel: "Fix Now",
+          icon: Icons.build_outlined,
+          detectedAt: DateTime.now(),
+          contextData: {
+            'enabledFeatures': enabledModuleKeys,
+          },
+        ));
+      }
+      // ...add more enabled-feature checks as needed
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'franchise_feature_validate_failed',
+        stack: stack.toString(),
+        source: 'FranchiseFeatureProvider.validate',
+        severity: 'error',
+        contextData: {},
+      );
+    }
+    return issues;
   }
 }
