@@ -28,8 +28,79 @@ class OnboardingIngredientsScreen extends StatefulWidget {
 
 class _OnboardingIngredientsScreenState
     extends State<OnboardingIngredientsScreen> {
+  final ScrollController _scrollController = ScrollController();
   late AppLocalizations loc;
   bool _hasInitialized = false;
+  final _listViewKey = GlobalKey();
+  final Set<String> _highlightedIngredients = {};
+
+  void scrollAndHighlightIngredient(String ingredientId,
+      {List<String>? focusFields}) {
+    final provider = context.read<IngredientMetadataProvider>();
+
+    // Ensure the item key exists (in case load() created items but keys not registered yet)
+    final key =
+        provider.itemGlobalKeys.putIfAbsent(ingredientId, () => GlobalKey());
+
+    final contextWidget = key.currentContext;
+    if (contextWidget == null || !mounted) {
+      debugPrint(
+          '[OnboardingIngredientsScreen] No visible context for $ingredientId — skipping highlight.');
+      return;
+    }
+
+    // Scroll tile into view
+    Scrollable.ensureVisible(
+      contextWidget,
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeInOut,
+    );
+
+    // Highlight tile overlay
+    final overlay = Overlay.of(context);
+    final renderBox = contextWidget.findRenderObject() as RenderBox?;
+    if (overlay != null && renderBox != null) {
+      final highlightTile = OverlayEntry(
+        builder: (_) => Positioned(
+          left: renderBox.localToGlobal(Offset.zero).dx,
+          top: renderBox.localToGlobal(Offset.zero).dy,
+          width: renderBox.size.width,
+          height: renderBox.size.height,
+          child: IgnorePointer(
+            child: Container(color: Colors.yellow.withOpacity(0.3)),
+          ),
+        ),
+      );
+      overlay.insert(highlightTile);
+      Future.delayed(const Duration(seconds: 2), () => highlightTile.remove());
+    }
+
+    // Highlight specific fields if provided
+    if (focusFields != null && focusFields.isNotEmpty) {
+      for (final field in focusFields) {
+        final fieldKey = provider.fieldGlobalKeys['$ingredientId::$field'];
+        if (fieldKey != null && fieldKey.currentContext != null) {
+          final box = fieldKey.currentContext!.findRenderObject() as RenderBox?;
+          if (box != null && overlay != null) {
+            final highlightField = OverlayEntry(
+              builder: (_) => Positioned(
+                left: box.localToGlobal(Offset.zero).dx,
+                top: box.localToGlobal(Offset.zero).dy,
+                width: box.size.width,
+                height: box.size.height,
+                child: IgnorePointer(
+                  child: Container(color: Colors.orange.withOpacity(0.35)),
+                ),
+              ),
+            );
+            overlay.insert(highlightField);
+            Future.delayed(
+                const Duration(seconds: 2), () => highlightField.remove());
+          }
+        }
+      }
+    }
+  }
 
   // Set to track selected ingredients for bulk actions
   final Set<String> _selectedIngredientIds = {};
@@ -209,13 +280,27 @@ class _OnboardingIngredientsScreenState
   }
 
   @override
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_hasInitialized) return;
 
-    // Just trigger load on the existing provider in the tree
+    final args = ModalRoute.of(context)?.settings.arguments;
     final provider = context.read<IngredientMetadataProvider>();
-    provider.load();
+
+    // Always load the provider first so keys exist
+    provider.load().then((_) {
+      if (args is Map && args.containsKey('focusItemId')) {
+        final String focusId = args['focusItemId'] as String;
+        final List<String>? focusFields =
+            (args['focusFields'] as List?)?.cast<String>();
+
+        // Wait until the widget tree is painted
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          scrollAndHighlightIngredient(focusId, focusFields: focusFields);
+        });
+      }
+    });
 
     _hasInitialized = true;
   }
@@ -543,6 +628,7 @@ class _OnboardingIngredientsScreenState
                           message: loc.noIngredientsMessage,
                         )
                       : ListView(
+                          controller: _scrollController,
                           children: groupedIngredients.entries.map((entry) {
                             print(
                                 '[OnboardingIngredientsScreen] Building ingredient group: ${entry.key}');
@@ -584,12 +670,23 @@ class _OnboardingIngredientsScreenState
                                     ],
                                   ),
                                 ),
-                                ...groupItems.map((item) => IngredientListTile(
+                                ...groupItems.map((item) {
+                                  final itemKey =
+                                      provider.itemGlobalKeys[item.id] ??
+                                          GlobalKey();
+                                  provider.itemGlobalKeys[item.id] = itemKey;
+
+                                  return Container(
+                                    key:
+                                        itemKey, // 🔹 assign key for scroll/highlight
+                                    child: IngredientListTile(
                                       ingredient: item,
                                       franchiseId: provider.franchiseId,
                                       onEdited: () => _openIngredientForm(item),
                                       onRefresh: () => provider.load(),
-                                    )),
+                                    ),
+                                  );
+                                }),
                               ],
                             );
                           }).toList(),

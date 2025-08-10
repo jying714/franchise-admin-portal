@@ -1906,7 +1906,68 @@
   "onboardingReviewFailed": "Review Failed",
   "onboardingReviewReadyToPublish": "All required information is complete. Ready to publish.",
   "onboardingReviewFixErrors": "Resolve all blocking issues before you can publish.",
-  "onboardingStepLabel": "Step {step} of {total}"
+  "onboardingStepLabel": "Step {step} of {total}",
+    "tagDairyDescription": "Contains dairy products such as milk, cheese, or butter.",
+  "@tagDairyDescription": {
+    "description": "Tooltip description for dairy allergen tag."
+  },
+  "tagGlutenDescription": "Contains gluten from wheat, barley, rye, or related grains.",
+  "@tagGlutenDescription": {
+    "description": "Tooltip description for gluten allergen tag."
+  },
+  "tagNutsDescription": "Contains tree nuts or peanuts.",
+  "@tagNutsDescription": {
+    "description": "Tooltip description for nuts allergen tag."
+  },
+  "tagSoyDescription": "Contains soy or soy-based products.",
+  "@tagSoyDescription": {
+    "description": "Tooltip description for soy allergen tag."
+  },
+  "tagEggsDescription": "Contains eggs or egg-based ingredients.",
+  "@tagEggsDescription": {
+    "description": "Tooltip description for eggs allergen tag."
+  },
+  "tagFishDescription": "Contains fish or fish-derived ingredients.",
+  "@tagFishDescription": {
+    "description": "Tooltip description for fish allergen tag."
+  },
+  "tagShellfishDescription": "Contains shellfish such as crab, shrimp, or lobster.",
+  "@tagShellfishDescription": {
+    "description": "Tooltip description for shellfish allergen tag."
+  },
+  "tagVeganDescription": "Suitable for a vegan diet; contains no animal products.",
+  "@tagVeganDescription": {
+    "description": "Tooltip description for vegan dietary tag."
+  },
+  "tagVegetarianDescription": "Suitable for a vegetarian diet; contains no meat or fish.",
+  "@tagVegetarianDescription": {
+    "description": "Tooltip description for vegetarian dietary tag."
+  },
+  "tagHalalDescription": "Prepared according to Halal dietary guidelines.",
+  "@tagHalalDescription": {
+    "description": "Tooltip description for halal dietary tag."
+  },
+  "tagKosherDescription": "Prepared according to Kosher dietary guidelines.",
+  "@tagKosherDescription": {
+    "description": "Tooltip description for kosher dietary tag."
+  },
+  "tagSugarFreeDescription": "Contains no added sugars.",
+  "@tagSugarFreeDescription": {
+    "description": "Tooltip description for sugar-free dietary tag."
+  },
+  "tagLowSodiumDescription": "Low in sodium content.",
+  "@tagLowSodiumDescription": {
+    "description": "Tooltip description for low sodium dietary tag."
+  },
+  "tagSpicyDescription": "May be spicy or contain hot peppers.",
+  "@tagSpicyDescription": {
+    "description": "Tooltip description for spicy food tag."
+  },
+  "tagOrganicDescription": "Made with organic ingredients.",
+  "@tagOrganicDescription": {
+    "description": "Tooltip description for organic dietary tag."
+  }
+
 
 
 

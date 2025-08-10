@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/models/onboarding_validation_issue.dart';
 import 'package:franchise_admin_portal/core/providers/onboarding_review_provider.dart';
+import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.dart';
 
 class ReviewSummaryTable extends StatelessWidget {
   static const Map<String, String> _sectionRoutes = {
@@ -228,74 +230,44 @@ class ReviewSummaryTable extends StatelessWidget {
     }
 
     Widget actionWidget;
-    // Deep link routing for "Fix Now" and "Review" actions:
+
+    void _navigateToFix(BuildContext ctx, OnboardingValidationIssue issue) {
+      if (issue.fixRoute.isEmpty) return;
+      final args = buildOnboardingNavArgs(section: section, issue: issue);
+      Navigator.of(ctx).pushNamed(issue.fixRoute, arguments: args);
+    }
+
     if (criticalCount > 0) {
+      final issue = issues.firstWhere(
+        (e) => e.isBlocking && e.severity == OnboardingIssueSeverity.critical,
+        orElse: () => issues.first,
+      );
       actionWidget = TextButton.icon(
         style: TextButton.styleFrom(
           foregroundColor: colorScheme.primary,
           textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        onPressed: () {
-          // Find the first critical issue for this section
-          final issue = issues.firstWhere(
-            (e) =>
-                e.isBlocking && e.severity == OnboardingIssueSeverity.critical,
-            orElse: () => issues.first,
-          );
-          final args = <String, dynamic>{};
-          if (issue.section == 'Features' && issue.itemId.isNotEmpty) {
-            args['featureKey'] = issue.itemId;
-          } else if (issue.section == 'Ingredient Types' &&
-              issue.itemId.isNotEmpty) {
-            args['ingredientTypeId'] = issue.itemId;
-          } else if (issue.section == 'Ingredients' &&
-              issue.itemId.isNotEmpty) {
-            args['ingredientId'] = issue.itemId;
-          } else if (issue.section == 'Categories' && issue.itemId.isNotEmpty) {
-            args['categoryId'] = issue.itemId;
-          } else if (issue.section == 'Menu Items' && issue.itemId.isNotEmpty) {
-            args['menuItemId'] = issue.itemId;
-          }
-          Navigator.of(context).pushNamed(
-            issue.fixRoute,
-            arguments: args,
-          );
-        },
+        onPressed: () => _navigateToFix(context, issue),
         icon: const Icon(Icons.build_circle_outlined, size: 20),
-        label: const Text('Fix Now'),
+        label: Text((issue.actionLabel?.isNotEmpty ?? false)
+            ? issue.actionLabel!
+            : 'Fix Now'),
       );
     } else if (warningCount > 0) {
+      final issue = issues.firstWhere(
+        (e) => !e.isBlocking && e.severity == OnboardingIssueSeverity.warning,
+        orElse: () => issues.first,
+      );
       actionWidget = TextButton.icon(
         style: TextButton.styleFrom(
           foregroundColor: colorScheme.tertiary,
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        onPressed: () {
-          final issue = issues.firstWhere(
-            (e) =>
-                !e.isBlocking && e.severity == OnboardingIssueSeverity.warning,
-            orElse: () => issues.first,
-          );
-          final args = <String, dynamic>{};
-          if (issue.section == 'Features' && issue.itemId.isNotEmpty) {
-            args['featureKey'] = issue.itemId;
-          } else if (issue.section == 'Ingredient Types' &&
-              issue.itemId.isNotEmpty) {
-            args['ingredientTypeId'] = issue.itemId;
-          } else if (issue.section == 'Ingredients' &&
-              issue.itemId.isNotEmpty) {
-            args['ingredientId'] = issue.itemId;
-          } else if (issue.section == 'Categories' && issue.itemId.isNotEmpty) {
-            args['categoryId'] = issue.itemId;
-          } else if (issue.section == 'Menu Items' && issue.itemId.isNotEmpty) {
-            args['menuItemId'] = issue.itemId;
-          }
-          Navigator.of(context).pushNamed(
-            issue.fixRoute,
-            arguments: args,
-          );
-        },
+        onPressed: () => _navigateToFix(context, issue),
         icon: const Icon(Icons.visibility_outlined, size: 20),
-        label: const Text('Review'),
+        label: Text((issue.actionLabel?.isNotEmpty ?? false)
+            ? issue.actionLabel!
+            : 'Review'),
       );
     } else {
       actionWidget = Text(

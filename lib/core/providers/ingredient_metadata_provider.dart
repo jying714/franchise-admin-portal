@@ -28,6 +28,8 @@ class IngredientMetadataProvider extends ChangeNotifier {
   bool _ascending = true;
   String? _groupByKey = 'type'; // 'type', 'typeId', or null for no grouping
 
+  final Map<String, GlobalKey> itemGlobalKeys = {};
+  final Map<String, GlobalKey> fieldGlobalKeys = {};
   IngredientMetadataProvider({
     required FirestoreService firestoreService,
     required this.franchiseId,
@@ -189,6 +191,13 @@ class IngredientMetadataProvider extends ChangeNotifier {
       _current = List.from(_original);
       _hasLoaded = true;
       _loadedFranchiseId = franchiseId;
+
+      // 🔹 Refresh global keys for each loaded ingredient
+      itemGlobalKeys.clear();
+      for (final ing in _current) {
+        itemGlobalKeys[ing.id] = GlobalKey();
+      }
+
       notifyListeners();
     } catch (e, stack) {
       await ErrorLogger.log(

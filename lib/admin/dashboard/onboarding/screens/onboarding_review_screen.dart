@@ -31,9 +31,34 @@ class OnboardingReviewScreen extends StatefulWidget {
 }
 
 class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
-  late OnboardingReviewProvider _reviewProvider;
+  OnboardingReviewProvider? _reviewProvider;
+  bool _providerReady = false;
   bool _loading = true;
   String? _error;
+  bool _didKickOffValidation = false;
+
+  bool _providersReady(BuildContext context) {
+    final types = context.read<IngredientTypeProvider>().ingredientTypes;
+    final ingredients = context.read<IngredientMetadataProvider>().ingredients;
+    final categories = context.read<CategoryProvider>().categories;
+    final menuItems = context.read<MenuItemProvider>().menuItems;
+
+    // Consider "ready" when providers have loaded at least once.
+    // We don't require non-empty, just that they are "loaded" lists.
+    return types != null &&
+        ingredients != null &&
+        categories != null &&
+        menuItems != null;
+  }
+
+  void _scheduleFirstValidation(BuildContext context) {
+    if (_didKickOffValidation) return;
+    if (!_providersReady(context)) return;
+    if (!mounted || _reviewProvider == null) return;
+
+    _didKickOffValidation = true;
+    _reviewProvider!.validateAll();
+  }
 
   @override
   void initState() {
@@ -71,6 +96,8 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
         firestoreService: firestoreService,
         auditLogService: auditLogService,
       );
+      _providerReady = true;
+      setState(() {}); // make build run with a mounted provider
       _initValidation();
     } catch (e, st) {
       setState(() {
@@ -83,7 +110,8 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
   Future<void> _initValidation() async {
     try {
       setState(() => _loading = true);
-      await _reviewProvider.validateAll();
+      await _reviewProvider?.validateAll();
+
       setState(() {
         _loading = false;
         _error = null;
@@ -101,9 +129,17 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
 
-    return ChangeNotifierProvider<OnboardingReviewProvider>.value(
-      value: _reviewProvider,
-      child: Scaffold(
+    // Force rebuild when data providers populate (do NOT read OnboardingReviewProvider here)
+    final _ = (
+      context.watch<IngredientTypeProvider>().ingredientTypes,
+      context.watch<IngredientMetadataProvider>().ingredients,
+      context.watch<CategoryProvider>().categories,
+      context.watch<MenuItemProvider>().menuItems
+    );
+
+    // If our local provider isn't constructed yet, show a lightweight shell
+    if (!_providerReady || _reviewProvider == null) {
+      return Scaffold(
         backgroundColor: DesignTokens.backgroundColor,
         appBar: AppBar(
           title: Text(loc.onboardingReviewPublishTitle ?? "Review & Publish"),
@@ -111,41 +147,62 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
           elevation: DesignTokens.adminCardElevation,
           iconTheme: IconThemeData(color: DesignTokens.appBarIconColor),
         ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Progress indicator and stepper consistent with other onboarding screens
-              Padding(
-                padding: const EdgeInsets.only(
-                    top: 12.0, left: 16, right: 16, bottom: 6),
-                child: OnboardingProgressIndicator(
-                  currentStep: 6,
-                  totalSteps: 6,
-                  stepLabel: loc.onboardingStepLabel(6, 6), // "Step 6 of 6"
-                ),
-              ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
-              Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _error != null
-                        ? Center(
-                            child: EmptyStateWidget(
-                              iconData: Icons.error_outline,
-                              title:
-                                  loc.onboardingReviewFailed ?? "Review Failed",
-                              message: _error!,
-                            ),
-                          )
-                        : Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12.0, vertical: 8.0),
-                            child: _OnboardingReviewContent(),
-                          ),
+    // Kick first validation once dependent providers are warm
+    _scheduleFirstValidation(context);
+
+    return ChangeNotifierProvider<OnboardingReviewProvider>.value(
+      value: _reviewProvider!,
+      child: Builder(
+        // IMPORTANT: obtain a new BuildContext under the provider
+        builder: (context) {
+          return Scaffold(
+            backgroundColor: DesignTokens.backgroundColor,
+            appBar: AppBar(
+              title:
+                  Text(loc.onboardingReviewPublishTitle ?? "Review & Publish"),
+              backgroundColor: colorScheme.surface,
+              elevation: DesignTokens.adminCardElevation,
+              iconTheme: IconThemeData(color: DesignTokens.appBarIconColor),
+            ),
+            body: SafeArea(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        top: 12.0, left: 16, right: 16, bottom: 6),
+                    child: OnboardingProgressIndicator(
+                      currentStep: 6,
+                      totalSteps: 6,
+                      stepLabel: loc.onboardingStepLabel(6, 6),
+                    ),
+                  ),
+                  Expanded(
+                    child: _loading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _error != null
+                            ? Center(
+                                child: EmptyStateWidget(
+                                  iconData: Icons.error_outline,
+                                  title: loc.onboardingReviewFailed ??
+                                      "Review Failed",
+                                  message: _error!,
+                                ),
+                              )
+                            : Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 12.0, vertical: 8.0),
+                                child: _OnboardingReviewContent(),
+                              ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -170,6 +227,30 @@ class _OnboardingReviewContent extends StatelessWidget {
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     final userId =
         Provider.of<UserProfileNotifier>(context, listen: false).user?.id ?? '';
+
+    final routeArgs = ModalRoute.of(context)?.settings.arguments;
+    if (routeArgs is Map<String, dynamic> && routeArgs['focusItemId'] != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ingredientProvider = context.read<IngredientMetadataProvider>();
+        final focusId = routeArgs['focusItemId'] as String;
+        final key = ingredientProvider.itemGlobalKeys[focusId];
+        if (key != null && key.currentContext != null) {
+          Scrollable.ensureVisible(
+            key.currentContext!,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+            alignment: 0.1,
+          );
+          // Optional highlight flash
+          Future.delayed(const Duration(milliseconds: 300), () {
+            final renderObj = key.currentContext?.findRenderObject();
+            if (renderObj is RenderBox) {
+              // You can integrate a state flag for temporary highlight here if desired
+            }
+          });
+        }
+      });
+    }
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -231,7 +312,10 @@ class _OnboardingReviewContent extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // --- (Step 6) Review Summary Table Widget Here ---
-                              ReviewSummaryTable(),
+                              FocusTraversalGroup(
+                                policy: OrderedTraversalPolicy(),
+                                child: ReviewSummaryTable(),
+                              ),
 
                               // --- (Step 7) Issue Drilldown/Expansion Widget Here ---
                               IssueDetailsExpansion(),

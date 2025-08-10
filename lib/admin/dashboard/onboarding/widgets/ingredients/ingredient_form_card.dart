@@ -42,10 +42,27 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
 
   bool _isSaving = false;
 
+  late final String _id;
+
   @override
   void initState() {
     super.initState();
+
     final data = widget.initialData;
+    final provider = context.read<IngredientMetadataProvider>();
+
+    // Stable ID for highlight mapping
+    _id = data?.id ?? '_new_${DateTime.now().millisecondsSinceEpoch}';
+
+    // 🔹 Register card-level key for section-level focus
+    provider.itemGlobalKeys[_id] ??= GlobalKey();
+
+    // Register highlight keys (only once)
+    provider.fieldGlobalKeys['$_id::name'] ??= GlobalKey();
+    provider.fieldGlobalKeys['$_id::typeId'] ??= GlobalKey();
+    provider.fieldGlobalKeys['$_id::notes'] ??= GlobalKey();
+    provider.fieldGlobalKeys['$_id::allergens'] ??= GlobalKey();
+
     if (data != null) {
       _nameController.text = data.name;
       _typeController.text = data.type;
@@ -95,7 +112,6 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
 
       context.read<IngredientMetadataProvider>().updateIngredient(ingredient);
 
-      // Only pop here if onSaved is not provided, otherwise rely on onSaved to pop
       if (widget.onSaved != null) {
         widget.onSaved!();
       } else if (context.mounted) {
@@ -123,141 +139,144 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
 
   @override
   Widget build(BuildContext context) {
-    try {
-      final typeProvider =
-          Provider.of<IngredientTypeProvider>(context, listen: false);
-      print(
-          '[ingredient form card][Provider DEBUG] IngredientTypeProvider FOUND! hashCode=${typeProvider.hashCode}');
-    } catch (e) {
-      print(
-          '[ingredient form card][Provider DEBUG] IngredientTypeProvider NOT FOUND: $e');
-    }
     final theme = Theme.of(context);
     final loc = widget.loc;
     final colorScheme = theme.colorScheme;
     final ingredientTypes =
         context.watch<IngredientTypeProvider>().ingredientTypes;
+    final provider = context.read<IngredientMetadataProvider>();
 
     if (_selectedTypeId == null && ingredientTypes.isNotEmpty) {
       _selectedTypeId = ingredientTypes.first.id;
       _typeController.text = ingredientTypes.first.name;
     }
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxWidth: 500,
-          maxHeight: 725,
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: loc.ingredientName,
-                    border: const OutlineInputBorder(),
-                  ),
-                  validator: (value) => (value == null || value.isEmpty)
-                      ? loc.requiredField
-                      : null,
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: _selectedTypeId,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: loc.ingredientType,
-                    border: const OutlineInputBorder(),
-                  ),
-                  items: ingredientTypes.map((type) {
-                    return DropdownMenuItem(
-                      value: type.id,
-                      child: Text(type.name),
-                    );
-                  }).toList(),
-                  validator: (val) => val == null ? loc.requiredField : null,
-                  onChanged: (val) {
-                    setState(() {
-                      _selectedTypeId = val;
-                      final type = ingredientTypes.firstWhere(
-                          (t) => t.id == val,
-                          orElse: () => IngredientType(id: '', name: ''));
-                      _typeController.text =
-                          type.name; // Keep type name in sync
-                    });
-                  },
-                ),
-                const SizedBox(height: 12),
-                IngredientTagSelector(
-                  selectedTags: _allergens,
-                  onChanged: (tags) => setState(() => _allergens = tags),
-                  loc: loc,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _notesController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: loc.ingredientDescription,
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 8,
+
+    return KeyedSubtree(
+        key: provider.itemGlobalKeys[_id],
+        child: Dialog(
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 500,
+              maxHeight: 725,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    CheckboxListTile(
-                      value: _removable,
-                      onChanged: (v) => setState(() => _removable = v ?? true),
-                      title: Text(loc.removable),
+                    TextFormField(
+                      key: provider.fieldGlobalKeys['$_id::name'],
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        labelText: loc.ingredientName,
+                        border: const OutlineInputBorder(),
+                      ),
+                      validator: (value) => (value == null || value.isEmpty)
+                          ? loc.requiredField
+                          : null,
                     ),
-                    CheckboxListTile(
-                      value: _supportsExtra,
-                      onChanged: (v) =>
-                          setState(() => _supportsExtra = v ?? false),
-                      title: Text(loc.supportsExtra),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      key: provider.fieldGlobalKeys['$_id::typeId'],
+                      value: _selectedTypeId,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: loc.ingredientType,
+                        border: const OutlineInputBorder(),
+                      ),
+                      items: ingredientTypes.map((type) {
+                        return DropdownMenuItem(
+                          value: type.id,
+                          child: Text(type.name),
+                        );
+                      }).toList(),
+                      validator: (val) =>
+                          val == null ? loc.requiredField : null,
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedTypeId = val;
+                          final type = ingredientTypes.firstWhere(
+                            (t) => t.id == val,
+                            orElse: () => IngredientType(id: '', name: ''),
+                          );
+                          _typeController.text = type.name;
+                        });
+                      },
                     ),
-                    CheckboxListTile(
-                      value: _sidesAllowed,
-                      onChanged: (v) =>
-                          setState(() => _sidesAllowed = v ?? false),
-                      title: Text(loc.sidesAllowed),
+                    const SizedBox(height: 12),
+                    IngredientTagSelector(
+                      key: provider.fieldGlobalKeys['$_id::allergens'],
+                      selectedTags: _allergens,
+                      onChanged: (tags) => setState(() => _allergens = tags),
+                      loc: loc,
                     ),
-                    CheckboxListTile(
-                      value: _outOfStock,
-                      onChanged: (v) =>
-                          setState(() => _outOfStock = v ?? false),
-                      title: Text(loc.outOfStock),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      key: provider.fieldGlobalKeys['$_id::notes'],
+                      controller: _notesController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: loc.ingredientDescription,
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 8,
+                      children: [
+                        CheckboxListTile(
+                          value: _removable,
+                          onChanged: (v) =>
+                              setState(() => _removable = v ?? true),
+                          title: Text(loc.removable),
+                        ),
+                        CheckboxListTile(
+                          value: _supportsExtra,
+                          onChanged: (v) =>
+                              setState(() => _supportsExtra = v ?? false),
+                          title: Text(loc.supportsExtra),
+                        ),
+                        CheckboxListTile(
+                          value: _sidesAllowed,
+                          onChanged: (v) =>
+                              setState(() => _sidesAllowed = v ?? false),
+                          title: Text(loc.sidesAllowed),
+                        ),
+                        CheckboxListTile(
+                          value: _outOfStock,
+                          onChanged: (v) =>
+                              setState(() => _outOfStock = v ?? false),
+                          title: Text(loc.outOfStock),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _isSaving ? null : _saveIngredient,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: DesignTokens.primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: _isSaving
+                            ? const CircularProgressIndicator(strokeWidth: 2)
+                            : Text(loc.saveIngredient),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isSaving ? null : _saveIngredient,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: DesignTokens.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: _isSaving
-                        ? const CircularProgressIndicator(strokeWidth: 2)
-                        : Text(loc.saveIngredient),
-                  ),
-                )
-              ],
+              ),
             ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 }
