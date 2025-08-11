@@ -67,6 +67,13 @@ class OnboardingReviewProvider extends ChangeNotifier {
   /// No placeholder logic; all validations are active.
   Future<void> validateAll() async {
     try {
+      _issuesBySection = {
+        'Features': [],
+        'Ingredient Types': [],
+        'Ingredients': [],
+        'Categories': [],
+        'Menu Items': [],
+      };
       final Map<String, List<OnboardingValidationIssue>> issues = {};
 
       // --- 1. Franchise Features ---
@@ -384,4 +391,25 @@ class OnboardingReviewProvider extends ChangeNotifier {
 
   /// Refresh (manual or after returning from fixing an issue)
   Future<void> refresh() => validateAll();
+
+  /// Public getter for the current validation issues.
+  /// Returns a flattened list from [_issuesBySection] for quick UI consumption.
+  List<OnboardingValidationIssue> get issues {
+    if (_issuesBySection.isEmpty) {
+      print(
+          '[OnboardingReviewProvider] ⚠️ issues getter called before any validation run.');
+      return const [];
+    }
+    final flat = _issuesBySection.values.expand((list) => list).toList();
+    print(
+        '[OnboardingReviewProvider] 📋 Returning ${flat.length} total issues across ${_issuesBySection.length} sections.');
+    return flat;
+  }
+
+  /// Alias for `issues` to maintain backward compatibility with older code.
+  List<OnboardingValidationIssue> get validationResults {
+    print(
+        '[OnboardingReviewProvider] 📋 validationResults getter called. Returning ${issues.length} issues.');
+    return issues;
+  }
 }

@@ -12,7 +12,7 @@ import 'package:flutter/material.dart';
 class IngredientTypeProvider with ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
   String franchiseId = '';
-
+  String? _loadedFranchiseId;
   bool _loading = false;
   String? _error;
 
@@ -30,16 +30,47 @@ class IngredientTypeProvider with ChangeNotifier {
 
   Set<String> get stagedForDelete => Set.unmodifiable(_stagedForDelete);
 
+  // Tracks whether this provider has ever completed an initial load.
+  bool _hasLoaded = false;
+  bool get isLoaded => _hasLoaded;
+
+  /// Uniform loader used by the review screen to avoid stale data.
+  /// - If [forceReloadFromFirestore] is true, always hits Firestore.
+  /// - Otherwise, it no-ops after the first successful load.
+  Future<void> load(
+      {bool forceReloadFromFirestore = false,
+      String? franchiseIdOverride}) async {
+    final id = (franchiseIdOverride ?? franchiseId);
+    if (id.isEmpty || id == 'unknown') {
+      debugPrint(
+          '[IngredientTypeProvider][load] ⚠️ Skipping load: empty/unknown franchiseId.');
+      return;
+    }
+
+    if (_hasLoaded && !forceReloadFromFirestore) {
+      debugPrint(
+          '[IngredientTypeProvider][load] 🔁 Using warm cache (types=${_ingredientTypes.length}).');
+      return;
+    }
+
+    debugPrint(
+        '[IngredientTypeProvider][load] 📡 Fetching ingredient types for franchise "$id"...');
+    await loadIngredientTypes(id); // ← uses your existing method
+    _hasLoaded = true;
+    debugPrint(
+        '[IngredientTypeProvider][load] ✅ Loaded (types=${_ingredientTypes.length}).');
+  }
+
   /// Load all ingredient types for the given franchise
-  Future<void> loadIngredientTypes(String newFranchiseId) async {
-    franchiseId = newFranchiseId;
+  Future<void> loadIngredientTypes(String franchiseId,
+      {bool forceReloadFromFirestore = false}) async {
     // Defensive: Block blank or unknown franchise IDs
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
-          '[IngredientTypeProvider] loadIngredientTypes called with blank/unknown franchiseId!');
+          '[IngredientTypeProvider][LOAD] ⚠️ Called with blank/unknown franchiseId! Skipping load.');
       await ErrorLogger.log(
         message:
-            'IngredientTypeProvider: loadIngredientTypes called with blank/unknown franchiseId',
+            'IngredientTypeProvider: load called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_type_provider.dart',
         screen: 'ingredient_type_provider.dart',
@@ -48,38 +79,57 @@ class IngredientTypeProvider with ChangeNotifier {
       );
       return;
     }
-    try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('franchises')
-          .doc(franchiseId)
-          .collection('ingredient_types')
-          .orderBy('sortOrder')
-          .get();
 
-      _ingredientTypes = snapshot.docs
-          .map((doc) => IngredientType.fromFirestore(doc))
-          .toList();
+    // Skip load if already loaded and not forcing refresh
+    if (_hasLoaded &&
+        _loadedFranchiseId == franchiseId &&
+        !forceReloadFromFirestore) {
+      print(
+          '[IngredientTypeProvider][LOAD] ✅ Already loaded for "$franchiseId". Skipping fetch.');
+      return;
+    }
+
+    try {
+      print(
+          '[IngredientTypeProvider][LOAD] 📡 Fetching ingredient types for franchise "$franchiseId"...');
+      final fetched = await FirestoreService.getIngredientTypes(franchiseId);
+
+      print(
+          '[IngredientTypeProvider][LOAD] ✅ Fetched ${fetched.length} ingredient types.');
+      for (final type in fetched) {
+        print('    • id="${type.id}", name="${type.name}"');
+      }
+
+      _ingredientTypes
+        ..clear()
+        ..addAll(fetched);
+
+      _hasLoaded = true;
+      _loadedFranchiseId = franchiseId;
+
       notifyListeners();
     } catch (e, stack) {
-      ErrorLogger.log(
-        message: 'Failed to load ingredient types',
-        source: 'ingredient_type_provider.dart',
-        severity: 'error',
+      print(
+          '[IngredientTypeProvider][LOAD][ERROR] ❌ Failed to load ingredient types: $e');
+      await ErrorLogger.log(
+        message: 'ingredient_type_load_error',
         stack: stack.toString(),
-        contextData: {
-          'franchiseId': franchiseId,
-          'errorType': e.runtimeType.toString(),
-        },
+        source: 'ingredient_type_provider.dart',
+        screen: 'ingredient_type_provider.dart',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
       );
+      rethrow;
     }
   }
 
   /// Reload ingredient types from Firestore (used after sidebar repair/add-new)
-  Future<void> reload(String franchiseId) async {
+  Future<void> reload(String franchiseId,
+      {bool forceReloadFromFirestore = false}) async {
     // Defensive: Block blank or unknown franchise IDs
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
-          '[IngredientTypeProvider] reload called with blank/unknown franchiseId!');
+          '[IngredientTypeProvider][RELOAD] ⚠️ Called with blank/unknown franchiseId! Skipping reload.');
       await ErrorLogger.log(
         message:
             'IngredientTypeProvider: reload called with blank/unknown franchiseId',
@@ -91,7 +141,18 @@ class IngredientTypeProvider with ChangeNotifier {
       );
       return;
     }
-    await loadIngredientTypes(franchiseId);
+
+    if (forceReloadFromFirestore) {
+      print(
+          '[IngredientTypeProvider][RELOAD] 🔄 Forcing reload from Firestore for franchise "$franchiseId"...');
+      _hasLoaded = false; // ensure load runs fresh
+    } else {
+      print(
+          '[IngredientTypeProvider][RELOAD] ♻️ Reloading ingredient types for franchise "$franchiseId"...');
+    }
+
+    await loadIngredientTypes(franchiseId,
+        forceReloadFromFirestore: forceReloadFromFirestore);
   }
 
   /// Returns all type IDs missing from the current provider (for repair UI)

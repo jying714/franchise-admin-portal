@@ -170,11 +170,19 @@ class IngredientMetadataProvider extends ChangeNotifier {
   }
 
   /// Loads ingredient metadata from Firestore and sets as original
-  Future<void> load() async {
-    // Defensive: Block blank or unknown franchise IDs
+  Future<void> load({bool forceReloadFromFirestore = false}) async {
+    print(
+        '\n[IngredientMetadataProvider.load] 🚀 Starting ingredient metadata load...');
+    print('   ➤ franchiseId = "$franchiseId"');
+    print('   ➤ _loadedFranchiseId = "${_loadedFranchiseId ?? 'null'}"');
+    print(
+        '   ➤ _hasLoaded = $_hasLoaded, _current.length = ${_current.length}');
+    print('   ➤ forceReloadFromFirestore = $forceReloadFromFirestore');
+
+    // 1️⃣ Defensive: Block blank or 'unknown' franchise IDs
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
-          '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
+          '[IngredientMetadataProvider.load] ⚠️ Called with blank/unknown franchiseId! Skipping load.');
       await ErrorLogger.log(
         message:
             'IngredientMetadataProvider: called with blank/unknown franchiseId',
@@ -186,20 +194,66 @@ class IngredientMetadataProvider extends ChangeNotifier {
       );
       return;
     }
+
+    // 2️⃣ Skip reload if already loaded for same franchise (unless forced)
+    if (!forceReloadFromFirestore &&
+        _hasLoaded &&
+        _loadedFranchiseId == franchiseId) {
+      print(
+          '[IngredientMetadataProvider.load] ⏩ Data already loaded for this franchise. Skipping fetch.');
+      return;
+    }
+
     try {
-      _original = await _firestore.fetchIngredientMetadata(franchiseId);
-      _current = List.from(_original);
+      // 3️⃣ Clear stale in-memory data
+      if (_current.isNotEmpty ||
+          _original.isNotEmpty ||
+          itemGlobalKeys.isNotEmpty) {
+        print(
+            '[IngredientMetadataProvider.load] 🧹 Clearing stale in-memory ingredient data...');
+        _current.clear();
+        _original.clear();
+        itemGlobalKeys.clear();
+        print(
+            '[IngredientMetadataProvider.load]    Cleared _current, _original, and itemGlobalKeys.');
+      }
+
+      // 4️⃣ Fetch from Firestore
+      print(
+          '[IngredientMetadataProvider.load] 📡 Fetching ingredient metadata from Firestore...');
+      final fetched = await _firestore.fetchIngredientMetadata(franchiseId);
+
+      print(
+          '[IngredientMetadataProvider.load] ✅ Fetch complete: ${fetched.length} items returned.');
+      if (fetched.isEmpty) {
+        print(
+            '[IngredientMetadataProvider.load] ⚠️ No ingredient docs found for this franchise.');
+      } else {
+        for (final ing in fetched) {
+          print(
+              '    • id="${ing.id}", name="${ing.name}", typeId="${ing.typeId}"');
+        }
+      }
+
+      // 5️⃣ Replace in-memory data
+      _original = List<IngredientMetadata>.from(fetched);
+      _current = List<IngredientMetadata>.from(fetched);
       _hasLoaded = true;
       _loadedFranchiseId = franchiseId;
 
-      // 🔹 Refresh global keys for each loaded ingredient
-      itemGlobalKeys.clear();
+      // 6️⃣ Refresh keys
       for (final ing in _current) {
         itemGlobalKeys[ing.id] = GlobalKey();
       }
+      print(
+          '[IngredientMetadataProvider.load] 🔑 Global keys set for ${itemGlobalKeys.length} items.');
 
+      // 7️⃣ Notify listeners
       notifyListeners();
+      print('[IngredientMetadataProvider.load] 🎯 Load complete. UI notified.');
     } catch (e, stack) {
+      print(
+          '[IngredientMetadataProvider.load][ERROR] ❌ Failed to load ingredient metadata: $e');
       await ErrorLogger.log(
         message: 'ingredient_metadata_load_error',
         stack: stack.toString(),
@@ -210,6 +264,8 @@ class IngredientMetadataProvider extends ChangeNotifier {
       );
       rethrow;
     }
+
+    print('[IngredientMetadataProvider.load] 🏁 Finished.\n');
   }
 
   Future<void> loadTemplate(String templateId) async {
@@ -839,15 +895,27 @@ class IngredientMetadataProvider extends ChangeNotifier {
   }
 
   Future<List<OnboardingValidationIssue>> validate({
-    List<String>? validTypeIds, // IngredientType IDs (for reference validation)
-    List<String>? referencedIngredientIds, // For orphan check if needed
+    List<String>? validTypeIds,
+    List<String>? referencedIngredientIds,
   }) async {
+    print('\n[IngredientMetadataProvider.validate] 🔍 Starting validation...');
+    print('   ➤ validTypeIds length = ${validTypeIds?.length ?? 0}');
+    print(
+        '   ➤ referencedIngredientIds length = ${referencedIngredientIds?.length ?? 0}');
+    print('   ➤ Current in-memory ingredient count = ${_current.length}');
+
     final issues = <OnboardingValidationIssue>[];
+
     try {
       final ingredientNames = <String>{};
-      for (final ing in _ingredients) {
-        // Name uniqueness
-        if (!ingredientNames.add(ing.name.trim().toLowerCase())) {
+      for (final ing in _current) {
+        print(
+            '   [CHECK] Ingredient: id="${ing.id}", name="${ing.name}", typeId="${ing.typeId}"');
+
+        // 🔹 Duplicate name check
+        final normalizedName = ing.name.trim().toLowerCase();
+        if (!ingredientNames.add(normalizedName)) {
+          print('    ❌ Duplicate name found: "${ing.name}"');
           issues.add(OnboardingValidationIssue(
             section: 'Ingredients',
             itemId: ing.id,
@@ -863,14 +931,15 @@ class IngredientMetadataProvider extends ChangeNotifier {
             actionLabel: "Fix Now",
             icon: Icons.label_important,
             detectedAt: DateTime.now(),
-            contextData: {
-              'ingredient': ing.toMap(),
-            },
+            contextData: {'ingredient': ing.toMap()},
           ));
         }
-        // Missing required type
+
+        // 🔹 Missing/invalid type check
         if ((ing.typeId?.isEmpty ?? true) ||
             (validTypeIds != null && !validTypeIds.contains(ing.typeId))) {
+          print(
+              '    ❌ Missing or invalid type for ingredient: "${ing.name}" (typeId="${ing.typeId}")');
           issues.add(OnboardingValidationIssue(
             section: 'Ingredients',
             itemId: ing.id,
@@ -886,18 +955,16 @@ class IngredientMetadataProvider extends ChangeNotifier {
             actionLabel: "Fix Now",
             icon: Icons.link_off,
             detectedAt: DateTime.now(),
-            contextData: {
-              'ingredient': ing.toMap(),
-            },
+            contextData: {'ingredient': ing.toMap()},
           ));
         }
-        // ... Add more field-level required checks as your model dictates (e.g., missing allergens, tag, etc)
       }
 
-      // (Optional) Orphan ingredient warning
+      // 🔹 Orphan ingredient warning
       if (referencedIngredientIds != null) {
-        for (final ing in _ingredients) {
+        for (final ing in _current) {
           if (!referencedIngredientIds.contains(ing.id)) {
+            print('    ⚠️ Unused ingredient: "${ing.name}"');
             issues.add(OnboardingValidationIssue(
               section: 'Ingredients',
               itemId: ing.id,
@@ -918,8 +985,9 @@ class IngredientMetadataProvider extends ChangeNotifier {
         }
       }
 
-      // At least one ingredient required
-      if (_ingredients.isEmpty) {
+      // 🔹 At least one ingredient required
+      if (_current.isEmpty) {
+        print('    ❌ No ingredients defined.');
         issues.add(OnboardingValidationIssue(
           section: 'Ingredients',
           itemId: '',
@@ -937,6 +1005,7 @@ class IngredientMetadataProvider extends ChangeNotifier {
         ));
       }
     } catch (e, stack) {
+      print('[IngredientMetadataProvider.validate][ERROR] ❌ $e');
       await ErrorLogger.log(
         message: 'ingredient_metadata_validate_failed',
         stack: stack.toString(),
@@ -945,6 +1014,9 @@ class IngredientMetadataProvider extends ChangeNotifier {
         contextData: {},
       );
     }
+
+    print(
+        '[IngredientMetadataProvider.validate] 🏁 Finished with ${issues.length} issues.\n');
     return issues;
   }
 }

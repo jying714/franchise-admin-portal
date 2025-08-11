@@ -17,12 +17,16 @@ class CategoryProvider extends ChangeNotifier {
   bool _loading = true;
   bool _groupByVisible = false;
 
+  // Tracks whether we've completed at least one successful Firestore load.
+  bool _hasLoaded = false;
+  bool get isLoaded => _hasLoaded;
+
   CategoryProvider({
     required this.firestore,
     required this.franchiseId,
   });
 
-  List<Category> get categories => _current;
+  List<Category> get categories => List.unmodifiable(_categories);
   bool get isLoading => _loading;
   bool get isDirty =>
       !const DeepCollectionEquality().equals(_original, _current);
@@ -35,6 +39,9 @@ class CategoryProvider extends ChangeNotifier {
   int get stagedCategoryCount => _stagedCategories.length;
 
   /// End
+
+  String? _loadedFranchiseId;
+  final List<Category> _categories = [];
 
   set groupByVisible(bool val) {
     _groupByVisible = val;
@@ -65,29 +72,135 @@ class CategoryProvider extends ChangeNotifier {
   }
 
   /// Reload categories from Firestore (useful after mapping or create-new in repair UI)
-  Future<void> reload() async {
-    await loadCategories();
+  Future<void> reload(String franchiseId,
+      {bool forceReloadFromFirestore = false}) async {
+    print('[CategoryProvider - reLoad] Incoming franchiseId="$franchiseId"');
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[CategoryProvider][RELOAD] ⚠️ Called with blank/unknown franchiseId! Skipping reload.');
+      await ErrorLogger.log(
+        message:
+            'CategoryProvider: reload called with blank/unknown franchiseId',
+        stack: '',
+        source: 'category_provider.dart',
+        screen: 'category_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
+
+    if (forceReloadFromFirestore) {
+      print(
+          '[CategoryProvider][RELOAD] 🔄 Forcing reload from Firestore for franchise "$franchiseId"...');
+      _hasLoaded = false;
+    } else {
+      print(
+          '[CategoryProvider][RELOAD] ♻️ Reloading categories for franchise "$franchiseId"...');
+    }
+
+    await loadCategories(franchiseId,
+        forceReloadFromFirestore: forceReloadFromFirestore);
   }
 
-  Future<void> loadCategories() async {
-    _loading = true;
-    Future.microtask(() => notifyListeners()); // <-- DEFERRED!
-    try {
-      _original = await firestore.fetchCategories(franchiseId);
-      _current = List.from(_original);
-    } catch (e, stack) {
+  Future<void> loadCategories(
+    String franchiseId, {
+    bool forceReloadFromFirestore = false,
+  }) async {
+    print('[CategoryProvider][LOAD] Incoming franchiseId="$franchiseId"');
+
+    // 🔹 If caller passed blank/unknown, try to use the last loaded franchise ID
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      if (_loadedFranchiseId != null && _loadedFranchiseId!.isNotEmpty) {
+        print(
+          '[CategoryProvider][LOAD] ℹ️ Using cached franchiseId="$_loadedFranchiseId" since incoming was blank/unknown.',
+        );
+        franchiseId = _loadedFranchiseId!;
+      }
+    }
+
+    // 🔹 Still invalid? bail and log
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print('[CategoryProvider][LOAD] ⚠️ No valid franchiseId. Skipping load.');
       await ErrorLogger.log(
-        message: 'Failed to load categories',
+        message: 'CategoryProvider: load called with blank/unknown franchiseId',
+        stack: '',
+        source: 'category_provider.dart',
+        screen: 'category_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
+
+    // 🔹 Skip if already loaded for this franchise and no force reload
+    if (_hasLoaded &&
+        _loadedFranchiseId == franchiseId &&
+        !forceReloadFromFirestore) {
+      print(
+        '[CategoryProvider][LOAD] ✅ Already loaded for "$franchiseId". Skipping fetch.',
+      );
+      return;
+    }
+
+    try {
+      print(
+        '[CategoryProvider][LOAD] 📡 Fetching categories for franchise "$franchiseId"...',
+      );
+      final fetched = await firestore.fetchCategories(franchiseId);
+
+      print('[CategoryProvider][LOAD] ✅ Fetched ${fetched.length} categories.');
+      for (final category in fetched) {
+        print('    • id="${category.id}", name="${category.name}"');
+      }
+
+      _categories
+        ..clear()
+        ..addAll(fetched);
+
+      _hasLoaded = true;
+      _loadedFranchiseId = franchiseId;
+
+      notifyListeners();
+    } catch (e, stack) {
+      print('[CategoryProvider][LOAD][ERROR] ❌ Failed to load categories: $e');
+      await ErrorLogger.log(
+        message: 'category_load_error',
         stack: stack.toString(),
-        source: 'CategoryProvider',
-        screen: 'onboarding_categories_screen',
+        source: 'category_provider.dart',
+        screen: 'category_provider.dart',
         severity: 'error',
         contextData: {'franchiseId': franchiseId},
       );
-    } finally {
-      _loading = false;
-      Future.microtask(() => notifyListeners()); // <-- DEFERRED!
+      rethrow;
     }
+  }
+
+  /// Uniform loader used by the review screen.
+  /// If [forceReloadFromFirestore] is false and data is warm, this is a no-op.
+  Future<void> load(
+      {bool forceReloadFromFirestore = false,
+      String? franchiseIdOverride}) async {
+    if (franchiseIdOverride != null &&
+        franchiseIdOverride.isNotEmpty &&
+        franchiseIdOverride != franchiseId) {
+      franchiseId = franchiseIdOverride;
+    }
+    print('[CategoryProvider - load] Incoming franchiseId="$franchiseId"');
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      debugPrint(
+          '[CategoryProvider][load] ⚠️ Skipping load: empty/unknown franchiseId.');
+      return;
+    }
+
+    if (_hasLoaded && !forceReloadFromFirestore) {
+      debugPrint(
+          '[CategoryProvider][load] 🔁 Using warm cache (categories=${_current.length}).');
+      return;
+    }
+
+    await loadCategories(franchiseId,
+        forceReloadFromFirestore: forceReloadFromFirestore);
   }
 
   Future<void> saveCategories() async {
@@ -122,7 +235,9 @@ class CategoryProvider extends ChangeNotifier {
     try {
       await firestore.deleteCategory(
           franchiseId: franchiseId, categoryId: categoryId);
-      await loadCategories(); // ⬅️ Forces Firestore re-fetch, like ingredients
+      await loadCategories(franchiseId,
+          forceReloadFromFirestore:
+              true); // ⬅️ Forces Firestore re-fetch, like ingredients
     } catch (e, stack) {
       await ErrorLogger.log(
         message: 'category_deletion_failed',
@@ -153,7 +268,8 @@ class CategoryProvider extends ChangeNotifier {
 
       await batch.commit();
 
-      await loadCategories(); // 🔁 reload after deletion
+      await loadCategories(franchiseId, forceReloadFromFirestore: true);
+      // 🔁 reload after deletion
     } catch (e, stack) {
       await ErrorLogger.log(
         message: 'bulk_delete_categories_failed',
@@ -215,7 +331,7 @@ class CategoryProvider extends ChangeNotifier {
       franchiseId = newId;
       // Defer to next frame to avoid build cycle errors
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        loadCategories();
+        loadCategories(franchiseId, forceReloadFromFirestore: true);
       });
     }
   }

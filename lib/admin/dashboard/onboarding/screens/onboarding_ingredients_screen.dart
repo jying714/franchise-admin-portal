@@ -34,69 +34,106 @@ class _OnboardingIngredientsScreenState
   final _listViewKey = GlobalKey();
   final Set<String> _highlightedIngredients = {};
 
-  void scrollAndHighlightIngredient(String ingredientId,
-      {List<String>? focusFields}) {
+  // Local-only keys for this screen instance (do NOT store in provider)
+  final Map<String, GlobalKey> _itemKeys = {};
+  final Map<String, GlobalKey> _fieldKeys =
+      {}; // optional, used for field highlights
+
+  // Handoff args from router → this screen
+  String? _focusIdFromArgs;
+  List<String>? _focusFieldsFromArgs;
+  bool _appliedFocusFromArgs = false;
+
+  void _maybeApplyInitialFocus() {
+    if (!mounted || _appliedFocusFromArgs != false) return;
+    if (_focusIdFromArgs == null) return;
+
     final provider = context.read<IngredientMetadataProvider>();
 
-    // Ensure the item key exists (in case load() created items but keys not registered yet)
-    final key =
-        provider.itemGlobalKeys.putIfAbsent(ingredientId, () => GlobalKey());
+    // Only try when items are present and the target exists
+    if (provider.ingredients.isEmpty) return;
+    final exists = provider.ingredients.any((e) => e.id == _focusIdFromArgs);
+    if (!exists) return;
 
-    final contextWidget = key.currentContext;
-    if (contextWidget == null || !mounted) {
+    debugPrint(
+      '[OnboardingIngredientsScreen] Applying initial focus to '
+      'ingredientId="${_focusIdFromArgs}" fields=${_focusFieldsFromArgs}',
+    );
+
+    _appliedFocusFromArgs = true; // guard: run exactly once
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      scrollAndHighlightIngredient(
+        _focusIdFromArgs!,
+        focusFields: _focusFieldsFromArgs,
+      );
+    });
+  }
+
+  void scrollAndHighlightIngredient(
+    String ingredientId, {
+    List<String>? focusFields,
+  }) {
+    // Use screen-local keys, not provider-level keys
+    final key = _itemKeys.putIfAbsent(ingredientId, () => GlobalKey());
+    final ctx = key.currentContext;
+
+    if (ctx == null || !mounted) {
       debugPrint(
-          '[OnboardingIngredientsScreen] No visible context for $ingredientId — skipping highlight.');
+        '[OnboardingIngredientsScreen] No visible context for $ingredientId — skipping highlight.',
+      );
       return;
     }
 
     // Scroll tile into view
     Scrollable.ensureVisible(
-      contextWidget,
+      ctx,
       duration: const Duration(milliseconds: 600),
       curve: Curves.easeInOut,
     );
 
-    // Highlight tile overlay
+    // Tile highlight overlay
     final overlay = Overlay.of(context);
-    final renderBox = contextWidget.findRenderObject() as RenderBox?;
-    if (overlay != null && renderBox != null) {
-      final highlightTile = OverlayEntry(
+    final box = ctx.findRenderObject() as RenderBox?;
+    if (overlay != null && box != null) {
+      final entry = OverlayEntry(
         builder: (_) => Positioned(
-          left: renderBox.localToGlobal(Offset.zero).dx,
-          top: renderBox.localToGlobal(Offset.zero).dy,
-          width: renderBox.size.width,
-          height: renderBox.size.height,
+          left: box.localToGlobal(Offset.zero).dx,
+          top: box.localToGlobal(Offset.zero).dy,
+          width: box.size.width,
+          height: box.size.height,
           child: IgnorePointer(
-            child: Container(color: Colors.yellow.withOpacity(0.3)),
+            child: Container(color: Colors.yellow.withOpacity(0.30)),
           ),
         ),
       );
-      overlay.insert(highlightTile);
-      Future.delayed(const Duration(seconds: 2), () => highlightTile.remove());
+      overlay.insert(entry);
+      Future.delayed(const Duration(seconds: 2), entry.remove);
     }
 
-    // Highlight specific fields if provided
+    // Optional: highlight specific fields if our screen registered them
     if (focusFields != null && focusFields.isNotEmpty) {
       for (final field in focusFields) {
-        final fieldKey = provider.fieldGlobalKeys['$ingredientId::$field'];
-        if (fieldKey != null && fieldKey.currentContext != null) {
-          final box = fieldKey.currentContext!.findRenderObject() as RenderBox?;
-          if (box != null && overlay != null) {
-            final highlightField = OverlayEntry(
-              builder: (_) => Positioned(
-                left: box.localToGlobal(Offset.zero).dx,
-                top: box.localToGlobal(Offset.zero).dy,
-                width: box.size.width,
-                height: box.size.height,
-                child: IgnorePointer(
-                  child: Container(color: Colors.orange.withOpacity(0.35)),
-                ),
+        final fKey = _fieldKeys['$ingredientId::$field'];
+        final fCtx = fKey?.currentContext;
+        if (fCtx == null) continue;
+        final overlay2 = Overlay.of(context);
+        final fBox = fCtx.findRenderObject() as RenderBox?;
+        if (overlay2 != null && fBox != null) {
+          final entry2 = OverlayEntry(
+            builder: (_) => Positioned(
+              left: fBox.localToGlobal(Offset.zero).dx,
+              top: fBox.localToGlobal(Offset.zero).dy,
+              width: fBox.size.width,
+              height: fBox.size.height,
+              child: IgnorePointer(
+                child: Container(color: Colors.orange.withOpacity(0.35)),
               ),
-            );
-            overlay.insert(highlightField);
-            Future.delayed(
-                const Duration(seconds: 2), () => highlightField.remove());
-          }
+            ),
+          );
+          overlay2.insert(entry2);
+          Future.delayed(const Duration(seconds: 2), entry2.remove);
         }
       }
     }
@@ -280,26 +317,42 @@ class _OnboardingIngredientsScreenState
   }
 
   @override
-  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_hasInitialized) return;
 
+    // 1️⃣ Capture router args ONCE
     final args = ModalRoute.of(context)?.settings.arguments;
-    final provider = context.read<IngredientMetadataProvider>();
-
-    // Always load the provider first so keys exist
-    provider.load().then((_) {
-      if (args is Map && args.containsKey('focusItemId')) {
-        final String focusId = args['focusItemId'] as String;
-        final List<String>? focusFields =
-            (args['focusFields'] as List?)?.cast<String>();
-
-        // Wait until the widget tree is painted
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          scrollAndHighlightIngredient(focusId, focusFields: focusFields);
-        });
+    if (args is Map) {
+      _focusIdFromArgs = (args['focusItemId'] ??
+          args['ingredientId'] ??
+          args['itemId']) as String?;
+      final fields = args['focusFields'];
+      if (fields is List) {
+        _focusFieldsFromArgs = fields.cast<String>();
       }
+      debugPrint(
+        '[OnboardingIngredientsScreen] Router args captured: '
+        'focusItemId=$_focusIdFromArgs, focusFields=$_focusFieldsFromArgs',
+      );
+    } else {
+      debugPrint('[OnboardingIngredientsScreen] No router args provided.');
+    }
+
+    // 2️⃣ Ensure provider data & keys exist BEFORE attempting focus
+    final provider = context.read<IngredientMetadataProvider>();
+    provider.load(forceReloadFromFirestore: true).then((_) {
+      if (!mounted) return;
+
+      // 3️⃣ Try initial focus once data & keys are ready
+      _maybeApplyInitialFocus();
+
+      debugPrint(
+        '[OnboardingIngredientsScreen] ✅ Ingredient reload complete. '
+        'Count=${provider.ingredients.length}',
+      );
+
+      setState(() {}); // Force UI refresh after load
     });
 
     _hasInitialized = true;
@@ -324,6 +377,7 @@ class _OnboardingIngredientsScreenState
       final theme = Theme.of(context);
       final colorScheme = theme.colorScheme;
       final provider = context.watch<IngredientMetadataProvider>();
+      _maybeApplyInitialFocus();
       print(
           '[OnboardingIngredientsScreen] IngredientMetadataProvider build() provider hashCode=${provider.hashCode}');
       print(
@@ -671,14 +725,11 @@ class _OnboardingIngredientsScreenState
                                   ),
                                 ),
                                 ...groupItems.map((item) {
-                                  final itemKey =
-                                      provider.itemGlobalKeys[item.id] ??
-                                          GlobalKey();
-                                  provider.itemGlobalKeys[item.id] = itemKey;
+                                  final itemKey = _itemKeys.putIfAbsent(
+                                      item.id, () => GlobalKey());
 
                                   return Container(
-                                    key:
-                                        itemKey, // 🔹 assign key for scroll/highlight
+                                    key: itemKey,
                                     child: IngredientListTile(
                                       ingredient: item,
                                       franchiseId: provider.franchiseId,

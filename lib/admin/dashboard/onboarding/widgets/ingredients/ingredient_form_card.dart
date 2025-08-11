@@ -44,6 +44,8 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
 
   late final String _id;
 
+  final GlobalKey _formRootKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
@@ -152,7 +154,7 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
     }
 
     return KeyedSubtree(
-        key: provider.itemGlobalKeys[_id],
+        key: _formRootKey,
         child: Dialog(
           insetPadding:
               const EdgeInsets.symmetric(horizontal: 40, vertical: 24),

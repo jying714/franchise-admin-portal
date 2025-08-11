@@ -37,11 +37,28 @@ class _OnboardingCategoriesScreenState
     if (_hasInitialized) return;
 
     final franchiseId = context.read<FranchiseProvider>().franchiseId;
-    final firestore = context.read<FirestoreService>();
 
     if (franchiseId.isNotEmpty && franchiseId != 'unknown') {
       final provider = context.read<CategoryProvider>();
-      provider.loadCategories();
+
+      // 🔹 Force reload from Firestore to ensure UI shows latest categories
+      provider
+          .loadCategories(
+        franchiseId,
+        forceReloadFromFirestore: true,
+      )
+          .then((_) {
+        if (!mounted) return;
+        debugPrint(
+          '[OnboardingCategoriesScreen] ✅ Category reload complete. '
+          'Count=${provider.categories.length}',
+        );
+        setState(() {}); // Trigger UI refresh after load
+      });
+    } else {
+      debugPrint(
+        '[OnboardingCategoriesScreen] ⚠️ Skipping load: blank/unknown franchiseId.',
+      );
     }
 
     _hasInitialized = true;

@@ -43,7 +43,19 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
 
     final franchiseId = context.read<FranchiseProvider>().franchiseId;
     if (franchiseId.isNotEmpty && franchiseId != 'unknown') {
-      context.read<MenuItemProvider>().loadMenuItems(franchiseId);
+      // Force reload all prerequisites so screen is always in sync
+      context
+          .read<IngredientTypeProvider>()
+          .loadIngredientTypes(franchiseId, forceReloadFromFirestore: true);
+      context
+          .read<IngredientMetadataProvider>()
+          .load(forceReloadFromFirestore: true);
+      context
+          .read<CategoryProvider>()
+          .loadCategories(franchiseId, forceReloadFromFirestore: true);
+      context
+          .read<MenuItemProvider>()
+          .loadMenuItems(franchiseId, forceReloadFromFirestore: true);
     }
 
     _hasInitialized = true;

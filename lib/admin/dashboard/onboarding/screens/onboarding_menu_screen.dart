@@ -125,11 +125,13 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     completed: progress['feature_setup'] == true,
                     onTap: () {
                       print(
-                          '[OnboardingMenuScreen] Navigating to onboarding_feature_setup');
-                      Navigator.pushNamed(
-                        context,
-                        '/dashboard?section=onboarding_feature_setup',
-                      );
+                          '[OnboardingMenuScreen] 🛠 Navigating to onboarding_feature_setup');
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        Navigator.pushNamed(
+                          context,
+                          '/dashboard?section=onboarding_feature_setup',
+                        );
+                      });
                     },
                   ),
                   OnboardingStepCard(
@@ -139,11 +141,13 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     completed: progress['ingredientTypes'] == true,
                     onTap: () {
                       print(
-                          '[OnboardingMenuScreen] Navigating to onboardingIngredientTypes');
-                      Navigator.pushNamed(
-                        context,
-                        '/dashboard?section=onboardingIngredientTypes',
-                      );
+                          '[OnboardingMenuScreen] 🛠 Navigating to onboardingIngredientTypes');
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        Navigator.pushNamed(
+                          context,
+                          '/dashboard?section=onboardingIngredientTypes',
+                        );
+                      });
                     },
                   ),
                   OnboardingStepCard(
@@ -153,11 +157,13 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     completed: progress['ingredients'] == true,
                     onTap: () {
                       print(
-                          '[OnboardingMenuScreen] Navigating to onboardingIngredients');
-                      Navigator.pushNamed(
-                        context,
-                        '/dashboard?section=onboardingIngredients',
-                      );
+                          '[OnboardingMenuScreen] 🛠 Navigating to onboardingIngredients');
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        Navigator.pushNamed(
+                          context,
+                          '/dashboard?section=onboardingIngredients',
+                        );
+                      });
                     },
                   ),
                   OnboardingStepCard(
@@ -167,11 +173,13 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     completed: progress['categories'] == true,
                     onTap: () {
                       print(
-                          '[OnboardingMenuScreen] Navigating to onboardingCategories');
-                      Navigator.pushNamed(
-                        context,
-                        '/dashboard?section=onboardingCategories',
-                      );
+                          '[OnboardingMenuScreen] 🛠 Navigating to onboardingCategories');
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        Navigator.pushNamed(
+                          context,
+                          '/dashboard?section=onboardingCategories',
+                        );
+                      });
                     },
                   ),
                   OnboardingStepCard(
@@ -181,11 +189,13 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     completed: progress['menuItems'] == true,
                     onTap: () {
                       print(
-                          '[OnboardingMenuScreen] Navigating to onboardingMenuItems');
-                      Navigator.pushNamed(
-                        context,
-                        '/dashboard?section=onboardingMenuItems',
-                      );
+                          '[OnboardingMenuScreen] 🛠 Navigating to onboardingMenuItems');
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        Navigator.pushNamed(
+                          context,
+                          '/dashboard?section=onboardingMenuItems',
+                        );
+                      });
                     },
                   ),
                   OnboardingStepCard(
@@ -195,11 +205,13 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     completed: progress['review'] == true,
                     onTap: () {
                       print(
-                          '[OnboardingMenuScreen] Navigating to onboardingReview');
-                      Navigator.pushNamed(
-                        context,
-                        '/dashboard?section=onboardingReview',
-                      );
+                          '[OnboardingMenuScreen] 🛠 Navigating to onboardingReview');
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        Navigator.pushNamed(
+                          context,
+                          '/dashboard?section=onboardingReview',
+                        );
+                      });
                     },
                   ),
                   const SizedBox(height: 16),

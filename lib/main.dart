@@ -872,8 +872,24 @@ class _FranchiseAuthenticatedRootState
                 ),
               );
             }
-            if (uri.path == '/dashboard' &&
-                uri.queryParameters.containsKey('section')) {
+            // DASHBOARD route handling (supports with/without ?section= param)
+            if (uri.path == '/dashboard') {
+              final sectionParam = uri.queryParameters['section'];
+
+              // Default to first sidebar section if no param
+              final targetSectionKey = sectionParam?.isNotEmpty == true
+                  ? sectionParam!
+                  : getSidebarSections().first.key;
+
+              print('[ROUTER] 📌 Requested /dashboard');
+              print('[ROUTER] 🔑 Target section key: "$targetSectionKey"');
+
+              final sectionExists =
+                  sectionRegistry.any((s) => s.key == targetSectionKey);
+              if (!sectionExists) {
+                print('[ROUTER] ❌ No matching section found, using default.');
+              }
+
               return MaterialPageRoute(
                 builder: (context) {
                   return FranchiseGate(
@@ -883,49 +899,107 @@ class _FranchiseAuthenticatedRootState
                             Provider.of<FranchiseProvider>(ctx, listen: false);
                         final franchiseId = franchiseProvider.franchiseId;
 
-                        print(
-                            '[ROUTER] 📌 Routing to /dashboard with section param');
                         print('[ROUTER] 🔍 franchiseId = "$franchiseId"');
 
                         if (franchiseId.isEmpty || franchiseId == 'unknown') {
                           print(
-                              '[ROUTER] ⚠️ Franchise ID is still loading... showing spinner.');
+                              '[ROUTER] ⚠️ Franchise ID loading — showing spinner.');
                           return const Scaffold(
                             body: Center(child: CircularProgressIndicator()),
                           );
                         }
 
-                        final sectionKey = uri.queryParameters['section'];
-                        print(
-                            '[ROUTER] 🔑 Requested dashboard section key: "$sectionKey"');
+                        // ──────────────────────────────────────────────
+                        // Prerequisite data checks for onboarding sections
+                        // ──────────────────────────────────────────────
+                        return FutureBuilder<void>(
+                          future: () async {
+                            try {
+                              if (targetSectionKey == 'onboardingIngredients') {
+                                print(
+                                    '[ROUTER] 📦 Preloading data for Ingredients...');
 
-                        final section = sectionRegistry.firstWhere(
-                          (s) => s.key == sectionKey,
-                          orElse: () {
+                                final ingredientTypesProvider =
+                                    ctx.read<IngredientTypeProvider>();
+                                final ingredientsProvider =
+                                    ctx.read<IngredientMetadataProvider>();
+
+                                // Ingredient Types preload
+                                if (ingredientTypesProvider.types.isEmpty) {
+                                  print(
+                                      '[ROUTER]    ➤ Loading Ingredient Types...');
+                                  await ingredientTypesProvider
+                                      .loadTypes(franchiseId);
+                                  print(
+                                      '[ROUTER]    ✔ Loaded Ingredient Types: count=${ingredientTypesProvider.types.length}');
+                                } else {
+                                  print(
+                                      '[ROUTER]    ✔ Ingredient Types already loaded: count=${ingredientTypesProvider.types.length}');
+                                }
+
+                                // Ingredient Metadata preload
+                                if (!ingredientsProvider.isInitialized) {
+                                  print('[ROUTER]    ➤ Loading Ingredients...');
+                                  await ingredientsProvider.load();
+                                  print(
+                                      '[ROUTER]    ✔ Loaded Ingredients: count=${ingredientsProvider.ingredients.length}');
+                                } else {
+                                  print(
+                                      '[ROUTER]    ✔ Ingredients already loaded: count=${ingredientsProvider.ingredients.length}');
+                                }
+                              } else if (targetSectionKey ==
+                                  'onboardingIngredientTypes') {
+                                print(
+                                    '[ROUTER] 📦 Preloading data for Ingredient Types only...');
+
+                                final ingredientTypesProvider =
+                                    ctx.read<IngredientTypeProvider>();
+
+                                if (ingredientTypesProvider.types.isEmpty) {
+                                  print(
+                                      '[ROUTER]    ➤ Loading Ingredient Types...');
+                                  await ingredientTypesProvider
+                                      .loadTypes(franchiseId);
+                                  print(
+                                      '[ROUTER]    ✔ Loaded Ingredient Types: count=${ingredientTypesProvider.types.length}');
+                                } else {
+                                  print(
+                                      '[ROUTER]    ✔ Ingredient Types already loaded: count=${ingredientTypesProvider.types.length}');
+                                }
+                              }
+                            } catch (e, st) {
+                              print(
+                                  '[ROUTER][ERROR] ⚠ Failed while preloading prerequisites.');
+                              print('    Exception: $e');
+                              print('    Stacktrace: $st');
+                            }
+                          }(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Scaffold(
+                                body:
+                                    Center(child: CircularProgressIndicator()),
+                              );
+                            }
+
+                            // ──────────────────────────────────────────────
+                            // Navigate to AdminDashboardScreen
+                            // ──────────────────────────────────────────────
                             print(
-                                '[ROUTER] ❌ No matching section found for key "$sectionKey".');
-                            return DashboardSection(
-                              key: 'notFound',
-                              title: 'Not Found',
-                              icon: Icons.error,
-                              sidebarOrder: 999,
-                              builder: (_) => const Scaffold(
-                                body: Center(child: Text('Section not found')),
-                              ),
+                                '[ROUTER] ✅ Navigating to AdminDashboardScreen with section "$targetSectionKey"');
+                            return AdminDashboardScreen(
+                              key: ValueKey(
+                                  'AdminDashboardScreen:$targetSectionKey'),
+                              initialSectionKey: targetSectionKey,
                             );
                           },
-                        );
-
-                        print(
-                            '[ROUTER] ✅ Routing to AdminDashboardScreen with sectionKey="$sectionKey"');
-                        return AdminDashboardScreen(
-                          key: ValueKey('AdminDashboardScreen:$sectionKey'),
-                          initialSectionKey: sectionKey,
                         );
                       },
                     ),
                   );
                 },
+                settings: settings,
               );
             }
 

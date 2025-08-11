@@ -35,92 +35,139 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
   bool _providerReady = false;
   bool _loading = true;
   String? _error;
-  bool _didKickOffValidation = false;
 
-  bool _providersReady(BuildContext context) {
+  // Guards
+  bool _didKickOffValidation = false;
+  bool _isValidating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initial validation will be scheduled after dependencies resolve.
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Only set up provider & initial validation once.
+    if (!_providerReady) {
+      try {
+        final franchiseFeatureProvider =
+            Provider.of<FranchiseFeatureProvider>(context, listen: false);
+        final ingredientTypeProvider =
+            Provider.of<IngredientTypeProvider>(context, listen: false);
+        final ingredientMetadataProvider =
+            Provider.of<IngredientMetadataProvider>(context, listen: false);
+        final categoryProvider =
+            Provider.of<CategoryProvider>(context, listen: false);
+        final menuItemProvider =
+            Provider.of<MenuItemProvider>(context, listen: false);
+        final firestoreService =
+            Provider.of<FirestoreService>(context, listen: false);
+        final auditLogService =
+            Provider.of<AuditLogService>(context, listen: false);
+
+        _reviewProvider = OnboardingReviewProvider(
+          franchiseFeatureProvider: franchiseFeatureProvider,
+          ingredientTypeProvider: ingredientTypeProvider,
+          ingredientMetadataProvider: ingredientMetadataProvider,
+          categoryProvider: categoryProvider,
+          menuItemProvider: menuItemProvider,
+          firestoreService: firestoreService,
+          auditLogService: auditLogService,
+        );
+
+        _providerReady = true;
+        setState(() {});
+
+        // Schedule first validation after build completes.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scheduleFirstValidation();
+        });
+      } catch (e) {
+        setState(() {
+          _loading = false;
+          _error = e.toString();
+        });
+      }
+    }
+  }
+
+  bool _providersReady() {
     final types = context.read<IngredientTypeProvider>().ingredientTypes;
     final ingredients = context.read<IngredientMetadataProvider>().ingredients;
     final categories = context.read<CategoryProvider>().categories;
     final menuItems = context.read<MenuItemProvider>().menuItems;
 
-    // Consider "ready" when providers have loaded at least once.
-    // We don't require non-empty, just that they are "loaded" lists.
     return types != null &&
         ingredients != null &&
         categories != null &&
         menuItems != null;
   }
 
-  void _scheduleFirstValidation(BuildContext context) {
+  void _scheduleFirstValidation() {
     if (_didKickOffValidation) return;
-    if (!_providersReady(context)) return;
+    if (!_providersReady()) return;
     if (!mounted || _reviewProvider == null) return;
 
     _didKickOffValidation = true;
-    _reviewProvider!.validateAll();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    // ReviewProvider initialized in didChangeDependencies after all context Providers are available.
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Only instantiate if not already
-    if (!mounted || _loading == false) return;
-    try {
-      final franchiseFeatureProvider =
-          Provider.of<FranchiseFeatureProvider>(context, listen: false);
-      final ingredientTypeProvider =
-          Provider.of<IngredientTypeProvider>(context, listen: false);
-      final ingredientMetadataProvider =
-          Provider.of<IngredientMetadataProvider>(context, listen: false);
-      final categoryProvider =
-          Provider.of<CategoryProvider>(context, listen: false);
-      final menuItemProvider =
-          Provider.of<MenuItemProvider>(context, listen: false);
-      final firestoreService =
-          Provider.of<FirestoreService>(context, listen: false);
-      final auditLogService =
-          Provider.of<AuditLogService>(context, listen: false);
-
-      _reviewProvider = OnboardingReviewProvider(
-        franchiseFeatureProvider: franchiseFeatureProvider,
-        ingredientTypeProvider: ingredientTypeProvider,
-        ingredientMetadataProvider: ingredientMetadataProvider,
-        categoryProvider: categoryProvider,
-        menuItemProvider: menuItemProvider,
-        firestoreService: firestoreService,
-        auditLogService: auditLogService,
-      );
-      _providerReady = true;
-      setState(() {}); // make build run with a mounted provider
-      _initValidation();
-    } catch (e, st) {
-      setState(() {
-        _loading = false;
-        _error = e.toString();
-      });
-    }
+    debugPrint(
+        '[OnboardingReviewScreen] ⏩ Triggering initial _initValidation()...');
+    _initValidation();
   }
 
   Future<void> _initValidation() async {
+    if (_isValidating) {
+      debugPrint(
+          '[OnboardingReviewScreen._initValidation] 🚫 Validation already running, skipping.');
+      return;
+    }
+    _isValidating = true;
+
     try {
       setState(() => _loading = true);
+
+      final franchiseId =
+          Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+
+      debugPrint(
+          '\n[OnboardingReviewScreen._initValidation] 🚀 Starting validation for franchise "$franchiseId"...');
+
+      // Reload only if needed; avoids unnecessary Firestore hits
+      await Provider.of<IngredientMetadataProvider>(context, listen: false)
+          .load(forceReloadFromFirestore: false);
+
+      await Provider.of<IngredientTypeProvider>(context, listen: false)
+          .loadIngredientTypes(franchiseId, forceReloadFromFirestore: false);
+
+      await Provider.of<CategoryProvider>(context, listen: false)
+          .loadCategories(franchiseId, forceReloadFromFirestore: false);
+
+      await Provider.of<MenuItemProvider>(context, listen: false)
+          .loadMenuItems(franchiseId, forceReloadFromFirestore: false);
+
+      debugPrint(
+          '[OnboardingReviewScreen._initValidation] ✅ Providers loaded, running validateAll()...');
+
       await _reviewProvider?.validateAll();
 
       setState(() {
         _loading = false;
         _error = null;
       });
+
+      final issueCount = _reviewProvider?.validationResults.length ?? 0;
+      debugPrint(
+          '[OnboardingReviewScreen._initValidation] 🎯 Validation complete. Issues found: $issueCount');
     } catch (e, st) {
+      debugPrint('[OnboardingReviewScreen._initValidation][ERROR] ❌ $e\n$st');
       setState(() {
         _loading = false;
         _error = e.toString();
       });
+    } finally {
+      _isValidating = false;
     }
   }
 
@@ -129,7 +176,7 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
 
-    // Force rebuild when data providers populate (do NOT read OnboardingReviewProvider here)
+    // Trigger rebuild when dependent providers change
     final _ = (
       context.watch<IngredientTypeProvider>().ingredientTypes,
       context.watch<IngredientMetadataProvider>().ingredients,
@@ -137,7 +184,6 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
       context.watch<MenuItemProvider>().menuItems
     );
 
-    // If our local provider isn't constructed yet, show a lightweight shell
     if (!_providerReady || _reviewProvider == null) {
       return Scaffold(
         backgroundColor: DesignTokens.backgroundColor,
@@ -151,71 +197,55 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
       );
     }
 
-    // Kick first validation once dependent providers are warm
-    _scheduleFirstValidation(context);
+    _scheduleFirstValidation();
 
     return ChangeNotifierProvider<OnboardingReviewProvider>.value(
       value: _reviewProvider!,
-      child: Builder(
-        // IMPORTANT: obtain a new BuildContext under the provider
-        builder: (context) {
-          return Scaffold(
-            backgroundColor: DesignTokens.backgroundColor,
-            appBar: AppBar(
-              title:
-                  Text(loc.onboardingReviewPublishTitle ?? "Review & Publish"),
-              backgroundColor: colorScheme.surface,
-              elevation: DesignTokens.adminCardElevation,
-              iconTheme: IconThemeData(color: DesignTokens.appBarIconColor),
-            ),
-            body: SafeArea(
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        top: 12.0, left: 16, right: 16, bottom: 6),
-                    child: OnboardingProgressIndicator(
-                      currentStep: 6,
-                      totalSteps: 6,
-                      stepLabel: loc.onboardingStepLabel(6, 6),
-                    ),
-                  ),
-                  Expanded(
-                    child: _loading
-                        ? const Center(child: CircularProgressIndicator())
-                        : _error != null
-                            ? Center(
-                                child: EmptyStateWidget(
-                                  iconData: Icons.error_outline,
-                                  title: loc.onboardingReviewFailed ??
-                                      "Review Failed",
-                                  message: _error!,
-                                ),
-                              )
-                            : Padding(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 12.0, vertical: 8.0),
-                                child: _OnboardingReviewContent(),
-                              ),
-                  ),
-                ],
+      child: Scaffold(
+        backgroundColor: DesignTokens.backgroundColor,
+        appBar: AppBar(
+          title: Text(loc.onboardingReviewPublishTitle ?? "Review & Publish"),
+          backgroundColor: colorScheme.surface,
+          elevation: DesignTokens.adminCardElevation,
+          iconTheme: IconThemeData(color: DesignTokens.appBarIconColor),
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(
+                    top: 12.0, left: 16, right: 16, bottom: 6),
+                child: OnboardingProgressIndicator(
+                  currentStep: 6,
+                  totalSteps: 6,
+                  stepLabel: loc.onboardingStepLabel(6, 6),
+                ),
               ),
-            ),
-          );
-        },
+              Expanded(
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error != null
+                        ? Center(
+                            child: EmptyStateWidget(
+                              iconData: Icons.error_outline,
+                              title:
+                                  loc.onboardingReviewFailed ?? "Review Failed",
+                              message: _error!,
+                            ),
+                          )
+                        : Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12.0, vertical: 8.0),
+                            child: _OnboardingReviewContent(),
+                          ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
-
-/// The main content scaffold for the review step.
-/// This widget should lay out the grid/column structure for:
-///  - Review summary table
-///  - Issue drilldown/expansion
-///  - Data export/download
-///  - Publish button & confirmation
-///  - Audit trail/history
-/// All widgets should match the onboarding theme and spacing.
 
 class _OnboardingReviewContent extends StatelessWidget {
   @override
@@ -230,26 +260,10 @@ class _OnboardingReviewContent extends StatelessWidget {
 
     final routeArgs = ModalRoute.of(context)?.settings.arguments;
     if (routeArgs is Map<String, dynamic> && routeArgs['focusItemId'] != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final ingredientProvider = context.read<IngredientMetadataProvider>();
-        final focusId = routeArgs['focusItemId'] as String;
-        final key = ingredientProvider.itemGlobalKeys[focusId];
-        if (key != null && key.currentContext != null) {
-          Scrollable.ensureVisible(
-            key.currentContext!,
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeInOut,
-            alignment: 0.1,
-          );
-          // Optional highlight flash
-          Future.delayed(const Duration(milliseconds: 300), () {
-            final renderObj = key.currentContext?.findRenderObject();
-            if (renderObj is RenderBox) {
-              // You can integrate a state flag for temporary highlight here if desired
-            }
-          });
-        }
-      });
+      debugPrint(
+        '[OnboardingReviewScreen] Focus requested for ingredientId="${routeArgs['focusItemId']}". '
+        'Delegating to OnboardingIngredientsScreen to handle scrolling/highlighting.',
+      );
     }
 
     return LayoutBuilder(
@@ -262,7 +276,6 @@ class _OnboardingReviewContent extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ===== Title & Description =====
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: Text(
@@ -289,13 +302,10 @@ class _OnboardingReviewContent extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                // ===== Main Content: Summary table and details =====
                 Flex(
                   direction: isWide ? Axis.horizontal : Axis.vertical,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- Left/Main Column: Review Summary Table + Drilldown + Data Export ---
                     Expanded(
                       flex: 5,
                       child: Card(
@@ -311,28 +321,17 @@ class _OnboardingReviewContent extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // --- (Step 6) Review Summary Table Widget Here ---
                               FocusTraversalGroup(
                                 policy: OrderedTraversalPolicy(),
                                 child: ReviewSummaryTable(),
                               ),
-
-                              // --- (Step 7) Issue Drilldown/Expansion Widget Here ---
                               IssueDetailsExpansion(),
-
-                              // --- (Step 8) Data Export/Download Widget Here ---
                               OnboardingDataExportButton(),
-
-                              // Spacer for button row
                               const SizedBox(height: 32),
-
-                              // --- (Step 9) Publish Button & Confirmation Dialog Widget Here ---
                               PublishOnboardingButton(
                                 franchiseId: franchiseId,
                                 userId: userId,
                               ),
-
-                              // Info note about publish state
                               reviewProvider.isPublishable
                                   ? Padding(
                                       padding: const EdgeInsets.only(top: 16.0),
@@ -383,7 +382,6 @@ class _OnboardingReviewContent extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // --- Right Column: Audit Trail, future info panel, etc. ---
                     if (isWide)
                       Expanded(
                         flex: 3,
@@ -400,7 +398,6 @@ class _OnboardingReviewContent extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // --- (Step 10) Audit Trail/History Widget Here ---
                                 OnboardingAuditTrail(franchiseId: franchiseId),
                               ],
                             ),
@@ -409,8 +406,6 @@ class _OnboardingReviewContent extends StatelessWidget {
                       ),
                   ],
                 ),
-
-                // Spacer to keep publish button above bottom nav in mobile layout
                 const SizedBox(height: 26),
               ],
             ),

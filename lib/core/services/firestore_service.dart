@@ -2545,6 +2545,34 @@ class FirestoreService {
         .toList();
   }
 
+  Future<List<MenuItem>> fetchMenuItems(String franchiseId) async {
+    try {
+      final snapshot = await _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection(_menuItems)
+          .orderBy('sortOrder')
+          .get();
+
+      return snapshot.docs
+          .map((d) => MenuItem.fromFirestore(
+                d.data() as Map<String, dynamic>,
+                d.id,
+              ))
+          .toList();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to fetch menu items',
+        source: 'FirestoreService',
+        screen: 'menu_item_provider.dart',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId},
+      );
+      rethrow;
+    }
+  }
+
   Stream<List<MenuItem>> getMenuItemsByIds(
       String franchiseId, List<String> ids) {
     if (ids.isEmpty) return Stream.value([]);
@@ -4293,6 +4321,9 @@ class FirestoreService {
   /// Fetches all categories for a given franchise
   Future<List<model.Category>> fetchCategories(String franchiseId) async {
     try {
+      print(
+          '[FirestoreService.fetchCategories] Fetching from /franchises/$franchiseId/categories');
+
       final snapshot = await _db
           .collection('franchises')
           .doc(franchiseId)
@@ -4569,6 +4600,33 @@ class FirestoreService {
         .get();
 
     return snapshot.docs.map((doc) => SizeTemplate.fromFirestore(doc)).toList();
+  }
+
+  static Future<List<IngredientType>> getIngredientTypes(
+      String franchiseId) async {
+    try {
+      final firestoreService = FirestoreService();
+      final snapshot = await firestoreService.db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_types')
+          .orderBy('sortOrder')
+          .get();
+
+      return snapshot.docs
+          .map((doc) => IngredientType.fromFirestore(doc))
+          .toList();
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to fetch ingredient types',
+        source: 'IngredientTypeService',
+        screen: 'onboarding_ingredients_screen',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId},
+      );
+      return [];
+    }
   }
 }
 

@@ -79,6 +79,12 @@ class MenuItemProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _franchiseId;
 
+  // Tracks whether we've completed at least one successful Firestore load.
+  bool _hasLoaded = false;
+  String? _loadedFranchiseId;
+
+  bool get isLoaded => _hasLoaded;
+
   List<MenuTemplateRef> get templateRefs => _templateRefs;
   bool get templateRefsLoading => _templateRefsLoading;
   String? get templateRefsError => _templateRefsError;
@@ -102,28 +108,136 @@ class MenuItemProvider extends ChangeNotifier {
     return false;
   }
 
-  Future<void> loadMenuItems(String franchiseId) async {
-    _franchiseId = franchiseId; // ✅ Assign here so persistChanges works
-    _isLoading = true;
-    Future.microtask(() => notifyListeners());
+  /// Uniform loader used by the review screen.
+  /// - Provide [franchiseIdOverride] if this provider hasn't been told its franchise yet.
+  /// - If [forceReloadFromFirestore] is false and data is warm, this is a no-op.
+  Future<void> load(
+      {bool forceReloadFromFirestore = false,
+      String? franchiseIdOverride}) async {
+    if (franchiseIdOverride != null && franchiseIdOverride.isNotEmpty) {
+      _franchiseId = franchiseIdOverride;
+    }
 
-    try {
-      final items = await _firestoreService.fetchMenuItemsOnce(franchiseId);
-      _original = items;
-      _working = items.map((e) => e.copyWith()).toList();
-    } catch (e, stack) {
+    final id = _franchiseId;
+    if (id == null || id.isEmpty || id == 'unknown') {
+      debugPrint(
+          '[MenuItemProvider][load] ⚠️ Skipping load: missing/unknown franchiseId.');
+      return;
+    }
+
+    if (_hasLoaded && !forceReloadFromFirestore) {
+      debugPrint(
+          '[MenuItemProvider][load] 🔁 Using warm cache (items=${_working.length}).');
+      return;
+    }
+
+    debugPrint(
+        '[MenuItemProvider][load] 📡 Fetching menu items for franchise "$id"...');
+    await loadMenuItems(id); // ← uses your existing method
+    _hasLoaded = true;
+    debugPrint('[MenuItemProvider][load] ✅ Loaded (items=${_working.length}).');
+  }
+
+  Future<void> reload(String franchiseId,
+      {bool forceReloadFromFirestore = false}) async {
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[MenuItemProvider][RELOAD] ⚠️ Called with blank/unknown franchiseId! Skipping reload.');
       await ErrorLogger.log(
-        message: 'Failed to load menu items',
-        source: 'MenuItemProvider',
-        screen: 'menu_item_provider',
-        severity: 'error',
-        stack: stack.toString(),
+        message:
+            'MenuItemProvider: reload called with blank/unknown franchiseId',
+        stack: '',
+        source: 'menu_item_provider.dart',
+        screen: 'menu_item_provider.dart',
+        severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
-    } finally {
-      _isLoading = false;
-      Future.microtask(() => notifyListeners());
+      return;
     }
+
+    if (forceReloadFromFirestore) {
+      print(
+          '[MenuItemProvider][RELOAD] 🔄 Forcing reload from Firestore for franchise "$franchiseId"...');
+      _hasLoaded = false;
+    } else {
+      print(
+          '[MenuItemProvider][RELOAD] ♻️ Reloading menu items for franchise "$franchiseId"...');
+    }
+
+    await loadMenuItems(franchiseId,
+        forceReloadFromFirestore: forceReloadFromFirestore);
+  }
+
+  Future<void> loadMenuItems(
+    String franchiseId, {
+    bool forceReloadFromFirestore = false,
+  }) async {
+    print(
+        '\n[MenuItemProvider][LOAD] 🚀 Starting menu item load for franchiseId="$franchiseId"');
+    print(
+        '   ➤ _loadedFranchiseId = "${_loadedFranchiseId ?? 'null'}", _hasLoaded = $_hasLoaded');
+    print('   ➤ forceReloadFromFirestore = $forceReloadFromFirestore');
+
+    // Defensive: Block blank/unknown franchise IDs
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      print(
+          '[MenuItemProvider][LOAD] ⚠️ Called with blank/unknown franchiseId! Skipping load.');
+      await ErrorLogger.log(
+        message: 'MenuItemProvider: load called with blank/unknown franchiseId',
+        stack: '',
+        source: 'menu_item_provider.dart',
+        screen: 'menu_item_provider.dart',
+        severity: 'warning',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
+
+    // Skip reload if already loaded for same franchise (unless forced)
+    if (!forceReloadFromFirestore &&
+        _hasLoaded &&
+        _loadedFranchiseId == franchiseId) {
+      print(
+          '[MenuItemProvider][LOAD] ⏩ Already loaded for this franchise. Skipping fetch.');
+      return;
+    }
+
+    try {
+      print(
+          '[MenuItemProvider][LOAD] 📡 Fetching menu items from Firestore...');
+      final fetched = await _firestoreService.fetchMenuItems(franchiseId);
+
+      print('[MenuItemProvider][LOAD] ✅ Fetched ${fetched.length} menu items.');
+      for (final item in fetched) {
+        print('    • id="${item.id}", name="${item.name}"');
+      }
+
+      // Replace in-memory collections
+      _working
+        ..clear()
+        ..addAll(fetched);
+
+      _original = _working.map((e) => e.copyWith()).toList();
+
+      _hasLoaded = true;
+      _loadedFranchiseId = franchiseId;
+
+      notifyListeners();
+      print('[MenuItemProvider][LOAD] 🎯 Load complete. UI notified.');
+    } catch (e, stack) {
+      print('[MenuItemProvider][LOAD][ERROR] ❌ Failed to load menu items: $e');
+      await ErrorLogger.log(
+        message: 'menu_item_load_error',
+        stack: stack.toString(),
+        source: 'menu_item_provider.dart',
+        screen: 'menu_item_provider.dart',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      rethrow;
+    }
+
+    print('[MenuItemProvider][LOAD] 🏁 Finished.\n');
   }
 
   void addOrUpdateMenuItem(MenuItem item) {
@@ -486,7 +600,7 @@ class MenuItemProvider extends ChangeNotifier {
 
     await Future.wait([
       _franchiseInfoProvider.reload(),
-      categoryProvider.reload(),
+      categoryProvider.reload(fid),
       ingredientProvider.reload(),
       ingredientTypeProvider.reload(fid),
     ]);

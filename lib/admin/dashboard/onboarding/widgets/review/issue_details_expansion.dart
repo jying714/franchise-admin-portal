@@ -97,22 +97,12 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
         elevation: 1,
         expandedHeaderPadding: EdgeInsets.zero,
         expansionCallback: (idx, isOpen) {
-          final before =
-              (idx >= 0 && idx < _expanded.length) ? _expanded[idx] : null;
-          final after = (before == null) ? null : !before;
-          debugPrint(
-              '[IssueDetailsExpansion] expansionCallback idx=$idx isOpen=$isOpen '
-              'before=$before -> after=$after '
-              'expandedLen=${_expanded.length} sections=${widget.sectionOrder.length}');
-          if (before == null) {
+          if (idx >= 0 && idx < _expanded.length) {
+            setState(() => _expanded[idx] = !_expanded[idx]);
+          } else {
             debugPrint(
                 '[IssueDetailsExpansion][WARN] expansionCallback index out of range');
-            return;
           }
-          setState(() {
-            _expanded[idx] = !before;
-          });
-          debugPrint('[IssueDetailsExpansion] afterToggle expanded=$_expanded');
         },
         animationDuration: const Duration(milliseconds: 200),
         children: [
@@ -138,145 +128,119 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
     ColorScheme colorScheme,
   ) {
     final criticals = issues
-        .where((e) => e.severity == OnboardingIssueSeverity.critical)
+        .where((e) =>
+            e.isBlocking && e.severity == OnboardingIssueSeverity.critical)
         .toList();
     final warnings = issues
-        .where((e) => e.severity == OnboardingIssueSeverity.warning)
+        .where((e) =>
+            !e.isBlocking && e.severity == OnboardingIssueSeverity.warning)
         .toList();
     final infos = issues
         .where((e) => e.severity == OnboardingIssueSeverity.info)
         .toList();
 
-    debugPrint('[IssueDetailsExpansion] buildPanel '
-        'idx=$idx section="$section" '
-        'expanded=${idx < _expanded.length ? _expanded[idx] : null} '
-        'issues=${issues.length}');
-
     return ExpansionPanel(
       canTapOnHeader: true,
-      isExpanded: (idx >= 0 && idx < _expanded.length) ? _expanded[idx] : false,
+      isExpanded: idx >= 0 && idx < _expanded.length && _expanded[idx],
       backgroundColor: colorScheme.surfaceVariant.withOpacity(0.92),
-      headerBuilder: (context, isOpen) => InkWell(
+      headerBuilder: (context, isOpen) => ListTile(
         key: ValueKey('IssueDetailsHeader::$section'),
-        onTap: () {
-          final before =
-              (idx >= 0 && idx < _expanded.length) ? _expanded[idx] : null;
-          final after = (before == null) ? null : !before;
-          debugPrint(
-              '[IssueDetailsExpansion] headerTap idx=$idx section="$section" '
-              'isOpen=$isOpen before=$before -> after=$after');
-          if (before == null) return;
-          setState(() {
-            _expanded[idx] = !before;
-          });
-          debugPrint(
-              '[IssueDetailsExpansion] headerTap after expanded=$_expanded');
-        },
-        child: ListTile(
-          dense: true,
-          title: Text(
-            section,
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 17,
-              color: colorScheme.primary,
-              fontFamily: DesignTokens.fontFamily,
-              letterSpacing: 0.1,
-            ),
-          ),
-          subtitle: Row(
-            children: [
-              if (criticals.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.cancel_rounded,
-                          color: colorScheme.error, size: 17),
-                      const SizedBox(width: 3),
-                      Text('${criticals.length} critical',
-                          style: TextStyle(
-                              color: colorScheme.error,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14)),
-                    ],
-                  ),
-                ),
-              if (warnings.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.warning_amber_rounded,
-                          color: colorScheme.tertiary, size: 17),
-                      const SizedBox(width: 3),
-                      Text('${warnings.length} warning',
-                          style: TextStyle(
-                              color: colorScheme.tertiary,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 14)),
-                    ],
-                  ),
-                ),
-              if (infos.isNotEmpty)
-                Row(
-                  children: [
-                    Icon(Icons.info_outline,
-                        color: colorScheme.secondary, size: 17),
-                    const SizedBox(width: 3),
-                    Text('${infos.length} info',
-                        style: TextStyle(
-                            color: colorScheme.secondary,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14)),
-                  ],
-                ),
-              if (criticals.isEmpty && warnings.isEmpty && infos.isEmpty)
-                Text('No issues',
-                    style: TextStyle(
-                        color: Colors.green[700], fontWeight: FontWeight.w500)),
-            ],
+        dense: true,
+        title: Text(
+          section,
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 17,
+            color: colorScheme.primary,
+            fontFamily: DesignTokens.fontFamily,
+            letterSpacing: 0.1,
           ),
         ),
+        subtitle: Row(
+          children: [
+            if (criticals.isNotEmpty)
+              _buildSeverityCount(
+                  Icons.cancel_rounded, colorScheme.error, criticals.length),
+            if (warnings.isNotEmpty)
+              _buildSeverityCount(Icons.warning_amber_rounded,
+                  colorScheme.tertiary, warnings.length),
+            if (infos.isNotEmpty)
+              _buildSeverityCount(
+                  Icons.info_outline, colorScheme.secondary, infos.length),
+            if (criticals.isEmpty && warnings.isEmpty && infos.isEmpty)
+              Text('No issues',
+                  style: TextStyle(
+                      color: Colors.green[700], fontWeight: FontWeight.w500)),
+          ],
+        ),
+        onTap: () {
+          if (idx >= 0 && idx < _expanded.length) {
+            setState(() => _expanded[idx] = !_expanded[idx]);
+          }
+        },
       ),
       body: issues.isEmpty
-          ? Padding(
-              padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 28),
-              child: Row(
-                children: [
-                  Icon(Icons.check_circle_rounded,
-                      color: Colors.green[700], size: 22),
-                  const SizedBox(width: 9),
-                  Text(
-                    'No issues in $section.',
-                    style: TextStyle(
-                        color: Colors.green[700],
-                        fontWeight: FontWeight.w500,
-                        fontSize: 16),
-                  ),
-                ],
-              ),
-            )
+          ? _buildNoIssuesBody(section)
           : Padding(
               padding: const EdgeInsets.fromLTRB(20, 10, 8, 20),
               child: Column(
-                children: [
-                  for (final issue in issues)
-                    _buildIssueRow(context, section, issue, colorScheme),
-                ],
+                children: issues
+                    .map((issue) =>
+                        _buildIssueRow(context, section, issue, colorScheme))
+                    .toList(),
               ),
             ),
     );
   }
 
-  Widget _buildIssueRow(BuildContext context, String section,
-      OnboardingValidationIssue issue, ColorScheme colorScheme) {
-    debugPrint('[IssueDetailsExpansion] buildIssueRow '
-        'severity=${issue.severity} '
-        'message="${issue.message}" '
-        'itemId=${issue.itemId} '
-        'actionLabel=${issue.actionLabel} '
-        'fixRoute=${issue.fixRoute}');
+  Widget _buildSeverityCount(IconData icon, Color color, int count) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 17),
+          const SizedBox(width: 3),
+          Text(
+            '$count ${_severityLabel(icon)}${count > 1 ? 's' : ''}',
+            style: TextStyle(
+                color: color, fontWeight: FontWeight.w500, fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _severityLabel(IconData icon) {
+    if (icon == Icons.cancel_rounded) return 'critical';
+    if (icon == Icons.warning_amber_rounded) return 'warning';
+    return 'info';
+  }
+
+  Widget _buildNoIssuesBody(String section) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 28),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle_rounded, color: Colors.green[700], size: 22),
+          const SizedBox(width: 9),
+          Text(
+            'No issues in $section.',
+            style: TextStyle(
+                color: Colors.green[700],
+                fontWeight: FontWeight.w500,
+                fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIssueRow(
+    BuildContext context,
+    String section,
+    OnboardingValidationIssue issue,
+    ColorScheme colorScheme,
+  ) {
     Color severityColor;
     IconData icon;
     switch (issue.severity) {
@@ -312,10 +276,7 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 3),
-              child: Icon(icon, color: severityColor, size: 23),
-            ),
+            Icon(icon, color: severityColor, size: 23),
             const SizedBox(width: 13),
             Expanded(
               child: Column(
@@ -328,12 +289,11 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
                       fontWeight: FontWeight.w600,
                       fontSize: 15.7,
                       fontFamily: DesignTokens.fontFamily,
-                      letterSpacing: 0.01,
                     ),
                   ),
-                  if ((issue.itemDisplayName.isNotEmpty ||
+                  if (issue.itemDisplayName.isNotEmpty ||
                       (issue.itemId.isNotEmpty &&
-                          issue.itemDisplayName.isEmpty)))
+                          issue.itemDisplayName.isEmpty))
                     Padding(
                       padding: const EdgeInsets.only(top: 3),
                       child: Text(
@@ -342,23 +302,18 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
                             : "ID: ${issue.itemId}",
                         style: TextStyle(
                           color: colorScheme.onSurface.withOpacity(0.65),
-                          fontWeight: FontWeight.w400,
                           fontSize: 14,
-                          fontFamily: DesignTokens.fontFamily,
                         ),
                       ),
                     ),
-                  if (issue.resolutionHint != null &&
-                      issue.resolutionHint!.isNotEmpty)
+                  if (issue.resolutionHint?.isNotEmpty ?? false)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
                         issue.resolutionHint!,
                         style: TextStyle(
                           color: colorScheme.onBackground.withOpacity(0.64),
-                          fontWeight: FontWeight.w400,
                           fontSize: 13.2,
-                          fontFamily: DesignTokens.fontFamily,
                         ),
                       ),
                     ),
@@ -369,34 +324,29 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
                         spacing: 8,
                         runSpacing: 2,
                         children: issue.affectedFields
-                            .map(
-                              (f) => Chip(
-                                label: Text(
-                                  f,
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    color: colorScheme.onSecondaryContainer,
+                            .map((f) => Chip(
+                                  label: Text(f,
+                                      style: TextStyle(
+                                          fontSize: 12.5,
+                                          color: colorScheme
+                                              .onSecondaryContainer)),
+                                  backgroundColor: colorScheme
+                                      .secondaryContainer
+                                      .withOpacity(0.37),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(7),
                                   ),
-                                ),
-                                backgroundColor: colorScheme.secondaryContainer
-                                    .withOpacity(0.37),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(7),
-                                ),
-                                visualDensity: VisualDensity.compact,
-                                materialTapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 5, vertical: 0),
-                              ),
-                            )
+                                  visualDensity: VisualDensity.compact,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ))
                             .toList(),
                       ),
                     ),
                 ],
               ),
             ),
-            if (issue.actionLabel != null && issue.actionLabel!.isNotEmpty)
+            if (issue.actionLabel?.isNotEmpty ?? false)
               Padding(
                 padding: const EdgeInsets.only(left: 9.0, top: 2.0),
                 child: TextButton.icon(
@@ -408,7 +358,6 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
                       color: severityColor,
                       fontWeight: FontWeight.w600,
                       fontSize: 14.2,
-                      fontFamily: DesignTokens.fontFamily,
                     ),
                   ),
                   style: TextButton.styleFrom(
@@ -416,13 +365,40 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
                         const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   ),
                   onPressed: () {
-                    if (issue.fixRoute.isEmpty) return;
+                    debugPrint(
+                        '[IssueDetailsExpansion] Attempting navigation...');
+                    debugPrint('  Section (raw): "$section"');
+                    debugPrint('  Issue.itemId: "${issue.itemId}"');
+                    debugPrint('  Issue.itemLocator: "${issue.itemLocator}"');
+                    debugPrint('  Issue.actionLabel: "${issue.actionLabel}"');
+                    debugPrint(
+                        '  Issue.affectedFields: ${issue.affectedFields}');
+
+                    // ✅ Normalize section before navigation (fix)
+                    final normalizedSection =
+                        OnboardingNavigationUtils.normalizeForRouting(section);
+                    debugPrint('  Normalized section: "$normalizedSection"');
+
+                    final route = OnboardingNavigationUtils.resolveRoute(
+                        normalizedSection, issue);
+                    debugPrint('  Resolved route: "$route"');
+
+                    if (route.isEmpty) {
+                      debugPrint(
+                          '[IssueDetailsExpansion][WARN] Route is empty — navigation aborted.');
+                      return;
+                    }
 
                     final args =
-                        buildOnboardingNavArgs(section: section, issue: issue);
+                        OnboardingNavigationUtils.buildOnboardingNavArgs(
+                      section: normalizedSection,
+                      issue: issue,
+                    );
+                    debugPrint('  Nav args: $args');
 
-                    Navigator.of(context)
-                        .pushNamed(issue.fixRoute, arguments: args);
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      Navigator.of(context).pushNamed(route, arguments: args);
+                    });
                   },
                 ),
               ),
