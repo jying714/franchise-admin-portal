@@ -1,0 +1,78 @@
+name: doughboys_pizzeria_final
+description: A Flutter app for Doughboys Pizzeria
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  firebase_core: ^3.13.1
+  cloud_firestore: ^5.6.8
+  firebase_auth: ^5.5.4
+  firebase_analytics: ^11.4.6
+  firebase_crashlytics: ^4.3.6
+  firebase_messaging: ^15.2.6
+  flutter_localizations:
+    sdk: flutter
+  flutter_image_compress: ^2.2.0
+  dropdown_search: ^5.0.6
+  carousel_slider: ^5.0.0
+  sqflite: ^2.3.2
+  path: ^1.9.0
+  provider: ^6.1.2
+  logging: ^1.2.0
+  cupertino_icons: ^1.0.8
+  url_launcher: ^6.2.6
+  google_sign_in: ^6.2.1
+  flutter_facebook_auth: ^6.1.1
+  shimmer: ^3.0.0
+  logger: ^2.0.2
+  path_provider: ^2.1.2
+  intl: ^0.19.0
+  uuid: ^4.0.0
+  cached_network_image: ^3.3.1
+  file_picker: ^10.1.9
+  fl_chart: ^0.65.0
+  async: ^2.11.0
+  collection: ^1.18.0
+  share_plus: ^7.2.2
+  file_saver: ^0.2.4
+  permission_handler: ^11.3.1
+  image_picker: ^1.0.7
+  firebase_storage: ^12.4.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.13.1
+  intl_utils: ^2.8.10
+
+  test: ^1.20.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/logo.png
+    - assets/images/logo_small.png
+    - assets/images/logo_large.png
+    - assets/images/default_pizza_icon.png
+    - assets/images/default_category_icon.png
+    - assets/images/banner_placeholder.png
+    - assets/images/pizza_icon.png
+    - assets/icons/
+  generate: true
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo.png"
+
+l10n:
+  arb-dir: lib/l10n
+  template-arb-file: app_en.arb
+  output-localization-file: app_localizations.dart
+  output-class: AppLocalizations

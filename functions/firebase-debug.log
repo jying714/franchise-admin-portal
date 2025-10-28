@@ -1,0 +1,37 @@
+[debug] [2025-07-12T04:16:54.591Z] ----------------------------------------------------------------------
+[debug] [2025-07-12T04:16:54.594Z] Command:       C:\Users\jying\AppData\Local\Programs\Python\Python38-32\node.exe C:\Users\jying\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions
+[debug] [2025-07-12T04:16:54.594Z] CLI Version:   14.9.0
+[debug] [2025-07-12T04:16:54.594Z] Platform:      win32
+[debug] [2025-07-12T04:16:54.594Z] Node Version:  v22.16.0
+[debug] [2025-07-12T04:16:54.594Z] Time:          Fri Jul 11 2025 23:16:54 GMT-0500 (Central Daylight Time)
+[debug] [2025-07-12T04:16:54.594Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-07-12T04:16:54.596Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2025-07-12T04:16:54.806Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-07-12T04:16:54.807Z] > authorizing via signed-in user (j.ying714@gmail.com)
+[debug] [2025-07-12T04:16:54.807Z] [iam] checking project doughboyspizzeria-2b3d2 for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2025-07-12T04:16:54.807Z] Checked if tokens are valid: false, expires at: 1752130470927
+[debug] [2025-07-12T04:16:54.807Z] Checked if tokens are valid: false, expires at: 1752130470927
+[debug] [2025-07-12T04:16:54.807Z] > refreshing access token with scopes: []
+[debug] [2025-07-12T04:16:54.808Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-07-12T04:16:54.808Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-07-12T04:16:54.892Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2025-07-12T04:16:54.892Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2025-07-12T04:16:54.981Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-07-12T04:16:54.981Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-07-12T04:16:54.988Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/doughboyspizzeria-2b3d2:testIamPermissions [none]
+[debug] [2025-07-12T04:16:54.988Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/doughboyspizzeria-2b3d2:testIamPermissions x-goog-quota-user=projects/doughboyspizzeria-2b3d2
+[debug] [2025-07-12T04:16:54.988Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/doughboyspizzeria-2b3d2:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-07-12T04:16:55.158Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/doughboyspizzeria-2b3d2:testIamPermissions 200
+[debug] [2025-07-12T04:16:55.158Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/doughboyspizzeria-2b3d2:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2025-07-12T04:16:55.158Z] Checked if tokens are valid: true, expires at: 1752297413981
+[debug] [2025-07-12T04:16:55.158Z] Checked if tokens are valid: true, expires at: 1752297413981
+[debug] [2025-07-12T04:16:55.158Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/doughboyspizzeria-2b3d2/serviceAccounts/doughboyspizzeria-2b3d2@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2025-07-12T04:16:55.159Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/doughboyspizzeria-2b3d2/serviceAccounts/doughboyspizzeria-2b3d2@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2025-07-12T04:16:55.399Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/doughboyspizzeria-2b3d2/serviceAccounts/doughboyspizzeria-2b3d2@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2025-07-12T04:16:55.399Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/doughboyspizzeria-2b3d2/serviceAccounts/doughboyspizzeria-2b3d2@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[info] 
+[info] === Deploying to 'doughboyspizzeria-2b3d2'...
+[info] 
+[info] i  deploying functions 
+[info] Running command: npm --prefix "$RESOURCE_DIR" run lint

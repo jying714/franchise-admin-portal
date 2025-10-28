@@ -1,0 +1,98 @@
+{
+  "project_info": {
+    "project_number": "739021537990",
+    "project_id": "doughboyspizzeria-2b3d2",
+    "storage_bucket": "doughboyspizzeria-2b3d2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:739021537990:android:b8ac27016ac25598fe0dc7",
+        "android_client_info": {
+          "package_name": "com.doughboys.pizzeria"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "739021537990-jlf0rrei7f54l35fp9ngjpo1lm95tje4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.doughboys.pizzeria",
+            "certificate_hash": "232e08380fe4ea09ea739c07452788bbc68e66e9"
+          }
+        },
+        {
+          "client_id": "739021537990-5ba7sgh5l4m5qag260357bmu6efgtpml.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAyEWoMyMkLD6qHmuqMQt0EvloVdFqK8Vg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "739021537990-5ba7sgh5l4m5qag260357bmu6efgtpml.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "739021537990-dmafgo3h5bokvs2gceithf8eb16jvnt4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.doughboysPizzeriaFresh"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:739021537990:android:43d49458c788c07ffe0dc7",
+        "android_client_info": {
+          "package_name": "com.example.doughboys_pizzeria_fresh"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "739021537990-2o9k7gke4ijuio0vg760oteg1mrk6a4e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.doughboys_pizzeria_fresh",
+            "certificate_hash": "232e08380fe4ea09ea739c07452788bbc68e66e9"
+          }
+        },
+        {
+          "client_id": "739021537990-5ba7sgh5l4m5qag260357bmu6efgtpml.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAyEWoMyMkLD6qHmuqMQt0EvloVdFqK8Vg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "739021537990-5ba7sgh5l4m5qag260357bmu6efgtpml.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "739021537990-dmafgo3h5bokvs2gceithf8eb16jvnt4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.doughboysPizzeriaFresh"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
