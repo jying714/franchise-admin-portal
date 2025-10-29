@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
 
 /// Robust, reusable info tile for profile and other label/value displays.
 /// Handles null/empty values gracefully.

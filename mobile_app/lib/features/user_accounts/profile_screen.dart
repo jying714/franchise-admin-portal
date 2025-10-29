@@ -1,28 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:doughboys_pizzeria_final/widgets/sign_out_button.dart';
+import 'package:franchise_mobile_app/widgets/sign_out_button.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
-import 'package:doughboys_pizzeria_final/widgets/profile_nav_tile.dart';
-import 'package:doughboys_pizzeria_final/config/branding_config.dart';
-import 'package:doughboys_pizzeria_final/core/services/auth_service.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:franchise_mobile_app/widgets/profile_nav_tile.dart';
+import 'package:franchise_mobile_app/config/branding_config.dart';
+import 'package:franchise_mobile_app/core/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'package:doughboys_pizzeria_final/core/services/firestore_service.dart';
-import 'package:doughboys_pizzeria_final/core/models/user.dart' as user_model;
-import 'package:doughboys_pizzeria_final/widgets/empty_state_widget.dart';
-import 'package:doughboys_pizzeria_final/features/user_accounts/delivery_addresses_screen.dart';
-import 'package:doughboys_pizzeria_final/features/user_accounts/order_history_screen.dart';
-import 'package:doughboys_pizzeria_final/features/user_accounts/scheduled_orders_screen.dart';
-import 'package:doughboys_pizzeria_final/features/user_accounts/favorites_screen.dart';
-import 'package:doughboys_pizzeria_final/features/language/language_screen.dart';
-import 'package:doughboys_pizzeria_final/features/chat_support/chat_screen.dart';
-import 'package:doughboys_pizzeria_final/features/home/home_screen.dart';
-import 'package:doughboys_pizzeria_final/admin/admin_dashboard_screen.dart';
-import 'package:doughboys_pizzeria_final/widgets/info_tile.dart';
+import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:franchise_mobile_app/core/models/user.dart' as user_model;
+import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
+import 'package:franchise_mobile_app/features/user_accounts/delivery_addresses_screen.dart';
+import 'package:franchise_mobile_app/features/user_accounts/order_history_screen.dart';
+import 'package:franchise_mobile_app/features/user_accounts/scheduled_orders_screen.dart';
+import 'package:franchise_mobile_app/features/user_accounts/favorites_screen.dart';
+import 'package:franchise_mobile_app/features/language/language_screen.dart';
+import 'package:franchise_mobile_app/features/chat_support/chat_screen.dart';
+import 'package:franchise_mobile_app/features/home/home_screen.dart';
+import 'package:franchise_mobile_app/widgets/info_tile.dart';
 
 // New dialog for forced profile review
-import 'package:doughboys_pizzeria_final/features/user_accounts/complete_profile_dialog.dart';
-import 'package:doughboys_pizzeria_final/widgets/confirmation_dialog.dart';
+import 'package:franchise_mobile_app/features/user_accounts/complete_profile_dialog.dart';
+import 'package:franchise_mobile_app/widgets/confirmation_dialog.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -120,6 +119,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 iconData: Icons.person_off,
               );
             }
+
             // Fetch the full User object from Firestore using UID
             return StreamBuilder<user_model.User?>(
               stream: firestoreService.getUserByIdStream(user.uid),
@@ -142,7 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   WidgetsBinding.instance.addPostFrameCallback((_) async {
                     if (!_dialogShown) {
                       _dialogShown = true;
-                      final result = await showDialog(
+                      await showDialog(
                         context: context,
                         barrierDismissible: false,
                         builder: (ctx) => CompleteProfileDialog(user: fullUser),
@@ -232,18 +232,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       label: l10n.chatWithUs,
                       destination: const ChatScreen(),
                     ),
-// ADMIN DASHBOARD ENTRYPOINT
-                    if (fullUser.isOwner ||
-                        fullUser.isAdmin ||
-                        fullUser.isManager ||
-                        fullUser.isStaff)
-                      ProfileNavTile(
-                        label: "Admin Dashboard",
-                        destination: const AdminDashboardScreen(),
-                        icon: Icons.admin_panel_settings,
-                        highlight: true,
-                      ),
-
                     const SizedBox(height: DesignTokens.gridSpacing * 2),
                     SignOutButton(
                       signOutLabel: l10n.signOut,

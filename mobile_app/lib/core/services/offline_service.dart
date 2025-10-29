@@ -7,14 +7,14 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
 import 'dart:io';
 import 'dart:convert';
-import 'package:doughboys_pizzeria_final/core/models/customization.dart';
-import 'package:doughboys_pizzeria_final/core/models/menu_item.dart';
+import 'package:franchise_mobile_app/core/models/customization.dart';
+import 'package:franchise_mobile_app/core/models/menu_item.dart';
 import 'package:flutter/material.dart' as material hide Banner, BannerLocation;
-import 'package:doughboys_pizzeria_final/core/models/order.dart' as order_model;
-import 'package:doughboys_pizzeria_final/core/models/feedback_entry.dart'
+import 'package:franchise_mobile_app/core/models/order.dart' as order_model;
+import 'package:franchise_mobile_app/core/models/feedback_entry.dart'
     as feedback_model;
-import 'package:doughboys_pizzeria_final/core/models/chat.dart';
-import 'package:doughboys_pizzeria_final/core/models/nutrition_info.dart';
+import 'package:franchise_mobile_app/core/models/chat.dart';
+import 'package:franchise_mobile_app/core/models/nutrition_info.dart';
 
 class OfflineService {
   Database? _database;

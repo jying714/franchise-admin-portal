@@ -1,6 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:logging/logging.dart';
-import 'package:doughboys_pizzeria_final/config/feature_config.dart';
+import 'package:franchise_mobile_app/config/feature_config.dart';
 
 class NotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;

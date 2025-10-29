@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logging/logging.dart';
-import 'package:doughboys_pizzeria_final/core/models/promo.dart';
+import 'package:franchise_mobile_app/core/models/promo.dart';
 
 class PromoService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;

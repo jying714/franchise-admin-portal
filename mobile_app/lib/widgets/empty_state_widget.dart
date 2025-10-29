@@ -1,8 +1,8 @@
 // ignore_for_file: prefer_const_constructors
 
 import 'package:flutter/material.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
-import 'package:doughboys_pizzeria_final/config/branding_config.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:franchise_mobile_app/config/branding_config.dart';
 
 class EmptyStateWidget extends StatelessWidget {
   final String title;

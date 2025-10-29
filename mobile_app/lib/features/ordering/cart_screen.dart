@@ -2,17 +2,17 @@ import 'dart:math' show min;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:doughboys_pizzeria_final/config/branding_config.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
-import 'package:doughboys_pizzeria_final/core/services/firestore_service.dart';
-import 'package:doughboys_pizzeria_final/core/models/menu_item.dart';
-import 'package:doughboys_pizzeria_final/core/models/customization.dart';
-import 'package:doughboys_pizzeria_final/core/models/order.dart' as order_model;
-import 'package:doughboys_pizzeria_final/core/models/ingredient_metadata.dart';
-import 'package:doughboys_pizzeria_final/features/ordering/checkout_screen.dart';
+import 'package:franchise_mobile_app/config/branding_config.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:franchise_mobile_app/core/models/menu_item.dart';
+import 'package:franchise_mobile_app/core/models/customization.dart';
+import 'package:franchise_mobile_app/core/models/order.dart' as order_model;
+import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
+import 'package:franchise_mobile_app/features/ordering/checkout_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:doughboys_pizzeria_final/widgets/network_image_widget.dart';
+import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});

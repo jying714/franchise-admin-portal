@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:doughboys_pizzeria_final/core/models/address.dart';
-import 'package:doughboys_pizzeria_final/widgets/Address/delivery_address_tile.dart';
+import 'package:franchise_mobile_app/core/models/address.dart';
+import 'package:franchise_mobile_app/widgets/Address/delivery_address_tile.dart';
 
 class AddressListView extends StatelessWidget {
   final List<Address> addresses;

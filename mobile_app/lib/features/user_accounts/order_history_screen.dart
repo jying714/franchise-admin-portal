@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:doughboys_pizzeria_final/core/services/auth_service.dart';
+import 'package:franchise_mobile_app/core/services/auth_service.dart';
 import 'package:provider/provider.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
-import 'package:doughboys_pizzeria_final/config/branding_config.dart';
-import 'package:doughboys_pizzeria_final/core/services/firestore_service.dart';
-import 'package:doughboys_pizzeria_final/core/models/order.dart' as order_model;
+import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:franchise_mobile_app/config/branding_config.dart';
+import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:franchise_mobile_app/core/models/order.dart' as order_model;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:doughboys_pizzeria_final/widgets/network_image_widget.dart'; // <-- Add this import
-import 'package:doughboys_pizzeria_final/widgets/feedback/feedback_submission_dialog.dart';
+import 'package:franchise_mobile_app/widgets/network_image_widget.dart'; // <-- Add this import
+import 'package:franchise_mobile_app/widgets/feedback/feedback_submission_dialog.dart';
 
 class OrderHistoryScreen extends StatelessWidget {
   const OrderHistoryScreen({super.key});

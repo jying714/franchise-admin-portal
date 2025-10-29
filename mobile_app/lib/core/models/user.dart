@@ -1,7 +1,7 @@
-import 'package:doughboys_pizzeria_final/core/models/order.dart';
-import 'package:doughboys_pizzeria_final/core/models/favorite_order.dart';
+import 'package:franchise_mobile_app/core/models/order.dart';
+import 'package:franchise_mobile_app/core/models/favorite_order.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
-import 'package:doughboys_pizzeria_final/core/models/loyalty.dart';
+import 'package:franchise_mobile_app/core/models/loyalty.dart';
 import 'address.dart';
 
 // ===================== USER MODEL =====================

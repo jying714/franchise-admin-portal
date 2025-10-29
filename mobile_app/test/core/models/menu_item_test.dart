@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:doughboys_pizzeria_final/core/models/menu_item.dart';
+import 'package:franchise_mobile_app/core/models/menu_item.dart';
 
 void main() {
   group('MenuItem Model', () {

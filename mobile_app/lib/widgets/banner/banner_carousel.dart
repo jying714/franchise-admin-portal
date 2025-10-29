@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
-import 'package:doughboys_pizzeria_final/config/branding_config.dart';
-import 'package:doughboys_pizzeria_final/core/models/banner.dart' as model;
-import 'package:doughboys_pizzeria_final/widgets/network_image_widget.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:franchise_mobile_app/config/branding_config.dart';
+import 'package:franchise_mobile_app/core/models/banner.dart' as model;
+import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:doughboys_pizzeria_final/widgets/banner/promo_banner_card.dart';
+import 'package:franchise_mobile_app/widgets/banner/promo_banner_card.dart';
 
 typedef BannerTapCallback = void Function(model.Banner banner);
 

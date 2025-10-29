@@ -1,21 +1,21 @@
 // ignore_for_file: unused_import
 
-import 'package:doughboys_pizzeria_final/widgets/header/franchise_app_bar.dart';
-import 'package:doughboys_pizzeria_final/widgets/Address/address_list_view.dart';
-import 'package:doughboys_pizzeria_final/widgets/Address/address_form.dart';
-import 'package:doughboys_pizzeria_final/widgets/Address/delivery_addresses_body.dart';
-import 'package:doughboys_pizzeria_final/widgets/Address/edit_address_dialog.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
+import 'package:franchise_mobile_app/widgets/Address/address_list_view.dart';
+import 'package:franchise_mobile_app/widgets/Address/address_form.dart';
+import 'package:franchise_mobile_app/widgets/Address/delivery_addresses_body.dart';
+import 'package:franchise_mobile_app/widgets/Address/edit_address_dialog.dart';
 import 'package:flutter/material.dart';
-import 'package:doughboys_pizzeria_final/widgets/Address/delivery_address_tile.dart';
-import 'package:doughboys_pizzeria_final/widgets/confirmation_dialog.dart';
+import 'package:franchise_mobile_app/widgets/Address/delivery_address_tile.dart';
+import 'package:franchise_mobile_app/widgets/confirmation_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
-import 'package:doughboys_pizzeria_final/core/services/firestore_service.dart';
-import 'package:doughboys_pizzeria_final/core/models/address.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:franchise_mobile_app/core/models/address.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:doughboys_pizzeria_final/widgets/empty_state_widget.dart';
+import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
 
 class DeliveryAddressesScreen extends StatefulWidget {
   const DeliveryAddressesScreen({super.key});

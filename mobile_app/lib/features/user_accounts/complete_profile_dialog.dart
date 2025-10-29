@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:doughboys_pizzeria_final/core/services/firestore_service.dart';
-import 'package:doughboys_pizzeria_final/core/models/user.dart' as user_model;
+import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:franchise_mobile_app/core/models/user.dart' as user_model;
 
 class CompleteProfileDialog extends StatefulWidget {
   final user_model.User user;

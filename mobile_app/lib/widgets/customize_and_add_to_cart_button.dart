@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
 
 /// Button for launching customization modal before adding to cart.
 /// Accepts loading state and a callback for tap.

@@ -1,10 +1,10 @@
 import 'dart:convert';
 
-import 'package:doughboys_pizzeria_final/core/models/menu_item.dart';
-import 'package:doughboys_pizzeria_final/core/models/category.dart';
-import 'package:doughboys_pizzeria_final/core/models/audit_log.dart';
-import 'package:doughboys_pizzeria_final/core/models/promo.dart';
-import 'package:doughboys_pizzeria_final/core/models/analytics_summary.dart';
+import 'package:franchise_mobile_app/core/models/menu_item.dart';
+import 'package:franchise_mobile_app/core/models/category.dart';
+import 'package:franchise_mobile_app/core/models/audit_log.dart';
+import 'package:franchise_mobile_app/core/models/promo.dart';
+import 'package:franchise_mobile_app/core/models/analytics_summary.dart';
 
 /// =======================
 /// ExportUtils

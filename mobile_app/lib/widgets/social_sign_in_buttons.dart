@@ -4,9 +4,9 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:doughboys_pizzeria_final/core/services/auth_service.dart';
-import 'package:doughboys_pizzeria_final/core/services/firestore_service.dart';
-import 'package:doughboys_pizzeria_final/core/models/user.dart' as db_user;
+import 'package:franchise_mobile_app/core/services/auth_service.dart';
+import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:franchise_mobile_app/core/models/user.dart' as db_user;
 
 class SocialSignInButtons extends StatefulWidget {
   final void Function(User? user)? onSuccess;

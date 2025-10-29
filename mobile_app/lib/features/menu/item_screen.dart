@@ -7,26 +7,26 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:doughboys_pizzeria_final/config/app_config.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
-import 'package:doughboys_pizzeria_final/config/branding_config.dart';
-import 'package:doughboys_pizzeria_final/core/models/menu_item.dart';
-import 'package:doughboys_pizzeria_final/core/models/ingredient_metadata.dart';
-import 'package:doughboys_pizzeria_final/features/ordering/cart_screen.dart';
-import 'package:doughboys_pizzeria_final/widgets/customization/customization_modal.dart';
-import 'package:doughboys_pizzeria_final/core/services/firestore_service.dart';
+import 'package:franchise_mobile_app/config/app_config.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:franchise_mobile_app/config/branding_config.dart';
+import 'package:franchise_mobile_app/core/models/menu_item.dart';
+import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
+import 'package:franchise_mobile_app/features/ordering/cart_screen.dart';
+import 'package:franchise_mobile_app/widgets/customization/customization_modal.dart';
+import 'package:franchise_mobile_app/core/services/firestore_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:doughboys_pizzeria_final/widgets/favorite_button.dart';
-import 'package:doughboys_pizzeria_final/widgets/dietary_allergen_chips_row.dart';
-import 'package:doughboys_pizzeria_final/widgets/menu_item_image.dart';
-import 'package:doughboys_pizzeria_final/widgets/included_ingredients_preview.dart';
-import 'package:doughboys_pizzeria_final/widgets/quantity_stepper.dart';
-import 'package:doughboys_pizzeria_final/widgets/customize_and_add_to_cart_button.dart';
-import 'package:doughboys_pizzeria_final/widgets/add_to_cart_button.dart';
-import 'package:doughboys_pizzeria_final/widgets/header/franchise_app_bar.dart';
-import 'package:doughboys_pizzeria_final/widgets/header/profile_icon_button.dart';
+import 'package:franchise_mobile_app/widgets/favorite_button.dart';
+import 'package:franchise_mobile_app/widgets/dietary_allergen_chips_row.dart';
+import 'package:franchise_mobile_app/widgets/menu_item_image.dart';
+import 'package:franchise_mobile_app/widgets/included_ingredients_preview.dart';
+import 'package:franchise_mobile_app/widgets/quantity_stepper.dart';
+import 'package:franchise_mobile_app/widgets/customize_and_add_to_cart_button.dart';
+import 'package:franchise_mobile_app/widgets/add_to_cart_button.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
+import 'package:franchise_mobile_app/widgets/header/profile_icon_button.dart';
 
 class ItemScreen extends StatefulWidget {
   final String itemId;

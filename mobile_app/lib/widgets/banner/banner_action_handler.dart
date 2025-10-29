@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:doughboys_pizzeria_final/core/models/banner.dart' as model;
-import 'package:doughboys_pizzeria_final/core/models/category.dart';
-import 'package:doughboys_pizzeria_final/features/category/category_screen.dart';
-import 'package:doughboys_pizzeria_final/core/services/analytics_service.dart';
+import 'package:franchise_mobile_app/core/models/banner.dart' as model;
+import 'package:franchise_mobile_app/core/models/category.dart';
+import 'package:franchise_mobile_app/features/category/category_screen.dart';
+import 'package:franchise_mobile_app/core/services/analytics_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 // You may inject analytics or other services here as needed.

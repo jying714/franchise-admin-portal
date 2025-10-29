@@ -1,7 +1,7 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logging/logging.dart';
-import 'package:doughboys_pizzeria_final/core/models/analytics_summary.dart';
+import 'package:franchise_mobile_app/core/models/analytics_summary.dart';
 
 /// AnalyticsService
 /// Use this service for logging any app, admin, or user events to Firebase Analytics,
@@ -9,43 +9,6 @@ import 'package:doughboys_pizzeria_final/core/models/analytics_summary.dart';
 class AnalyticsService {
   final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
   final Logger _logger = Logger('AnalyticsService');
-
-  // --- Analytics Dashboard Methods ---
-
-  /// Returns a stream of AnalyticsSummary (dashboard metrics) for admin panels.
-  Stream<List<AnalyticsSummary>> getSummaryMetrics() {
-    return FirebaseFirestore.instance
-        .collection('analytics_summaries')
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => AnalyticsSummary.fromFirestore(doc.data(), doc.id))
-            .toList());
-  }
-
-  /// Returns a Future<List<AnalyticsSummary>> for bulk export or reporting.
-  Future<List<AnalyticsSummary>> getAnalyticsSummaries() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('analytics_summaries')
-        .get();
-    return snapshot.docs
-        .map((doc) => AnalyticsSummary.fromFirestore(doc.data(), doc.id))
-        .toList();
-  }
-
-  /// Exports analytics summaries as a CSV string (for admin export dialog).
-  Future<String> exportSummary() async {
-    final summaries = await getAnalyticsSummaries();
-
-    final buffer = StringBuffer();
-    // CSV Header
-    buffer.writeln(
-        'period,totalRevenue,totalOrders,retention,mostPopularItem,averageOrderValue');
-    for (final summary in summaries) {
-      buffer.writeln(
-          '${summary.period},${summary.totalRevenue},${summary.totalOrders},${summary.retention},${summary.mostPopularItem ?? ""},${summary.averageOrderValue}');
-    }
-    return buffer.toString();
-  }
 
   // --- Event Logging ---
 
@@ -116,10 +79,6 @@ class AnalyticsService {
   // ==========================
   // === ADMIN/ADMIN PANEL ====
   // ==========================
-
-  Future<void> logAdminMenuEditorViewed(String userId) async {
-    await logEvent('admin_menu_editor_viewed', {'admin_user_id': userId});
-  }
 
   Future<void> logAdminMenuItemAction({
     required String action, // add, update, delete, bulk_upload
@@ -224,34 +183,6 @@ class AnalyticsService {
     await logEvent('unauthorized_access', {
       'attempted_action': attemptedAction,
       'user_id': userId,
-    });
-  }
-
-  // ========================
-  // === EXPORT/IMPORT ======
-  // ========================
-
-  Future<void> logExportAction({
-    required String type, // menu, category, order, etc
-    int? count,
-    String? userId,
-  }) async {
-    await logEvent('export_action', {
-      'type': type,
-      if (count != null) 'count': count,
-      if (userId != null) 'user_id': userId,
-    });
-  }
-
-  Future<void> logImportAction({
-    required String type,
-    int? count,
-    String? userId,
-  }) async {
-    await logEvent('import_action', {
-      'type': type,
-      if (count != null) 'count': count,
-      if (userId != null) 'user_id': userId,
     });
   }
 

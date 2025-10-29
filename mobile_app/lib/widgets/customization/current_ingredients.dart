@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:doughboys_pizzeria_final/core/models/menu_item.dart';
-import 'package:doughboys_pizzeria_final/core/models/ingredient_metadata.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
-import 'package:doughboys_pizzeria_final/widgets/portion_selector.dart';
-import 'package:doughboys_pizzeria_final/widgets/customization/portion_pill_toggle.dart';
+import 'package:franchise_mobile_app/core/models/menu_item.dart';
+import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:franchise_mobile_app/widgets/portion_selector.dart';
+import 'package:franchise_mobile_app/widgets/customization/portion_pill_toggle.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 typedef CurrencyFormat = String Function(BuildContext context, num value);

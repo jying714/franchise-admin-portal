@@ -1,6 +1,6 @@
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:doughboys_pizzeria_final/core/services/firestore_service.dart';
+import 'package:franchise_mobile_app/core/services/firestore_service.dart';
 
 class CustomizationGroupEditor extends StatefulWidget {
   final List<Map<String, dynamic>> customizations;

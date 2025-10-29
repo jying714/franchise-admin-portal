@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:doughboys_pizzeria_final/widgets/dynamic_form/image_upload_field.dart';
-import 'package:doughboys_pizzeria_final/widgets/dynamic_form/smart_dropdown_or_text_field.dart';
+import 'package:franchise_mobile_app/widgets/dynamic_form/image_upload_field.dart';
+import 'package:franchise_mobile_app/widgets/dynamic_form/smart_dropdown_or_text_field.dart';
 import 'dart:convert';
 
 /// Universal dynamic input renderer for schema-driven forms.

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:doughboys_pizzeria_final/features/main_menu/main_menu_screen.dart';
-import 'package:doughboys_pizzeria_final/features/home/home_screen.dart'; // Update path if different
+import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
+import 'package:franchise_mobile_app/features/home/home_screen.dart'; // Update path if different
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

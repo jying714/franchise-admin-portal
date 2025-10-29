@@ -3,19 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
-import 'package:doughboys_pizzeria_final/core/services/auth_service.dart';
-import 'package:doughboys_pizzeria_final/core/services/analytics_service.dart';
-import 'package:doughboys_pizzeria_final/core/services/firestore_service.dart';
-import 'package:doughboys_pizzeria_final/features/language/language_provider.dart';
-import 'package:doughboys_pizzeria_final/core/models/user.dart' as app_user;
-import 'package:doughboys_pizzeria_final/core/models/ingredient_metadata.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:franchise_mobile_app/core/services/auth_service.dart';
+import 'package:franchise_mobile_app/core/services/analytics_service.dart';
+import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:franchise_mobile_app/features/language/language_provider.dart';
+import 'package:franchise_mobile_app/core/models/user.dart' as app_user;
+import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
 import 'firebase_options.dart';
 // Import required screens/widgets:
-import 'package:doughboys_pizzeria_final/features/splash/splash_screen.dart';
-import 'package:doughboys_pizzeria_final/features/main_menu/main_menu_screen.dart';
-import 'package:doughboys_pizzeria_final/features/auth/sign_in_screen.dart';
-import 'package:doughboys_pizzeria_final/features/user_accounts/complete_profile_dialog.dart';
+import 'package:franchise_mobile_app/features/splash/splash_screen.dart';
+import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
+import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
+import 'package:franchise_mobile_app/features/user_accounts/complete_profile_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// --- IngredientMetadata Firestore Loader Provider ---

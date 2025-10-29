@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
-import 'package:doughboys_pizzeria_final/core/models/menu_item.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:franchise_mobile_app/core/models/menu_item.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CustomizationHeader extends StatelessWidget {

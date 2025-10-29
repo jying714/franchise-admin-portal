@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
-import 'package:doughboys_pizzeria_final/core/models/ingredient_metadata.dart';
-import 'package:doughboys_pizzeria_final/core/utils/formatting.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
+import 'package:franchise_mobile_app/core/utils/formatting.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CheckboxCustomizationGroup extends StatelessWidget {

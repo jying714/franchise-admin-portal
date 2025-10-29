@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
 
 class LoadingShimmerWidget extends StatelessWidget {
   final int itemCount;

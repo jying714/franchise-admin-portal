@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
 
 /// Displays a shopping cart icon with a dynamic badge count.
 /// Pass in a [cartItemCountStream] that emits the item count as an integer.

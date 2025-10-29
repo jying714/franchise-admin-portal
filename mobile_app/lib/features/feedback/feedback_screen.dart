@@ -2,12 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
-import 'package:doughboys_pizzeria_final/core/services/firestore_service.dart';
-import 'package:doughboys_pizzeria_final/core/models/feedback_entry.dart'
-    as model;
-import 'package:doughboys_pizzeria_final/core/services/offline_service.dart';
-import 'package:doughboys_pizzeria_final/config/branding_config.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:franchise_mobile_app/core/models/feedback_entry.dart' as model;
+import 'package:franchise_mobile_app/core/services/offline_service.dart';
+import 'package:franchise_mobile_app/config/branding_config.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 

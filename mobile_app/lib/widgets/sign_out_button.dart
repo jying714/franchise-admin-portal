@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
-import 'package:doughboys_pizzeria_final/widgets/confirmation_dialog.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:franchise_mobile_app/widgets/confirmation_dialog.dart';
 
 /// A reusable sign out button with built-in confirmation dialog.
 /// Use in any screen where sign-out is needed for consistent UX.

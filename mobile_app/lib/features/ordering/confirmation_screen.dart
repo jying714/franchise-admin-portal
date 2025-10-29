@@ -1,14 +1,14 @@
 // ignore: unused_import
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
-import 'package:doughboys_pizzeria_final/config/feature_config.dart';
-import 'package:doughboys_pizzeria_final/core/services/notification_service.dart';
-import 'package:doughboys_pizzeria_final/features/tracking/tracking_screen.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:franchise_mobile_app/config/feature_config.dart';
+import 'package:franchise_mobile_app/core/services/notification_service.dart';
+import 'package:franchise_mobile_app/features/tracking/tracking_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:doughboys_pizzeria_final/widgets/feedback/feedback_submission_dialog.dart';
+import 'package:franchise_mobile_app/widgets/feedback/feedback_submission_dialog.dart';
 import 'package:provider/provider.dart';
-import 'package:doughboys_pizzeria_final/core/models/user.dart';
+import 'package:franchise_mobile_app/core/models/user.dart';
 
 class ConfirmationScreen extends StatefulWidget {
   final String orderId;

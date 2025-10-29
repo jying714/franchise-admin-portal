@@ -2,12 +2,12 @@
 
 import 'package:flutter/material.dart';
 // ignore: unused_import
-import 'package:doughboys_pizzeria_final/config/app_config.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
-import 'package:doughboys_pizzeria_final/config/branding_config.dart';
-import 'package:doughboys_pizzeria_final/features/auth/sign_in_screen.dart';
-import 'package:doughboys_pizzeria_final/features/auth/sign_up_screen.dart';
-import 'package:doughboys_pizzeria_final/features/main_menu/main_menu_screen.dart';
+import 'package:franchise_mobile_app/config/app_config.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:franchise_mobile_app/config/branding_config.dart';
+import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
+import 'package:franchise_mobile_app/features/auth/sign_up_screen.dart';
+import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class HomeScreen extends StatelessWidget {

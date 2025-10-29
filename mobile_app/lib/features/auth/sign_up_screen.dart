@@ -1,18 +1,18 @@
 // ignore_for_file: unused_import, prefer_const_constructors
-import 'package:doughboys_pizzeria_final/features/user_accounts/profile_screen.dart';
+import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:doughboys_pizzeria_final/core/services/auth_service.dart';
-import 'package:doughboys_pizzeria_final/core/services/firestore_service.dart';
-import 'package:doughboys_pizzeria_final/core/models/user.dart' as db_user;
-import 'package:doughboys_pizzeria_final/features/main_menu/main_menu_screen.dart';
-import 'package:doughboys_pizzeria_final/config/app_config.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
-import 'package:doughboys_pizzeria_final/config/branding_config.dart';
-import 'package:doughboys_pizzeria_final/widgets/social_sign_in_buttons.dart';
+import 'package:franchise_mobile_app/core/services/auth_service.dart';
+import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:franchise_mobile_app/core/models/user.dart' as db_user;
+import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
+import 'package:franchise_mobile_app/config/app_config.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:franchise_mobile_app/config/branding_config.dart';
+import 'package:franchise_mobile_app/widgets/social_sign_in_buttons.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SignUpScreen extends StatefulWidget {

@@ -1,29 +1,28 @@
-import 'package:doughboys_pizzeria_final/core/models/ingredient_metadata.dart';
+import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
 import 'dart:collection';
 // ignore_for_file: unused_import, unnecessary_cast
-import 'package:doughboys_pizzeria_final/core/models/customization.dart';
+import 'package:franchise_mobile_app/core/models/customization.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:doughboys_pizzeria_final/config/app_config.dart';
-import 'package:doughboys_pizzeria_final/core/models/message.dart';
-import 'package:doughboys_pizzeria_final/core/models/loyalty.dart';
-import 'package:doughboys_pizzeria_final/core/models/category.dart';
-import 'package:doughboys_pizzeria_final/core/models/favorite_order.dart';
-import 'package:doughboys_pizzeria_final/core/models/menu_item.dart';
-import 'package:doughboys_pizzeria_final/core/models/order.dart' as order_model;
-import 'package:doughboys_pizzeria_final/core/models/user.dart' as user_model;
-import 'package:doughboys_pizzeria_final/core/models/promo.dart';
-import 'package:doughboys_pizzeria_final/core/models/banner.dart';
-import 'package:doughboys_pizzeria_final/core/models/chat.dart';
-import 'package:doughboys_pizzeria_final/core/models/feedback_entry.dart'
+import 'package:franchise_mobile_app/config/app_config.dart';
+import 'package:franchise_mobile_app/core/models/message.dart';
+import 'package:franchise_mobile_app/core/models/loyalty.dart';
+import 'package:franchise_mobile_app/core/models/category.dart';
+import 'package:franchise_mobile_app/core/models/favorite_order.dart';
+import 'package:franchise_mobile_app/core/models/menu_item.dart';
+import 'package:franchise_mobile_app/core/models/order.dart' as order_model;
+import 'package:franchise_mobile_app/core/models/user.dart' as user_model;
+import 'package:franchise_mobile_app/core/models/promo.dart';
+import 'package:franchise_mobile_app/core/models/banner.dart';
+import 'package:franchise_mobile_app/core/models/chat.dart';
+import 'package:franchise_mobile_app/core/models/feedback_entry.dart'
     as feedback_model;
-import 'package:doughboys_pizzeria_final/core/models/inventory.dart';
-import 'package:doughboys_pizzeria_final/core/models/address.dart';
-import 'package:doughboys_pizzeria_final/core/models/scheduled_order.dart';
-import 'package:doughboys_pizzeria_final/core/models/audit_log.dart';
-import 'package:doughboys_pizzeria_final/core/services/audit_log_service.dart';
-import 'package:doughboys_pizzeria_final/core/models/export_utils.dart';
-import 'package:doughboys_pizzeria_final/core/models/analytics_summary.dart';
+import 'package:franchise_mobile_app/core/models/inventory.dart';
+import 'package:franchise_mobile_app/core/models/address.dart';
+import 'package:franchise_mobile_app/core/models/scheduled_order.dart';
+import 'package:franchise_mobile_app/core/models/audit_log.dart';
+import 'package:franchise_mobile_app/core/models/export_utils.dart';
+import 'package:franchise_mobile_app/core/models/analytics_summary.dart';
 import 'package:async/async.dart';
 
 class FirestoreService {
@@ -245,56 +244,6 @@ class FirestoreService {
   }
 
   // --- MENU ITEMS ---
-  Future<void> addMenuItem(MenuItem item, {String? userId}) async {
-    assert(item.categoryId.isNotEmpty, 'categoryId must not be empty');
-    final doc = _db.collection(_menuItems).doc();
-    final data = item.copyWith(id: doc.id).toFirestore();
-    data['customizations'] =
-        item.customizations.map((c) => c.toFirestore()).toList();
-    data['includedIngredients'] = item.includedIngredients ?? [];
-    data['optionalAddOns'] = item.optionalAddOns ?? [];
-    await doc.set(data);
-    await AuditLogService().addLog(
-      action: 'add_menu_item',
-      userId: userId ?? currentUserId ?? 'unknown',
-      details: {'menuItemId': doc.id, 'name': item.name},
-    );
-  }
-
-  Future<void> updateMenuItem(MenuItem item, {String? userId}) async {
-    try {
-      // --- Ensure customizations are always a List<Map> ---
-      final data = item.toFirestore();
-      if (item.customizations.isNotEmpty) {
-        data['customizations'] =
-            item.customizations.map((c) => c.toFirestore()).toList();
-      }
-      await _db.collection(_menuItems).doc(item.id).update(data);
-      await AuditLogService().addLog(
-        action: 'update_menu_item',
-        userId: userId ?? currentUserId ?? 'unknown',
-        details: {'menuItemId': item.id, 'name': item.name},
-      );
-    } catch (e, stack) {
-      _logFirestoreError('updateMenuItem', e, stack);
-      rethrow;
-    }
-  }
-
-  Future<void> deleteMenuItem(String id, {String? userId}) async {
-    try {
-      await _db.collection(_menuItems).doc(id).delete();
-      await AuditLogService().addLog(
-        action: 'delete_menu_item',
-        userId: userId ?? currentUserId ?? 'unknown',
-        details: {'menuItemId': id},
-      );
-    } catch (e, stack) {
-      _logFirestoreError('deleteMenuItem', e, stack);
-      rethrow;
-    }
-  }
-
   Stream<List<MenuItem>> getMenuItems(
       {String? search, String? sortBy, bool descending = false}) {
     Query query = _db.collection(_menuItems);
@@ -463,34 +412,6 @@ class FirestoreService {
     return MenuItem.fromFirestore(data, doc.id);
   }
 
-  Future<void> bulkUploadMenuItems(List<MenuItem> items,
-      {String? userId}) async {
-    final batch = _db.batch();
-    for (final item in items) {
-      final docRef = _db.collection(_menuItems).doc();
-      // --- Ensure customizations are always a List<Map> ---
-      var data = item.copyWith(id: docRef.id).toFirestore();
-      if (item.customizations.isNotEmpty) {
-        data['customizations'] =
-            item.customizations.map((c) => c.toFirestore()).toList();
-      }
-      batch.set(docRef, data);
-    }
-    await batch.commit();
-    await AuditLogService().addLog(
-      action: 'bulk_upload_menu_items',
-      userId: userId ?? currentUserId ?? 'unknown',
-      details: {'count': items.length},
-    );
-  }
-
-  Future<String> exportMenuToCsv() async {
-    final snap = await _db.collection(_menuItems).get();
-    final items =
-        snap.docs.map((d) => MenuItem.fromFirestore(d.data(), d.id)).toList();
-    return ExportUtils.menuItemsToCsv(items);
-  }
-
   // --- PROMOTIONS ---
   Future<void> addPromo(Promo promo) async =>
       _db.collection(_promotions).doc(promo.id).set(promo.toFirestore());
@@ -508,25 +429,6 @@ class FirestoreService {
   Future<List<Promo>> getPromosOnce() async {
     final snap = await _db.collection(_promotions).get();
     return snap.docs.map((d) => Promo.fromFirestore(d.data(), d.id)).toList();
-  }
-
-  Future<void> bulkUploadPromos(List<Promo> promos, {String? userId}) async {
-    final batch = _db.batch();
-    for (final promo in promos) {
-      final docRef = _db.collection(_promotions).doc();
-      batch.set(docRef, promo.copyWith(id: docRef.id).toFirestore());
-    }
-    await batch.commit();
-    await AuditLogService().addLog(
-      action: 'bulk_upload_promos',
-      userId: userId ?? currentUserId ?? 'unknown',
-      details: {'count': promos.length},
-    );
-  }
-
-  Future<String> exportPromosToCsv() async {
-    final promos = await getPromosOnce();
-    return ExportUtils.promosToCsv(promos);
   }
 
   // --- Promotion Aliases for Admin UI Compatibility ---
@@ -763,15 +665,6 @@ class FirestoreService {
             snap.docs.map((d) => Chat.fromFirestore(d.data(), d.id)).toList());
   }
 
-  Future<void> deleteSupportChat(String chatId) async {
-    await _db.collection(_supportChats).doc(chatId).delete();
-    await AuditLogService().addLog(
-      action: 'delete_support_chat',
-      userId: currentUserId ?? 'unknown',
-      details: {'chatId': chatId},
-    );
-  }
-
   Future<List<Chat>> getAllChats() async {
     final snap = await _db.collection(_supportChats).get();
     return snap.docs.map((d) => Chat.fromFirestore(d.data(), d.id)).toList();
@@ -780,15 +673,6 @@ class FirestoreService {
   Stream<List<Chat>> streamAllChats() {
     return _db.collection(_supportChats).snapshots().map((snap) =>
         snap.docs.map((d) => Chat.fromFirestore(d.data(), d.id)).toList());
-  }
-
-  Future<void> deleteChat(String chatId) async {
-    await _db.collection(_supportChats).doc(chatId).delete();
-    await AuditLogService().addLog(
-      action: 'delete_chat',
-      userId: currentUserId ?? 'unknown',
-      details: {'chatId': chatId},
-    );
   }
 
   Future<void> sendMessage({
@@ -866,86 +750,7 @@ class FirestoreService {
     }
   }
 
-  // --- STAFF USERS MANAGEMENT (Admin/Staff Access Panel) ---
-  Stream<List<user_model.User>> getStaffUsers() {
-    return _db
-        .collection(_users)
-        .where('role', whereIn: ['staff', 'manager'])
-        .snapshots()
-        .map((snap) => snap.docs
-            .map((doc) => user_model.User.fromFirestore(doc.data(), doc.id))
-            .toList());
-  }
-
-  Future<void> addStaffUser({
-    required String name,
-    required String email,
-    String? phone,
-    String role = 'staff',
-  }) async {
-    final docRef = _db.collection(_users).doc();
-    await docRef.set({
-      'id': docRef.id,
-      'name': name,
-      'email': email,
-      'phone': phone ?? '',
-      'role': role,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-    await AuditLogService().addLog(
-      action: 'add_staff_user',
-      userId: currentUserId ?? 'unknown',
-      details: {
-        'staffUserId': docRef.id,
-        'name': name,
-        'email': email,
-        'role': role
-      },
-    );
-  }
-
-  Future<void> removeStaffUser(String staffUserId) async {
-    await _db.collection(_users).doc(staffUserId).delete();
-    await AuditLogService().addLog(
-      action: 'remove_staff_user',
-      userId: currentUserId ?? 'unknown',
-      details: {'staffUserId': staffUserId},
-    );
-  }
-
-  // --- FEEDBACK MANAGEMENT (Admin/Feedback Management Panel) ---
-  Stream<List<feedback_model.FeedbackEntry>> getFeedbackEntries() {
-    return _db
-        .collection(_feedback)
-        .orderBy('timestamp', descending: true)
-        .snapshots()
-        .map((snap) => snap.docs
-            .map((d) =>
-                feedback_model.FeedbackEntry.fromFirestore(d.data(), d.id))
-            .toList());
-  }
-
-  Future<void> deleteFeedbackEntry(String id) async {
-    await _db.collection(_feedback).doc(id).delete();
-    await AuditLogService().addLog(
-      action: 'delete_feedback_entry',
-      userId: currentUserId ?? 'unknown',
-      details: {'feedbackId': id},
-    );
-  }
-
-  Future<List<feedback_model.FeedbackEntry>> getFeedbackOnce() async {
-    final snap = await _db.collection(_feedback).get();
-    return snap.docs
-        .map((d) => feedback_model.FeedbackEntry.fromFirestore(d.data(), d.id))
-        .toList();
-  }
-
-  Future<feedback_model.FeedbackEntry?> getFeedbackById(String id) async {
-    final doc = await _db.collection(_feedback).doc(id).get();
-    if (!doc.exists || doc.data() == null) return null;
-    return feedback_model.FeedbackEntry.fromFirestore(doc.data()!, doc.id);
-  }
+  // --- FEEDBACK MANAGEMENT ---
 
   Future<void> submitOrderFeedback({
     required String userId,
@@ -976,28 +781,10 @@ class FirestoreService {
     return query.docs.isNotEmpty;
   }
 
-  /// Returns the feedback analytics for a given period.
-  /// If franchiseId is null, defaults to 'default'.
-  Future<Map<String, dynamic>?> getFeedbackStatsForPeriod(String period,
-      {String? franchiseId}) async {
-    final String docId = '${franchiseId ?? "default"}_$period';
-    final doc = await _db.collection('analytics_summaries').doc(docId).get();
-    if (!doc.exists) return null;
-    final data = doc.data();
-    // If your feedback analytics are stored under a field like 'feedbackStats', return that directly.
-    // Otherwise, return the relevant fields.
-    return data?['feedbackStats'] ?? {};
-  }
-
   // --- INVENTORY (Admin/Inventory Panel) ---
   Stream<List<Inventory>> getInventory() {
     return _db.collection(_inventory).snapshots().map((snap) =>
         snap.docs.map((d) => Inventory.fromFirestore(d.data(), d.id)).toList());
-  }
-
-  Future<void> addInventory(Inventory inventory) async {
-    final doc = _db.collection(_inventory).doc();
-    await doc.set(inventory.copyWith(id: doc.id).toFirestore());
   }
 
   Future<void> updateInventory(Inventory inventory) async {
@@ -1005,29 +792,6 @@ class FirestoreService {
         .collection(_inventory)
         .doc(inventory.id)
         .update(inventory.toFirestore());
-  }
-
-  Future<void> deleteInventory(String id) async {
-    await _db.collection(_inventory).doc(id).delete();
-    await AuditLogService().addLog(
-      action: 'delete_inventory',
-      userId: currentUserId ?? 'unknown',
-      details: {'inventoryId': id},
-    );
-  }
-
-  // --- FEATURE SETTINGS / FEATURE TOGGLES (admin/feature_settings/...) ---
-  Future<Map<String, bool>> getFeatureToggles() async {
-    final doc = await _db.collection('feature_toggles').doc('global').get();
-    if (!doc.exists || doc.data() == null) return {};
-    return Map<String, bool>.from(doc.data() as Map<String, dynamic>);
-  }
-
-  Future<void> updateFeatureToggle(String key, bool enabled) async {
-    await _db
-        .collection('feature_toggles')
-        .doc('global')
-        .set({key: enabled}, SetOptions(merge: true));
   }
 
   // --- CATEGORIES ---
@@ -1049,64 +813,6 @@ class FirestoreService {
         .map((d) =>
             Category.fromFirestore(d.data() as Map<String, dynamic>, d.id))
         .toList());
-  }
-
-  Future<void> addCategory(Category category, {String? userId}) async {
-    final doc = _db.collection(_categories).doc();
-    final categoryWithId = Category(
-      id: doc.id,
-      name: category.name,
-      description: category.description,
-      image: category.image,
-    );
-    await doc.set(categoryWithId.toFirestore());
-    await AuditLogService().addLog(
-      action: 'add_category',
-      userId: userId ?? currentUserId ?? 'unknown',
-      details: {'categoryId': doc.id, 'name': category.name},
-    );
-  }
-
-  Future<void> updateCategory(Category category, {String? userId}) async {
-    await _db
-        .collection(_categories)
-        .doc(category.id)
-        .update(category.toFirestore());
-    await AuditLogService().addLog(
-      action: 'update_category',
-      userId: userId ?? currentUserId ?? 'unknown',
-      details: {'categoryId': category.id, 'name': category.name},
-    );
-  }
-
-  Future<void> deleteCategory(String id, {String? userId}) async {
-    await _db.collection(_categories).doc(id).delete();
-    await AuditLogService().addLog(
-      action: 'delete_category',
-      userId: userId ?? currentUserId ?? 'unknown',
-      details: {'categoryId': id},
-    );
-  }
-
-  Future<void> bulkUploadCategories(List<Category> categories,
-      {String? userId}) async {
-    final batch = _db.batch();
-    for (final cat in categories) {
-      final docRef = _db.collection(_categories).doc();
-      final catWithId = Category(
-        id: docRef.id,
-        name: cat.name,
-        description: cat.description,
-        image: cat.image,
-      );
-      batch.set(docRef, catWithId.toFirestore());
-    }
-    await batch.commit();
-    await AuditLogService().addLog(
-      action: 'bulk_upload_categories',
-      userId: userId ?? currentUserId ?? 'unknown',
-      details: {'count': categories.length},
-    );
   }
 
   // --- FAVORITE ORDERS ---
@@ -1211,45 +917,6 @@ class FirestoreService {
   Future<void> deleteScheduledOrder(String orderId) async =>
       _db.collection(_scheduledOrders).doc(orderId).delete();
 
-  // --- AUDIT LOGS ---
-  Stream<List<AuditLog>> getAuditLogs({String? userId, String? action}) {
-    Query query = _db.collection('audit_logs');
-    if (userId != null) {
-      query = query.where('userId', isEqualTo: userId);
-    }
-    if (action != null) {
-      query = query.where('action', isEqualTo: action);
-    }
-    return query.orderBy('timestamp', descending: true).snapshots().map(
-          (snap) => snap.docs
-              .map((d) => AuditLog.fromFirestore(
-                  d.data() as Map<String, dynamic>, d.id))
-              .toList(),
-        );
-  }
-
-  // --- ANALYTICS DASHBOARD / EXPORT ---
-  Future<AnalyticsSummary?> getAnalyticsSummary(
-      {required String period}) async {
-    final doc = await _db.collection('analytics_summaries').doc(period).get();
-    if (!doc.exists || doc.data() == null) return null;
-    return AnalyticsSummary.fromFirestore(doc.data()!, doc.id);
-  }
-
-  Future<String> exportAnalyticsToCsv({required String period}) async {
-    final summary = await getAnalyticsSummary(period: period);
-    if (summary == null) return '';
-    return ExportUtils.analyticsSummaryToCsv(summary);
-  }
-
-  // --- MENU EXPORT (Enterprise) ---
-  Future<String> exportMenuCsv() async {
-    final snap = await _db.collection(_menuItems).get();
-    final items =
-        snap.docs.map((d) => MenuItem.fromFirestore(d.data(), d.id)).toList();
-    return ExportUtils.menuItemsToCsv(items);
-  }
-
   // --- MENU ONLINE STATUS (stub) ---
   Stream<bool> menuOnlineStatusStream() async* {
     yield true;
@@ -1270,7 +937,7 @@ class FirestoreService {
             : null);
   }
 
-  /// [PATCH]: Log and validate order status update
+  /// [PATCH]: Log and validate order status update (client-safe)
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
     try {
       final validStatuses = [
@@ -1282,16 +949,18 @@ class FirestoreService {
         'Delivered',
         'Completed',
         'Cancelled',
-        'Refunded'
+        'Refunded',
       ];
+
       if (!validStatuses.contains(newStatus)) {
         throw Exception('Invalid status: $newStatus');
       }
+
       await _db.collection(_orders).doc(orderId).update({'status': newStatus});
-      await AuditLogService().addLog(
-        action: 'update_order_status',
-        userId: currentUserId ?? 'unknown',
-        details: {'orderId': orderId, 'newStatus': newStatus},
+
+      // Optional: simple local debug log (replaces AuditLogService)
+      print(
+        '[FirestoreService] Updated order $orderId to status: $newStatus',
       );
     } catch (e, stack) {
       _logFirestoreError('updateOrderStatus', e, stack);
@@ -1388,21 +1057,6 @@ class FirestoreService {
       'lastModified': FieldValue.serverTimestamp(),
       'lastModifiedBy': currentUserId ?? 'system',
     });
-  }
-
-  /// update menu item customizations with audit
-  Future<void> updateMenuItemCustomizationsWithAudit(
-      String menuItemId, List<Customization> customizations,
-      {String? userId}) async {
-    await updateMenuItemCustomizations(menuItemId, customizations);
-    await AuditLogService().addLog(
-      action: 'update_menu_item_customizations',
-      userId: userId ?? currentUserId ?? 'unknown',
-      details: {
-        'menuItemId': menuItemId,
-        'customizationsCount': customizations.length
-      },
-    );
   }
 
   /// get menu customizations

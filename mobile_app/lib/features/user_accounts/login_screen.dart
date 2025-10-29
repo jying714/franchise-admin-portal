@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:doughboys_pizzeria_final/config/design_tokens.dart';
-import 'package:doughboys_pizzeria_final/config/branding_config.dart';
-import 'package:doughboys_pizzeria_final/core/services/auth_service.dart';
-import 'package:doughboys_pizzeria_final/features/main_menu/main_menu_screen.dart';
-import 'package:doughboys_pizzeria_final/widgets/social_sign_in_buttons.dart';
-import 'package:doughboys_pizzeria_final/config/feature_config.dart';
+import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:franchise_mobile_app/config/branding_config.dart';
+import 'package:franchise_mobile_app/core/services/auth_service.dart';
+import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
+import 'package:franchise_mobile_app/widgets/social_sign_in_buttons.dart';
+import 'package:franchise_mobile_app/config/feature_config.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
