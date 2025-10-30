@@ -4,7 +4,13 @@ tag-template: "v$RESOLVED_VERSION"
 version-template: "$MAJOR.$MINOR.$PATCH"
 
 categories:
-  - title: "Features"
+  - title: "Mobile App"
+    labels:
+      - "mobile"
+  - title: "Web Admin"
+    labels:
+      - "web"
+  - title: "Shared Features"
     labels:
       - "feature"
       - "enhancement"
