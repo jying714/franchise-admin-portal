@@ -1,9 +1,12 @@
-# .github/workflows/release-drafter.yml
 name: Release Drafter
 
 on:
   push:
     branches: [ main ]
+
+permissions:
+  contents: write     # Allows creating/editing releases
+  pull-requests: write # Optional: for PR comments
 
 jobs:
   update_release_draft:
