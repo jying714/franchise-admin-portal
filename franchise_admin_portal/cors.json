@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["https://franchisehq.io", "http://localhost:49554"],
+    "responseHeader": ["Content-Type"],
+    "method": ["GET", "HEAD"],
+    "maxAgeSeconds": 3600
+  }
+]
