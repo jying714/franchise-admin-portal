@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "admin-portal/build/web",
+    "public": "franchise-admin-portal/build/web",
     "ignore": [
       "firebase.json",
       "**/.*",

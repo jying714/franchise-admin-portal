@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'admin-portal/**'
+      - 'franchise-admin-portal/**'
       - 'firebase.json'
       - '.github/workflows/deploy-web.yml'
 
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./admin-portal
+        working-directory: ./franchise-admin-portal   # ← MATCHES NEW NAME
 
     steps:
       - uses: actions/checkout@v4
