@@ -1,7 +1,6 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logging/logging.dart';
-import 'package:franchise_mobile_app/core/models/analytics_summary.dart';
 
 /// AnalyticsService
 /// Use this service for logging any app, admin, or user events to Firebase Analytics,

@@ -17,12 +17,8 @@ import 'package:franchise_mobile_app/core/models/banner.dart';
 import 'package:franchise_mobile_app/core/models/chat.dart';
 import 'package:franchise_mobile_app/core/models/feedback_entry.dart'
     as feedback_model;
-import 'package:franchise_mobile_app/core/models/inventory.dart';
 import 'package:franchise_mobile_app/core/models/address.dart';
 import 'package:franchise_mobile_app/core/models/scheduled_order.dart';
-import 'package:franchise_mobile_app/core/models/audit_log.dart';
-import 'package:franchise_mobile_app/core/models/export_utils.dart';
-import 'package:franchise_mobile_app/core/models/analytics_summary.dart';
 import 'package:async/async.dart';
 
 class FirestoreService {
@@ -779,19 +775,6 @@ class FirestoreService {
         .limit(1)
         .get();
     return query.docs.isNotEmpty;
-  }
-
-  // --- INVENTORY (Admin/Inventory Panel) ---
-  Stream<List<Inventory>> getInventory() {
-    return _db.collection(_inventory).snapshots().map((snap) =>
-        snap.docs.map((d) => Inventory.fromFirestore(d.data(), d.id)).toList());
-  }
-
-  Future<void> updateInventory(Inventory inventory) async {
-    await _db
-        .collection(_inventory)
-        .doc(inventory.id)
-        .update(inventory.toFirestore());
   }
 
   // --- CATEGORIES ---
