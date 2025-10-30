@@ -6,6 +6,7 @@ on:
     branches: [ main ]
     paths:
       - 'mobile_app/**'
+      - '.github/workflows/build-mobile.yml'
 
 jobs:
   build:
@@ -15,13 +16,22 @@ jobs:
         working-directory: ./mobile_app
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@v4  # Updated for consistency
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.29.2'
-      - run: flutter pub get
-      - run: flutter build apk --release
-      - uses: actions/upload-artifact@v3
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4  # FIXED: v3 → v4
         with:
           name: doughboys-app
           path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30  # Optional: Keep artifacts 30 days
