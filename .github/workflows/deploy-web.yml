@@ -3,17 +3,18 @@ name: Deploy Web to Firebase
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'franchise-admin-portal/**'
-      - 'firebase.json'
-      - '.github/workflows/deploy-web.yml'
+    # Remove 'paths' temporarily to test
+  # paths:
+  #   - 'franchise-admin-portal/**'
+  #   - 'firebase.json'
+  #   - '.github/workflows/deploy-web.yml'
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./franchise-admin-portal   # ← MATCHES NEW NAME
+        working-directory: ./franchise-admin-portal
 
     steps:
       - uses: actions/checkout@v4
