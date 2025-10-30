@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/franchise_info.dart';
+import 'package:admin_portal/core/models/franchise_info.dart';
 
 class FranchiseSelector extends StatelessWidget {
   final List<FranchiseInfo> items;

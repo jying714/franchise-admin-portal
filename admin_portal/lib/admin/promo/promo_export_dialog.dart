@@ -3,12 +3,12 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:convert';
 import 'package:flutter/material.dart';
 // Don't import dart:io at top-level if you want to build for web.
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
 import 'package:path_provider/path_provider.dart'
     if (dart.library.io) 'package:path_provider/path_provider.dart';
 import 'dart:io' if (dart.library.io) 'dart:io';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
 import 'dart:html' as html; // For web file download
 
 class PromoExportDialog extends StatefulWidget {

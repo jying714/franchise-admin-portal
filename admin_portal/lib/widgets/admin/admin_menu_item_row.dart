@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/widgets/admin/admin_menu_item_actions_row.dart';
-import 'package:franchise_admin_portal/core/models/menu_item.dart';
-import 'package:franchise_admin_portal/core/models/category.dart';
-import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
-import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:franchise_admin_portal/widgets/network_image_widget.dart';
-import 'package:franchise_admin_portal/widgets/dietary_allergen_chips_row.dart';
-import 'package:franchise_admin_portal/widgets/status_chip.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/widgets/admin/admin_menu_item_actions_row.dart';
+import 'package:admin_portal/core/models/menu_item.dart';
+import 'package:admin_portal/core/models/category.dart';
+import 'package:admin_portal/core/models/user.dart' as admin_user;
+import 'package:admin_portal/config/branding_config.dart';
+import 'package:admin_portal/widgets/network_image_widget.dart';
+import 'package:admin_portal/widgets/dietary_allergen_chips_row.dart';
+import 'package:admin_portal/widgets/status_chip.dart';
+import 'package:admin_portal/config/design_tokens.dart';
 
 class AdminMenuItemRow extends StatelessWidget {
   final MenuItem item;

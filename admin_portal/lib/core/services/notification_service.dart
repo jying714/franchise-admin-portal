@@ -1,6 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:logging/logging.dart';
-import 'package:franchise_admin_portal/config/feature_config.dart';
+import 'package:admin_portal/config/feature_config.dart';
 
 class NotificationService {
   late final FirebaseMessaging _messaging;

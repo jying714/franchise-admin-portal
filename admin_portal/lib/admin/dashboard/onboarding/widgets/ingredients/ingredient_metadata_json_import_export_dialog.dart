@@ -5,15 +5,15 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/schema_templates.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/ingredient_metadata.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/widgets/scrolling_json_editor.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/utils/schema_templates.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/core/models/ingredient_metadata.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/core/providers/ingredient_metadata_provider.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/widgets/scrolling_json_editor.dart';
+import 'package:admin_portal/core/providers/ingredient_type_provider.dart';
 import 'ingredient_metadata_json_preview_table.dart';
 
 class IngredientMetadataJsonImportExportDialog extends StatefulWidget {

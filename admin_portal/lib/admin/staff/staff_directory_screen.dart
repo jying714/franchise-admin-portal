@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/core/models/user.dart' as admin_user;
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
 import 'package:provider/provider.dart';
 
 class StaffDirectoryScreen extends StatefulWidget {

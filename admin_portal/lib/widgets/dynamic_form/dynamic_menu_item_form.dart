@@ -1,15 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:franchise_admin_portal/widgets/menu_item_validator.dart';
+import 'package:admin_portal/widgets/menu_item_validator.dart';
 import 'dart:convert';
-import 'package:franchise_admin_portal/core/models/customization.dart';
-import 'package:franchise_admin_portal/widgets/dynamic_form/smart_dropdown_or_text_field.dart';
+import 'package:admin_portal/core/models/customization.dart';
+import 'package:admin_portal/widgets/dynamic_form/smart_dropdown_or_text_field.dart';
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/menu_item.dart';
-import 'package:franchise_admin_portal/core/models/nutrition_info.dart';
-import 'package:franchise_admin_portal/widgets/dynamic_form/dynamic_field_input.dart';
-import 'package:franchise_admin_portal/widgets/dynamic_form/dynamic_array_editor.dart';
-import 'package:franchise_admin_portal/widgets/dynamic_form/customization_group_editor.dart';
-import 'package:franchise_admin_portal/widgets/dynamic_form/image_upload_field.dart';
+import 'package:admin_portal/core/models/menu_item.dart';
+import 'package:admin_portal/core/models/nutrition_info.dart';
+import 'package:admin_portal/widgets/dynamic_form/dynamic_field_input.dart';
+import 'package:admin_portal/widgets/dynamic_form/dynamic_array_editor.dart';
+import 'package:admin_portal/widgets/dynamic_form/customization_group_editor.dart';
+import 'package:admin_portal/widgets/dynamic_form/image_upload_field.dart';
 
 class DynamicMenuItemForm extends StatefulWidget {
   final Map<String, dynamic> schema;

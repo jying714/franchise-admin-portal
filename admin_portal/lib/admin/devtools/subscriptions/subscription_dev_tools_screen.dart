@@ -1,9 +1,9 @@
 // File: lib/admin/developer/subscriptions/subscription_dev_tools_screen.dart
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/admin/devtools/subscriptions/manual_subscription_injector.dart';
-import 'package:franchise_admin_portal/admin/devtools/subscriptions/subscription_state_toggler.dart';
-import 'package:franchise_admin_portal/admin/devtools/subscriptions/plan_swapper_tool.dart';
+import 'package:admin_portal/admin/devtools/subscriptions/manual_subscription_injector.dart';
+import 'package:admin_portal/admin/devtools/subscriptions/subscription_state_toggler.dart';
+import 'package:admin_portal/admin/devtools/subscriptions/plan_swapper_tool.dart';
 
 class SubscriptionDevToolsScreen extends StatelessWidget {
   const SubscriptionDevToolsScreen({super.key});

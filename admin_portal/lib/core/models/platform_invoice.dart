@@ -1,7 +1,7 @@
 // lib/models/platform_invoice.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
 
 /// A production-grade model representing an invoice issued by the platform
 /// to a franchisee (e.g. SaaS fees, royalties, services).

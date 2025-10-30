@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/config/design_tokens.dart';
 
 /// Displays a shopping cart icon with a dynamic badge count.
 /// Pass in a [cartItemCountStream] that emits the item count as an integer.

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:franchise_admin_portal/core/models/banner.dart' as model;
-import 'package:franchise_admin_portal/widgets/network_image_widget.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/config/branding_config.dart';
+import 'package:admin_portal/core/models/banner.dart' as model;
+import 'package:admin_portal/widgets/network_image_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class PromoBannerCard extends StatelessWidget {

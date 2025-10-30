@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logging/logging.dart';
-import 'package:franchise_admin_portal/core/models/promo.dart';
+import 'package:admin_portal/core/models/promo.dart';
 
 class PromoService {
   late final FirebaseFirestore _db;

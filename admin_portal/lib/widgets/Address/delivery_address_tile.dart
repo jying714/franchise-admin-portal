@@ -1,12 +1,12 @@
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:franchise_admin_portal/core/models/address.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/widgets/Address/edit_address_dialog.dart';
+import 'package:admin_portal/core/models/address.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/widgets/Address/edit_address_dialog.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
 
 class DeliveryAddressTile extends StatelessWidget {
   final Address address;

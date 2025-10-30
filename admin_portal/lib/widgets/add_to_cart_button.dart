@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/config/design_tokens.dart';
 
 /// Button for adding an item directly to the cart (no customization flow).
 /// Accepts loading state and a callback for tap.

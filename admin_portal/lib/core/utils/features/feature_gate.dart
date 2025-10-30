@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_feature_provider.dart';
-import 'package:franchise_admin_portal/core/utils/features/feature_lock_overlay.dart';
+import 'package:admin_portal/core/providers/franchise_feature_provider.dart';
+import 'package:admin_portal/core/utils/features/feature_lock_overlay.dart';
 
 /// Defines how the fallback content should behave if the feature is not granted or enabled.
 enum FeatureFallbackStyle {

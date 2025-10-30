@@ -1,6 +1,6 @@
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
 
 class CustomizationGroupEditor extends StatefulWidget {
   final String franchiseId;

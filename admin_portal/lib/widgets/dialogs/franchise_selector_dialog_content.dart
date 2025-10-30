@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/models/franchise_info.dart'; // <-- use this
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/core/models/franchise_info.dart'; // <-- use this
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class FranchiseSelectorDialogContent extends StatelessWidget {

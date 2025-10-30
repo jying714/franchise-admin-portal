@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:franchise_admin_portal/core/models/restaurant_type.dart';
+import 'package:admin_portal/core/models/restaurant_type.dart';
 
 class RestaurantTypeProvider with ChangeNotifier {
   List<RestaurantType> _types = [];

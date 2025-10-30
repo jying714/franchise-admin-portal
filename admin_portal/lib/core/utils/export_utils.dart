@@ -1,16 +1,16 @@
 // File: lib/core/utils/export_utils.dart
 
 import 'dart:convert';
-import 'package:franchise_admin_portal/core/models/invoice.dart';
+import 'package:admin_portal/core/models/invoice.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/analytics_summary.dart';
-import 'package:franchise_admin_portal/core/models/audit_log.dart';
-import 'package:franchise_admin_portal/core/models/category.dart';
-import 'package:franchise_admin_portal/core/models/menu_item.dart';
-import 'package:franchise_admin_portal/core/models/promo.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/core/models/analytics_summary.dart';
+import 'package:admin_portal/core/models/audit_log.dart';
+import 'package:admin_portal/core/models/category.dart';
+import 'package:admin_portal/core/models/menu_item.dart';
+import 'package:admin_portal/core/models/promo.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
 
 /// =======================
 /// ExportUtils

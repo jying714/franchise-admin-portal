@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_feature_provider.dart';
+import 'package:admin_portal/core/providers/franchise_feature_provider.dart';
 
 /// A flexible widget that only shows [child] if the specified feature/module is
 /// available in the franchise plan, and optionally also enabled by the franchisee.

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
-import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/providers/admin_user_provider.dart';
+import 'package:admin_portal/config/branding_config.dart';
+import 'package:admin_portal/config/design_tokens.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/widgets/financials/platform_revenue_stats_row.dart';
-import 'package:franchise_admin_portal/widgets/financials/platform_financial_kpi_row.dart';
+import 'package:admin_portal/widgets/financials/platform_revenue_stats_row.dart';
+import 'package:admin_portal/widgets/financials/platform_financial_kpi_row.dart';
 import 'package:provider/provider.dart';
 
 class PlatformRevenueSummaryPanel extends StatefulWidget {

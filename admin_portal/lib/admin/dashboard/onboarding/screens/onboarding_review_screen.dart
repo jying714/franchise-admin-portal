@@ -3,25 +3,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/providers/onboarding_review_provider.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
-import 'package:franchise_admin_portal/core/providers/category_provider.dart';
-import 'package:franchise_admin_portal/core/providers/menu_item_provider.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_feature_provider.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/onboarding_progress_indicator.dart';
-import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/core/providers/onboarding_review_provider.dart';
+import 'package:admin_portal/core/providers/ingredient_type_provider.dart';
+import 'package:admin_portal/core/providers/ingredient_metadata_provider.dart';
+import 'package:admin_portal/core/providers/category_provider.dart';
+import 'package:admin_portal/core/providers/menu_item_provider.dart';
+import 'package:admin_portal/core/providers/franchise_feature_provider.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/widgets/empty_state_widget.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/onboarding_progress_indicator.dart';
+import 'package:admin_portal/core/services/audit_log_service.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/core/providers/user_profile_notifier.dart';
 // Import future widgets here as they are implemented
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/review/review_summary_table.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/review/issue_details_expansion.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/review/onboarding_data_export_button.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/review/publish_onboarding_button.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/review/onboarding_audit_trail.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/review/review_summary_table.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/review/issue_details_expansion.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/review/onboarding_data_export_button.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/review/publish_onboarding_button.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/review/onboarding_audit_trail.dart';
 
 class OnboardingReviewScreen extends StatefulWidget {
   const OnboardingReviewScreen({Key? key}) : super(key: key);

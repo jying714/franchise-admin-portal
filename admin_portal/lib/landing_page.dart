@@ -6,7 +6,7 @@ import 'config/design_tokens.dart';
 import 'config/branding_config.dart';
 import 'widgets/empty_state_widget.dart';
 import 'dart:ui';
-import 'package:franchise_admin_portal/widgets/safe_logo_image.dart';
+import 'package:admin_portal/widgets/safe_logo_image.dart';
 
 // Demo asset URLs (swap for real URLs in production)
 const heroScreenshot =

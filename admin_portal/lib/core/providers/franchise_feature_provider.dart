@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/feature_metadata.dart'
+import 'package:admin_portal/core/models/feature_metadata.dart'
     show FeatureState;
-import 'package:franchise_admin_portal/core/models/feature_module.dart';
-import 'package:franchise_admin_portal/core/services/franchise_feature_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/core/models/onboarding_validation_issue.dart';
+import 'package:admin_portal/core/models/feature_module.dart';
+import 'package:admin_portal/core/services/franchise_feature_service.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/models/onboarding_validation_issue.dart';
 
 class FranchiseFeatureProvider with ChangeNotifier {
   final FranchiseFeatureService _service;

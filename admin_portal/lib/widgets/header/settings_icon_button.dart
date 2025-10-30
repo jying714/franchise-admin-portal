@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/widgets/settings/settings_dialog.dart';
+import 'package:admin_portal/widgets/settings/settings_dialog.dart';
 
 class SettingsIconButton extends StatelessWidget {
   const SettingsIconButton({Key? key}) : super(key: key);

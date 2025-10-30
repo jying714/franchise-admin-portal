@@ -2,12 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/menu_item.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/providers/menu_item_provider.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_info_provider.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/core/models/menu_item.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/core/providers/menu_item_provider.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/providers/franchise_info_provider.dart';
 
 class MenuItemTemplatePickerDialog extends StatelessWidget {
   final AppLocalizations loc;

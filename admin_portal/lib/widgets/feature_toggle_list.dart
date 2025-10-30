@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/widgets/loading_shimmer_widget.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/core/models/user.dart' as admin_user;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class FeatureToggleList extends StatelessWidget {

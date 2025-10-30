@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/widgets/dynamic_form/image_upload_field.dart';
-import 'package:franchise_admin_portal/widgets/dynamic_form/smart_dropdown_or_text_field.dart';
+import 'package:admin_portal/widgets/dynamic_form/image_upload_field.dart';
+import 'package:admin_portal/widgets/dynamic_form/smart_dropdown_or_text_field.dart';
 import 'dart:convert';
 
 /// Universal dynamic input renderer for schema-driven forms.

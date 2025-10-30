@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
-import 'package:franchise_admin_portal/core/models/franchise_info.dart';
+import 'package:admin_portal/core/models/user.dart' as admin_user;
+import 'package:admin_portal/core/models/franchise_info.dart';
 
 class FranchiseProvider extends ChangeNotifier {
   VoidCallback? onFranchiseChanged;

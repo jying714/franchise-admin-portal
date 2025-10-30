@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/widgets/admin/admin_sidebar.dart';
-import 'package:franchise_admin_portal/widgets/admin/franchise_selector.dart';
-import 'package:franchise_admin_portal/core/models/franchise_info.dart';
-import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
-import 'package:franchise_admin_portal/core/utils/franchise_utils.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/widgets/admin/admin_sidebar.dart';
+import 'package:admin_portal/widgets/admin/franchise_selector.dart';
+import 'package:admin_portal/core/models/franchise_info.dart';
+import 'package:admin_portal/core/providers/user_profile_notifier.dart';
+import 'package:admin_portal/core/utils/franchise_utils.dart';
 
 class FranchiseSelectorScreen extends StatefulWidget {
   const FranchiseSelectorScreen({super.key});

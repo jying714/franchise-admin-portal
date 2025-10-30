@@ -1,4 +1,4 @@
-import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
+import 'package:admin_portal/core/models/user.dart' as admin_user;
 
 /// Centralized permission checks for roles across the app.
 /// This avoids repeating `user?.isOwner || user?.isManager || ...` everywhere.

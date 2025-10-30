@@ -3,15 +3,15 @@ import 'dart:io'; // Will be ignored on web due to kIsWeb checks
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/models/menu_item.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/models/menu_item.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 // Web-only import:
 import 'dart:html' as html;
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
 
 class ExportMenuDialog extends StatefulWidget {
   const ExportMenuDialog({Key? key}) : super(key: key);

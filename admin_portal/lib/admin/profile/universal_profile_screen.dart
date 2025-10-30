@@ -3,24 +3,24 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
-import 'package:franchise_admin_portal/widgets/profile/account_details_panel.dart';
-import 'package:franchise_admin_portal/widgets/financials/franchisee_invoice_list.dart';
-import 'package:franchise_admin_portal/widgets/financials/franchisee_payment_list.dart';
-import 'package:franchise_admin_portal/core/models/platform_payment.dart';
-import 'package:franchise_admin_portal/core/models/platform_invoice.dart';
-import 'package:franchise_admin_portal/widgets/financials/pay_invoice_dialog.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/core/providers/admin_user_provider.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/widgets/dashboard/dashboard_section_card.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/config/branding_config.dart';
+import 'package:admin_portal/core/providers/user_profile_notifier.dart';
+import 'package:admin_portal/widgets/profile/account_details_panel.dart';
+import 'package:admin_portal/widgets/financials/franchisee_invoice_list.dart';
+import 'package:admin_portal/widgets/financials/franchisee_payment_list.dart';
+import 'package:admin_portal/core/models/platform_payment.dart';
+import 'package:admin_portal/core/models/platform_invoice.dart';
+import 'package:admin_portal/widgets/financials/pay_invoice_dialog.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
 
 // FUTURE: Modular import for payment methods and plan management
-// import 'package:franchise_admin_portal/widgets/financials/payment_method_manager.dart';
-// import 'package:franchise_admin_portal/widgets/support/support_contact_panel.dart';
+// import 'package:admin_portal/widgets/financials/payment_method_manager.dart';
+// import 'package:admin_portal/widgets/support/support_contact_panel.dart';
 
 class UniversalProfileScreen extends StatefulWidget {
   const UniversalProfileScreen({super.key});

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/config/design_tokens.dart';
 
 /// A universal, reusable quantity stepper widget.
 /// Accepts a value, increment/decrement callbacks, and an optional minimum/maximum.

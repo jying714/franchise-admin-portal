@@ -3,15 +3,15 @@
 import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/onboarding_validation_issue.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
-import 'package:franchise_admin_portal/core/providers/category_provider.dart';
-import 'package:franchise_admin_portal/core/providers/menu_item_provider.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_feature_provider.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
+import 'package:admin_portal/core/models/onboarding_validation_issue.dart';
+import 'package:admin_portal/core/providers/ingredient_type_provider.dart';
+import 'package:admin_portal/core/providers/ingredient_metadata_provider.dart';
+import 'package:admin_portal/core/providers/category_provider.dart';
+import 'package:admin_portal/core/providers/menu_item_provider.dart';
+import 'package:admin_portal/core/providers/franchise_feature_provider.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/services/audit_log_service.dart';
 
 /// OnboardingReviewProvider: Aggregates and enforces all onboarding state and menu integrity
 ///

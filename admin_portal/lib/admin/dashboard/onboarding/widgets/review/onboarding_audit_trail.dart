@@ -2,10 +2,10 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/audit_log.dart';
-import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
-import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/core/models/audit_log.dart';
+import 'package:admin_portal/core/services/audit_log_service.dart';
+import 'package:admin_portal/widgets/empty_state_widget.dart';
 
 /// Displays recent onboarding audit trail events for the current franchise.
 /// - Fetches logs from AuditLogService

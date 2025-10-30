@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/config/design_tokens.dart';
 
 /// A branded loading screen used across the app during initialization,
 /// user/profile loading, or route transitions.

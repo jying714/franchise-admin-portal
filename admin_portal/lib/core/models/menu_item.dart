@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'nutrition_info.dart';
 import 'customization.dart';
-import 'package:franchise_admin_portal/core/models/size_template.dart';
+import 'package:admin_portal/core/models/size_template.dart';
 import 'dart:convert';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
 import 'package:flutter/material.dart';
 
 extension IterableFirstOrNull<T> on Iterable<T> {

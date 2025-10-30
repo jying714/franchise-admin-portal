@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/feature_config.dart';
+import 'package:admin_portal/config/feature_config.dart';
 
 class FeatureToggleDialog extends StatefulWidget {
   final VoidCallback? onChanged;

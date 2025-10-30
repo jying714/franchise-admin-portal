@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/services/auth_service.dart';
+import 'package:admin_portal/core/services/auth_service.dart';
 
 class ProfileLoadingGate extends StatelessWidget {
   final Widget Function(BuildContext, dynamic /*app.User*/) builder;

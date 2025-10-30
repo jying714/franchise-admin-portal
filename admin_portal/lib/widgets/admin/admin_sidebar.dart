@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/core/models/dashboard_section.dart';
+import 'package:admin_portal/config/design_tokens.dart';
 
 class AdminSidebar extends StatelessWidget {
   final List<DashboardSection> sections;

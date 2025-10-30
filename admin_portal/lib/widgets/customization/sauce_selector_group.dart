@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/widgets/portion_selector.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/widgets/portion_selector.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/models/ingredient_metadata.dart';
-import 'package:franchise_admin_portal/widgets/customization/customization_modal.dart'; // for PizzaSauceSelection (or use correct path)
+import 'package:admin_portal/core/models/ingredient_metadata.dart';
+import 'package:admin_portal/widgets/customization/customization_modal.dart'; // for PizzaSauceSelection (or use correct path)
 
 // Add any additional imports your project structure requires.
 

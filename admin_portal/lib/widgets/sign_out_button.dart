@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/widgets/confirmation_dialog.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/widgets/confirmation_dialog.dart';
 
 /// A reusable sign out button with built-in confirmation dialog.
 /// Use in any screen where sign-out is needed for consistent UX.

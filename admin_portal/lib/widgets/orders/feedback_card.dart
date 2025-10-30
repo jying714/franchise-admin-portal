@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/analytics_summary.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/core/models/analytics_summary.dart';
 
 class FeedbackCard extends StatelessWidget {
   final AnalyticsSummary summary;

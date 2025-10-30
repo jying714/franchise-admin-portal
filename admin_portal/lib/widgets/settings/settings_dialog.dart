@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/widgets/settings/theme_mode_selector.dart';
-import 'package:franchise_admin_portal/widgets/settings/language_selector.dart';
-import 'package:franchise_admin_portal/widgets/settings/about_section.dart';
-import 'package:franchise_admin_portal/widgets/settings/legal_section.dart';
-import 'package:franchise_admin_portal/widgets/settings/keyboard_shortcuts_section.dart';
-import 'package:franchise_admin_portal/widgets/settings/support_chat_button.dart';
-import 'package:franchise_admin_portal/widgets/settings/feedback_button.dart';
+import 'package:admin_portal/widgets/settings/theme_mode_selector.dart';
+import 'package:admin_portal/widgets/settings/language_selector.dart';
+import 'package:admin_portal/widgets/settings/about_section.dart';
+import 'package:admin_portal/widgets/settings/legal_section.dart';
+import 'package:admin_portal/widgets/settings/keyboard_shortcuts_section.dart';
+import 'package:admin_portal/widgets/settings/support_chat_button.dart';
+import 'package:admin_portal/widgets/settings/feedback_button.dart';
 
 class SettingsDialog extends StatelessWidget {
   const SettingsDialog({Key? key}) : super(key: key);

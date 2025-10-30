@@ -2,9 +2,9 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
-import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/models/franchise_subscription_model.dart';
+import 'package:admin_portal/core/models/platform_plan_model.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
 
 class FranchiseSubscriptionService {
   final FirebaseFirestore _db;

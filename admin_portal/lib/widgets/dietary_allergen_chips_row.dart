@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/config/design_tokens.dart';
 
 /// Reusable row for displaying dietary tags and allergens as chips.
 /// Hides itself if both lists are empty.

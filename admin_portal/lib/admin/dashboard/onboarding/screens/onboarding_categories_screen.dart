@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/category.dart';
-import 'package:franchise_admin_portal/core/providers/category_provider.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_info_provider.dart';
-import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/categories/category_list_tile.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/categories/category_form_dialog.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/categories/category_json_import_export_dialog.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/categories/categories_template_picker_dialog.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/core/models/category.dart';
+import 'package:admin_portal/core/providers/category_provider.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/core/providers/franchise_info_provider.dart';
+import 'package:admin_portal/core/providers/onboarding_progress_provider.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/widgets/empty_state_widget.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/categories/category_list_tile.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/categories/category_form_dialog.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/categories/category_json_import_export_dialog.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/categories/categories_template_picker_dialog.dart';
 
 class OnboardingCategoriesScreen extends StatefulWidget {
   const OnboardingCategoriesScreen({super.key});

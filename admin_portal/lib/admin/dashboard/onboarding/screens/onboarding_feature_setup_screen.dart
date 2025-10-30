@@ -3,14 +3,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_feature_provider.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_info_provider.dart';
-import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/feature_toggle_tile.dart';
+import 'package:admin_portal/config/branding_config.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/core/providers/franchise_feature_provider.dart';
+import 'package:admin_portal/core/providers/franchise_info_provider.dart';
+import 'package:admin_portal/core/providers/onboarding_progress_provider.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/models/dashboard_section.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/feature_toggle_tile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OnboardingFeatureSetupScreen extends StatefulWidget {

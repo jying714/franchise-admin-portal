@@ -1,7 +1,7 @@
 // 📁 lib/core/services/franchise_onboarding_service.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
 
 class FranchiseOnboardingService {
   late final FirebaseFirestore _db;

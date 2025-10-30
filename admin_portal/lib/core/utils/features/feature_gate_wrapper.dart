@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/utils/features/feature_gate.dart';
+import 'package:admin_portal/core/utils/features/feature_gate.dart';
 
 ///
 /// 🧱 FeatureGateWrapper

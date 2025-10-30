@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/models/ingredient_type_model.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/models/ingredient_type_model.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class IngredientTypeCreationDialog extends StatefulWidget {

@@ -3,15 +3,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:franchise_admin_portal/core/models/enriched/enriched_franchise_subscription.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/services/enrichment/franchise_subscription_enricher.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
-import 'package:franchise_admin_portal/admin/developer/platform/franchise_subscription_editor_dialog.dart';
-import 'package:franchise_admin_portal/admin/owner/widgets/franchise_subscription_list_tile.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/config/app_config.dart';
+import 'package:admin_portal/core/models/enriched/enriched_franchise_subscription.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/services/enrichment/franchise_subscription_enricher.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/providers/admin_user_provider.dart';
+import 'package:admin_portal/admin/developer/platform/franchise_subscription_editor_dialog.dart';
+import 'package:admin_portal/admin/owner/widgets/franchise_subscription_list_tile.dart';
 
 class FullFranchiseSubscriptionListScreen extends StatefulWidget {
   const FullFranchiseSubscriptionListScreen({super.key});

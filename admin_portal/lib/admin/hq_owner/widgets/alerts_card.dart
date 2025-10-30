@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/alert_model.dart';
-import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
-import 'package:franchise_admin_portal/config/app_config.dart';
+import 'package:admin_portal/core/models/alert_model.dart';
+import 'package:admin_portal/admin/features/alerts/alerts_repository.dart';
+import 'package:admin_portal/config/app_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
 
 class AlertsCard extends StatelessWidget {
   final String franchiseId;

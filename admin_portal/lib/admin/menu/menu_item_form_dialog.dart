@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/menu_item.dart';
-import 'package:franchise_admin_portal/core/models/category.dart';
-import 'package:franchise_admin_portal/core/models/customization.dart';
-import 'package:franchise_admin_portal/core/models/nutrition_info.dart';
-import 'package:franchise_admin_portal/admin/menu/menu_item_customizations_dialog.dart';
+import 'package:admin_portal/core/models/menu_item.dart';
+import 'package:admin_portal/core/models/category.dart';
+import 'package:admin_portal/core/models/customization.dart';
+import 'package:admin_portal/core/models/nutrition_info.dart';
+import 'package:admin_portal/admin/menu/menu_item_customizations_dialog.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/admin/menu/customization_types.dart';
+import 'package:admin_portal/admin/menu/customization_types.dart';
 
 class MenuItemFormDialog extends StatefulWidget {
   final MenuItem? initialItem;

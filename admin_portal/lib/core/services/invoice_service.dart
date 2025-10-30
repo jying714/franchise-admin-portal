@@ -3,15 +3,15 @@ import 'package:csv/csv.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/invoice.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/widgets/dashboard/billing_summary_card.dart';
+import 'package:admin_portal/core/models/invoice.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/widgets/dashboard/billing_summary_card.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:franchise_admin_portal/core/models/platform_revenue_overview.dart';
-import 'package:franchise_admin_portal/core/services/payout_service.dart';
-import 'package:franchise_admin_portal/core/models/platform_financial_kpis.dart';
+import 'package:admin_portal/core/models/platform_revenue_overview.dart';
+import 'package:admin_portal/core/services/payout_service.dart';
+import 'package:admin_portal/core/models/platform_financial_kpis.dart';
 
 /// Service class handling all Invoice-related Firestore operations.
 /// Integrates error logging, supports filtering, streaming, and atomic updates.

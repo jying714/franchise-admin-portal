@@ -5,7 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show VisibleForTesting;
-import 'package:franchise_admin_portal/core/models/onboarding_validation_issue.dart';
+import 'package:admin_portal/core/models/onboarding_validation_issue.dart';
 
 /// Canonical argument keys used across onboarding routes.
 class OnboardingNavKeys {

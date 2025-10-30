@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/admin/devtools/billing/admin_webhook_simulator.dart';
-import 'package:franchise_admin_portal/admin/devtools/billing/mock_payment_editor.dart';
-import 'package:franchise_admin_portal/admin/devtools/billing/test_invoice_generator.dart';
-import 'package:franchise_admin_portal/admin/devtools/billing/test_invoice_cleaner.dart';
-import 'package:franchise_admin_portal/admin/devtools/billing/clear_all_test_invoices_button.dart';
-import 'package:franchise_admin_portal/admin/devtools/billing/mock_payment_tester.dart';
+import 'package:admin_portal/admin/devtools/billing/admin_webhook_simulator.dart';
+import 'package:admin_portal/admin/devtools/billing/mock_payment_editor.dart';
+import 'package:admin_portal/admin/devtools/billing/test_invoice_generator.dart';
+import 'package:admin_portal/admin/devtools/billing/test_invoice_cleaner.dart';
+import 'package:admin_portal/admin/devtools/billing/clear_all_test_invoices_button.dart';
+import 'package:admin_portal/admin/devtools/billing/mock_payment_tester.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class BillingSubscriptionToolsScreen extends StatelessWidget {

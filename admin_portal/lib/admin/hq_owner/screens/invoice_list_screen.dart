@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:franchise_admin_portal/core/models/platform_invoice.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/widgets/admin/admin_search_bar.dart';
-import 'package:franchise_admin_portal/widgets/admin/admin_empty_state_widget.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/invoice_search_bar.dart';
+import 'package:admin_portal/core/models/platform_invoice.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/widgets/admin/admin_search_bar.dart';
+import 'package:admin_portal/widgets/admin/admin_empty_state_widget.dart';
+import 'package:admin_portal/admin/hq_owner/invoice_search_bar.dart';
 
 class InvoiceListScreen extends StatefulWidget {
   const InvoiceListScreen({Key? key}) : super(key: key);

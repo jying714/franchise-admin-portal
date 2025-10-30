@@ -1,7 +1,7 @@
 // File: lib/admin/dashboard/onboarding/widgets/onboarding_progress_indicator.dart
 
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/config/design_tokens.dart';
 
 /// A polished, responsive onboarding progress indicator for stepper-based flows.
 /// - Shows the current step number, total steps, and an optional custom label.

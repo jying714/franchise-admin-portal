@@ -1,28 +1,28 @@
 import 'package:flutter/material.dart';
 // Import ALL your admin sections (ensure these files exist!)
-import 'package:franchise_admin_portal/admin/dashboard/dashboard_home_screen.dart';
-import 'package:franchise_admin_portal/admin/menu/menu_editor_screen.dart';
-import 'package:franchise_admin_portal/admin/categories/category_management_screen.dart';
-import 'package:franchise_admin_portal/admin/inventory/inventory_screen.dart';
-import 'package:franchise_admin_portal/admin/orders/analytics_screen.dart';
-import 'package:franchise_admin_portal/admin/orders/order_management_screen.dart';
-import 'package:franchise_admin_portal/admin/feedback/feedback_management_screen.dart';
-import 'package:franchise_admin_portal/admin/promo/promo_management_screen.dart';
-import 'package:franchise_admin_portal/admin/staff/staff_access_screen.dart';
-import 'package:franchise_admin_portal/admin/features/feature_settings_screen.dart';
-import 'package:franchise_admin_portal/admin/chat/chat_management_screen.dart';
-import 'package:franchise_admin_portal/admin/error_logs/error_logs_screen.dart';
-import 'package:franchise_admin_portal/admin/developer/platform/platform_plans_section.dart';
+import 'package:admin_portal/admin/dashboard/dashboard_home_screen.dart';
+import 'package:admin_portal/admin/menu/menu_editor_screen.dart';
+import 'package:admin_portal/admin/categories/category_management_screen.dart';
+import 'package:admin_portal/admin/inventory/inventory_screen.dart';
+import 'package:admin_portal/admin/orders/analytics_screen.dart';
+import 'package:admin_portal/admin/orders/order_management_screen.dart';
+import 'package:admin_portal/admin/feedback/feedback_management_screen.dart';
+import 'package:admin_portal/admin/promo/promo_management_screen.dart';
+import 'package:admin_portal/admin/staff/staff_access_screen.dart';
+import 'package:admin_portal/admin/features/feature_settings_screen.dart';
+import 'package:admin_portal/admin/chat/chat_management_screen.dart';
+import 'package:admin_portal/admin/error_logs/error_logs_screen.dart';
+import 'package:admin_portal/admin/developer/platform/platform_plans_section.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_categories_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredients_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_items_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_review_screen.dart';
-import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredient_type_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_feature_setup_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/menu_item_editor_screen.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/screens/onboarding_categories_screen.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredients_screen.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_items_screen.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_screen.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/screens/onboarding_review_screen.dart';
+import 'package:admin_portal/core/models/dashboard_section.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredient_type_screen.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/screens/onboarding_feature_setup_screen.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/screens/menu_item_editor_screen.dart';
 // Any new (plugin/module) screens can be imported and registered here
 
 // ==== UNIFIED SECTION REGISTRY (ALL MAIN + ONBOARDING) ====

@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:franchise_admin_portal/core/utils/log_utils.dart';
-import 'package:franchise_admin_portal/core/models/user.dart' as app;
+import 'package:admin_portal/core/utils/log_utils.dart';
+import 'package:admin_portal/core/models/user.dart' as app;
 import 'dart:html' as html show window;
 
 class AuthService extends ChangeNotifier {

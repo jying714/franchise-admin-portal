@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/error_log.dart';
+import 'package:admin_portal/core/models/error_log.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/widgets/collapsible_panel.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/widgets/collapsible_panel.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
 
 String _truncateTooltip(String text, [int max = 150]) {
   if (text.length <= max) return text;

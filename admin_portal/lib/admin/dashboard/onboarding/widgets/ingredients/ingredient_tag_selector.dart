@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/config/design_tokens.dart';
 
 /// A chip selector widget for choosing ingredient tags (e.g., allergens, dietary flags).
 /// Used in onboarding or editing IngredientMetadata.

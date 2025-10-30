@@ -3,9 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-import 'package:franchise_admin_portal/core/models/invoice.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/models/invoice.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
 
 /// InvoiceAuditTrailWidget
 /// Displays a chronological timeline of audit events for a given invoice.

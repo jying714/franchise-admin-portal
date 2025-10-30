@@ -1,9 +1,9 @@
-import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
-import 'package:franchise_admin_portal/core/models/enriched/enriched_franchise_subscription.dart';
-import 'package:franchise_admin_portal/core/models/user.dart' as app_user;
-import 'package:franchise_admin_portal/core/models/franchise_info.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/models/franchise_subscription_model.dart';
+import 'package:admin_portal/core/models/enriched/enriched_franchise_subscription.dart';
+import 'package:admin_portal/core/models/user.dart' as app_user;
+import 'package:admin_portal/core/models/franchise_info.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
 import 'package:flutter/material.dart';
 
 /// Utility to batch enrich franchise subscriptions with franchise + owner data.

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/customization_group.dart';
-import 'package:franchise_admin_portal/core/models/ingredient_reference.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/multi_ingredient_selector.dart';
+import 'package:admin_portal/core/models/customization_group.dart';
+import 'package:admin_portal/core/models/ingredient_reference.dart';
+import 'package:admin_portal/core/providers/ingredient_metadata_provider.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/menu_items/multi_ingredient_selector.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 

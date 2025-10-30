@@ -1,12 +1,12 @@
 // 📁 lib/core/providers/platform_plan_selection_provider.dart
 
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/models/platform_plan_model.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
-import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
+import 'package:admin_portal/core/models/franchise_subscription_model.dart';
+import 'package:admin_portal/core/services/franchise_subscription_service.dart';
 
 class PlatformPlanSelectionProvider extends ChangeNotifier {
   PlatformPlan? _selectedPlan;

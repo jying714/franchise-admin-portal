@@ -1,11 +1,11 @@
 import 'package:flutter/widgets.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/models/user.dart' as admin_user;
+import 'package:admin_portal/core/services/firestore_service.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 

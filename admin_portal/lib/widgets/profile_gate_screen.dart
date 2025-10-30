@@ -6,14 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
+import 'package:admin_portal/core/models/user.dart' as admin_user;
 import '../core/services/firestore_service.dart';
 import '../core/providers/admin_user_provider.dart';
 import '../core/providers/user_profile_notifier.dart';
 import '../config/design_tokens.dart';
 import '../config/branding_config.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
 
 class ProfileGateScreen extends StatefulWidget {
   const ProfileGateScreen({Key? key}) : super(key: key);

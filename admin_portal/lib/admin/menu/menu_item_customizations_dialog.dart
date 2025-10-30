@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/models/customization.dart';
-import 'package:franchise_admin_portal/admin/menu/customization_types.dart';
+import 'package:admin_portal/core/models/customization.dart';
+import 'package:admin_portal/admin/menu/customization_types.dart';
 
 // Dialog for full-featured editing of menu customizations/groups/options.
 class MenuItemCustomizationsDialog extends StatefulWidget {

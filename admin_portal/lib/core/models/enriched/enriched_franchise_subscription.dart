@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
-import 'package:franchise_admin_portal/core/models/franchise_info.dart';
-import 'package:franchise_admin_portal/core/models/platform_invoice.dart';
-import 'package:franchise_admin_portal/core/models/user.dart' as app_user;
+import 'package:admin_portal/core/models/franchise_subscription_model.dart';
+import 'package:admin_portal/core/models/franchise_info.dart';
+import 'package:admin_portal/core/models/platform_invoice.dart';
+import 'package:admin_portal/core/models/user.dart' as app_user;
 
 /// Combines a franchise subscription with enriched franchise and billing data.
 class EnrichedFranchiseSubscription {

@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_feature_provider.dart';
+import 'package:admin_portal/core/providers/franchise_feature_provider.dart';
 
 extension FeatureContextExtension on BuildContext {
   /// Shorthand for checking top-level feature availability

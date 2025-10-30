@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/widgets/import_csv_file_button.dart';
-import 'package:franchise_admin_portal/core/models/category.dart';
+import 'package:admin_portal/widgets/import_csv_file_button.dart';
+import 'package:admin_portal/core/models/category.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class BulkMenuUploadDialog extends StatefulWidget {

@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
-import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
-import 'package:franchise_admin_portal/admin/developer/platform/franchise_subscription_editor_dialog.dart';
-import 'package:franchise_admin_portal/admin/categories/bulk_action_bar.dart';
-import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
+import 'package:admin_portal/core/providers/admin_user_provider.dart';
+import 'package:admin_portal/core/models/dashboard_section.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/config/app_config.dart';
+import 'package:admin_portal/core/models/franchise_subscription_model.dart';
+import 'package:admin_portal/admin/developer/platform/franchise_subscription_editor_dialog.dart';
+import 'package:admin_portal/admin/categories/bulk_action_bar.dart';
+import 'package:admin_portal/core/services/franchise_subscription_service.dart';
 
 final DashboardSection franchiseSubscriptionsSection = DashboardSection(
   key: 'franchiseSubscriptions',

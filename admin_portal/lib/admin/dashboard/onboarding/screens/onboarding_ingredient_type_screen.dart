@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider.dart';
-import 'package:franchise_admin_portal/core/models/ingredient_type_model.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_type_template_picker_dialog.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/editable_ingredient_type_row.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/inline_add_ingredient_type_row.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_type_json_import_export_dialog.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
+import 'package:admin_portal/core/providers/onboarding_progress_provider.dart';
+import 'package:admin_portal/core/models/ingredient_type_model.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/core/providers/ingredient_type_provider.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_type_template_picker_dialog.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/ingredients/editable_ingredient_type_row.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/ingredients/inline_add_ingredient_type_row.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_type_json_import_export_dialog.dart';
+import 'package:admin_portal/core/providers/ingredient_type_provider.dart';
 
 class IngredientTypeManagementScreen extends StatefulWidget {
   const IngredientTypeManagementScreen({super.key});

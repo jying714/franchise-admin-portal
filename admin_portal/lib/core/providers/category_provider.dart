@@ -1,10 +1,10 @@
 // lib/core/providers/category_provider.dart
-import 'package:franchise_admin_portal/core/models/onboarding_validation_issue.dart';
+import 'package:admin_portal/core/models/onboarding_validation_issue.dart';
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
-import 'package:franchise_admin_portal/core/models/category.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/models/category.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
 
 class CategoryProvider extends ChangeNotifier {
   final FirestoreService firestore;

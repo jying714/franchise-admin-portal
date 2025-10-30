@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:franchise_admin_portal/core/models/menu_item.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/core/models/menu_template_ref.dart';
-import 'package:franchise_admin_portal/core/models/size_template.dart';
+import 'package:admin_portal/core/models/menu_item.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/models/menu_template_ref.dart';
+import 'package:admin_portal/core/models/size_template.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'package:franchise_admin_portal/core/providers/franchise_info_provider.dart';
+import 'package:admin_portal/core/providers/franchise_info_provider.dart';
 import 'package:collection/collection.dart';
-import 'package:franchise_admin_portal/core/providers/category_provider.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
+import 'package:admin_portal/core/providers/category_provider.dart';
+import 'package:admin_portal/core/providers/ingredient_metadata_provider.dart';
+import 'package:admin_portal/core/providers/ingredient_type_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/models/onboarding_validation_issue.dart';
+import 'package:admin_portal/core/models/onboarding_validation_issue.dart';
 
 class MenuItemProvider extends ChangeNotifier {
   final FirestoreService _firestoreService;

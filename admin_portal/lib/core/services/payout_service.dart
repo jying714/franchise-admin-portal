@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
 
 /// Service class for platform-wide and franchise payout operations.
 /// Integrates error logging and Firestore queries for SaaS use.

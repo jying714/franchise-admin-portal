@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_subscription_provider.dart';
-import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
-import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:admin_portal/core/providers/franchise_subscription_provider.dart';
+import 'package:admin_portal/core/providers/user_profile_notifier.dart';
+import 'package:admin_portal/core/providers/admin_user_provider.dart';
 
 class SubscriptionAccessGuard extends StatelessWidget {
   final Widget child;

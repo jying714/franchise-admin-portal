@@ -1,9 +1,9 @@
 // File: lib/core/providers/franchisee_invitation_provider.dart
 
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/franchisee_invitation.dart';
-import 'package:franchise_admin_portal/widgets/financials/franchisee_invitation_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/models/franchisee_invitation.dart';
+import 'package:admin_portal/widgets/financials/franchisee_invitation_service.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
 /// Provider for Franchisee Invitations. Owns invitation state, exposes

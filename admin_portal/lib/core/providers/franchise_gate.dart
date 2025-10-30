@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'franchise_selector.dart';
 import 'franchise_provider.dart';
-import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
-import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import 'package:admin_portal/core/models/user.dart' as admin_user;
+import 'package:admin_portal/core/providers/admin_user_provider.dart';
 
 class FranchiseGate extends StatelessWidget {
   final Widget child;

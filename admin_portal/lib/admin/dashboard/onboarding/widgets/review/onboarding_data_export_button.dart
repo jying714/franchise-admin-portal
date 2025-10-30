@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/providers/onboarding_review_provider.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/core/providers/onboarding_review_provider.dart';
 
 /// Button for exporting onboarding data (including issues) as JSON.
 /// - Pulls from OnboardingReviewProvider.exportDataAsJson()

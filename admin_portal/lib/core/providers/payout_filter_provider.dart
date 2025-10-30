@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/payout_filter.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/models/payout_filter.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
 
 /// Provider for managing payout table filter/search state.
 /// Integrates with FirestoreService's getPayoutsForFranchise().

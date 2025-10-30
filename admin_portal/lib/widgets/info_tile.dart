@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/config/design_tokens.dart';
 
 /// Robust, reusable info tile for profile and other label/value displays.
 /// Handles null/empty values gracefully.

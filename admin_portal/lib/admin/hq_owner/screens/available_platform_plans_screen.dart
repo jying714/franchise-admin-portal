@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
-import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/core/utils/export_utils.dart';
-import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
-import 'package:franchise_admin_portal/core/providers/platform_plan_selection_provider.dart';
-import 'package:franchise_admin_portal/core/services/franchise_onboarding_service.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_subscription_provider.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/widgets/active_plan_banner.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/widgets/platform_plan_tile.dart';
-import 'package:franchise_admin_portal/core/providers/role_guard.dart';
+import 'package:admin_portal/core/services/franchise_subscription_service.dart';
+import 'package:admin_portal/core/models/platform_plan_model.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/utils/export_utils.dart';
+import 'package:admin_portal/core/providers/admin_user_provider.dart';
+import 'package:admin_portal/core/providers/platform_plan_selection_provider.dart';
+import 'package:admin_portal/core/services/franchise_onboarding_service.dart';
+import 'package:admin_portal/core/providers/franchise_subscription_provider.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/admin/hq_owner/widgets/active_plan_banner.dart';
+import 'package:admin_portal/admin/hq_owner/widgets/platform_plan_tile.dart';
+import 'package:admin_portal/core/providers/role_guard.dart';
 
 class AvailablePlatformPlansScreen extends StatefulWidget {
   const AvailablePlatformPlansScreen({super.key});

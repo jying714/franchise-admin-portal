@@ -2,7 +2,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logging/logging.dart';
-import 'package:franchise_admin_portal/core/models/analytics_summary.dart';
+import 'package:admin_portal/core/models/analytics_summary.dart';
 
 /// AnalyticsService
 /// Used for logging admin/app events to Firebase Analytics,

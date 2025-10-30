@@ -3,10 +3,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/config/branding_config.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
 
 /// Model representing a pending or completed franchisee invitation.
 /// Includes methods for Firestore serialization/deserialization, robust error logging,

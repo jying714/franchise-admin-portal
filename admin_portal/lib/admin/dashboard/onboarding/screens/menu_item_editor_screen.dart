@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/models/menu_item.dart';
-import 'package:franchise_admin_portal/core/models/menu_item_schema_issue.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_info_provider.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
-import 'package:franchise_admin_portal/core/providers/category_provider.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_editor_sheet.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/schema_issue_sidebar.dart';
+import 'package:admin_portal/core/models/menu_item.dart';
+import 'package:admin_portal/core/models/menu_item_schema_issue.dart';
+import 'package:admin_portal/core/providers/franchise_provider.dart';
+import 'package:admin_portal/core/providers/franchise_info_provider.dart';
+import 'package:admin_portal/core/providers/ingredient_metadata_provider.dart';
+import 'package:admin_portal/core/providers/ingredient_type_provider.dart';
+import 'package:admin_portal/core/providers/category_provider.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_editor_sheet.dart';
+import 'package:admin_portal/admin/dashboard/onboarding/widgets/menu_items/schema_issue_sidebar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MenuItemEditorScreen extends StatefulWidget {

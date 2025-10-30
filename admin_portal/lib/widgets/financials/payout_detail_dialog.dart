@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/models/payout.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
+import 'package:admin_portal/core/models/payout.dart';
+import 'package:admin_portal/core/services/firestore_service.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/config/branding_config.dart';
+import 'package:admin_portal/widgets/empty_state_widget.dart';
 
 // Add the two new widgets here:
-import 'package:franchise_admin_portal/widgets/financials/payout_note_editor.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/widgets/attachment_uploader.dart';
+import 'package:admin_portal/widgets/financials/payout_note_editor.dart';
+import 'package:admin_portal/admin/hq_owner/widgets/attachment_uploader.dart';
 
 class PayoutDetailDialog extends StatefulWidget {
   final String payoutId;

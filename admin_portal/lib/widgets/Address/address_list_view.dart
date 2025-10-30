@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/address.dart';
-import 'package:franchise_admin_portal/widgets/Address/delivery_address_tile.dart';
+import 'package:admin_portal/core/models/address.dart';
+import 'package:admin_portal/widgets/Address/delivery_address_tile.dart';
 
 class AddressListView extends StatelessWidget {
   final List<Address> addresses;

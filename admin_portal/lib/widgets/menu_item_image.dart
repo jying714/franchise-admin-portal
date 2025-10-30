@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/config/branding_config.dart';
+import 'package:admin_portal/config/design_tokens.dart';
 
 /// A reusable menu item image widget with fallback to the default pizza icon.
 /// Accepts network or asset image URLs, with sizing consistent across the app.

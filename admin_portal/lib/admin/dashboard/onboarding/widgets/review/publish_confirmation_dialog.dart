@@ -1,8 +1,8 @@
 // File: lib/admin/dashboard/onboarding/widgets/review/publish_confirmation_dialog.dart
 
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/onboarding_validation_issue.dart';
+import 'package:admin_portal/config/design_tokens.dart';
+import 'package:admin_portal/core/models/onboarding_validation_issue.dart';
 
 /// Confirmation modal shown before onboarding publish.
 /// - Lists any remaining blocking issues (should be empty if UI is correct)

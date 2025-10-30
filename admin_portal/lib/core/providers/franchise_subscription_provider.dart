@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
-import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
-import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:admin_portal/core/models/franchise_subscription_model.dart';
+import 'package:admin_portal/core/models/platform_plan_model.dart';
+import 'package:admin_portal/core/services/franchise_subscription_service.dart';
+import 'package:admin_portal/core/utils/error_logger.dart';
 
 class FranchiseSubscriptionNotifier extends ChangeNotifier {
   final FranchiseSubscriptionService _service;
