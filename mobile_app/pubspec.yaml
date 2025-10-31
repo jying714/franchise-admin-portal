@@ -76,3 +76,6 @@ l10n:
   template-arb-file: app_en.arb
   output-localization-file: app_localizations.dart
   output-class: AppLocalizations
+
+shared_core:
+  path: ../packages/shared_core

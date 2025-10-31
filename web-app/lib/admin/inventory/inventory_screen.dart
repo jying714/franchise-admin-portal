@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/models/inventory.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import '../../../../packages/shared_core/lib/src/core/models/inventory.dart';
+import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
+import '../../../../packages/shared_core/lib/src/core/models/user.dart'
+    as admin_user;
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
-import 'package:franchise_admin_portal/core/providers/role_guard.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/role_guard.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});

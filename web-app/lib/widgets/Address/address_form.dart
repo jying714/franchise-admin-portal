@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/address.dart';
+import '../../../../packages/shared_core/lib/src/core/models/address.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 typedef FieldValidator = String? Function(String?);

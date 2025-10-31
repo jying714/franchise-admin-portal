@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/models/category.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/models/category.dart';
 import 'package:uuid/uuid.dart';
 
 class CategoryCreationDialog extends StatefulWidget {

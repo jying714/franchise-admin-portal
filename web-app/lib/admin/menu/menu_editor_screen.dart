@@ -2,7 +2,7 @@ import 'package:franchise_admin_portal/admin/menu/menu_item_editor_panel.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_dialog.dart';
 import 'package:franchise_admin_portal/widgets/delayed_loading_shimmer.dart';
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/admin/menu/dynamic_menu_item_editor_screen.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_menu_editor_popup_menu.dart';
 import 'package:franchise_admin_portal/widgets/header/franchise_app_bar.dart';
@@ -12,13 +12,14 @@ import 'package:franchise_admin_portal/widgets/status_chip.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_delete_confirm_dialog.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/models/menu_item.dart';
+import '../../../../packages/shared_core/lib/src/core/models/menu_item.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
-import 'package:franchise_admin_portal/core/models/category.dart';
+import '../../../../packages/shared_core/lib/src/core/models/category.dart';
 import 'package:franchise_admin_portal/widgets/dietary_allergen_chips_row.dart';
-import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
+import '../../../../packages/shared_core/lib/src/core/models/user.dart'
+    as admin_user;
+import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import '../../../../packages/shared_core/lib/src/core/services/audit_log_service.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/filter_dropdown.dart';
@@ -27,12 +28,12 @@ import 'package:franchise_admin_portal/admin/menu/menu_item_customizations_dialo
 import 'package:franchise_admin_portal/admin/menu/customization_types.dart'
     as ct;
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/providers/role_guard.dart';
-import 'package:franchise_admin_portal/core/utils/user_permissions.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/role_guard.dart';
+import '../../../../packages/shared_core/lib/src/core/utils/user_permissions.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
-import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
 
 const menuItemColumns = [
   {"key": "image", "width": 56.0, "header": "Image"},

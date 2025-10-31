@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
+import '../../../../packages/shared_core/lib/src/core/models/dashboard_section.dart';
 
 class AdminBottomNavBar extends StatelessWidget {
   final List<DashboardSection> sections;

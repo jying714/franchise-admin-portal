@@ -2,14 +2,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/models/menu_item_schema_issue.dart';
-import 'package:franchise_admin_portal/core/providers/category_provider.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_type_provider.dart';
-import 'package:franchise_admin_portal/core/models/category.dart';
-import 'package:franchise_admin_portal/core/models/ingredient_metadata.dart';
-import 'package:franchise_admin_portal/core/models/ingredient_type_model.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/models/menu_item_schema_issue.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/providers/category_provider.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/providers/ingredient_metadata_provider.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/providers/ingredient_type_provider.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/models/category.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/models/ingredient_metadata.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/models/ingredient_type_model.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/ingredient_creation_dialog.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/ingredient_type_creation_dialog.dart';

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/order.dart' as order_model;
+import '../../../../packages/shared_core/lib/src/core/models/order.dart'
+    as order_model;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class OrderDetailDialog extends StatelessWidget {

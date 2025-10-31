@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import '../../../../../packages/shared_core/lib/src/core/models/platform_plan_model.dart';
+import '../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import '../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/tight_section_card.dart';
-import 'package:franchise_admin_portal/core/providers/role_guard.dart';
+import '../../../../../packages/shared_core/lib/src/core/providers/role_guard.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import '../../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
 import 'mock_payment_form.dart';
 import 'mock_payment_data.dart';
-import 'package:franchise_admin_portal/core/models/franchise_subscription_model.dart';
-import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
+import '../../../../../packages/shared_core/lib/src/core/models/franchise_subscription_model.dart';
+import '../../../../../packages/shared_core/lib/src/core/services/franchise_subscription_service.dart';
 
 class PlatformPlanTile extends StatefulWidget {
   final PlatformPlan plan;

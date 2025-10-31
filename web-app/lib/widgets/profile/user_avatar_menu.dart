@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class UserAvatarMenu extends StatelessWidget {

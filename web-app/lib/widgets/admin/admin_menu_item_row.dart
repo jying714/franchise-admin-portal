@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_menu_item_actions_row.dart';
-import 'package:franchise_admin_portal/core/models/menu_item.dart';
-import 'package:franchise_admin_portal/core/models/category.dart';
-import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
+import '../../../../packages/shared_core/lib/src/core/models/menu_item.dart';
+import '../../../../packages/shared_core/lib/src/core/models/category.dart';
+import '../../../../packages/shared_core/lib/src/core/models/user.dart'
+    as admin_user;
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/network_image_widget.dart';
 import 'package:franchise_admin_portal/widgets/dietary_allergen_chips_row.dart';

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/message.dart';
+import '../../../../packages/shared_core/lib/src/core/models/message.dart';
 
 class AdminChatDetailDialog extends StatefulWidget {
   final String franchiseId;

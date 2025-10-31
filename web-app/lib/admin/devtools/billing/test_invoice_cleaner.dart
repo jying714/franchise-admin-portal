@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import '../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
 
 class TestInvoiceCleaner extends StatefulWidget {
   const TestInvoiceCleaner({super.key});

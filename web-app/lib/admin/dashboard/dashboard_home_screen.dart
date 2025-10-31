@@ -2,11 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_feature_provider.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/core/utils/user_permissions.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/franchise_feature_provider.dart';
+import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import '../../../../packages/shared_core/lib/src/core/utils/user_permissions.dart';
 import 'package:franchise_admin_portal/widgets/financials/dashboard_stat_card.dart';
 import 'package:franchise_admin_portal/widgets/financials/revenue_stat_card.dart';
 import 'package:franchise_admin_portal/widgets/financials/kpi_card.dart';
@@ -15,8 +15,8 @@ import 'package:franchise_admin_portal/widgets/dashboard/activity_feed_widget.da
 import 'package:franchise_admin_portal/widgets/dashboard/urgent_status_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/notifications_panel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
-import 'package:franchise_admin_portal/core/providers/role_guard.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/role_guard.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/live_operational_snapshot_widget.dart';
 
 /// ---------------------------------------------------------------------------

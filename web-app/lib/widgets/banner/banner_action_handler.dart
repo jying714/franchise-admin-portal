@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/banner.dart' as model;
-import 'package:franchise_admin_portal/core/models/category.dart';
-import 'package:franchise_admin_portal/core/services/analytics_service.dart';
+import '../../../../packages/shared_core/lib/src/core/models/banner.dart'
+    as model;
+import '../../../../packages/shared_core/lib/src/core/models/category.dart';
+import '../../../../packages/shared_core/lib/src/core/services/analytics_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 // You may inject analytics or other services here as needed.

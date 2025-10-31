@@ -4,9 +4,9 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:franchise_admin_portal/core/utils/formatting.dart';
-import 'package:franchise_admin_portal/core/models/menu_item.dart';
-import 'package:franchise_admin_portal/core/models/ingredient_metadata.dart';
+import '../../../../packages/shared_core/lib/src/core/utils/formatting.dart';
+import '../../../../packages/shared_core/lib/src/core/models/menu_item.dart';
+import '../../../../packages/shared_core/lib/src/core/models/ingredient_metadata.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/widgets/portion_selector.dart';
@@ -26,7 +26,7 @@ import 'package:franchise_admin_portal/widgets/customization/topping_cost_label.
 import 'package:franchise_admin_portal/widgets/customization/current_ingredients.dart';
 import 'package:franchise_admin_portal/widgets/customization/header.dart';
 import 'package:franchise_admin_portal/widgets/customization/bottom_bar.dart';
-import 'package:franchise_admin_portal/core/models/size_template.dart';
+import '../../../../packages/shared_core/lib/src/core/models/size_template.dart';
 
 const MAX_DOUBLES = 4;
 const DOUGH_IDS = {'dough_calzone', 'dough_pizza', 'dough'};

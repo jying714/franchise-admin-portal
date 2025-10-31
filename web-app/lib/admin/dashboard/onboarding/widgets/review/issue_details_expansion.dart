@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/onboarding_validation_issue.dart';
-import 'package:franchise_admin_portal/core/providers/onboarding_review_provider.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/models/onboarding_validation_issue.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/providers/onboarding_review_provider.dart';
 import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.dart';
 
 /// Displays an expandable issue detail panel for each onboarding section.

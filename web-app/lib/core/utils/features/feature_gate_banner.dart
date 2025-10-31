@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_feature_provider.dart';
+import '../../../../../packages/shared_core/lib/src/core/providers/franchise_feature_provider.dart';
 
 ///
 /// 🔒 FeatureGateBanner

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
 
 /// Widget to add/view notes/comments on a payout.
 class PayoutNoteEditor extends StatefulWidget {

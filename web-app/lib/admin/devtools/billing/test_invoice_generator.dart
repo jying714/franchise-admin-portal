@@ -3,10 +3,10 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/models/platform_invoice.dart';
-import 'package:franchise_admin_portal/core/models/franchise_info.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import '../../../../../packages/shared_core/lib/src/core/models/platform_invoice.dart';
+import '../../../../../packages/shared_core/lib/src/core/models/franchise_info.dart';
+import '../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import '../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
 
 class TestInvoiceGenerator extends StatefulWidget {
   const TestInvoiceGenerator({super.key});

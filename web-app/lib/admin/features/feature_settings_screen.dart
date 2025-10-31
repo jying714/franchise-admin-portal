@@ -1,15 +1,16 @@
 import 'package:franchise_admin_portal/widgets/feature_toggle_list.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
-import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
+import '../../../../packages/shared_core/lib/src/core/models/user.dart'
+    as admin_user;
+import '../../../../packages/shared_core/lib/src/core/services/audit_log_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
+import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
 
 class FeatureSettingsScreen extends StatefulWidget {
   const FeatureSettingsScreen({super.key});

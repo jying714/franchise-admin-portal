@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
+import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
-import 'package:franchise_admin_portal/core/models/alert_model.dart';
-import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
+import '../../../../packages/shared_core/lib/src/core/models/alert_model.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/financials/payouts_filter_bar.dart';
@@ -15,7 +15,7 @@ import 'package:franchise_admin_portal/widgets/financials/payout_detail_dialog.d
 import 'package:franchise_admin_portal/widgets/financials/payout_note_editor.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/attachment_uploader.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/bulk_ops_bar.dart';
-import 'package:franchise_admin_portal/core/providers/payout_filter_provider.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/payout_filter_provider.dart';
 
 class PayoutListScreen extends StatefulWidget {
   const PayoutListScreen({Key? key}) : super(key: key);

@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/admin/chat/admin_chat_detail_dialog.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/user.dart' as admin_user;
-import 'package:franchise_admin_portal/core/services/audit_log_service.dart';
-import 'package:franchise_admin_portal/core/models/chat.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/core/utils/user_permissions.dart';
+import '../../../../packages/shared_core/lib/src/core/models/user.dart'
+    as admin_user;
+import '../../../../packages/shared_core/lib/src/core/services/audit_log_service.dart';
+import '../../../../packages/shared_core/lib/src/core/models/chat.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
+import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import '../../../../packages/shared_core/lib/src/core/utils/user_permissions.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
-import 'package:franchise_admin_portal/core/providers/role_guard.dart';
-import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/role_guard.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ChatManagementScreen extends StatelessWidget {

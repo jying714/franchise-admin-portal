@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/models/user.dart' as app;
+import '../../../../packages/shared_core/lib/src/core/models/user.dart' as app;
 
 class DashboardSwitcherDropdown extends StatelessWidget {
   final String currentScreen;

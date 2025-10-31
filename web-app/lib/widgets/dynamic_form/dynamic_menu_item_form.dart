@@ -1,11 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:franchise_admin_portal/widgets/menu_item_validator.dart';
 import 'dart:convert';
-import 'package:franchise_admin_portal/core/models/customization.dart';
+import '../../../../packages/shared_core/lib/src/core/models/customization.dart';
 import 'package:franchise_admin_portal/widgets/dynamic_form/smart_dropdown_or_text_field.dart';
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/menu_item.dart';
-import 'package:franchise_admin_portal/core/models/nutrition_info.dart';
+import '../../../../packages/shared_core/lib/src/core/models/menu_item.dart';
+import '../../../../packages/shared_core/lib/src/core/models/nutrition_info.dart';
 import 'package:franchise_admin_portal/widgets/dynamic_form/dynamic_field_input.dart';
 import 'package:franchise_admin_portal/widgets/dynamic_form/dynamic_array_editor.dart';
 import 'package:franchise_admin_portal/widgets/dynamic_form/customization_group_editor.dart';

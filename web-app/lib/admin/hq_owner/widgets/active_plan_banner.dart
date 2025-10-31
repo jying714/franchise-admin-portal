@@ -3,10 +3,10 @@ import 'package:intl/intl.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
-import 'package:franchise_admin_portal/core/services/franchise_subscription_service.dart';
-import 'package:franchise_admin_portal/core/models/platform_plan_model.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_subscription_provider.dart';
-import 'package:franchise_admin_portal/core/providers/role_guard.dart';
+import '../../../../../packages/shared_core/lib/src/core/services/franchise_subscription_service.dart';
+import '../../../../../packages/shared_core/lib/src/core/models/platform_plan_model.dart';
+import '../../../../../packages/shared_core/lib/src/core/providers/franchise_subscription_provider.dart';
+import '../../../../../packages/shared_core/lib/src/core/providers/role_guard.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/tight_section_card.dart';
 
 class ActivePlanBanner extends StatefulWidget {

@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/menu_item.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/models/menu_item.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
 
 class MenuItemFormDialog extends StatefulWidget {
   final MenuItem? initialItem;

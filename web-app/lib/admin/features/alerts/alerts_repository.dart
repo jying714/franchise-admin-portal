@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
+import '../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:franchise_admin_portal/core/models/alert_model.dart';
+import '../../../../../packages/shared_core/lib/src/core/models/alert_model.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/core/models/dashboard_section.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import '../../../../../packages/shared_core/lib/src/core/models/dashboard_section.dart';
+import '../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
 
 class AlertsRepository {
   final FirebaseFirestore _firestore;

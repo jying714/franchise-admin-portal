@@ -1,9 +1,9 @@
-import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/services/analytics_service.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/models/analytics_summary.dart';
+import '../../../../packages/shared_core/lib/src/core/services/analytics_service.dart';
+import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import '../../../../packages/shared_core/lib/src/core/models/analytics_summary.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import '../../widgets/orders/export_analytics_dialog.dart';
@@ -11,10 +11,10 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:io';
-import 'package:franchise_admin_portal/core/utils/export_utils.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:franchise_admin_portal/core/providers/admin_user_provider.dart';
+import '../../../../packages/shared_core/lib/src/core/utils/export_utils.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
+import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/widgets/orders/feedback_card.dart';
 
 class AnalyticsScreen extends StatefulWidget {

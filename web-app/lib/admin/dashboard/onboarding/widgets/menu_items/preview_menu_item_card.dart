@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/models/menu_item.dart';
-import 'package:franchise_admin_portal/core/models/ingredient_reference.dart';
-import 'package:franchise_admin_portal/core/models/customization_group.dart';
-import 'package:franchise_admin_portal/core/models/nutrition_info.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/models/menu_item.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/models/ingredient_reference.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/models/customization_group.dart';
+import '../../../../../../../packages/shared_core/lib/src/core/models/nutrition_info.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 /// ✅ Production-ready card UI to preview a MenuItem as it would appear

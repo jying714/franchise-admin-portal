@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/core/services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/models/category.dart';
+import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import '../../../../packages/shared_core/lib/src/core/models/category.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 // Optionally for user id:
-import 'package:franchise_admin_portal/core/providers/user_profile_notifier.dart';
-import 'package:franchise_admin_portal/core/providers/franchise_provider.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
+import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
+import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
 
 class BulkUploadDialog extends StatefulWidget {
   final String franchiseId;

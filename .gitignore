@@ -23,3 +23,9 @@ android/app/upload-keystore.jks
 **/build/
 **/.firebase/
 **/.firebase/
+
+# ---- NEW FILES TO IGNORE ----
+dump-repo-schema.mjs
+lib-raw-urls.txt
+repo_schema.txt
+get-lib-raw-urls.ps1

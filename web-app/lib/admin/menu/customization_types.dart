@@ -1,6 +1,6 @@
 // lib/admin/menu_editor/customization_types.dart
 
-import 'package:franchise_admin_portal/core/models/customization.dart';
+import '../../../../packages/shared_core/lib/src/core/models/customization.dart';
 
 /// Editable group of customizations for use in admin dialogs/screens.
 /// Fully supports multi/group/option types for franchise/SaaS, upcharges, portion, etc.

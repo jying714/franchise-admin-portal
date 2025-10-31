@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/core/models/analytics_summary.dart';
-import 'package:franchise_admin_portal/core/utils/export_utils.dart';
+import '../../../../packages/shared_core/lib/src/core/models/analytics_summary.dart';
+import '../../../../packages/shared_core/lib/src/core/utils/export_utils.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 
