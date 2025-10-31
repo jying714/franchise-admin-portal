@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
 
 /// A modular profile icon button for AppBars, easily reused across the app.
@@ -31,3 +31,5 @@ class ProfileIconButton extends StatelessWidget {
     );
   }
 }
+
+

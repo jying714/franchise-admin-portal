@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 /// Modular bar chart widget for admin analytics.
@@ -130,3 +130,5 @@ class LineChartWidget extends StatelessWidget {
     );
   }
 }
+
+

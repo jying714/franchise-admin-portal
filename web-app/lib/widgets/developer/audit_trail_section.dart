@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 
 class AuditTrailSection extends StatefulWidget {
   final String? franchiseId;
@@ -49,7 +49,7 @@ class _AuditTrailSectionState extends State<AuditTrailSection> {
           timestamp: DateTime.now().subtract(const Duration(minutes: 6)),
           type: 'MenuUpdate',
           description:
-              'Updated price of “Deluxe Pizza” from \$15.99 to \$16.49',
+              'Updated price of â€œDeluxe Pizzaâ€ from \$15.99 to \$16.49',
           actor: 'jane@doughboys.com',
           franchiseId: widget.franchiseId == 'all'
               ? 'doughboyspizzeria'
@@ -152,8 +152,8 @@ class _AuditTrailSectionState extends State<AuditTrailSection> {
         children: [
           Text(
             isAllFranchises
-                ? '${loc.auditTrailSectionTitle} — ${loc.allFranchisesLabel ?? "All Franchises"}'
-                : '${loc.auditTrailSectionTitle} — ${widget.franchiseId}',
+                ? '${loc.auditTrailSectionTitle} â€” ${loc.allFranchisesLabel ?? "All Franchises"}'
+                : '${loc.auditTrailSectionTitle} â€” ${widget.franchiseId}',
             style: theme.textTheme.titleLarge?.copyWith(
               color: colorScheme.primary,
               fontWeight: FontWeight.bold,
@@ -292,7 +292,7 @@ class _AuditTrailList extends StatelessWidget {
             leading: Icon(Icons.timeline, color: colorScheme.outline),
             title: Text(entry.description),
             subtitle: Text(
-              '${loc.auditTrailSectionAt} ${entry.type} • ${_formatDateTime(entry.timestamp)}\n${loc.auditTrailSectionBy}: ${entry.actor}',
+              '${loc.auditTrailSectionAt} ${entry.type} â€¢ ${_formatDateTime(entry.timestamp)}\n${loc.auditTrailSectionBy}: ${entry.actor}',
               style: const TextStyle(fontSize: 13),
             ),
             trailing:
@@ -388,3 +388,5 @@ class AuditEntry {
     this.franchiseId,
   });
 }
+
+

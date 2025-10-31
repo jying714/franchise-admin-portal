@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../packages/shared_core/lib/src/core/models/franchise_info.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/models/franchise_info.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
 
 class FranchisePickerDropdown extends StatelessWidget {
   final String? selectedFranchiseId;
@@ -54,7 +54,7 @@ class FranchisePickerDropdown extends StatelessWidget {
 
             franchiseProvider.setFranchiseId(newValue);
 
-            // 🧠 Defer route transition slightly to allow provider update to propagate
+            // ðŸ§  Defer route transition slightly to allow provider update to propagate
             Future.microtask(() {
               print(
                   '[FranchisePickerDropdown] Navigating to Admin Dashboard after franchise selection...');
@@ -92,3 +92,5 @@ class FranchisePickerDropdown extends StatelessWidget {
     );
   }
 }
+
+

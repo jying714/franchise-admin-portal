@@ -1,22 +1,22 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../packages/shared_core/lib/src/core/models/order.dart'
+import 'package:shared_core/src/core/models/order.dart'
     as order_model;
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../packages/shared_core/lib/src/core/models/user.dart'
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../packages/shared_core/lib/src/core/services/audit_log_service.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/role_guard.dart';
+import 'package:shared_core/src/core/services/audit_log_service.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/src/core/providers/role_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/widgets/orders/order_detail_dialog.dart';
 
 class OrderManagementScreen extends StatelessWidget {
@@ -215,7 +215,7 @@ class _OrderManagementScreenContentState
         body: Center(
           child: loading
               ? const CircularProgressIndicator()
-              : const Text('Unauthorized — No admin user'),
+              : const Text('Unauthorized â€” No admin user'),
         ),
       );
     }
@@ -351,7 +351,7 @@ class _OrderManagementScreenContentState
                                               : '#'),
                                     ),
                                     title: Text(
-                                        "${order.id} — ${order.userNameDisplay}",
+                                        "${order.id} â€” ${order.userNameDisplay}",
                                         style: const TextStyle(
                                             fontWeight: FontWeight.bold)),
                                     subtitle: Column(
@@ -412,3 +412,5 @@ class _OrderManagementScreenContentState
     );
   }
 }
+
+

@@ -1,4 +1,4 @@
-import 'package:intl/intl.dart';
+﻿import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
@@ -87,3 +87,5 @@ class ErrorLogTrendChart extends StatelessWidget {
     );
   }
 }
+
+

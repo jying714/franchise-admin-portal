@@ -1,4 +1,4 @@
-// UN-USED FILE
+﻿// UN-USED FILE
 // UN-USED FILE
 // UN-USED FILE
 // UN-USED FILE
@@ -7,7 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_mobile_app/config/app_config.dart';
+import 'package:shared_core/src/core/config/app_config.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/branding_config.dart';
 import 'package:franchise_mobile_app/core/models/menu_item.dart';

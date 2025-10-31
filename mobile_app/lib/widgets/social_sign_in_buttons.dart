@@ -1,10 +1,10 @@
-// ignore_for_file: unused_import, prefer_const_constructors
+﻿// ignore_for_file: unused_import, prefer_const_constructors
 
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:franchise_mobile_app/core/services/auth_service.dart';
+import 'package:shared_core/src/core/services/auth_service.dart';
 import 'package:franchise_mobile_app/core/services/firestore_service.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as db_user;
 

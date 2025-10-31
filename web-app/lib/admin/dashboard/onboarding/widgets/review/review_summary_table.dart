@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/ingredient_type_provider.dart';
+import '../package:shared_core/src/core/providers/ingredient_type_provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/onboarding_validation_issue.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/onboarding_review_provider.dart';
-import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/ingredient_metadata_provider.dart';
+import '../package:shared_core/src/core/models/onboarding_validation_issue.dart';
+import '../package:shared_core/src/core/providers/onboarding_review_provider.dart';
+import 'package:shared_core/src/core/utils/onboarding_navigation_utils.dart';
+import '../package:shared_core/src/core/providers/ingredient_metadata_provider.dart';
 
 class ReviewSummaryTable extends StatelessWidget {
   static const List<String> _sectionOrder = [
@@ -235,28 +235,28 @@ class ReviewSummaryTable extends StatelessWidget {
     ColorScheme colorScheme,
   ) {
     void _navigateToFix(OnboardingValidationIssue issue) async {
-      debugPrint('──────────────────────────────────────────────');
-      debugPrint('[ReviewSummaryTable] 🛠 Attempting navigation');
-      debugPrint('  • Section (raw): "$section"');
-      debugPrint('  • Issue.itemId: "${issue.itemId}"');
-      debugPrint('  • Issue.itemLocator: "${issue.itemLocator}"');
-      debugPrint('  • Issue.actionLabel: "${issue.actionLabel}"');
-      debugPrint('  • Issue.affectedFields: ${issue.affectedFields}');
-      debugPrint('──────────────────────────────────────────────');
+      debugPrint('â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€');
+      debugPrint('[ReviewSummaryTable] ðŸ›  Attempting navigation');
+      debugPrint('  â€¢ Section (raw): "$section"');
+      debugPrint('  â€¢ Issue.itemId: "${issue.itemId}"');
+      debugPrint('  â€¢ Issue.itemLocator: "${issue.itemLocator}"');
+      debugPrint('  â€¢ Issue.actionLabel: "${issue.actionLabel}"');
+      debugPrint('  â€¢ Issue.affectedFields: ${issue.affectedFields}');
+      debugPrint('â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€');
 
       // 1) Normalize & resolve route
       final normalizedSection =
           OnboardingNavigationUtils.normalizeForRouting(section);
       debugPrint(
-          '[ReviewSummaryTable] Normalized section → "$normalizedSection"');
+          '[ReviewSummaryTable] Normalized section â†’ "$normalizedSection"');
 
       final route =
           OnboardingNavigationUtils.resolveRoute(normalizedSection, issue);
-      debugPrint('[ReviewSummaryTable] Resolved route → "$route"');
+      debugPrint('[ReviewSummaryTable] Resolved route â†’ "$route"');
 
       if (route.isEmpty) {
         debugPrint(
-            '[ReviewSummaryTable][WARN] ❌ Route is empty — navigation aborted.');
+            '[ReviewSummaryTable][WARN] âŒ Route is empty â€” navigation aborted.');
         return;
       }
 
@@ -265,13 +265,13 @@ class ReviewSummaryTable extends StatelessWidget {
         section: normalizedSection,
         issue: issue,
       );
-      debugPrint('[ReviewSummaryTable] Built nav args → $args');
+      debugPrint('[ReviewSummaryTable] Built nav args â†’ $args');
 
       // 3) Pre-load prerequisites for sections that need them
       try {
         if (normalizedSection == 'onboardingIngredients') {
           debugPrint(
-              '[ReviewSummaryTable] 📦 Checking prerequisites for Ingredients…');
+              '[ReviewSummaryTable] ðŸ“¦ Checking prerequisites for Ingredientsâ€¦');
 
           final typeProvider = context.read<IngredientTypeProvider>();
           final metaProvider = context.read<IngredientMetadataProvider>();
@@ -287,10 +287,10 @@ class ReviewSummaryTable extends StatelessWidget {
           final typesCount = typeProvider.ingredientTypes.length;
           debugPrint('    IngredientTypes count: $typesCount');
           if (typesCount == 0) {
-            debugPrint('    ➤ Loading Ingredient Types…');
+            debugPrint('    âž¤ Loading Ingredient Typesâ€¦');
             await typeProvider.loadIngredientTypes(fid);
             debugPrint(
-                '    ✔ Ingredient Types loaded. New count: ${typeProvider.ingredientTypes.length}');
+                '    âœ” Ingredient Types loaded. New count: ${typeProvider.ingredientTypes.length}');
           }
 
           // Ingredient Metadata (screen uses provider.isInitialized + list)
@@ -299,14 +299,14 @@ class ReviewSummaryTable extends StatelessWidget {
           debugPrint(
               '    IngredientMetadata count: ${metaProvider.ingredients.length}');
           if (!metaProvider.isInitialized || metaProvider.ingredients.isEmpty) {
-            debugPrint('    ➤ Loading Ingredient Metadata…');
+            debugPrint('    âž¤ Loading Ingredient Metadataâ€¦');
             await metaProvider.load();
             debugPrint(
-                '    ✔ Ingredient Metadata loaded. New count: ${metaProvider.ingredients.length}');
+                '    âœ” Ingredient Metadata loaded. New count: ${metaProvider.ingredients.length}');
           }
         } else if (normalizedSection == 'onboardingIngredientTypes') {
           debugPrint(
-              '[ReviewSummaryTable] 📦 Checking prerequisites for Ingredient Types…');
+              '[ReviewSummaryTable] ðŸ“¦ Checking prerequisites for Ingredient Typesâ€¦');
 
           final typeProvider = context.read<IngredientTypeProvider>();
           String fid = typeProvider.franchiseId;
@@ -320,15 +320,15 @@ class ReviewSummaryTable extends StatelessWidget {
           final typesCount = typeProvider.ingredientTypes.length;
           debugPrint('    IngredientTypes count: $typesCount');
           if (typesCount == 0) {
-            debugPrint('    ➤ Loading Ingredient Types…');
+            debugPrint('    âž¤ Loading Ingredient Typesâ€¦');
             await typeProvider.loadIngredientTypes(fid);
             debugPrint(
-                '    ✔ Ingredient Types loaded. New count: ${typeProvider.ingredientTypes.length}');
+                '    âœ” Ingredient Types loaded. New count: ${typeProvider.ingredientTypes.length}');
           }
         }
       } catch (e, st) {
         debugPrint(
-            '[ReviewSummaryTable][ERROR] ⚠ Failed while preloading prerequisites.');
+            '[ReviewSummaryTable][ERROR] âš  Failed while preloading prerequisites.');
         debugPrint('    Exception: $e');
         debugPrint('    Stacktrace: $st');
         // Continue to navigate; downstream screen may still guard itself.
@@ -336,7 +336,7 @@ class ReviewSummaryTable extends StatelessWidget {
 
       // 4) Navigate after this frame to avoid setState during build
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        debugPrint('[ReviewSummaryTable] 🚀 Navigating to → "$route"');
+        debugPrint('[ReviewSummaryTable] ðŸš€ Navigating to â†’ "$route"');
         Navigator.of(context).pushNamed(route, arguments: args);
       });
     }
@@ -369,7 +369,7 @@ class ReviewSummaryTable extends StatelessWidget {
       );
     }
 
-    return Text('—',
+    return Text('â€”',
         style: TextStyle(color: colorScheme.outlineVariant, fontSize: 15),
         textAlign: TextAlign.center);
   }
@@ -390,3 +390,5 @@ class ReviewSummaryTable extends StatelessWidget {
     );
   }
 }
+
+

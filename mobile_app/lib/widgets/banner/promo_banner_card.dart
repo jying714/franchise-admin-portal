@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/branding_config.dart';
 import 'package:franchise_mobile_app/core/models/banner.dart' as model;
@@ -127,3 +127,5 @@ class PromoBannerCard extends StatelessWidget {
     }
   }
 }
+
+

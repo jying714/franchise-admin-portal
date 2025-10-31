@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../../packages/shared_core/lib/src/core/providers/franchise_feature_provider.dart';
+import 'package:shared_core/src/core/providers/franchise_feature_provider.dart';
 
 /// Defines how `FeatureGuardWrapper` handles feature-gated content.
 enum FeatureFallbackStyle {
@@ -13,19 +13,19 @@ enum FeatureFallbackStyle {
 }
 
 ///
-/// 🧱 FeatureGuardWrapper
+/// ðŸ§± FeatureGuardWrapper
 ///
 /// A flexible wrapper that conditionally hides or disables its child based on
 /// a platform feature toggle (and optionally a nested subfeature).
 ///
 /// Use this when:
-/// - ✅ You want to **educate** the user about a locked feature.
-/// - ✅ You want to **upsell** with a disabled UI (dimmed).
-/// - ✅ You want to gracefully **gate** non-critical widgets.
+/// - âœ… You want to **educate** the user about a locked feature.
+/// - âœ… You want to **upsell** with a disabled UI (dimmed).
+/// - âœ… You want to gracefully **gate** non-critical widgets.
 ///
 /// Avoid this when:
-/// - ❌ The gated content would break layout or flow when visible but disabled.
-/// - ❌ You want to fully eliminate logic branches (use FeatureGuard instead).
+/// - âŒ The gated content would break layout or flow when visible but disabled.
+/// - âŒ You want to fully eliminate logic branches (use FeatureGuard instead).
 ///
 /// Example:
 /// ```dart
@@ -80,10 +80,10 @@ class FeatureGuardWrapper extends StatelessWidget {
 
     final isAllowed = _isPermitted(featureProvider);
 
-    // ✅ Feature is active → show as-is
+    // âœ… Feature is active â†’ show as-is
     if (isAllowed) return child;
 
-    // ❌ Feature blocked → determine fallback behavior
+    // âŒ Feature blocked â†’ determine fallback behavior
     switch (fallbackStyle) {
       case FeatureFallbackStyle.hidden:
         return const SizedBox.shrink();
@@ -103,3 +103,5 @@ class FeatureGuardWrapper extends StatelessWidget {
     }
   }
 }
+
+

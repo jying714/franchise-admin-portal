@@ -1,23 +1,23 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
 import 'package:franchise_admin_portal/widgets/business/business_hours_editor.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
-import '../../../../packages/shared_core/lib/src/core/services/auth_service.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/services/auth_service.dart';
 import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
-import '../../../../packages/shared_core/lib/src/core/models/user.dart'
+import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/restaurant_type_provider.dart';
-import '../../../../packages/shared_core/lib/src/core/models/restaurant_type.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/restaurant_type_provider.dart';
+import 'package:shared_core/src/core/models/restaurant_type.dart';
 
 String roleToDashboardRoute(List<String> roles) {
   if (roles.contains('platform_owner')) return '/platform-owner/dashboard';
@@ -204,7 +204,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       );
       print('[FranchiseOnboardingScreen] Custom claims updated for $userId');
 
-      // ✅ Set FranchiseProvider immediately
+      // âœ… Set FranchiseProvider immediately
       await Provider.of<FranchiseProvider>(context, listen: false)
           .setInitialFranchiseId(franchiseId);
       print(
@@ -247,10 +247,10 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       final roles = (claims['roles'] as List?)?.cast<String>() ?? [];
       if (!roles.contains('hq_owner')) {
         print(
-            '[FranchiseOnboardingScreen] ⚠️ Custom claim "hq_owner" not found after retrying.');
+            '[FranchiseOnboardingScreen] âš ï¸ Custom claim "hq_owner" not found after retrying.');
       }
 
-      // 🕓 Poll Firestore until roles are updated
+      // ðŸ•“ Poll Firestore until roles are updated
       admin_user.User? updatedUser;
       int attempt = 0;
       while (attempt < 10) {
@@ -265,7 +265,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
 
       if ((updatedUser?.roles ?? []).isEmpty) {
         print(
-            '[FranchiseOnboardingScreen] ⚠️ Firestore user.roles still empty after retries.');
+            '[FranchiseOnboardingScreen] âš ï¸ Firestore user.roles still empty after retries.');
       }
 
       if (updatedUser != null) {
@@ -570,3 +570,5 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
     );
   }
 }
+
+

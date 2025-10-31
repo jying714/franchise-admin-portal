@@ -1,11 +1,11 @@
-// lib/core/utils/onboarding_navigation_utils.dart
+﻿// lib/core/utils/onboarding_navigation_utils.dart
 //
 // Navigation utilities for the Onboarding flow.
 // Keeps routing keys, arguments, and normalization consistent.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show VisibleForTesting;
-import '../../../../packages/shared_core/lib/src/core/models/onboarding_validation_issue.dart';
+import 'package:shared_core/src/core/models/onboarding_validation_issue.dart';
 
 /// Canonical argument keys used across onboarding routes.
 class OnboardingNavKeys {
@@ -169,7 +169,7 @@ class OnboardingNavigationUtils {
     }
 
     debugPrint(
-      '[OnboardingNavigationUtils] buildOnboardingNavArgs → section="$section" normalized="$normalizedSection" args=$args',
+      '[OnboardingNavigationUtils] buildOnboardingNavArgs â†’ section="$section" normalized="$normalizedSection" args=$args',
     );
 
     return Map<String, dynamic>.unmodifiable(args);
@@ -256,3 +256,5 @@ String? _stringifySeverity(OnboardingIssueSeverity? s) {
       return null;
   }
 }
+
+

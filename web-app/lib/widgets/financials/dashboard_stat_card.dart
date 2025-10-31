@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class DashboardStatCard<T extends num> extends StatelessWidget {
   final String label;
@@ -168,3 +168,5 @@ class DashboardStatCard<T extends num> extends StatelessWidget {
     );
   }
 }
+
+

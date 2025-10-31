@@ -1,7 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 
 class SeedPlatformFeaturesForm extends StatefulWidget {
   const SeedPlatformFeaturesForm({super.key});
@@ -126,7 +126,7 @@ class _SeedPlatformFeaturesFormState extends State<SeedPlatformFeaturesForm> {
             style: theme.textTheme.bodyMedium),
         const SizedBox(height: 16),
 
-        // ─── Horizontal Row 1 ────────────────────────────────────────
+        // â”€â”€â”€ Horizontal Row 1 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         Row(children: [
           Expanded(
             child: TextField(
@@ -144,7 +144,7 @@ class _SeedPlatformFeaturesFormState extends State<SeedPlatformFeaturesForm> {
         ]),
         const SizedBox(height: 12),
 
-        // ─── Horizontal Row 2 ────────────────────────────────────────
+        // â”€â”€â”€ Horizontal Row 2 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
@@ -175,7 +175,7 @@ class _SeedPlatformFeaturesFormState extends State<SeedPlatformFeaturesForm> {
         ),
         const SizedBox(height: 12),
 
-        // ─── Multiline Description ──────────────────────────────────
+        // â”€â”€â”€ Multiline Description â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         TextField(
           controller: _descController,
           maxLines: 2,
@@ -205,7 +205,7 @@ class _SeedPlatformFeaturesFormState extends State<SeedPlatformFeaturesForm> {
         ),
         const SizedBox(height: 24),
 
-        // ─── List of Features ───────────────────────────────────────
+        // â”€â”€â”€ List of Features â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if (_featuresToSeed.isNotEmpty) ...[
           Text(
             loc.devtoolsFeaturesToSeed,
@@ -213,7 +213,7 @@ class _SeedPlatformFeaturesFormState extends State<SeedPlatformFeaturesForm> {
                 ?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
-          ..._featuresToSeed.map((f) => Text('- ${f['key']} → ${f['name']}')),
+          ..._featuresToSeed.map((f) => Text('- ${f['key']} â†’ ${f['name']}')),
           const SizedBox(height: 12),
         ],
 
@@ -241,3 +241,5 @@ class _SeedPlatformFeaturesFormState extends State<SeedPlatformFeaturesForm> {
     );
   }
 }
+
+

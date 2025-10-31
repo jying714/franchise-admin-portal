@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:franchise_mobile_app/config/app_config.dart';
+import 'package:shared_core/src/core/config/app_config.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
 import 'package:franchise_mobile_app/core/services/firestore_service.dart';
 import 'package:franchise_mobile_app/core/services/analytics_service.dart';

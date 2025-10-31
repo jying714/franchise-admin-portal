@@ -1,21 +1,21 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_metadata_template_picker_dialog.dart';
-import '../../../../../../packages/shared_core/lib/src/core/models/ingredient_metadata.dart';
-import '../../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/onboarding_progress_provider.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/franchise_info_provider.dart';
+import 'package:shared_core/src/core/models/ingredient_metadata.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/providers/onboarding_progress_provider.dart';
+import 'package:shared_core/src/core/providers/franchise_info_provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/ingredient_metadata_provider.dart';
+import 'package:shared_core/src/core/providers/ingredient_metadata_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_form_card.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_list_tile.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_metadata_json_import_export_dialog.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/ingredient_type_provider.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/ingredient_type_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/missing_type_resolution_dialog.dart';
 
 class OnboardingIngredientsScreen extends StatefulWidget {
@@ -39,7 +39,7 @@ class _OnboardingIngredientsScreenState
   final Map<String, GlobalKey> _fieldKeys =
       {}; // optional, used for field highlights
 
-  // Handoff args from router → this screen
+  // Handoff args from router â†’ this screen
   String? _focusIdFromArgs;
   List<String>? _focusFieldsFromArgs;
   bool _appliedFocusFromArgs = false;
@@ -81,7 +81,7 @@ class _OnboardingIngredientsScreenState
 
     if (ctx == null || !mounted) {
       debugPrint(
-        '[OnboardingIngredientsScreen] No visible context for $ingredientId — skipping highlight.',
+        '[OnboardingIngredientsScreen] No visible context for $ingredientId â€” skipping highlight.',
       );
       return;
     }
@@ -321,7 +321,7 @@ class _OnboardingIngredientsScreenState
     super.didChangeDependencies();
     if (_hasInitialized) return;
 
-    // 1️⃣ Capture router args ONCE
+    // 1ï¸âƒ£ Capture router args ONCE
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is Map) {
       _focusIdFromArgs = (args['focusItemId'] ??
@@ -339,16 +339,16 @@ class _OnboardingIngredientsScreenState
       debugPrint('[OnboardingIngredientsScreen] No router args provided.');
     }
 
-    // 2️⃣ Ensure provider data & keys exist BEFORE attempting focus
+    // 2ï¸âƒ£ Ensure provider data & keys exist BEFORE attempting focus
     final provider = context.read<IngredientMetadataProvider>();
     provider.load(forceReloadFromFirestore: true).then((_) {
       if (!mounted) return;
 
-      // 3️⃣ Try initial focus once data & keys are ready
+      // 3ï¸âƒ£ Try initial focus once data & keys are ready
       _maybeApplyInitialFocus();
 
       debugPrint(
-        '[OnboardingIngredientsScreen] ✅ Ingredient reload complete. '
+        '[OnboardingIngredientsScreen] âœ… Ingredient reload complete. '
         'Count=${provider.ingredients.length}',
       );
 
@@ -763,3 +763,5 @@ class _OnboardingIngredientsScreenState
     super.dispose();
   }
 }
+
+

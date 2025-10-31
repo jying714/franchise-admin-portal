@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/widgets/help/help_dialog.dart';
 
 class HelpIconButton extends StatelessWidget {
@@ -21,3 +21,5 @@ class HelpIconButton extends StatelessWidget {
     );
   }
 }
+
+

@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import '../../../../packages/shared_core/lib/src/core/models/dashboard_section.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:shared_core/src/core/models/dashboard_section.dart';
 
 class AdminBottomNavBar extends StatelessWidget {
   final List<DashboardSection> sections;
@@ -31,3 +31,5 @@ class AdminBottomNavBar extends StatelessWidget {
     );
   }
 }
+
+

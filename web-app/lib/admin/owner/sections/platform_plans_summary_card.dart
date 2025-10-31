@@ -1,15 +1,15 @@
-// 📁 Path: lib/admin/owner/sections/platform_plans_summary_card.dart
+﻿// ðŸ“ Path: lib/admin/owner/sections/platform_plans_summary_card.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../../packages/shared_core/lib/src/core/models/platform_plan_model.dart';
-import '../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/models/platform_plan_model.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:provider/provider.dart';
-import '../../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
-import '../../../../../packages/shared_core/lib/src/core/services/franchise_subscription_service.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/services/franchise_subscription_service.dart';
 
 class PlatformPlansSummaryCard extends StatelessWidget {
   const PlatformPlansSummaryCard({super.key});
@@ -94,7 +94,7 @@ class PlatformPlansSummaryCard extends StatelessWidget {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                  '${plan.name} • \$${plan.price.toStringAsFixed(2)} / ${loc.perMonth}',
+                                  '${plan.name} â€¢ \$${plan.price.toStringAsFixed(2)} / ${loc.perMonth}',
                                   style: theme.textTheme.bodyMedium),
                             ),
                           ],
@@ -112,3 +112,5 @@ class PlatformPlansSummaryCard extends StatelessWidget {
     );
   }
 }
+
+

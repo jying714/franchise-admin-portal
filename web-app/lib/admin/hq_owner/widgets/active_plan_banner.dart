@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../../packages/shared_core/lib/src/core/services/franchise_subscription_service.dart';
-import '../../../../../packages/shared_core/lib/src/core/models/platform_plan_model.dart';
-import '../../../../../packages/shared_core/lib/src/core/providers/franchise_subscription_provider.dart';
-import '../../../../../packages/shared_core/lib/src/core/providers/role_guard.dart';
+import 'package:shared_core/src/core/services/franchise_subscription_service.dart';
+import 'package:shared_core/src/core/models/platform_plan_model.dart';
+import 'package:shared_core/src/core/providers/franchise_subscription_provider.dart';
+import 'package:shared_core/src/core/providers/role_guard.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/tight_section_card.dart';
 
 class ActivePlanBanner extends StatefulWidget {
@@ -73,7 +73,7 @@ class _ActivePlanBannerState extends State<ActivePlanBanner> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '$name – \$${price.toStringAsFixed(2)} / $interval',
+                    '$name â€“ \$${price.toStringAsFixed(2)} / $interval',
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -158,7 +158,7 @@ class _ActivePlanBannerState extends State<ActivePlanBanner> {
                     subscription.paymentTokenId != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    '${loc.cardOnFileLabel}: ${subscription.cardBrand} •••• ${subscription.cardLast4}',
+                    '${loc.cardOnFileLabel}: ${subscription.cardBrand} â€¢â€¢â€¢â€¢ ${subscription.cardLast4}',
                     style: textTheme.bodyMedium,
                   ),
                 ],
@@ -195,3 +195,5 @@ class _ActivePlanBannerState extends State<ActivePlanBanner> {
     );
   }
 }
+
+

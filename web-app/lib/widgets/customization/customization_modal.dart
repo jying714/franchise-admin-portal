@@ -1,12 +1,12 @@
-// ignore_for_file: prefer_const_constructors
+﻿// ignore_for_file: prefer_const_constructors
 import 'package:franchise_admin_portal/widgets/customization/pizza_sauce_selector_tab.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/formatting.dart';
-import '../../../../packages/shared_core/lib/src/core/models/menu_item.dart';
-import '../../../../packages/shared_core/lib/src/core/models/ingredient_metadata.dart';
+import 'package:shared_core/src/core/utils/formatting.dart';
+import 'package:shared_core/src/core/models/menu_item.dart';
+import 'package:shared_core/src/core/models/ingredient_metadata.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/widgets/portion_selector.dart';
@@ -26,7 +26,7 @@ import 'package:franchise_admin_portal/widgets/customization/topping_cost_label.
 import 'package:franchise_admin_portal/widgets/customization/current_ingredients.dart';
 import 'package:franchise_admin_portal/widgets/customization/header.dart';
 import 'package:franchise_admin_portal/widgets/customization/bottom_bar.dart';
-import '../../../../packages/shared_core/lib/src/core/models/size_template.dart';
+import 'package:shared_core/src/core/models/size_template.dart';
 
 const MAX_DOUBLES = 4;
 const DOUGH_IDS = {'dough_calzone', 'dough_pizza', 'dough'};
@@ -744,7 +744,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
           .toList();
       for (final id in sauceAddOnIds) {
         final count = _sideDipCounts[id] ?? 0;
-        total += count * upcharge; // No "free" sauces—always upcharge
+        total += count * upcharge; // No "free" saucesâ€”always upcharge
       }
     }
 
@@ -1913,3 +1913,5 @@ class _CustomizationModalState extends State<CustomizationModal> {
     );
   }
 }
+
+

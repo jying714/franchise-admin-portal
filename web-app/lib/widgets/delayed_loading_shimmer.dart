@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'loading_shimmer_widget.dart';
 
 class DelayedLoadingShimmer extends StatefulWidget {
@@ -60,3 +60,5 @@ class _DelayedLoadingShimmerState extends State<DelayedLoadingShimmer> {
     return widget.child;
   }
 }
+
+

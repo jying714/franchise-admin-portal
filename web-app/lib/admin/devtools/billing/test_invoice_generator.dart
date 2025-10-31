@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import '../../../../../packages/shared_core/lib/src/core/models/platform_invoice.dart';
-import '../../../../../packages/shared_core/lib/src/core/models/franchise_info.dart';
-import '../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/models/platform_invoice.dart';
+import 'package:shared_core/src/core/models/franchise_info.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 
 class TestInvoiceGenerator extends StatefulWidget {
   const TestInvoiceGenerator({super.key});
@@ -199,3 +199,5 @@ class _TestInvoiceGeneratorState extends State<TestInvoiceGenerator> {
     );
   }
 }
+
+

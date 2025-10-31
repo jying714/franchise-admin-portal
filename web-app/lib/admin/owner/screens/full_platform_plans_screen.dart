@@ -1,15 +1,15 @@
-// 📁 File: lib/admin/owner/screens/full_platform_plans_screen.dart
+﻿// ðŸ“ File: lib/admin/owner/screens/full_platform_plans_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
-import '../../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
-import '../../../../../packages/shared_core/lib/src/core/models/platform_plan_model.dart';
-import '../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
-import '../../../../../packages/shared_core/lib/src/core/services/franchise_subscription_service.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/models/platform_plan_model.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/services/franchise_subscription_service.dart';
 
 class FullPlatformPlansScreen extends StatefulWidget {
   const FullPlatformPlansScreen({super.key});
@@ -50,7 +50,7 @@ class _FullPlatformPlansScreenState extends State<FullPlatformPlansScreen> {
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
-    // 🔐 Developer-only access
+    // ðŸ” Developer-only access
     if (!(user?.isDeveloper ?? false) && !(user?.isPlatformOwner ?? false)) {
       return Scaffold(
         appBar: AppBar(title: Text(loc.platformPlansTitle)),
@@ -164,3 +164,5 @@ class _FullPlatformPlansScreenState extends State<FullPlatformPlansScreen> {
     );
   }
 }
+
+

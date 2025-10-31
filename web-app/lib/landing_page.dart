@@ -1,4 +1,4 @@
-import 'package:http/http.dart' as http;
+﻿import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -138,7 +138,7 @@ class GlassHero extends StatelessWidget {
         ),
         const SizedBox(height: 22),
         Text(
-          "Ordering • Customization • Analytics • Modular Admin Tools\nFor Franchise, Restaurant, and Food-Service Brands",
+          "Ordering â€¢ Customization â€¢ Analytics â€¢ Modular Admin Tools\nFor Franchise, Restaurant, and Food-Service Brands",
           style: TextStyle(
             fontSize: isMobile ? 16 : 20,
             color: Colors.black.withOpacity(0.68),
@@ -299,7 +299,7 @@ class LandingPage extends StatelessWidget {
                             ),
                             const SizedBox(height: 14),
                             Text(
-                              "Empower your brand with a unified, modular cloud platform built for modern food-service franchises. Launch your own branded ordering apps, customize workflows, and manage locations, staff, analytics, and menus — all from one scalable, secure SaaS hub.",
+                              "Empower your brand with a unified, modular cloud platform built for modern food-service franchises. Launch your own branded ordering apps, customize workflows, and manage locations, staff, analytics, and menus â€” all from one scalable, secure SaaS hub.",
                               style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.grey[700],
@@ -362,7 +362,7 @@ class LandingPage extends StatelessWidget {
                                 "Integrated Payments & Analytics",
                                 "Full payment support, real-time sales, location/region analytics."),
                             _featureCard(Icons.lock, "Role-Based Secure Access",
-                                "Owner, franchisee, and staff-level controls — multi-location ready."),
+                                "Owner, franchisee, and staff-level controls â€” multi-location ready."),
                             _featureCard(
                                 Icons.support_agent,
                                 "Integrated Support",
@@ -524,7 +524,7 @@ class LandingPage extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(vertical: 32, horizontal: 14),
                 child: Text(
-                  "© ${DateTime.now().year} FranchiseHQ | Modular SaaS for Restaurants & Franchises | info@yourplatform.com",
+                  "Â© ${DateTime.now().year} FranchiseHQ | Modular SaaS for Restaurants & Franchises | info@yourplatform.com",
                   style: TextStyle(
                     color: Colors.grey[500],
                     fontSize: 15,
@@ -611,3 +611,5 @@ class LandingPage extends StatelessWidget {
     );
   }
 }
+
+

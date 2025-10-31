@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class RoleBadge extends StatelessWidget {
   final String role;
@@ -26,3 +26,5 @@ class RoleBadge extends StatelessWidget {
     );
   }
 }
+
+

@@ -1,4 +1,4 @@
-/// Utility class to validate menu item customization groups
+﻿/// Utility class to validate menu item customization groups
 class MenuItemValidator {
   /// Returns a list of required customization groups that are missing from the current item.
   static List<String> getMissingRequiredGroups({
@@ -41,3 +41,5 @@ class MenuItemValidator {
     return missing;
   }
 }
+
+

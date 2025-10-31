@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class GlobalSearchBar extends StatefulWidget {
   const GlobalSearchBar({Key? key}) : super(key: key);
@@ -36,3 +36,5 @@ class _GlobalSearchBarState extends State<GlobalSearchBar> {
     );
   }
 }
+
+

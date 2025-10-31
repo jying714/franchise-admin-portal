@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_sidebar.dart';
 import 'package:franchise_admin_portal/widgets/admin/franchise_selector.dart';
-import '../../../../packages/shared_core/lib/src/core/models/franchise_info.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/franchise_utils.dart';
+import 'package:shared_core/src/core/models/franchise_info.dart';
+import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/src/core/utils/franchise_utils.dart';
 
 class FranchiseSelectorScreen extends StatefulWidget {
   const FranchiseSelectorScreen({super.key});
@@ -98,3 +98,5 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
     );
   }
 }
+
+

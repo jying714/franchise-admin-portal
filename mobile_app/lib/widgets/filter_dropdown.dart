@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 /// A dropdown filter for admin tables/lists.
 /// Generic for any type T (e.g., String for status, category, etc.).
@@ -42,3 +42,5 @@ class FilterDropdown<T> extends StatelessWidget {
     );
   }
 }
+
+

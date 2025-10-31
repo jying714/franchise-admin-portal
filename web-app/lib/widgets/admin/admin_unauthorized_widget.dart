@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class AdminUnauthorizedWidget extends StatelessWidget {
   final String? title;
@@ -28,7 +28,7 @@ class AdminUnauthorizedWidget extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               message ??
-                  "Unauthorized — You do not have permission to access this page.",
+                  "Unauthorized â€” You do not have permission to access this page.",
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               textAlign: TextAlign.center,
             ),
@@ -47,3 +47,5 @@ class AdminUnauthorizedWidget extends StatelessWidget {
     );
   }
 }
+
+

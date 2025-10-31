@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_mobile_app/core/models/menu_item.dart';
 import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
@@ -327,3 +327,5 @@ class CurrentIngredients extends StatelessWidget {
     );
   }
 }
+
+

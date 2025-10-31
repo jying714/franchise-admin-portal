@@ -1,15 +1,15 @@
-// lib/admin/dashboard/onboarding/widgets/menu_items/menu_item_utility.dart
+﻿// lib/admin/dashboard/onboarding/widgets/menu_items/menu_item_utility.dart
 
-import '../../../../../../../packages/shared_core/lib/src/core/models/menu_item.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/customization_group.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/ingredient_reference.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/nutrition_info.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/menu_item_schema_issue.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/size_template.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/customization.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/category.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/ingredient_metadata.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/ingredient_type_model.dart';
+import '../package:shared_core/src/core/models/menu_item.dart';
+import '../package:shared_core/src/core/models/customization_group.dart';
+import '../package:shared_core/src/core/models/ingredient_reference.dart';
+import '../package:shared_core/src/core/models/nutrition_info.dart';
+import '../package:shared_core/src/core/models/menu_item_schema_issue.dart';
+import '../package:shared_core/src/core/models/size_template.dart';
+import '../package:shared_core/src/core/models/customization.dart';
+import '../package:shared_core/src/core/models/category.dart';
+import '../package:shared_core/src/core/models/ingredient_metadata.dart';
+import '../package:shared_core/src/core/models/ingredient_type_model.dart';
 import 'package:collection/collection.dart';
 import 'package:uuid/uuid.dart';
 
@@ -666,3 +666,5 @@ MenuItem buildPreviewMenuItem({
     templateRefs: selectedTemplateRefs,
   );
 }
+
+

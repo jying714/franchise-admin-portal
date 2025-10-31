@@ -1,4 +1,4 @@
-import 'dart:math' show min;
+﻿import 'dart:math' show min;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -687,3 +687,5 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 }
+
+

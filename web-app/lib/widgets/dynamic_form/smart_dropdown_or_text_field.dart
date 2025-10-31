@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SmartDropdownOrTextField extends StatefulWidget {
@@ -218,3 +218,5 @@ class _SmartDropdownOrTextFieldState extends State<SmartDropdownOrTextField> {
     );
   }
 }
+
+

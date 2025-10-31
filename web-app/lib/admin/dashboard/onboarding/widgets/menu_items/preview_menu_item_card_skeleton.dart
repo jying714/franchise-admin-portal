@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 /// Shimmer-free lightweight skeleton for use in onboarding preview sections.
@@ -98,3 +98,5 @@ class PreviewMenuItemCardSkeleton extends StatelessWidget {
     );
   }
 }
+
+

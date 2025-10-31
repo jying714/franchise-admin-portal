@@ -1,4 +1,4 @@
-// ignore_for_file: unused_import
+﻿// ignore_for_file: unused_import
 
 import 'dart:io';
 
@@ -9,7 +9,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:franchise_mobile_app/widgets/header/cart_icon_badge.dart';
-import 'package:franchise_mobile_app/config/app_config.dart';
+import 'package:shared_core/src/core/config/app_config.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/branding_config.dart';
 import 'package:franchise_mobile_app/core/services/firestore_service.dart';

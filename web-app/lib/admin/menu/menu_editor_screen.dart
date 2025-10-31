@@ -1,8 +1,8 @@
-import 'package:franchise_admin_portal/admin/menu/menu_item_editor_panel.dart';
+﻿import 'package:franchise_admin_portal/admin/menu/menu_item_editor_panel.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_dialog.dart';
 import 'package:franchise_admin_portal/widgets/delayed_loading_shimmer.dart';
 import 'package:flutter/material.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/admin/menu/dynamic_menu_item_editor_screen.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_menu_editor_popup_menu.dart';
 import 'package:franchise_admin_portal/widgets/header/franchise_app_bar.dart';
@@ -12,14 +12,14 @@ import 'package:franchise_admin_portal/widgets/status_chip.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_delete_confirm_dialog.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import '../../../../packages/shared_core/lib/src/core/models/menu_item.dart';
+import 'package:shared_core/src/core/models/menu_item.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
-import '../../../../packages/shared_core/lib/src/core/models/category.dart';
+import 'package:shared_core/src/core/models/category.dart';
 import 'package:franchise_admin_portal/widgets/dietary_allergen_chips_row.dart';
-import '../../../../packages/shared_core/lib/src/core/models/user.dart'
+import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../packages/shared_core/lib/src/core/services/audit_log_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/audit_log_service.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/filter_dropdown.dart';
@@ -28,12 +28,12 @@ import 'package:franchise_admin_portal/admin/menu/menu_item_customizations_dialo
 import 'package:franchise_admin_portal/admin/menu/customization_types.dart'
     as ct;
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/role_guard.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/user_permissions.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/role_guard.dart';
+import 'package:shared_core/src/core/utils/user_permissions.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
 
 const menuItemColumns = [
   {"key": "image", "width": 56.0, "header": "Image"},
@@ -530,7 +530,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
     final isLoading = context.watch<AdminUserProvider>().loading;
     final loc = AppLocalizations.of(context);
 
-    debugPrint('[MenuEditorScreen] 🧭 Route Loaded');
+    debugPrint('[MenuEditorScreen] ðŸ§­ Route Loaded');
     debugPrint('[MenuEditorScreen] Franchise ID: $franchiseId');
     debugPrint('[MenuEditorScreen] AdminUserProvider loading: $isLoading');
     debugPrint(
@@ -538,7 +538,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
 
     if (loc == null) {
       debugPrint(
-          '[MenuEditorScreen] ❗ Localization is null — returning fallback UI');
+          '[MenuEditorScreen] â— Localization is null â€” returning fallback UI');
       return const Scaffold(
         body: Center(child: Text('Localization missing!')),
       );
@@ -546,15 +546,15 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
 
     if (user == null) {
       if (isLoading) {
-        debugPrint('[MenuEditorScreen] ⏳ Admin user loading...');
+        debugPrint('[MenuEditorScreen] â³ Admin user loading...');
         return const Scaffold(
           body: Center(child: CircularProgressIndicator()),
         );
       } else {
         debugPrint(
-            '[MenuEditorScreen] ❌ No admin user loaded — aborting screen.');
+            '[MenuEditorScreen] âŒ No admin user loaded â€” aborting screen.');
         return const Scaffold(
-          body: Center(child: Text('Unauthorized — No admin user')),
+          body: Center(child: Text('Unauthorized â€” No admin user')),
         );
       }
     }
@@ -1003,3 +1003,5 @@ extension _LocTry on AppLocalizations {
     }
   }
 }
+
+

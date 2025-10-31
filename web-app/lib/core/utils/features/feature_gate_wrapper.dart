@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/utils/features/feature_gate.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:shared_core/src/core/utils/features/feature_gate.dart';
 
 ///
-/// 🧱 FeatureGateWrapper
+/// ðŸ§± FeatureGateWrapper
 ///
 /// Lightweight wrapper for gating a widget with configurable fallback style,
 /// using the full FeatureGate behind the scenes.
@@ -45,3 +45,5 @@ class FeatureGateWrapper extends StatelessWidget {
     );
   }
 }
+
+

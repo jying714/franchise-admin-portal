@@ -1,11 +1,11 @@
-// 📁 lib/admin/owner/sections/quick_links_card.dart
+﻿// ðŸ“ lib/admin/owner/sections/quick_links_card.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import '../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
-import '../../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
 import 'package:provider/provider.dart';
 
 class QuickLinksCard extends StatelessWidget {
@@ -123,3 +123,5 @@ class _QuickLinkTile extends StatelessWidget {
     );
   }
 }
+
+

@@ -1,4 +1,4 @@
-// ignore: unused_import
+﻿// ignore: unused_import
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
@@ -212,3 +212,5 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
     );
   }
 }
+
+

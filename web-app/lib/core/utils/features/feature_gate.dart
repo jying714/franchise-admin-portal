@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../../packages/shared_core/lib/src/core/providers/franchise_feature_provider.dart';
-import 'package:franchise_admin_portal/core/utils/features/feature_lock_overlay.dart';
+import 'package:shared_core/src/core/providers/franchise_feature_provider.dart';
+import 'package:shared_core/src/core/utils/features/feature_lock_overlay.dart';
 
 /// Defines how the fallback content should behave if the feature is not granted or enabled.
 enum FeatureFallbackStyle {
@@ -16,15 +16,15 @@ enum FeatureFallbackStyle {
 }
 
 ///
-/// 🚪 FeatureGate
+/// ðŸšª FeatureGate
 ///
 /// Centralized feature-gating widget supporting `.hidden`, `.dimmed`, and `.lockedBanner` styles.
 ///
-/// ✅ Use for:
+/// âœ… Use for:
 /// - Gating optional sections, cards, tabs, fields, or advanced inputs.
 /// - Educating or upselling on locked features.
 ///
-/// ❌ Avoid when:
+/// âŒ Avoid when:
 /// - You need backend-level access control (this is UI-only).
 /// - You want zero layout impact (use `hidden` only).
 ///
@@ -99,3 +99,5 @@ class FeatureGate extends StatelessWidget {
     }
   }
 }
+
+

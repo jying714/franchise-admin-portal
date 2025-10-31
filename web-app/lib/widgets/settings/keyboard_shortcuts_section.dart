@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class KeyboardShortcutsSection extends StatelessWidget {
   @override
@@ -15,3 +15,5 @@ class KeyboardShortcutsSection extends StatelessWidget {
     );
   }
 }
+
+

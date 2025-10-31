@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:intl/intl.dart';
 
 enum RevenuePeriod { daily, weekly, monthly }
@@ -225,3 +225,5 @@ class _RevenueStatCardState extends State<RevenueStatCard> {
     );
   }
 }
+
+

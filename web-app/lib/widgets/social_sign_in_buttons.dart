@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../packages/shared_core/lib/src/core/services/auth_service.dart';
-import '../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../packages/shared_core/lib/src/core/models/user.dart'
+import 'package:shared_core/src/core/services/auth_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
-import '../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
 
 /// SocialSignInButtons (ADMIN VERSION)
 /// Only allows Google and Phone sign-in (no guest or demo modes).
@@ -267,3 +267,5 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
     );
   }
 }
+
+

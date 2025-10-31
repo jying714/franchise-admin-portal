@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class AnalyticsPlaceholderCard extends StatelessWidget {
   final String title;
@@ -38,3 +38,5 @@ class AnalyticsPlaceholderCard extends StatelessWidget {
     );
   }
 }
+
+

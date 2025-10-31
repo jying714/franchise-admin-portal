@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
@@ -73,3 +73,5 @@ class LoadingShimmerWidget extends StatelessWidget {
     );
   }
 }
+
+

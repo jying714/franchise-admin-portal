@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_mobile_app/core/models/banner.dart' as model;
 import 'package:franchise_mobile_app/core/models/category.dart';
 import 'package:franchise_mobile_app/features/category/category_screen.dart';
@@ -101,3 +101,5 @@ class BannerActionHandler {
     }
   }
 }
+
+

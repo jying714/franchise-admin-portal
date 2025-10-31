@@ -1,12 +1,12 @@
-// lib/admin/dashboard/onboarding/widgets/ingredients/missing_type_resolution_dialog.dart
+﻿// lib/admin/dashboard/onboarding/widgets/ingredients/missing_type_resolution_dialog.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/ingredient_metadata.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/ingredient_type_model.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/ingredient_type_provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
+import '../package:shared_core/src/core/models/ingredient_metadata.dart';
+import '../package:shared_core/src/core/models/ingredient_type_model.dart';
+import '../package:shared_core/src/core/providers/ingredient_type_provider.dart';
+import '../package:shared_core/src/core/utils/error_logger.dart';
+import '../package:shared_core/src/core/providers/franchise_provider.dart';
 
 class MissingTypeResolutionDialog extends StatefulWidget {
   /// Ingredients that reference a typeId not present in current ingredient types
@@ -266,3 +266,5 @@ class _MissingTypeResolutionDialogState
     super.deactivate();
   }
 }
+
+

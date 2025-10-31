@@ -1,4 +1,4 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
 import 'package:franchise_mobile_app/core/services/firestore_service.dart';
@@ -581,3 +581,5 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 }
+
+

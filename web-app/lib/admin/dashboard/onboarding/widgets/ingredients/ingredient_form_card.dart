@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/ingredient_metadata.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import '../package:shared_core/src/core/models/ingredient_metadata.dart';
+import '../package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:provider/provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/ingredient_metadata_provider.dart';
+import '../package:shared_core/src/core/providers/ingredient_metadata_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_tag_selector.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/ingredient_type_provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/ingredient_type_model.dart';
+import '../package:shared_core/src/core/providers/ingredient_type_provider.dart';
+import '../package:shared_core/src/core/models/ingredient_type_model.dart';
 
 class IngredientFormCard extends StatefulWidget {
   final IngredientMetadata? initialData;
@@ -56,7 +56,7 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
     // Stable ID for highlight mapping
     _id = data?.id ?? '_new_${DateTime.now().millisecondsSinceEpoch}';
 
-    // 🔹 Register card-level key for section-level focus
+    // ðŸ”¹ Register card-level key for section-level focus
     provider.itemGlobalKeys[_id] ??= GlobalKey();
 
     // Register highlight keys (only once)
@@ -282,3 +282,5 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
         ));
   }
 }
+
+

@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/onboarding_progress_provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import '../package:shared_core/src/core/services/firestore_service.dart';
+import '../package:shared_core/src/core/providers/franchise_provider.dart';
+import '../package:shared_core/src/core/providers/onboarding_progress_provider.dart';
+import '../package:shared_core/src/core/services/firestore_service.dart';
+import '../package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/ingredient_type_provider.dart';
+import '../package:shared_core/src/core/providers/ingredient_type_provider.dart';
 
 class IngredientTypeTemplatePickerDialog extends StatefulWidget {
   final AppLocalizations loc;
@@ -67,14 +67,14 @@ class _IngredientTypeTemplatePickerDialogState
         templateId: templateId,
       );
 
-      // ✅ Immediately close dialog before triggering UI changes
+      // âœ… Immediately close dialog before triggering UI changes
       if (context.mounted) Navigator.of(context).pop();
 
-      // ✅ Reload types after closing
+      // âœ… Reload types after closing
       await Provider.of<IngredientTypeProvider>(context, listen: false)
           .loadTypes(franchiseId);
 
-      // ✅ Show snackbar after frame settles
+      // âœ… Show snackbar after frame settles
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(loc.templateLoadedSuccessfully)),
@@ -133,14 +133,14 @@ class _IngredientTypeTemplatePickerDialogState
               children: [
                 _buildTemplateTile(
                   id: 'pizzeria',
-                  icon: '🍕',
+                  icon: 'ðŸ•',
                   label: loc.pizzaShopTemplateLabel,
                   subtitle: loc.pizzaShopTemplateSubtitle,
                 ),
                 const SizedBox(height: 12),
                 _buildTemplateTile(
                   id: 'wing_bar',
-                  icon: '🍗',
+                  icon: 'ðŸ—',
                   label: loc.wingBarTemplateLabel,
                   subtitle: loc.wingBarTemplateSubtitle,
                   enabled: false, // Placeholder for future
@@ -189,3 +189,5 @@ class _IngredientTypeTemplatePickerDialogState
     );
   }
 }
+
+

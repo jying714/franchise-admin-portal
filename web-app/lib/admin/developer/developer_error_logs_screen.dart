@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../packages/shared_core/lib/src/core/models/error_log.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/models/error_log.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class DeveloperErrorLogsScreen extends StatefulWidget {
@@ -98,7 +98,7 @@ class _DeveloperErrorLogsScreenState extends State<DeveloperErrorLogsScreen> {
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   debugPrint(
-                      '❌ Firestore error in streamErrorLogsGlobal: ${snapshot.error}');
+                      'âŒ Firestore error in streamErrorLogsGlobal: ${snapshot.error}');
                   return Center(child: Text('Failed to load logs.'));
                 }
                 if (!snapshot.hasData) {
@@ -244,7 +244,7 @@ class _DeveloperErrorLogsScreenState extends State<DeveloperErrorLogsScreen> {
                   icon: const Icon(Icons.date_range),
                   label: Text(_dateRange == null
                       ? loc.developerErrorLogsScreenAllDates
-                      : '${_dateRange!.start.year}-${_dateRange!.start.month.toString().padLeft(2, '0')}-${_dateRange!.start.day.toString().padLeft(2, '0')} — ${_dateRange!.end.year}-${_dateRange!.end.month.toString().padLeft(2, '0')}-${_dateRange!.end.day.toString().padLeft(2, '0')}'),
+                      : '${_dateRange!.start.year}-${_dateRange!.start.month.toString().padLeft(2, '0')}-${_dateRange!.start.day.toString().padLeft(2, '0')} â€” ${_dateRange!.end.year}-${_dateRange!.end.month.toString().padLeft(2, '0')}-${_dateRange!.end.day.toString().padLeft(2, '0')}'),
                   onPressed: _pickDateRange,
                 ),
               ],
@@ -305,12 +305,12 @@ class _DevErrorLogList extends StatelessWidget {
       separatorBuilder: (_, __) => const Divider(height: 1),
       itemBuilder: (context, idx) {
         final log = logs[idx];
-        final email = log.contextData?['userEmail'] ?? '—';
+        final email = log.contextData?['userEmail'] ?? 'â€”';
         final device = log.deviceInfo?['deviceModel'] ??
             log.contextData?['device'] ??
             'unknown';
         final franchiseId = log.contextData?['franchiseId'];
-        final franchiseLabel = franchises[franchiseId] ?? franchiseId ?? '—';
+        final franchiseLabel = franchises[franchiseId] ?? franchiseId ?? 'â€”';
         final ts = log.timestamp;
 
         return ExpansionTile(
@@ -329,7 +329,7 @@ class _DevErrorLogList extends StatelessWidget {
           ),
           title: Text(log.message),
           subtitle: Text(
-            '${loc.developerErrorLogsScreenAt}: ${log.screen}\n${ts != null ? _formatDateTime(ts) : '—'}',
+            '${loc.developerErrorLogsScreenAt}: ${log.screen}\n${ts != null ? _formatDateTime(ts) : 'â€”'}',
             style: const TextStyle(fontSize: 13),
           ),
           trailing: Icon(Icons.expand_more, color: colorScheme.outline),
@@ -426,3 +426,5 @@ class _ComingSoonCard extends StatelessWidget {
     );
   }
 }
+
+

@@ -1,7 +1,7 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 
 class DynamicArrayEditor extends StatefulWidget {
   final String title;
@@ -318,3 +318,5 @@ class _DynamicArrayEditorState extends State<DynamicArrayEditor> {
             .replaceAllMapped(RegExp(r'[A-Z]'), (m) => ' ${m.group(0)}');
   }
 }
+
+

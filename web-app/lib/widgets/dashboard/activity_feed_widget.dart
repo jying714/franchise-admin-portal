@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class ActivityFeedWidget extends StatelessWidget {
   final List<String>? activities;
@@ -45,3 +45,5 @@ class ActivityFeedWidget extends StatelessWidget {
     );
   }
 }
+
+

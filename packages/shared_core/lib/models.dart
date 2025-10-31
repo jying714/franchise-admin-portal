@@ -1,0 +1,52 @@
+library shared_core_models;
+
+// core models
+export 'src/core/models/address.dart';
+export 'src/core/models/alert_model.dart';
+export 'src/core/models/analytics_summary.dart';
+export 'src/core/models/audit_log.dart';
+export 'src/core/models/bank_account.dart';
+export 'src/core/models/banner.dart';
+export 'src/core/models/cash_flow_forecast.dart';
+export 'src/core/models/category.dart';
+export 'src/core/models/chat.dart';
+export 'src/core/models/customization.dart';
+export 'src/core/models/customization_group.dart';
+export 'src/core/models/dashboard_section.dart';
+export 'src/core/models/error_log.dart';
+export 'src/core/models/feature_metadata.dart';
+export 'src/core/models/feature_module.dart';
+export 'src/core/models/feature_toggle.dart';
+export 'src/core/models/feedback_entry.dart';
+export 'src/core/models/franchisee_invitation.dart';
+export 'src/core/models/franchise_info.dart';
+export 'src/core/models/franchise_subscription_model.dart';
+export 'src/core/models/ingredient_metadata.dart';
+export 'src/core/models/ingredient_reference.dart';
+export 'src/core/models/ingredient_type_model.dart';
+export 'src/core/models/inventory.dart';
+export 'src/core/models/invoice.dart';
+export 'src/core/models/menu_item.dart';
+export 'src/core/models/menu_item_schema_issue.dart';
+export 'src/core/models/menu_template_ref.dart';
+export 'src/core/models/message.dart';
+export 'src/core/models/model_utils.dart';
+export 'src/core/models/nutrition_info.dart';
+export 'src/core/models/onboarding_validation_issue.dart';
+export 'src/core/models/order.dart';
+export 'src/core/models/payout.dart';
+export 'src/core/models/payout_filter.dart';
+export 'src/core/models/platform_financial_kpis.dart';
+export 'src/core/models/platform_invoice.dart';
+export 'src/core/models/platform_payment.dart';
+export 'src/core/models/platform_plan_model.dart';
+export 'src/core/models/platform_revenue_overview.dart';
+export 'src/core/models/promo.dart';
+export 'src/core/models/report.dart';
+export 'src/core/models/restaurant_type.dart';
+export 'src/core/models/size_template.dart';
+export 'src/core/models/staff.dart';
+export 'src/core/models/user.dart';
+
+// enriched subfolder
+export 'src/core/models/enriched/enriched_franchise_subscription.dart';

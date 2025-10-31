@@ -1,14 +1,14 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/profile/franchise_onboarding_screen.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'dart:html' as html;
-import '../../../../packages/shared_core/lib/src/core/services/auth_service.dart';
+import 'package:shared_core/src/core/services/auth_service.dart';
 
 class InviteAcceptScreen extends StatefulWidget {
   final String? inviteToken;
@@ -414,3 +414,5 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
     );
   }
 }
+
+

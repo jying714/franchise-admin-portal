@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
 import 'package:franchise_mobile_app/core/models/menu_item.dart';
@@ -129,3 +129,5 @@ class _FavoriteButtonState extends State<FavoriteButton> {
     );
   }
 }
+
+

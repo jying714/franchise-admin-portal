@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../../packages/shared_core/lib/src/core/models/franchise_subscription_model.dart';
+import 'package:shared_core/src/core/models/franchise_subscription_model.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
-import '../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:provider/provider.dart';
-import '../../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
 
 class FranchiseSubscriptionSummary extends StatelessWidget {
   final FranchiseSubscription subscription;
@@ -22,7 +22,7 @@ class FranchiseSubscriptionSummary extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final user = context.read<AdminUserProvider>().user;
 
-    // 🔐 Access Control
+    // ðŸ” Access Control
     final isDevOrOwner =
         (user?.isDeveloper ?? false) || (user?.isPlatformOwner ?? false);
     if (!isDevOrOwner) return const SizedBox.shrink();
@@ -78,7 +78,7 @@ class FranchiseSubscriptionSummary extends StatelessWidget {
 
               /// Plan Details
               Text(
-                '$planName • ${loc.perLabel(billingInterval)}',
+                '$planName â€¢ ${loc.perLabel(billingInterval)}',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -182,3 +182,5 @@ class FranchiseSubscriptionSummary extends StatelessWidget {
     }
   }
 }
+
+

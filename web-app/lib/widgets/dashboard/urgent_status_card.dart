@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class UrgentStatusCard extends StatelessWidget {
   final List<String>? alerts;
@@ -54,3 +54,5 @@ class UrgentStatusCard extends StatelessWidget {
     );
   }
 }
+
+

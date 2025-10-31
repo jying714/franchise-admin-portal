@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logging/logging.dart';
 
 /// Centralized feature toggle loader and runtime flags for app-wide features.
@@ -133,3 +133,5 @@ class FeatureConfig {
         'analyticsExportEnabled': analyticsExportEnabled,
       };
 }
+
+

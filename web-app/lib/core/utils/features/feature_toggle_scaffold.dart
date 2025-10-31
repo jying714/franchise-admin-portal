@@ -1,9 +1,9 @@
-// 🔧 Feature Toggle Registration Scaffold
+﻿// ðŸ”§ Feature Toggle Registration Scaffold
 // Used in onboarding_feature_setup_screen.dart or devtools
 
 import 'package:flutter/material.dart';
-import '../../../../../packages/shared_core/lib/src/core/utils/features/enum_platform_features.dart';
-import 'package:franchise_admin_portal/core/utils/features/feature_gate.dart';
+import 'package:shared_core/src/core/utils/features/enum_platform_features.dart';
+import 'package:shared_core/src/core/utils/features/feature_gate.dart';
 
 class FeatureToggleScaffold extends StatelessWidget {
   final Map<String, bool> currentState;
@@ -32,3 +32,5 @@ class FeatureToggleScaffold extends StatelessWidget {
     );
   }
 }
+
+

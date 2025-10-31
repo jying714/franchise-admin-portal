@@ -1,15 +1,15 @@
-import 'package:csv/csv.dart';
+﻿import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../../packages/shared_core/lib/src/core/models/error_log.dart';
+import 'package:shared_core/src/core/models/error_log.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'error_log_detail_drawer.dart';
-import '../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
-import '../../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
 
 class ErrorLogTable extends StatefulWidget {
   final List<ErrorLog> logs;
@@ -532,7 +532,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
                                       maxWidth: _condensed ? 120 : 280),
                                   child: Text(
                                     message.length > (_condensed ? 24 : 48)
-                                        ? '${message.substring(0, _condensed ? 24 : 48)}…'
+                                        ? '${message.substring(0, _condensed ? 24 : 48)}â€¦'
                                         : message,
                                     overflow: TextOverflow.ellipsis,
                                     softWrap: false,
@@ -659,3 +659,5 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
     );
   }
 }
+
+

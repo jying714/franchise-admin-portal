@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../packages/shared_core/lib/src/core/models/menu_item.dart';
-import '../../../../packages/shared_core/lib/src/core/models/ingredient_metadata.dart';
+import 'package:shared_core/src/core/models/menu_item.dart';
+import 'package:shared_core/src/core/models/ingredient_metadata.dart';
 import 'package:franchise_admin_portal/widgets/customization/portion_pill_toggle.dart'; // if you use the pill toggle here
-import '../../../../packages/shared_core/lib/src/core/utils/formatting.dart';
+import 'package:shared_core/src/core/utils/formatting.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 typedef DoubleAddOnCallback = void Function(String ingId, bool value);
@@ -192,3 +192,5 @@ class OptionalAddOnsGroup extends StatelessWidget {
     );
   }
 }
+
+

@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../../packages/shared_core/lib/src/core/models/platform_invoice.dart';
-import '../../../../../packages/shared_core/lib/src/core/models/franchise_info.dart';
-import '../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/models/platform_invoice.dart';
+import 'package:shared_core/src/core/models/franchise_info.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 
 class AdminWebhookSimulator extends StatefulWidget {
   const AdminWebhookSimulator({super.key});
@@ -54,7 +54,7 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
   Future<void> _loadInvoicesForFranchise(String franchiseId) async {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       debugPrint(
-          '[AdminWebhookSimulator] Skipping load — invalid franchiseId.');
+          '[AdminWebhookSimulator] Skipping load â€” invalid franchiseId.');
       setState(() {
         _invoices = [];
         _loading = false;
@@ -274,3 +274,5 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
     );
   }
 }
+
+

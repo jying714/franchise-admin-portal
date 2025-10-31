@@ -1,4 +1,4 @@
-// lib/widgets/menu_item_card.dart
+﻿// lib/widgets/menu_item_card.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -394,3 +394,5 @@ class _MenuItemCardState extends State<MenuItemCard> {
     );
   }
 }
+
+

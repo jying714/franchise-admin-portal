@@ -1,19 +1,19 @@
-import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+﻿import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import '../../../../packages/shared_core/lib/src/core/models/dashboard_section.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/src/core/models/dashboard_section.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/role_badge.dart';
 import 'package:franchise_admin_portal/admin/developer/developer_dashboard_screen.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 import 'package:franchise_admin_portal/widgets/financials/franchise_financial_kpi_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
-import '../../../../packages/shared_core/lib/src/core/models/franchise_info.dart';
+import 'package:shared_core/src/core/models/franchise_info.dart';
 import 'package:franchise_admin_portal/widgets/financials/cash_flow_forecast_card.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/alerts_card.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -27,9 +27,9 @@ import 'package:franchise_admin_portal/widgets/financials/invoices_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/billing_summary_card.dart';
 import 'package:franchise_admin_portal/widgets/financials/payout_status_card.dart';
 import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
-import '../../../../packages/shared_core/lib/src/core/services/franchise_subscription_service.dart';
-import '../../../../packages/shared_core/lib/src/core/models/franchise_subscription_model.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/services/franchise_subscription_service.dart';
+import 'package:shared_core/src/core/models/franchise_subscription_model.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/widgets/header/settings_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/help_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.dart';
@@ -773,3 +773,5 @@ class FutureFeaturePlaceholderPanel extends StatelessWidget {
     );
   }
 }
+
+

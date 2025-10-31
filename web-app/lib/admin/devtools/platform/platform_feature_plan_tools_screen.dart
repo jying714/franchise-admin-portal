@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/admin/devtools/platform/seed_platform_features_form.dart';
 import 'package:franchise_admin_portal/admin/devtools/platform/seed_platform_plans_form.dart';
 import 'package:franchise_admin_portal/admin/devtools/platform/remove_platform_plans_form.dart';
@@ -12,7 +12,7 @@ class PlatformFeaturePlanToolsScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('🛠️ Platform Feature + Plan Dev Guide'),
+        title: const Text('ðŸ› ï¸ Platform Feature + Plan Dev Guide'),
         content: SizedBox(
           width: double.maxFinite,
           child: SingleChildScrollView(
@@ -36,7 +36,7 @@ class PlatformFeaturePlanToolsScreen extends StatelessWidget {
                 Text('Plan Snapshot Behavior',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
-                  'Upon subscription, the selected plan’s features are snapshotted into the franchise\'s `franchise_subscriptions` '
+                  'Upon subscription, the selected planâ€™s features are snapshotted into the franchise\'s `franchise_subscriptions` '
                   'and seeded into `feature_metadata` under that franchise. Changes to `/platform_plans` do not retroactively affect existing subscriptions.',
                 ),
                 SizedBox(height: 12),
@@ -50,7 +50,7 @@ class PlatformFeaturePlanToolsScreen extends StatelessWidget {
                 Text(
                     'A simple widget to delete a selected feature completely from the database.'),
                 SizedBox(height: 12),
-                Text('🔒 Locked Features',
+                Text('ðŸ”’ Locked Features',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
                   'Features not included in a plan will appear locked and uneditable in onboarding or admin screens.',
@@ -118,3 +118,5 @@ class PlatformFeaturePlanToolsScreen extends StatelessWidget {
     );
   }
 }
+
+

@@ -1,11 +1,11 @@
-// File: lib/core/services/franchisee_invitation_service.dart
+﻿// File: lib/core/services/franchisee_invitation_service.dart
 
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../../../../packages/shared_core/lib/src/core/models/franchisee_invitation.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/models/franchisee_invitation.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 
 class FranchiseeInvitationService {
   final FirestoreService firestoreService;
@@ -209,3 +209,5 @@ class FranchiseeInvitationService {
     throw UnimplementedError('Export invitations is a planned feature.');
   }
 }
+
+

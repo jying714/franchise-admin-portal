@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/admin/menu/dynamic_menu_item_editor_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
 import 'package:provider/provider.dart';
 
 class MenuItemEditorPanel extends StatefulWidget {
@@ -153,3 +153,5 @@ class _MenuItemEditorPanelState extends State<MenuItemEditorPanel> {
     );
   }
 }
+
+

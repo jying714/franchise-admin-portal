@@ -1,4 +1,4 @@
-// File: lib/widgets/profile_gate_screen.dart
+﻿// File: lib/widgets/profile_gate_screen.dart
 import 'dart:async';
 import 'dart:html' as html; // Web reload
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -6,15 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../packages/shared_core/lib/src/core/models/user.dart'
+import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
-import '../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
-import '../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
 import '../config/design_tokens.dart';
 import '../config/branding_config.dart';
-import '../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 
 class ProfileGateScreen extends StatefulWidget {
   const ProfileGateScreen({Key? key}) : super(key: key);
@@ -61,18 +61,18 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
       if (fbUser != null) {
         if (_profileNotifier.user == null && !_profileNotifier.loading) {
           print(
-              '[ProfileGateScreen] ⏳ No user loaded, starting listenToUser...');
+              '[ProfileGateScreen] â³ No user loaded, starting listenToUser...');
           _profileNotifier.listenToUser(_firestoreService, fbUser.uid);
           _startTimeout();
         } else if (_profileNotifier.user != null) {
           print(
-              '[ProfileGateScreen] ✅ User already loaded. No need to reload.');
+              '[ProfileGateScreen] âœ… User already loaded. No need to reload.');
         } else if (_profileNotifier.loading) {
-          print('[ProfileGateScreen] ⏳ Already loading. No action taken.');
+          print('[ProfileGateScreen] â³ Already loading. No action taken.');
         }
       } else {
         print(
-            '[ProfileGateScreen] ⚠️ Firebase user is null. Cannot load profile.');
+            '[ProfileGateScreen] âš ï¸ Firebase user is null. Cannot load profile.');
       }
     });
   }
@@ -232,7 +232,7 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
     if (user != null && user.status == 'active') {
       if (!hasRoles) {
         print(
-            '[ProfileGateScreen] ⚠️ User is active, but roles are missing. Will wait for claim sync.');
+            '[ProfileGateScreen] âš ï¸ User is active, but roles are missing. Will wait for claim sync.');
         if (!_claimsRefreshed) {
           setState(() => _claimsRefreshed = true);
           _forceClaimsAndReload(loc);
@@ -506,3 +506,5 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
     );
   }
 }
+
+

@@ -1149,6 +1149,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.4.0"
+  shared_core:
+    dependency: "direct main"
+    description:
+      path: "../packages/shared_core"
+      relative: true
+    source: path
+    version: "0.1.0"
   shelf:
     dependency: transitive
     description:

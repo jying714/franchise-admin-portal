@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../packages/shared_core/lib/src/core/models/customization.dart';
+import 'package:shared_core/src/core/models/customization.dart';
 import 'package:franchise_admin_portal/admin/menu/customization_types.dart';
 
 // Dialog for full-featured editing of menu customizations/groups/options.
@@ -603,11 +603,11 @@ class _MenuItemCustomizationsDialogState
                                         '${opt.name} (\$${opt.price.toStringAsFixed(2)})'
                                         '${opt.upcharges != null && opt.upcharges!.isNotEmpty ? ' [${loc.upchargePerSize}: ${opt.upcharges!.entries.map((e) => '${e.key}: \$${e.value.toStringAsFixed(2)}').join(', ')}]' : ''}'),
                                     subtitle: Text(
-                                        '${opt.tag != null && opt.tag!.isNotEmpty ? '${loc.tag}: ${opt.tag!} • ' : ''}'
+                                        '${opt.tag != null && opt.tag!.isNotEmpty ? '${loc.tag}: ${opt.tag!} â€¢ ' : ''}'
                                         '${loc.portion}: ${opt.portion.name}, '
                                         '${loc.quantity}: ${opt.quantity}'
-                                        '${opt.outOfStock ? ' • ${loc.outOfStock}' : ''}'
-                                        '${opt.isDefault ? ' • ${loc.setAsDefault}' : ''}'),
+                                        '${opt.outOfStock ? ' â€¢ ${loc.outOfStock}' : ''}'
+                                        '${opt.isDefault ? ' â€¢ ${loc.setAsDefault}' : ''}'),
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
@@ -663,3 +663,5 @@ class _MenuItemCustomizationsDialogState
     );
   }
 }
+
+

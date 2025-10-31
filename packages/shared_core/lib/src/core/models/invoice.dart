@@ -4,23 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../constants/invoice_status.dart';
 
 /// ========================
 /// ENUMS
 /// ========================
-
-enum InvoiceStatus {
-  draft,
-  sent,
-  viewed,
-  open,
-  paid,
-  overdue,
-  refunded,
-  voided,
-  archived,
-  failed,
-}
 
 InvoiceStatus invoiceStatusFromString(String status) {
   switch (status) {

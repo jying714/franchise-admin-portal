@@ -1,14 +1,14 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../../packages/shared_core/lib/src/core/services/auth_service.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/auth_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/social_sign_in_buttons.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -320,3 +320,5 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 }
+
+

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_mobile_app/core/models/address.dart';
 import 'package:franchise_mobile_app/widgets/Address/delivery_address_tile.dart';
 
@@ -28,3 +28,5 @@ class AddressListView extends StatelessWidget {
     );
   }
 }
+
+

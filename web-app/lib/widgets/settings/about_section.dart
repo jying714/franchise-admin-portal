@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class AboutSection extends StatelessWidget {
   @override
@@ -12,9 +12,11 @@ class AboutSection extends StatelessWidget {
         Text("Doughboys Franchise Admin Portal"),
         Text("Version: 1.0.0 (build 100)"),
         const SizedBox(height: 8),
-        Text("© 2025 Doughboys Inc. All rights reserved.",
+        Text("Â© 2025 Doughboys Inc. All rights reserved.",
             style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }
 }
+
+

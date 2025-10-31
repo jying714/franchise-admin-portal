@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 /// Displays a shopping cart icon with a dynamic badge count.
@@ -76,3 +76,5 @@ class CartIconBadge extends StatelessWidget {
     );
   }
 }
+
+

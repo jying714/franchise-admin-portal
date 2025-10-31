@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 /// Pagination controls for admin tables/lists.
 /// Supports "Previous" and "Next" buttons, with page display.
@@ -45,3 +45,5 @@ class PaginationControls extends StatelessWidget {
     );
   }
 }
+
+

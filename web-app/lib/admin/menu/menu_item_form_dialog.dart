@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
-import '../../../../packages/shared_core/lib/src/core/models/menu_item.dart';
-import '../../../../packages/shared_core/lib/src/core/models/category.dart';
-import '../../../../packages/shared_core/lib/src/core/models/customization.dart';
-import '../../../../packages/shared_core/lib/src/core/models/nutrition_info.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:shared_core/src/core/models/menu_item.dart';
+import 'package:shared_core/src/core/models/category.dart';
+import 'package:shared_core/src/core/models/customization.dart';
+import 'package:shared_core/src/core/models/nutrition_info.dart';
 import 'package:franchise_admin_portal/admin/menu/menu_item_customizations_dialog.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/menu/customization_types.dart';
@@ -459,3 +459,5 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
     );
   }
 }
+
+

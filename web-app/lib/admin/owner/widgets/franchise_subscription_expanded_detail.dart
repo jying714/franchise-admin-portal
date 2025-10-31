@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../../packages/shared_core/lib/src/core/models/models/enriched/enriched_franchise_subscription.dart';
-import '../../../../../packages/shared_core/lib/src/core/models/platform_invoice.dart';
-import '../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/models/models/enriched/enriched_franchise_subscription.dart';
+import 'package:shared_core/src/core/models/platform_invoice.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
 
@@ -73,7 +73,7 @@ class _FranchiseSubscriptionExpandedDetailState
         if (enriched.userId != null)
           _infoRow(loc.linkedUserIdLabel, enriched.userId!),
         _infoRow(loc.billingIntervalLabel,
-            enriched.subscription.billingInterval ?? '—'),
+            enriched.subscription.billingInterval ?? 'â€”'),
         _infoRow(loc.statusLabel, enriched.subscriptionStatus),
         _infoRow(loc.invoiceStatusLabel, _resolveInvoiceStatus(enriched)),
         _infoRow(
@@ -149,7 +149,7 @@ class _FranchiseSubscriptionExpandedDetailState
   }
 
   String _resolveInvoiceStatus(EnrichedFranchiseSubscription enriched) {
-    if (enriched.latestInvoice == null) return '—';
+    if (enriched.latestInvoice == null) return 'â€”';
     if (enriched.isInvoicePaid) return AppLocalizations.of(context)!.paid;
     if (enriched.isInvoicePartial) return AppLocalizations.of(context)!.partial;
     if (enriched.isInvoiceOverdue) return AppLocalizations.of(context)!.overdue;
@@ -157,3 +157,5 @@ class _FranchiseSubscriptionExpandedDetailState
     return enriched.latestInvoice!.status;
   }
 }
+
+

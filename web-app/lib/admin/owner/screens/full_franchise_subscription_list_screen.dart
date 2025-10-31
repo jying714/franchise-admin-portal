@@ -1,15 +1,15 @@
-// 📄 lib/admin/owner/screens/full_franchise_subscription_list_screen.dart
+﻿// ðŸ“„ lib/admin/owner/screens/full_franchise_subscription_list_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:franchise_admin_portal/core/models/enriched/enriched_franchise_subscription.dart';
-import '../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../../packages/shared_core/lib/src/core/services/enrichment/franchise_subscription_enricher.dart';
-import '../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
-import '../../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/models/enriched/enriched_franchise_subscription.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/enrichment/franchise_subscription_enricher.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/admin/developer/platform/franchise_subscription_editor_dialog.dart';
 import 'package:franchise_admin_portal/admin/owner/widgets/franchise_subscription_list_tile.dart';
 
@@ -38,7 +38,7 @@ class _FullFranchiseSubscriptionListScreenState
       final enricher = FranchiseSubscriptionEnricher(firestore);
       final enriched = await enricher.enrichAllSubscriptions();
 
-      // 🐞 Debug & duplicate detection
+      // ðŸž Debug & duplicate detection
       final seen = <String>{};
       for (final e in enriched) {
         final id = e.subscription.id;
@@ -46,12 +46,12 @@ class _FullFranchiseSubscriptionListScreenState
         final fid = e.franchiseId;
 
         if (seen.contains(id)) {
-          debugPrint('[⚠️ DUPLICATE] FranchiseId: $fid, Plan: $plan, ID: $id');
+          debugPrint('[âš ï¸ DUPLICATE] FranchiseId: $fid, Plan: $plan, ID: $id');
         } else {
           seen.add(id);
         }
 
-        debugPrint('[✅ Enriched] FranchiseId: $fid, Plan: $plan, ID: $id');
+        debugPrint('[âœ… Enriched] FranchiseId: $fid, Plan: $plan, ID: $id');
       }
 
       return enriched;
@@ -134,3 +134,5 @@ class _FullFranchiseSubscriptionListScreenState
     );
   }
 }
+
+

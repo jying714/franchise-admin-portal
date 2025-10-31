@@ -1,4 +1,4 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
+﻿// GENERATED CODE - DO NOT MODIFY BY HAND
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'intl/messages_all.dart';
@@ -78,3 +78,5 @@ class AppLocalizationDelegate extends LocalizationsDelegate<S> {
     return false;
   }
 }
+
+

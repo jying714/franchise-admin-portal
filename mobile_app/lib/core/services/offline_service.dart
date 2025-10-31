@@ -1,4 +1,4 @@
-// lib/core/services/offline_service.dart
+﻿// lib/core/services/offline_service.dart
 
 // ignore_for_file: unused_import
 
@@ -7,14 +7,14 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
 import 'dart:io';
 import 'dart:convert';
-import 'package:franchise_mobile_app/core/models/customization.dart';
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
+import 'package:shared_core/src/core/models/customization.dart';
+import 'package:shared_core/src/core/models/menu_item.dart';
 import 'package:flutter/material.dart' as material hide Banner, BannerLocation;
-import 'package:franchise_mobile_app/core/models/order.dart' as order_model;
-import 'package:franchise_mobile_app/core/models/feedback_entry.dart'
+import 'package:shared_core/src/core/models/order.dart' as order_model;
+import 'package:shared_core/src/core/models/feedback_entry.dart'
     as feedback_model;
-import 'package:franchise_mobile_app/core/models/chat.dart';
-import 'package:franchise_mobile_app/core/models/nutrition_info.dart';
+import 'package:shared_core/src/core/models/chat.dart';
+import 'package:shared_core/src/core/models/nutrition_info.dart';
 
 class OfflineService {
   Database? _database;

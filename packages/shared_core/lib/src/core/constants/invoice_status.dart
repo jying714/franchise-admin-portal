@@ -1,12 +1,15 @@
-// lib/core/constants/invoice_status.dart
+// lib/src/core/constants/invoice_status.dart
 enum InvoiceStatus {
-  unpaid,
-  paid,
-  overdue,
-  partial,
-  refunded,
-  voided,
-  failed,
   draft,
   sent,
+  viewed,
+  open,
+  unpaid,
+  paid,
+  partial,
+  overdue,
+  refunded,
+  voided,
+  archived,
+  failed,
 }

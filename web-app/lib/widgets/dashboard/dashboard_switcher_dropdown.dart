@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../packages/shared_core/lib/src/core/models/user.dart' as app;
+import 'package:shared_core/src/core/models/user.dart' as app;
 
 class DashboardSwitcherDropdown extends StatelessWidget {
   final String currentScreen;
@@ -86,7 +86,7 @@ class DashboardSwitcherDropdown extends StatelessWidget {
         if (selected.route == ModalRoute.of(context)?.settings.name) return;
 
         print(
-            '[DEBUG-NAV] FROM DASHBOARD SWITCHER DROPDOWN → Navigating to ${selected.route}');
+            '[DEBUG-NAV] FROM DASHBOARD SWITCHER DROPDOWN â†’ Navigating to ${selected.route}');
         Navigator.of(context).pushReplacementNamed(selected.route);
       },
       items: options.map((opt) {
@@ -110,3 +110,5 @@ class _DashboardTarget {
     required this.route,
   });
 }
+
+

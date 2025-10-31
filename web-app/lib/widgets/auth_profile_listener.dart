@@ -1,13 +1,13 @@
-import 'package:flutter/widgets.dart';
+﻿import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import '../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
-import '../../../packages/shared_core/lib/src/core/models/user.dart'
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
-import '../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
-import '../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 
 class AuthProfileListener extends StatefulWidget {
   final Widget child;
@@ -40,12 +40,12 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     if (!_subscribed) {
       _subscribed = true;
 
-      // ✅ Listen for user changes and rerun routing when ready
+      // âœ… Listen for user changes and rerun routing when ready
       notifier.addListener(() {
         final user = notifier.user;
         final loading = notifier.loading;
         if (user != null) {
-          // ✅ Inject into AdminUserProvider
+          // âœ… Inject into AdminUserProvider
           Provider.of<AdminUserProvider>(context, listen: false).user = user;
         }
 
@@ -181,3 +181,5 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     }
   }
 }
+
+

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/widgets/help/contact_support_section.dart';
 import 'package:franchise_admin_portal/widgets/help/faq_section.dart';
 import 'package:franchise_admin_portal/widgets/help/release_notes_section.dart';
@@ -42,3 +42,5 @@ class HelpDialog extends StatelessWidget {
     );
   }
 }
+
+

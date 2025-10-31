@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import '../../../../packages/shared_core/lib/src/core/models/address.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:shared_core/src/core/models/address.dart';
 import 'package:franchise_admin_portal/widgets/Address/delivery_address_tile.dart';
 
 class AddressListView extends StatelessWidget {
@@ -28,3 +28,5 @@ class AddressListView extends StatelessWidget {
     );
   }
 }
+
+

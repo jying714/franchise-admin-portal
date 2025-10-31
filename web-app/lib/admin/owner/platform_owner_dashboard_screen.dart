@@ -1,22 +1,22 @@
-// File: lib/admin/owner/platform_owner_dashboard_screen.dart
+﻿// File: lib/admin/owner/platform_owner_dashboard_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import '../../../../packages/shared_core/lib/src/core/models/user.dart' as app;
-import '../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/src/core/models/user.dart' as app;
+import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchisee_invitation_provider.dart';
+import 'package:shared_core/src/core/providers/franchisee_invitation_provider.dart';
 import 'package:franchise_admin_portal/widgets/financials/franchisee_invitation_service.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/dialogs/franchisee_invitation_dialog.dart';
 import 'package:franchise_admin_portal/widgets/financials/platform_revenue_summary_panel.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/platform_financials_provider.dart';
+import 'package:shared_core/src/core/providers/platform_financials_provider.dart';
 import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/admin/owner/sections/platform_plans_summary_card.dart';
 import 'package:franchise_admin_portal/admin/owner/sections/franchise_subscription_summary_card.dart';
 import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
@@ -434,7 +434,7 @@ class FranchiseInvitationPanel extends StatelessWidget {
             return ListTile(
               leading: Icon(Icons.email_outlined, color: colorScheme.primary),
               title: Text(invite.email),
-              subtitle: Text("${invite.role ?? ''} • ${invite.status}"),
+              subtitle: Text("${invite.role ?? ''} â€¢ ${invite.status}"),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -463,7 +463,7 @@ class FranchiseInvitationPanel extends StatelessWidget {
                         if (invite.token != null) {
                           await provider.cancelInvitation(invite.token!);
                         } else {
-                          // Handle gracefully (shouldn’t happen in valid UI)
+                          // Handle gracefully (shouldnâ€™t happen in valid UI)
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                             content: Text('Invalid invitation token.'),
                             backgroundColor:
@@ -859,3 +859,5 @@ class OwnerAnnouncementsPanel extends StatelessWidget {
     );
   }
 }
+
+

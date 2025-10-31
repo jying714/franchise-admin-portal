@@ -1,4 +1,4 @@
-// File: lib/main.dart
+﻿// File: lib/main.dart
 
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -46,7 +46,7 @@ import 'package:franchise_admin_portal/admin/devtools/billing/billing_subscripti
 import 'package:franchise_admin_portal/admin/devtools/subscriptions/subscription_dev_tools_screen.dart';
 import '../../packages/shared_core/lib/src/core/providers/franchise_info_provider.dart';
 import '../../packages/shared_core/lib/src/core/providers/onboarding_progress_provider.dart';
-import 'package:franchise_admin_portal/core/section_registry.dart';
+import 'package:franchise_admin_portal/admin/dashboard/section_registry.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredients_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredient_type_screen.dart';
@@ -162,7 +162,7 @@ void main() {
         providers: [
           ChangeNotifierProvider(create: (_) => UserProfileNotifier()),
           ChangeNotifierProvider(
-              create: (_) => FranchiseProvider()), // ✅ REQUIRED
+              create: (_) => FranchiseProvider()), // âœ… REQUIRED
           ChangeNotifierProvider(create: (_) => AuthService()),
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           Provider<FirestoreService>.value(value: firestoreService),
@@ -217,7 +217,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
         !userNotifier.loading) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         userNotifier
-            .loadUser(); // ✅ defer user loading until firebaseUser is available
+            .loadUser(); // âœ… defer user loading until firebaseUser is available
       });
     }
 
@@ -304,7 +304,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
             (fid != null && fid.isNotEmpty && fid != 'unknown');
 
         if (!isUserReady || !isFranchiseReady) {
-          debugPrint('[FranchiseAppRootSplit] ⏳ Waiting for readiness...');
+          debugPrint('[FranchiseAppRootSplit] â³ Waiting for readiness...');
           debugPrint('[FranchiseAppRootSplit] firebaseUser: $firebaseUser');
           debugPrint('[FranchiseAppRootSplit] isUserReady = $isUserReady');
           debugPrint(
@@ -550,19 +550,19 @@ class _FranchiseAuthenticatedRootState
           Provider.of<FranchiseProvider>(context, listen: false);
 
       if (fbUser == null) {
-        debugPrint('[FranchiseAuthenticatedRoot] ❌ No Firebase user.');
+        debugPrint('[FranchiseAuthenticatedRoot] âŒ No Firebase user.');
         return;
       }
 
       if (fbUser.uid == _lastUid) {
         debugPrint(
-            '[FranchiseAuthenticatedRoot] 🔁 UID unchanged (${fbUser.uid}), skipping listenToAdminUser.');
+            '[FranchiseAuthenticatedRoot] ðŸ” UID unchanged (${fbUser.uid}), skipping listenToAdminUser.');
         return;
       }
 
       if (_initializingUser) {
         debugPrint(
-            '[FranchiseAuthenticatedRoot] ⏳ Already initializing user, skipping.');
+            '[FranchiseAuthenticatedRoot] â³ Already initializing user, skipping.');
         return;
       }
 
@@ -570,9 +570,9 @@ class _FranchiseAuthenticatedRootState
       _lastUid = fbUser.uid;
 
       debugPrint(
-          '[FranchiseAuthenticatedRoot] ✅ Detected Firebase UID: ${fbUser.uid}');
+          '[FranchiseAuthenticatedRoot] âœ… Detected Firebase UID: ${fbUser.uid}');
       debugPrint(
-          '[FranchiseAuthenticatedRoot] ⏬ Calling listenToAdminUser (post-frame)...');
+          '[FranchiseAuthenticatedRoot] â¬ Calling listenToAdminUser (post-frame)...');
 
       adminUserProvider.listenToAdminUser(
         firestoreService,
@@ -589,14 +589,14 @@ class _FranchiseAuthenticatedRootState
     final fbUser = Provider.of<fb_auth.User?>(context);
     final adminUserProvider = Provider.of<AdminUserProvider>(context);
 
-    print('[FranchiseAuthenticatedRoot] 🔄 build() called');
+    print('[FranchiseAuthenticatedRoot] ðŸ”„ build() called');
     print('[DEBUG] fbUser: ${fbUser?.email} (${fbUser?.uid})');
     print('[DEBUG] AdminUser loading: ${adminUserProvider.loading}');
     print('[DEBUG] AdminUser loaded: ${adminUserProvider.user}');
 
     // Still loading user profile
     if (adminUserProvider.loading || adminUserProvider.user == null) {
-      print('[FranchiseAuthenticatedRoot] ⏳ Waiting on admin user profile...');
+      print('[FranchiseAuthenticatedRoot] â³ Waiting on admin user profile...');
       return const MaterialApp(
         home: Scaffold(
           body: Center(child: CircularProgressIndicator()),
@@ -606,7 +606,7 @@ class _FranchiseAuthenticatedRootState
 
     // Roles missing
     if (adminUserProvider.user?.roles == null) {
-      print('[FranchiseAuthenticatedRoot] ❌ User roles missing. Unauthorized.');
+      print('[FranchiseAuthenticatedRoot] âŒ User roles missing. Unauthorized.');
       debugPrint(
           'AppLocalizations.supportedLocales: ${AppLocalizations.supportedLocales}');
 
@@ -621,11 +621,11 @@ class _FranchiseAuthenticatedRootState
       );
     }
 
-    // ✅ Build full app
+    // âœ… Build full app
     print(
-        '[FranchiseAuthenticatedRoot] ✅ App user loaded. Proceeding with router...');
+        '[FranchiseAuthenticatedRoot] âœ… App user loaded. Proceeding with router...');
     print(
-        '[FranchiseAuthenticatedRoot] ✅ All data ready. Building MaterialApp with router...');
+        '[FranchiseAuthenticatedRoot] âœ… All data ready. Building MaterialApp with router...');
     print('[DEBUG] Roles: ${adminUserProvider.user?.roles}');
     return Builder(
       builder: (ctx) => MaterialApp(
@@ -881,13 +881,13 @@ class _FranchiseAuthenticatedRootState
                   ? sectionParam!
                   : getSidebarSections().first.key;
 
-              print('[ROUTER] 📌 Requested /dashboard');
-              print('[ROUTER] 🔑 Target section key: "$targetSectionKey"');
+              print('[ROUTER] ðŸ“Œ Requested /dashboard');
+              print('[ROUTER] ðŸ”‘ Target section key: "$targetSectionKey"');
 
               final sectionExists =
                   sectionRegistry.any((s) => s.key == targetSectionKey);
               if (!sectionExists) {
-                print('[ROUTER] ❌ No matching section found, using default.');
+                print('[ROUTER] âŒ No matching section found, using default.');
               }
 
               return MaterialPageRoute(
@@ -899,25 +899,25 @@ class _FranchiseAuthenticatedRootState
                             Provider.of<FranchiseProvider>(ctx, listen: false);
                         final franchiseId = franchiseProvider.franchiseId;
 
-                        print('[ROUTER] 🔍 franchiseId = "$franchiseId"');
+                        print('[ROUTER] ðŸ” franchiseId = "$franchiseId"');
 
                         if (franchiseId.isEmpty || franchiseId == 'unknown') {
                           print(
-                              '[ROUTER] ⚠️ Franchise ID loading — showing spinner.');
+                              '[ROUTER] âš ï¸ Franchise ID loading â€” showing spinner.');
                           return const Scaffold(
                             body: Center(child: CircularProgressIndicator()),
                           );
                         }
 
-                        // ──────────────────────────────────────────────
+                        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                         // Prerequisite data checks for onboarding sections
-                        // ──────────────────────────────────────────────
+                        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                         return FutureBuilder<void>(
                           future: () async {
                             try {
                               if (targetSectionKey == 'onboardingIngredients') {
                                 print(
-                                    '[ROUTER] 📦 Preloading data for Ingredients...');
+                                    '[ROUTER] ðŸ“¦ Preloading data for Ingredients...');
 
                                 final ingredientTypesProvider =
                                     ctx.read<IngredientTypeProvider>();
@@ -927,49 +927,49 @@ class _FranchiseAuthenticatedRootState
                                 // Ingredient Types preload
                                 if (ingredientTypesProvider.types.isEmpty) {
                                   print(
-                                      '[ROUTER]    ➤ Loading Ingredient Types...');
+                                      '[ROUTER]    âž¤ Loading Ingredient Types...');
                                   await ingredientTypesProvider
                                       .loadTypes(franchiseId);
                                   print(
-                                      '[ROUTER]    ✔ Loaded Ingredient Types: count=${ingredientTypesProvider.types.length}');
+                                      '[ROUTER]    âœ” Loaded Ingredient Types: count=${ingredientTypesProvider.types.length}');
                                 } else {
                                   print(
-                                      '[ROUTER]    ✔ Ingredient Types already loaded: count=${ingredientTypesProvider.types.length}');
+                                      '[ROUTER]    âœ” Ingredient Types already loaded: count=${ingredientTypesProvider.types.length}');
                                 }
 
                                 // Ingredient Metadata preload
                                 if (!ingredientsProvider.isInitialized) {
-                                  print('[ROUTER]    ➤ Loading Ingredients...');
+                                  print('[ROUTER]    âž¤ Loading Ingredients...');
                                   await ingredientsProvider.load();
                                   print(
-                                      '[ROUTER]    ✔ Loaded Ingredients: count=${ingredientsProvider.ingredients.length}');
+                                      '[ROUTER]    âœ” Loaded Ingredients: count=${ingredientsProvider.ingredients.length}');
                                 } else {
                                   print(
-                                      '[ROUTER]    ✔ Ingredients already loaded: count=${ingredientsProvider.ingredients.length}');
+                                      '[ROUTER]    âœ” Ingredients already loaded: count=${ingredientsProvider.ingredients.length}');
                                 }
                               } else if (targetSectionKey ==
                                   'onboardingIngredientTypes') {
                                 print(
-                                    '[ROUTER] 📦 Preloading data for Ingredient Types only...');
+                                    '[ROUTER] ðŸ“¦ Preloading data for Ingredient Types only...');
 
                                 final ingredientTypesProvider =
                                     ctx.read<IngredientTypeProvider>();
 
                                 if (ingredientTypesProvider.types.isEmpty) {
                                   print(
-                                      '[ROUTER]    ➤ Loading Ingredient Types...');
+                                      '[ROUTER]    âž¤ Loading Ingredient Types...');
                                   await ingredientTypesProvider
                                       .loadTypes(franchiseId);
                                   print(
-                                      '[ROUTER]    ✔ Loaded Ingredient Types: count=${ingredientTypesProvider.types.length}');
+                                      '[ROUTER]    âœ” Loaded Ingredient Types: count=${ingredientTypesProvider.types.length}');
                                 } else {
                                   print(
-                                      '[ROUTER]    ✔ Ingredient Types already loaded: count=${ingredientTypesProvider.types.length}');
+                                      '[ROUTER]    âœ” Ingredient Types already loaded: count=${ingredientTypesProvider.types.length}');
                                 }
                               }
                             } catch (e, st) {
                               print(
-                                  '[ROUTER][ERROR] ⚠ Failed while preloading prerequisites.');
+                                  '[ROUTER][ERROR] âš  Failed while preloading prerequisites.');
                               print('    Exception: $e');
                               print('    Stacktrace: $st');
                             }
@@ -983,11 +983,11 @@ class _FranchiseAuthenticatedRootState
                               );
                             }
 
-                            // ──────────────────────────────────────────────
+                            // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                             // Navigate to AdminDashboardScreen
-                            // ──────────────────────────────────────────────
+                            // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                             print(
-                                '[ROUTER] ✅ Navigating to AdminDashboardScreen with section "$targetSectionKey"');
+                                '[ROUTER] âœ… Navigating to AdminDashboardScreen with section "$targetSectionKey"');
                             return AdminDashboardScreen(
                               key: ValueKey(
                                   'AdminDashboardScreen:$targetSectionKey'),
@@ -1021,7 +1021,7 @@ class _FranchiseAuthenticatedRootState
             if (uri.path == '/onboarding/feature_setup') {
               return MaterialPageRoute(
                 builder: (_) => const OnboardingFeatureSetupScreen(),
-                settings: settings, // ← passes .arguments
+                settings: settings, // â† passes .arguments
               );
             }
             if (uri.path == '/onboarding/review') {
@@ -1317,3 +1317,5 @@ final ThemeData _darkTheme = ThemeData(
   dividerColor: DesignTokens.dividerColorDark,
   iconTheme: IconThemeData(color: DesignTokens.textColorDark),
 );
+
+

@@ -1,13 +1,13 @@
-// 📁 Path: lib/admin/owner/sections/franchise_subscription_summary_card.dart
+﻿// ðŸ“ Path: lib/admin/owner/sections/franchise_subscription_summary_card.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../../packages/shared_core/lib/src/core/models/franchise_subscription_model.dart';
-import '../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/models/franchise_subscription_model.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:provider/provider.dart';
-import '../../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
 
 class FranchiseSubscriptionSummaryCard extends StatelessWidget {
   const FranchiseSubscriptionSummaryCard({super.key});
@@ -92,7 +92,7 @@ class FranchiseSubscriptionSummaryCard extends StatelessWidget {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                  'ID: ${sub.franchiseId} • ${sub.platformPlanId}',
+                                  'ID: ${sub.franchiseId} â€¢ ${sub.platformPlanId}',
                                   style: theme.textTheme.bodyMedium),
                             ),
                           ],
@@ -110,3 +110,5 @@ class FranchiseSubscriptionSummaryCard extends StatelessWidget {
     );
   }
 }
+
+

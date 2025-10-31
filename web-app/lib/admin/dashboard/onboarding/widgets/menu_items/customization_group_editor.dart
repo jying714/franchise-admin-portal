@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/customization_group.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/ingredient_reference.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/ingredient_metadata_provider.dart';
+﻿import 'package:flutter/material.dart';
+import '../package:shared_core/src/core/models/customization_group.dart';
+import '../package:shared_core/src/core/models/ingredient_reference.dart';
+import '../package:shared_core/src/core/providers/ingredient_metadata_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/multi_ingredient_selector.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -96,7 +96,7 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 🔤 Group Label Input
+                  // ðŸ”¤ Group Label Input
                   TextFormField(
                     initialValue: group.label,
                     decoration: InputDecoration(
@@ -130,7 +130,7 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
 
                   const SizedBox(height: 8),
 
-                  // 🔢 Selection Limit Input
+                  // ðŸ”¢ Selection Limit Input
                   Row(
                     children: [
                       Text(loc.selectionLimit),
@@ -156,7 +156,7 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
 
                   const SizedBox(height: 12),
 
-                  // 🧀 Ingredient Selector
+                  // ðŸ§€ Ingredient Selector
                   MultiIngredientSelector(
                     title: group.label.isNotEmpty
                         ? group.label
@@ -204,3 +204,5 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
     );
   }
 }
+
+

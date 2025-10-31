@@ -1,15 +1,15 @@
-// lib/admin/dashboard/onboarding/widgets/menu_items/schema_issue_sidebar.dart
+﻿// lib/admin/dashboard/onboarding/widgets/menu_items/schema_issue_sidebar.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/menu_item_schema_issue.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/category_provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/ingredient_metadata_provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/ingredient_type_provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/category.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/ingredient_metadata.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/ingredient_type_model.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import '../package:shared_core/src/core/models/menu_item_schema_issue.dart';
+import '../package:shared_core/src/core/providers/category_provider.dart';
+import '../package:shared_core/src/core/providers/ingredient_metadata_provider.dart';
+import '../package:shared_core/src/core/providers/ingredient_type_provider.dart';
+import '../package:shared_core/src/core/models/category.dart';
+import '../package:shared_core/src/core/models/ingredient_metadata.dart';
+import '../package:shared_core/src/core/models/ingredient_type_model.dart';
+import '../package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/ingredient_creation_dialog.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/ingredient_type_creation_dialog.dart';
@@ -415,7 +415,7 @@ class _IngredientRepairTile extends StatelessWidget {
 
     if (newIngredient != null) {
       try {
-        provider.stageIngredient(newIngredient); // 🔄 stage it, don’t save
+        provider.stageIngredient(newIngredient); // ðŸ”„ stage it, donâ€™t save
         onRepair(newIngredient.id);
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -529,7 +529,7 @@ class _IngredientTypeRepairTile extends StatelessWidget {
 
     if (newType != null) {
       try {
-        provider.stageIngredientType(newType); // ✅ stage for persistence
+        provider.stageIngredientType(newType); // âœ… stage for persistence
         onRepair(newType.id!);
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -711,3 +711,5 @@ class _ResolvedIssueTile extends StatelessWidget {
     );
   }
 }
+
+

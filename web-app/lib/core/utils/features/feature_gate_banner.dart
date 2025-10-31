@@ -1,21 +1,21 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../../packages/shared_core/lib/src/core/providers/franchise_feature_provider.dart';
+import 'package:shared_core/src/core/providers/franchise_feature_provider.dart';
 
 ///
-/// 🔒 FeatureGateBanner
+/// ðŸ”’ FeatureGateBanner
 ///
 /// A premium gating wrapper that overlays a semi-transparent lock banner
 /// over its child when the required feature or subfeature is not available.
 ///
 /// Use this when:
-/// - ✅ You want to **educate** or **upsell** locked features.
-/// - ✅ You want to **visually indicate** restricted sections during onboarding.
-/// - ✅ You want the layout to remain consistent, but clearly restricted.
+/// - âœ… You want to **educate** or **upsell** locked features.
+/// - âœ… You want to **visually indicate** restricted sections during onboarding.
+/// - âœ… You want the layout to remain consistent, but clearly restricted.
 ///
 /// Avoid this when:
-/// - ❌ The gated content could break layout if visible but unusable.
-/// - ❌ You require total exclusion (use `FeatureGate` with `hidden` style instead).
+/// - âŒ The gated content could break layout if visible but unusable.
+/// - âŒ You require total exclusion (use `FeatureGate` with `hidden` style instead).
 ///
 /// ---
 ///
@@ -114,3 +114,5 @@ class FeatureGateBanner extends StatelessWidget {
     );
   }
 }
+
+

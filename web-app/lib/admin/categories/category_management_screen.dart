@@ -1,16 +1,16 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../packages/shared_core/lib/src/core/models/category.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/models/category.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/user_permissions.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/role_guard.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/src/core/utils/user_permissions.dart';
+import 'package:shared_core/src/core/providers/role_guard.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/active_plan_banner.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
@@ -100,7 +100,7 @@ class _CategoryManagementScreenContentState
     await showDialog<Category>(
       context: context,
       builder: (_) => CategoryFormDialog(
-        franchiseId: franchiseId, // ✅ REQUIRED FIX
+        franchiseId: franchiseId, // âœ… REQUIRED FIX
         category: category,
         onSaved: (Category saved) async {
           setState(() => _isLoading = true);
@@ -606,3 +606,5 @@ class _CategoryManagementScreenContentState
     );
   }
 }
+
+

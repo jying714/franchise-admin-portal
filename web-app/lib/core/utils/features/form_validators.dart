@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 /// A utility class for reusable form field validators
 class FormValidators {
@@ -76,3 +76,5 @@ class FormValidators {
     return null;
   }
 }
+
+

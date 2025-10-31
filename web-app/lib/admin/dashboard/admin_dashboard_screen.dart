@@ -1,9 +1,9 @@
-import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+﻿import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../packages/shared_core/lib/src/core/services/auth_service.dart';
-import '../../../../packages/shared_core/lib/src/core/models/dashboard_section.dart';
-import 'package:franchise_admin_portal/core/section_registry.dart';
+import 'package:shared_core/src/core/services/auth_service.dart';
+import 'package:shared_core/src/core/models/dashboard_section.dart';
+import 'package:franchise_admin_portal/admin/dashboard/section_registry.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/role_badge.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/maintenance_banner.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/notifications_panel.dart';
@@ -12,19 +12,19 @@ import 'package:franchise_admin_portal/widgets/header/help_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../packages/shared_core/lib/src/core/models/user.dart' as app;
+import 'package:shared_core/src/core/models/user.dart' as app;
 import 'package:franchise_admin_portal/widgets/header/franchise_app_bar.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_selector.dart';
+import 'package:shared_core/src/core/providers/franchise_selector.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/role_guard.dart';
+import 'package:shared_core/src/core/providers/role_guard.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/ingredient_type_provider.dart';
+import 'package:shared_core/src/core/providers/ingredient_type_provider.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final String? initialSectionKey;
@@ -61,7 +61,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         _selectedIndex = index;
         _initializedFromKey = true;
         debugPrint(
-            '[DEBUG][AdminDashboardScreen] 🧭 Applied initialSectionKey: $_selectedIndex (${_sections[_selectedIndex].key})');
+            '[DEBUG][AdminDashboardScreen] ðŸ§­ Applied initialSectionKey: $_selectedIndex (${_sections[_selectedIndex].key})');
       } else {
         debugPrint(
             '[WARN][AdminDashboardScreen] initialSectionKey "${widget.initialSectionKey}" not found in _sections');
@@ -414,3 +414,5 @@ class _SidebarSectionTile extends StatelessWidget {
     );
   }
 }
+
+

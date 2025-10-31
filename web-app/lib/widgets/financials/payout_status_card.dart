@@ -1,15 +1,15 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
-import '../../../../packages/shared_core/lib/src/core/models/alert_model.dart';
-import '../../../../packages/shared_core/lib/src/core/models/dashboard_section.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/src/core/models/alert_model.dart';
+import 'package:shared_core/src/core/models/dashboard_section.dart';
+import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
 
 /// Dashboard card: At-a-glance payout summary + live payout-related alerts.
 class PayoutStatusCard extends StatelessWidget {
@@ -27,7 +27,7 @@ class PayoutStatusCard extends StatelessWidget {
     final franchiseId = context.watch<FranchiseProvider>().franchiseId;
     final colorScheme = theme.colorScheme;
 
-    // 🧑‍💻 Developer-only access guard (example: show only for owners/managers/dev)
+    // ðŸ§‘â€ðŸ’» Developer-only access guard (example: show only for owners/managers/dev)
     final user = Provider.of<UserProfileNotifier>(context, listen: false).user;
     if (user == null ||
         !user.roles.any(
@@ -251,3 +251,5 @@ class _ErrorWidget extends StatelessWidget {
     );
   }
 }
+
+

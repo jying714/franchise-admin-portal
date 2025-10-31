@@ -1,17 +1,17 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../../../packages/shared_core/lib/src/core/models/franchise_info.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/role_guard.dart';
+import 'package:shared_core/src/core/models/franchise_info.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/src/core/providers/role_guard.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/franchise_info_provider.dart';
+import 'package:shared_core/src/core/providers/franchise_info_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/onboarding_step_card.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/onboarding_progress_provider.dart';
+import 'package:shared_core/src/core/providers/onboarding_progress_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredient_type_screen.dart';
 
 class OnboardingMenuScreen extends StatefulWidget {
@@ -125,7 +125,7 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     completed: progress['feature_setup'] == true,
                     onTap: () {
                       print(
-                          '[OnboardingMenuScreen] 🛠 Navigating to onboarding_feature_setup');
+                          '[OnboardingMenuScreen] ðŸ›  Navigating to onboarding_feature_setup');
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         Navigator.pushNamed(
                           context,
@@ -141,7 +141,7 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     completed: progress['ingredientTypes'] == true,
                     onTap: () {
                       print(
-                          '[OnboardingMenuScreen] 🛠 Navigating to onboardingIngredientTypes');
+                          '[OnboardingMenuScreen] ðŸ›  Navigating to onboardingIngredientTypes');
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         Navigator.pushNamed(
                           context,
@@ -157,7 +157,7 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     completed: progress['ingredients'] == true,
                     onTap: () {
                       print(
-                          '[OnboardingMenuScreen] 🛠 Navigating to onboardingIngredients');
+                          '[OnboardingMenuScreen] ðŸ›  Navigating to onboardingIngredients');
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         Navigator.pushNamed(
                           context,
@@ -173,7 +173,7 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     completed: progress['categories'] == true,
                     onTap: () {
                       print(
-                          '[OnboardingMenuScreen] 🛠 Navigating to onboardingCategories');
+                          '[OnboardingMenuScreen] ðŸ›  Navigating to onboardingCategories');
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         Navigator.pushNamed(
                           context,
@@ -189,7 +189,7 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     completed: progress['menuItems'] == true,
                     onTap: () {
                       print(
-                          '[OnboardingMenuScreen] 🛠 Navigating to onboardingMenuItems');
+                          '[OnboardingMenuScreen] ðŸ›  Navigating to onboardingMenuItems');
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         Navigator.pushNamed(
                           context,
@@ -205,7 +205,7 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
                     completed: progress['review'] == true,
                     onTap: () {
                       print(
-                          '[OnboardingMenuScreen] 🛠 Navigating to onboardingReview');
+                          '[OnboardingMenuScreen] ðŸ›  Navigating to onboardingReview');
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         Navigator.pushNamed(
                           context,
@@ -230,3 +230,5 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
     );
   }
 }
+
+

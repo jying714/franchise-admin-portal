@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/confirmation_dialog.dart';
 
@@ -60,3 +60,5 @@ class SignOutButton extends StatelessWidget {
     );
   }
 }
+
+

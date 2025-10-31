@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 
 class PluginConfigDialog extends StatefulWidget {
   final String pluginId;
@@ -127,7 +127,7 @@ class _PluginConfigDialogState extends State<PluginConfigDialog> {
                     Icon(Icons.extension, color: colorScheme.primary, size: 28),
                     const SizedBox(width: 12),
                     Text(
-                      '${loc.pluginConfigDialogTitle} — ${widget.pluginId}',
+                      '${loc.pluginConfigDialogTitle} â€” ${widget.pluginId}',
                       style: theme.textTheme.titleLarge?.copyWith(
                         color: colorScheme.primary,
                         fontWeight: FontWeight.bold,
@@ -304,3 +304,5 @@ class _ComingSoonCard extends StatelessWidget {
     );
   }
 }
+
+

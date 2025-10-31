@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors
+﻿// ignore_for_file: prefer_const_constructors
 import 'package:franchise_mobile_app/widgets/customization/pizza_sauce_selector_tab.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
@@ -740,7 +740,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
           .toList();
       for (final id in sauceAddOnIds) {
         final count = _sideDipCounts[id] ?? 0;
-        total += count * upcharge; // No "free" sauces—always upcharge
+        total += count * upcharge; // No "free" saucesâ€”always upcharge
       }
     }
 
@@ -1888,3 +1888,5 @@ class _CustomizationModalState extends State<CustomizationModal> {
     );
   }
 }
+
+

@@ -1,11 +1,11 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../../../packages/shared_core/lib/src/core/models/promo.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/models/promo.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/confirmation_dialog.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
 import 'package:provider/provider.dart';
 
 class PromoBulkUploadDialog extends StatefulWidget {
@@ -107,3 +107,5 @@ class _PromoBulkUploadDialogState extends State<PromoBulkUploadDialog> {
     );
   }
 }
+
+

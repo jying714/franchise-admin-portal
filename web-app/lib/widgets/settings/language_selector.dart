@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class LanguageSelector extends StatelessWidget {
   @override
@@ -8,7 +8,7 @@ class LanguageSelector extends StatelessWidget {
       DropdownMenuItem(value: 'en', child: Text('English')),
       DropdownMenuItem(
           value: 'es',
-          child: Text('Español (coming soon)',
+          child: Text('EspaÃ±ol (coming soon)',
               style: TextStyle(color: Colors.grey))),
     ];
 
@@ -36,3 +36,5 @@ class LanguageSelector extends StatelessWidget {
     );
   }
 }
+
+

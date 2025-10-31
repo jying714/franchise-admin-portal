@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class NotificationsPanel extends StatelessWidget {
   final List<String>? notifications;
@@ -52,3 +52,5 @@ class NotificationsPanel extends StatelessWidget {
     );
   }
 }
+
+

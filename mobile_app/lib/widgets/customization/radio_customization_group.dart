@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -78,3 +78,5 @@ class RadioCustomizationGroup extends StatelessWidget {
     );
   }
 }
+
+

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/widgets/dynamic_form/image_upload_field.dart';
 import 'package:franchise_admin_portal/widgets/dynamic_form/smart_dropdown_or_text_field.dart';
 import 'dart:convert';
@@ -33,7 +33,7 @@ class DynamicFieldInput extends StatelessWidget {
     final inputMode = config['inputMode'] ?? '';
     final requiredField = config['required'] == true;
 
-    // ✅ Normalize value for all input types
+    // âœ… Normalize value for all input types
     final dynamic sanitizedValue = value is String
         ? value
         : (value is Map && value.containsKey('en'))
@@ -238,3 +238,5 @@ class DynamicFieldInput extends StatelessWidget {
     );
   }
 }
+
+

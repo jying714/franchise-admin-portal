@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class FAQSection extends StatelessWidget {
   @override
@@ -19,3 +19,5 @@ class FAQSection extends StatelessWidget {
     );
   }
 }
+
+

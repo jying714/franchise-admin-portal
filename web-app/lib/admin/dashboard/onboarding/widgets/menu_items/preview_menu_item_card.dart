@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/menu_item.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/ingredient_reference.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/customization_group.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/nutrition_info.dart';
+﻿import 'package:flutter/material.dart';
+import '../package:shared_core/src/core/models/menu_item.dart';
+import '../package:shared_core/src/core/models/ingredient_reference.dart';
+import '../package:shared_core/src/core/models/customization_group.dart';
+import '../package:shared_core/src/core/models/nutrition_info.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
-/// ✅ Production-ready card UI to preview a MenuItem as it would appear
+/// âœ… Production-ready card UI to preview a MenuItem as it would appear
 /// in the customer-facing app.
 ///
 /// Used within onboarding flow to validate:
@@ -153,3 +153,5 @@ class PreviewMenuItemCard extends StatelessWidget {
     );
   }
 }
+
+

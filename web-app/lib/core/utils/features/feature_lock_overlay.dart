@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 ///
-/// 🔐 FeatureLockOverlay
+/// ðŸ” FeatureLockOverlay
 ///
 /// A flexible widget that overlays a centered lock icon, message, and optional
 /// upgrade button over a blurred or dimmed background.
@@ -13,11 +13,11 @@ import 'package:flutter/material.dart';
 ///
 /// ---
 ///
-/// ✅ Use when:
+/// âœ… Use when:
 /// - You want a **consistent visual style** for locked features.
 /// - You're gating a **card**, **container**, or **section** with meaningful content.
 ///
-/// ❌ Avoid when:
+/// âŒ Avoid when:
 /// - You're gating small elements (e.g. toggle switch only).
 /// - You want full invisibility (`FeatureFallbackStyle.hidden` is better).
 ///
@@ -65,3 +65,5 @@ class FeatureLockOverlay extends StatelessWidget {
     );
   }
 }
+
+

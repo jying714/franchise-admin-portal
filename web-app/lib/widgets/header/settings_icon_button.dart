@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/widgets/settings/settings_dialog.dart';
 
 class SettingsIconButton extends StatelessWidget {
@@ -21,3 +21,5 @@ class SettingsIconButton extends StatelessWidget {
     );
   }
 }
+
+

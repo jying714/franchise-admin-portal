@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 /// Button for adding an item directly to the cart (no customization flow).
@@ -43,3 +43,5 @@ class AddToCartButton extends StatelessWidget {
     );
   }
 }
+
+

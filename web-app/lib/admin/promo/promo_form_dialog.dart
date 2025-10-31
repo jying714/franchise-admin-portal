@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
-import '../../../../packages/shared_core/lib/src/core/models/promo.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:shared_core/src/core/models/promo.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:provider/provider.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
 
 class PromoFormDialog extends StatefulWidget {
   final Promo? promo;
@@ -193,3 +193,5 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
     );
   }
 }
+
+

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
 
 /// A universal, reusable quantity stepper widget.
@@ -65,3 +65,5 @@ class QuantityStepper extends StatelessWidget {
     );
   }
 }
+
+

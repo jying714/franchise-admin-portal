@@ -1,4 +1,4 @@
-// File: lib/admin/dashboard/widgets/live_operational_snapshot_widget.dart
+﻿// File: lib/admin/dashboard/widgets/live_operational_snapshot_widget.dart
 //
 // PURPOSE:
 // Displays real-time operational metrics for the currently selected franchise.
@@ -17,8 +17,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 
 class LiveOperationalSnapshotWidget extends StatelessWidget {
   final String franchiseId;
@@ -131,12 +131,12 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
               : completedOrders.reduce((a, b) => a + b) /
                   completedOrders.length;
 
-          debugPrint('[LiveOperationalSnapshotWidget] Metrics → '
+          debugPrint('[LiveOperationalSnapshotWidget] Metrics â†’ '
               'Active: $activeOrders, LastHour: $recentOrders, '
               'KitchenTickets: $kitchenTickets, KitchenLoad: $kitchenLoad, '
               'RevenueToday: $todayRevenue, AvgFulfillment: $avgFulfillmentTime');
 
-          // Expanded → 2×3 grid
+          // Expanded â†’ 2Ã—3 grid
           if (expanded) {
             return GridView.count(
               crossAxisCount: 2,
@@ -162,7 +162,7 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
             );
           }
 
-          // Collapsed → single compact row
+          // Collapsed â†’ single compact row
           return Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -216,3 +216,5 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
     );
   }
 }
+
+

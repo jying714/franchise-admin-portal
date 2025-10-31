@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/onboarding_validation_issue.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/onboarding_review_provider.dart';
-import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.dart';
+import '../package:shared_core/src/core/models/onboarding_validation_issue.dart';
+import '../package:shared_core/src/core/providers/onboarding_review_provider.dart';
+import 'package:shared_core/src/core/utils/onboarding_navigation_utils.dart';
 
 /// Displays an expandable issue detail panel for each onboarding section.
 /// - Groups by severity (critical, warning, info)
@@ -374,7 +374,7 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
                     debugPrint(
                         '  Issue.affectedFields: ${issue.affectedFields}');
 
-                    // ✅ Normalize section before navigation (fix)
+                    // âœ… Normalize section before navigation (fix)
                     final normalizedSection =
                         OnboardingNavigationUtils.normalizeForRouting(section);
                     debugPrint('  Normalized section: "$normalizedSection"');
@@ -385,7 +385,7 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
 
                     if (route.isEmpty) {
                       debugPrint(
-                          '[IssueDetailsExpansion][WARN] Route is empty — navigation aborted.');
+                          '[IssueDetailsExpansion][WARN] Route is empty â€” navigation aborted.');
                       return;
                     }
 
@@ -408,3 +408,5 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
     );
   }
 }
+
+

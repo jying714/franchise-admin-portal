@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/admin/devtools/billing/admin_webhook_simulator.dart';
 import 'package:franchise_admin_portal/admin/devtools/billing/mock_payment_editor.dart';
 import 'package:franchise_admin_portal/admin/devtools/billing/test_invoice_generator.dart';
@@ -14,21 +14,21 @@ class BillingSubscriptionToolsScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('🧾 Billing & Subscription Dev Guide'),
+        title: const Text('ðŸ§¾ Billing & Subscription Dev Guide'),
         content: SizedBox(
           width: double.maxFinite,
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                Text('🔹 Test Invoice Generator',
+                Text('ðŸ”¹ Test Invoice Generator',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
                   'Use this to create mock invoices for a specific franchise. '
                   'These invoices are flagged as test data and can be used in webhook simulations or payment flows.',
                 ),
                 SizedBox(height: 12),
-                Text('🔹 Webhook Simulator',
+                Text('ðŸ”¹ Webhook Simulator',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
                   'Simulate Stripe-style webhook events for test invoices. '
@@ -36,7 +36,7 @@ class BillingSubscriptionToolsScreen extends StatelessWidget {
                   'Results are logged and can be audited via Firestore or the ErrorLogger.',
                 ),
                 SizedBox(height: 12),
-                Text('🔹 Mock Payment Editor',
+                Text('ðŸ”¹ Mock Payment Editor',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
                   'Generate mock payment records tied to a franchise or invoice. '
@@ -44,13 +44,13 @@ class BillingSubscriptionToolsScreen extends StatelessWidget {
                   'Use this for testing how the platform handles payment edge cases.',
                 ),
                 SizedBox(height: 12),
-                Text('🔹 Test Invoice Cleaner',
+                Text('ðŸ”¹ Test Invoice Cleaner',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
                   'View, reset, or delete test invoices. Useful for keeping the test environment clean or reproducing failed flows.',
                 ),
                 SizedBox(height: 12),
-                Text('🔹 Logs & Audit Trails',
+                Text('ðŸ”¹ Logs & Audit Trails',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
                   'All test tool actions are logged via `ErrorLogger`. '
@@ -101,7 +101,7 @@ class BillingSubscriptionToolsScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
               Text(
-                '🧪 Test Data Utilities',
+                'ðŸ§ª Test Data Utilities',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 16),
@@ -111,7 +111,7 @@ class BillingSubscriptionToolsScreen extends StatelessWidget {
               SizedBox(height: 32),
 
               Text(
-                '📦 Webhook Testing',
+                'ðŸ“¦ Webhook Testing',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 16),
@@ -119,7 +119,7 @@ class BillingSubscriptionToolsScreen extends StatelessWidget {
               SizedBox(height: 32),
 
               Text(
-                '💳 Mock Payment Simulator',
+                'ðŸ’³ Mock Payment Simulator',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 16),
@@ -127,7 +127,7 @@ class BillingSubscriptionToolsScreen extends StatelessWidget {
               SizedBox(height: 32),
 
               Text(
-                '🧹 Test Invoice Cleaner',
+                'ðŸ§¹ Test Invoice Cleaner',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 16),
@@ -142,3 +142,5 @@ class BillingSubscriptionToolsScreen extends StatelessWidget {
     );
   }
 }
+
+

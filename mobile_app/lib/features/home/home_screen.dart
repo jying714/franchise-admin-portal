@@ -1,8 +1,8 @@
-// ignore_for_file: prefer_const_constructors
+﻿// ignore_for_file: prefer_const_constructors
 
 import 'package:flutter/material.dart';
 // ignore: unused_import
-import 'package:franchise_mobile_app/config/app_config.dart';
+import 'package:shared_core/src/core/config/app_config.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/branding_config.dart';
 import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';

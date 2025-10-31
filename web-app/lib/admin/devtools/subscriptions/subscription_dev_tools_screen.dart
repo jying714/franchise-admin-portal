@@ -1,4 +1,4 @@
-// File: lib/admin/developer/subscriptions/subscription_dev_tools_screen.dart
+﻿// File: lib/admin/developer/subscriptions/subscription_dev_tools_screen.dart
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/admin/devtools/subscriptions/manual_subscription_injector.dart';
@@ -12,46 +12,46 @@ class SubscriptionDevToolsScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('🧾 Subscription Dev Tools Guide'),
+        title: const Text('ðŸ§¾ Subscription Dev Tools Guide'),
         content: SizedBox(
           width: double.maxFinite,
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                Text('🔹 Manual Subscription Injector',
+                Text('ðŸ”¹ Manual Subscription Injector',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
                   'Create a new subscription manually for a selected franchise. '
                   'Used for testing plans, onboarding flows, or plan migrations.',
                 ),
                 SizedBox(height: 12),
-                Text('🔹 Plan Swapper',
+                Text('ðŸ”¹ Plan Swapper',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
-                  'Replaces a franchise’s active subscription with a different plan. '
+                  'Replaces a franchiseâ€™s active subscription with a different plan. '
                   'Keeps an audit trail of the change.',
                 ),
                 SizedBox(height: 12),
-                Text('🔹 State Toggler',
+                Text('ðŸ”¹ State Toggler',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
                   'Quickly toggle the subscription between `active`, `paused`, and `canceled` states.',
                 ),
                 SizedBox(height: 12),
-                Text('🔹 Trial Expiry Simulator',
+                Text('ðŸ”¹ Trial Expiry Simulator',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
                   'Forcefully end or extend a trial period to test onboarding or expiration logic.',
                 ),
                 SizedBox(height: 12),
-                Text('🔹 Raw Snapshot Viewer',
+                Text('ðŸ”¹ Raw Snapshot Viewer',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
-                  'View the raw Firestore data for a franchise’s subscription. Useful for debugging.',
+                  'View the raw Firestore data for a franchiseâ€™s subscription. Useful for debugging.',
                 ),
                 SizedBox(height: 12),
-                Text('🔹 Billing Schedule Debugger',
+                Text('ðŸ”¹ Billing Schedule Debugger',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
                   'Visualize and verify upcoming billing anchors, renewal dates, and status transitions.',
@@ -101,7 +101,7 @@ class SubscriptionDevToolsScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
               Text(
-                '🧩 Manual Controls',
+                'ðŸ§© Manual Controls',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 16),
@@ -115,7 +115,7 @@ class SubscriptionDevToolsScreen extends StatelessWidget {
 
               SizedBox(height: 32),
               Text(
-                '⏳ Trial Tools',
+                'â³ Trial Tools',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 16),
@@ -126,7 +126,7 @@ class SubscriptionDevToolsScreen extends StatelessWidget {
 
               SizedBox(height: 32),
               Text(
-                '🛠 Debugging & Snapshots',
+                'ðŸ›  Debugging & Snapshots',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 16),
@@ -147,3 +147,5 @@ class SubscriptionDevToolsScreen extends StatelessWidget {
     );
   }
 }
+
+

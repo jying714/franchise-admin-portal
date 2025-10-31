@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class AdminMenuEditorPopupMenu extends StatelessWidget {
   final bool showDeleted;
@@ -147,3 +147,5 @@ class AdminMenuEditorPopupMenu extends StatelessWidget {
     );
   }
 }
+
+

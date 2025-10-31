@@ -1,14 +1,14 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../../../packages/shared_core/lib/src/core/models/category.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/category_provider.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/franchise_info_provider.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/onboarding_progress_provider.dart';
-import '../../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/models/category.dart';
+import 'package:shared_core/src/core/providers/category_provider.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/franchise_info_provider.dart';
+import 'package:shared_core/src/core/providers/onboarding_progress_provider.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/categories/category_list_tile.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/categories/category_form_dialog.dart';
@@ -41,7 +41,7 @@ class _OnboardingCategoriesScreenState
     if (franchiseId.isNotEmpty && franchiseId != 'unknown') {
       final provider = context.read<CategoryProvider>();
 
-      // 🔹 Force reload from Firestore to ensure UI shows latest categories
+      // ðŸ”¹ Force reload from Firestore to ensure UI shows latest categories
       provider
           .loadCategories(
         franchiseId,
@@ -50,14 +50,14 @@ class _OnboardingCategoriesScreenState
           .then((_) {
         if (!mounted) return;
         debugPrint(
-          '[OnboardingCategoriesScreen] ✅ Category reload complete. '
+          '[OnboardingCategoriesScreen] âœ… Category reload complete. '
           'Count=${provider.categories.length}',
         );
         setState(() {}); // Trigger UI refresh after load
       });
     } else {
       debugPrint(
-        '[OnboardingCategoriesScreen] ⚠️ Skipping load: blank/unknown franchiseId.',
+        '[OnboardingCategoriesScreen] âš ï¸ Skipping load: blank/unknown franchiseId.',
       );
     }
 
@@ -402,3 +402,5 @@ class _OnboardingCategoriesScreenState
     );
   }
 }
+
+

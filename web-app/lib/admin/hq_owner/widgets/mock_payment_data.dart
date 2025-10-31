@@ -1,4 +1,4 @@
-class MockPaymentData {
+﻿class MockPaymentData {
   final String cardHolderName;
   final String maskedCardString;
   final String expiryDate;
@@ -9,3 +9,5 @@ class MockPaymentData {
     required this.expiryDate,
   });
 }
+
+

@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/menu_item.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/menu_item_provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/franchise_info_provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import '../package:shared_core/src/core/models/menu_item.dart';
+import '../package:shared_core/src/core/providers/menu_item_provider.dart';
+import '../package:shared_core/src/core/providers/franchise_info_provider.dart';
+import '../package:shared_core/src/core/utils/error_logger.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class MenuItemTemplateDropdown extends StatefulWidget {
@@ -139,3 +139,5 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
     );
   }
 }
+
+

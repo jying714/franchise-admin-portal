@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/theme_provider.dart';
 
@@ -39,3 +39,5 @@ class ThemeModeSelector extends StatelessWidget {
     );
   }
 }
+
+

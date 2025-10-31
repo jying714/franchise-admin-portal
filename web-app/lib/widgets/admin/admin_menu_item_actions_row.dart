@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class AdminMenuItemActionsRow extends StatelessWidget {
   final bool canEdit;
@@ -40,3 +40,5 @@ class AdminMenuItemActionsRow extends StatelessWidget {
     );
   }
 }
+
+

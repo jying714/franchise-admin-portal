@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -62,7 +62,7 @@ class PlatformFinancialKpiRow extends StatelessWidget {
         value: _formatCurrency(context, recentPayouts),
         color: theme.colorScheme.tertiary,
       ),
-      // 💡 Future Feature Placeholder (uncomment as needed)
+      // ðŸ’¡ Future Feature Placeholder (uncomment as needed)
       // _KpiBlock(label: loc.platformKpiChurn, value: "...", color: Colors.orange),
     ];
 
@@ -145,3 +145,5 @@ class _KpiBlock extends StatelessWidget {
     );
   }
 }
+
+

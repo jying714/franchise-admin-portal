@@ -1,4 +1,4 @@
-// lib/admin/dashboard/onboarding/widgets/ingredients/ingredient_type_json_import_export_dialog.dart
+﻿// lib/admin/dashboard/onboarding/widgets/ingredients/ingredient_type_json_import_export_dialog.dart
 
 import 'dart:convert';
 
@@ -6,11 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/ingredient_type_model.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/ingredient_type_provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/utils/schema_templates.dart';
+import '../package:shared_core/src/core/models/ingredient_type_model.dart';
+import '../package:shared_core/src/core/providers/franchise_provider.dart';
+import '../package:shared_core/src/core/providers/ingredient_type_provider.dart';
+import '../package:shared_core/src/core/utils/error_logger.dart';
+import '../package:shared_core/src/core/utils/schema_templates.dart';
 import 'package:franchise_admin_portal/widgets/scrolling_json_editor.dart';
 
 import 'ingredient_type_json_preview_table.dart';
@@ -272,3 +272,5 @@ class _IngredientTypeJsonImportExportDialogState
     );
   }
 }
+
+

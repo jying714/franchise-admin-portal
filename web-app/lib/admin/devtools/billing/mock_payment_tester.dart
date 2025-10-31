@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:uuid/uuid.dart';
-import '../../../../../packages/shared_core/lib/src/core/models/platform_invoice.dart';
-import '../../../../../packages/shared_core/lib/src/core/models/platform_payment.dart';
-import '../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/models/platform_invoice.dart';
+import 'package:shared_core/src/core/models/platform_payment.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/mock_payment_data.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/mock_payment_form.dart';
 
@@ -118,7 +118,7 @@ class _MockPaymentTesterState extends State<MockPaymentTester> {
       await fs.markPlatformInvoicePaid(invoice.id, 'mock_card');
 
       setState(() {
-        _result = '✅ Payment submitted and invoice marked as paid.';
+        _result = 'âœ… Payment submitted and invoice marked as paid.';
         _submitting = false;
       });
 
@@ -136,9 +136,11 @@ class _MockPaymentTesterState extends State<MockPaymentTester> {
 
       if (!mounted) return;
       setState(() {
-        _result = '❌ Error: $e';
+        _result = 'âŒ Error: $e';
         _submitting = false;
       });
     }
   }
 }
+
+

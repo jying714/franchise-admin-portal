@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class BrandingConfig {
   // --------- Franchise Details ---------
@@ -51,3 +51,5 @@ class BrandingConfig {
   // static const String franchiseEmail = "contact@doughboys.com";
   // static const String franchiseSlogan = "Slice of Heaven Since 1999";
 }
+
+

@@ -1,4 +1,4 @@
-// ignore_for_file: unused_import
+﻿// ignore_for_file: unused_import
 
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/widgets/Address/address_list_view.dart';
@@ -74,3 +74,5 @@ class _DeliveryAddressesScreenState extends State<DeliveryAddressesScreen> {
     );
   }
 }
+
+

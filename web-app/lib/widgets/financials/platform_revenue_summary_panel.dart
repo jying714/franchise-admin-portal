@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -197,3 +197,5 @@ class _PlatformRevenueSummaryPanelState
     );
   }
 }
+
+

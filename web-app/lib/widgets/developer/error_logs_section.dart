@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/admin/developer/developer_error_logs_screen.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 
 class ErrorLogsSection extends StatefulWidget {
   final String? franchiseId;
@@ -45,7 +45,7 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
     try {
       final allLogs = await FirestoreService().getErrorLogSummaries();
 
-      print('✅ Retrieved ${allLogs.length} logs from Firestore');
+      print('âœ… Retrieved ${allLogs.length} logs from Firestore');
       for (final log in allLogs) {
         print(
             '[DEBUG] Log => ${log.timestamp} | ${log.severity} | ${log.message}');
@@ -54,7 +54,7 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
       final filteredLogs = _filterSeverity == null
           ? allLogs
           : allLogs.where((log) => log.severity == _filterSeverity).toList();
-      print('👀 Setting logs: ${filteredLogs.length} logs');
+      print('ðŸ‘€ Setting logs: ${filteredLogs.length} logs');
       setState(() {
         _logs = filteredLogs;
         _loading = false;
@@ -125,7 +125,7 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${loc.errorLogsSectionTitle} — $titleFranchiseLabel',
+              '${loc.errorLogsSectionTitle} â€” $titleFranchiseLabel',
               style: theme.textTheme.titleLarge?.copyWith(
                 color: colorScheme.primary,
                 fontWeight: FontWeight.bold,
@@ -308,8 +308,8 @@ class _ErrorLogList extends StatelessWidget {
             ),
             title: Text(log.message),
             subtitle: Text(
-              '${loc.errorLogsSectionAt} ${log.screen} — ${_formatDateTime(log.timestamp)}'
-              '${log.franchiseId != null ? " — Franchise: ${log.franchiseId}" : ""}',
+              '${loc.errorLogsSectionAt} ${log.screen} â€” ${_formatDateTime(log.timestamp)}'
+              '${log.franchiseId != null ? " â€” Franchise: ${log.franchiseId}" : ""}',
             ),
             trailing: const Icon(Icons.chevron_right),
             shape: RoundedRectangleBorder(
@@ -406,3 +406,5 @@ class ErrorLogSummary {
     this.franchiseId,
   });
 }
+
+

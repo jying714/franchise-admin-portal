@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -74,7 +74,7 @@ class PlatformRevenueStatsRow extends StatelessWidget {
         value: _formatCurrency(context, overdueAmount),
         warning: overdueAmount > 0,
       ),
-      // 💡 Future Feature Placeholders (uncomment/add here)
+      // ðŸ’¡ Future Feature Placeholders (uncomment/add here)
       // _RevenueStatBlock(label: loc.platformStatRefunds, value: ...),
     ];
 
@@ -172,3 +172,5 @@ class _RevenueStatBlock extends StatelessWidget {
     );
   }
 }
+
+

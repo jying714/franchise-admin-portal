@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 // Import ALL your admin sections (ensure these files exist!)
 import 'package:franchise_admin_portal/admin/dashboard/dashboard_home_screen.dart';
 import 'package:franchise_admin_portal/admin/menu/menu_editor_screen.dart';
@@ -188,3 +188,5 @@ List<DashboardSection> getSidebarSections() =>
 /// All sections (for routing, content stack, and selection), sorted by sidebarOrder.
 List<DashboardSection> getAllDashboardSections() => sectionRegistry.toList()
   ..sort((a, b) => a.sidebarOrder.compareTo(b.sidebarOrder));
+
+

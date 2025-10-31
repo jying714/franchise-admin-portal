@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class TightSectionCard extends StatelessWidget {
   final String title;
@@ -49,3 +49,5 @@ class TightSectionCard extends StatelessWidget {
     );
   }
 }
+
+

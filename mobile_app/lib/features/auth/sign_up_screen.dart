@@ -1,15 +1,15 @@
-// ignore_for_file: unused_import, prefer_const_constructors
+﻿// ignore_for_file: unused_import, prefer_const_constructors
 import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:franchise_mobile_app/core/services/auth_service.dart';
+import 'package:shared_core/src/core/services/auth_service.dart';
 import 'package:franchise_mobile_app/core/services/firestore_service.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as db_user;
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
-import 'package:franchise_mobile_app/config/app_config.dart';
+import 'package:shared_core/src/core/config/app_config.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/branding_config.dart';
 import 'package:franchise_mobile_app/widgets/social_sign_in_buttons.dart';

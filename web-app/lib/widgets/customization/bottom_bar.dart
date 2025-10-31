@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../packages/shared_core/lib/src/core/models/menu_item.dart';
+import 'package:shared_core/src/core/models/menu_item.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/formatting.dart';
+import 'package:shared_core/src/core/utils/formatting.dart';
 
 typedef ConfirmCallback = void Function(
   Map<String, dynamic> customizations,
@@ -147,3 +147,5 @@ class CustomizationBottomBar extends StatelessWidget {
     );
   }
 }
+
+

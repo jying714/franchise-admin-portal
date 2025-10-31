@@ -1,4 +1,4 @@
-// File generated for Franchise Admin Web (Web-only project)
+﻿// File generated for Franchise Admin Web (Web-only project)
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
@@ -20,3 +20,5 @@ class DefaultFirebaseOptions {
     measurementId: 'G-SJRBLVVV5Z',
   );
 }
+
+

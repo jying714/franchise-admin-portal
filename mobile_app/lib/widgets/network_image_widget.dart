@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 /// A reusable widget that loads & caches a network image,
@@ -77,3 +77,5 @@ class NetworkImageWidget extends StatelessWidget {
     return img;
   }
 }
+
+

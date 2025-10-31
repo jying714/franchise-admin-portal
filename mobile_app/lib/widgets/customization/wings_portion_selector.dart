@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_mobile_app/core/models/menu_item.dart';
 import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
@@ -45,7 +45,7 @@ class WingsPortionSelector extends StatelessWidget {
             ),
           ),
           Text(
-            "Choose a sauce for each portion below. 'Plain' means no sauce—just crispy wings.",
+            "Choose a sauce for each portion below. 'Plain' means no sauceâ€”just crispy wings.",
             style: theme.textTheme.bodySmall?.copyWith(
               color: DesignTokens.secondaryTextColor,
               fontStyle: FontStyle.italic,
@@ -86,3 +86,5 @@ class WingsPortionSelector extends StatelessWidget {
     );
   }
 }
+
+

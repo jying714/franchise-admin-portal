@@ -1,22 +1,22 @@
-// File: lib/widgets/profile/universal_profile_screen.dart
+﻿// File: lib/widgets/profile/universal_profile_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
-import '../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/widgets/profile/account_details_panel.dart';
 import 'package:franchise_admin_portal/widgets/financials/franchisee_invoice_list.dart';
 import 'package:franchise_admin_portal/widgets/financials/franchisee_payment_list.dart';
-import '../../../../packages/shared_core/lib/src/core/models/platform_payment.dart';
-import '../../../../packages/shared_core/lib/src/core/models/platform_invoice.dart';
+import 'package:shared_core/src/core/models/platform_payment.dart';
+import 'package:shared_core/src/core/models/platform_invoice.dart';
 import 'package:franchise_admin_portal/widgets/financials/pay_invoice_dialog.dart';
-import '../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
 
 // FUTURE: Modular import for payment methods and plan management
 // import 'package:franchise_admin_portal/widgets/financials/payment_method_manager.dart';
@@ -363,3 +363,5 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
     );
   }
 }
+
+

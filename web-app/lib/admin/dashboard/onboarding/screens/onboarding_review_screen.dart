@@ -1,21 +1,21 @@
-// File: lib/admin/dashboard/onboarding/screens/onboarding_review_screen.dart
+﻿// File: lib/admin/dashboard/onboarding/screens/onboarding_review_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/onboarding_review_provider.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/ingredient_type_provider.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/ingredient_metadata_provider.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/category_provider.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/menu_item_provider.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/franchise_feature_provider.dart';
-import '../../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/providers/onboarding_review_provider.dart';
+import 'package:shared_core/src/core/providers/ingredient_type_provider.dart';
+import 'package:shared_core/src/core/providers/ingredient_metadata_provider.dart';
+import 'package:shared_core/src/core/providers/category_provider.dart';
+import 'package:shared_core/src/core/providers/menu_item_provider.dart';
+import 'package:shared_core/src/core/providers/franchise_feature_provider.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/onboarding_progress_indicator.dart';
-import '../../../../../../packages/shared_core/lib/src/core/services/audit_log_service.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/src/core/services/audit_log_service.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
 // Import future widgets here as they are implemented
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/review/review_summary_table.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/review/issue_details_expansion.dart';
@@ -113,14 +113,14 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
 
     _didKickOffValidation = true;
     debugPrint(
-        '[OnboardingReviewScreen] ⏩ Triggering initial _initValidation()...');
+        '[OnboardingReviewScreen] â© Triggering initial _initValidation()...');
     _initValidation();
   }
 
   Future<void> _initValidation() async {
     if (_isValidating) {
       debugPrint(
-          '[OnboardingReviewScreen._initValidation] 🚫 Validation already running, skipping.');
+          '[OnboardingReviewScreen._initValidation] ðŸš« Validation already running, skipping.');
       return;
     }
     _isValidating = true;
@@ -132,7 +132,7 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
           Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
 
       debugPrint(
-          '\n[OnboardingReviewScreen._initValidation] 🚀 Starting validation for franchise "$franchiseId"...');
+          '\n[OnboardingReviewScreen._initValidation] ðŸš€ Starting validation for franchise "$franchiseId"...');
 
       // Reload only if needed; avoids unnecessary Firestore hits
       await Provider.of<IngredientMetadataProvider>(context, listen: false)
@@ -148,7 +148,7 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
           .loadMenuItems(franchiseId, forceReloadFromFirestore: false);
 
       debugPrint(
-          '[OnboardingReviewScreen._initValidation] ✅ Providers loaded, running validateAll()...');
+          '[OnboardingReviewScreen._initValidation] âœ… Providers loaded, running validateAll()...');
 
       await _reviewProvider?.validateAll();
 
@@ -159,9 +159,9 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
 
       final issueCount = _reviewProvider?.validationResults.length ?? 0;
       debugPrint(
-          '[OnboardingReviewScreen._initValidation] 🎯 Validation complete. Issues found: $issueCount');
+          '[OnboardingReviewScreen._initValidation] ðŸŽ¯ Validation complete. Issues found: $issueCount');
     } catch (e, st) {
-      debugPrint('[OnboardingReviewScreen._initValidation][ERROR] ❌ $e\n$st');
+      debugPrint('[OnboardingReviewScreen._initValidation][ERROR] âŒ $e\n$st');
       setState(() {
         _loading = false;
         _error = e.toString();
@@ -415,3 +415,5 @@ class _OnboardingReviewContent extends StatelessWidget {
     );
   }
 }
+
+

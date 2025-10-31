@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../config/branding_config.dart';
 
 class SafeLogoImage extends StatelessWidget {
@@ -17,3 +17,5 @@ class SafeLogoImage extends StatelessWidget {
     );
   }
 }
+
+

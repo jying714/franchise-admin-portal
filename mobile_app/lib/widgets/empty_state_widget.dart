@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors
+﻿// ignore_for_file: prefer_const_constructors
 
 import 'package:flutter/material.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
@@ -90,3 +90,5 @@ class EmptyStateWidget extends StatelessWidget {
     );
   }
 }
+
+

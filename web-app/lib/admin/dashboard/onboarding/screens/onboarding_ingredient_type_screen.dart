@@ -1,17 +1,17 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/onboarding_progress_provider.dart';
-import '../../../../../../packages/shared_core/lib/src/core/models/ingredient_type_model.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/ingredient_type_provider.dart';
-import '../../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/providers/onboarding_progress_provider.dart';
+import 'package:shared_core/src/core/models/ingredient_type_model.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/ingredient_type_provider.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_type_template_picker_dialog.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/editable_ingredient_type_row.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/inline_add_ingredient_type_row.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_type_json_import_export_dialog.dart';
-import '../../../../../../packages/shared_core/lib/src/core/providers/ingredient_type_provider.dart';
+import 'package:shared_core/src/core/providers/ingredient_type_provider.dart';
 
 class IngredientTypeManagementScreen extends StatefulWidget {
   const IngredientTypeManagementScreen({super.key});
@@ -61,7 +61,7 @@ class _IngredientTypeManagementScreenState
     final ingredientTypeProvider = context.read<IngredientTypeProvider>();
 
     print(
-        '[OnboardingIngredientTypeScreen] FAB pressed – loc: $loc, franchiseId: $franchiseId');
+        '[OnboardingIngredientTypeScreen] FAB pressed â€“ loc: $loc, franchiseId: $franchiseId');
 
     if (loc == null) return;
 
@@ -561,7 +561,7 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
                 keyboardType: TextInputType.number,
                 onChanged: (val) => sortOrder = int.tryParse(val) ?? sortOrder,
               ),
-              // 💡 Future Feature Placeholder: Add visibility toggle, tag color, etc.
+              // ðŸ’¡ Future Feature Placeholder: Add visibility toggle, tag color, etc.
             ],
           ),
         ),
@@ -610,3 +610,5 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
     );
   }
 }
+
+

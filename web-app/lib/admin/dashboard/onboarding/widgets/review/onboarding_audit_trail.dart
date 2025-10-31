@@ -1,10 +1,10 @@
-// File: lib/admin/dashboard/onboarding/widgets/review/onboarding_audit_trail.dart
+﻿// File: lib/admin/dashboard/onboarding/widgets/review/onboarding_audit_trail.dart
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/audit_log.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/services/audit_log_service.dart';
+import '../package:shared_core/src/core/models/audit_log.dart';
+import '../package:shared_core/src/core/services/audit_log_service.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 
 /// Displays recent onboarding audit trail events for the current franchise.
@@ -230,3 +230,5 @@ class _OnboardingAuditTrailState extends State<OnboardingAuditTrail> {
     }
   }
 }
+
+

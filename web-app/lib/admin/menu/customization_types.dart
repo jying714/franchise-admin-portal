@@ -1,6 +1,6 @@
-// lib/admin/menu_editor/customization_types.dart
+﻿// lib/admin/menu_editor/customization_types.dart
 
-import '../../../../packages/shared_core/lib/src/core/models/customization.dart';
+import 'package:shared_core/src/core/models/customization.dart';
 
 /// Editable group of customizations for use in admin dialogs/screens.
 /// Fully supports multi/group/option types for franchise/SaaS, upcharges, portion, etc.
@@ -119,3 +119,5 @@ Customization groupToCustomization(CustomizationGroup g) {
         .toList(),
   );
 }
+
+

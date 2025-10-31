@@ -1,15 +1,15 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/services/firebase_storage_service.dart';
+import '../package:shared_core/src/core/providers/franchise_provider.dart';
+import '../package:shared_core/src/core/services/firebase_storage_service.dart';
 
 /// A form field widget to allow image selection from device gallery or camera,
 /// then upload it to Firebase Storage and store the public URL.
 ///
-/// ✅ Features:
+/// âœ… Features:
 /// - Thumbnail preview
 /// - Clear/reset support
 /// - Firebase upload on selection
@@ -131,3 +131,5 @@ class ImageUploadField extends FormField<String?> {
           },
         );
 }
+
+

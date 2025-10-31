@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../../packages/shared_core/lib/src/core/models/error_log.dart';
+import 'package:shared_core/src/core/models/error_log.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'error_log_detail_drawer.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -149,3 +149,5 @@ class _ErrorLogDataSource extends DataTableSource {
   @override
   int get selectedRowCount => 0;
 }
+
+

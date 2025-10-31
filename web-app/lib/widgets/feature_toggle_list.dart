@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../packages/shared_core/lib/src/core/models/user.dart'
+import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -231,3 +231,5 @@ class _FeatureToggleTileState extends State<FeatureToggleTile> {
     );
   }
 }
+
+

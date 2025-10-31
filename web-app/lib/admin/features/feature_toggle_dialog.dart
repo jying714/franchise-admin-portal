@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/feature_config.dart';
 
 class FeatureToggleDialog extends StatefulWidget {
@@ -50,3 +50,5 @@ class _FeatureToggleDialogState extends State<FeatureToggleDialog> {
     );
   }
 }
+
+

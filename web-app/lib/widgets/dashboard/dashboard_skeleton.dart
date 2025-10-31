@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 class DashboardSkeleton extends StatelessWidget {
   @override
@@ -44,3 +44,5 @@ class DashboardSkeleton extends StatelessWidget {
     );
   }
 }
+
+

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/widgets/settings/theme_mode_selector.dart';
 import 'package:franchise_admin_portal/widgets/settings/language_selector.dart';
 import 'package:franchise_admin_portal/widgets/settings/about_section.dart';
@@ -54,3 +54,5 @@ class SettingsDialog extends StatelessWidget {
     );
   }
 }
+
+

@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/models/ingredient_metadata.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../../../../../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import '../package:shared_core/src/core/models/ingredient_metadata.dart';
+import '../package:shared_core/src/core/services/firestore_service.dart';
+import '../package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/widgets/network_image_widget.dart';
 import 'ingredient_form_card.dart';
 
@@ -208,3 +208,5 @@ class IngredientListTile extends StatelessWidget {
     }
   }
 }
+
+
