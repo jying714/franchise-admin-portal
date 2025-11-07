@@ -1,68 +1,71 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
+// shared_core/lib/src/core/utils/error_logger.dart
 
-/// Robust Error Logger for all app error logging.
-/// Routes unauth/public errors to logPublicError function.
-/// Routes authenticated errors to logAppError function.
+/// Pure Dart error logger interface + fallback
+/// Apps override via setCustomLogger()
 class ErrorLogger {
-  static const String _publicLogUrl =
-      'https://us-central1-doughboyspizzeria-2b3d2.cloudfunctions.net/logPublicError';
-  static const String _privateLogUrl =
-      'https://us-central1-doughboyspizzeria-2b3d2.cloudfunctions.net/logAppError';
-
-  /// Logs an error to the appropriate endpoint based on authentication status.
-  /// Optionally pass extra [contextData] for deeper troubleshooting.
-  static Future<void> log({
+  /// Default fallback logger (prints to console)
+  static void _defaultLog({
     required String message,
-    String? stack,
     String? source,
     String? severity,
-    String? screen,
+    String? stack,
     Map<String, dynamic>? contextData,
-  }) async {
-    if (Firebase.apps.isEmpty) {
-      print('[ErrorLogger] log() called before Firebase initialized!');
-      // Optionally: fallback to console-only log or queue for later, if needed.
-      return;
+  }) {
+    final buffer = StringBuffer();
+    buffer.writeln('[ERROR] $message');
+    if (source != null) buffer.writeln('  Source: $source');
+    if (severity != null) buffer.writeln('  Severity: $severity');
+    if (stack != null) buffer.writeln('  Stack: $stack');
+    if (contextData != null && contextData.isNotEmpty) {
+      buffer.writeln('  Context: $contextData');
     }
+    // ignore: avoid_print
+    print(buffer.toString());
+  }
 
-    final user = FirebaseAuth.instance.currentUser;
-    final isAuthenticated = user != null;
+  /// Custom logger set by app
+  static void Function({
+    required String message,
+    String? source,
+    String? severity,
+    String? stack,
+    Map<String, dynamic>? contextData,
+  })? _customLogger;
 
-    final url = isAuthenticated ? _privateLogUrl : _publicLogUrl;
+  /// Set custom logger (called once in main.dart)
+  static void setCustomLogger(
+    void Function({
+      required String message,
+      String? source,
+      String? severity,
+      String? stack,
+      Map<String, dynamic>? contextData,
+    }) logger,
+  ) {
+    _customLogger = logger;
+  }
 
-    // Always enrich with basic info
-    final enrichedContext = <String, dynamic>{
-      ...?contextData,
-      if (isAuthenticated) 'userId': user!.uid,
-      if (isAuthenticated && user.email != null) 'userEmail': user.email,
-    };
-
-    final body = {
-      'message': message,
-      'stack': stack ?? '',
-      'source': source ?? '',
-      'severity': severity ?? (isAuthenticated ? 'error' : 'public'),
-      'screen': screen ?? '',
-      'contextData': enrichedContext,
-    };
-
-    try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(body),
-      );
-
-      if (response.statusCode != 200) {
-        // Log to console if the server endpoint failed
-        print(
-            '[ErrorLogger] Failed to log error to $url: ${response.statusCode} ${response.body}');
-      }
-    } catch (e, st) {
-      print('[ErrorLogger] Exception during error log: $e\n$st');
-    }
+  /// Public entry point — safe to call from anywhere
+  static void log({
+    required String message,
+    String? source,
+    String? severity,
+    String? stack,
+    Map<String, dynamic>? contextData,
+  }) {
+    _customLogger?.call(
+      message: message,
+      source: source,
+      severity: severity,
+      stack: stack,
+      contextData: contextData,
+    );
+    _defaultLog(
+      message: message,
+      source: source,
+      severity: severity,
+      stack: stack,
+      contextData: contextData,
+    );
   }
 }

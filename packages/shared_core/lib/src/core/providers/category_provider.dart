@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import '../models/category.dart';
 import '../services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 
 class CategoryProvider extends ChangeNotifier {
   final FirestoreService firestore;
@@ -78,13 +78,10 @@ class CategoryProvider extends ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[CategoryProvider][RELOAD] ⚠️ Called with blank/unknown franchiseId! Skipping reload.');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'CategoryProvider: reload called with blank/unknown franchiseId',
-        stack: '',
         source: 'category_provider.dart',
-        screen: 'category_provider.dart',
-        severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
       return;
@@ -122,12 +119,9 @@ class CategoryProvider extends ChangeNotifier {
     // 🔹 Still invalid? bail and log
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print('[CategoryProvider][LOAD] ⚠️ No valid franchiseId. Skipping load.');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'CategoryProvider: load called with blank/unknown franchiseId',
-        stack: '',
         source: 'category_provider.dart',
-        screen: 'category_provider.dart',
-        severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
       return;
@@ -164,12 +158,10 @@ class CategoryProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e, stack) {
       print('[CategoryProvider][LOAD][ERROR] ❌ Failed to load categories: $e');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'category_load_error',
         stack: stack.toString(),
         source: 'category_provider.dart',
-        screen: 'category_provider.dart',
-        severity: 'error',
         contextData: {'franchiseId': franchiseId},
       );
       rethrow;
@@ -209,12 +201,10 @@ class CategoryProvider extends ChangeNotifier {
       _original = List.from(_current);
       notifyListeners();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to save categories',
         stack: stack.toString(),
         source: 'CategoryProvider',
-        screen: 'onboarding_categories_screen',
-        severity: 'error',
         contextData: {'franchiseId': franchiseId},
       );
       rethrow;
@@ -239,12 +229,10 @@ class CategoryProvider extends ChangeNotifier {
           forceReloadFromFirestore:
               true); // ⬅️ Forces Firestore re-fetch, like ingredients
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'category_deletion_failed',
         stack: stack.toString(),
         source: 'CategoryProvider',
-        screen: 'onboarding_categories_screen',
-        severity: 'error',
         contextData: {
           'franchiseId': franchiseId,
           'categoryId': categoryId,
@@ -271,12 +259,10 @@ class CategoryProvider extends ChangeNotifier {
       await loadCategories(franchiseId, forceReloadFromFirestore: true);
       // 🔁 reload after deletion
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'bulk_delete_categories_failed',
         stack: stack.toString(),
         source: 'CategoryProvider',
-        screen: 'onboarding_categories_screen',
-        severity: 'error',
         contextData: {
           'franchiseId': franchiseId,
           'deletedCount': ids.length,
@@ -369,12 +355,10 @@ class CategoryProvider extends ChangeNotifier {
       _applySortOrder();
       notifyListeners();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'category_template_load_failed',
         stack: stack.toString(),
         source: 'CategoryProvider',
-        screen: 'onboarding_categories_screen',
-        severity: 'error',
         contextData: {
           'templateId': templateId,
           'franchiseId': franchiseId,
@@ -449,12 +433,10 @@ class CategoryProvider extends ChangeNotifier {
       _stagedCategories.clear();
       notifyListeners();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'category_stage_save_failed',
         stack: stack.toString(),
         source: 'CategoryProvider',
-        screen: 'onboarding_categories_screen',
-        severity: 'error',
         contextData: {'franchiseId': franchiseId},
       );
       rethrow;
@@ -570,11 +552,10 @@ class CategoryProvider extends ChangeNotifier {
         }
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'category_validate_failed',
         stack: stack.toString(),
         source: 'CategoryProvider.validate',
-        severity: 'error',
         contextData: {},
       );
     }

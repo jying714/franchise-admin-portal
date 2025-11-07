@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/platform_revenue_overview.dart';
 import '../models/platform_financial_kpis.dart';
 import '../services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 
 /// Provider for platform-level revenue and KPI aggregates.
 /// Robust state management for the platform owner dashboard.
@@ -35,11 +35,10 @@ class PlatformFinancialsProvider extends ChangeNotifier {
     } catch (e, stack) {
       debugPrint('Firestore error in loadFinancials: $e');
       debugPrint('Stack trace: $stack');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'PlatformFinancialsProvider',
-        screen: 'loadFinancials',
         severity: 'error',
       );
       _error = e.toString();

@@ -3,8 +3,7 @@
 import 'package:flutter/material.dart';
 import '../models/platform_plan_model.dart';
 import '../services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import '../models/franchise_subscription_model.dart';
 import '../services/franchise_subscription_service.dart';
 
@@ -36,18 +35,12 @@ class PlatformPlanSelectionProvider extends ChangeNotifier {
 
   /// Submits the currently selected plan for the given franchise.
   Future<void> subscribeToPlan({
-    required BuildContext context,
     required String franchiseId,
+    required PlatformPlan plan,
     VoidCallback? onSuccess,
+    String? successMessage,
+    String? errorMessage,
   }) async {
-    final loc = AppLocalizations.of(context)!;
-    final plan = _selectedPlan;
-    if (plan == null) {
-      _errorMessage = loc.genericErrorOccurred;
-      notifyListeners();
-      return;
-    }
-
     _isLoading = true;
     _errorMessage = null;
     _success = false;
@@ -58,31 +51,22 @@ class PlatformPlanSelectionProvider extends ChangeNotifier {
         franchiseId: franchiseId,
         plan: plan,
       );
-      _success = true;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.subscriptionSuccessMessage)),
-      );
 
-      // ⬅️ Trigger success flow
+      _success = true;
       if (onSuccess != null) onSuccess();
+      if (successMessage != null) {
+        // Caller handles UI (SnackBar, etc.)
+      }
     } catch (e, stack) {
-      _errorMessage = loc.genericErrorOccurred;
-      await ErrorLogger.log(
+      _errorMessage = errorMessage ?? 'Subscription failed';
+      ErrorLogger.log(
         message: 'Plan subscription failed: $e',
         stack: stack.toString(),
         source: 'PlatformPlanSelectionProvider',
-        screen: 'available_platform_plans_screen',
-        severity: 'error',
         contextData: {
           'franchiseId': franchiseId,
           'planId': plan.id,
         },
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(loc.genericErrorOccurred),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
       );
     } finally {
       _isLoading = false;
@@ -101,11 +85,10 @@ class PlatformPlanSelectionProvider extends ChangeNotifier {
       _currentSubscription = sub;
       notifyListeners();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to refresh subscription for franchise: $franchiseId',
         stack: stack.toString(),
         source: 'PlatformPlanSelectionProvider',
-        screen: 'available_platform_plans_screen',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId, 'exception': e.toString()},
       );

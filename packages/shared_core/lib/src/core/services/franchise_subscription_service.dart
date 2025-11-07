@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../models/franchise_subscription_model.dart';
 import '../models/platform_plan_model.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import '../../core/utils/error_logger.dart';
 
 class FranchiseSubscriptionService {
   final FirebaseFirestore _db;
@@ -101,10 +101,9 @@ class FranchiseSubscriptionService {
       await batch.commit();
       debugPrint('[🔥DEBUG] Subscription + feature metadata committed ✅');
 
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Franchise subscribed to platform plan',
         source: 'FranchiseSubscriptionService',
-        screen: 'confirm_plan_subscription_dialog',
         severity: 'info',
         contextData: {
           'franchiseId': franchiseId,
@@ -113,10 +112,9 @@ class FranchiseSubscriptionService {
         },
       );
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to subscribe franchise to plan: $e',
         source: 'FranchiseSubscriptionService',
-        screen: 'confirm_plan_subscription_dialog',
         severity: 'error',
         stack: stack.toString(),
         contextData: {
@@ -151,11 +149,10 @@ class FranchiseSubscriptionService {
         );
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to update franchise subscription',
         stack: stack.toString(),
         source: 'FranchiseSubscriptionService',
-        screen: 'updateFranchiseSubscription',
         severity: 'error',
         contextData: {'exception': e.toString(), 'inputData': data},
       );
@@ -204,11 +201,10 @@ class FranchiseSubscriptionService {
       debugPrint(
           '[FranchiseSubscriptionService] Saved subscription: ${docRef.id}');
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to save franchise subscription',
         stack: stack.toString(),
         source: 'FranchiseSubscriptionService',
-        screen: 'saveFranchiseSubscription',
         severity: 'error',
         contextData: {
           'subscriptionId': subscription.id,
@@ -224,11 +220,10 @@ class FranchiseSubscriptionService {
     try {
       await _db.collection('franchise_subscriptions').doc(id).delete();
     } catch (e, st) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to delete franchise_subscription $id',
         stack: st.toString(),
         source: 'FranchiseSubscriptionService',
-        screen: 'deleteFranchiseSubscription',
         severity: 'error',
         contextData: {'subscriptionId': id, 'exception': e.toString()},
       );
@@ -248,11 +243,10 @@ class FranchiseSubscriptionService {
 
       await batch.commit();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to delete multiple franchise subscriptions',
         stack: stack.toString(),
         source: 'FranchiseSubscriptionService',
-        screen: 'deleteManyFranchiseSubscriptions',
         severity: 'error',
         contextData: {'ids': ids, 'exception': e.toString()},
       );
@@ -276,10 +270,9 @@ class FranchiseSubscriptionService {
           '[FranchiseSubscriptionService] Fetched ${list.length} subscriptions.');
       return list;
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch franchise subscriptions',
         source: 'FranchiseSubscriptionService',
-        screen: 'platform_owner_dashboard',
         severity: 'error',
         stack: stack.toString(),
       );
@@ -324,11 +317,10 @@ class FranchiseSubscriptionService {
           '[FranchiseSubscriptionService] Loaded active subscription: ${sub.platformPlanId}');
       return sub;
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Error loading active subscription: $e',
         stack: stack.toString(),
         source: 'FranchiseSubscriptionService',
-        screen: 'getCurrentSubscription',
         severity: 'error',
         contextData: {
           'franchiseId': franchiseId,
@@ -354,10 +346,9 @@ class FranchiseSubscriptionService {
       final doc = snap.docs.first;
       return FranchiseSubscription.fromMap(doc.id, doc.data());
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to get active subscription for franchise',
         source: 'FranchiseSubscriptionService',
-        screen: 'franchise_subscription_check',
         severity: 'warning',
         stack: stack.toString(),
         contextData: {'franchiseId': franchiseId},
@@ -392,11 +383,10 @@ class FranchiseSubscriptionService {
         return sub;
       }).handleError((error, stack) async {
         print('[FranchiseSubscriptionService] Stream error: $error');
-        await ErrorLogger.log(
+        ErrorLogger.log(
           message: 'Stream error in watchCurrentSubscription: $error',
           stack: stack.toString(),
           source: 'FranchiseSubscriptionService',
-          screen: 'watchCurrentSubscription',
           severity: 'error',
           contextData: {
             'franchiseId': franchiseId,
@@ -408,7 +398,6 @@ class FranchiseSubscriptionService {
         message: 'Failed to initialize watchCurrentSubscription: $e',
         stack: stack.toString(),
         source: 'FranchiseSubscriptionService',
-        screen: 'watchCurrentSubscription',
         severity: 'fatal',
         contextData: {
           'franchiseId': franchiseId,
@@ -431,10 +420,9 @@ class FranchiseSubscriptionService {
       final doc = await _db.collection('platform_plans').doc(planId).get();
 
       if (!doc.exists) {
-        await ErrorLogger.log(
+        ErrorLogger.log(
           message: 'PlatformPlan not found for ID: $planId',
           source: 'FranchiseSubscriptionService',
-          screen: 'plan_resolution_fallback',
           severity: 'warning',
           contextData: {'missingId': planId},
           stack: '',
@@ -444,10 +432,9 @@ class FranchiseSubscriptionService {
 
       return PlatformPlan.fromFirestore(doc);
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Error fetching PlatformPlan by ID: $planId',
         source: 'FranchiseSubscriptionService',
-        screen: 'plan_resolution_fallback',
         stack: stack.toString(),
         severity: 'error',
         contextData: {
@@ -475,11 +462,10 @@ class FranchiseSubscriptionService {
       debugPrint('[FranchiseSubscriptionService] Total plans: ${plans.length}');
       return plans;
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Error loading platform plans: $e',
         stack: stack.toString(),
         source: 'FranchiseSubscriptionService',
-        screen: 'getAllPlatformPlans',
         severity: 'error',
       );
       return [];
@@ -505,11 +491,10 @@ class FranchiseSubscriptionService {
       debugPrint('[FranchiseSubscriptionService] Parsed ${plans.length} plans');
       return plans;
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Error loading platform plans: $e',
         stack: stack.toString(),
         source: 'FranchiseSubscriptionService',
-        screen: 'getPlatformPlans',
         severity: 'error',
       );
       return [];

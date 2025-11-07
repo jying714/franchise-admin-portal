@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/feature_metadata.dart' show FeatureState;
-import '../models/feature_module.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import '../../core/utils/error_logger.dart';
 import 'package:flutter/material.dart';
 
 class FranchiseFeatureService {
@@ -36,7 +35,7 @@ class FranchiseFeatureService {
 
       return [];
     } catch (e, st) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'Failed to load granted features for franchise $franchiseId via query',
         stack: st.toString(),
@@ -50,11 +49,10 @@ class FranchiseFeatureService {
   /// 🔹 Load the feature metadata config for onboarding/use
   Future<FeatureState?> getFeatureMetadata(String franchiseId) async {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'getFeatureMetadata called with blank/unknown franchiseId',
         stack: '',
         source: 'franchise_feature_service.dart',
-        screen: 'franchise_feature_service.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -79,7 +77,7 @@ class FranchiseFeatureService {
 
       return featureState;
     } catch (e, st) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to get feature_metadata',
         stack: st.toString(),
         source: 'FranchiseFeatureService.getFeatureMetadata',
@@ -102,7 +100,7 @@ class FranchiseFeatureService {
       );
 
       if (errors.isNotEmpty) {
-        await ErrorLogger.log(
+        ErrorLogger.log(
           message: 'Invalid feature metadata attempted to be saved',
           severity: 'warning',
           source: 'FranchiseFeatureService.saveFeatureMetadata',
@@ -126,7 +124,7 @@ class FranchiseFeatureService {
 
       return true;
     } catch (e, st) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Exception while saving feature metadata',
         stack: st.toString(),
         source: 'FranchiseFeatureService.saveFeatureMetadata',
@@ -246,12 +244,11 @@ class FranchiseFeatureService {
           '[FranchiseFeatureService] liveSnapshotEnabled for $franchiseId: $enabled');
       return enabled;
     } catch (e, st) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to check liveSnapshotEnabled',
         stack: st.toString(),
         source: 'FranchiseFeatureService.isLiveSnapshotEnabled',
         severity: 'error',
-        screen: 'franchise_feature_service.dart',
         contextData: {'franchiseId': franchiseId},
       );
       return false;
@@ -261,11 +258,10 @@ class FranchiseFeatureService {
   /// 🔹 Toggle the liveSnapshotEnabled flag in Firestore
   Future<void> updateLiveSnapshotFlag(String franchiseId, bool enabled) async {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'updateLiveSnapshotFlag called with blank/unknown franchiseId',
         stack: '',
         source: 'FranchiseFeatureService.updateLiveSnapshotFlag',
-        screen: 'franchise_feature_service.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId, 'requestedValue': enabled},
       );
@@ -287,23 +283,21 @@ class FranchiseFeatureService {
       debugPrint(
           '[FranchiseFeatureService] liveSnapshotEnabled updated → $enabled for franchiseId=$franchiseId');
 
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'liveSnapshotEnabled flag updated',
         source: 'FranchiseFeatureService.updateLiveSnapshotFlag',
         severity: 'info',
-        screen: 'franchise_feature_service.dart',
         contextData: {
           'franchiseId': franchiseId,
           'newValue': enabled,
         },
       );
     } catch (e, st) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to update liveSnapshotEnabled flag',
         stack: st.toString(),
         source: 'FranchiseFeatureService.updateLiveSnapshotFlag',
         severity: 'error',
-        screen: 'franchise_feature_service.dart',
         contextData: {
           'franchiseId': franchiseId,
           'requestedValue': enabled,

@@ -30,10 +30,6 @@ class FeatureState {
 
       final liveSnapshotFlag = data['liveSnapshotEnabled'] ?? false;
 
-      debugPrint(
-        '[FeatureState] liveSnapshotEnabled loaded: $liveSnapshotFlag',
-      );
-
       return FeatureState(
         modules: parsedModules,
         liveSnapshotEnabled: liveSnapshotFlag,
@@ -43,8 +39,6 @@ class FeatureState {
         message: 'Failed to parse FeatureState',
         stack: st.toString(),
         source: 'FeatureState.fromMap',
-        severity: 'error',
-        screen: 'feature_metadata.dart',
         contextData: {'rawData': data},
       );
       rethrow;
@@ -63,8 +57,6 @@ class FeatureState {
         message: 'Failed to convert FeatureState toMap',
         stack: st.toString(),
         source: 'FeatureState.toMap',
-        severity: 'error',
-        screen: 'feature_metadata.dart',
         contextData: {
           'moduleCount': modules.length,
           'liveSnapshotEnabled': liveSnapshotEnabled,
@@ -74,7 +66,6 @@ class FeatureState {
     }
   }
 
-  /// Factory for creating directly from Firestore snapshot
   factory FeatureState.fromFirestore(DocumentSnapshot doc) {
     try {
       return FeatureState.fromMap(doc.data() as Map<String, dynamic>);
@@ -83,8 +74,6 @@ class FeatureState {
         message: 'Failed to parse FeatureState from Firestore',
         stack: st.toString(),
         source: 'FeatureState.fromFirestore',
-        severity: 'error',
-        screen: 'feature_metadata.dart',
         contextData: {'docId': doc.id},
       );
       rethrow;

@@ -2,9 +2,6 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:shared_core/src/core/services/firestore_service.dart';
 
@@ -36,38 +33,20 @@ class FranchiseeInvitation {
   });
 
   /// For localization of status and info.
-  String localizedStatus(BuildContext context) {
-    final loc = AppLocalizations.of(context);
-    if (loc == null) {
-      print(
-          '[FranchiseeInvitation] loc is null! Localization not available for this context.');
-      // Fallback to default English or raw status
-      switch (status) {
-        case 'pending':
-          return 'Pending';
-        case 'sent':
-          return 'Sent';
-        case 'accepted':
-          return 'Accepted';
-        case 'revoked':
-          return 'Revoked';
-        case 'expired':
-          return 'Expired';
-        default:
-          return status;
-      }
-    }
+  String localizedStatus() {
+    // No BuildContext or AppLocalizations in shared_core
+    // Return raw English string only
     switch (status) {
       case 'pending':
-        return loc.inviteStatusPending ?? 'Pending';
+        return 'Pending';
       case 'sent':
-        return loc.inviteStatusSent ?? 'Sent';
+        return 'Sent';
       case 'accepted':
-        return loc.inviteStatusAccepted ?? 'Accepted';
+        return 'Accepted';
       case 'revoked':
-        return loc.inviteStatusRevoked ?? 'Revoked';
+        return 'Revoked';
       case 'expired':
-        return loc.inviteStatusExpired ?? 'Expired';
+        return 'Expired';
       default:
         return status;
     }
@@ -113,7 +92,6 @@ class FranchiseeInvitation {
         stack: stack.toString(),
         severity: 'error',
         source: 'FranchiseeInvitation.fromDoc',
-        screen: 'FranchiseeInvitation',
         contextData: {'exception': e.toString(), 'docId': doc.id},
       );
       rethrow;
@@ -139,12 +117,11 @@ class FranchiseeInvitation {
     try {
       await firestoreService.invitationCollection.doc(id).set(toMap());
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to save FranchiseeInvitation',
         stack: stack.toString(),
         severity: 'error',
         source: 'FranchiseeInvitation.saveToFirestore',
-        screen: 'FranchiseeInvitation',
         contextData: {
           'exception': e.toString(),
           'inviteId': id,

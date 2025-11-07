@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/invoice.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import '../../core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/billing_summary_card.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -31,11 +31,10 @@ class InvoiceService {
           .doc(invoice.id)
           .set(invoice.toFirestore(), SetOptions(merge: true));
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'InvoiceService',
-        screen: 'addOrUpdateInvoice',
         severity: 'error',
         contextData: {'invoiceId': invoice.id},
       );
@@ -50,11 +49,10 @@ class InvoiceService {
       if (!doc.exists || doc.data() == null) return null;
       return Invoice.fromFirestore(doc.data()!, doc.id);
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'InvoiceService',
-        screen: 'getInvoiceById',
         severity: 'error',
         contextData: {'invoiceId': id},
       );
@@ -67,11 +65,10 @@ class InvoiceService {
     try {
       await _db.collection('invoices').doc(id).delete();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'InvoiceService',
-        screen: 'deleteInvoice',
         severity: 'error',
         contextData: {'invoiceId': id},
       );
@@ -127,11 +124,10 @@ class InvoiceService {
         'updated_at': FieldValue.serverTimestamp(),
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'InvoiceService',
-        screen: 'updateInvoiceDunningState',
         severity: 'error',
         contextData: {'invoiceId': invoiceId, 'dunningState': dunningState},
       );
@@ -148,11 +144,10 @@ class InvoiceService {
         'updated_at': FieldValue.serverTimestamp(),
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'InvoiceService',
-        screen: 'addInvoiceOverdueReminder',
         severity: 'error',
         contextData: {'invoiceId': invoiceId},
       );
@@ -169,11 +164,10 @@ class InvoiceService {
         'updated_at': FieldValue.serverTimestamp(),
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'InvoiceService',
-        screen: 'setInvoicePaymentPlan',
         severity: 'error',
         contextData: {'invoiceId': invoiceId},
       );
@@ -190,11 +184,10 @@ class InvoiceService {
         'updated_at': FieldValue.serverTimestamp(),
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'InvoiceService',
-        screen: 'addInvoiceEscalationEvent',
         severity: 'error',
         contextData: {'invoiceId': invoiceId},
       );
@@ -216,11 +209,10 @@ class InvoiceService {
         'escalation_history': data['escalation_history'],
       };
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'InvoiceService',
-        screen: 'getInvoiceWorkflowFields',
         severity: 'error',
         contextData: {'invoiceId': invoiceId},
       );
@@ -236,11 +228,10 @@ class InvoiceService {
         'updated_at': FieldValue.serverTimestamp(),
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'InvoiceService',
-        screen: 'removeInvoicePaymentPlan',
         severity: 'error',
         contextData: {'invoiceId': invoiceId},
       );
@@ -257,11 +248,10 @@ class InvoiceService {
         'updated_at': FieldValue.serverTimestamp(),
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'InvoiceService',
-        screen: 'addInvoiceSupportNote',
         severity: 'error',
         contextData: {'invoiceId': invoiceId},
       );
@@ -278,11 +268,10 @@ class InvoiceService {
         'updated_at': FieldValue.serverTimestamp(),
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'InvoiceService',
-        screen: 'addInvoiceAttachment',
         severity: 'error',
         contextData: {'invoiceId': invoiceId},
       );
@@ -379,11 +368,10 @@ class InvoiceService {
         return filePath;
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'downloadSummary failed: $e',
         stack: stack.toString(),
         source: 'InvoiceService',
-        screen: 'downloadSummary',
         severity: 'error',
         contextData: {'franchiseId': franchiseId},
       );
@@ -434,11 +422,10 @@ class InvoiceService {
         overdueAmount: overdueAmount,
       );
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'InvoiceService',
-        screen: 'fetchPlatformRevenueOverview',
         severity: 'error',
       );
       rethrow;
@@ -488,11 +475,10 @@ class InvoiceService {
         recentPayouts: recentPayouts,
       );
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'InvoiceService',
-        screen: 'fetchPlatformFinancialKpis',
         severity: 'error',
       );
       rethrow;

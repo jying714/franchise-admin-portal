@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 
 class OnboardingProgressProvider extends ChangeNotifier {
   final FirestoreService firestore;
@@ -27,11 +27,10 @@ class OnboardingProgressProvider extends ChangeNotifier {
     if (franchiseId.isEmpty) {
       print(
           '[ERROR][OnboardingProgressProvider] FranchiseId is empty! Skipping progress load.');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to load onboarding progress for empty franchiseId',
         stack: '',
         source: 'OnboardingProgressProvider',
-        screen: 'onboarding_menu_screen',
         severity: 'error',
         contextData: {'franchiseId': franchiseId},
       );
@@ -58,11 +57,10 @@ class OnboardingProgressProvider extends ChangeNotifier {
           step: data != null && data[step] == true
       };
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to load onboarding progress',
         stack: stack.toString(),
         source: 'OnboardingProgressProvider',
-        screen: 'onboarding_menu_screen',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -76,12 +74,11 @@ class OnboardingProgressProvider extends ChangeNotifier {
     if (franchiseId.isEmpty) {
       print(
           '[ERROR][OnboardingProgressProvider] Cannot mark step complete: franchiseId is empty!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'Failed to mark onboarding step "$stepKey" complete: franchiseId is empty',
         stack: '',
         source: 'OnboardingProgressProvider',
-        screen: 'onboarding_menu_screen',
         severity: 'error',
         contextData: {'franchiseId': franchiseId, 'stepKey': stepKey},
       );
@@ -96,11 +93,10 @@ class OnboardingProgressProvider extends ChangeNotifier {
       _stepStatus[stepKey] = true;
       notifyListeners();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to mark onboarding step "$stepKey" complete',
         stack: stack.toString(),
         source: 'OnboardingProgressProvider',
-        screen: 'onboarding_menu_screen',
         severity: 'error',
         contextData: {'franchiseId': franchiseId, 'stepKey': stepKey},
       );
@@ -111,12 +107,11 @@ class OnboardingProgressProvider extends ChangeNotifier {
     if (franchiseId.isEmpty) {
       print(
           '[ERROR][OnboardingProgressProvider] Cannot mark step incomplete: franchiseId is empty!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'Failed to mark onboarding step "$stepKey" incomplete: franchiseId is empty',
         stack: '',
         source: 'OnboardingProgressProvider',
-        screen: 'onboarding_menu_screen',
         severity: 'error',
         contextData: {'franchiseId': franchiseId, 'stepKey': stepKey},
       );
@@ -131,11 +126,10 @@ class OnboardingProgressProvider extends ChangeNotifier {
       _stepStatus[stepKey] = false;
       notifyListeners();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to mark onboarding step "$stepKey" incomplete',
         stack: stack.toString(),
         source: 'OnboardingProgressProvider',
-        screen: 'onboarding_menu_screen',
         severity: 'error',
         contextData: {'franchiseId': franchiseId, 'stepKey': stepKey},
       );

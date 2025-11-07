@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/feature_metadata.dart' show FeatureState;
 import '../models/feature_module.dart';
 import '../services/franchise_feature_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import '../models/onboarding_validation_issue.dart';
 
 class FranchiseFeatureProvider with ChangeNotifier {
@@ -40,16 +40,12 @@ class FranchiseFeatureProvider with ChangeNotifier {
   Future<void> loadLiveSnapshotFlag(String franchiseId) async {
     try {
       _liveSnapshotEnabled = await _service.isLiveSnapshotEnabled(franchiseId);
-      debugPrint(
-          '[FranchiseFeatureProvider] liveSnapshotEnabled set to $_liveSnapshotEnabled');
       notifyListeners();
     } catch (e, st) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to load liveSnapshotEnabled flag',
         stack: st.toString(),
         source: 'FranchiseFeatureProvider.loadLiveSnapshotFlag',
-        severity: 'error',
-        screen: 'franchise_feature_provider.dart',
         contextData: {'franchiseId': franchiseId},
       );
     }
@@ -57,9 +53,6 @@ class FranchiseFeatureProvider with ChangeNotifier {
 
   void setLiveSnapshotEnabled(bool value) {
     if (_featureMetadata.liveSnapshotEnabled == value) return;
-
-    debugPrint('[FranchiseFeatureProvider] liveSnapshotEnabled changing from '
-        '${_featureMetadata.liveSnapshotEnabled} → $value');
 
     // Update local state
     _featureMetadata = FeatureState(
@@ -70,15 +63,11 @@ class FranchiseFeatureProvider with ChangeNotifier {
     notifyListeners();
 
     // Persist to Firestore instantly
-    _service
-        .updateLiveSnapshotFlag(_franchiseId, value)
-        .catchError((e, st) async {
-      await ErrorLogger.log(
+    _service.updateLiveSnapshotFlag(_franchiseId, value).catchError((e, st) {
+      ErrorLogger.log(
         message: 'Failed to persist liveSnapshotEnabled change',
         stack: st.toString(),
         source: 'FranchiseFeatureProvider.setLiveSnapshotEnabled',
-        severity: 'error',
-        screen: 'franchise_feature_provider.dart',
         contextData: {
           'franchiseId': _franchiseId,
           'attemptedValue': value,
@@ -86,12 +75,10 @@ class FranchiseFeatureProvider with ChangeNotifier {
       );
     });
 
-    // Log to ErrorLogger for audit trail
+    // Log success for audit
     ErrorLogger.log(
       message: 'liveSnapshotEnabled flag updated locally and persisted',
       source: 'FranchiseFeatureProvider.setLiveSnapshotEnabled',
-      severity: 'info',
-      screen: 'franchise_feature_provider.dart',
       contextData: {
         'franchiseId': _franchiseId,
         'newValue': value,
@@ -283,11 +270,10 @@ class FranchiseFeatureProvider with ChangeNotifier {
       }
       // ...add more enabled-feature checks as needed
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'franchise_feature_validate_failed',
         stack: stack.toString(),
         source: 'FranchiseFeatureProvider.validate',
-        severity: 'error',
         contextData: {},
       );
     }

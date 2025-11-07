@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/franchise_subscription_model.dart';
 import '../models/platform_plan_model.dart';
 import '../services/franchise_subscription_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 
 class FranchiseSubscriptionNotifier extends ChangeNotifier {
   final FranchiseSubscriptionService _service;
@@ -92,12 +92,10 @@ class FranchiseSubscriptionNotifier extends ChangeNotifier {
             await resolveActivePlan();
           }
         } catch (e, stack) {
-          await ErrorLogger.log(
+          ErrorLogger.log(
             message: 'Fallback getCurrentSubscription failed: $e',
             stack: stack.toString(),
             source: 'FranchiseSubscriptionNotifier',
-            screen: 'subscription_logic',
-            severity: 'error',
             contextData: {'franchiseId': franchiseId},
           );
         }
@@ -143,12 +141,10 @@ class FranchiseSubscriptionNotifier extends ChangeNotifier {
             '[FranchiseSubscriptionNotifier] ✅ Resolved active plan: ${plan?.name}');
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch active platform plan: $e',
         stack: stack.toString(),
-        source: 'FranchiseSubscriptionNotifier',
-        screen: 'resolveActivePlan',
-        severity: 'warning',
+        source: 'FranchiseSubscriptionNotifier.resolveActivePlan',
         contextData: {'planId': planId},
       );
     } finally {

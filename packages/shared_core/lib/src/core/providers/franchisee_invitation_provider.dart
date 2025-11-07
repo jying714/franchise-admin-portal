@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import '../models/franchisee_invitation.dart';
-import 'package:franchise_admin_portal/widgets/financials/franchisee_invitation_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/services/franchisee_invitation_service.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
 /// Provider for Franchisee Invitations. Owns invitation state, exposes
@@ -44,11 +44,10 @@ class FranchiseeInvitationProvider with ChangeNotifier {
       notifyListeners();
     }, onError: (e, stack) async {
       _lastError = e.toString();
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Subscription error in FranchiseeInvitationProvider',
         stack: stack.toString(),
         source: 'FranchiseeInvitationProvider.subscribeInvitations',
-        screen: 'FranchiseeInvitation',
         contextData: {'exception': e.toString()},
       );
       notifyListeners();
@@ -123,12 +122,11 @@ class FranchiseeInvitationProvider with ChangeNotifier {
     } on FirebaseFunctionsException catch (e, stack) {
       // Optionally: handle different error codes/types
       // Use your error logger
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to send invitation',
         stack: stack.toString(),
         severity: 'error',
         source: 'FranchiseeInvitationProvider.sendInvitation',
-        screen: 'PlatformOwnerDashboardScreen',
         contextData: {
           'exception': e.toString(),
           'email': email,
@@ -169,11 +167,10 @@ class FranchiseeInvitationProvider with ChangeNotifier {
       return true;
     } catch (e, stack) {
       _lastError = e.toString();
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to invite franchisee',
         stack: stack.toString(),
         source: 'FranchiseeInvitationProvider.inviteFranchisee',
-        screen: 'FranchiseeInvitation',
         contextData: {
           'email': email,
           'role': role,
@@ -198,11 +195,10 @@ class FranchiseeInvitationProvider with ChangeNotifier {
       return true;
     } catch (e, stack) {
       _lastError = e.toString();
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to update invitation',
         stack: stack.toString(),
         source: 'FranchiseeInvitationProvider.updateInvitation',
-        screen: 'FranchiseeInvitation',
         contextData: {'id': id, 'data': data, 'exception': e.toString()},
       );
       _loading = false;
@@ -223,11 +219,10 @@ class FranchiseeInvitationProvider with ChangeNotifier {
       return true;
     } catch (e, stack) {
       _lastError = e.toString();
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to cancel invitation',
         stack: stack.toString(),
         source: 'FranchiseeInvitationProvider.cancelInvitation',
-        screen: 'FranchiseeInvitation',
         contextData: {'id': id, 'exception': e.toString()},
       );
       _loading = false;
@@ -248,11 +243,10 @@ class FranchiseeInvitationProvider with ChangeNotifier {
       return true;
     } catch (e, stack) {
       _lastError = e.toString();
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to delete invitation',
         stack: stack.toString(),
         source: 'FranchiseeInvitationProvider.deleteInvitation',
-        screen: 'FranchiseeInvitation',
         contextData: {'id': id, 'exception': e.toString()},
       );
       _loading = false;
@@ -273,11 +267,10 @@ class FranchiseeInvitationProvider with ChangeNotifier {
       return true;
     } catch (e, stack) {
       _lastError = e.toString();
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to expire invitation',
         stack: stack.toString(),
         source: 'FranchiseeInvitationProvider.expireInvitation',
-        screen: 'FranchiseeInvitation',
         contextData: {'id': id, 'exception': e.toString()},
       );
       _loading = false;
@@ -298,11 +291,10 @@ class FranchiseeInvitationProvider with ChangeNotifier {
       return true;
     } catch (e, stack) {
       _lastError = e.toString();
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to mark invitation as re-sent',
         stack: stack.toString(),
         source: 'FranchiseeInvitationProvider.markInvitationResent',
-        screen: 'FranchiseeInvitation',
         contextData: {'id': id, 'exception': e.toString()},
       );
       _loading = false;

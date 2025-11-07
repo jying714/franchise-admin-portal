@@ -8,7 +8,7 @@ import 'package:shared_core/src/core/providers/onboarding_progress_provider.dart
 import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:shared_core/src/core/utils/features/feature_guard.dart';
-import 'package:shared_core/src/core/utils/features/feature_gate_banner.dart';
+import 'package:franchise_admin_portal/core/utils/features/feature_gate_banner.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_editor_sheet.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_items_list_tile.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_json_import_export_dialog.dart';
@@ -576,5 +576,3 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     );
   }
 }
-
-

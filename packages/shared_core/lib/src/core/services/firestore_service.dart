@@ -5,7 +5,7 @@ import 'dart:collection';
 import '../models/customization.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'package:franchise_admin_portal/config/app_config.dart';
+import 'package:shared_core/src/core/config/app_config.dart';
 import '../models/message.dart';
 import '../models/category.dart' as model;
 import '../models/menu_item.dart';
@@ -16,7 +16,7 @@ import '../models/feedback_entry.dart' as feedback_model;
 import '../models/inventory.dart';
 import '../models/audit_log.dart';
 import 'audit_log_service.dart';
-import 'package:franchise_admin_portal/core/utils/export_utils.dart';
+import '../../core/utils/export_utils.dart';
 import '../models/analytics_summary.dart';
 import 'package:async/async.dart';
 import '../models/user.dart' as app_user;
@@ -27,7 +27,7 @@ import '../models/payout.dart';
 import '../models/report.dart';
 import '../models/invoice.dart';
 import '../models/bank_account.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import '../../core/utils/error_logger.dart';
 import '../models/franchisee_invitation.dart';
 import 'payout_service.dart';
 import '../models/platform_revenue_overview.dart';
@@ -38,7 +38,6 @@ import 'package:flutter/foundation.dart';
 import '../models/platform_plan_model.dart';
 import '../models/franchise_subscription_model.dart';
 import '../models/ingredient_type_model.dart';
-import 'package:franchise_admin_portal/widgets/developer/error_logs_section.dart';
 import 'dart:convert';
 import '../models/size_template.dart';
 import '../models/menu_template_ref.dart';
@@ -234,11 +233,10 @@ class FirestoreService {
       return franchiseId;
     } catch (e, st) {
       print('[FirestoreService] createFranchiseProfile error: $e\n$st');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to create franchise profile: $e',
         stack: st.toString(),
         source: 'FirestoreService',
-        screen: 'createFranchiseProfile',
         severity: 'error',
       );
       rethrow;
@@ -312,12 +310,11 @@ class FirestoreService {
           .doc(franchiseId)
           .set({'hours': hours}, firestore.SetOptions(merge: true));
     } catch (e, st) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to save business hours: $e',
         stack: st.toString(),
         source: 'FirestoreService',
         severity: 'error',
-        screen: 'business_hours_editor',
         contextData: {'franchiseId': franchiseId, 'hours': hours},
       );
       rethrow;
@@ -333,12 +330,11 @@ class FirestoreService {
       final List<dynamic> raw = doc.data()?['hours'] ?? [];
       return raw.map((e) => Map<String, dynamic>.from(e)).toList();
     } catch (e, st) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to load business hours: $e',
         stack: st.toString(),
         source: 'FirestoreService',
         severity: 'error',
-        screen: 'business_hours_editor',
         contextData: {'franchiseId': franchiseId},
       );
       return [];
@@ -382,11 +378,10 @@ class FirestoreService {
           .doc(userId)
           .set(data, firestore.SetOptions(merge: true));
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to update user profile: $e',
         stack: stack.toString(),
         source: 'FirestoreService',
-        screen: 'updateUserProfile',
         severity: 'error',
         contextData: {'userId': userId, ...?data},
       );
@@ -471,11 +466,10 @@ class FirestoreService {
         return app_user.User.fromFirestore(data, doc.id);
       }).toList();
     } catch (e, st) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch all users: $e',
         stack: st.toString(),
         source: 'FirestoreService',
-        screen: 'getAllUsers',
         severity: 'error',
       );
       return [];
@@ -861,7 +855,6 @@ class FirestoreService {
             timestamp: tsRaw.toDate(),
             message: data['message'] ?? '[No message]',
             severity: data['severity'] ?? 'unknown',
-            screen: data['screen'] ?? 'unknown',
             franchiseId: _extractFranchiseId(data['franchiseId']),
           );
         })
@@ -968,7 +961,7 @@ class FirestoreService {
     String? stackTrace,
     String? userId,
   }) async {
-    await ErrorLogger.log(
+    ErrorLogger.log(
       message: message,
       stack: stackTrace,
       source: 'customization_template_resolution',
@@ -1613,11 +1606,10 @@ class FirestoreService {
         'lastInvoiceDate': lastInvoiceDate,
       };
     } catch (e, stackTrace) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: e.toString(),
         stack: stackTrace.toString(),
         source: 'FirestoreService',
-        screen: 'getInvoiceStatsForFranchise',
         severity: 'error',
       );
       rethrow;
@@ -2246,10 +2238,9 @@ class FirestoreService {
       );
     } catch (e, stack) {
       // 🔥 ErrorLogger integration
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to delete menu item',
         source: 'FirestoreService',
-        screen: 'firestore_service.dart',
         severity: 'error',
         stack: stack.toString(),
         contextData: {
@@ -2370,10 +2361,9 @@ class FirestoreService {
       // Optional: Add future audit logging here if needed
       // await AuditLogService().addLog(...);
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to delete category',
         source: 'FirestoreService',
-        screen: 'firestore_service.dart',
         severity: 'error',
         stack: stack.toString(),
         contextData: {
@@ -2560,10 +2550,9 @@ class FirestoreService {
               ))
           .toList();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch menu items',
         source: 'FirestoreService',
-        screen: 'menu_item_provider.dart',
         severity: 'error',
         stack: stack.toString(),
         contextData: {'franchiseId': franchiseId},
@@ -2775,11 +2764,10 @@ class FirestoreService {
         'failed': failed,
       };
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'getPayoutStatsForFranchise failed: $e',
         stack: stack.toString(),
         source: 'FirestoreService',
-        screen: 'getPayoutStatsForFranchise',
         severity: 'error',
         contextData: {'franchiseId': franchiseId},
       );
@@ -3157,11 +3145,10 @@ class FirestoreService {
       final snap = await query.orderBy('createdAt', descending: true).get();
       return snap.docs.map((doc) => FranchiseeInvitation.fromDoc(doc)).toList();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch invitations',
         stack: stack.toString(),
         source: 'FirestoreService.fetchInvitations',
-        screen: 'FranchiseeInvitation',
         contextData: {
           'exception': e.toString(),
         },
@@ -3194,11 +3181,10 @@ class FirestoreService {
       if (!doc.exists) return null;
       return FranchiseeInvitation.fromDoc(doc);
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch invitation by id',
         stack: stack.toString(),
         source: 'FirestoreService.fetchInvitationById',
-        screen: 'FranchiseeInvitation',
         contextData: {'exception': e.toString(), 'id': id},
       );
       rethrow;
@@ -3210,11 +3196,10 @@ class FirestoreService {
     try {
       await invitationCollection.doc(id).update(data);
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to update invitation',
         stack: stack.toString(),
         source: 'FirestoreService.updateInvitation',
-        screen: 'FranchiseeInvitation',
         contextData: {'exception': e.toString(), 'id': id, 'data': data},
       );
       rethrow;
@@ -3230,11 +3215,10 @@ class FirestoreService {
         'revokedAt': firestore.Timestamp.now(),
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to cancel/revoke invitation',
         stack: stack.toString(),
         source: 'FirestoreService.cancelInvitation',
-        screen: 'FranchiseeInvitation',
         contextData: {
           'exception': e.toString(),
           'id': id,
@@ -3250,11 +3234,10 @@ class FirestoreService {
     try {
       await invitationCollection.doc(id).delete();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to delete invitation',
         stack: stack.toString(),
         source: 'FirestoreService.deleteInvitation',
-        screen: 'FranchiseeInvitation',
         contextData: {'exception': e.toString(), 'id': id},
       );
       rethrow;
@@ -3269,11 +3252,10 @@ class FirestoreService {
         'expiredAt': firestore.Timestamp.now(),
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to expire invitation',
         stack: stack.toString(),
         source: 'FirestoreService.expireInvitation',
-        screen: 'FranchiseeInvitation',
         contextData: {'exception': e.toString(), 'id': id},
       );
       rethrow;
@@ -3288,11 +3270,10 @@ class FirestoreService {
         'lastSentAt': firestore.Timestamp.now(),
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to mark invitation as resent',
         stack: stack.toString(),
         source: 'FirestoreService.markInvitationResent',
-        screen: 'FranchiseeInvitation',
         contextData: {'exception': e.toString(), 'id': id},
       );
       rethrow;
@@ -3344,11 +3325,10 @@ class FirestoreService {
         overdueAmount: overdueAmount,
       );
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'FirestoreService',
-        screen: 'fetchPlatformRevenueOverview',
         severity: 'error',
       );
       rethrow;
@@ -3393,11 +3373,10 @@ class FirestoreService {
         recentPayouts: recentPayouts,
       );
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'FirestoreService',
-        screen: 'fetchPlatformFinancialKpis',
         severity: 'error',
       );
       rethrow;
@@ -3434,7 +3413,6 @@ class FirestoreService {
                   message: 'Failed to parse PlatformInvoice from Firestore: $e',
                   stack: stack.toString(),
                   source: 'FirestoreService',
-                  screen: 'platformInvoicesStream',
                   contextData: {'docId': doc.id},
                 );
                 return null;
@@ -3448,7 +3426,6 @@ class FirestoreService {
         message: 'Exception in platformInvoicesStream: $e',
         stack: stack.toString(),
         source: 'FirestoreService',
-        screen: 'platformInvoicesStream',
         contextData: {'franchiseeId': franchiseeId, 'status': status},
       );
       return const Stream.empty();
@@ -3479,7 +3456,6 @@ class FirestoreService {
                 message: 'Failed to parse invoice doc: $e',
                 stack: stack.toString(),
                 source: 'FirestoreService.getPlatformInvoicesForUser',
-                screen: 'universal_profile_screen',
                 contextData: {'invoiceId': doc.id},
               );
               return null;
@@ -3493,11 +3469,10 @@ class FirestoreService {
       return invoices;
     } catch (e, stack) {
       debugPrint('[FirestoreService] ERROR in getPlatformInvoicesForUser: $e');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to load platform invoices: $e',
         stack: stack.toString(),
         source: 'FirestoreService.getPlatformInvoicesForUser',
-        screen: 'universal_profile_screen',
         severity: 'error',
         contextData: {'userId': userId},
       );
@@ -3526,11 +3501,10 @@ class FirestoreService {
       return result;
     } catch (e, stack) {
       debugPrint('[FirestoreService] ERROR in getPlatformPaymentsForUser: $e');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to load platform payments: $e',
         stack: stack.toString(),
         source: 'FirestoreService',
-        screen: 'getPlatformPaymentsForUser',
         severity: 'error',
         contextData: {'userId': userId},
       );
@@ -3552,11 +3526,10 @@ class FirestoreService {
 
       print('[FirestoreService] Invoice $invoiceId saved from webhook.');
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to save platform invoice from webhook: $e',
         stack: stack.toString(),
         source: 'FirestoreService',
-        screen: 'webhook_invoice_handler',
         severity: 'error',
         contextData: {
           'invoiceId': invoiceId,
@@ -3580,11 +3553,10 @@ class FirestoreService {
           .map((doc) => PlatformInvoice.fromMap(doc.id, doc.data()))
           .toList();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch platform invoices for $franchiseeId: $e',
         stack: stack.toString(),
         source: 'FirestoreService.getPlatformInvoicesForFranchisee',
-        screen: 'universal_profile_screen',
       );
       return [];
     }
@@ -3597,11 +3569,10 @@ class FirestoreService {
           .doc(invoice.id)
           .set(invoice.toMap());
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to create platform invoice ${invoice.id}: $e',
         stack: stack.toString(),
         source: 'FirestoreService.createPlatformInvoice',
-        screen: 'invoice_admin',
       );
     }
   }
@@ -3614,12 +3585,11 @@ class FirestoreService {
           .doc(invoiceId)
           .update({'status': newStatus});
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'Failed to update invoice status ($invoiceId -> $newStatus): $e',
         stack: stack.toString(),
         source: 'FirestoreService.updatePlatformInvoiceStatus',
-        screen: 'invoice_admin',
       );
     }
   }
@@ -3637,11 +3607,10 @@ class FirestoreService {
           .map((doc) => PlatformPayment.fromMap(doc.id, doc.data()))
           .toList();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch platform payments for $franchiseeId: $e',
         stack: stack.toString(),
         source: 'FirestoreService.getPlatformPaymentsForFranchisee',
-        screen: 'universal_profile_screen',
       );
       return [];
     }
@@ -3654,11 +3623,10 @@ class FirestoreService {
           .doc(payment.id)
           .set(payment.toMap());
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to create platform payment ${payment.id}: $e',
         stack: stack.toString(),
         source: 'FirestoreService.createPlatformPayment',
-        screen: 'developer_tools',
       );
     }
   }
@@ -3670,11 +3638,10 @@ class FirestoreService {
           .doc(paymentId)
           .update({'status': 'completed'});
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to mark platform payment $paymentId as completed: $e',
         stack: stack.toString(),
         source: 'FirestoreService.markPlatformPaymentCompleted',
-        screen: 'payment_processing',
       );
     }
   }
@@ -3687,12 +3654,11 @@ class FirestoreService {
           .doc(paymentId)
           .update({'status': newStatus});
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'Failed to update platform payment status ($paymentId -> $newStatus): $e',
         stack: stack.toString(),
         source: 'FirestoreService.updatePlatformPaymentStatus',
-        screen: 'payment_admin',
       );
     }
   }
@@ -3705,11 +3671,10 @@ class FirestoreService {
         'lastPaymentMethod': method, // 👈 optional field
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to mark invoice paid: $e',
         stack: stack.toString(),
         source: 'markPlatformInvoicePaid',
-        screen: 'pay_invoice_dialog',
       );
       rethrow;
     }
@@ -3725,11 +3690,10 @@ class FirestoreService {
           .map((doc) => FranchiseSubscription.fromMap(doc.id, doc.data()))
           .toList();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch franchise subscriptions',
         stack: stack.toString(),
         source: 'FirestoreService',
-        screen: 'firestore_service.dart',
         severity: 'error',
         contextData: {
           'exception': e.toString(),
@@ -3750,22 +3714,20 @@ class FirestoreService {
       if (doc.exists && doc.data() != null) {
         return FranchiseSubscription.fromMap(doc.id, doc.data()!);
       } else {
-        await ErrorLogger.log(
+        ErrorLogger.log(
           message: 'No subscription found for franchiseId: $franchiseId',
           stack: '',
           source: 'FirestoreService',
-          screen: 'firestore_service.dart',
           severity: 'warning',
           contextData: {'franchiseId': franchiseId},
         );
         return null;
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Error fetching franchise subscription',
         stack: stack.toString(),
         source: 'FirestoreService',
-        screen: 'firestore_service.dart',
         severity: 'error',
         contextData: {
           'franchiseId': franchiseId,
@@ -3798,10 +3760,9 @@ class FirestoreService {
       debugPrint('[FirestoreService] Active subscription found: ${doc.id}');
       return FranchiseSubscription.fromMap(doc.id, doc.data());
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to load current subscription: $e',
         source: 'FirestoreService',
-        screen: 'getCurrentSubscriptionForFranchise',
         severity: 'error',
         stack: stack.toString(),
         contextData: {'franchiseId': franchiseId},
@@ -3824,10 +3785,9 @@ class FirestoreService {
       debugPrint('[FirestoreService] Retrieved ${list.length} subscriptions.');
       return list;
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch all franchise subscriptions: $e',
         source: 'FirestoreService',
-        screen: 'getAllFranchiseSubscriptions',
         severity: 'error',
         stack: stack.toString(),
       );
@@ -3858,10 +3818,9 @@ class FirestoreService {
     try {
       final doc = await _db.collection('franchises').doc(franchiseId).get();
       if (!doc.exists) {
-        await ErrorLogger.log(
+        ErrorLogger.log(
           message: 'Franchise document not found: $franchiseId',
           source: 'FirestoreService.getFranchiseInfo',
-          screen: 'onboarding_menu_screen',
           severity: 'warning',
           contextData: {'franchiseId': franchiseId},
         );
@@ -3869,11 +3828,10 @@ class FirestoreService {
       }
       return FranchiseInfo.fromMap(doc.data()!, franchiseId);
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch franchise info: $e',
         stack: stack.toString(),
         source: 'FirestoreService.getFranchiseInfo',
-        screen: 'onboarding_menu_screen',
         severity: 'error',
         contextData: {'franchiseId': franchiseId},
       );
@@ -3893,11 +3851,10 @@ class FirestoreService {
       if (!doc.exists) return null;
       return doc.data();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch onboarding progress for $franchiseId',
         stack: stack.toString(),
         source: 'FirestoreService.getOnboardingProgress',
-        screen: 'onboarding_menu_screen',
         severity: 'error',
         contextData: {'franchiseId': franchiseId},
       );
@@ -3925,11 +3882,10 @@ class FirestoreService {
         }, firestore.SetOptions(merge: true));
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to update onboarding step "$stepKey"',
         stack: stack.toString(),
         source: 'FirestoreService.updateOnboardingStep',
-        screen: 'onboarding_menu_screen',
         severity: 'error',
         contextData: {
           'franchiseId': franchiseId,
@@ -3954,7 +3910,7 @@ class FirestoreService {
         'status': 'active',
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to set onboarding complete for franchise',
         stack: stack.toString(),
         source: 'FirestoreService.setOnboardingComplete',
@@ -4027,11 +3983,10 @@ class FirestoreService {
       debugPrint(
           '[FirestoreService] Simulated webhook event "$eventType" for invoice $invoiceId');
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to simulate webhook event: $e',
         stack: stack.toString(),
         source: 'FirestoreService.simulateWebhookEvent',
-        screen: 'admin_webhook_simulator',
         contextData: {
           'invoiceId': invoiceId,
           'eventType': eventType,
@@ -4060,11 +4015,10 @@ class FirestoreService {
           .map((doc) => PlatformInvoice.fromMap(doc.id, doc.data()))
           .toList();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch test invoices: $e',
         stack: stack.toString(),
         source: 'FirestoreService.getTestPlatformInvoices',
-        screen: 'admin_webhook_simulator',
       );
       return [];
     }
@@ -4111,11 +4065,10 @@ class FirestoreService {
 
       await batch.commit();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'copyIngredientTypesFromTemplate failed',
         stack: stack.toString(),
         severity: 'error',
-        screen: 'ingredient_type_management_screen',
         source: 'FirestoreService.copyIngredientTypesFromTemplate',
         contextData: {
           'franchiseId': franchiseId,
@@ -4156,7 +4109,7 @@ class FirestoreService {
 
       await batch.commit();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to update ingredient type sort orders',
         stack: stack.toString(),
         severity: 'error',
@@ -4197,10 +4150,9 @@ class FirestoreService {
 
       await batch.commit();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to replace ingredient types from JSON',
         source: 'FirestoreService',
-        screen: 'ingredient_type_management_screen',
         severity: 'error',
         stack: stack.toString(),
         contextData: {
@@ -4225,7 +4177,7 @@ class FirestoreService {
           .map((doc) => IngredientMetadata.fromMap(doc.data()))
           .toList();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'ingredient_metadata_template_load_error',
         source: 'FirestoreService',
         stack: stack.toString(),
@@ -4253,10 +4205,9 @@ class FirestoreService {
 
       await batch.commit();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'importIngredientMetadataTemplate_failed',
         source: 'FirestoreService',
-        screen: 'firestore_service.dart',
         severity: 'error',
         stack: stack.toString(),
         contextData: {
@@ -4273,12 +4224,11 @@ class FirestoreService {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[ERROR][fetchIngredientMetadata] Called with empty/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'fetchIngredientMetadata called with blank/unknown franchiseId',
         stack: '',
         source: 'FirestoreService',
-        screen: 'firestore_service.dart',
         severity: 'error',
         contextData: {'franchiseId': franchiseId},
       );
@@ -4295,11 +4245,10 @@ class FirestoreService {
           .map((doc) => IngredientMetadata.fromMap(doc.data()))
           .toList();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'fetchIngredientMetadata failed',
         stack: stack.toString(),
         source: 'FirestoreService',
-        screen: 'firestore_service.dart',
         severity: 'error',
         contextData: {'franchiseId': franchiseId},
       );
@@ -4333,10 +4282,9 @@ class FirestoreService {
           .map((doc) => model.Category.fromFirestore(doc.data(), doc.id))
           .toList();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch categories',
         source: 'FirestoreService',
-        screen: 'firestore_service.dart',
         severity: 'error',
         stack: stack.toString(),
         contextData: {'franchiseId': franchiseId},
@@ -4355,10 +4303,9 @@ class FirestoreService {
           .doc(category.id)
           .set(category.toFirestore());
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to save category',
         source: 'FirestoreService',
-        screen: 'firestore_service.dart',
         severity: 'error',
         stack: stack.toString(),
         contextData: {
@@ -4392,10 +4339,9 @@ class FirestoreService {
 
       await batch.commit();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to bulk replace categories',
         source: 'FirestoreService',
-        screen: 'firestore_service.dart',
         severity: 'error',
         stack: stack.toString(),
         contextData: {
@@ -4421,10 +4367,9 @@ class FirestoreService {
 
       await batch.commit();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to batch save categories',
         source: 'FirestoreService',
-        screen: 'firestore_service.dart',
         severity: 'error',
         stack: stack.toString(),
         contextData: {
@@ -4450,10 +4395,9 @@ class FirestoreService {
         return MenuItem.fromFirestore(doc.data(), doc.id);
       }).toList();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch menu items',
         source: 'FirestoreService',
-        screen: 'firestore_service.dart',
         severity: 'error',
         stack: stack.toString(),
         contextData: {'franchiseId': franchiseId},
@@ -4473,10 +4417,9 @@ class FirestoreService {
 
         // 🚨 Skip if item.id is null or empty
         if (item.id.isEmpty) {
-          await ErrorLogger.log(
+          ErrorLogger.log(
             message: 'MenuItem missing ID, skipping save',
             source: 'FirestoreService',
-            screen: 'firestore_service.dart',
             severity: 'warning',
             contextData: {
               'index': i,
@@ -4494,10 +4437,9 @@ class FirestoreService {
 
       await batch.commit();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to batch save menu items',
         source: 'FirestoreService',
-        screen: 'firestore_service.dart',
         severity: 'error',
         stack: stack.toString(),
         contextData: {'franchiseId': franchiseId, 'itemCount': items.length},
@@ -4521,10 +4463,9 @@ class FirestoreService {
 
       await batch.commit();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to reorder menu items',
         source: 'FirestoreService',
-        screen: 'firestore_service.dart',
         severity: 'warning',
         stack: stack.toString(),
         contextData: {
@@ -4553,10 +4494,9 @@ class FirestoreService {
           .map((doc) => MenuTemplateRef.fromFirestore(doc.data()))
           .toList();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch menu template refs',
         source: 'FirestoreService',
-        screen: 'firestore_service.dart',
         severity: 'error',
         stack: stack.toString(),
         contextData: {
@@ -4576,7 +4516,7 @@ class FirestoreService {
 
       return List<Map<String, dynamic>>.from(parsed);
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to decode JSON input for feature/plans import',
         severity: 'error',
         stack: stack.toString(),
@@ -4616,10 +4556,9 @@ class FirestoreService {
           .map((doc) => IngredientType.fromFirestore(doc))
           .toList();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch ingredient types',
         source: 'IngredientTypeService',
-        screen: 'onboarding_ingredients_screen',
         severity: 'error',
         stack: stack.toString(),
         contextData: {'franchiseId': franchiseId},
@@ -4658,7 +4597,6 @@ extension IngredientOnboardingMethods on FirestoreService {
       ErrorLogger.log(
         message: 'Failed to stream ingredients: $e',
         source: 'FirestoreService',
-        screen: 'IngredientOnboarding',
         severity: 'error',
         stack: stack.toString(),
         contextData: {'franchiseId': franchiseId},
@@ -4682,10 +4620,9 @@ extension IngredientOnboardingMethods on FirestoreService {
 
       await docRef.set(ingredient.toMap(), firestore.SetOptions(merge: true));
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to save ingredient: $e',
         source: 'FirestoreService',
-        screen: 'IngredientOnboarding',
         severity: 'error',
         stack: stack.toString(),
         contextData: {
@@ -4712,10 +4649,9 @@ extension IngredientOnboardingMethods on FirestoreService {
 
       await docRef.delete();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to delete ingredient: $e',
         source: 'FirestoreService',
-        screen: 'IngredientOnboarding',
         severity: 'error',
         stack: stack.toString(),
         contextData: {
@@ -4741,11 +4677,10 @@ extension IngredientOnboardingMethods on FirestoreService {
 
       await docRef.set(ingredient.toMap(), firestore.SetOptions(merge: true));
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to create/update ingredient metadata',
         stack: stack.toString(),
         source: 'FirestoreService',
-        screen: 'ingredient_onboarding',
         severity: 'error',
         contextData: {
           'franchiseId': franchiseId,
@@ -4772,10 +4707,9 @@ extension IngredientOnboardingMethods on FirestoreService {
           .map((doc) => IngredientType.fromFirestore(doc))
           .toList();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to fetch ingredient types',
         source: 'IngredientTypeService',
-        screen: 'onboarding_ingredients_screen',
         severity: 'error',
         stack: stack.toString(),
         contextData: {'franchiseId': franchiseId},
@@ -4794,10 +4728,9 @@ extension IngredientOnboardingMethods on FirestoreService {
           .collection('ingredient_types')
           .add(type.toMap());
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to add ingredient type',
         source: 'IngredientTypeService',
-        screen: 'onboarding_ingredients_screen',
         severity: 'error',
         stack: stack.toString(),
         contextData: {
@@ -4820,10 +4753,9 @@ extension IngredientOnboardingMethods on FirestoreService {
           .doc(typeId)
           .update(data);
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to update ingredient type',
         source: 'IngredientTypeService',
-        screen: 'onboarding_ingredients_screen',
         severity: 'error',
         stack: stack.toString(),
         contextData: {

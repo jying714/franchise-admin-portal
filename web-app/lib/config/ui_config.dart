@@ -1,6 +1,7 @@
 // web_app/lib/core/config/ui_config.dart
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/core/config/app_config.dart';
+import 'package:intl/intl.dart';
 
 class UiConfig {
   // App-specific singleton instance bridging to shared_core
@@ -34,4 +35,10 @@ class UiConfig {
     final value = int.parse('FF$hex', radix: 16);
     return Color(value);
   }
+
+  static String formatDueDate(DateTime? date) =>
+      date != null ? DateFormat.yMMMd().format(date) : '';
+
+  static String formatTotal(double amount, String currency) =>
+      NumberFormat.simpleCurrency(name: currency).format(amount);
 }

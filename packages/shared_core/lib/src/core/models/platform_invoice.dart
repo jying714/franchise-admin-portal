@@ -1,99 +1,42 @@
-// lib/models/platform_invoice.dart
+// lib/src/core/models/platform_invoice.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 
 /// A production-grade model representing an invoice issued by the platform
 /// to a franchisee (e.g. SaaS fees, royalties, services).
 class PlatformInvoice {
-  /// Document ID
   final String id;
-
-  /// ID of the franchisee receiving the invoice
   final String franchiseeId;
-
-  /// Optional: associated store (for franchisees with multiple locations)
   final String? franchiseLocationId;
-
-  /// Human-readable invoice number
   final String invoiceNumber;
-
-  /// Total amount due
   final double amount;
-
-  /// ISO currency (e.g. 'USD')
   final String currency;
-
-  /// Date the invoice was created
   final DateTime createdAt;
-
-  /// Date the invoice is due
   final DateTime dueDate;
-
-  /// Invoice status
-  /// 'unpaid', 'paid', 'overdue', 'partial'
   final String status;
-
-  /// Optional list of payment IDs made toward this invoice
   final List<String> paymentIds;
-
-  /// Optional metadata describing charges
   final Map<String, dynamic>? lineItems;
-
-  /// Optional note for context (e.g. "September Royalty Fee")
   final String? note;
-
-  /// Optional URL to downloadable PDF
   final String? pdfUrl;
-
-  /// Origin tag
-  final String issuedBy; // 'platform'
-
-  /// If this invoice is for a specific billing plan
+  final String issuedBy;
   final String? planId;
-
-  /// Optional breakdown of taxes/fees
   final Map<String, dynamic>? taxBreakdown;
-
-  /// Optional sandbox/test invoice flag
   final bool isTest;
+  final String? subscriptionId;
+  final DateTime? paidAt;
+  final String? externalInvoiceId;
+  final String? paymentProvider;
+  final String? paymentMethod;
+  final List<Map<String, dynamic>>? paymentAttempts;
+  final String? lastAttemptStatus;
+  final String? receiptUrl;
 
-  /// True if the invoice has been marked paid
   bool get isPaid => status.toLowerCase() == 'paid';
-
-  /// True if the invoice is unpaid and past the due date
   bool get isOverdue =>
       status.toLowerCase() == 'unpaid' && dueDate.isBefore(DateTime.now());
-
-  /// True if invoice is partially paid
   bool get isPartial => status.toLowerCase() == 'partial';
-
-  /// True if invoice is unpaid (not paid or partial)
   bool get isUnpaid => status.toLowerCase() == 'unpaid';
-
-  /// Optional: Associated subscription (for recurring invoices)
-  final String? subscriptionId;
-
-  /// Timestamp when the invoice was paid (for audit / reconciliation)
-  final DateTime? paidAt;
-
-  /// Optional: External payment processor ID (e.g., Stripe invoice ID)
-  final String? externalInvoiceId;
-
-  /// Optional: External payment provider name (e.g., 'stripe')
-  final String? paymentProvider;
-
-  /// Optional: Method used (e.g. 'card', 'ach')
-  final String? paymentMethod;
-
-  /// Optional log of payment attempts with metadata
-  final List<Map<String, dynamic>>? paymentAttempts;
-
-  /// Last known status of payment attempt
-  final String? lastAttemptStatus;
-
-  /// Optional public receipt URL (if available from provider)
-  final String? receiptUrl;
 
   PlatformInvoice({
     required this.id,
@@ -123,7 +66,6 @@ class PlatformInvoice {
     this.receiptUrl,
   });
 
-  /// Deserializes from Firestore document
   factory PlatformInvoice.fromMap(String id, Map<String, dynamic> data) {
     try {
       return PlatformInvoice(
@@ -164,13 +106,12 @@ class PlatformInvoice {
         message: 'Failed to parse PlatformInvoice: $e',
         stack: stack.toString(),
         source: 'platform_invoice.fromMap',
-        screen: 'platform_invoice',
+        contextData: {'docId': id, 'error': e.toString()},
       );
       rethrow;
     }
   }
 
-  /// Converts to Firestore map
   Map<String, dynamic> toMap() {
     return {
       'franchiseeId': franchiseeId,
@@ -219,7 +160,6 @@ class PlatformInvoice {
     };
   }
 
-  /// Parses invoice data from a Stripe invoice webhook payload.
   factory PlatformInvoice.fromStripeWebhook(
     Map<String, dynamic> eventData,
     String invoiceId,
@@ -230,7 +170,7 @@ class PlatformInvoice {
       id: invoiceId,
       franchiseeId: invoice['metadata']['franchiseeId'] ?? '',
       invoiceNumber: invoice['number'] ?? invoiceId,
-      amount: (invoice['amount_due'] ?? 0) / 100, // Stripe uses cents
+      amount: (invoice['amount_due'] ?? 0) / 100,
       currency: invoice['currency']?.toUpperCase() ?? 'USD',
       createdAt: DateTime.fromMillisecondsSinceEpoch(invoice['created'] * 1000),
       dueDate: invoice['due_date'] != null
@@ -248,8 +188,7 @@ class PlatformInvoice {
           : null,
       note: invoice['description'],
       pdfUrl: invoice['invoice_pdf'],
-      receiptUrl:
-          invoice['hosted_invoice_url'], // This is Stripe’s receipt page
+      receiptUrl: invoice['hosted_invoice_url'],
       planId: invoice['metadata']['planId'],
       externalInvoiceId: invoice['id'],
       paymentProvider: 'stripe',
@@ -264,5 +203,10 @@ class PlatformInvoice {
               invoice['status_transitions']['paid_at'] * 1000)
           : null,
     );
+  }
+
+  factory PlatformInvoice.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return PlatformInvoice.fromMap(doc.id, data);
   }
 }

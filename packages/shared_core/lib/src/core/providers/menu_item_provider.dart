@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../models/menu_item.dart';
 import '../services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import '../models/menu_template_ref.dart';
 import '../models/size_template.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -63,10 +63,9 @@ class MenuItemProvider extends ChangeNotifier {
           await _firestoreService.getSizeTemplatesForTemplate(restaurantType);
       notifyListeners();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to load size templates',
         source: 'MenuItemProvider',
-        screen: 'menu_item_provider',
         severity: 'error',
         stack: stack.toString(),
       );
@@ -143,12 +142,11 @@ class MenuItemProvider extends ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[MenuItemProvider][RELOAD] ⚠️ Called with blank/unknown franchiseId! Skipping reload.');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'MenuItemProvider: reload called with blank/unknown franchiseId',
         stack: '',
         source: 'menu_item_provider.dart',
-        screen: 'menu_item_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -182,11 +180,10 @@ class MenuItemProvider extends ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[MenuItemProvider][LOAD] ⚠️ Called with blank/unknown franchiseId! Skipping load.');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'MenuItemProvider: load called with blank/unknown franchiseId',
         stack: '',
         source: 'menu_item_provider.dart',
-        screen: 'menu_item_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -226,11 +223,10 @@ class MenuItemProvider extends ChangeNotifier {
       print('[MenuItemProvider][LOAD] 🎯 Load complete. UI notified.');
     } catch (e, stack) {
       print('[MenuItemProvider][LOAD][ERROR] ❌ Failed to load menu items: $e');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'menu_item_load_error',
         stack: stack.toString(),
         source: 'menu_item_provider.dart',
-        screen: 'menu_item_provider.dart',
         severity: 'error',
         contextData: {'franchiseId': franchiseId},
       );
@@ -280,10 +276,9 @@ class MenuItemProvider extends ChangeNotifier {
           await _typeProvider.saveStagedIngredientTypes();
           print('[DEBUG] Staged ingredient types saved');
         } catch (e, stack) {
-          await ErrorLogger.log(
+          ErrorLogger.log(
             message: 'Failed to save staged ingredient types',
             source: 'MenuItemProvider',
-            screen: 'menu_item_provider.dart',
             severity: 'error',
             stack: stack.toString(),
             contextData: {'franchiseId': _franchiseId},
@@ -301,10 +296,9 @@ class MenuItemProvider extends ChangeNotifier {
           await _ingredientProvider.saveStagedIngredients();
           print('[DEBUG] Staged ingredients saved');
         } catch (e, stack) {
-          await ErrorLogger.log(
+          ErrorLogger.log(
             message: 'Failed to save staged ingredients',
             source: 'MenuItemProvider',
-            screen: 'menu_item_provider.dart',
             severity: 'error',
             stack: stack.toString(),
             contextData: {'franchiseId': _franchiseId},
@@ -322,10 +316,9 @@ class MenuItemProvider extends ChangeNotifier {
           await _categoryProvider.saveStagedCategories();
           print('[DEBUG] Staged categories saved');
         } catch (e, stack) {
-          await ErrorLogger.log(
+          ErrorLogger.log(
             message: 'Failed to save staged categories',
             source: 'MenuItemProvider',
-            screen: 'menu_item_provider.dart',
             severity: 'error',
             stack: stack.toString(),
             contextData: {'franchiseId': _franchiseId},
@@ -350,10 +343,9 @@ class MenuItemProvider extends ChangeNotifier {
       notifyListeners();
       print('[DEBUG] Save complete, isDirty=$isDirty');
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to persist menu item changes',
         source: 'MenuItemProvider',
-        screen: 'menu_item_provider.dart',
         severity: 'error',
         stack: stack.toString(),
         contextData: {'franchiseId': _franchiseId},
@@ -375,10 +367,9 @@ class MenuItemProvider extends ChangeNotifier {
       _working = reordered;
       notifyListeners();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to reorder menu items',
         source: 'MenuItemProvider',
-        screen: 'menu_item_provider',
         severity: 'error',
         stack: stack.toString(),
         contextData: {'franchiseId': _franchiseId},
@@ -404,10 +395,9 @@ class MenuItemProvider extends ChangeNotifier {
       );
     } catch (e, stack) {
       _templateRefsError = e.toString();
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to load menu template refs',
         source: 'MenuItemProvider',
-        screen: 'menu_item_provider',
         severity: 'error',
         stack: stack.toString(),
       );
@@ -430,10 +420,9 @@ class MenuItemProvider extends ChangeNotifier {
           .get();
 
       if (!docSnapshot.exists) {
-        await ErrorLogger.log(
+        ErrorLogger.log(
           message: 'Menu item template not found',
           source: 'MenuItemProvider.fetchMenuItemTemplateById',
-          screen: 'menu_item_editor_sheet.dart',
           severity: 'warning',
           contextData: {
             'restaurantType': restaurantType,
@@ -445,10 +434,9 @@ class MenuItemProvider extends ChangeNotifier {
 
       final data = docSnapshot.data();
       if (data == null) {
-        await ErrorLogger.log(
+        ErrorLogger.log(
           message: 'Empty menu item template document',
           source: 'MenuItemProvider.fetchMenuItemTemplateById',
-          screen: 'menu_item_editor_sheet.dart',
           severity: 'error',
           contextData: {
             'restaurantType': restaurantType,
@@ -461,11 +449,10 @@ class MenuItemProvider extends ChangeNotifier {
       try {
         return MenuItem.fromFirestore(data, docSnapshot.id);
       } catch (e, stack) {
-        await ErrorLogger.log(
+        ErrorLogger.log(
           message: 'MenuItem.fromFirestore threw during template fetch',
           stack: stack.toString(),
           source: 'MenuItemProvider.fetchMenuItemTemplateById',
-          screen: 'menu_item_editor_sheet.dart',
           severity: 'error',
           contextData: {
             'restaurantType': restaurantType,
@@ -478,11 +465,10 @@ class MenuItemProvider extends ChangeNotifier {
         return null;
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Unhandled exception during menu item template fetch',
         stack: stack.toString(),
         source: 'MenuItemProvider.fetchMenuItemTemplateById',
-        screen: 'menu_item_editor_sheet.dart',
         severity: 'error',
         contextData: {
           'restaurantType': restaurantType,
@@ -573,10 +559,9 @@ class MenuItemProvider extends ChangeNotifier {
     required String newValue,
     required String user,
   }) async {
-    await ErrorLogger.log(
+    ErrorLogger.log(
       message: 'MenuItem repair',
       source: 'MenuItemProvider',
-      screen: 'onboarding/repair',
       severity: 'info',
       contextData: {
         'menuItemId': menuItemId,
@@ -641,10 +626,9 @@ class MenuItemProvider extends ChangeNotifier {
       await _firestoreService.deleteMenuItem(_franchiseId!, id);
       deleteMenuItem(id);
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to delete menu item from Firestore',
         source: 'MenuItemProvider',
-        screen: 'menu_item_provider',
         severity: 'error',
         stack: stack.toString(),
         contextData: {'franchiseId': _franchiseId, 'menuItemId': id},
@@ -793,7 +777,7 @@ class MenuItemProvider extends ChangeNotifier {
         ));
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'menu_item_validate_failed',
         stack: stack.toString(),
         source: 'MenuItemProvider.validate',

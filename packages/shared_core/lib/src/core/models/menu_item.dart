@@ -3,7 +3,7 @@ import 'nutrition_info.dart';
 import 'customization.dart';
 import 'size_template.dart';
 import 'dart:convert';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:flutter/material.dart';
 
 extension IterableFirstOrNull<T> on Iterable<T> {
@@ -234,12 +234,10 @@ class MenuItem {
             }
           }
         } catch (e, st) {
-          debugPrint('[MenuItem] Failed to parse string-double map: $e');
           ErrorLogger.log(
             message: 'Failed to parse string-double map',
             stack: st.toString(),
-            source: 'MenuItem.fromFirestore',
-            screen: 'MenuItem',
+            source: 'MenuItem.parseStringDoubleMap',
             contextData: {'raw': raw.toString()},
           );
         }
@@ -271,7 +269,6 @@ class MenuItem {
             message: 'Malformed customization entry',
             stack: st.toString(),
             source: 'MenuItem.fromFirestore',
-            screen: 'MenuItem',
           );
         }
       }
@@ -281,11 +278,9 @@ class MenuItem {
         if (g is Map) {
           safeGroups.add(Map<String, dynamic>.from(g));
         } else {
-          debugPrint('[MenuItem] Skipped invalid customizationGroup: $g');
           ErrorLogger.log(
             message: 'Skipped malformed customizationGroup entry',
             source: 'MenuItem.fromFirestore',
-            screen: 'MenuItem',
             contextData: {'entry': g.toString()},
           );
         }
@@ -296,11 +291,9 @@ class MenuItem {
         if (o is Map) {
           safeAddOns.add(Map<String, dynamic>.from(o));
         } else {
-          debugPrint('[MenuItem] Skipped invalid optionalAddOn: $o');
           ErrorLogger.log(
             message: 'Skipped malformed optionalAddOn entry',
             source: 'MenuItem.fromFirestore',
-            screen: 'MenuItem',
             contextData: {'entry': o.toString()},
           );
         }
@@ -311,11 +304,9 @@ class MenuItem {
         if (i is Map) {
           safeIncluded.add(Map<String, dynamic>.from(i));
         } else {
-          debugPrint('[MenuItem] Skipped invalid includedIngredient: $i');
           ErrorLogger.log(
             message: 'Skipped malformed includedIngredient entry',
             source: 'MenuItem.fromFirestore',
-            screen: 'MenuItem',
             contextData: {'entry': i.toString()},
           );
         }
@@ -497,8 +488,6 @@ class MenuItem {
       ErrorLogger.log(
         message: 'MenuItem.fromFirestore threw exception',
         source: 'MenuItem.fromFirestore',
-        screen: 'menu_item_provider.dart',
-        severity: 'error',
         stack: st.toString(),
         contextData: {
           'id': id,
@@ -518,8 +507,6 @@ class MenuItem {
       ErrorLogger.log(
         message: 'MenuItem.fromMap failed',
         source: 'MenuItem.fromMap',
-        screen: 'menu_item_provider.dart',
-        severity: 'error',
         stack: stack.toString(),
         contextData: {
           'id': id ?? data['id'] ?? '',

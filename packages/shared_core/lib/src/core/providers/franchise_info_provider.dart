@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/franchise_info.dart';
 import '../services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'franchise_provider.dart';
 
 class FranchiseInfoProvider extends ChangeNotifier {
@@ -49,12 +49,10 @@ class FranchiseInfoProvider extends ChangeNotifier {
       final info = await firestore.getFranchiseInfo(fid);
       _franchise = info;
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'FranchiseInfoProvider failed to load franchise: $e',
         stack: stack.toString(),
         source: 'FranchiseInfoProvider',
-        screen: 'global',
-        severity: 'error',
         contextData: {'franchiseId': fid},
       );
       _franchise = null;

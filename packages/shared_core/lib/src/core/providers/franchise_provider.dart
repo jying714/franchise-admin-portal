@@ -1,169 +1,102 @@
-import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../models/user.dart' as admin_user;
-import '../models/franchise_info.dart';
+// shared_core/lib/src/core/providers/franchise_provider.dart
 
-class FranchiseProvider extends ChangeNotifier {
-  VoidCallback? onFranchiseChanged;
+import 'package:shared_core/src/core/models/user.dart' as admin_user;
+import 'package:shared_core/src/core/models/franchise_info.dart';
+import 'package:shared_core/src/core/utils/local_storage.dart';
+
+/// Pure business logic for franchise selection and user context
+/// NO Flutter, NO ChangeNotifier, NO VoidCallback
+class FranchiseProvider {
+  Function()?
+      onFranchiseChanged; // <-- Fixed: Function() instead of VoidCallback
   String _franchiseId = 'unknown';
   bool _loading = true;
   admin_user.User? _adminUser;
+  final LocalStorage _storage;
 
-  String get franchiseId {
-    print('[FranchiseProvider] franchiseId getter: $_franchiseId');
-    return _franchiseId.isEmpty ? 'unknown' : _franchiseId;
-  }
-
+  String get franchiseId => _franchiseId.isEmpty ? 'unknown' : _franchiseId;
   bool get loading => _loading;
   bool get isFranchiseSelected =>
       _franchiseId != 'unknown' && _franchiseId.isNotEmpty;
   admin_user.User? get adminUser => _adminUser;
   bool get isDeveloper => _adminUser?.isDeveloper ?? false;
-
   bool get hasValidFranchise =>
       _franchiseId.isNotEmpty && _franchiseId != 'unknown';
 
-  FranchiseProvider() {
+  FranchiseProvider(this._storage) {
     _loadFranchiseId();
   }
 
-  /// Set the logged-in admin user context
   void setAdminUser(admin_user.User? user) {
     _adminUser = user;
-    notifyListeners();
   }
 
-  /// Load franchiseId from local storage (used at boot or cold start)
   Future<void> _loadFranchiseId() async {
     _loading = true;
-    notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
-    final id = prefs.getString('selectedFranchiseId');
-    if (id != null && id.isNotEmpty) {
-      _franchiseId = id;
-    } else {
-      _franchiseId = 'unknown';
-    }
+    final id = await _storage.getString('selectedFranchiseId');
+    _franchiseId = (id != null && id.isNotEmpty) ? id : 'unknown';
     _loading = false;
-    notifyListeners();
   }
 
-  /// Lock access unless explicitly allowed or user is developer
   Future<void> setFranchiseId(String id) async {
-    print(
-        '[FranchiseProvider] setFranchiseId called: new id="$id" (was "$_franchiseId")');
-    if (id.isEmpty) return;
-    if (_franchiseId != id) {
-      _franchiseId = id;
-      notifyListeners();
-      if (onFranchiseChanged != null) onFranchiseChanged!();
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('selectedFranchiseId', id);
-    }
-  }
-
-  /// Use this at login to override franchiseId based on defaultFranchise
-  Future<void> setInitialFranchiseId(String id) async {
-    print('[FranchiseProvider] setInitialFranchiseId called: id="$id"');
-
-    if (_franchiseId == id) {
-      print(
-          '[FranchiseProvider] setInitialFranchiseId: No change (already "$id"), skipping update.');
-      return;
-    }
+    if (id.isEmpty || _franchiseId == id) return;
 
     _franchiseId = id;
+    if (onFranchiseChanged != null) onFranchiseChanged!();
+    await _storage.setString('selectedFranchiseId', id);
+  }
 
-    final prefs = await SharedPreferences.getInstance();
-    final existing = prefs.getString('selectedFranchiseId');
+  Future<void> setInitialFranchiseId(String id) async {
+    if (_franchiseId == id) return;
 
+    _franchiseId = id;
+    final existing = await _storage.getString('selectedFranchiseId');
     if (existing != id) {
-      await prefs.setString('selectedFranchiseId', id);
-      print(
-          '[FranchiseProvider] setInitialFranchiseId: Saved to SharedPreferences: "$id"');
-    } else {
-      print(
-          '[FranchiseProvider] setInitialFranchiseId: Already persisted, skipping write.');
+      await _storage.setString('selectedFranchiseId', id);
     }
-
-    notifyListeners();
-    print(
-        '[FranchiseProvider] setInitialFranchiseId: Notified listeners. Current franchiseId="$id"');
   }
 
   Future<void> clear() async {
-    print(
-        '[FranchiseProvider] clear() called: franchiseId and adminUser set to null/unknown');
-
     _franchiseId = 'unknown';
     _adminUser = null;
-    notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('selectedFranchiseId');
+    await _storage.remove('selectedFranchiseId');
   }
 
   List<FranchiseInfo> _allFranchises = [];
-
-  // Public getter for the franchise picker
   List<FranchiseInfo> get allFranchises => List.unmodifiable(_allFranchises);
-
-  // Optionally, expose a way to set them (you might fetch from Firestore/API)
   void setAllFranchises(List<FranchiseInfo> franchises) {
     _allFranchises = franchises;
-    notifyListeners();
   }
 
   Future<void> initializeWithUser(admin_user.User user) async {
     _adminUser = user;
-    final prefs = await SharedPreferences.getInstance();
 
-    // ✅ If _franchiseId already initialized, don't override
-    if (_franchiseId != null &&
-        _franchiseId != 'unknown' &&
-        _franchiseId!.isNotEmpty) {
-      print(
-          '[FranchiseProvider] initializeWithUser: Skipped — already set to $_franchiseId');
+    if (_franchiseId != 'unknown' && _franchiseId.isNotEmpty) {
       _loading = false;
-      notifyListeners();
       return;
     }
 
-    final storedId = prefs.getString('selectedFranchiseId');
+    final storedId = await _storage.getString('selectedFranchiseId');
     if (storedId != null && storedId.isNotEmpty) {
       _franchiseId = storedId;
-      print(
-          '[FranchiseProvider] initializeWithUser: Loaded from SharedPreferences: $_franchiseId');
     } else if (user.defaultFranchise != null &&
         user.defaultFranchise!.isNotEmpty) {
       _franchiseId = user.defaultFranchise!;
-      await prefs.setString('selectedFranchiseId', _franchiseId);
-      print(
-          '[FranchiseProvider] initializeWithUser: Set from user.defaultFranchise: $_franchiseId');
+      await _storage.setString('selectedFranchiseId', _franchiseId);
     } else {
       _franchiseId = 'unknown';
-      print(
-          '[FranchiseProvider] initializeWithUser: No valid source, defaulting to "unknown"');
     }
 
     _loading = false;
-    notifyListeners();
-
-    print(
-        '[FranchiseProvider] Initialized franchiseId=$_franchiseId for user=${user.email}');
-    print(
-        '[FranchiseProvider] Final state: franchiseId=$_franchiseId, user roles=${user.roles}');
   }
 
-  /// Filtered viewable franchises based on current user access
   List<FranchiseInfo> get viewableFranchises {
     if (_adminUser == null) return [];
 
-    // Platform Owner and Developer can see all
     if (_adminUser!.isPlatformOwner || _adminUser!.isDeveloper) {
       return _allFranchises;
     }
 
-    // Everyone else is filtered to their allowed franchise IDs
     final allowedIds = _adminUser!.franchiseIds;
     return _allFranchises.where((f) => allowedIds.contains(f.id)).toList();
   }
@@ -172,6 +105,5 @@ class FranchiseProvider extends ChangeNotifier {
     _franchiseId = '';
     _allFranchises = [];
     _adminUser = null;
-    notifyListeners();
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/payout_filter.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 
 /// Provider for managing payout table filter/search state.
 /// Integrates with FirestoreService's getPayoutsForFranchise().
@@ -51,7 +51,6 @@ class PayoutFilterProvider extends ChangeNotifier {
       message: 'PayoutFilterProvider Error: $_lastError',
       stack: stack?.toString(),
       source: 'PayoutFilterProvider',
-      screen: context ?? 'filter',
       severity: 'warning',
     );
     notifyListeners();

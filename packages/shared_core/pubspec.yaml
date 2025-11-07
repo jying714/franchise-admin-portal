@@ -1,21 +1,20 @@
 name: shared_core
-description: Shared domain models, providers, services, and utils for web + mobile.
+description: Shared domain models, providers, services, and utils for web + mobile. Pure domain layer — NO FLUTTER
 version: 0.1.0
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
-  flutter:
-    sdk: flutter
   provider: ^6.0.0
   firebase_core: ^3.0.0
   firebase_auth: ^5.0.0
   cloud_firestore: ^5.0.0
   firebase_storage: ^12.0.0
-  intl: ^0.19.0
   http: ^1.2.1
   equatable: ^2.0.7
+  cloud_functions: ^5.6.2
+  logging: ^1.3.0
 
 dev_dependencies:
   flutter_lints: ^4.0.0

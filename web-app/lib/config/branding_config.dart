@@ -1,19 +1,16 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart' show BrandingConfig;
 
+/// UI-specific branding configuration for the web app
+/// Wraps shared_core data and adds Flutter-specific assets, colors, paths
 class BrandingConfig {
-  // --------- Franchise Details ---------
-  static const String franchiseName = "Doughboys Pizzeria";
-  static const String franchiseAddress = "123 Main St, City, State";
-  static const String franchisePhone = "(555) 123-4567";
-  static const String poweredBy = "Powered by Dough Boys Tech";
-
-  // --------- Logos ---------
+  // --------- Logos (Asset Paths) ---------
   static const String logoMain = 'assets/images/logo.png';
   static const String logoSmall = 'assets/images/logo_small.png';
   static const String logoLarge = 'assets/logo/logo_large.png';
   static const String logoLargeLegacy = 'assets/images/logo_large.png';
 
-  // --------- Icons & Images ---------
+  // --------- Icons & Images (Asset Paths) ---------
   static const String defaultPizzaIcon = 'assets/icons/pizza.png';
   static const String defaultPizzaIconLegacy =
       'assets/images/default_pizza_icon.png';
@@ -27,61 +24,37 @@ class BrandingConfig {
   static const String adminEmptyStateImage = 'assets/images/admin_empty.png';
   static const String menuItemPlaceholderImage =
       'assets/images/menu_item_placeholder.png';
-  static const Color brandRed = Color(0xFFD23215); // Dough Boys Pizzeria Red
+  static const String ingredientPlaceholder =
+      'assets/images/ingredient_placeholder.png';
 
   // --------- Bulk Upload, Export, Misc ---------
   static const String bulkUploadCSVIcon = 'assets/icons/csv_upload.png';
   static const String exportCSVIcon = 'assets/icons/export_csv.png';
 
-  // --------- Legal/Docs ---------
-  static const String termsOfServiceUrl = 'https://doughboys.com/terms';
-  static const String privacyPolicyUrl = 'https://doughboys.com/privacy';
-
-  // app bar
-
-  static const String appBarLogoAsset =
-      'assets/images/logo.png'; // Path to logo
-  static const bool showLogoInAppBar = false; // Default to false
-  static const String appBarTitle = 'Menu Categories';
-
-  // Profile Page
+  // --------- Profile Page ---------
   static const String defaultProfileIcon = 'assets/images/default_profile.png';
 
-  // kpi
-  static Color brandColorFor(String brandId) {
-    // Extend this logic if brand-specific colors are used
-    return brandRed; // fallback to default brand color
-  }
+  // --------- App Bar UI Config ---------
+  static const String appBarLogoAsset = 'assets/images/logo.png';
+  static const bool showLogoInAppBar = false;
 
-  // Recommended dashboard card background (adjust to your design, e.g. neutral surface or white)
+  // --------- Colors (Converted from Hex) ---------
+  static Color get brandRed => _hexToColor(BrandingConfig.brandRedHex);
+  static Color get accentColor => _hexToColor(BrandingConfig.accentColorHex);
+
+  // --------- Dashboard UI ---------
   static const Color dashboardCardColor = Colors.white;
 
-// Accent color (typically your brand color or another action/CTA color)
-  static const Color accentColor = brandRed;
-  // landing page
-  static const String heroScreenshot =
-      'https://via.placeholder.com/640x300.png?text=Landing+Hero';
-  static const String adminDashboardScreenshot =
-      'https://via.placeholder.com/480x240.png?text=Admin+Dashboard';
-  static const String mobileAppScreenshot =
-      'https://via.placeholder.com/240x480.png?text=Mobile+App';
-  static const String menuEditorScreenshot =
-      'https://via.placeholder.com/480x240.png?text=Menu+Editor';
-  static const String demoVideoUrl =
-      'https://www.youtube.com/watch?v=yourdemo'; // or leave blank if not available
-  static const String logoUrl =
-      'https://via.placeholder.com/256x64.png?text=Logo';
-  static const String primaryContact =
-      'support@doughboyspizzeria.com'; // or your real contact email
-  static const String ingredientPlaceholder =
-      'assets/images/ingredient_placeholder.png';
+  // --------- Helper: Hex → Color ---------
+  static Color _hexToColor(String hex) {
+    final cleaned = hex.replaceAll('#', '');
+    final value = int.parse('FF$cleaned', radix: 16);
+    return Color(value);
+  }
 
-  // ======================
-  // === FUTURE TOKENS ====
-  // ======================
-  // static const String instagramHandle = "@doughboys";
-  // static const String franchiseEmail = "contact@doughboys.com";
-  // static const String franchiseSlogan = "Slice of Heaven Since 1999";
+  // --------- Brand Color by ID (UI Layer) ---------
+  static Color brandColorFor(String brandId) {
+    final hex = BrandingConfig.brandColorHexFor(brandId);
+    return _hexToColor(hex);
+  }
 }
-
-

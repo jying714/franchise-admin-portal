@@ -1,13 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
 import 'package:collection/collection.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 
 class IngredientType {
   final String? id;
   final String name;
   final String? description;
   final int? sortOrder;
-  final String? systemTag; // optional: e.g., 'cheese', 'sauce', etc.
+  final String? systemTag;
   final bool visibleInApp;
   final Timestamp? createdAt;
   final Timestamp? updatedAt;
@@ -23,7 +23,6 @@ class IngredientType {
     this.updatedAt,
   });
 
-  /// Factory for Firestore document -> Dart object
   factory IngredientType.fromFirestore(DocumentSnapshot doc) {
     try {
       final data = doc.data() as Map<String, dynamic>?;
@@ -59,7 +58,6 @@ class IngredientType {
     }
   }
 
-  /// Converts object -> Firestore data map
   Map<String, dynamic> toMap({bool includeTimestamps = false}) {
     final map = <String, dynamic>{
       'name': name,
@@ -145,47 +143,36 @@ class IngredientType {
   @override
   int get hashCode => id.hashCode ^ name.hashCode;
 
-  /// Checks if this type matches an ID (case-insensitive).
   bool matchesId(String? otherId) =>
       otherId != null &&
       id != null &&
       id!.toLowerCase() == otherId.toLowerCase();
 
-  /// Checks if this type matches a name (case-insensitive, trimmed).
   bool matchesName(String? otherName) =>
       otherName != null &&
       name.trim().toLowerCase() == otherName.trim().toLowerCase();
 
-  /// Checks if this type matches a systemTag (case-insensitive).
   bool matchesSystemTag(String? otherTag) =>
       otherTag != null &&
       systemTag != null &&
       systemTag!.toLowerCase() == otherTag.toLowerCase();
 
-  /// Utility for schema mapping: resolve from ID, name, or systemTag.
   static IngredientType? resolveFromReference(
     List<IngredientType> types, {
     String? id,
     String? name,
     String? systemTag,
   }) {
-    final byId = types.firstWhereOrNull(
-      (t) => t.matchesId(id),
-    );
+    final byId = types.firstWhereOrNull((t) => t.matchesId(id));
     if (byId != null) return byId;
 
-    final byName = types.firstWhereOrNull(
-      (t) => t.matchesName(name),
-    );
+    final byName = types.firstWhereOrNull((t) => t.matchesName(name));
     if (byName != null) return byName;
 
-    final byTag = types.firstWhereOrNull(
-      (t) => t.matchesSystemTag(systemTag),
-    );
+    final byTag = types.firstWhereOrNull((t) => t.matchesSystemTag(systemTag));
     return byTag;
   }
 
-  /// Warn if critical fields are missing for onboarding/template mapping.
   String? get schemaWarning {
     if (id == null || id!.isEmpty || name.isEmpty) {
       return "IngredientType missing required id or name: id='$id', name='$name'";
@@ -193,7 +180,6 @@ class IngredientType {
     return null;
   }
 
-  /// Extracts all IDs from a list of IngredientTypes for mapping/validation.
   static List<String> extractIds(List<IngredientType> types) => types
       .where((t) => t.id != null && t.id!.isNotEmpty)
       .map((t) => t.id!)

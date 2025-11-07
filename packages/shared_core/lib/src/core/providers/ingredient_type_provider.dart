@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/ingredient_type_model.dart';
 import '../services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
 import 'dart:convert';
@@ -68,12 +68,11 @@ class IngredientTypeProvider with ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientTypeProvider][LOAD] ⚠️ Called with blank/unknown franchiseId! Skipping load.');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientTypeProvider: load called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_type_provider.dart',
-        screen: 'ingredient_type_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -111,11 +110,10 @@ class IngredientTypeProvider with ChangeNotifier {
     } catch (e, stack) {
       print(
           '[IngredientTypeProvider][LOAD][ERROR] ❌ Failed to load ingredient types: $e');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'ingredient_type_load_error',
         stack: stack.toString(),
         source: 'ingredient_type_provider.dart',
-        screen: 'ingredient_type_provider.dart',
         severity: 'error',
         contextData: {'franchiseId': franchiseId},
       );
@@ -130,12 +128,11 @@ class IngredientTypeProvider with ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientTypeProvider][RELOAD] ⚠️ Called with blank/unknown franchiseId! Skipping reload.');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientTypeProvider: reload called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_type_provider.dart',
-        screen: 'ingredient_type_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -179,12 +176,11 @@ class IngredientTypeProvider with ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientTypeProvider] createType called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientTypeProvider: createType called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_type_provider.dart',
-        screen: 'ingredient_type_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId, 'typeName': type.name},
       );
@@ -198,11 +194,10 @@ class IngredientTypeProvider with ChangeNotifier {
       await colRef.doc(type.id).set(type.toMap(includeTimestamps: true));
       await loadIngredientTypes(franchiseId);
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to create ingredient type',
         stack: stack.toString(),
         source: 'ingredient_type_provider.dart',
-        screen: 'ingredient_type_provider.dart',
         severity: 'error',
         contextData: {
           'franchiseId': franchiseId,
@@ -224,12 +219,11 @@ class IngredientTypeProvider with ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientTypeProvider] reorderIngredientTypes called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientTypeProvider: reorder called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_type_provider.dart',
-        screen: 'ingredient_type_management_screen',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -251,10 +245,9 @@ class IngredientTypeProvider with ChangeNotifier {
       // Reload local state after update
       await loadIngredientTypes(franchiseId);
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to reorder ingredient types',
         source: 'ingredient_type_provider.dart',
-        screen: 'ingredient_type_management_screen',
         severity: 'error',
         stack: stack.toString(),
         contextData: {
@@ -278,12 +271,11 @@ class IngredientTypeProvider with ChangeNotifier {
     // Defensive: Block blank or unknown franchise IDs
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print('[IngredientTypeProvider] Called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientTypeProvider: called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_type_provider.dart',
-        screen: 'ingredient_type_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -322,12 +314,11 @@ class IngredientTypeProvider with ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientTypeProvider] updateIngredientType called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientTypeProvider: update called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_type_provider.dart',
-        screen: 'ingredient_type_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId, 'typeId': typeId},
       );
@@ -366,12 +357,11 @@ class IngredientTypeProvider with ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientTypeProvider] deleteIngredientType called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientTypeProvider: delete called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_type_provider.dart',
-        screen: 'ingredient_type_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId, 'typeId': typeId},
       );
@@ -410,12 +400,11 @@ class IngredientTypeProvider with ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientTypeProvider] isIngredientTypeInUse called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientTypeProvider: isInUse called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_type_provider.dart',
-        screen: 'ingredient_type_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId, 'typeId': typeId},
       );
@@ -432,7 +421,7 @@ class IngredientTypeProvider with ChangeNotifier {
 
       return querySnapshot.docs.isNotEmpty;
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to check ingredient type usage',
         source: 'ingredient_type_provider.dart',
         severity: 'error',
@@ -452,12 +441,11 @@ class IngredientTypeProvider with ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientTypeProvider] exportTypesAsJson called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientTypeProvider: exportTypesAsJson called with blank/unknown franchiseId',
         stack: '',
         source: 'IngredientTypeProvider',
-        screen: 'ingredient_type_management_screen',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -467,10 +455,9 @@ class IngredientTypeProvider with ChangeNotifier {
       final exportable = types.map((type) => type.toMap()).toList();
       return const JsonEncoder.withIndent('  ').convert(exportable);
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to export ingredient types as JSON',
         source: 'IngredientTypeProvider',
-        screen: 'ingredient_type_management_screen',
         severity: 'error',
         stack: stack.toString(),
         contextData: {
@@ -490,12 +477,11 @@ class IngredientTypeProvider with ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientTypeProvider] bulkReplaceIngredientTypes called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientTypeProvider: bulkReplace called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_type_provider.dart',
-        screen: 'ingredient_type_json_import_export_dialog.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -527,12 +513,11 @@ class IngredientTypeProvider with ChangeNotifier {
       await batch.commit();
       await loadIngredientTypes(franchiseId);
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed bulk replace of ingredient types',
         stack: stack.toString(),
         severity: 'error',
         source: 'ingredient_type_provider.dart',
-        screen: 'ingredient_type_json_import_export_dialog.dart',
         contextData: {
           'franchiseId': franchiseId,
           'newTypeCount': newTypes.length,
@@ -550,12 +535,11 @@ class IngredientTypeProvider with ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientTypeProvider] loadTemplateIngredients called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientTypeProvider: loadTemplateIngredients called with blank/unknown franchiseId',
         stack: '',
         source: 'IngredientTypeProvider',
-        screen: 'ingredient_metadata_template_picker_dialog',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId, 'templateId': templateId},
       );
@@ -581,12 +565,11 @@ class IngredientTypeProvider with ChangeNotifier {
 
       await batch.commit();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'template_ingredient_metadata_import_failed',
         source: 'IngredientTypeProvider',
         stack: stack.toString(),
         severity: 'error',
-        screen: 'ingredient_metadata_template_picker_dialog',
         contextData: {
           'franchiseId': franchiseId,
           'templateId': templateId,
@@ -664,12 +647,11 @@ class IngredientTypeProvider with ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientTypeProvider] saveStagedIngredientTypes called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientTypeProvider: saveStagedIngredientTypes called with blank/unknown franchiseId',
         stack: '',
         source: 'IngredientTypeProvider',
-        screen: 'ingredient_type_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -696,11 +678,10 @@ class IngredientTypeProvider with ChangeNotifier {
       await loadIngredientTypes(franchiseId);
       notifyListeners();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'ingredient_type_save_failed',
         stack: stack.toString(),
         source: 'IngredientTypeProvider',
-        screen: 'ingredient_type_provider.dart',
         severity: 'error',
         contextData: {'franchiseId': franchiseId},
       );
@@ -762,12 +743,11 @@ class IngredientTypeProvider with ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientTypeProvider] commitStagedDeletes called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientTypeProvider: commitStagedDeletes called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_type_provider.dart',
-        screen: 'ingredient_type_provider.dart',
         severity: 'warning',
         contextData: {
           'franchiseId': franchiseId,
@@ -791,7 +771,7 @@ class IngredientTypeProvider with ChangeNotifier {
       await loadIngredientTypes(franchiseId);
       notifyListeners();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'Failed to commit staged ingredient type deletions',
         source: 'ingredient_type_provider.dart',
         severity: 'error',
@@ -881,7 +861,7 @@ class IngredientTypeProvider with ChangeNotifier {
         }
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'ingredient_type_validate_failed',
         stack: stack.toString(),
         source: 'IngredientTypeProvider.validate',

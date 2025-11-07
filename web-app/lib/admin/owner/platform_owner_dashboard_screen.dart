@@ -10,7 +10,7 @@ import 'package:shared_core/src/core/models/user.dart' as app;
 import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 import 'package:shared_core/src/core/providers/franchisee_invitation_provider.dart';
-import 'package:franchise_admin_portal/widgets/financials/franchisee_invitation_service.dart';
+import 'package:shared_core/src/core/services/franchisee_invitation_service.dart';
 import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/widgets/dialogs/franchisee_invitation_dialog.dart';
 import 'package:franchise_admin_portal/widgets/financials/platform_revenue_summary_panel.dart';
@@ -859,5 +859,3 @@ class OwnerAnnouncementsPanel extends StatelessWidget {
     );
   }
 }
-
-

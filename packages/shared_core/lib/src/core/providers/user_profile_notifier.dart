@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../models/user.dart' as admin_user;
 import '../services/firestore_service.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'franchise_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -28,12 +28,11 @@ class UserProfileNotifier extends ChangeNotifier {
     if (Firebase.apps.isEmpty) {
       final msg = '[UserProfileNotifier] loadUser: Firebase not initialized!';
       debugPrint(msg);
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'UserProfileNotifier.loadUser called before Firebase initialized',
         source: 'UserProfileNotifier',
         severity: 'fatal',
-        screen: 'UserProfileNotifier',
         contextData: {
           'phase': 'loadUser',
           'hint': 'Firebase.apps.isEmpty',
@@ -51,11 +50,10 @@ class UserProfileNotifier extends ChangeNotifier {
     } else {
       debugPrint('[UserProfileNotifier] loadUser: firebaseUser is null');
       // You may want to log this as a warning as well if it's unexpected:
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'loadUser called but firebaseUser is null',
         source: 'UserProfileNotifier',
         severity: 'warning',
-        screen: 'UserProfileNotifier',
       );
     }
   }
@@ -114,7 +112,6 @@ class UserProfileNotifier extends ChangeNotifier {
         ErrorLogger.log(
           message: err.toString(),
           source: 'UserProfileNotifier.listenToUser',
-          screen: 'HomeWrapper',
           stack: stack?.toString(),
           severity: 'error',
           contextData: {

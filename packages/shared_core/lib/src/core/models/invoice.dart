@@ -3,7 +3,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../constants/invoice_status.dart';
 
 /// ========================
@@ -453,12 +452,6 @@ class Invoice {
         return invoiceStatusToString(status);
     }
   }
-
-  String get formattedDueDate =>
-      dueAt != null ? DateFormat.yMMMd().format(dueAt!) : '';
-
-  String get formattedTotal =>
-      NumberFormat.simpleCurrency(name: currency).format(total);
 
   // === Future Feature Placeholder ===
   // You can add logic for CSV/Excel/PDF export serialization here.

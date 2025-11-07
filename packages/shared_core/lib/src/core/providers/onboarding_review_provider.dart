@@ -9,7 +9,7 @@ import 'ingredient_metadata_provider.dart';
 import 'category_provider.dart';
 import 'menu_item_provider.dart';
 import 'franchise_feature_provider.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import '../services/firestore_service.dart';
 import '../services/audit_log_service.dart';
 
@@ -287,7 +287,7 @@ class OnboardingReviewProvider extends ChangeNotifier {
       // --- Prepare exportable snapshot ---
       _lastExportSnapshot = _buildExportSnapshot();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'onboarding_review_validate_failed',
         stack: stack.toString(),
         source: 'OnboardingReviewProvider.validateAll',
@@ -375,7 +375,7 @@ class OnboardingReviewProvider extends ChangeNotifier {
       // 3. Optionally, notify listeners, UI, etc.
       notifyListeners();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'onboarding_publish_failed',
         stack: stack.toString(),
         source: 'OnboardingReviewProvider.publishOnboarding',

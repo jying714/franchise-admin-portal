@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/ingredient_metadata.dart';
 import '../services/firestore_service.dart';
-import 'package:franchise_admin_portal/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:collection/collection.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/onboarding_validation_issue.dart';
@@ -85,12 +85,11 @@ class IngredientMetadataProvider extends ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientMetadataProvider: called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_metadata_provider.dart',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -155,12 +154,11 @@ class IngredientMetadataProvider extends ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientMetadataProvider: called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_metadata_provider.dart',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -183,12 +181,11 @@ class IngredientMetadataProvider extends ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientMetadataProvider.load] ⚠️ Called with blank/unknown franchiseId! Skipping load.');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientMetadataProvider: called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_metadata_provider.dart',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -254,11 +251,10 @@ class IngredientMetadataProvider extends ChangeNotifier {
     } catch (e, stack) {
       print(
           '[IngredientMetadataProvider.load][ERROR] ❌ Failed to load ingredient metadata: $e');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'ingredient_metadata_load_error',
         stack: stack.toString(),
         source: 'IngredientMetadataProvider',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'error',
         contextData: {'franchiseId': franchiseId},
       );
@@ -273,12 +269,11 @@ class IngredientMetadataProvider extends ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientMetadataProvider: called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_metadata_provider.dart',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId, 'templateId': templateId},
       );
@@ -299,11 +294,10 @@ class IngredientMetadataProvider extends ChangeNotifier {
         updateIngredient(item); // Adds to _current, marks dirty
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'template_load_error',
         stack: stack.toString(),
         source: 'IngredientMetadataProvider',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'error',
         contextData: {'templateId': templateId, 'franchiseId': franchiseId},
       );
@@ -418,12 +412,11 @@ class IngredientMetadataProvider extends ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientMetadataProvider: called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_metadata_provider.dart',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -444,11 +437,10 @@ class IngredientMetadataProvider extends ChangeNotifier {
       _original = List.from(_current);
       notifyListeners();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'ingredient_metadata_save_failed',
         stack: stack.toString(),
         source: 'IngredientMetadataProvider',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'error',
         contextData: {'franchiseId': franchiseId},
       );
@@ -461,12 +453,11 @@ class IngredientMetadataProvider extends ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientMetadataProvider: called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_metadata_provider.dart',
-        screen: 'onboarding_ingredients_screen',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -492,11 +483,10 @@ class IngredientMetadataProvider extends ChangeNotifier {
       await load(); // <<--- Add this line!
       notifyListeners();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'ingredient_metadata_save_failed',
         stack: stack.toString(),
         source: 'ingredient_metadata_provider.dart',
-        screen: 'onboarding_ingredients_screen',
         severity: 'error',
         contextData: {
           'franchiseId': franchiseId,
@@ -522,7 +512,6 @@ class IngredientMetadataProvider extends ChangeNotifier {
       ErrorLogger.log(
         message: 'toggleSelection failed',
         source: 'IngredientMetadataProvider',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'error',
         stack: stack.toString(),
         contextData: {'id': id},
@@ -540,7 +529,6 @@ class IngredientMetadataProvider extends ChangeNotifier {
       ErrorLogger.log(
         message: 'clearSelection failed',
         source: 'IngredientMetadataProvider',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'error',
         stack: stack.toString(),
       );
@@ -558,7 +546,6 @@ class IngredientMetadataProvider extends ChangeNotifier {
       ErrorLogger.log(
         message: 'selectAll failed',
         source: 'IngredientMetadataProvider',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'error',
         stack: stack.toString(),
       );
@@ -577,7 +564,6 @@ class IngredientMetadataProvider extends ChangeNotifier {
       ErrorLogger.log(
         message: 'deleteSelected failed',
         source: 'IngredientMetadataProvider',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'error',
         stack: stack.toString(),
       );
@@ -591,12 +577,11 @@ class IngredientMetadataProvider extends ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientMetadataProvider: called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_metadata_provider.dart',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId, 'ids': ids},
       );
@@ -607,11 +592,10 @@ class IngredientMetadataProvider extends ChangeNotifier {
       _selectedIngredientIds.removeAll(ids);
       notifyListeners();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'bulk_delete_ingredients_failed',
         stack: stack.toString(),
         source: 'IngredientMetadataProvider',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'error',
         contextData: {'ids': ids, 'franchiseId': franchiseId},
       );
@@ -624,12 +608,11 @@ class IngredientMetadataProvider extends ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientMetadataProvider: called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_metadata_provider.dart',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId, 'ids': ids},
       );
@@ -651,11 +634,10 @@ class IngredientMetadataProvider extends ChangeNotifier {
       // After deletion, reload the ingredients
       await load();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'bulk_delete_ingredients_failed',
         stack: stack.toString(),
         source: 'IngredientMetadataProvider',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'error',
         contextData: {'deletedCount': ids.length, 'franchiseId': franchiseId},
       );
@@ -673,12 +655,11 @@ class IngredientMetadataProvider extends ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientMetadataProvider: called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_metadata_provider.dart',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -802,12 +783,11 @@ class IngredientMetadataProvider extends ChangeNotifier {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       print(
           '[IngredientMetadataProvider] Called with blank/unknown franchiseId!');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message:
             'IngredientMetadataProvider: called with blank/unknown franchiseId',
         stack: '',
         source: 'ingredient_metadata_provider.dart',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
@@ -833,11 +813,10 @@ class IngredientMetadataProvider extends ChangeNotifier {
       _stagedIngredients.clear();
       notifyListeners();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'ingredient_metadata_batch_save_failed',
         stack: stack.toString(),
         source: 'IngredientMetadataProvider',
-        screen: 'ingredient_metadata_provider.dart',
         severity: 'error',
         contextData: {
           'franchiseId': franchiseId,
@@ -1006,7 +985,7 @@ class IngredientMetadataProvider extends ChangeNotifier {
       }
     } catch (e, stack) {
       print('[IngredientMetadataProvider.validate][ERROR] ❌ $e');
-      await ErrorLogger.log(
+      ErrorLogger.log(
         message: 'ingredient_metadata_validate_failed',
         stack: stack.toString(),
         source: 'IngredientMetadataProvider.validate',

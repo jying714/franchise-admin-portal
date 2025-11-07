@@ -10,15 +10,15 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/alert_list_screen.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/firebase_options.dart';
-import '../../packages/shared_core/lib/src/core/services/auth_service.dart';
-import '../../packages/shared_core/lib/src/core/services/firestore_service.dart';
-import '../../packages/shared_core/lib/src/core/services/analytics_service.dart';
+import 'package:shared_core/src/core/services/auth_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/analytics_service.dart';
 import 'package:franchise_admin_portal/core/theme_provider.dart';
-import '../../packages/shared_core/lib/src/core/providers/franchise_provider.dart';
-import '../../packages/shared_core/lib/src/core/providers/admin_user_provider.dart';
-import '../../packages/shared_core/lib/src/core/providers/user_profile_notifier.dart';
-import '../../packages/shared_core/lib/src/core/providers/franchise_gate.dart';
-import '../../packages/shared_core/lib/src/core/utils/error_logger.dart';
+import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/src/core/providers/franchise_gate.dart';
+import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/landing_page.dart';
 import 'package:franchise_admin_portal/admin/sign_in/sign_in_screen.dart';
 import 'package:franchise_admin_portal/widgets/profile_gate_screen.dart';
@@ -29,41 +29,41 @@ import 'package:franchise_admin_portal/admin/hq_owner/owner_hq_dashboard_screen.
 import 'package:franchise_admin_portal/admin/hq_owner/screens/invoice_list_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/screens/invoice_detail_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/payout_list_screen.dart';
-import '../../packages/shared_core/lib/src/core/providers/payout_filter_provider.dart';
+import 'package:shared_core/src/core/providers/payout_filter_provider.dart';
 import 'package:franchise_admin_portal/admin/owner/platform_owner_dashboard_screen.dart';
-import '../../packages/shared_core/lib/src/core/providers/franchisee_invitation_provider.dart';
-import 'package:franchise_admin_portal/widgets/financials/franchisee_invitation_service.dart';
+import 'package:shared_core/src/core/providers/franchisee_invitation_provider.dart';
+import 'package:shared_core/src/core/services/franchisee_invitation_service.dart';
 import 'package:franchise_admin_portal/admin/profile/universal_profile_screen.dart';
 import 'package:franchise_admin_portal/admin/auth/invite_accept_screen.dart';
 import 'package:franchise_admin_portal/admin/profile/franchise_onboarding_screen.dart';
 import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/screens/available_platform_plans_screen.dart';
-import '../../packages/shared_core/lib/src/core/providers/platform_plan_selection_provider.dart';
-import '../../packages/shared_core/lib/src/core/providers/franchise_subscription_provider.dart';
-import '../../packages/shared_core/lib/src/core/services/franchise_subscription_service.dart';
+import 'package:shared_core/src/core/providers/platform_plan_selection_provider.dart';
+import 'package:shared_core/src/core/providers/franchise_subscription_provider.dart';
+import 'package:shared_core/src/core/services/franchise_subscription_service.dart';
 import 'package:franchise_admin_portal/admin/owner/screens/full_franchise_subscription_list_screen.dart';
 import 'package:franchise_admin_portal/admin/devtools/billing/billing_subscription_tools_screen.dart';
 import 'package:franchise_admin_portal/admin/devtools/subscriptions/subscription_dev_tools_screen.dart';
-import '../../packages/shared_core/lib/src/core/providers/franchise_info_provider.dart';
-import '../../packages/shared_core/lib/src/core/providers/onboarding_progress_provider.dart';
-import 'package:franchise_admin_portal/admin/dashboard/section_registry.dart';
+import 'package:shared_core/src/core/providers/franchise_info_provider.dart';
+import 'package:shared_core/src/core/providers/onboarding_progress_provider.dart';
+import 'package:franchise_admin_portal/core/section_registry.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredients_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredient_type_screen.dart';
-import '../../packages/shared_core/lib/src/core/models/dashboard_section.dart';
-import '../../packages/shared_core/lib/src/core/providers/ingredient_type_provider.dart';
-import '../../packages/shared_core/lib/src/core/providers/ingredient_metadata_provider.dart';
+import 'package:shared_core/src/core/models/dashboard_section.dart';
+import 'package:shared_core/src/core/providers/ingredient_type_provider.dart';
+import 'package:shared_core/src/core/providers/ingredient_metadata_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_categories_screen.dart';
-import '../../packages/shared_core/lib/src/core/providers/category_provider.dart';
-import '../../packages/shared_core/lib/src/core/providers/menu_item_provider.dart';
+import 'package:shared_core/src/core/providers/category_provider.dart';
+import 'package:shared_core/src/core/providers/menu_item_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_items_screen.dart';
-import '../../packages/shared_core/lib/src/core/providers/franchise_feature_provider.dart';
-import '../../packages/shared_core/lib/src/core/services/franchise_feature_service.dart';
+import 'package:shared_core/src/core/providers/franchise_feature_provider.dart';
+import 'package:shared_core/src/core/services/franchise_feature_service.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_feature_setup_screen.dart';
-import '../../packages/shared_core/lib/src/core/providers/restaurant_type_provider.dart';
+import 'package:shared_core/src/core/providers/restaurant_type_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/menu_item_editor_screen.dart';
-import '../../packages/shared_core/lib/src/core/services/audit_log_service.dart';
-import '../../packages/shared_core/lib/src/core/providers/onboarding_review_provider.dart';
+import 'package:shared_core/src/core/services/audit_log_service.dart';
+import 'package:shared_core/src/core/providers/onboarding_review_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_review_screen.dart';
 import 'dart:html' as html;
 
@@ -596,7 +596,8 @@ class _FranchiseAuthenticatedRootState
 
     // Still loading user profile
     if (adminUserProvider.loading || adminUserProvider.user == null) {
-      print('[FranchiseAuthenticatedRoot] â³ Waiting on admin user profile...');
+      print(
+          '[FranchiseAuthenticatedRoot] â³ Waiting on admin user profile...');
       return const MaterialApp(
         home: Scaffold(
           body: Center(child: CircularProgressIndicator()),
@@ -606,7 +607,8 @@ class _FranchiseAuthenticatedRootState
 
     // Roles missing
     if (adminUserProvider.user?.roles == null) {
-      print('[FranchiseAuthenticatedRoot] âŒ User roles missing. Unauthorized.');
+      print(
+          '[FranchiseAuthenticatedRoot] âŒ User roles missing. Unauthorized.');
       debugPrint(
           'AppLocalizations.supportedLocales: ${AppLocalizations.supportedLocales}');
 
@@ -939,7 +941,8 @@ class _FranchiseAuthenticatedRootState
 
                                 // Ingredient Metadata preload
                                 if (!ingredientsProvider.isInitialized) {
-                                  print('[ROUTER]    âž¤ Loading Ingredients...');
+                                  print(
+                                      '[ROUTER]    âž¤ Loading Ingredients...');
                                   await ingredientsProvider.load();
                                   print(
                                       '[ROUTER]    âœ” Loaded Ingredients: count=${ingredientsProvider.ingredients.length}');
@@ -1317,5 +1320,3 @@ final ThemeData _darkTheme = ThemeData(
   dividerColor: DesignTokens.dividerColorDark,
   iconTheme: IconThemeData(color: DesignTokens.textColorDark),
 );
-
-
