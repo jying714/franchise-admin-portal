@@ -4,7 +4,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/core/models/franchisee_invitation.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service_BACKUP.dart';
 import 'package:shared_core/src/core/utils/error_logger.dart';
 
 class FranchiseeInvitationService {

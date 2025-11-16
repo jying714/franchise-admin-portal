@@ -2,7 +2,7 @@ import '../../models/franchise_subscription_model.dart';
 import '../../models/enriched/enriched_franchise_subscription.dart';
 import '../../models/user.dart' as app_user;
 import '../../models/franchise_info.dart';
-import '../firestore_service.dart';
+import '../firestore_service_BACKUP.dart';
 import '../../utils/error_logger.dart';
 import 'package:flutter/material.dart';
 

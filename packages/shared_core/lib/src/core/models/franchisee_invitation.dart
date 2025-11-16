@@ -3,7 +3,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_core/src/core/utils/error_logger.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service_BACKUP.dart';
 
 /// Model representing a pending or completed franchisee invitation.
 /// Includes methods for Firestore serialization/deserialization, robust error logging,

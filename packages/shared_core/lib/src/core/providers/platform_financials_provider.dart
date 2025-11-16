@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/platform_revenue_overview.dart';
 import '../models/platform_financial_kpis.dart';
-import '../services/firestore_service.dart';
+import '../services/firestore_service_BACKUP.dart';
 import 'package:shared_core/src/core/utils/error_logger.dart';
 
 /// Provider for platform-level revenue and KPI aggregates.
