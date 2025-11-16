@@ -1,8 +1,8 @@
+// web_app/lib/core/widgets/franchise_selector.dart
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// FranchiseSelector is a widget that displays all available franchises
-/// and allows the user to pick one. On selection, it calls [onSelected].
 class FranchiseSelector extends StatefulWidget {
   final void Function(String franchiseId) onSelected;
 
@@ -22,16 +22,20 @@ class _FranchiseSelectorState extends State<FranchiseSelector> {
   }
 
   Future<List<_FranchiseInfo>> _fetchFranchises() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('franchises').get();
-    return snapshot.docs.map((doc) {
-      // You can expand _FranchiseInfo as needed
-      return _FranchiseInfo(
-        id: doc.id,
-        name: doc.data()['displayName'] ?? doc.id,
-        logoUrl: doc.data()['logoUrl'],
-      );
-    }).toList();
+    try {
+      final snapshot =
+          await FirebaseFirestore.instance.collection('franchises').get();
+      return snapshot.docs.map((doc) {
+        return _FranchiseInfo(
+          id: doc.id,
+          name: doc.data()['displayName']?.toString() ?? doc.id,
+          logoUrl: doc.data()['logoUrl']?.toString(),
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('Error fetching franchises: $e');
+      rethrow;
+    }
   }
 
   @override
@@ -83,7 +87,6 @@ class _FranchiseSelectorState extends State<FranchiseSelector> {
             );
           }
 
-// Insert 'All Franchises' at the top of the list.
           final allFranchisesOption = _FranchiseInfo(
             id: 'all',
             name: 'All Franchises',
@@ -120,8 +123,6 @@ class _FranchiseSelectorState extends State<FranchiseSelector> {
   }
 }
 
-/// Internal helper class for franchise display.
-/// You can expand this for more data fields as needed.
 class _FranchiseInfo {
   final String id;
   final String name;

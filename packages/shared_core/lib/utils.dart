@@ -4,7 +4,6 @@
 export 'src/core/utils/error_logger.dart';
 export 'src/core/utils/export_utils_core.dart';
 export 'src/core/utils/formatting_core.dart';
-export 'src/core/utils/franchise_utils.dart';
 export 'src/core/utils/log_utils_core.dart';
 export 'src/core/utils/schema_templates.dart';
 export 'src/core/utils/user_permissions.dart';

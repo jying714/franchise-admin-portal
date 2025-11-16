@@ -1,5 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
+// packages/shared_core/lib/src/core/models/error_log.dart
+// PURE DART — NO cloud_firestore, NO flutter
 
 class ErrorLog {
   final String id;
@@ -54,8 +54,8 @@ class ErrorLog {
       'resolved': resolved,
       'archived': archived,
       'comments': comments,
-      'timestamp': Timestamp.fromDate(timestamp),
-      if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+      'timestamp': timestamp, // impl will convert to Timestamp
+      if (updatedAt != null) 'updatedAt': updatedAt,
     };
   }
 
@@ -87,7 +87,6 @@ class ErrorLog {
         throw Exception(
             '[ErrorLog] Missing required "timestamp" field in log: $id');
       }
-      if (ts is Timestamp) return ts.toDate();
       if (ts is DateTime) return ts;
       if (ts is String) return DateTime.tryParse(ts) ?? DateTime.now();
       throw Exception('[ErrorLog] Unrecognized timestamp format in log: $id');
@@ -106,8 +105,6 @@ class ErrorLog {
 
     final dynamic ts = data['timestamp'] ?? data['createdAt'];
     if (ts == null) {
-      debugPrint(
-          '⚠️ Skipping ErrorLog "$id" due to missing timestamp or createdAt');
       throw Exception('Missing timestamp in ErrorLog "$id"');
     }
 
@@ -132,20 +129,5 @@ class ErrorLog {
       updatedAt:
           data['updatedAt'] != null ? parseTimestamp(data['updatedAt']) : null,
     );
-  }
-
-  factory ErrorLog.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return ErrorLog.fromMap(data, doc.id);
-  }
-
-  static ErrorLog? tryParse(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>?;
-    if (data == null) return null;
-    try {
-      return ErrorLog.fromMap(data, doc.id);
-    } catch (e) {
-      return null;
-    }
   }
 }

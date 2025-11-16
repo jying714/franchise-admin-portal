@@ -2,7 +2,7 @@
 
 import 'package:provider/provider.dart';
 import '../models/user.dart';
-import '../services/firestore_service_BACKUP.dart';
+import '../services/firestore_service.dart';
 import '../utils/error_logger.dart';
 import '../config/app_config.dart';
 

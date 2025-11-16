@@ -47,6 +47,7 @@ export 'src/core/models/restaurant_type.dart';
 export 'src/core/models/size_template.dart';
 export 'src/core/models/staff.dart';
 export 'src/core/models/user.dart';
+export 'src/core/models/error_log_summary.dart';
 
 // enriched subfolder
 export 'src/core/models/enriched/enriched_franchise_subscription.dart';

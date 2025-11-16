@@ -204,6 +204,7 @@
 |   |   |-- |-- audit_log_service_impl.dart
 |   |   |-- |-- auth_service_impl.dart
 |   |   |-- |-- firebase_storage_service_impl.dart
+|   |   |-- |-- firestore_service_impl.dart
 |   |   |-- |-- franchise_onboarding_service_impl.dart
 |   |   |-- |-- invoice_service_impl.dart
 |   |   |-- |-- notification_service.dart
@@ -217,11 +218,15 @@
 |   |   |   |-- |-- feature_toggle_scaffold.dart
 |   |   |   --- |-- form_validators.dart
 |   |   |-- |-- app_local_storage.dart
+|   |   |-- |-- export_utils.dart
+|   |   |-- |-- formatting.dart
+|   |   |-- |-- log_utils.dart
 |   |   --- |-- onboarding_navigation_utils.dart
 |   |-- |-- section_registry.dart
 |   --- |-- theme_provider.dart
-+-- l10n
-|   --- |-- app_en.arb
++-- generated
+|   |-- |-- app_localizations.dart
+|   --- |-- app_localizations_en.dart
 +-- widgets
 |   |-- +-- Address
 |   |   |-- |-- address_form.dart
@@ -493,7 +498,7 @@
 |       |   |-- |-- audit_log_service.dart
 |       |   |-- |-- auth_service.dart
 |       |   |-- |-- firebase_storage_service.dart
-|       |   |-- |-- firestore_service.dart
+|       |   |-- |-- firestore_service
 |       |   |-- |-- franchise_feature_service.dart
 |       |   |-- |-- franchise_onboarding_service.dart
 |       |   |-- |-- franchise_subscription_service.dart
@@ -509,11 +514,11 @@
 |           |   |-- |-- feature_guard.dart
 |           |   --- |-- feature_lock_overlay.dart
 |           |-- |-- error_logger.dart
-|           |-- |-- export_utils.dart
-|           |-- |-- formatting.dart
+|           |-- |-- export_utils_core.dart
+|           |-- |-- formatting_core.dart
 |           |-- |-- franchise_utils.dart
 |           |-- |-- local_storage.dart
-|           |-- |-- log_utils.dart
+|           |-- |-- log_utils_core.dart
 |           |-- |-- schema_templates.dart
 |           --- |-- user_permissions.dart
 |-- config.dart
@@ -637,5 +642,5 @@
 |   --- |-- status_chip.dart
 |-- firebase_options.dart
 |-- main.dart
-Schema generated at: 2025-11-07 15:38:12
+Schema generated at: 2025-11-16 15:59:08
 Output saved to: C:\Users\jying\franchise_platform\scripts\project_schema.txt

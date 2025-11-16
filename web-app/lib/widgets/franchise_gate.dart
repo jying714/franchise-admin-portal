@@ -1,9 +1,8 @@
+// web_app/lib/core/widgets/franchise_gate.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'franchise_selector.dart';
-import 'franchise_provider.dart';
-import '../models/user.dart' as admin_user;
-import 'admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart';
 
 class FranchiseGate extends StatelessWidget {
   final Widget child;
@@ -15,7 +14,6 @@ class FranchiseGate extends StatelessWidget {
     final user = Provider.of<AdminUserProvider>(context).user;
 
     if (user == null) {
-      print('[FranchiseGate] ⏳ Admin user not yet available.');
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -25,13 +23,6 @@ class FranchiseGate extends StatelessWidget {
     final isFranchiseOptionalRole = roles.contains('platform_owner') ||
         roles.contains('developer') ||
         roles.contains('hq_owner');
-
-    print('[FranchiseGate] build() for ${child.runtimeType}');
-    print('[FranchiseGate] Roles: $roles');
-    print(
-        '[FranchiseGate] Franchise selected: ${franchiseProvider.isFranchiseSelected}');
-    print(
-        '[FranchiseGate] FranchiseProvider loading: ${franchiseProvider.loading}');
 
     if (franchiseProvider.loading) {
       return const Scaffold(

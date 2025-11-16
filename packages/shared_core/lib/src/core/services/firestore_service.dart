@@ -1,12 +1,10 @@
-// packages/shared_core/lib/src/core/services/firestore_service.dart
-
 import '../models/franchise_info.dart';
 import '../models/ingredient_metadata.dart';
 import '../models/address.dart';
 import 'dart:collection';
 import '../models/customization.dart';
-import 'package:shared_core/src/core/config/app_config.dart';
 import '../models/message.dart';
+import '../models/error_log_summary.dart';
 import '../models/category.dart' as model;
 import '../models/menu_item.dart';
 import '../models/promo.dart';
@@ -15,10 +13,7 @@ import '../models/chat.dart';
 import '../models/feedback_entry.dart' as feedback_model;
 import '../models/inventory.dart';
 import '../models/audit_log.dart';
-import 'audit_log_service.dart';
-import '../../core/utils/export_utils.dart';
 import '../models/analytics_summary.dart';
-import 'package:async/async.dart';
 import '../models/user.dart' as app_user;
 import '../models/order.dart';
 import '../models/error_log.dart';
@@ -26,9 +21,7 @@ import '../models/payout.dart';
 import '../models/report.dart';
 import '../models/invoice.dart';
 import '../models/bank_account.dart';
-import '../../core/utils/error_logger.dart';
 import '../models/franchisee_invitation.dart';
-import 'payout_service.dart';
 import '../models/platform_revenue_overview.dart';
 import '../models/platform_financial_kpis.dart';
 import '../models/platform_invoice.dart';
@@ -36,7 +29,6 @@ import '../models/platform_payment.dart';
 import '../models/platform_plan_model.dart';
 import '../models/franchise_subscription_model.dart';
 import '../models/ingredient_type_model.dart';
-import 'dart:convert';
 import '../models/size_template.dart';
 import '../models/menu_template_ref.dart';
 
@@ -44,32 +36,49 @@ abstract class FirestoreService {
   // Caching (pure Dart)
   List<IngredientMetadata>? _cachedIngredientMetadata;
   DateTime? _lastIngredientMetadataFetch;
-  String get _ingredientMetadata => 'ingredient_metadata';
+  String get _ingredientMetadata;
 
   // Getters (pure Dart)
   String? get currentUserId;
-  String get _menuItems => AppConfig.menuItemsCollection;
-  String get _promotions => AppConfig.promotionsCollection;
-  String get _banners => AppConfig.bannersCollection;
-  String get _supportChats => AppConfig.supportChatsCollection;
-  String get _feedback => AppConfig.feedbackCollection;
-  String get _inventory => AppConfig.inventoryCollection;
-  String get _categories => AppConfig.categoriesCollection;
+  String get _menuItems;
+  String get _promotions;
+  String get _banners;
+  String get _supportChats;
+  String get _feedback;
+  String get _inventory;
+  String get _categories;
 
-  // Abstract methods (pure Dart signatures)
-  Future<List<IngredientMetadata>> getAllIngredientMetadata(String franchiseId, {bool forceRefresh = false});
-  Future<List<IngredientMetadata>> getIngredientMetadataByIds(String franchiseId, List<String> ids);
-  Future<Map<String, IngredientMetadata>> getIngredientMetadataMap(String franchiseId, {bool forceRefresh = false});
-  Future<List<Map<String, dynamic>>> fetchIngredientMetadataAsMaps(String franchiseId, {bool forceRefresh = false});
-  Future<List<String>> getAllergensForIngredientIds(String franchiseId, List<String>? ingredientIds);
-  Future<List<String>> getAllergensForCustomizations(String franchiseId, List<Customization> customizations);
+  // === CORE ABSTRACT METHODS ===
+  Future<List<IngredientMetadata>> getAllIngredientMetadata(String franchiseId,
+      {bool forceRefresh = false});
+  Future<List<IngredientMetadata>> getIngredientMetadataByIds(
+      String franchiseId, List<String> ids);
+  Future<Map<String, IngredientMetadata>> getIngredientMetadataMap(
+      String franchiseId,
+      {bool forceRefresh = false});
+  Future<List<Map<String, dynamic>>> fetchIngredientMetadataAsMaps(
+      String franchiseId,
+      {bool forceRefresh = false});
+  Future<List<String>> getAllergensForIngredientIds(
+      String franchiseId, List<String>? ingredientIds);
+  Future<List<String>> getAllergensForCustomizations(
+      String franchiseId, List<Customization> customizations);
 
   Future<Map<String, dynamic>?> getFranchiseeInvitationByToken(String token);
-  Future<String> createFranchiseProfile({required Map<String, dynamic> franchiseData, required String invitedUserId});
-  Future<void> updateUserClaims({required String uid, required List<String> franchiseIds, List<String>? roles, Map<String, dynamic>? additionalClaims});
-  Future<void> updateFranchiseProfile({required String franchiseId, required Map<String, dynamic> data});
-  Future<void> saveFranchiseBusinessHours({required String franchiseId, required List<Map<String, dynamic>> hours});
-  Future<List<Map<String, dynamic>>> getFranchiseBusinessHours(String franchiseId);
+  Future<String> createFranchiseProfile(
+      {required Map<String, dynamic> franchiseData,
+      required String invitedUserId});
+  Future<void> updateUserClaims(
+      {required String uid,
+      required List<String> franchiseIds,
+      List<String>? roles,
+      Map<String, dynamic>? additionalClaims});
+  Future<void> updateFranchiseProfile(
+      {required String franchiseId, required Map<String, dynamic> data});
+  Future<void> saveFranchiseBusinessHours(
+      {required String franchiseId, required List<Map<String, dynamic>> hours});
+  Future<List<Map<String, dynamic>>> getFranchiseBusinessHours(
+      String franchiseId);
   Future<void> callAcceptInvitationFunction(String token);
   Future<void> claimInvitation(String token, String newUid);
 
@@ -88,26 +97,40 @@ abstract class FirestoreService {
   Future<void> removeAddressForUser(String userId, String addressId);
   Future<List<Address>> getAddressesForUser(String userId);
 
-  Future<Map<String, dynamic>?> getFranchiseProfile(String userId, String franchiseId);
-  Future<void> setFranchiseProfile(String userId, String franchiseId, Map<String, dynamic> data);
-  Stream<Map<String, dynamic>?> franchiseProfileStream(String userId, String franchiseId);
-  Stream<List<String>> favoritesMenuItemIdsStream(String userId, String franchiseId);
-  Future<List<String>> getFavoritesMenuItemIds(String userId, String franchiseId);
-  Future<void> addFavoriteMenuItem(String userId, String franchiseId, String menuItemId);
-  Future<void> removeFavoriteMenuItem(String userId, String franchiseId, String menuItemId);
-  Future<Map<String, dynamic>?> getLoyaltyForUser(String userId, String franchiseId);
-  Future<void> setLoyaltyForUser(String userId, String franchiseId, Map<String pot, dynamic> loyalty);
+  Future<Map<String, dynamic>?> getFranchiseProfile(
+      String userId, String franchiseId);
+  Future<void> setFranchiseProfile(
+      String userId, String franchiseId, Map<String, dynamic> data);
+  Stream<Map<String, dynamic>?> franchiseProfileStream(
+      String userId, String franchiseId);
+  Stream<List<String>> favoritesMenuItemIdsStream(
+      String userId, String franchiseId);
+  Future<List<String>> getFavoritesMenuItemIds(
+      String userId, String franchiseId);
+  Future<void> addFavoriteMenuItem(
+      String userId, String franchiseId, String menuItemId);
+  Future<void> removeFavoriteMenuItem(
+      String userId, String franchiseId, String menuItemId);
+  Future<Map<String, dynamic>?> getLoyaltyForUser(
+      String userId, String franchiseId);
+  Future<void> setLoyaltyForUser(
+      String userId, String franchiseId, Map<String, dynamic> loyalty);
 
-  Future<void> updateOrderStatus(String franchiseId, String orderId, String newStatus);
-  Future<void> refundOrder(String franchiseId, String orderId, {double? amount, String? refundReason});
+  Future<void> updateOrderStatus(
+      String franchiseId, String orderId, String newStatus);
+  Future<void> refundOrder(String franchiseId, String orderId,
+      {double? amount, String? refundReason});
   Stream<List<Order>> getAllOrdersStream(String franchiseId);
 
   // === FEATURE TOGGLES ===
   Future<Map<String, dynamic>> getGlobalFeatureToggles();
   Future<Map<String, dynamic>> getFranchiseFeatureToggles(String franchiseId);
-  Future<void> setFranchiseFeatureToggles(String franchiseId, Map<String, dynamic> toggles);
-  Stream<Map<String, dynamic>> streamFranchiseFeatureToggles(String franchiseId);
-  Future<void> updateFeatureToggle(String franchiseId, String key, dynamic value);
+  Future<void> setFranchiseFeatureToggles(
+      String franchiseId, Map<String, dynamic> toggles);
+  Stream<Map<String, dynamic>> streamFranchiseFeatureToggles(
+      String franchiseId);
+  Future<void> updateFeatureToggle(
+      String franchiseId, String key, dynamic value);
 
   // === ERROR LOGS ===
   Future<void> addErrorLogGlobal(ErrorLog log);
@@ -137,7 +160,12 @@ abstract class FirestoreService {
     bool? showResolved,
   });
   Future<void> deleteErrorLogGlobal(String logId);
-  Future<void> logSchemaError(String franchiseId, {required String message, String? templateId, String? menuItemId, String? stackTrace, String? userId});
+  Future<void> logSchemaError(String franchiseId,
+      {required String message,
+      String? templateId,
+      String? menuItemId,
+      String? stackTrace,
+      String? userId});
   Future<void> logError(
     String? franchiseId, {
     required String message,
@@ -151,22 +179,32 @@ abstract class FirestoreService {
     Map<String, dynamic>? deviceInfo,
     String? assignedTo,
   });
-  Future<void> updateErrorLog(String franchiseId, String logId, Map<String, dynamic> updates);
-  Future<void> addCommentToErrorLog(String franchiseId, String logId, Map<String, dynamic> comment);
-  Future<void> setErrorLogStatus(String franchiseId, String logId, {bool? resolved, bool? archived});
+  Future<void> updateErrorLog(
+      String franchiseId, String logId, Map<String, dynamic> updates);
+  Future<void> addCommentToErrorLog(
+      String franchiseId, String logId, Map<String, dynamic> comment);
+  Future<void> setErrorLogStatus(String franchiseId, String logId,
+      {bool? resolved, bool? archived});
   Future<void> deleteErrorLog(String franchiseId, String logId);
 
   // === AUDIT LOGS ===
   Future<void> addAuditLogGlobal(AuditLog log);
   Future<AuditLog?> getAuditLogGlobal(String logId);
-  Stream<List<AuditLog>> auditLogsStreamGlobal({String? franchiseId, String? userId, String? action});
+  Stream<List<AuditLog>> auditLogsStreamGlobal(
+      {String? franchiseId, String? userId, String? action});
   Future<void> addAuditLogFranchise(String franchiseId, AuditLog log);
   Future<AuditLog?> getAuditLogFranchise(String franchiseId, String logId);
-  Stream<List<AuditLog>> auditLogsStreamFranchise(String franchiseId, {String? userId, String? action});
+  Stream<List<AuditLog>> auditLogsStreamFranchise(String franchiseId,
+      {String? userId, String? action});
 
   // === STAFF/ADMIN USERS ===
   Stream<List<app_user.User>> getStaffUsers(String franchiseId);
-  Future<void> addStaffUser({required String name, required String email, String? phone, required List<String> roles, required List<String> franchiseIds});
+  Future<void> addStaffUser(
+      {required String name,
+      required String email,
+      String? phone,
+      required List<String> roles,
+      required List<String> franchiseIds});
   Future<void> removeStaffUser(String userId);
 
   // === FRANCHISE LIST HELPERS ===
@@ -180,7 +218,8 @@ abstract class FirestoreService {
   Future<Payout?> getPayoutById(String id);
   Future<void> deletePayout(String id);
   Stream<List<Payout>> payoutsStream({String? franchiseId, String? status});
-  Future<List<Map<String, dynamic>>> getPayoutsForFranchise({required String franchiseId, String? status, String? searchQuery});
+  Future<List<Map<String, dynamic>>> getPayoutsForFranchise(
+      {required String franchiseId, String? status, String? searchQuery});
   Future<List<Payout>> fetchPayouts({
     String? franchiseId,
     String? status,
@@ -191,21 +230,23 @@ abstract class FirestoreService {
     String? sortBy,
     bool descending = true,
     int? limit,
-    firestore.DocumentSnapshot? startAfter,
+    dynamic startAfter, // ← CHANGED: was firestore.DocumentSnapshot
   });
   Future<Map<String, dynamic>?> getPayoutDetailsWithAudit(String payoutId);
   Future<void> addPayoutAuditEvent(String payoutId, Map<String, dynamic> event);
-  Future<void> addAttachmentToPayout(String payoutId, Map<String, dynamic> attachment);
-  Future<void> removeAttachmentFromPayout(String payoutId, Map<String, dynamic> attachment);
+  Future<void> addAttachmentToPayout(
+      String payoutId, Map<String, dynamic> attachment);
+  Future<void> removeAttachmentFromPayout(
+      String payoutId, Map<String, dynamic> attachment);
   Future<void> bulkUpdatePayoutStatus(List<String> payoutIds, String status);
   Future<void> addPayoutComment(String payoutId, Map<String, dynamic> comment);
-
-  // === PAYOUTS ===
   Future<List<Map<String, dynamic>>> getPayoutComments(String payoutId);
-  Future<void> removePayoutComment(String payoutId, Map<String, dynamic> comment);
+  Future<void> removePayoutComment(
+      String payoutId, Map<String, dynamic> comment);
   Future<void> markPayoutSent(String payoutId, {DateTime? sentAt});
   Future<void> setPayoutStatus(String payoutId, String newStatus);
-  Future<void> markPayoutFailed(String payoutId, {String? errorMsg, String? errorCode});
+  Future<void> markPayoutFailed(String payoutId,
+      {String? errorMsg, String? errorCode});
   Future<void> retryPayout(String payoutId);
   Future<List<AuditLog>> getAuditLogsForPayout(String payoutId);
   Future<String> exportPayoutsToCsv({
@@ -222,19 +263,26 @@ abstract class FirestoreService {
 
   // === INVOICES ===
   Future<Map<String, dynamic>> getInvoiceStatsForFranchise(String franchiseId);
-  Future<List<Invoice>> fetchInvoicesFiltered({required String franchiseId, DateTime? startDate, DateTime? endDate});
+  Future<List<Invoice>> fetchInvoicesFiltered(
+      {required String franchiseId, DateTime? startDate, DateTime? endDate});
   Future<void> addOrUpdateInvoice(Invoice invoice);
   Future<Invoice?> getInvoiceById(String id);
   Future<void> deleteInvoice(String id);
   Future<void> updateInvoiceDunningState(String invoiceId, String dunningState);
-  Future<void> addInvoiceOverdueReminder(String invoiceId, Map<String, dynamic> reminder);
-  Future<void> setInvoicePaymentPlan(String invoiceId, Map<String, dynamic> paymentPlan);
-  Future<void> addInvoiceEscalationEvent(String invoiceId, Map<String, dynamic> escalationEvent);
+  Future<void> addInvoiceOverdueReminder(
+      String invoiceId, Map<String, dynamic> reminder);
+  Future<void> setInvoicePaymentPlan(
+      String invoiceId, Map<String, dynamic> paymentPlan);
+  Future<void> addInvoiceEscalationEvent(
+      String invoiceId, Map<String, dynamic> escalationEvent);
   Future<Map<String, dynamic>?> getInvoiceWorkflowFields(String invoiceId);
   Future<void> removeInvoicePaymentPlan(String invoiceId);
-  Future<void> addInvoiceSupportNote(String invoiceId, Map<String, dynamic> note);
-  Future<void> addInvoiceAttachment(String invoiceId, Map<String, dynamic> attachment);
-  Future<void> addInvoiceAuditEvent(String invoiceId, Map<String, dynamic> event);
+  Future<void> addInvoiceSupportNote(
+      String invoiceId, Map<String, dynamic> note);
+  Future<void> addInvoiceAttachment(
+      String invoiceId, Map<String, dynamic> attachment);
+  Future<void> addInvoiceAuditEvent(
+      String invoiceId, Map<String, dynamic> event);
   Future<int> getNextInvoiceNumber();
   Stream<List<Invoice>> invoicesStream({
     String? franchiseId,
@@ -262,8 +310,16 @@ abstract class FirestoreService {
   Future<List<Chat>> getAllChats(String franchiseId);
   Stream<List<Chat>> streamAllChats(String franchiseId);
   Future<void> deleteChat(String franchiseId, String chatId);
-  Future<void> sendMessage(String franchiseId, {required String chatId, required String senderId, required String content, String role = 'user'});
-  Future<void> sendSupportReply({required String franchiseId, required String chatId, required String senderId, required String content});
+  Future<void> sendMessage(String franchiseId,
+      {required String chatId,
+      required String senderId,
+      required String content,
+      String role = 'user'});
+  Future<void> sendSupportReply(
+      {required String franchiseId,
+      required String chatId,
+      required String senderId,
+      required String content});
   Stream<List<Message>> streamChatMessages(String franchiseId, String chatId);
   Stream<bool> streamSupportOnline();
 
@@ -274,22 +330,28 @@ abstract class FirestoreService {
   Stream<List<BankAccount>> bankAccountsStream({String? franchiseId});
 
   // === ANALYTICS SUMMARY ===
-  Future<AnalyticsSummary?> getAnalyticsSummary(String franchiseId, {required String period});
-  Future<String> exportAnalyticsToCsv(String franchiseId, {required String period});
+  Future<AnalyticsSummary?> getAnalyticsSummary(String franchiseId,
+      {required String period});
+  Future<String> exportAnalyticsToCsv(String franchiseId,
+      {required String period});
   Future<double> getTotalRevenueToday(String franchiseId);
   Future<double> getTotalRevenueForPeriod(String franchiseId, String period);
   Future<int> getTotalOrdersTodayCount({required String franchiseId});
 
   // === MENU ITEMS ===
   Future<void> addMenuItem(String franchiseId, MenuItem item, {String? userId});
-  Future<void> updateMenuItem(String franchiseId, MenuItem item, {String? userId});
+  Future<void> updateMenuItem(String franchiseId, MenuItem item,
+      {String? userId});
   Future<void> deleteMenuItem(String franchiseId, String id, {String? userId});
-  Stream<List<MenuItem>> getMenuItems(String franchiseId, {String? search, String? sortBy, bool descending = false});
+  Stream<List<MenuItem>> getMenuItems(String franchiseId,
+      {String? search, String? sortBy, bool descending = false});
   Future<List<MenuItem>> getMenuItemsOnce(String franchiseId);
-  Stream<List<MenuItem>> getMenuItemsByIds(String franchiseId, List<String> ids);
+  Stream<List<MenuItem>> getMenuItemsByIds(
+      String franchiseId, List<String> ids);
   List<Customization> getCustomizationGroups(MenuItem item);
   List<Customization> getPreselectedCustomizations(MenuItem item);
-  Customization? findCustomizationOption(List<Customization> groups, String idOrName);
+  Customization? findCustomizationOption(
+      List<Customization> groups, String idOrName);
 
   // === INVENTORY ===
   Future<void> addInventory(String franchiseId, Inventory inventory);
@@ -311,12 +373,15 @@ abstract class FirestoreService {
   Future<void> deletePromo(String franchiseId, String promoId);
 
   // === FEEDBACK ===
-  Stream<List<feedback_model.FeedbackEntry>> getFeedbackEntries(String franchiseId);
+  Stream<List<feedback_model.FeedbackEntry>> getFeedbackEntries(
+      String franchiseId);
   Future<void> deleteFeedbackEntry(String franchiseId, String id);
 
   // === SUPPORT REQUESTS ===
-  Future<firestore.DocumentReference> addSupportRequest(Map<String, dynamic> data);
-  Future<void> updateSupportRequest(String requestId, Map<String, dynamic> updates);
+  Future<dynamic> addSupportRequest(
+      Map<String, dynamic> data); // ← CHANGED: was DocumentReference
+  Future<void> updateSupportRequest(
+      String requestId, Map<String, dynamic> updates);
   Future<Map<String, dynamic>?> getSupportRequestById(String requestId);
   Stream<List<Map<String, dynamic>>> supportRequestsStream({
     String? franchiseId,
@@ -327,17 +392,22 @@ abstract class FirestoreService {
     String? openedBy,
     int limit = 50,
   });
-  Future<void> addMessageToSupportRequest(String requestId, Map<String, dynamic> message);
+  Future<void> addMessageToSupportRequest(
+      String requestId, Map<String, dynamic> message);
   Future<void> deleteSupportRequest(String requestId);
   Future<void> addSupportNote(String requestId, Map<String, dynamic> note);
   Future<void> updateSupportType(String requestId, String type);
-  Future<void> linkEntitiesToSupportRequest(String requestId, {String? invoiceId, String? paymentId});
-  Future<void> updateSupportRequestStatus(String requestId, {required String status, String? lastUpdatedBy, String? resolutionNotes});
+  Future<void> linkEntitiesToSupportRequest(String requestId,
+      {String? invoiceId, String? paymentId});
+  Future<void> updateSupportRequestStatus(String requestId,
+      {required String status, String? lastUpdatedBy, String? resolutionNotes});
   Future<List<Map<String, dynamic>>> getSupportNotes(String requestId);
-  Stream<List<Map<String, dynamic>>> supportRequestsByTypeOrStatus({String? type, String? status, int limit = 50});
+  Stream<List<Map<String, dynamic>>> supportRequestsByTypeOrStatus(
+      {String? type, String? status, int limit = 50});
 
   // === TAX REPORTS ===
-  Future<firestore.DocumentReference> addTaxReport(Map<String, dynamic> data);
+  Future<dynamic> addTaxReport(
+      Map<String, dynamic> data); // ← CHANGED: was DocumentReference
   Future<void> updateTaxReport(String reportId, Map<String, dynamic> updates);
   Future<Map<String, dynamic>?> getTaxReportById(String reportId);
   Stream<List<Map<String, dynamic>>> taxReportsStream({
@@ -351,12 +421,16 @@ abstract class FirestoreService {
     int limit = 100,
   });
   Future<void> deleteTaxReport(String reportId);
-  Future<void> addTaxReportReminder(String reportId, Map<String, dynamic> reminder);
-  Future<void> addTaxReportAttachment(String reportId, Map<String, dynamic> attachment);
+  Future<void> addTaxReportReminder(
+      String reportId, Map<String, dynamic> reminder);
+  Future<void> addTaxReportAttachment(
+      String reportId, Map<String, dynamic> attachment);
 
   // === INVITATIONS ===
-  Future<List<FranchiseeInvitation>> fetchInvitations({String? status, String? inviterUserId, String? email});
-  Stream<List<FranchiseeInvitation>> invitationStream({String? status, String? inviterUserId});
+  Future<List<FranchiseeInvitation>> fetchInvitations(
+      {String? status, String? inviterUserId, String? email});
+  Stream<List<FranchiseeInvitation>> invitationStream(
+      {String? status, String? inviterUserId});
   Future<FranchiseeInvitation?> fetchInvitationById(String id);
   Future<void> updateInvitation(String id, Map<String, dynamic> data);
   Future<void> cancelInvitation(String id, {String? revokedByUserId});
@@ -368,14 +442,18 @@ abstract class FirestoreService {
   Future<PlatformRevenueOverview> fetchPlatformRevenueOverview();
   Future<PlatformFinancialKpis> fetchPlatformFinancialKpis();
 
-  Stream<List<PlatformInvoice>> platformInvoicesStream({required String franchiseeId, String? status});
+  Stream<List<PlatformInvoice>> platformInvoicesStream(
+      {required String franchiseeId, String? status});
   Future<List<PlatformInvoice>> getPlatformInvoicesForUser(String userId);
   Future<List<Map<String, dynamic>>> getPlatformPaymentsForUser(String userId);
-  Future<void> savePlatformInvoiceFromWebhook(Map<String, dynamic> eventData, String invoiceId);
-  Future<List<PlatformInvoice>> getPlatformInvoicesForFranchisee(String franchiseeId);
+  Future<void> savePlatformInvoiceFromWebhook(
+      Map<String, dynamic> eventData, String invoiceId);
+  Future<List<PlatformInvoice>> getPlatformInvoicesForFranchisee(
+      String franchiseeId);
   Future<void> createPlatformInvoice(PlatformInvoice invoice);
   Future<void> updatePlatformInvoiceStatus(String invoiceId, String newStatus);
-  Future<List<PlatformPayment>> getPlatformPaymentsForFranchisee(String franchiseeId);
+  Future<List<PlatformPayment>> getPlatformPaymentsForFranchisee(
+      String franchiseeId);
   Future<void> createPlatformPayment(PlatformPayment payment);
   Future<void> markPlatformPaymentCompleted(String paymentId);
   Future<void> updatePlatformPaymentStatus(String paymentId, String newStatus);
@@ -384,15 +462,20 @@ abstract class FirestoreService {
   // === FRANCHISE SUBSCRIPTIONS ===
   Future<List<FranchiseSubscription>> getFranchiseSubscriptions();
   Future<FranchiseSubscription?> getFranchiseSubscription(String franchiseId);
-  Future<FranchiseSubscription?> getCurrentSubscriptionForFranchise(String franchiseId);
+  Future<FranchiseSubscription?> getCurrentSubscriptionForFranchise(
+      String franchiseId);
   Future<List<FranchiseSubscription>> getAllFranchiseSubscriptions();
-  Future<List<firestore.QueryDocumentSnapshot<Map<String, dynamic>>>> getAllFranchiseSubscriptionsRaw();
+  Future<List<dynamic>>
+      getAllFranchiseSubscriptionsRaw(); // ← CHANGED: was QueryDocumentSnapshot
   Future<List<Map<String, dynamic>>> getStoreInvoicesForUser(String userId);
 
   // === ONBOARDING ===
   Future<FranchiseInfo?> getFranchiseInfo(String franchiseId);
   Future<Map<String, dynamic>?> getOnboardingProgress(String franchiseId);
-  Future<void> updateOnboardingStep({required String franchiseId, required String stepKey, required bool completed});
+  Future<void> updateOnboardingStep(
+      {required String franchiseId,
+      required String stepKey,
+      required bool completed});
   Future<void> setOnboardingComplete({required String franchiseId});
 
   // === SIMULATION ===
@@ -410,24 +493,38 @@ abstract class FirestoreService {
     String paymentProvider = 'developer',
   });
   Future<void> logSimulatedWebhookEvent(Map<String, dynamic> data);
-  Future<List<PlatformInvoice>> getTestPlatformInvoices({required String franchiseeId});
+  Future<List<PlatformInvoice>> getTestPlatformInvoices(
+      {required String franchiseeId});
 
   // === TEMPLATES & IMPORT ===
-  Future<void> copyIngredientTypesFromTemplate({required String franchiseId, required String templateId});
-  Future<void> updateIngredientTypeSortOrders({required String franchiseId, required List<Map<String, dynamic>> sortedUpdates});
-  Future<void> replaceIngredientTypesFromJson({required String franchiseId, required List<IngredientType> items});
-  Future<List<IngredientMetadata>> getIngredientMetadataTemplate(String templateId);
-  Future<void> importIngredientMetadataTemplate({required String templateId, required String franchiseId});
+  Future<void> copyIngredientTypesFromTemplate(
+      {required String franchiseId, required String templateId});
+  Future<void> updateIngredientTypeSortOrders(
+      {required String franchiseId,
+      required List<Map<String, dynamic>> sortedUpdates});
+  Future<void> replaceIngredientTypesFromJson(
+      {required String franchiseId, required List<IngredientType> items});
+  Future<List<IngredientMetadata>> getIngredientMetadataTemplate(
+      String templateId);
+  Future<void> importIngredientMetadataTemplate(
+      {required String templateId, required String franchiseId});
   Future<List<IngredientMetadata>> fetchIngredientMetadata(String franchiseId);
   Future<List<String>> fetchIngredientTypeIds(String franchiseId);
   Future<List<model.Category>> fetchCategories(String franchiseId);
   Future<void> saveCategory(String franchiseId, model.Category category);
-  Future<void> replaceAllCategories(String franchiseId, List<model.Category> categories);
-  Future<void> saveAllCategories(String franchiseId, List<model.Category> categories);
+  Future<void> replaceAllCategories(
+      String franchiseId, List<model.Category> categories);
+  Future<void> saveAllCategories(
+      String franchiseId, List<model.Category> categories);
   Future<List<MenuItem>> fetchMenuItemsOnce(String franchiseId);
   Future<void> saveMenuItems(String franchiseId, List<MenuItem> items);
   Future<void> reorderMenuItems(String franchiseId, List<MenuItem> ordered);
-  Future<List<MenuTemplateRef>> fetchMenuTemplateRefs({required String restaurantType});
+  Future<List<MenuTemplateRef>> fetchMenuTemplateRefs(
+      {required String restaurantType});
   Future<List<Map<String, dynamic>>> decodeJsonList(String input);
   Future<List<SizeTemplate>> getSizeTemplatesForTemplate(String restaurantType);
+
+  // === COLLECTIONS (pure Dart getters) ===
+  String get invitationCollectionPath;
+  // You can add others: menuItemsCollectionPath, etc.
 }

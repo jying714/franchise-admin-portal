@@ -2840,4 +2840,22 @@ class FirestoreServiceImpl implements FirestoreService {
 
     return snapshot.docs.map((doc) => SizeTemplate.fromFirestore(doc)).toList();
   }
+
+  @override
+  String get invitationCollectionPath => 'franchisee_invitations';
+
+  CollectionReference get invitationCollection => 
+      _db.collection(invitationCollectionPath);
+
+
+  @override
+  Stream<admin_user.User?> userStream(String userId) {
+    return _db
+        .collection('users')
+        .doc(userId)
+        .snapshots()
+        .map((doc) => doc.data() != null
+            ? admin_user.User.fromMap(doc.data()!, doc.id)
+            : null);
+  }
 }
