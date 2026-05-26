@@ -9,12 +9,15 @@ on:
       - 'firebase.json'
       - '.github/workflows/deploy-web.yml'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # ← Fixes Node 20 deprecation
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./web-app   # ← CHANGED
+        working-directory: ./web-app
 
     steps:
       - uses: actions/checkout@v4
