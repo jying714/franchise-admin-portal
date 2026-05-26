@@ -354,7 +354,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
             ),
             ChangeNotifierProvider(
                 create: (_) => PlatformPlanSelectionProvider()),
-            Provider<FirestoreService>.value(value: FirestoreService()),
+            // FirestoreService is provided at the root level above.
             ChangeNotifierProxyProvider2<FranchiseProvider, FirestoreService,
                 FranchiseInfoProvider>(
               create: (_) => FranchiseInfoProvider(

@@ -1,4 +1,5 @@
 ﻿import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -6,8 +7,9 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
 import 'package:shared_core/src/core/services/auth_service.dart';
 import 'package:franchise_mobile_app/core/services/analytics_service.dart';
-import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_mobile_app/features/language/language_provider.dart';
+import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as app_user;
 import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
 import 'firebase_options.dart';
@@ -73,9 +75,11 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        ChangeNotifierProvider(create: (_) => FranchiseProvider()),
         Provider(create: (_) => AuthService()),
         Provider(create: (_) => AnalyticsService()),
         Provider(create: (_) => FirestoreService()),
+        Provider(create: (_) => FirebaseAuth.instance),
         // Loader for ingredient metadata
         ChangeNotifierProvider(create: (_) => IngredientMetadataProvider()),
         // StreamProvider for Firestore-backed User model, synced with Firebase Auth state

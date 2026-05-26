@@ -43,7 +43,8 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
     });
 
     try {
-      final allLogs = await FirestoreService().getErrorLogSummaries();
+      final allLogs = await Provider.of<FirestoreService>(context, listen: false)
+          .getErrorLogSummaries();
 
       print('âœ… Retrieved ${allLogs.length} logs from Firestore');
       for (final log in allLogs) {

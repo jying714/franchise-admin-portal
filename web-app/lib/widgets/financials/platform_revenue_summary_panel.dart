@@ -50,9 +50,9 @@ class _PlatformRevenueSummaryPanelState
 
     try {
       // You should implement/extend these methods in firestore_service.dart
-      final financials =
-          await FirestoreService().fetchPlatformRevenueOverview();
-      final kpis = await FirestoreService().fetchPlatformFinancialKpis();
+      final fs = Provider.of<FirestoreService>(context, listen: false);
+      final financials = await fs.fetchPlatformRevenueOverview();
+      final kpis = await fs.fetchPlatformFinancialKpis();
 
       setState(() {
         totalRevenueYtd = financials.totalRevenueYtd;

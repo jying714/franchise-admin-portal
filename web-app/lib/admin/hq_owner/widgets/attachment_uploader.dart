@@ -61,7 +61,8 @@ class _AttachmentUploaderState extends State<AttachmentUploader> {
         // 'url': ..., // Add if implementing storage!
       };
 
-      await FirestoreService().addAttachmentToPayout(widget.payoutId, meta);
+      await Provider.of<FirestoreService>(context, listen: false)
+          .addAttachmentToPayout(widget.payoutId, meta);
       widget.onUploaded?.call();
       setState(() {
         _uploading = false;
@@ -84,7 +85,8 @@ class _AttachmentUploaderState extends State<AttachmentUploader> {
 
   Future<void> _deleteAttachment(Map<String, dynamic> att) async {
     try {
-      await FirestoreService().removeAttachmentFromPayout(widget.payoutId, att);
+      await Provider.of<FirestoreService>(context, listen: false)
+          .removeAttachmentFromPayout(widget.payoutId, att);
       widget.onDeleted?.call();
     } catch (e, stack) {
       ErrorLogger.log(

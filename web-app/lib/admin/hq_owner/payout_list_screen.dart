@@ -39,7 +39,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
       _bulkError = null;
     });
     try {
-      await FirestoreService().bulkUpdatePayoutStatus(
+      await Provider.of<FirestoreService>(context, listen: false).bulkUpdatePayoutStatus(
         _selectedPayoutIds.toList(),
         status,
       );
@@ -70,7 +70,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
     try {
       final franchiseId =
           Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
-      await FirestoreService().exportPayoutsToCsv(
+      await Provider.of<FirestoreService>(context, listen: false).exportPayoutsToCsv(
         franchiseId: franchiseId,
       );
       ScaffoldMessenger.of(context).showSnackBar(
@@ -92,7 +92,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
   Future<void> _deleteSelectedPayouts() async {
     try {
       for (final id in _selectedPayoutIds) {
-        await FirestoreService().deletePayout(id);
+        await Provider.of<FirestoreService>(context, listen: false).deletePayout(id);
       }
       setState(() => _selectedPayoutIds.clear());
       ScaffoldMessenger.of(context).showSnackBar(
@@ -356,7 +356,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
                 child: Consumer<PayoutFilterProvider>(
                   builder: (context, filterProvider, _) {
                     return FutureBuilder<List<Map<String, dynamic>>>(
-                      future: FirestoreService().getPayoutsForFranchise(
+                      future: Provider.of<FirestoreService>(context, listen: false).getPayoutsForFranchise(
                         franchiseId: franchiseId,
                         status: filterProvider.status == 'all'
                             ? null
@@ -523,7 +523,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
                                             );
                                             _retry();
                                           } else if (v == 'ResetPending') {
-                                            await FirestoreService()
+                                            await Provider.of<FirestoreService>(context, listen: false)
                                                 .retryPayout(payout['id']);
                                             _retry();
                                           } else {

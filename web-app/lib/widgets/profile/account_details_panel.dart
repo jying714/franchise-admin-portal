@@ -1,6 +1,7 @@
 ﻿// File: lib/widgets/profile/account_details_panel.dart
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_core/src/core/models/user.dart';
 import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:shared_core/src/core/utils/error_logger.dart';
@@ -50,7 +51,7 @@ class _AccountDetailsPanelState extends State<AccountDetailsPanel> {
       _error = null;
     });
     try {
-      await FirestoreService().updateUserProfile(widget.user.id, {
+      await Provider.of<FirestoreService>(context, listen: false).updateUserProfile(widget.user.id, {
         'name': _nameController.text.trim(),
         'phoneNumber': _phoneController.text.trim(),
         'language': _language,

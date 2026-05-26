@@ -1,6 +1,6 @@
 ﻿import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:logging/logging.dart';
-import 'package:franchise_mobile_app/config/feature_config.dart';
+import 'package:shared_core/src/core/config/feature_config.dart';
 
 class NotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
@@ -65,5 +65,3 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       .info('Handling background message: ${message.notification?.title}');
   // Implement any background logic here (e.g., badge update)
 }
-
-

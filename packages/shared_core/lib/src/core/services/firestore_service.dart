@@ -32,6 +32,8 @@ import '../models/ingredient_type_model.dart';
 import '../models/size_template.dart';
 import '../models/menu_template_ref.dart';
 
+import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
+
 abstract class FirestoreService {
   // Caching (pure Dart)
   List<IngredientMetadata>? _cachedIngredientMetadata;
@@ -112,9 +114,9 @@ abstract class FirestoreService {
   Future<void> removeFavoriteMenuItem(
       String userId, String franchiseId, String menuItemId);
   Future<Map<String, dynamic>?> getLoyaltyForUser(
-      String userId, String franchiseId);
+      String userId, {String? franchiseId});
   Future<void> setLoyaltyForUser(
-      String userId, String franchiseId, Map<String, dynamic> loyalty);
+      String userId, Map<String, dynamic> loyalty, {String? franchiseId});
 
   Future<void> updateOrderStatus(
       String franchiseId, String orderId, String newStatus);
@@ -523,6 +525,89 @@ abstract class FirestoreService {
       {required String restaurantType});
   Future<List<Map<String, dynamic>>> decodeJsonList(String input);
   Future<List<SizeTemplate>> getSizeTemplatesForTemplate(String restaurantType);
+
+  // === CUSTOMER ORDERING & ENGAGEMENT (mobile flows - franchiseId recommended) ===
+  // Cart (currently modeled via Order with status 'cart' for transition; dedicated Cart model planned)
+  Stream<Order?> getCart(String userId, {String? franchiseId});
+  Future<void> updateCart(Order cart);
+  Future<void> addToCart({
+    required String userId,
+    required String franchiseId,
+    required MenuItem menuItem,
+    required List<Customization> customizations,
+    required int quantity,
+    required double price,
+    String? specialInstructions,
+  });
+  Future<void> removeFromCart(String userId, String cartItemKey, {String? franchiseId});
+  Stream<int> getCartItemCountStream(String userId, {String? franchiseId});
+  Future<void> clearCart(String userId, {String? franchiseId});
+
+  // Customer order placement & history
+  Future<void> addOrder(Order order);
+  Stream<List<Order>> getOrdersForUser(String userId, {String? franchiseId, int limit = 20});
+
+  // Scheduled / recurring orders (customer)
+  Stream<List<Order>> getScheduledOrdersForUser(String userId, {String? franchiseId});
+  Future<void> addScheduledOrder(Order scheduled);
+  Future<void> updateScheduledOrder(Order scheduled);
+  Future<void> deleteScheduledOrder(String orderId, {String? userId, String? franchiseId});
+
+  // Favorites (customer-friendly overloads; existing 3-param methods remain for admin/shared)
+  Stream<List<MenuItem>> getFavoriteMenuItemsForUser(String userId, {String? franchiseId});
+  Future<void> addFavoriteMenuItemForUser(String userId, String menuItemId, {String? franchiseId});
+  Future<void> removeFavoriteMenuItemForUser(String userId, String menuItemId, {String? franchiseId});
+  Stream<List<Order>> getFavoriteOrdersForUser(String userId, {String? franchiseId});
+  Future<void> removeFavoriteOrderForUser(String userId, String orderId, {String? franchiseId});
+
+  // Feedback & loyalty (customer)
+  Future<void> submitOrderFeedback({
+    required String orderId,
+    required String userId,
+    required Map<String, dynamic> feedback,
+    String? franchiseId,
+  });
+  Future<void> claimReward(String userId, String rewardId, {String? franchiseId, int? points});
+
+  // Customer chat/support
+  Future<String?> createOrGetUserChat(String userId, {String? franchiseId});
+  Future<void> sendCustomerMessage({
+    required String chatId,
+    required String senderId,
+    required String content,
+    String? franchiseId,
+  });
+
+  // === CATEGORY MANAGEMENT (admin) ===
+  Future<void> addCategory({
+    required String franchiseId,
+    required model.Category category,
+  });
+  Future<void> updateCategory(String franchiseId, model.Category category);
+  Future<void> deleteCategory({
+    required String franchiseId,
+    required String categoryId,
+  });
+  Stream<List<model.Category>> getCategories(String franchiseId);
+
+  // === MENU / CATEGORY SCHEMA HELPERS (admin) ===
+  Future<Map<String, dynamic>?> getCategorySchema(
+      String franchiseId, String categoryId);
+  Future<List<String>> getAllCategorySchemaIds(String franchiseId);
+  Future<Map<String, dynamic>?> getCustomizationTemplate(
+      String franchiseId, String templateId);
+  // Additional schema helpers sometimes referenced in legacy code
+  Future<Map<String, dynamic>> getCustomizationTemplates(String franchiseId);
+
+  // === INVITATIONS (legacy direct collection access for backward compat) ===
+  firestore.CollectionReference<Map<String, dynamic>> get invitationCollection;
+
+  // === MOBILE COMPATIBILITY HELPERS (lightweight, for gradual migration) ===
+  Stream<List<MenuItem>> getMenuItemsByCategory(String categoryId, {String? franchiseId, String? sortBy});
+  Future<MenuItem?> getMenuItemById(String itemId, {String? franchiseId});
+  Stream<List<Order>> getOrders({String? userId, String? franchiseId});
+  Future<bool> hasOrderFeedback(String orderId);
+  Stream<app_user.User?> getUserByIdStream(String userId);
 
   // === COLLECTIONS (pure Dart getters) ===
   String get invitationCollectionPath;

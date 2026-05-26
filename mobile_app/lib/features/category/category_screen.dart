@@ -3,10 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_core/src/core/config/app_config.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/core/services/analytics_service.dart';
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
-import 'package:franchise_mobile_app/core/models/order.dart' as order_model;
+import 'package:shared_core/src/core/models/menu_item.dart';
+import 'package:shared_core/src/core/models/order.dart' as order_model;
 import 'package:franchise_mobile_app/features/ordering/cart_screen.dart';
 import 'package:franchise_mobile_app/widgets/menu_item_card.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -62,6 +63,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
       double totalPrice) async {
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
+    final franchiseProvider = Provider.of<FranchiseProvider>(context, listen: false);
+    final franchiseId = franchiseProvider.currentFranchiseId;
     final analytics = Provider.of<AnalyticsService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
 
@@ -74,10 +77,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
       return;
     }
 
-    var cart = await firestoreService.getCart(user.uid).first;
+    var cart = await firestoreService.getCart(user.uid, franchiseId: franchiseId != 'unknown' ? franchiseId : null).first;
     cart ??= order_model.Order(
       id: user.uid,
       userId: user.uid,
+      storeId: franchiseId != 'unknown' ? franchiseId : 'default',
       items: [],
       subtotal: 0.0,
       tax: 0.0,
@@ -176,7 +180,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           const SizedBox(width: 10), // Spacing between icons
         ],
       ),
-      backgroundColor: DesignTokens.backgroundColor,
+      backgroundColor: Colors.white,
       body: StreamBuilder<List<MenuItem>>(
         stream: firestoreService.getMenuItemsByCategory(
           widget.categoryId,
@@ -230,7 +234,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
               Expanded(
                 child: ListView.builder(
-                  padding: DesignTokens.gridPadding,
+                  padding: EdgeInsets.all(16),
                   itemCount: items.length,
                   itemBuilder: (context, index) {
                     final item = items[index];

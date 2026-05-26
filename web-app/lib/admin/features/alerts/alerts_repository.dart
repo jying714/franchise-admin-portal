@@ -14,10 +14,10 @@ class AlertsRepository {
 
   AlertsRepository({
     FirebaseFirestore? firestore,
-    FirestoreService? firestoreService,
+    required FirestoreService firestoreService,
     AppConfig? appConfig,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _firestoreService = firestoreService ?? FirestoreService(),
+        _firestoreService = firestoreService,
         _appConfig = appConfig;
 
   /// Stream all active alerts for the given franchise/location.

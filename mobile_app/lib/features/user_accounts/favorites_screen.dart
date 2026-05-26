@@ -4,10 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/branding_config.dart';
-import 'package:franchise_mobile_app/core/services/firestore_service.dart';
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
-import 'package:franchise_mobile_app/core/models/favorite_order.dart';
-import 'package:franchise_mobile_app/core/models/order.dart' as order_model;
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/models/menu_item.dart';
+import 'package:franchise_mobile_app/core/models/favorite_order.dart'; // local for now if not in shared
+import 'package:shared_core/src/core/models/order.dart' as order_model;
+import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'dart:convert';
 
@@ -53,7 +54,8 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
 
-    order_model.Order? cart = await firestoreService.getCart(_userId!).first;
+    final franchiseId = Provider.of<FranchiseProvider>(context, listen: false).currentFranchiseId;
+    order_model.Order? cart = await firestoreService.getCart(_userId!, franchiseId: franchiseId != 'unknown' ? franchiseId : null).first;
     cart ??= order_model.Order(
       id: _userId!,
       userId: _userId!,

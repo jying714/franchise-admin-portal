@@ -5,7 +5,7 @@ import 'package:franchise_mobile_app/widgets/Address/address_form.dart';
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
 import 'package:franchise_mobile_app/widgets/confirmation_dialog.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 

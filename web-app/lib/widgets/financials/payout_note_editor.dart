@@ -40,7 +40,8 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
 
   Future<void> _fetchNotes() async {
     try {
-      final notes = await FirestoreService().getPayoutComments(widget.payoutId);
+      final notes = await Provider.of<FirestoreService>(context, listen: false)
+          .getPayoutComments(widget.payoutId);
       setState(() => _notes = notes);
     } catch (e, stack) {
       ErrorLogger.log(
@@ -73,7 +74,8 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
         'userId': widget.userId,
         // You could add username, avatar, etc.
       };
-      await FirestoreService().addPayoutComment(widget.payoutId, note);
+      await Provider.of<FirestoreService>(context, listen: false)
+          .addPayoutComment(widget.payoutId, note);
       _controller.clear();
       _focusNode.unfocus();
       setState(() {
@@ -106,7 +108,8 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
       return;
     }
     try {
-      await FirestoreService().removePayoutComment(widget.payoutId, note);
+      await Provider.of<FirestoreService>(context, listen: false)
+          .removePayoutComment(widget.payoutId, note);
       setState(() {
         _notes.remove(note);
       });

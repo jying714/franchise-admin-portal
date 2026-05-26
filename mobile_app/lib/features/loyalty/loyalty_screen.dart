@@ -3,9 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/core/services/firestore_service.dart';
-import 'package:franchise_mobile_app/core/models/loyalty.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:franchise_mobile_app/core/models/loyalty.dart'; // local stub if needed; consider moving to shared_core
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class LoyaltyScreen extends StatefulWidget {
@@ -27,7 +28,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
     super.didChangeDependencies();
     if (!_initialized) {
       _firestoreService = Provider.of<FirestoreService>(context, listen: false);
-      final uid = _firestoreService.auth.currentUser?.uid;
+      final auth = Provider.of<FirebaseAuth>(context, listen: false);
+      final uid = auth.currentUser?.uid;
       if (uid != null) {
         _loyaltyFuture = _fetchLoyalty(uid);
       }
@@ -48,7 +50,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
       _claimError = null;
     });
 
-    final uid = _firestoreService.auth.currentUser!.uid;
+    final auth = Provider.of<FirebaseAuth>(context, listen: false);
+    final uid = auth.currentUser!.uid;
     try {
       await _firestoreService.claimReward(uid, reward);
       setState(() {

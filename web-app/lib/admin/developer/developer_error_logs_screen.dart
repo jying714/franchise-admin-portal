@@ -87,7 +87,8 @@ class _DeveloperErrorLogsScreenState extends State<DeveloperErrorLogsScreen> {
                     : _franchiseId;
 
             return StreamBuilder<List<ErrorLog>>(
-              stream: FirestoreService().streamErrorLogsGlobal(
+              stream: Provider.of<FirestoreService>(context, listen: false)
+                  .streamErrorLogsGlobal(
                 franchiseId: selectedFranchiseId,
                 severity: _severity,
                 userId: null,

@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_mobile_app/config/branding_config.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/core/services/firestore_service.dart';
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
-import 'package:franchise_mobile_app/core/models/customization.dart';
-import 'package:franchise_mobile_app/core/models/order.dart' as order_model;
-import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/models/menu_item.dart';
+import 'package:shared_core/src/core/models/customization.dart';
+import 'package:shared_core/src/core/models/order.dart' as order_model;
+import 'package:shared_core/src/core/models/ingredient_metadata.dart';
 import 'package:franchise_mobile_app/features/ordering/checkout_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 
@@ -244,6 +245,9 @@ class _CartScreenState extends State<CartScreen> {
   Widget build(BuildContext context) {
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
+    final franchiseProvider =
+        Provider.of<FranchiseProvider>(context, listen: true);
+    final franchiseId = franchiseProvider.currentFranchiseId;
     final user = FirebaseAuth.instance.currentUser;
     final loc = AppLocalizations.of(context)!;
 
@@ -278,7 +282,7 @@ class _CartScreenState extends State<CartScreen> {
             )
           : StreamBuilder<order_model.Order?>(
               key: retryKey,
-              stream: firestoreService.getCart(user.uid),
+              stream: firestoreService.getCart(user.uid, franchiseId: franchiseId != 'unknown' ? franchiseId : null),
               builder: (context, cartSnapshot) {
                 if (cartSnapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());

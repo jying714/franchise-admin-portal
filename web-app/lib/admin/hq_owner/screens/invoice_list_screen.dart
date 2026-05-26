@@ -19,7 +19,7 @@ class InvoiceListScreen extends StatefulWidget {
 }
 
 class _InvoiceListScreenState extends State<InvoiceListScreen> {
-  final FirestoreService _firestoreService = FirestoreService();
+  late final FirestoreService _firestoreService;
   late final FranchiseProvider _franchiseProvider;
   InvoiceSortOrder _selectedSortOrder = InvoiceSortOrder.dateDesc;
 
@@ -30,6 +30,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _franchiseProvider = Provider.of<FranchiseProvider>(context);
+    _firestoreService = Provider.of<FirestoreService>(context, listen: false);
     print(
         '[InvoiceListScreen] didChangeDependencies called, franchiseId=${_franchiseProvider.franchiseId}');
   }

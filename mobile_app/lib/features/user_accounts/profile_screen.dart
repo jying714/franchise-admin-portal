@@ -7,7 +7,7 @@ import 'package:franchise_mobile_app/widgets/profile_nav_tile.dart';
 import 'package:franchise_mobile_app/config/branding_config.dart';
 import 'package:shared_core/src/core/services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as user_model;
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
 import 'package:franchise_mobile_app/features/user_accounts/delivery_addresses_screen.dart';
@@ -16,6 +16,8 @@ import 'package:franchise_mobile_app/features/user_accounts/scheduled_orders_scr
 import 'package:franchise_mobile_app/features/user_accounts/favorites_screen.dart';
 import 'package:franchise_mobile_app/features/language/language_screen.dart';
 import 'package:franchise_mobile_app/features/chat_support/chat_screen.dart';
+import 'package:franchise_mobile_app/features/user_accounts/franchise_selector_screen.dart';
+import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/features/home/home_screen.dart';
 import 'package:franchise_mobile_app/widgets/info_tile.dart';
 
@@ -227,6 +229,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ProfileNavTile(
                       label: l10n.language,
                       destination: const LanguageScreen(),
+                    ),
+                    // Switch Restaurant - MVP multi-tenant support
+                    Consumer<FranchiseProvider>(
+                      builder: (context, fp, _) {
+                        return ListTile(
+                          leading: const Icon(Icons.store),
+                          title: Text('Switch Restaurant (${fp.restaurantName})'),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const FranchiseSelectorScreen(),
+                              ),
+                            );
+                          },
+                        );
+                      },
                     ),
                     ProfileNavTile(
                       label: l10n.chatWithUs,

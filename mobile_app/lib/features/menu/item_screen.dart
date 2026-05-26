@@ -7,14 +7,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:shared_core/src/core/config/app_config.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/branding_config.dart';
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
-import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
+import 'package:shared_core/src/core/models/menu_item.dart';
+import 'package:shared_core/src/core/models/ingredient_metadata.dart';
 import 'package:franchise_mobile_app/features/ordering/cart_screen.dart';
 import 'package:franchise_mobile_app/widgets/customization/customization_modal.dart';
-import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -93,6 +93,20 @@ class _ItemScreenState extends State<ItemScreen> {
     print('  totalPrice: $totalPrice');
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
+    final franchiseProvider =
+        Provider.of<FranchiseProvider>(context, listen: false);
+    final franchiseId = franchiseProvider.currentFranchiseId;
+
+    if (franchiseId == 'unknown' || franchiseId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please select a franchise location to order.'),
+          duration: AppConfig.toastDuration,
+        ),
+      );
+      setState(() => _isProcessing = false);
+      return;
+    }
 
     if (_userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -118,6 +132,7 @@ class _ItemScreenState extends State<ItemScreen> {
       print('  estimatedTime: $_estimatedTime');
       await firestoreService.addToCart(
         userId: _userId!,
+        franchiseId: franchiseId,
         menuItem: item,
         customizations: customizations,
         quantity: quantity,

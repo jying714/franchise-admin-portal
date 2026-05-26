@@ -26,7 +26,9 @@ class _PromoExportDialogState extends State<PromoExportDialog> {
     final franchiseId =
         Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
     setState(() => isExporting = true);
-    final promos = await FirestoreService().getPromos(franchiseId).first;
+    final promos = await Provider.of<FirestoreService>(context, listen: false)
+        .getPromos(franchiseId)
+        .first;
     final csvHeader = [/* ... */];
     final csvRows = [/* ... */];
     final csvContent = '${csvHeader.join(',')}\n${csvRows.join('\n')}';

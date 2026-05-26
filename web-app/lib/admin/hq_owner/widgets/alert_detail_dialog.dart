@@ -38,7 +38,7 @@ class AlertDetailDialog extends StatelessWidget {
     }
     final colorScheme = Theme.of(context).colorScheme;
     final appConfig = AppConfig.instance;
-    final fireService = FirestoreService();
+    final fireService = Provider.of<FirestoreService>(context, listen: false);
     final user = Provider.of<AdminUserProvider>(context, listen: false).user;
 
     final repo = repository ??

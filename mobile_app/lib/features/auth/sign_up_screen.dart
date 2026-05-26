@@ -6,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_core/src/core/services/auth_service.dart';
-import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as db_user;
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:shared_core/src/core/config/app_config.dart';
@@ -86,13 +86,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         name: displayName ?? user.displayName ?? "",
         email: user.email ?? "",
         phoneNumber: user.phoneNumber,
+        roles: [db_user.User.roleCustomer],
         addresses: [],
-        orders: [],
-        favorites: [],
-        scheduledOrders: [],
         language: "en",
-        loyalty: null,
-        role: db_user.User.roleCustomer, // Always default to 'customer'
+        status: "active",
       );
       await firestoreService.addUser(newUser);
     }
@@ -128,7 +125,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
 
     final firebaseUser =
-        await authService.registerWithEmail(email, password, name, '');
+        await authService.createUserWithEmailAndPassword(email: email, password: password);
 
     if (!mounted) return;
     setState(() => _loading = false);

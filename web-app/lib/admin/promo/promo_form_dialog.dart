@@ -75,9 +75,11 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
     } else {
       // Fallback: Dialog saves directly if no callback supplied (legacy usage)
       if (widget.promo != null) {
-        await FirestoreService().updatePromo(franchiseId, promo);
+        await Provider.of<FirestoreService>(context, listen: false)
+            .updatePromo(franchiseId, promo);
       } else {
-        await FirestoreService().addPromo(franchiseId, promo);
+        await Provider.of<FirestoreService>(context, listen: false)
+            .addPromo(franchiseId, promo);
       }
     }
     if (mounted) Navigator.of(context).pop();

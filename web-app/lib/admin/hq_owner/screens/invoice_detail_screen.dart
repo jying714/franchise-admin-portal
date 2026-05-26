@@ -30,13 +30,14 @@ class InvoiceDetailScreen extends StatefulWidget {
 }
 
 class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
-  final FirestoreService _firestoreService = FirestoreService();
+  late final FirestoreService _firestoreService;
 
   late Future<Invoice?> _invoiceFuture;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _firestoreService = Provider.of<FirestoreService>(context, listen: false);
     _invoiceFuture = _firestoreService.getInvoiceById(widget.invoiceId);
   }
 

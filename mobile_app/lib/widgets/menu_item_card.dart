@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/branding_config.dart';
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
-import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
+import 'package:shared_core/src/core/models/menu_item.dart';
+import 'package:shared_core/src/core/models/ingredient_metadata.dart';
 import 'package:franchise_mobile_app/widgets/customization/customization_modal.dart';
-import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 

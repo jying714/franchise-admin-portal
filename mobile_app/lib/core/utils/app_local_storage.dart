@@ -7,21 +7,27 @@ class AppLocalStorage implements LocalStorage {
   factory AppLocalStorage() => _instance;
   AppLocalStorage._();
 
-  @override
-  Future<void> setString(String key, String value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(key, value);
+  SharedPreferences? _prefs;
+
+  Future<void> _ensurePrefs() async {
+    _prefs ??= await SharedPreferences.getInstance();
   }
 
   @override
-  Future<String?> getString(String key) async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(key);
+  Future<void> setString(String key, String value) async {
+    await _ensurePrefs();
+    await _prefs!.setString(key, value);
+  }
+
+  @override
+  String? getString(String key) {
+    if (_prefs == null) return null;
+    return _prefs!.getString(key);
   }
 
   @override
   Future<void> remove(String key) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(key);
+    await _ensurePrefs();
+    await _prefs!.remove(key);
   }
 }

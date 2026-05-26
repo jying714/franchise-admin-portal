@@ -2,8 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_mobile_app/core/models/feedback_entry.dart' as model;
 import 'package:franchise_mobile_app/core/services/offline_service.dart';
 import 'package:franchise_mobile_app/config/branding_config.dart';
@@ -59,10 +60,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       _error = null;
     });
 
-    final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+    final auth = Provider.of<FirebaseAuth>(context, listen: false);
     final userId =
-        _anonymous ? '' : (firestoreService.auth.currentUser?.uid ?? '');
+        _anonymous ? '' : (auth.currentUser?.uid ?? '');
 
     final String feedbackId = const Uuid().v4();
     final feedback = model.FeedbackEntry(

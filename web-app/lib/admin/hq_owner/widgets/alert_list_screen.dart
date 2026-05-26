@@ -35,7 +35,7 @@ class AlertListScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final appConfig = AppConfig.instance;
-    final fireService = FirestoreService();
+    final fireService = Provider.of<FirestoreService>(context, listen: false);
     final user = Provider.of<AdminUserProvider>(context, listen: false).user;
     final isDeveloper = user?.isDeveloper ?? false;
 

@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart' as material hide Banner, BannerLocation;
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,12 +13,12 @@ import 'package:franchise_mobile_app/widgets/header/cart_icon_badge.dart';
 import 'package:shared_core/src/core/config/app_config.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/branding_config.dart';
-import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_mobile_app/core/services/analytics_service.dart';
-import 'package:franchise_mobile_app/core/models/banner.dart';
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
-import 'package:franchise_mobile_app/core/models/order.dart' as order_model;
-import 'package:franchise_mobile_app/core/models/category.dart';
+import 'package:shared_core/src/core/models/banner.dart';
+import 'package:shared_core/src/core/models/menu_item.dart';
+import 'package:shared_core/src/core/models/order.dart' as order_model;
+import 'package:shared_core/src/core/models/category.dart' as model;
 import 'package:franchise_mobile_app/features/category/category_screen.dart';
 import 'package:franchise_mobile_app/features/ordering/cart_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
@@ -50,16 +51,18 @@ class MainMenuScreen extends material.StatelessWidget {
         Provider.of<FirestoreService>(context, listen: false);
     final analyticsService =
         Provider.of<AnalyticsService>(context, listen: false);
+    final franchiseProvider = Provider.of<FranchiseProvider>(context, listen: true);
+    final franchiseId = franchiseProvider.currentFranchiseId;
     final userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
     final loc = AppLocalizations.of(context)!;
 
     final cartItemCountStream = firestoreService
-        .getCart(userId)
+        .getCart(userId, franchiseId: franchiseId != 'unknown' ? franchiseId : null)
         .map((order) => order?.items.length ?? 0);
 
     return material.Scaffold(
       appBar: FranchiseAppBar(
-        title: 'Menu Categories',
+        title: Provider.of<FranchiseProvider>(context, listen: true).restaurantName,
         centerTitle: true,
         actions: [
           ProfileIconButton(
@@ -133,8 +136,8 @@ class MainMenuScreen extends material.StatelessWidget {
             ),
             // --- Category Grid Section ---
             material.Expanded(
-              child: material.StreamBuilder<List<Category>>(
-                stream: firestoreService.getCategories(),
+              child: material.StreamBuilder<List<model.Category>>(
+                stream: firestoreService.getCategories(franchiseProvider.currentFranchiseId != 'unknown' ? franchiseProvider.currentFranchiseId : 'default'),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState ==
                       material.ConnectionState.waiting) {

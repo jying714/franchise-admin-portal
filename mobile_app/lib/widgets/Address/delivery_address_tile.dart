@@ -2,7 +2,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:franchise_mobile_app/core/models/address.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_mobile_app/widgets/Address/edit_address_dialog.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 

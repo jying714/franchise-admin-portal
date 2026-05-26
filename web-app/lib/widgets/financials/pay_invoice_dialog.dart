@@ -89,8 +89,9 @@ class _PayInvoiceDialogState extends State<PayInvoiceDialog> {
                     setState(() => _loading = true);
                     try {
                       // TODO: Replace with actual payment integration logic
-                      await FirestoreService().markPlatformInvoicePaid(
-                          widget.invoice.id!, _selectedMethod!);
+                      await Provider.of<FirestoreService>(context, listen: false)
+                          .markPlatformInvoicePaid(
+                              widget.invoice.id!, _selectedMethod!);
                       Navigator.of(context).pop(true);
                     } catch (e, stack) {
                       await ErrorLogger.log(

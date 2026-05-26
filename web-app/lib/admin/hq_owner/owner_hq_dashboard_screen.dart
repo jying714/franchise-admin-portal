@@ -231,7 +231,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                   ConstrainedBox(
                     constraints: BoxConstraints(minHeight: 220),
                     child: FutureBuilder<Map<String, dynamic>>(
-                      future: FirestoreService()
+                      future: Provider.of<FirestoreService>(context, listen: false)
                           .getInvoiceStatsForFranchise(franchiseId),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==

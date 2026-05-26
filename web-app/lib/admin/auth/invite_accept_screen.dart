@@ -157,7 +157,8 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
       }
 
       // Call cloud function to mark as accepted
-      await FirestoreService().callAcceptInvitationFunction(_effectiveToken!);
+      await Provider.of<FirestoreService>(context, listen: false)
+          .callAcceptInvitationFunction(_effectiveToken!);
 
       Navigator.of(context).pushReplacementNamed(
         '/franchise-onboarding',

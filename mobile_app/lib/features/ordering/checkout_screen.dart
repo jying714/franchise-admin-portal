@@ -1,11 +1,12 @@
 ﻿import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:franchise_mobile_app/core/models/order.dart' as order_model;
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
+import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/models/order.dart' as order_model;
+import 'package:shared_core/src/core/models/menu_item.dart';
 import 'package:franchise_mobile_app/features/ordering/confirmation_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -104,8 +105,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (user == null) return;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
+    final franchiseId = Provider.of<FranchiseProvider>(context, listen: false).currentFranchiseId;
 
-    firestoreService.getCart(user.uid).first.then((cart) {
+    firestoreService.getCart(user.uid, franchiseId: franchiseId != 'unknown' ? franchiseId : null).first.then((cart) {
       if (cart == null) return;
       double subtotal = 0.0;
       for (final item in cart.items) {
@@ -147,7 +149,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
-    final cart = await firestoreService.getCart(user.uid).first;
+    final franchiseId = Provider.of<FranchiseProvider>(context, listen: false).currentFranchiseId;
+    final cart = await firestoreService.getCart(user.uid, franchiseId: franchiseId != 'unknown' ? franchiseId : null).first;
     if (cart == null || cart.items.isEmpty) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -263,7 +266,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     // --- StreamBuilder to display allergens at checkout, just like cart ---
     return StreamBuilder<order_model.Order?>(
-      stream: user == null ? null : firestoreService.getCart(user.uid),
+      stream: user == null ? null : firestoreService.getCart(user.uid, franchiseId: Provider.of<FranchiseProvider>(context, listen: false).currentFranchiseId != 'unknown' ? Provider.of<FranchiseProvider>(context, listen: false).currentFranchiseId : null),
       builder: (context, cartSnapshot) {
         final cart = cartSnapshot.data;
         if (cart == null || cart.items.isEmpty) {

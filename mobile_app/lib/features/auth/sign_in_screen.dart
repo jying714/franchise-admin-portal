@@ -9,6 +9,7 @@ import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:shared_core/src/core/models/user.dart' as db_user;
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart'; // <-- Make sure this is imported!
+import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:shared_core/src/core/config/app_config.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/branding_config.dart';
@@ -50,13 +51,10 @@ class _SignInScreenState extends State<SignInScreen> {
         name: user.displayName ?? "",
         email: user.email ?? "",
         phoneNumber: user.phoneNumber,
+        roles: [db_user.User.roleCustomer],
         addresses: [],
-        orders: [],
-        favorites: [],
-        scheduledOrders: [],
         language: "en",
-        loyalty: null,
-        role: db_user.User.roleCustomer, // Always default to 'customer'
+        status: "active",
       );
       await firestoreService.addUser(newUser);
     }
@@ -72,7 +70,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
     final email = _emailController.text.trim();
     final password = _passwordController.text;
-    final user = await authService.signInWithEmail(email, password);
+    final user = await authService.signInWithEmailAndPassword(email: email, password: password);
 
     if (!mounted) return;
     setState(() => _loading = false);
@@ -87,6 +85,17 @@ class _SignInScreenState extends State<SignInScreen> {
         final dbUser = await firestoreService.getUser(user.uid);
 
         if (!mounted) return;
+
+        // Initialize franchise context from user's defaultFranchise (or first franchiseId)
+        final franchiseProvider = Provider.of<FranchiseProvider>(context, listen: false);
+        final defaultId = dbUser?.defaultFranchise ?? (dbUser?.franchiseIds.isNotEmpty == true ? dbUser!.franchiseIds.first : null);
+        await franchiseProvider.initializeFromUser(defaultFranchiseId: defaultId);
+
+        // Optionally load full details for branding (firestore already in scope)
+        if (defaultId != null) {
+          await franchiseProvider.loadCurrentFranchiseDetails(firestoreService);
+        }
+
         // If completeProfile is false or missing, route to ProfileScreen (will show dialog)
         if (dbUser == null || !(dbUser.completeProfile ?? false)) {
           Navigator.of(context).pushAndRemoveUntil(
@@ -124,7 +133,7 @@ class _SignInScreenState extends State<SignInScreen> {
       return;
     }
     try {
-      await authService.resetPassword(email);
+      await authService.sendPasswordResetEmail(email);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.passwordResetSent)),

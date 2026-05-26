@@ -31,13 +31,19 @@ class InvoiceExportDialog extends StatefulWidget {
 }
 
 class _InvoiceExportDialogState extends State<InvoiceExportDialog> {
-  final FirestoreService _firestoreService = FirestoreService();
+  late final FirestoreService _firestoreService;
 
   DateTime? _startDate;
   DateTime? _endDate;
   String _exportFormat = 'csv'; // 'csv' or 'pdf'
 
   bool _loading = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _firestoreService = Provider.of<FirestoreService>(context, listen: false);
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -68,13 +68,14 @@ class _PayoutCardContentState extends State<_PayoutCardContent> {
   @override
   void initState() {
     super.initState();
-    _future = FirestoreService().getPayoutStatsForFranchise(widget.franchiseId);
+    _future = Provider.of<FirestoreService>(context, listen: false)
+        .getPayoutStatsForFranchise(widget.franchiseId);
   }
 
   void _retry() {
     setState(() {
-      _future =
-          FirestoreService().getPayoutStatsForFranchise(widget.franchiseId);
+      _future = Provider.of<FirestoreService>(context, listen: false)
+          .getPayoutStatsForFranchise(widget.franchiseId);
     });
   }
 

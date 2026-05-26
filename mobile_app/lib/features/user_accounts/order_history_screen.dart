@@ -3,8 +3,9 @@ import 'package:shared_core/src/core/services/auth_service.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_mobile_app/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/branding_config.dart';
-import 'package:franchise_mobile_app/core/services/firestore_service.dart';
-import 'package:franchise_mobile_app/core/models/order.dart' as order_model;
+import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/src/core/models/order.dart' as order_model;
+import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart'; // <-- Add this import
 import 'package:franchise_mobile_app/widgets/feedback/feedback_submission_dialog.dart';
@@ -50,7 +51,12 @@ class OrderHistoryScreen extends StatelessWidget {
               ),
             )
           : StreamBuilder<List<order_model.Order>>(
-              stream: firestoreService.getOrders(authUser.uid),
+              stream: firestoreService.getOrders(
+                userId: authUser.uid,
+                franchiseId: Provider.of<FranchiseProvider>(context, listen: false).currentFranchiseId != 'unknown' 
+                  ? Provider.of<FranchiseProvider>(context, listen: false).currentFranchiseId 
+                  : null,
+              ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());

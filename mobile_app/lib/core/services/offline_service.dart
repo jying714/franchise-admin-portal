@@ -124,15 +124,16 @@ class OfflineService {
     final List<Map<String, dynamic>> maps = await db.query('menu_items');
     return maps.map((map) {
       return MenuItem(
-        id: map['id'],
-        category: map['category'],
+        id: map['id'] ?? '',
+        available: map['availability'] == 1,
+        availability: map['availability'] == 1,
+        category: map['category'] ?? '',
         categoryId: map['categoryId'] ?? '',
-        name: map['name'],
-        price: map['price'],
+        name: map['name'] ?? '',
+        price: (map['price'] as num?)?.toDouble() ?? 0.0,
         description: map['description'],
         image: map['image'],
         taxCategory: map['taxCategory'],
-        availability: map['availability'] == 1,
         sku: map['sku'],
         dietaryTags: map['dietaryTags'] != null && map['dietaryTags'] != ''
             ? map['dietaryTags'].split(',').where((e) => e.isNotEmpty).toList()
@@ -196,14 +197,15 @@ class OfflineService {
     if (maps.isEmpty) return null;
     // Note: Deserialization of items needs to match your order item model!
     return order_model.Order(
-      id: maps[0]['id'],
-      userId: maps[0]['userId'],
+      id: maps[0]['id'] ?? '',
+      userId: maps[0]['userId'] ?? '',
+      storeId: maps[0]['storeId'] ?? 'default',
       items: [], // To be extended if needed
       subtotal: 0.0,
       tax: 0.0,
       deliveryFee: 0.0,
       discount: 0.0,
-      total: maps[0]['total'],
+      total: (maps[0]['total'] as num?)?.toDouble() ?? 0.0,
       deliveryType: '',
       time: '',
       status: '',

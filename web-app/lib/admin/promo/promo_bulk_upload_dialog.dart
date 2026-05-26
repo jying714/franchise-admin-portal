@@ -50,7 +50,8 @@ class _PromoBulkUploadDialogState extends State<PromoBulkUploadDialog> {
 
     setState(() => isLoading = true);
     for (final promo in previewPromos) {
-      await FirestoreService().addPromo(franchiseId, promo);
+      await Provider.of<FirestoreService>(context, listen: false)
+          .addPromo(franchiseId, promo);
     }
     setState(() => isLoading = false);
     if (widget.onUploadComplete != null) widget.onUploadComplete!();

@@ -21,7 +21,7 @@ class _ChatReplyDialogState extends State<ChatReplyDialog> {
     if (reply.isEmpty) return;
     setState(() => isSending = true);
     final franchiseId = context.watch<FranchiseProvider>().franchiseId;
-    await FirestoreService().sendMessage(
+    await Provider.of<FirestoreService>(context, listen: false).sendMessage(
       franchiseId,
       chatId: widget.chatId,
       senderId: 'admin', // You may want to use the actual admin/staff ID
