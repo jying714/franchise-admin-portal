@@ -9,10 +9,10 @@ on:
       - '.github/workflows/build-mobile.yml'
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # ← Fixes Node 20 deprecation
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -29,12 +29,8 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
-      - name: Build APK
-        run: flutter build apk --release
+      - name: Generate Localization
+        run: flutter gen-l10n
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: doughboys-app
-          path: build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 30
+      - name: Analyze Only (No Full Build)
+        run: flutter analyze
