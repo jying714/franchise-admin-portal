@@ -4,15 +4,18 @@ analyze_*.txt
 build_log.txt
 project_schema*.txt
 mobile_app_file_roles.txt
+repo_schema.txt
+build_final.txt
 
 # IDE
 .idea/
 .vscode/
 
-# Flutter
+# Flutter generated
 **/build/
 **/.dart_tool/
 **/.flutter-plugins
+**/.flutter-plugins-dependencies
 **/.packages
 **/*.lock
 pubspec.lock
@@ -24,5 +27,10 @@ Thumbs.db
 # Docs (local only)
 docs/
 
-# Config folders that might be auto-generated
-**/config/
+# Only ignore root-level config folder if truly generated
+/config/
+
+# Do NOT ignore mobile_app/core/ or package configs
+!mobile_app/core/
+!mobile_app/lib/core/
+!packages/shared_core/lib/src/core/config/
