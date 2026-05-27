@@ -33,21 +33,28 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
   }) async {
     final localizations = AppLocalizations.of(context)!;
     final isEditing = scheduledOrder != null;
-    final TextEditingController freqController =
-        TextEditingController(text: scheduledOrder?.frequency ?? 'weekly');
+
+    final TextEditingController freqController = TextEditingController(
+      text: scheduledOrder?.frequency ?? 'weekly',
+    );
 
     DateTime nextRun =
         scheduledOrder?.nextDate ?? DateTime.now().add(const Duration(days: 7));
-    bool isPaused = scheduledOrder?.isPaused ??
-        false; // Will be handled via status fallback if missing
+    bool isPaused = scheduledOrder?.isPaused ?? false;
 
     final franchiseProvider =
         Provider.of<FranchiseProvider>(context, listen: false);
     final menuItems = await firestoreService
         .getMenuItems(franchiseProvider.currentFranchiseId)
         .first;
-    List<MenuItem> selectedItems =
-        List<MenuItem>.from(scheduledOrder?.items ?? []);
+
+    // Convert MenuItem list to OrderItem list
+    List<shared.OrderItem> selectedOrderItems = scheduledOrder?.items ?? [];
+    List<MenuItem> selectedMenuItems = menuItems
+        .where((m) => selectedOrderItems.any((oi) => oi.menuItemId == m.id))
+        .toList();
+
+    if (!mounted) return;
 
     await showDialog(
       context: context,
@@ -61,6 +68,7 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
             ),
             content: SingleChildScrollView(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<String>(
                     value: freqController.text,
@@ -95,7 +103,7 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                           lastDate:
                               DateTime.now().add(const Duration(days: 365)),
                         );
-                        if (picked != null) {
+                        if (picked != null && mounted) {
                           setModalState(() => nextRun = picked);
                         }
                       },
@@ -117,13 +125,13 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                         .map((item) => FilterChip(
                               label: Text(item.name),
                               selected:
-                                  selectedItems.any((i) => i.id == item.id),
+                                  selectedMenuItems.any((i) => i.id == item.id),
                               onSelected: (selected) {
                                 setModalState(() {
                                   if (selected) {
-                                    selectedItems.add(item);
+                                    selectedMenuItems.add(item);
                                   } else {
-                                    selectedItems
+                                    selectedMenuItems
                                         .removeWhere((i) => i.id == item.id);
                                   }
                                 });
@@ -143,29 +151,40 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                 child: Text(
                     isEditing ? localizations.update : localizations.create),
                 onPressed: () async {
-                  if (_userId == null || selectedItems.isEmpty) return;
+                  if (_userId == null || selectedMenuItems.isEmpty || !mounted)
+                    return;
 
                   final franchiseProvider =
                       Provider.of<FranchiseProvider>(context, listen: false);
                   final now = DateTime.now();
 
+                  // Convert MenuItems to OrderItems
+                  final List<shared.OrderItem> orderItems = selectedMenuItems
+                      .map((m) => shared.OrderItem(
+                            menuItemId: m.id,
+                            name: m.name,
+                            price: m.price ?? 0.0,
+                            quantity: 1,
+                            customizations: {},
+                            image: m.image,
+                          ))
+                      .toList();
+
                   final ScheduledOrder updated = ScheduledOrder(
                     id: scheduledOrder?.id ??
                         now.microsecondsSinceEpoch.toString(),
                     userId: _userId!,
-                    franchiseId: franchiseProvider.currentFranchiseId,
-                    items: selectedItems,
+                    storeId: franchiseProvider.currentFranchiseId,
+                    items: orderItems,
                     frequency: freqController.text,
                     nextDate: nextRun,
                     isPaused: isPaused,
                   );
 
                   if (isEditing) {
-                    await firestoreService
-                        .updateScheduledOrder(updated as shared.Order);
+                    await firestoreService.updateScheduledOrder(updated);
                   } else {
-                    await firestoreService
-                        .addScheduledOrder(updated as shared.Order);
+                    await firestoreService.addScheduledOrder(updated);
                   }
                   if (mounted) Navigator.of(context).pop();
                 },
@@ -187,12 +206,7 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
         appBar: AppBar(
           title: Text(
             localizations.scheduledOrders,
-            style: TextStyle(
-              fontSize: DesignTokens.titleFontSize,
-              color: UiConfig.foregroundColorDark,
-              fontWeight: UiConfig.fontWeightBold,
-              fontFamily: DesignTokens.fontFamily,
-            ),
+            style: UiConfig.titleStyle,
           ),
           backgroundColor: UiConfig.primaryColor,
           centerTitle: true,
@@ -203,12 +217,7 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
         body: Center(
           child: Text(
             localizations.mustSignInForScheduledOrders,
-            style: TextStyle(
-              fontSize: DesignTokens.bodyFontSize,
-              color: UiConfig.textColorDark,
-              fontFamily: DesignTokens.fontFamily,
-              fontWeight: UiConfig.fontWeightNormal,
-            ),
+            style: UiConfig.bodyStyle,
           ),
         ),
       );
@@ -221,12 +230,7 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
       appBar: AppBar(
         title: Text(
           localizations.scheduledOrders,
-          style: TextStyle(
-            fontSize: DesignTokens.titleFontSize,
-            color: UiConfig.foregroundColorDark,
-            fontWeight: UiConfig.fontWeightBold,
-            fontFamily: DesignTokens.fontFamily,
-          ),
+          style: UiConfig.titleStyle,
         ),
         backgroundColor: UiConfig.primaryColor,
         centerTitle: true,
@@ -250,17 +254,14 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          final scheduledOrders = snapshot.data ?? [];
+          final scheduledOrders =
+              snapshot.data?.whereType<ScheduledOrder>().toList() ?? [];
+
           if (scheduledOrders.isEmpty) {
             return Center(
               child: Text(
                 localizations.noScheduledOrders,
-                style: TextStyle(
-                  fontSize: DesignTokens.bodyFontSize,
-                  color: UiConfig.textColorDark,
-                  fontFamily: DesignTokens.fontFamily,
-                  fontWeight: UiConfig.fontWeightNormal,
-                ),
+                style: UiConfig.bodyStyle,
               ),
             );
           }
@@ -295,31 +296,23 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                         : const SizedBox(width: 48, height: 48),
                     title: Text(
                       localizations.orderNumberWithId(order.id),
-                      style: TextStyle(
-                        fontSize: DesignTokens.bodyFontSize,
-                        color: UiConfig.textColorDark,
-                        fontWeight: UiConfig.fontWeightBold,
-                        fontFamily: DesignTokens.fontFamily,
-                      ),
+                      style: UiConfig.bodyBoldStyle,
                     ),
                     subtitle: Text(
-                      "${order.frequency ?? 'weekly'} • ${order.timestamp.toString().substring(0, 16)}",
-                      style: TextStyle(
-                        fontSize: DesignTokens.captionFontSize,
-                        color: UiConfig.secondaryTextColor,
-                        fontFamily: DesignTokens.fontFamily,
-                        fontWeight: UiConfig.fontWeightNormal,
-                      ),
+                      "${order.frequency ?? 'weekly'} • ${order.nextDate.toString().substring(0, 16)}",
+                      style: UiConfig.captionStyle,
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.pause),
+                          icon: Icon(
+                              order.isPaused ? Icons.play_arrow : Icons.pause),
                           color: UiConfig.primaryColor,
-                          tooltip: 'Pause',
+                          tooltip: order.isPaused ? 'Resume' : 'Pause',
                           onPressed: () async {
-                            final updated = order.copyWith(status: 'paused');
+                            final updated =
+                                order.copyWith(isPaused: !order.isPaused);
                             await firestoreService
                                 .updateScheduledOrder(updated);
                           },

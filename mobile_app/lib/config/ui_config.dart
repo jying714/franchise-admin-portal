@@ -104,6 +104,35 @@ class UiConfig {
   static const String logoSmall = BrandingConfig.logoSmall;
   static const String logoLarge = BrandingConfig.logoLarge;
 
+  // Pre-built TextStyles (used across stabilized screens)
+  static TextStyle get titleStyle => TextStyle(
+        fontSize: DesignTokens.titleFontSize,
+        color: foregroundColorDark,
+        fontWeight: fontWeightBold,
+        fontFamily: DesignTokens.fontFamily,
+      );
+
+  static TextStyle get bodyStyle => TextStyle(
+        fontSize: DesignTokens.bodyFontSize,
+        color: textColorDark,
+        fontFamily: DesignTokens.fontFamily,
+        fontWeight: fontWeightNormal,
+      );
+
+  static TextStyle get bodyBoldStyle => TextStyle(
+        fontSize: DesignTokens.bodyFontSize,
+        color: textColorDark,
+        fontWeight: fontWeightBold,
+        fontFamily: DesignTokens.fontFamily,
+      );
+
+  static TextStyle get captionStyle => TextStyle(
+        fontSize: DesignTokens.captionFontSize,
+        color: secondaryTextColor,
+        fontFamily: DesignTokens.fontFamily,
+        fontWeight: fontWeightNormal,
+      );
+
   static Color _hexToColor(String hex) {
     final cleaned = hex.replaceAll('#', '');
     final value = int.parse('FF$cleaned', radix: 16);
