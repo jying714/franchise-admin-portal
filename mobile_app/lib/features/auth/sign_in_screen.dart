@@ -211,7 +211,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     Image.asset(UiConfig.logoMain, height: 120),
                     const SizedBox(height: 32),
                     SocialSignInButtons(
-                      onSuccess: _handleSocialSuccess,
+                      onSuccess: _handleSocialSuccessWrapper,
                       onError: (String err) => setState(() => _error = err),
                       isLoading: _loading,
                       setLoading: (bool loading) =>
@@ -310,5 +310,39 @@ class _SignInScreenState extends State<SignInScreen> {
         ),
       ),
     );
+  }
+
+  void _handleSocialSuccessWrapper(shared.User? user) {
+    if (user == null) return;
+    // Fire the async logic without blocking the button callback
+    _handleSocialSuccessFromShared(user);
+  }
+
+  Future<void> _handleSocialSuccessFromShared(shared.User user) async {
+    setState(() => _loading = true);
+    try {
+      await _ensureUserProfile(user);
+
+      final firestoreService =
+          Provider.of<shared.FirestoreService>(context, listen: false);
+      final dbUser = await firestoreService.getUser(user.id);
+
+      if (!mounted) return;
+      if (dbUser == null || !(dbUser.completeProfile ?? false)) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+          (route) => false,
+        );
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainMenuScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Profile error');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 }

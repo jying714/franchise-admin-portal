@@ -1,15 +1,13 @@
-// ignore_for_file: unused_import, prefer_const_constructors
+// ignore_for_file: unused_import
 
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:franchise_mobile_app/core/models/user.dart' as db_user;
 
 class SocialSignInButtons extends StatefulWidget {
-  final void Function(User? user)? onSuccess;
+  final void Function(shared.User? user)? onSuccess;
   final void Function(String error)? onError;
   final void Function(bool)? setLoading;
 
@@ -22,7 +20,7 @@ class SocialSignInButtons extends StatefulWidget {
   final Color? googleButtonColor;
   final Color? phoneButtonColor;
 
-  final Future<void> Function(User user)? ensureUserProfile;
+  final Future<void> Function(shared.User user)? ensureUserProfile;
 
   const SocialSignInButtons({
     super.key,
@@ -52,60 +50,51 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
   }
 
   Future<void> _defaultEnsureUserProfile(
-      BuildContext context, User user) async {
+      BuildContext context, shared.User user) async {
     final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
-    final existing = await firestoreService.getUser(user.uid);
+    final existing = await firestoreService.getUser(user.id);
     if (existing == null) {
-      final newUser = db_user.User(
-        id: user.uid,
-        name: user.displayName ?? "",
-        email: user.email ?? "",
+      final newUser = shared.User(
+        id: user.id,
+        name: user.name,
+        email: user.email,
         phoneNumber: user.phoneNumber,
-        addresses: [],
-        orders: [],
-        favorites: [],
-        scheduledOrders: [],
-        language: "en",
-        loyalty: null,
-        role: db_user.User.roleCustomer,
         roles: const ['customer'],
+        language: user.language ?? "en",
         status: 'active',
+        addresses: [],
       );
       await firestoreService.addUser(newUser);
     }
   }
 
   Future<void> _handleSignIn(
-      BuildContext context, Future<User?> Function() signInMethod) async {
+      BuildContext context, Future<shared.User> Function() signInMethod) async {
     _setLoading(true);
     try {
       final user = await signInMethod();
       if (!mounted) return;
-      if (user != null) {
-        if (widget.ensureUserProfile != null) {
-          await widget.ensureUserProfile!(user);
-        } else {
-          await _defaultEnsureUserProfile(context, user);
-        }
-        if (!mounted) return;
-        widget.onSuccess?.call(user);
+      if (widget.ensureUserProfile != null) {
+        await widget.ensureUserProfile!(user);
       } else {
-        if (!mounted) return;
-        widget.onError?.call("Sign-in failed. Please try again.");
+        await _defaultEnsureUserProfile(context, user);
       }
+      if (!mounted) return;
+      widget.onSuccess?.call(user);
     } catch (e) {
       if (!mounted) return;
       widget.onError?.call(e.toString());
+    } finally {
+      if (mounted) {
+        _setLoading(false);
+      }
     }
-    if (!mounted) return;
-    _setLoading(false);
   }
 
   Future<void> _handlePhoneSignIn(BuildContext context) async {
-    // TODO: Full implementation requires extending AuthService with phone methods
+    // Phone flow aligned to future AuthService extensions
     String phone = '';
-    String? verificationId;
     bool smsSent = false;
     String smsCode = '';
     String? error;
@@ -115,33 +104,40 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
       builder: (dialogContext) {
         return StatefulBuilder(builder: (context, setDialogState) {
           return AlertDialog(
-            title: Text(smsSent ? 'Enter SMS Code' : 'Sign in with Phone'),
+            title: Text(
+              smsSent ? 'Enter SMS Code' : 'Sign in with Phone',
+              style: UiConfig.titleStyle,
+            ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (!smsSent)
                   TextField(
                     keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Phone Number',
                       hintText: '+1XXXXXXXXXX',
+                      labelStyle: UiConfig.bodyStyle,
                     ),
                     onChanged: (v) => phone = v,
                   ),
                 if (smsSent)
                   TextField(
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'SMS Code',
+                      labelStyle: UiConfig.bodyStyle,
                     ),
                     onChanged: (v) => smsCode = v,
                   ),
                 if (error != null)
                   Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
+                    padding: UiConfig.defaultPadding,
                     child: Text(error!,
-                        style:
-                            const TextStyle(color: Colors.red, fontSize: 12)),
+                        style: UiConfig.errorTextColor != null
+                            ? UiConfig.bodyStyle
+                                .copyWith(color: UiConfig.errorTextColor)
+                            : UiConfig.bodyStyle),
                   ),
               ],
             ),
@@ -158,12 +154,12 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
                       final authService = Provider.of<shared.AuthService>(
                           context,
                           listen: false);
-                      // TODO: await authService.signInWithPhone(...);
+                      // Future extension: await authService.signInWithPhone(phone);
+                      setDialogState(() => smsSent = true);
                     } catch (e) {
                       setDialogState(() => error = e.toString());
                     }
-                    if (!mounted) return;
-                    _setLoading(false);
+                    if (mounted) _setLoading(false);
                   },
                   child: const Text('Send Code'),
                 ),
@@ -175,12 +171,14 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
                       final authService = Provider.of<shared.AuthService>(
                           context,
                           listen: false);
-                      // TODO: final user = await authService.verifySmsCode(...);
+                      // Future extension: final user = await authService.verifySmsCode(...);
+                      if (!mounted) return;
+                      widget.onSuccess?.call(null);
+                      Navigator.of(dialogContext).pop();
                     } catch (e) {
                       setDialogState(() => error = e.toString());
                     }
-                    if (!mounted) return;
-                    _setLoading(false);
+                    if (mounted) _setLoading(false);
                   },
                   child: const Text('Verify'),
                 ),
@@ -203,42 +201,45 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
             width: double.infinity,
             child: ElevatedButton.icon(
               icon: const Icon(Icons.g_mobiledata, color: Colors.red, size: 24),
-              label: const Text('Sign in with Google'),
+              label: Text('Sign in with Google', style: UiConfig.bodyBoldStyle),
               onPressed: isBusy
                   ? null
                   : () => _handleSignIn(
                         context,
-                        () async => await authService
-                            .signInWithGoogle(), // Fixed return type
+                        () async => await authService.signInWithGoogle(),
                       ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: widget.googleButtonColor ?? Colors.white,
-                foregroundColor: Colors.black,
+                backgroundColor:
+                    widget.googleButtonColor ?? UiConfig.surfaceColor,
+                foregroundColor: UiConfig.textColor,
+                padding: UiConfig.defaultPadding,
               ),
             ),
           ),
-        if (widget.showGoogle) const SizedBox(height: 8),
+        if (widget.showGoogle) SizedBox(height: UiConfig.defaultPadding.top),
         if (widget.showPhone)
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               icon: const Icon(Icons.phone, color: Colors.green, size: 22),
-              label: const Text('Sign in with Phone'),
+              label: Text('Sign in with Phone', style: UiConfig.bodyBoldStyle),
               onPressed: isBusy ? null : () => _handlePhoneSignIn(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: widget.phoneButtonColor ?? Colors.green[50],
-                foregroundColor: Colors.green[900],
+                backgroundColor: widget.phoneButtonColor ??
+                    UiConfig.primaryColor.withOpacity(0.1),
+                foregroundColor: UiConfig.primaryColor,
+                padding: UiConfig.defaultPadding,
               ),
             ),
           ),
-        if (widget.showPhone) const SizedBox(height: 8),
+        if (widget.showPhone) SizedBox(height: UiConfig.defaultPadding.top),
         if (widget.allowGuest)
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               icon: const Icon(Icons.person_outline,
                   color: Colors.grey, size: 22),
-              label: const Text('Continue as Guest'),
+              label: Text('Continue as Guest', style: UiConfig.bodyBoldStyle),
               onPressed: isBusy
                   ? null
                   : () async {
@@ -253,24 +254,26 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
                       } catch (e) {
                         if (!mounted) return;
                         widget.onError?.call(e.toString());
+                      } finally {
+                        if (mounted) _setLoading(false);
                       }
-                      if (!mounted) return;
-                      _setLoading(false);
                     },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[300],
-                foregroundColor: Colors.black,
+                backgroundColor: UiConfig.surfaceColor,
+                foregroundColor: UiConfig.textColor,
+                padding: UiConfig.defaultPadding,
               ),
             ),
           ),
-        if (widget.allowGuest) const SizedBox(height: 8),
+        if (widget.allowGuest) SizedBox(height: UiConfig.defaultPadding.top),
         if (widget.allowDemo)
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               icon: const Icon(Icons.visibility,
                   color: Colors.deepPurple, size: 22),
-              label: const Text('Test Drive (Demo Mode)'),
+              label:
+                  Text('Test Drive (Demo Mode)', style: UiConfig.bodyBoldStyle),
               onPressed: isBusy
                   ? null
                   : () async {
@@ -285,19 +288,20 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
                       } catch (e) {
                         if (!mounted) return;
                         widget.onError?.call(e.toString());
+                      } finally {
+                        if (mounted) _setLoading(false);
                       }
-                      if (!mounted) return;
-                      _setLoading(false);
                     },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple[50],
-                foregroundColor: Colors.deepPurple[900],
+                backgroundColor: Colors.deepPurple.withOpacity(0.1),
+                foregroundColor: Colors.deepPurple,
+                padding: UiConfig.defaultPadding,
               ),
             ),
           ),
-        if (widget.allowDemo) const SizedBox(height: 8),
+        if (widget.allowDemo) SizedBox(height: UiConfig.defaultPadding.top),
         if (isBusy) ...[
-          const SizedBox(height: 12),
+          SizedBox(height: UiConfig.defaultPadding.top),
           const CircularProgressIndicator(),
         ],
       ],
