@@ -97,4 +97,15 @@ class AuthServiceImpl implements AuthService {
   Future<void> sendEmailVerification() async {
     await _auth.currentUser?.sendEmailVerification();
   }
+
+  @override
+  Future<void> setGuestSession() async {
+    await _auth.signInAnonymously();
+  }
+
+  @override
+  Future<void> setDemoSession() async {
+    // Demo mode currently uses anonymous auth (can be extended later with demo-specific credentials or Firestore flags)
+    await _auth.signInAnonymously();
+  }
 }

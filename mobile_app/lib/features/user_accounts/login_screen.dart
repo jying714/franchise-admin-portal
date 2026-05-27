@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/src/core/services/auth_service.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:shared_core/shared_core.dart' show DesignTokens;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
+import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
+import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/widgets/social_sign_in_buttons.dart';
 import 'package:franchise_mobile_app/config/feature_config.dart';
 
@@ -40,44 +42,79 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  Future<void> _handleEmailAuth(AuthService auth) async {
+  Future<void> _handleEmailAuth(shared.AuthService auth) async {
     setState(() {
       loading = true;
       error = '';
     });
     try {
       final user = isLoginMode
-          ? await auth.signInWithEmail(
-              emailController.text.trim(),
-              passwordController.text.trim(),
+          ? await auth.signInWithEmailAndPassword(
+              email: emailController.text.trim(),
+              password: passwordController.text.trim(),
             )
-          : await auth.registerWithEmail(
-              emailController.text.trim(),
-              passwordController.text.trim(),
-              nameController.text.trim(),
-              phoneController.text.trim(),
+          : await auth.createUserWithEmailAndPassword(
+              email: emailController.text.trim(),
+              password: passwordController.text.trim(),
             );
+
       if (!mounted) return;
+
+      // For registration, update display name (phone is handled in profile)
+      if (!isLoginMode) {
+        final name = nameController.text.trim();
+        if (name.isNotEmpty) {
+          await auth.updateUserProfile(displayName: name);
+        }
+      }
+
       if (user == null) {
         setState(() {
           error = isLoginMode
               ? "Invalid email or password."
               : "Registration failed. Please try again.";
         });
+        return;
+      }
+
+      // Align with stabilized flow: ensure profile + franchise init
+      final firestoreService =
+          Provider.of<shared.FirestoreService>(context, listen: false);
+      final franchiseProvider =
+          Provider.of<FranchiseProvider>(context, listen: false);
+
+      final dbUser = await firestoreService.getUser(user.id);
+      if (!mounted) return;
+
+      final defaultId = dbUser?.defaultFranchise ??
+          (dbUser?.franchiseIds.isNotEmpty == true
+              ? dbUser!.franchiseIds.first
+              : null);
+
+      await franchiseProvider.initializeFromUser(defaultFranchiseId: defaultId);
+      if (defaultId != null) {
+        await franchiseProvider.loadCurrentFranchiseDetails(firestoreService);
+      }
+
+      if (dbUser == null || !(dbUser.completeProfile ?? false)) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+          (route) => false,
+        );
       } else {
-        Navigator.pushReplacement(
-          context,
+        Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const MainMenuScreen()),
+          (route) => false,
         );
       }
     } catch (e) {
-      setState(() => error = e.toString());
+      if (mounted) setState(() => error = e.toString());
     } finally {
       if (mounted) setState(() => loading = false);
     }
   }
 
-  Future<void> _handleGuest(AuthService auth) async {
+  Future<void> _handleGuest(shared.AuthService auth) async {
     setState(() {
       loading = true;
       error = '';
@@ -85,18 +122,18 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await auth.setGuestSession();
       if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
+      Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const MainMenuScreen()),
+        (route) => false,
       );
     } catch (e) {
-      setState(() => error = e.toString());
+      if (mounted) setState(() => error = e.toString());
     } finally {
       if (mounted) setState(() => loading = false);
     }
   }
 
-  Future<void> _handleDemo(AuthService auth) async {
+  Future<void> _handleDemo(shared.AuthService auth) async {
     setState(() {
       loading = true;
       error = '';
@@ -104,12 +141,12 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await auth.setDemoSession();
       if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
+      Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const MainMenuScreen()),
+        (route) => false,
       );
     } catch (e) {
-      setState(() => error = e.toString());
+      if (mounted) setState(() => error = e.toString());
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -117,39 +154,36 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = Provider.of<AuthService>(context, listen: false);
-    final featureConfig = FeatureConfig.instance;
-    final enableGuest = featureConfig.enableGuestMode;
-    final enableDemo = featureConfig.enableDemoMode && !enableGuest;
+    final auth = Provider.of<shared.AuthService>(context, listen: false);
 
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundColor,
+      backgroundColor: UiConfig.backgroundColorDark,
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(DesignTokens.gridSpacing * 3),
+          padding: UiConfig.defaultScreenPadding,
           child: Card(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.dialogRadius),
+              borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
             ),
             elevation: DesignTokens.cardElevation,
-            color: DesignTokens.surfaceColor,
+            color: UiConfig.surfaceColor,
             child: Padding(
-              padding: DesignTokens.cardPadding,
+              padding: UiConfig.cardPadding,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Image.asset(
-                    BrandingConfig.logoMain,
+                    UiConfig.logoMain,
                     height: DesignTokens.logoHeightLarge,
                   ),
                   const SizedBox(height: DesignTokens.gridSpacing * 2),
                   Text(
                     isLoginMode ? 'Sign In' : 'Register',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: DesignTokens.titleFontSize,
-                      fontWeight: DesignTokens.titleFontWeight,
+                      fontWeight: UiConfig.fontWeightBold,
                       fontFamily: DesignTokens.fontFamily,
-                      color: DesignTokens.primaryColor,
+                      color: UiConfig.primaryColor,
                     ),
                   ),
                   const SizedBox(height: DesignTokens.gridSpacing * 2),
@@ -159,16 +193,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       labelText: 'Email',
-                      prefixIcon: const Icon(Icons.email),
+                      prefixIcon: Icon(UiConfig.emailIcon),
                       border: OutlineInputBorder(
                         borderRadius:
                             BorderRadius.circular(DesignTokens.formFieldRadius),
                       ),
                     ),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: DesignTokens.bodyFontSize,
                       fontFamily: DesignTokens.fontFamily,
-                      color: DesignTokens.textColor,
+                      color: UiConfig.textColorDark,
                     ),
                   ),
                   const SizedBox(height: DesignTokens.gridSpacing),
@@ -178,16 +212,16 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: true,
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock),
+                      prefixIcon: Icon(UiConfig.lockIcon),
                       border: OutlineInputBorder(
                         borderRadius:
                             BorderRadius.circular(DesignTokens.formFieldRadius),
                       ),
                     ),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: DesignTokens.bodyFontSize,
                       fontFamily: DesignTokens.fontFamily,
-                      color: DesignTokens.textColor,
+                      color: UiConfig.textColorDark,
                     ),
                   ),
                   if (!isLoginMode) ...[
@@ -203,10 +237,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               DesignTokens.formFieldRadius),
                         ),
                       ),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: DesignTokens.bodyFontSize,
                         fontFamily: DesignTokens.fontFamily,
-                        color: DesignTokens.textColor,
+                        color: UiConfig.textColorDark,
                       ),
                     ),
                     const SizedBox(height: DesignTokens.gridSpacing),
@@ -222,10 +256,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               DesignTokens.formFieldRadius),
                         ),
                       ),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: DesignTokens.bodyFontSize,
                         fontFamily: DesignTokens.fontFamily,
-                        color: DesignTokens.textColor,
+                        color: UiConfig.textColorDark,
                       ),
                     ),
                   ],
@@ -233,20 +267,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: DesignTokens.gridSpacing),
                     Text(
                       error,
-                      style: const TextStyle(
-                        color: DesignTokens.errorColor,
+                      style: TextStyle(
+                        color: UiConfig.errorColor,
                         fontSize: DesignTokens.bodyFontSize,
                         fontFamily: DesignTokens.fontFamily,
-                        fontWeight: DesignTokens.bodyFontWeight,
                       ),
                     ),
                   ],
                   const SizedBox(height: DesignTokens.gridSpacing * 2),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: DesignTokens.primaryColor,
-                      foregroundColor: DesignTokens.foregroundColor,
-                      padding: DesignTokens.buttonPadding,
+                      backgroundColor: UiConfig.primaryColor,
+                      foregroundColor: UiConfig.foregroundColorDark,
+                      padding: UiConfig.defaultPadding,
                       shape: RoundedRectangleBorder(
                         borderRadius:
                             BorderRadius.circular(DesignTokens.buttonRadius),
@@ -262,11 +295,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           )
                         : Text(
                             isLoginMode ? 'Sign In' : 'Register',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: DesignTokens.bodyFontSize,
                               fontFamily: DesignTokens.fontFamily,
-                              fontWeight: DesignTokens.bodyFontWeight,
-                              color: DesignTokens.foregroundColor,
+                              fontWeight: UiConfig.fontWeightBold,
+                              color: UiConfig.foregroundColorDark,
                             ),
                           ),
                   ),
@@ -278,22 +311,22 @@ class _LoginScreenState extends State<LoginScreen> {
                         isLoginMode
                             ? "Don't have an account?"
                             : "Already have an account?",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: DesignTokens.bodyFontSize,
                           fontFamily: DesignTokens.fontFamily,
-                          fontWeight: DesignTokens.bodyFontWeight,
-                          color: DesignTokens.textColor,
+                          fontWeight: UiConfig.fontWeightNormal,
+                          color: UiConfig.textColorDark,
                         ),
                       ),
                       TextButton(
                         onPressed: loading ? null : _toggleMode,
                         child: Text(
                           isLoginMode ? 'Register' : 'Sign In',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: DesignTokens.bodyFontSize,
                             fontFamily: DesignTokens.fontFamily,
-                            fontWeight: DesignTokens.bodyFontWeight,
-                            color: DesignTokens.accentColor,
+                            fontWeight: UiConfig.fontWeightBold,
+                            color: UiConfig.accentColor,
                           ),
                         ),
                       ),
@@ -306,69 +339,56 @@ class _LoginScreenState extends State<LoginScreen> {
                   SocialSignInButtons(
                     onSuccess: (user) {
                       if (user != null) {
-                        Navigator.pushReplacement(
-                          context,
+                        Navigator.of(context).pushAndRemoveUntil(
                           MaterialPageRoute(
                               builder: (_) => const MainMenuScreen()),
+                          (route) => false,
                         );
                       }
                     },
-                    onError: (err) {
-                      setState(() => error = err);
-                    },
+                    onError: (err) => setState(() => error = err),
                     isLoading: loading,
                     setLoading: (val) => setState(() => loading = val),
+                    showPhone: true,
                   ),
                   const SizedBox(height: DesignTokens.gridSpacing * 2),
-                  if (enableGuest)
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.person_outline),
-                      label: const Text("Continue as Guest"),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: DesignTokens.primaryColor,
-                        side:
-                            const BorderSide(color: DesignTokens.primaryColor),
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(DesignTokens.buttonRadius),
-                        ),
-                        textStyle: const TextStyle(
-                          fontSize: DesignTokens.bodyFontSize,
-                          fontFamily: DesignTokens.fontFamily,
-                          fontWeight: DesignTokens.bodyFontWeight,
-                        ),
+                  // Guest & Demo always available (FeatureConfig flags removed in current config)
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.person_outline),
+                    label: const Text("Continue as Guest"),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: UiConfig.primaryColor,
+                      side: BorderSide(color: UiConfig.primaryColor),
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.buttonRadius),
                       ),
-                      onPressed: loading ? null : () => _handleGuest(auth),
-                    ),
-                  if (enableDemo)
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.visibility),
-                      label: const Text("Try Demo Mode"),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: DesignTokens.secondaryColor,
-                        side: const BorderSide(
-                            color: DesignTokens.secondaryColor),
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(DesignTokens.buttonRadius),
-                        ),
-                        textStyle: const TextStyle(
-                          fontSize: DesignTokens.bodyFontSize,
-                          fontFamily: DesignTokens.fontFamily,
-                          fontWeight: DesignTokens.bodyFontWeight,
-                        ),
+                      textStyle: TextStyle(
+                        fontSize: DesignTokens.bodyFontSize,
+                        fontFamily: DesignTokens.fontFamily,
+                        fontWeight: UiConfig.fontWeightNormal,
                       ),
-                      onPressed: loading ? null : () => _handleDemo(auth),
                     ),
+                    onPressed: loading ? null : () => _handleGuest(auth),
+                  ),
                   const SizedBox(height: DesignTokens.gridSpacing),
-                  Text(
-                    FeatureConfig.instance.forceLogin ? '' : '',
-                    style: const TextStyle(
-                      color: DesignTokens.disabledTextColor,
-                      fontSize: DesignTokens.captionFontSize,
-                      fontFamily: DesignTokens.fontFamily,
-                      fontWeight: DesignTokens.bodyFontWeight,
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("Try Demo Mode"),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: UiConfig.secondaryColor,
+                      side: BorderSide(color: UiConfig.secondaryColor),
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.buttonRadius),
+                      ),
+                      textStyle: TextStyle(
+                        fontSize: DesignTokens.bodyFontSize,
+                        fontFamily: DesignTokens.fontFamily,
+                        fontWeight: UiConfig.fontWeightNormal,
+                      ),
                     ),
+                    onPressed: loading ? null : () => _handleDemo(auth),
                   ),
                 ],
               ),

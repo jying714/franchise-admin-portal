@@ -48,4 +48,10 @@ abstract class AuthService {
 
   /// Send email verification
   Future<void> sendEmailVerification();
+
+  /// Set guest session (anonymous Firebase auth)
+  Future<void> setGuestSession();
+
+  /// Set demo session (anonymous Firebase auth for testing/demo mode)
+  Future<void> setDemoSession();
 }

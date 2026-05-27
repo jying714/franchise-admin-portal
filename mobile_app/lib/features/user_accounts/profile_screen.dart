@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/widgets/sign_out_button.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:shared_core/shared_core.dart' show DesignTokens;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:franchise_mobile_app/widgets/sign_out_button.dart';
 import 'package:franchise_mobile_app/widgets/profile_nav_tile.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/src/core/services/auth_service.dart';
-import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:franchise_mobile_app/core/models/user.dart' as user_model;
+import 'package:franchise_mobile_app/widgets/info_tile.dart';
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
+import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/features/user_accounts/delivery_addresses_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/order_history_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/scheduled_orders_screen.dart';
@@ -17,13 +16,10 @@ import 'package:franchise_mobile_app/features/user_accounts/favorites_screen.dar
 import 'package:franchise_mobile_app/features/language/language_screen.dart';
 import 'package:franchise_mobile_app/features/chat_support/chat_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/franchise_selector_screen.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/features/home/home_screen.dart';
-import 'package:franchise_mobile_app/widgets/info_tile.dart';
-
-// New dialog for forced profile review
 import 'package:franchise_mobile_app/features/user_accounts/complete_profile_dialog.dart';
 import 'package:franchise_mobile_app/widgets/confirmation_dialog.dart';
+import 'package:franchise_mobile_app/core/models/user.dart' as user_model;
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -43,6 +39,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String? hintText,
   }) async {
     final controller = TextEditingController(text: initialValue);
+    final l10n = AppLocalizations.of(context)!;
+
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -51,9 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           controller: controller,
           autofocus: true,
           keyboardType: keyboardType,
-          decoration: InputDecoration(
-            hintText: hintText,
-          ),
+          decoration: InputDecoration(hintText: hintText),
           onSubmitted: (val) {
             if (val.trim().isNotEmpty) {
               onSubmitted(val.trim());
@@ -64,7 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(AppLocalizations.of(context)!.cancel),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -74,7 +70,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Navigator.of(context).pop();
               }
             },
-            child: Text(AppLocalizations.of(context)!.save),
+            child: Text(l10n.save),
           ),
         ],
       ),
@@ -83,37 +79,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authService = Provider.of<AuthService>(context, listen: false);
+    final authService = Provider.of<shared.AuthService>(context, listen: false);
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+        Provider.of<shared.FirestoreService>(context, listen: false);
+    final franchiseProvider =
+        Provider.of<FranchiseProvider>(context, listen: false);
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
           l10n.profile,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: DesignTokens.titleFontSize,
-            color: DesignTokens.foregroundColor,
-            fontWeight: DesignTokens.titleFontWeight,
+            color: UiConfig.foregroundColorDark,
+            fontWeight: UiConfig.fontWeightBold,
             fontFamily: DesignTokens.fontFamily,
           ),
         ),
-        backgroundColor: DesignTokens.primaryColor,
+        backgroundColor: UiConfig.primaryColor,
         centerTitle: true,
         elevation: 0,
-        iconTheme: const IconThemeData(color: DesignTokens.foregroundColor),
+        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
       ),
-      backgroundColor: DesignTokens.backgroundColor,
+      backgroundColor: UiConfig.backgroundColorDark,
       body: Padding(
-        padding: DesignTokens.cardPadding,
-        child: StreamBuilder<fb_auth.User?>(
+        padding: UiConfig.defaultScreenPadding,
+        child: StreamBuilder<shared.User?>(
           stream: authService.authStateChanges,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-            final fb_auth.User? user = snapshot.data;
+            final shared.User? user = snapshot.data;
             if (user == null) {
               return EmptyStateWidget(
                 title: l10n.notSignedIn,
@@ -122,14 +120,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               );
             }
 
-            // Fetch the full User object from Firestore using UID
-            return StreamBuilder<user_model.User?>(
-              stream: firestoreService.getUserByIdStream(user.uid),
+            return StreamBuilder<shared.User?>(
+              stream: firestoreService.getUserByIdStream(user.id),
               builder: (context, userSnapshot) {
                 if (userSnapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                final user_model.User? fullUser = userSnapshot.data;
+                final shared.User? fullUser = userSnapshot.data;
                 if (fullUser == null) {
                   return EmptyStateWidget(
                     title: l10n.profileNotFound,
@@ -138,18 +135,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   );
                 }
 
+                // Forced profile completion
                 // ---- FORCED PROFILE COMPLETION LOGIC ----
                 if ((fullUser.completeProfile ?? false) == false &&
                     !_dialogShown) {
                   WidgetsBinding.instance.addPostFrameCallback((_) async {
-                    if (!_dialogShown) {
+                    if (!_dialogShown && mounted) {
                       _dialogShown = true;
+
+                      // Convert shared.User → local user_model.User for CompleteProfileDialog
+                      final localUser = user_model.User(
+                        id: fullUser.id,
+                        name: fullUser.name,
+                        email: fullUser.email,
+                        phoneNumber: fullUser.phoneNumber,
+                        roles: fullUser.roles,
+                        addresses: fullUser.addresses,
+                        language: fullUser.language,
+                        status: fullUser.status,
+                        defaultFranchise: fullUser.defaultFranchise,
+                        avatarUrl: fullUser.avatarUrl,
+                        franchiseIds: fullUser.franchiseIds,
+                        completeProfile: fullUser.completeProfile,
+                        onboardingComplete: fullUser.onboardingComplete,
+                        isActive: fullUser.isActive,
+                        updatedAt: fullUser.updatedAt,
+                      );
+
                       await showDialog(
                         context: context,
                         barrierDismissible: false,
-                        builder: (ctx) => CompleteProfileDialog(user: fullUser),
+                        builder: (_) => CompleteProfileDialog(user: localUser),
                       );
-                      // Refresh the profile after the dialog closes
+
                       if (mounted) setState(() {});
                       _dialogShown = false;
                     }
@@ -158,15 +176,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                // ---- PROFILE DISPLAY ----
                 return ListView(
                   children: [
                     InfoTile(
                       label: l10n.name,
                       value: fullUser.name,
                       trailing: IconButton(
-                        icon:
-                            Icon(Icons.edit, color: DesignTokens.primaryColor),
+                        icon: Icon(Icons.edit, color: UiConfig.primaryColor),
                         tooltip: l10n.edit,
                         onPressed: () {
                           _showEditFieldDialog(
@@ -177,7 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               final updatedUser =
                                   fullUser.copyWith(name: newName);
                               await firestoreService.updateUser(updatedUser);
-                              setState(() {}); // Refresh UI
+                              if (mounted) setState(() {});
                             },
                           );
                         },
@@ -185,10 +201,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     InfoTile(
                       label: l10n.phoneNumber,
-                      value: fullUser.phoneNumber,
+                      value: fullUser.phoneNumber ?? '',
                       trailing: IconButton(
-                        icon:
-                            Icon(Icons.edit, color: DesignTokens.primaryColor),
+                        icon: Icon(Icons.edit, color: UiConfig.primaryColor),
                         tooltip: l10n.edit,
                         onPressed: () {
                           _showEditFieldDialog(
@@ -200,15 +215,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               final updatedUser =
                                   fullUser.copyWith(phoneNumber: newPhone);
                               await firestoreService.updateUser(updatedUser);
-                              setState(() {});
+                              if (mounted) setState(() {});
                             },
                           );
                         },
                       ),
                     ),
                     InfoTile(label: l10n.email, value: fullUser.email),
-                    if (fullUser.role != user_model.User.roleCustomer)
-                      InfoTile(label: 'Role', value: fullUser.role),
                     const Divider(),
                     ProfileNavTile(
                       label: l10n.deliveryAddresses,
@@ -230,21 +243,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       label: l10n.language,
                       destination: const LanguageScreen(),
                     ),
-                    // Switch Restaurant - MVP multi-tenant support
                     Consumer<FranchiseProvider>(
-                      builder: (context, fp, _) {
-                        return ListTile(
-                          leading: const Icon(Icons.store),
-                          title: Text('Switch Restaurant (${fp.restaurantName})'),
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const FranchiseSelectorScreen(),
-                              ),
-                            );
-                          },
-                        );
-                      },
+                      builder: (context, fp, _) => ListTile(
+                        leading: const Icon(Icons.store),
+                        title: Text('Switch Restaurant (${fp.restaurantName})'),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const FranchiseSelectorScreen(),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                     ProfileNavTile(
                       label: l10n.chatWithUs,
@@ -254,13 +264,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     SignOutButton(
                       signOutLabel: l10n.signOut,
                       confirmationTitle: l10n.signOut,
-                      confirmationMessage:
-                          l10n.signOutConfirmationMessage, // From ARB
+                      confirmationMessage: l10n.signOutConfirmationMessage,
                       confirmLabel: l10n.signOut,
                       cancelLabel: l10n.cancel,
                       onSignOut: () async {
                         await authService.signOut();
-                        if (context.mounted) {
+                        if (mounted) {
                           Navigator.of(context).pushAndRemoveUntil(
                             MaterialPageRoute(
                                 builder: (_) => const HomeScreen()),

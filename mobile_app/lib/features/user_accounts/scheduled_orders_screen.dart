@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:shared_core/shared_core.dart' show DesignTokens;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/core/models/scheduled_order.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_mobile_app/core/models/menu_item.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
+import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' show BrandingConfig;
 
 class ScheduledOrdersScreen extends StatefulWidget {
   const ScheduledOrdersScreen({super.key});
@@ -22,21 +24,28 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
   @override
   void initState() {
     super.initState();
-    _userId = FirebaseAuth.instance.currentUser?.uid;
+    _userId = fb_auth.FirebaseAuth.instance.currentUser?.uid;
   }
 
   Future<void> _showOrderEditorDialog({
     ScheduledOrder? scheduledOrder,
-    required FirestoreService firestoreService,
+    required shared.FirestoreService firestoreService,
   }) async {
     final localizations = AppLocalizations.of(context)!;
     final isEditing = scheduledOrder != null;
     final TextEditingController freqController =
         TextEditingController(text: scheduledOrder?.frequency ?? 'weekly');
+
     DateTime nextRun =
-        scheduledOrder?.nextRun ?? DateTime.now().add(const Duration(days: 7));
-    bool isPaused = scheduledOrder?.isPaused ?? false;
-    final menuItems = await firestoreService.getMenuItems().first;
+        scheduledOrder?.nextDate ?? DateTime.now().add(const Duration(days: 7));
+    bool isPaused = scheduledOrder?.isPaused ??
+        false; // Will be handled via status fallback if missing
+
+    final franchiseProvider =
+        Provider.of<FranchiseProvider>(context, listen: false);
+    final menuItems = await firestoreService
+        .getMenuItems(franchiseProvider.currentFranchiseId)
+        .first;
     List<MenuItem> selectedItems =
         List<MenuItem>.from(scheduledOrder?.items ?? []);
 
@@ -57,29 +66,25 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                     value: freqController.text,
                     items: [
                       DropdownMenuItem(
-                        value: 'daily',
-                        child: Text(localizations.frequencyDaily),
-                      ),
+                          value: 'daily',
+                          child: Text(localizations.frequencyDaily)),
                       DropdownMenuItem(
-                        value: 'weekly',
-                        child: Text(localizations.frequencyWeekly),
-                      ),
+                          value: 'weekly',
+                          child: Text(localizations.frequencyWeekly)),
                       DropdownMenuItem(
-                        value: 'monthly',
-                        child: Text(localizations.frequencyMonthly),
-                      ),
+                          value: 'monthly',
+                          child: Text(localizations.frequencyMonthly)),
                     ],
                     onChanged: (value) {
                       setModalState(
                           () => freqController.text = value ?? 'weekly');
                     },
-                    decoration: InputDecoration(
-                      labelText: localizations.frequency,
-                    ),
+                    decoration:
+                        InputDecoration(labelText: localizations.frequency),
                   ),
                   ListTile(
                     title: Text(localizations.nextRunDate),
-                    subtitle: Text("${nextRun.toString().substring(0, 16)}"),
+                    subtitle: Text(nextRun.toString().substring(0, 16)),
                     trailing: IconButton(
                       icon: const Icon(Icons.calendar_today),
                       onPressed: () async {
@@ -111,12 +116,16 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                     children: menuItems
                         .map((item) => FilterChip(
                               label: Text(item.name),
-                              selected: selectedItems.contains(item),
+                              selected:
+                                  selectedItems.any((i) => i.id == item.id),
                               onSelected: (selected) {
                                 setModalState(() {
-                                  selected
-                                      ? selectedItems.add(item)
-                                      : selectedItems.remove(item);
+                                  if (selected) {
+                                    selectedItems.add(item);
+                                  } else {
+                                    selectedItems
+                                        .removeWhere((i) => i.id == item.id);
+                                  }
                                 });
                               },
                             ))
@@ -135,21 +144,28 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                     isEditing ? localizations.update : localizations.create),
                 onPressed: () async {
                   if (_userId == null || selectedItems.isEmpty) return;
+
+                  final franchiseProvider =
+                      Provider.of<FranchiseProvider>(context, listen: false);
                   final now = DateTime.now();
+
                   final ScheduledOrder updated = ScheduledOrder(
                     id: scheduledOrder?.id ??
                         now.microsecondsSinceEpoch.toString(),
                     userId: _userId!,
+                    franchiseId: franchiseProvider.currentFranchiseId,
                     items: selectedItems,
                     frequency: freqController.text,
-                    nextRun: nextRun,
+                    nextDate: nextRun,
                     isPaused: isPaused,
-                    createdAt: scheduledOrder?.createdAt ?? now,
                   );
+
                   if (isEditing) {
-                    await firestoreService.updateScheduledOrder(updated);
+                    await firestoreService
+                        .updateScheduledOrder(updated as shared.Order);
                   } else {
-                    await firestoreService.addScheduledOrder(updated);
+                    await firestoreService
+                        .addScheduledOrder(updated as shared.Order);
                   }
                   if (mounted) Navigator.of(context).pop();
                 },
@@ -164,32 +180,34 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
+    final franchiseProvider = Provider.of<FranchiseProvider>(context);
+
     if (_userId == null) {
       return Scaffold(
         appBar: AppBar(
           title: Text(
             localizations.scheduledOrders,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: DesignTokens.titleFontSize,
-              color: DesignTokens.foregroundColor,
-              fontWeight: DesignTokens.titleFontWeight,
+              color: UiConfig.foregroundColorDark,
+              fontWeight: UiConfig.fontWeightBold,
               fontFamily: DesignTokens.fontFamily,
             ),
           ),
-          backgroundColor: DesignTokens.primaryColor,
+          backgroundColor: UiConfig.primaryColor,
           centerTitle: true,
           elevation: 0,
-          iconTheme: const IconThemeData(color: DesignTokens.foregroundColor),
+          iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
         ),
-        backgroundColor: DesignTokens.backgroundColor,
+        backgroundColor: UiConfig.backgroundColorDark,
         body: Center(
           child: Text(
             localizations.mustSignInForScheduledOrders,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: DesignTokens.bodyFontSize,
-              color: DesignTokens.textColor,
+              color: UiConfig.textColorDark,
               fontFamily: DesignTokens.fontFamily,
-              fontWeight: DesignTokens.bodyFontWeight,
+              fontWeight: UiConfig.fontWeightNormal,
             ),
           ),
         ),
@@ -197,34 +215,37 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
     }
 
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+        Provider.of<shared.FirestoreService>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
           localizations.scheduledOrders,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: DesignTokens.titleFontSize,
-            color: DesignTokens.foregroundColor,
-            fontWeight: DesignTokens.titleFontWeight,
+            color: UiConfig.foregroundColorDark,
+            fontWeight: UiConfig.fontWeightBold,
             fontFamily: DesignTokens.fontFamily,
           ),
         ),
-        backgroundColor: DesignTokens.primaryColor,
+        backgroundColor: UiConfig.primaryColor,
         centerTitle: true,
         elevation: 0,
-        iconTheme: const IconThemeData(color: DesignTokens.foregroundColor),
+        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
       ),
-      backgroundColor: DesignTokens.backgroundColor,
+      backgroundColor: UiConfig.backgroundColorDark,
       floatingActionButton: FloatingActionButton(
-        backgroundColor: DesignTokens.primaryColor,
+        backgroundColor: UiConfig.primaryColor,
         onPressed: () =>
             _showOrderEditorDialog(firestoreService: firestoreService),
         child: const Icon(Icons.add, color: Colors.white),
         tooltip: localizations.addScheduledOrder,
       ),
-      body: StreamBuilder<List<ScheduledOrder>>(
-        stream: firestoreService.getScheduledOrdersForUser(_userId!),
+      body: StreamBuilder<List<shared.Order>>(
+        stream: firestoreService.getScheduledOrdersForUser(
+          _userId!,
+          franchiseId: franchiseProvider.currentFranchiseId,
+        ),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -234,23 +255,24 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
             return Center(
               child: Text(
                 localizations.noScheduledOrders,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: DesignTokens.bodyFontSize,
-                  color: DesignTokens.textColor,
+                  color: UiConfig.textColorDark,
                   fontFamily: DesignTokens.fontFamily,
-                  fontWeight: DesignTokens.bodyFontWeight,
+                  fontWeight: UiConfig.fontWeightNormal,
                 ),
               ),
             );
           }
           return Padding(
-            padding: DesignTokens.cardPadding,
+            padding: UiConfig.defaultScreenPadding,
             child: ListView.builder(
               itemCount: scheduledOrders.length,
               itemBuilder: (context, index) {
                 final order = scheduledOrders[index];
                 final firstItem =
                     order.items.isNotEmpty ? order.items.first : null;
+
                 return Card(
                   elevation: DesignTokens.cardElevation,
                   margin: const EdgeInsets.symmetric(
@@ -259,12 +281,12 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                     borderRadius:
                         BorderRadius.circular(DesignTokens.cardRadius),
                   ),
-                  color: DesignTokens.surfaceColor,
+                  color: UiConfig.surfaceColor,
                   child: ListTile(
                     leading: firstItem != null
                         ? NetworkImageWidget(
                             imageUrl: firstItem.image ?? '',
-                            fallbackAsset: 'assets/images/pizza_icon.png',
+                            fallbackAsset: BrandingConfig.defaultPizzaIcon,
                             width: 48,
                             height: 48,
                             fit: BoxFit.cover,
@@ -273,55 +295,38 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                         : const SizedBox(width: 48, height: 48),
                     title: Text(
                       localizations.orderNumberWithId(order.id),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: DesignTokens.bodyFontSize,
-                        color: DesignTokens.textColor,
-                        fontWeight: DesignTokens.titleFontWeight,
+                        color: UiConfig.textColorDark,
+                        fontWeight: UiConfig.fontWeightBold,
                         fontFamily: DesignTokens.fontFamily,
                       ),
                     ),
                     subtitle: Text(
-                      localizations.scheduledOrderSubtitle(
-                        order.frequency,
-                        order.nextRun.toString().substring(0, 16),
-                        order.items.map((e) => e.name).join(', '),
-                      ),
-                      style: const TextStyle(
+                      "${order.frequency ?? 'weekly'} • ${order.timestamp.toString().substring(0, 16)}",
+                      style: TextStyle(
                         fontSize: DesignTokens.captionFontSize,
-                        color: DesignTokens.secondaryTextColor,
+                        color: UiConfig.secondaryTextColor,
                         fontFamily: DesignTokens.fontFamily,
-                        fontWeight: DesignTokens.bodyFontWeight,
+                        fontWeight: UiConfig.fontWeightNormal,
                       ),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: Icon(
-                            order.isPaused ? Icons.play_arrow : Icons.pause,
-                          ),
-                          color: DesignTokens.primaryColor,
-                          tooltip: order.isPaused
-                              ? localizations.resume
-                              : localizations.pause,
+                          icon: const Icon(Icons.pause),
+                          color: UiConfig.primaryColor,
+                          tooltip: 'Pause',
                           onPressed: () async {
-                            await firestoreService.updateScheduledOrder(
-                              order.copyWith(isPaused: !order.isPaused),
-                            );
+                            final updated = order.copyWith(status: 'paused');
+                            await firestoreService
+                                .updateScheduledOrder(updated);
                           },
                         ),
                         IconButton(
-                          icon: const Icon(Icons.edit),
-                          color: DesignTokens.secondaryColor,
-                          tooltip: localizations.edit,
-                          onPressed: () => _showOrderEditorDialog(
-                            scheduledOrder: order,
-                            firestoreService: firestoreService,
-                          ),
-                        ),
-                        IconButton(
                           icon: const Icon(Icons.delete),
-                          color: DesignTokens.errorColor,
+                          color: UiConfig.errorColor,
                           tooltip: localizations.delete,
                           onPressed: () async {
                             await firestoreService
@@ -340,5 +345,3 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
     );
   }
 }
-
-

@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/src/core/services/auth_service.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/models/order.dart' as order_model;
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:shared_core/shared_core.dart' show DesignTokens;
+import 'package:shared_core/shared_core.dart' show BrandingConfig;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_mobile_app/widgets/network_image_widget.dart'; // <-- Add this import
+import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:franchise_mobile_app/widgets/feedback/feedback_submission_dialog.dart';
 
 class OrderHistoryScreen extends StatelessWidget {
@@ -16,8 +15,10 @@ class OrderHistoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
-    final authService = Provider.of<AuthService>(context, listen: false);
+        Provider.of<shared.FirestoreService>(context, listen: false);
+    final authService = Provider.of<shared.AuthService>(context, listen: false);
+    final franchiseProvider =
+        Provider.of<FranchiseProvider>(context, listen: false);
     final localizations = AppLocalizations.of(context)!;
     final authUser = authService.currentUser;
 
@@ -25,71 +26,58 @@ class OrderHistoryScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(
           localizations.orderHistory,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: DesignTokens.titleFontSize,
-            color: DesignTokens.foregroundColor,
-            fontWeight: DesignTokens.titleFontWeight,
+            color: UiConfig.foregroundColorDark,
+            fontWeight: UiConfig.fontWeightBold,
             fontFamily: DesignTokens.fontFamily,
           ),
         ),
-        backgroundColor: DesignTokens.primaryColor,
+        backgroundColor: UiConfig.primaryColor,
         centerTitle: true,
         elevation: 0,
-        iconTheme: const IconThemeData(color: DesignTokens.foregroundColor),
+        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
       ),
-      backgroundColor: DesignTokens.backgroundColor,
+      backgroundColor: UiConfig.backgroundColorDark,
       body: authUser == null
           ? Center(
               child: Text(
                 localizations.notSignedIn,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: DesignTokens.bodyFontSize,
-                  color: DesignTokens.textColor,
+                  color: UiConfig.textColorDark,
                   fontFamily: DesignTokens.fontFamily,
-                  fontWeight: DesignTokens.bodyFontWeight,
+                  fontWeight: UiConfig.fontWeightNormal,
                 ),
               ),
             )
-          : StreamBuilder<List<order_model.Order>>(
+          : StreamBuilder<List<shared.Order>>(
               stream: firestoreService.getOrders(
-                userId: authUser.uid,
-                franchiseId: Provider.of<FranchiseProvider>(context, listen: false).currentFranchiseId != 'unknown' 
-                  ? Provider.of<FranchiseProvider>(context, listen: false).currentFranchiseId 
-                  : null,
+                userId: authUser.id,
+                franchiseId: franchiseProvider.currentFranchiseId != 'unknown'
+                    ? franchiseProvider.currentFranchiseId
+                    : null,
               ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                if (!snapshot.hasData) {
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return Center(
                     child: Text(
                       localizations.noPastOrders,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: DesignTokens.bodyFontSize,
-                        color: DesignTokens.textColor,
+                        color: UiConfig.textColorDark,
                         fontFamily: DesignTokens.fontFamily,
-                        fontWeight: DesignTokens.bodyFontWeight,
+                        fontWeight: UiConfig.fontWeightNormal,
                       ),
                     ),
                   );
                 }
                 final orders = snapshot.data!;
-                if (orders.isEmpty) {
-                  return Center(
-                    child: Text(
-                      localizations.noPastOrders,
-                      style: const TextStyle(
-                        fontSize: DesignTokens.bodyFontSize,
-                        color: DesignTokens.textColor,
-                        fontFamily: DesignTokens.fontFamily,
-                        fontWeight: DesignTokens.bodyFontWeight,
-                      ),
-                    ),
-                  );
-                }
                 return ListView.builder(
-                  padding: DesignTokens.cardPadding,
+                  padding: UiConfig.defaultScreenPadding,
                   itemCount: orders.length,
                   itemBuilder: (context, index) {
                     final order = orders[index];
@@ -102,14 +90,14 @@ class OrderHistoryScreen extends StatelessWidget {
                         borderRadius:
                             BorderRadius.circular(DesignTokens.cardRadius),
                       ),
-                      color: DesignTokens.surfaceColor,
+                      color: UiConfig.surfaceColor,
                       child: ExpansionTile(
                         title: Text(
                           localizations.orderNumberWithId(order.id),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: DesignTokens.bodyFontSize,
-                            color: DesignTokens.textColor,
-                            fontWeight: DesignTokens.titleFontWeight,
+                            color: UiConfig.textColorDark,
+                            fontWeight: UiConfig.fontWeightBold,
                             fontFamily: DesignTokens.fontFamily,
                           ),
                         ),
@@ -118,37 +106,37 @@ class OrderHistoryScreen extends StatelessWidget {
                             order.timestamp.toString().substring(0, 10),
                             order.total.toStringAsFixed(2),
                           ),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: DesignTokens.captionFontSize,
-                            color: DesignTokens.secondaryTextColor,
+                            color: UiConfig.secondaryTextColor,
                             fontFamily: DesignTokens.fontFamily,
-                            fontWeight: DesignTokens.bodyFontWeight,
+                            fontWeight: UiConfig.fontWeightNormal,
                           ),
                         ),
                         children: [
                           Padding(
-                            padding: DesignTokens.cardPadding,
+                            padding: UiConfig.cardPadding,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   '${localizations.status}: ${order.status}',
-                                  style: const TextStyle(
-                                    color: DesignTokens.textColor,
+                                  style: TextStyle(
+                                    color: UiConfig.textColorDark,
                                     fontSize: DesignTokens.bodyFontSize,
                                     fontFamily: DesignTokens.fontFamily,
-                                    fontWeight: DesignTokens.bodyFontWeight,
+                                    fontWeight: UiConfig.fontWeightNormal,
                                   ),
                                 ),
                                 const SizedBox(
                                     height: DesignTokens.gridSpacing / 2),
                                 Text(
                                   localizations.items,
-                                  style: const TextStyle(
-                                    color: DesignTokens.textColor,
+                                  style: TextStyle(
+                                    color: UiConfig.textColorDark,
                                     fontSize: DesignTokens.bodyFontSize,
                                     fontFamily: DesignTokens.fontFamily,
-                                    fontWeight: DesignTokens.bodyFontWeight,
+                                    fontWeight: UiConfig.fontWeightBold,
                                   ),
                                 ),
                                 ...order.items.map((item) => Padding(
@@ -173,15 +161,15 @@ class OrderHistoryScreen extends StatelessWidget {
                                           Expanded(
                                             child: Text(
                                               '- ${item.name} x${item.quantity} (\$${item.price.toStringAsFixed(2)})',
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: DesignTokens
                                                     .captionFontSize,
-                                                color: DesignTokens
-                                                    .secondaryTextColor,
+                                                color:
+                                                    UiConfig.secondaryTextColor,
                                                 fontFamily:
                                                     DesignTokens.fontFamily,
                                                 fontWeight:
-                                                    DesignTokens.bodyFontWeight,
+                                                    UiConfig.fontWeightNormal,
                                               ),
                                             ),
                                           ),
@@ -192,11 +180,11 @@ class OrderHistoryScreen extends StatelessWidget {
                                     height: DesignTokens.gridSpacing / 2),
                                 Text(
                                   '${localizations.deliveryType}: ${order.deliveryType}',
-                                  style: const TextStyle(
-                                    color: DesignTokens.textColor,
+                                  style: TextStyle(
+                                    color: UiConfig.textColorDark,
                                     fontSize: DesignTokens.bodyFontSize,
                                     fontFamily: DesignTokens.fontFamily,
-                                    fontWeight: DesignTokens.bodyFontWeight,
+                                    fontWeight: UiConfig.fontWeightNormal,
                                   ),
                                 ),
                                 if (order.address != null) ...[
@@ -204,11 +192,11 @@ class OrderHistoryScreen extends StatelessWidget {
                                       height: DesignTokens.gridSpacing / 2),
                                   Text(
                                     '${localizations.address}: ${order.address!.street}, ${order.address!.city}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: DesignTokens.captionFontSize,
-                                      color: DesignTokens.secondaryTextColor,
+                                      color: UiConfig.secondaryTextColor,
                                       fontFamily: DesignTokens.fontFamily,
-                                      fontWeight: DesignTokens.bodyFontWeight,
+                                      fontWeight: UiConfig.fontWeightNormal,
                                     ),
                                   ),
                                 ],
@@ -222,7 +210,7 @@ class OrderHistoryScreen extends StatelessWidget {
                                         snapshot.data == true;
                                     if (snapshot.connectionState ==
                                         ConnectionState.waiting) {
-                                      return const SizedBox(); // Or loading indicator
+                                      return const SizedBox();
                                     }
 
                                     return Row(
@@ -232,9 +220,9 @@ class OrderHistoryScreen extends StatelessWidget {
                                         ElevatedButton(
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor:
-                                                DesignTokens.primaryColor,
+                                                UiConfig.primaryColor,
                                             foregroundColor:
-                                                DesignTokens.foregroundColor,
+                                                UiConfig.foregroundColorDark,
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 20, vertical: 12),
                                             shape: RoundedRectangleBorder(
@@ -250,21 +238,13 @@ class OrderHistoryScreen extends StatelessWidget {
                                             ScaffoldMessenger.of(context)
                                                 .showSnackBar(
                                               SnackBar(
-                                                content: Text(
-                                                    localizations
-                                                        .reorderNotImplemented,
-                                                    style: const TextStyle(
-                                                      color: DesignTokens
-                                                          .textColor,
-                                                      fontFamily: DesignTokens
-                                                          .fontFamily,
-                                                      fontWeight: DesignTokens
-                                                          .bodyFontWeight,
-                                                    )),
+                                                content: Text(localizations
+                                                    .reorderNotImplemented),
                                                 backgroundColor:
-                                                    DesignTokens.surfaceColor,
-                                                duration:
-                                                    DesignTokens.toastDuration,
+                                                    UiConfig.surfaceColor,
+                                                duration: const Duration(
+                                                    seconds: DesignTokens
+                                                        .toastDurationSeconds),
                                               ),
                                             );
                                           },
@@ -278,9 +258,9 @@ class OrderHistoryScreen extends StatelessWidget {
                                                 Icons.feedback_outlined),
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor:
-                                                  DesignTokens.secondaryColor,
+                                                  UiConfig.secondaryColor,
                                               foregroundColor:
-                                                  DesignTokens.foregroundColor,
+                                                  UiConfig.foregroundColorDark,
                                               padding:
                                                   const EdgeInsets.symmetric(
                                                       horizontal: 20,
@@ -300,7 +280,7 @@ class OrderHistoryScreen extends StatelessWidget {
                                                 builder: (_) =>
                                                     FeedbackSubmissionDialog(
                                                   orderId: order.id,
-                                                  userId: authUser.uid,
+                                                  userId: authUser.id,
                                                   feedbackMode: FeedbackMode
                                                       .orderExperience,
                                                   onSubmitted: () {
@@ -311,10 +291,11 @@ class OrderHistoryScreen extends StatelessWidget {
                                                         content: Text(localizations
                                                             .feedbackThankYouBody),
                                                         backgroundColor:
-                                                            DesignTokens
+                                                            UiConfig
                                                                 .surfaceColor,
-                                                        duration: DesignTokens
-                                                            .toastDuration,
+                                                        duration: const Duration(
+                                                            seconds: DesignTokens
+                                                                .toastDurationSeconds),
                                                       ),
                                                     );
                                                   },
@@ -331,37 +312,37 @@ class OrderHistoryScreen extends StatelessWidget {
                                                 CrossAxisAlignment.center,
                                             children: [
                                               Icon(Icons.feedback,
-                                                  color: DesignTokens
-                                                      .secondaryColor,
+                                                  color:
+                                                      UiConfig.secondaryColor,
                                                   size: 18),
                                               const SizedBox(height: 4),
                                               Text(
                                                 localizations
                                                     .feedbackAlreadySubmittedTitle,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: DesignTokens
                                                       .captionFontSize,
-                                                  color: DesignTokens
+                                                  color: UiConfig
                                                       .secondaryTextColor,
                                                   fontFamily:
                                                       DesignTokens.fontFamily,
-                                                  fontWeight: DesignTokens
-                                                      .bodyFontWeight,
+                                                  fontWeight:
+                                                      UiConfig.fontWeightNormal,
                                                 ),
                                                 textAlign: TextAlign.center,
                                               ),
                                               Text(
                                                 localizations
                                                     .feedbackAlreadySubmittedSubtitle,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: DesignTokens
                                                       .captionFontSize,
-                                                  color: DesignTokens
+                                                  color: UiConfig
                                                       .secondaryTextColor,
                                                   fontFamily:
                                                       DesignTokens.fontFamily,
-                                                  fontWeight: DesignTokens
-                                                      .bodyFontWeight,
+                                                  fontWeight:
+                                                      UiConfig.fontWeightNormal,
                                                 ),
                                                 textAlign: TextAlign.center,
                                               ),
