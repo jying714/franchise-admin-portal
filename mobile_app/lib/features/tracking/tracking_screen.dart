@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:shared_core/src/core/config/design_tokens.dart';
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class TrackingScreen extends StatelessWidget {
@@ -12,34 +14,32 @@ class TrackingScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          localizations.trackOrder, // "Track Order" from ARB
-          style: const TextStyle(
+          localizations.trackOrder,
+          style: TextStyle(
             fontSize: DesignTokens.titleFontSize,
-            color: DesignTokens.foregroundColor,
-            fontWeight: DesignTokens.titleFontWeight,
+            color: UiConfig.foregroundColor,
+            fontWeight: UiConfig.bold,
             fontFamily: DesignTokens.fontFamily,
           ),
         ),
-        backgroundColor: DesignTokens.primaryColor,
+        backgroundColor: UiConfig.primaryColor,
         centerTitle: true,
         elevation: 0,
-        iconTheme: const IconThemeData(color: DesignTokens.foregroundColor),
+        iconTheme: IconThemeData(color: UiConfig.foregroundColor),
       ),
-      backgroundColor: DesignTokens.backgroundColor,
+      backgroundColor: UiConfig.backgroundColor,
       body: Center(
         child: Text(
           '${localizations.orderNumber}: $orderId\n\nTracking info coming soon!',
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: DesignTokens.bodyFontSize,
-            color: DesignTokens.textColor,
+            color: UiConfig.textColor,
             fontFamily: DesignTokens.fontFamily,
-            fontWeight: DesignTokens.bodyFontWeight,
+            fontWeight: UiConfig.normal,
           ),
         ),
       ),
     );
   }
 }
-
-
