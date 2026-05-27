@@ -1,9 +1,10 @@
 library shared_core;
 
-// Re-export grouped public APIs
-export 'constants.dart';
-export 'models.dart';
-export 'providers.dart';
-export 'services.dart';
-export 'utils.dart';
-export 'config.dart';
+// Public API - Clean Barrel
+export 'models.dart'; // Your existing models barrel
+
+// Services
+export 'src/core/services/auth_service.dart';
+export 'src/core/services/auth_service_impl.dart';
+export 'src/core/services/firestore_service.dart';
+export 'src/core/services/firestore_service_impl.dart';

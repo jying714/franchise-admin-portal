@@ -1,26 +1,24 @@
 ﻿import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:shared_core/src/core/services/auth_service.dart';
-import 'package:franchise_mobile_app/core/services/analytics_service.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:franchise_mobile_app/features/language/language_provider.dart';
 import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
+import 'package:franchise_mobile_app/core/services/analytics_service.dart';
+import 'package:franchise_mobile_app/features/language/language_provider.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as app_user;
 import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
-import 'firebase_options.dart';
-// Import required screens/widgets:
-import 'package:franchise_mobile_app/features/splash/splash_screen.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/complete_profile_dialog.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'firebase_options.dart';
 
-/// --- IngredientMetadata Firestore Loader Provider ---
+/// Ingredient Metadata Provider
 class IngredientMetadataProvider extends ChangeNotifier {
   final Map<String, IngredientMetadata> _ingredients = {};
   bool _isLoaded = false;
@@ -29,10 +27,6 @@ class IngredientMetadataProvider extends ChangeNotifier {
 
   IngredientMetadataProvider() {
     _loadIngredients();
-    //print('[DEBUG] All loaded ingredient IDs: ${_ingredients.keys.toList()}');
-    for (var entry in _ingredients.entries) {
-      //print('[DEBUG] Ingredient: ${entry.key} -> ${entry.value.toMap()}');
-    }
   }
 
   Future<void> _loadIngredients() async {
@@ -40,29 +34,23 @@ class IngredientMetadataProvider extends ChangeNotifier {
       final snapshot = await FirebaseFirestore.instance
           .collection('ingredient_metadata')
           .get();
-      //print('[DEBUG] ingredient_metadata docs loaded: ${snapshot.docs.length}');
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final id = data['id'] ?? doc.id;
-        //print('[DEBUG] Loading ingredient: $id');
         _ingredients[id] = IngredientMetadata.fromMap({...data, 'id': id});
       }
-      //print('[DEBUG] All loaded ingredient IDs: ${_ingredients.keys.toList()}');
       _isLoaded = true;
       notifyListeners();
     } catch (e) {
-      //print('[DEBUG] Error loading ingredient_metadata: $e');
       _isLoaded = true;
       notifyListeners();
     }
   }
 }
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -71,41 +59,37 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // The ChangeNotifierProvider for loading ingredient metadata
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => FranchiseProvider()),
-        Provider(create: (_) => AuthService()),
         Provider(create: (_) => AnalyticsService()),
-        Provider(create: (_) => FirestoreService()),
-        Provider(create: (_) => FirebaseAuth.instance),
-        // Loader for ingredient metadata
         ChangeNotifierProvider(create: (_) => IngredientMetadataProvider()),
-        // StreamProvider for Firestore-backed User model, synced with Firebase Auth state
-        StreamProvider<app_user.User?>(
-          create: (context) {
-            final auth = Provider.of<AuthService>(context, listen: false);
-            final firestore =
-                Provider.of<FirestoreService>(context, listen: false);
-            return auth.authStateChanges.asyncExpand((fbUser) {
-              if (fbUser == null) return Stream.value(null);
-              return firestore.getUserByIdStream(fbUser.uid);
+
+        // Concrete implementations from shared_core
+        Provider<shared.AuthService>(create: (_) => shared.AuthServiceImpl()),
+        Provider<shared.FirestoreService>(
+            create: (_) => shared.FirestoreServiceImpl()),
+
+        StreamProvider<shared.User?>(
+          create: (_) {
+            final authService = shared.AuthServiceImpl();
+            final firestoreService = shared.FirestoreServiceImpl();
+
+            return authService.authStateChanges.asyncExpand((user) {
+              if (user == null) {
+                return Stream.value(null);
+              }
+              return firestoreService.getUserByIdStream(user.id);
             });
           },
           initialData: null,
         ),
       ],
-      // This Provider<Map<String, IngredientMetadata>> is used by all screens for
-      // ingredient lookup, including CustomizationModal and menu item display.
-      // It is updated on app startup and can be extended to reload on demand.
-      // NEW: Inject a Provider<Map<String, IngredientMetadata>> above MaterialApp
       child: Builder(
         builder: (context) {
           final ingredientProvider =
               Provider.of<IngredientMetadataProvider>(context);
-
-          // While loading ingredients, show loading (ensures Provider is available before app builds)
           if (!ingredientProvider.isLoaded) {
             return const MaterialApp(
               home: Scaffold(body: Center(child: CircularProgressIndicator())),
@@ -113,7 +97,6 @@ class MyApp extends StatelessWidget {
             );
           }
 
-          // Provide the loaded Map<String, IngredientMetadata> for all screens
           return Provider<Map<String, IngredientMetadata>>.value(
             value: ingredientProvider.ingredients,
             child: Consumer<LanguageProvider>(
@@ -135,11 +118,6 @@ class MyApp extends StatelessWidget {
                       bodyLarge: TextStyle(
                         fontFamily: DesignTokens.fontFamily,
                         fontSize: DesignTokens.bodyFontSize,
-                        fontWeight: DesignTokens.bodyFontWeight,
-                      ),
-                      bodyMedium: TextStyle(
-                        fontFamily: DesignTokens.fontFamily,
-                        fontSize: DesignTokens.captionFontSize,
                         fontWeight: DesignTokens.bodyFontWeight,
                       ),
                     ),
@@ -176,38 +154,45 @@ class _HomeWrapperState extends State<HomeWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    final appUser = Provider.of<app_user.User?>(context);
+    final sharedUser = Provider.of<shared.User?>(context);
 
-    // Still loading or not signed in
-    if (appUser == null) {
-      final auth = Provider.of<AuthService>(context, listen: false);
-      // If Firebase Auth's user is null, show Sign In
-      if (auth.currentUser == null) {
-        return const SignInScreen();
-      }
-      // Otherwise show splash while Firestore user loads
-      return const SplashScreen();
+    if (sharedUser == null) {
+      return const SignInScreen();
     }
 
-    // If profile is incomplete (null or false), show the forced dialog (once)
-    if ((appUser.completeProfile == null || appUser.completeProfile == false) &&
+    // Convert shared.User → local app_user.User for the dialog
+    final localUser = app_user.User(
+      id: sharedUser.id,
+      name: sharedUser.name,
+      email: sharedUser.email,
+      roles: sharedUser.roles,
+      language: sharedUser.language,
+      status: sharedUser.status,
+      phoneNumber: sharedUser.phoneNumber,
+      addresses: sharedUser.addresses,
+      defaultFranchise: sharedUser.defaultFranchise,
+      avatarUrl: sharedUser.avatarUrl,
+      franchiseIds: sharedUser.franchiseIds,
+      completeProfile: sharedUser.completeProfile,
+      onboardingComplete: sharedUser.onboardingComplete,
+      isActive: sharedUser.isActive,
+      updatedAt: sharedUser.updatedAt,
+    );
+
+    if ((localUser.completeProfile == null ||
+            localUser.completeProfile == false) &&
         !_dialogShown) {
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        _dialogShown = true;
-        await showDialog<bool>(
+      _dialogShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (_) => CompleteProfileDialog(user: appUser),
+          builder: (_) => CompleteProfileDialog(user: localUser),
         );
-        // Optionally refresh or reload user data after dialog
-        // setState(() {}); // Uncomment if needed
       });
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // Profile is complete, load main menu
     return const MainMenuScreen();
   }
 }
