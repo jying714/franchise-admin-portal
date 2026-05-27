@@ -1,25 +1,20 @@
-// lib/widgets/menu_item_card.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/src/core/models/menu_item.dart';
-import 'package:shared_core/src/core/models/ingredient_metadata.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/customization/customization_modal.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 typedef AddToCartCallback = void Function(
-  MenuItem menuItem,
+  shared.MenuItem menuItem,
   Map<String, dynamic> customizations,
   int quantity,
   double totalPrice,
 );
 
 class MenuItemCard extends StatefulWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final AddToCartCallback? onAddToCart;
   final bool showDescription;
   final bool expanded;
@@ -51,12 +46,11 @@ class _MenuItemCardState extends State<MenuItemCard> {
 
   Widget _favoriteHeart(bool isFavorited, bool enabled, AppLocalizations loc) {
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+        Provider.of<shared.FirestoreService>(context, listen: false);
     return IconButton(
       icon: Icon(
         isFavorited ? Icons.favorite : Icons.favorite_border,
-        color:
-            isFavorited ? DesignTokens.accentColor : DesignTokens.hintTextColor,
+        color: isFavorited ? UiConfig.accentColor : UiConfig.hintTextColor,
       ),
       tooltip: enabled
           ? (isFavorited
@@ -79,9 +73,9 @@ class _MenuItemCardState extends State<MenuItemCard> {
   }
 
   Future<void> _handleCustomizeAndAdd(AppLocalizations loc) async {
-    // Get ingredientMetadata from Provider (required for CustomizationModal)
     final ingredientMetadata =
-        Provider.of<Map<String, IngredientMetadata>>(context, listen: false);
+        Provider.of<Map<String, shared.IngredientMetadata>>(context,
+            listen: false);
 
     await showDialog(
       context: context,
@@ -119,20 +113,19 @@ class _MenuItemCardState extends State<MenuItemCard> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final isWide = MediaQuery.of(context).size.width > 600;
 
-    // *** PULL INGREDIENT METADATA HERE ***
     final ingredientMetadata =
-        Provider.of<Map<String, IngredientMetadata>>(context);
+        Provider.of<Map<String, shared.IngredientMetadata>>(context);
 
     return Card(
       margin: widget.margin ??
           const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
       elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
-        side: const BorderSide(color: DesignTokens.cardBorderColor, width: 1),
+        borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
+        side: BorderSide(color: UiConfig.cardBorderColor, width: 1),
       ),
       child: Padding(
         padding: isWide
@@ -145,25 +138,26 @@ class _MenuItemCardState extends State<MenuItemCard> {
             Column(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+                  borderRadius:
+                      BorderRadius.circular(shared.DesignTokens.cardRadius),
                   child: widget.menuItem.image != null &&
                           widget.menuItem.image!.isNotEmpty
                       ? Image.network(
                           widget.menuItem.image!,
-                          width: DesignTokens.menuItemImageWidth,
-                          height: DesignTokens.menuItemImageHeight,
+                          width: shared.DesignTokens.menuItemImageWidth,
+                          height: shared.DesignTokens.menuItemImageHeight,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
                               Image.asset(
-                            BrandingConfig.defaultPizzaIcon,
-                            width: DesignTokens.menuItemImageWidth,
-                            height: DesignTokens.menuItemImageHeight,
+                            shared.BrandingConfig.defaultPizzaIcon,
+                            width: shared.DesignTokens.menuItemImageWidth,
+                            height: shared.DesignTokens.menuItemImageHeight,
                           ),
                         )
                       : Image.asset(
-                          BrandingConfig.defaultPizzaIcon,
-                          width: DesignTokens.menuItemImageWidth,
-                          height: DesignTokens.menuItemImageHeight,
+                          shared.BrandingConfig.defaultPizzaIcon,
+                          width: shared.DesignTokens.menuItemImageWidth,
+                          height: shared.DesignTokens.menuItemImageHeight,
                         ),
                 ),
                 const SizedBox(height: 8),
@@ -182,7 +176,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                       '$_quantity',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: DesignTokens.bodyFontSize,
+                        fontSize: shared.DesignTokens.bodyFontSize,
                       ),
                     ),
                     IconButton(
@@ -203,10 +197,8 @@ class _MenuItemCardState extends State<MenuItemCard> {
                   // NAME
                   Text(
                     widget.menuItem.name,
-                    style: const TextStyle(
-                      fontSize: DesignTokens.titleFontSize,
-                      fontWeight: FontWeight.bold,
-                      color: DesignTokens.textColor,
+                    style: UiConfig.titleStyle.copyWith(
+                      color: UiConfig.textColor,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -214,10 +206,8 @@ class _MenuItemCardState extends State<MenuItemCard> {
                   // PRICE
                   Text(
                     '\$${widget.menuItem.price.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: DesignTokens.bodyFontSize,
+                    style: UiConfig.bodyStyle.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: DesignTokens.textColor,
                     ),
                   ),
                   // DESCRIPTION
@@ -227,10 +217,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                       padding: const EdgeInsets.only(top: 4.0),
                       child: Text(
                         widget.menuItem.description,
-                        style: const TextStyle(
-                          fontSize: DesignTokens.captionFontSize,
-                          color: DesignTokens.secondaryTextColor,
-                        ),
+                        style: UiConfig.captionStyle,
                         maxLines: widget.expanded ? 4 : 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -247,13 +234,13 @@ class _MenuItemCardState extends State<MenuItemCard> {
                             height: 36,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: DesignTokens.secondaryColor,
-                                foregroundColor: DesignTokens.foregroundColor,
+                                backgroundColor: UiConfig.secondaryColor,
+                                foregroundColor: UiConfig.foregroundColor,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(18),
                                 ),
                                 padding: EdgeInsets.zero,
-                                elevation: DesignTokens.buttonElevation,
+                                elevation: shared.DesignTokens.buttonElevation,
                               ),
                               onPressed: () => _handleCustomizeAndAdd(loc),
                               child: Padding(
@@ -282,13 +269,13 @@ class _MenuItemCardState extends State<MenuItemCard> {
                             height: 36,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: DesignTokens.primaryColor,
-                                foregroundColor: DesignTokens.foregroundColor,
+                                backgroundColor: UiConfig.primaryColor,
+                                foregroundColor: UiConfig.foregroundColor,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(18),
                                 ),
                                 padding: EdgeInsets.zero,
-                                elevation: DesignTokens.buttonElevation,
+                                elevation: shared.DesignTokens.buttonElevation,
                               ),
                               onPressed: () => _handleAddToCart(loc),
                               child: Padding(
@@ -315,13 +302,13 @@ class _MenuItemCardState extends State<MenuItemCard> {
                             height: 36,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: DesignTokens.primaryColor,
-                                foregroundColor: DesignTokens.foregroundColor,
+                                backgroundColor: UiConfig.primaryColor,
+                                foregroundColor: UiConfig.foregroundColor,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(18),
                                 ),
                                 padding: EdgeInsets.zero,
-                                elevation: DesignTokens.buttonElevation,
+                                elevation: shared.DesignTokens.buttonElevation,
                               ),
                               onPressed: () => _handleAddToCart(loc),
                               child: Padding(
@@ -347,7 +334,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                       // Heart/favorite
                       _userId == null
                           ? _favoriteHeart(false, false, loc)
-                          : StreamBuilder<List<MenuItem>>(
+                          : StreamBuilder<List<shared.MenuItem>>(
                               stream: firestoreService
                                   .getFavoriteMenuItemsForUser(_userId!),
                               builder: (context, snapshot) {
@@ -366,7 +353,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                             ),
                     ],
                   ),
-                  // -- EXAMPLE: Show allergen tags from metadata (optional) --
+                  // Allergen tags example (optional)
                   if (_hasCustomizations &&
                       widget.menuItem.includedIngredients != null)
                     Padding(
@@ -394,5 +381,3 @@ class _MenuItemCardState extends State<MenuItemCard> {
     );
   }
 }
-
-

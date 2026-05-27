@@ -30,6 +30,8 @@ class User extends shared_user.User {
     this.loyalty,
     this.role = 'customer',
   });
-
+  static const String roleCustomer = 'customer';
+  static const String roleAdmin = 'admin';
+  static const String roleOwner = 'owner';
   // Add factory if needed, but for compile, this may help some casts
 }

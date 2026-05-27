@@ -1,9 +1,8 @@
-// ignore_for_file: prefer_const_constructors
-
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 
+/// Reusable empty state widget with support for image, icon, retry button, and admin branding.
 class EmptyStateWidget extends StatelessWidget {
   final String title;
   final String? message;
@@ -28,18 +27,18 @@ class EmptyStateWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final img = imageAsset ??
         (isAdmin
-            ? BrandingConfig.adminEmptyStateImage
-            : BrandingConfig.bannerPlaceholder);
+            ? shared.BrandingConfig.adminEmptyStateImage
+            : shared.BrandingConfig.bannerPlaceholder);
 
     return Center(
       child: Padding(
-        padding: DesignTokens.gridPadding
+        padding: UiConfig.defaultPadding
             .add(const EdgeInsets.symmetric(vertical: 32)),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (iconData != null)
-              Icon(iconData, size: 80, color: DesignTokens.primaryColor)
+              Icon(iconData, size: 80, color: UiConfig.primaryColor)
             else if (img != null && img.isNotEmpty)
               Image.asset(
                 img,
@@ -50,10 +49,8 @@ class EmptyStateWidget extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               title,
-              style: TextStyle(
-                fontSize: DesignTokens.titleFontSize,
-                fontWeight: DesignTokens.titleFontWeight,
-                color: DesignTokens.primaryColor,
+              style: UiConfig.titleStyle.copyWith(
+                color: UiConfig.primaryColor,
               ),
               textAlign: TextAlign.center,
             ),
@@ -62,10 +59,7 @@ class EmptyStateWidget extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   message!,
-                  style: TextStyle(
-                    fontSize: DesignTokens.bodyFontSize,
-                    color: DesignTokens.secondaryTextColor,
-                  ),
+                  style: UiConfig.bodyStyle,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -75,10 +69,11 @@ class EmptyStateWidget extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onRetry,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: DesignTokens.secondaryColor,
-                    foregroundColor: DesignTokens.foregroundColor,
+                    backgroundColor: UiConfig.secondaryColor,
+                    foregroundColor: UiConfig.foregroundColor,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(
+                          shared.DesignTokens.buttonRadius),
                     ),
                   ),
                   child: Text(buttonText ?? (isAdmin ? 'Reload' : 'Try Again')),
@@ -90,5 +85,3 @@ class EmptyStateWidget extends StatelessWidget {
     );
   }
 }
-
-

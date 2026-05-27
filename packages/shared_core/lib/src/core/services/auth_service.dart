@@ -54,4 +54,6 @@ abstract class AuthService {
 
   /// Set demo session (anonymous Firebase auth for testing/demo mode)
   Future<void> setDemoSession();
+
+  Future<User> signInWithGoogle();
 }

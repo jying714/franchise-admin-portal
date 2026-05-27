@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 
 class LoadingShimmerWidget extends StatelessWidget {
   final int itemCount;
@@ -13,21 +14,21 @@ class LoadingShimmerWidget extends StatelessWidget {
   final int gridColumns;
 
   const LoadingShimmerWidget({
-    Key? key,
+    super.key,
     this.itemCount = 4,
     this.cardHeight = 160.0,
     this.cardWidth = double.infinity,
     this.direction = Axis.vertical,
     this.isAdminGrid = false,
     this.gridColumns = 2,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     if (isAdminGrid) {
       return Shimmer.fromColors(
-        baseColor: DesignTokens.shimmerBaseColor,
-        highlightColor: DesignTokens.shimmerHighlightColor,
+        baseColor: UiConfig.shimmerBaseColor,
+        highlightColor: UiConfig.shimmerHighlightColor,
         child: GridView.count(
           physics: const NeverScrollableScrollPhysics(),
           shrinkWrap: true,
@@ -41,7 +42,8 @@ class LoadingShimmerWidget extends StatelessWidget {
                 width: cardWidth,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+                  borderRadius:
+                      BorderRadius.circular(shared.DesignTokens.cardRadius),
                 ),
               ),
             ),
@@ -51,8 +53,8 @@ class LoadingShimmerWidget extends StatelessWidget {
     }
 
     return Shimmer.fromColors(
-      baseColor: DesignTokens.shimmerBaseColor,
-      highlightColor: DesignTokens.shimmerHighlightColor,
+      baseColor: UiConfig.shimmerBaseColor,
+      highlightColor: UiConfig.shimmerHighlightColor,
       child: GridView.count(
         crossAxisCount: 2, // or 3 for tablet
         shrinkWrap: true,
@@ -65,7 +67,8 @@ class LoadingShimmerWidget extends StatelessWidget {
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+              borderRadius:
+                  BorderRadius.circular(shared.DesignTokens.cardRadius),
             ),
           ),
         ),
@@ -73,5 +76,3 @@ class LoadingShimmerWidget extends StatelessWidget {
     );
   }
 }
-
-

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// Displays a list of included ingredients for a menu item as labeled chips.
@@ -25,18 +26,16 @@ class IncludedIngredientsPreview extends StatelessWidget {
     }
     final loc = AppLocalizations.of(context)!;
     return Padding(
-      padding: const EdgeInsets.only(bottom: DesignTokens.gridSpacing),
+      padding: EdgeInsets.only(bottom: shared.DesignTokens.gridSpacing),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label ?? loc.includedIngredientsLabel,
-            style: TextStyle(
-              fontSize: DesignTokens.captionFontSize,
-              fontWeight: FontWeight.bold,
-              color: DesignTokens.secondaryTextColor,
-              fontFamily: DesignTokens.fontFamily,
+            style: UiConfig.captionStyle.copyWith(
+              fontWeight: UiConfig.fontWeightBold,
             ),
+            textAlign: TextAlign.start,
           ),
           const SizedBox(height: 4),
           Wrap(
@@ -49,7 +48,7 @@ class IncludedIngredientsPreview extends StatelessWidget {
                             : '',
                         style: const TextStyle(fontSize: 13),
                       ),
-                      backgroundColor: DesignTokens.surfaceColor,
+                      backgroundColor: UiConfig.surfaceColor,
                     ))
                 .toList(),
           ),
@@ -58,5 +57,3 @@ class IncludedIngredientsPreview extends StatelessWidget {
     );
   }
 }
-
-

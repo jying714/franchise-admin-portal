@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/confirmation_dialog.dart';
 
 /// A reusable sign out button with built-in confirmation dialog.
@@ -13,26 +14,26 @@ class SignOutButton extends StatelessWidget {
   final VoidCallback onSignOut;
 
   const SignOutButton({
-    Key? key,
+    super.key,
     required this.signOutLabel,
     required this.confirmationTitle,
     required this.confirmationMessage,
     required this.confirmLabel,
     required this.cancelLabel,
     required this.onSignOut,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: DesignTokens.errorColor,
-        foregroundColor: DesignTokens.foregroundColor,
-        padding: DesignTokens.buttonPadding,
+        backgroundColor: UiConfig.errorColor,
+        foregroundColor: UiConfig.foregroundColor,
+        padding: UiConfig.defaultPadding,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.buttonRadius),
+          borderRadius: BorderRadius.circular(shared.DesignTokens.buttonRadius),
         ),
-        elevation: DesignTokens.buttonElevation,
+        elevation: shared.DesignTokens.buttonElevation,
       ),
       onPressed: () async {
         final shouldSignOut = await ConfirmationDialog.show(
@@ -42,7 +43,7 @@ class SignOutButton extends StatelessWidget {
           icon: Icons.logout,
           confirmLabel: confirmLabel,
           cancelLabel: cancelLabel,
-          confirmColor: DesignTokens.errorColor,
+          confirmColor: UiConfig.errorColor,
           onConfirm: () {}, // ConfirmationDialog requires onConfirm
         );
         if (shouldSignOut == true) {
@@ -51,14 +52,10 @@ class SignOutButton extends StatelessWidget {
       },
       child: Text(
         signOutLabel,
-        style: const TextStyle(
-          fontSize: DesignTokens.bodyFontSize,
-          fontFamily: DesignTokens.fontFamily,
-          fontWeight: DesignTokens.bodyFontWeight,
+        style: UiConfig.bodyStyle.copyWith(
+          fontWeight: UiConfig.fontWeightBold,
         ),
       ),
     );
   }
 }
-
-

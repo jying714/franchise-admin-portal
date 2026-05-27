@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 
 /// A universal, reusable quantity stepper widget.
 /// Accepts a value, increment/decrement callbacks, and an optional minimum/maximum.
@@ -35,9 +36,8 @@ class QuantityStepper extends StatelessWidget {
           icon: const Icon(Icons.remove),
           iconSize: iconSize,
           onPressed: canDecrement ? onDecrement : null,
-          color: canDecrement
-              ? DesignTokens.primaryColor
-              : DesignTokens.disabledTextColor,
+          color:
+              canDecrement ? UiConfig.primaryColor : UiConfig.disabledTextColor,
           splashRadius: 20,
         ),
         Container(
@@ -48,7 +48,7 @@ class QuantityStepper extends StatelessWidget {
             style: TextStyle(
               fontSize: fontSize,
               fontWeight: FontWeight.bold,
-              fontFamily: DesignTokens.fontFamily,
+              fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
         ),
@@ -56,14 +56,11 @@ class QuantityStepper extends StatelessWidget {
           icon: const Icon(Icons.add),
           iconSize: iconSize,
           onPressed: canIncrement ? onIncrement : null,
-          color: canIncrement
-              ? DesignTokens.primaryColor
-              : DesignTokens.disabledTextColor,
+          color:
+              canIncrement ? UiConfig.primaryColor : UiConfig.disabledTextColor,
           splashRadius: 20,
         ),
       ],
     );
   }
 }
-
-
