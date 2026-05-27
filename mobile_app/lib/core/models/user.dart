@@ -1,4 +1,4 @@
-﻿import 'package:shared_core/src/core/models/user.dart' as shared_user;
+import 'package:shared_core/src/core/models/user.dart' as shared_user;
 import 'address.dart';
 
 class User extends shared_user.User {

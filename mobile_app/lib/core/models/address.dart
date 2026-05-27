@@ -1,4 +1,4 @@
-﻿class Address {
+class Address {
   final String id;
   final String label;
   final String street;

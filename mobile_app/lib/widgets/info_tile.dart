@@ -1,5 +1,5 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart';
 
 /// Robust, reusable info tile for profile and other label/value displays.
 /// Handles null/empty values gracefully.
@@ -33,7 +33,7 @@ class InfoTile extends StatelessWidget {
         ),
       ),
       subtitle: Text(
-        (value == null || value!.trim().isEmpty) ? 'â€”' : value!,
+        (value == null || value!.trim().isEmpty) ? '—' : value!,
         style: const TextStyle(
           fontSize: DesignTokens.captionFontSize,
           color: DesignTokens.secondaryTextColor,

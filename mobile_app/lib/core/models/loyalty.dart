@@ -1,4 +1,4 @@
-﻿class Loyalty {
+class Loyalty {
   final int points;
   final List<LoyaltyReward> redeemedRewards;
   final List<dynamic> transactions;

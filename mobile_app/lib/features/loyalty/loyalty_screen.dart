@@ -1,10 +1,10 @@
-﻿// ignore_for_file: prefer_const_constructors
+// ignore_for_file: prefer_const_constructors
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_mobile_app/core/models/loyalty.dart'; // local stub if needed; consider moving to shared_core
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';

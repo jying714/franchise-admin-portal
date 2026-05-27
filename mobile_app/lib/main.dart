@@ -1,24 +1,22 @@
-﻿import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/core/services/analytics_service.dart';
 import 'package:franchise_mobile_app/features/language/language_provider.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as app_user;
-import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
-import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart'; // ← NEW: Use this for Colors & Icons
 
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/complete_profile_dialog.dart';
 import 'firebase_options.dart';
 
-/// Ingredient Metadata Provider
+/// Ingredient Metadata Provider (kept as-is)
 class IngredientMetadataProvider extends ChangeNotifier {
   final Map<String, IngredientMetadata> _ingredients = {};
   bool _isLoaded = false;
@@ -66,20 +64,16 @@ class MyApp extends StatelessWidget {
         Provider(create: (_) => AnalyticsService()),
         ChangeNotifierProvider(create: (_) => IngredientMetadataProvider()),
 
-        // Concrete implementations from shared_core
-        Provider<shared.AuthService>(create: (_) => shared.AuthServiceImpl()),
-        Provider<shared.FirestoreService>(
-            create: (_) => shared.FirestoreServiceImpl()),
+        // Concrete shared_core implementations
+        Provider<AuthService>(create: (_) => AuthServiceImpl()),
+        Provider<FirestoreService>(create: (_) => FirestoreServiceImpl()),
 
-        StreamProvider<shared.User?>(
+        StreamProvider<User?>(
           create: (_) {
-            final authService = shared.AuthServiceImpl();
-            final firestoreService = shared.FirestoreServiceImpl();
-
+            final authService = AuthServiceImpl();
+            final firestoreService = FirestoreServiceImpl();
             return authService.authStateChanges.asyncExpand((user) {
-              if (user == null) {
-                return Stream.value(null);
-              }
+              if (user == null) return Stream.value(null);
               return firestoreService.getUserByIdStream(user.id);
             });
           },
@@ -104,21 +98,21 @@ class MyApp extends StatelessWidget {
                 return MaterialApp(
                   title: 'Doughboys Pizzeria',
                   theme: ThemeData(
-                    primaryColor: DesignTokens.primaryColor,
-                    scaffoldBackgroundColor: DesignTokens.backgroundColor,
+                    primaryColor: UiConfig.primaryColor, // ← Fixed: real Color
+                    scaffoldBackgroundColor: UiConfig.backgroundColorDark,
                     colorScheme: ColorScheme.fromSwatch().copyWith(
-                      secondary: DesignTokens.secondaryColor,
+                      secondary: UiConfig.secondaryColor,
                     ),
-                    textTheme: const TextTheme(
+                    textTheme: TextTheme(
                       titleLarge: TextStyle(
                         fontFamily: DesignTokens.fontFamily,
                         fontSize: DesignTokens.titleFontSize,
-                        fontWeight: DesignTokens.titleFontWeight,
+                        fontWeight: FontWeight.bold, // ← Fixed: proper enum
                       ),
                       bodyLarge: TextStyle(
                         fontFamily: DesignTokens.fontFamily,
                         fontSize: DesignTokens.bodyFontSize,
-                        fontWeight: DesignTokens.bodyFontWeight,
+                        fontWeight: FontWeight.normal,
                       ),
                     ),
                   ),
@@ -154,13 +148,13 @@ class _HomeWrapperState extends State<HomeWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    final sharedUser = Provider.of<shared.User?>(context);
+    final sharedUser = Provider.of<User?>(context);
 
     if (sharedUser == null) {
       return const SignInScreen();
     }
 
-    // Convert shared.User → local app_user.User for the dialog
+    // Convert shared.User to local app_user.User for dialog
     final localUser = app_user.User(
       id: sharedUser.id,
       name: sharedUser.name,

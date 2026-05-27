@@ -1,9 +1,9 @@
-﻿import 'dart:math' show min;
+import 'dart:math' show min;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_mobile_app/config/branding_config.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:shared_core/src/core/models/menu_item.dart';
 import 'package:shared_core/src/core/models/customization.dart';

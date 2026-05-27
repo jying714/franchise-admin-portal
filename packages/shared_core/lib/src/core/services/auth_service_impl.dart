@@ -92,4 +92,9 @@ class AuthServiceImpl implements AuthService {
   @override
   Future<String?> getIdToken({bool forceRefresh = false}) async =>
       await _auth.currentUser?.getIdToken(forceRefresh);
+
+  @override
+  Future<void> sendEmailVerification() async {
+    await _auth.currentUser?.sendEmailVerification();
+  }
 }

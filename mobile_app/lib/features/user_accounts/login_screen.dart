@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/config/branding_config.dart';
+import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_core/src/core/services/auth_service.dart';
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:franchise_mobile_app/widgets/social_sign_in_buttons.dart';

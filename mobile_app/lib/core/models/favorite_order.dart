@@ -1,4 +1,4 @@
-﻿class FavoriteOrder {
+class FavoriteOrder {
   final String id;
   final String name;
   final List<dynamic> items;

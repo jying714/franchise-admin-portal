@@ -1,8 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_core/src/core/services/auth_service.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/config/branding_config.dart';
+import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:shared_core/src/core/models/order.dart' as order_model;
 import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';

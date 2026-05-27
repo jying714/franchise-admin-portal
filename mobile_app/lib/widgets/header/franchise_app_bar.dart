@@ -1,5 +1,5 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart';
 
 /// A modular, franchise-ready AppBar widget.
 /// Expandable: supports title, logo, subtitle, custom actions, colors, and more.

@@ -1,52 +1,69 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart' show BrandingConfig;
+import 'package:shared_core/shared_core.dart';
 
 /// UI-specific branding for mobile app
-/// Uses shared_core for data, adds Flutter-specific assets and colors
+/// Bridges shared DesignTokens + BrandingConfig into Flutter types
 class UiConfig {
-  // --------- Asset Paths (Mobile-Specific) ---------
-  static const String logoMain = 'assets/images/logo.png';
-  static const String logoSmall = 'assets/images/logo_small.png';
-  static const String logoLarge = 'assets/logo/logo_large.png';
-  static const String logoLargeLegacy = 'assets/images/logo_large.png';
-
-  static const String defaultPizzaIcon = 'assets/icons/pizza.png';
-  static const String defaultPizzaIconLegacy =
-      'assets/images/default_pizza_icon.png';
-  static const String defaultCategoryIcon =
-      'assets/images/default_category_icon.png';
-  static const String bannerPlaceholder =
-      'assets/images/banner_placeholder.png';
-  static const String fallbackAppIcon = 'assets/images/pizza_icon.png';
-
-  static const String adminEmptyStateImage = 'assets/images/admin_empty.png';
+  // Assets from BrandingConfig
+  static const String logoMain = BrandingConfig.logoMain;
+  static const String defaultPizzaIcon = BrandingConfig.defaultPizzaIcon;
+  static const String adminEmptyStateImage =
+      BrandingConfig.adminEmptyStateImage;
   static const String menuItemPlaceholderImage =
-      'assets/images/menu_item_placeholder.png';
+      BrandingConfig.menuItemPlaceholderImage;
   static const String ingredientPlaceholder =
-      'assets/images/ingredient_placeholder.png';
+      BrandingConfig.ingredientPlaceholder;
+  static const String defaultProfileIcon = BrandingConfig.defaultProfileIcon;
 
-  static const String bulkUploadCSVIcon = 'assets/icons/csv_upload.png';
-  static const String exportCSVIcon = 'assets/icons/export_csv.png';
-
-  static const String defaultProfileIcon = 'assets/images/default_profile.png';
-
-  // --------- App Bar ---------
-  static const String appBarLogoAsset = 'assets/images/logo.png';
-  static const bool showLogoInAppBar = false;
-
-  // --------- Colors (Converted from shared_core hex) ---------
+  // Colors from DesignTokens
+  static Color get accentColor => _hexToColor(DesignTokens.accentColorHex);
   static Color get brandRed => _hexToColor(BrandingConfig.brandRedHex);
-  static Color get accentColor => _hexToColor(BrandingConfig.accentColorHex);
+  static Color get backgroundColorDark =>
+      _hexToColor(DesignTokens.backgroundColorDarkHex);
+  static Color get textColorDark => _hexToColor(DesignTokens.textColorDarkHex);
+  static Color get successTextColor =>
+      _hexToColor(DesignTokens.successTextColorHex);
+  static Color get disabledTextColor =>
+      _hexToColor(DesignTokens.disabledTextColorHex);
+  static Color get errorBgColor => _hexToColor(DesignTokens.errorBgColorHex);
+  static Color get surfaceColorDark =>
+      _hexToColor(DesignTokens.surfaceColorDarkHex);
+  static Color get facebookColor => _hexToColor(DesignTokens.facebookColorHex);
+  static Color get adminPrimaryColor =>
+      _hexToColor(DesignTokens.adminPrimaryColorHex);
+  static Color get primaryColor => _hexToColor(DesignTokens.primaryColorHex);
+  static Color get secondaryColor =>
+      _hexToColor(DesignTokens.secondaryColorHex);
+  static Color get textColor => _hexToColor(DesignTokens.textColorHex);
+  static Color get foregroundColor =>
+      _hexToColor(DesignTokens.foregroundColorHex);
+  static Color get foregroundColorDark =>
+      _hexToColor(DesignTokens.foregroundColorDarkHex); // ← Added
+  static Color get hintTextColor => _hexToColor(DesignTokens.hintTextColorHex);
+  static Color get surfaceColor => _hexToColor(DesignTokens.surfaceColorHex);
+  static Color get successColor => _hexToColor(DesignTokens.successColorHex);
+  static Color get errorColor => _hexToColor(DesignTokens.errorColorHex);
+  static Color get shimmerBaseColor =>
+      _hexToColor(DesignTokens.shimmerBaseColorHex);
+  static Color get shimmerHighlightColor =>
+      _hexToColor(DesignTokens.shimmerHighlightColorHex);
 
+  // Icons
+  static IconData get emailIcon => Icons.email;
+  static IconData get lockIcon => Icons.lock;
+  static IconData get visibilityIcon => Icons.visibility;
+  static IconData get visibilityOffIcon => Icons.visibility_off;
+
+  // Dynamic
   static Color brandColorFor(String brandId) {
     final hex = BrandingConfig.brandColorHexFor(brandId);
     return _hexToColor(hex);
   }
 
-  // --------- Dashboard (if used in mobile) ---------
   static const Color dashboardCardColor = Colors.white;
 
-  // --------- Helper ---------
+  static Color get warningColor => _hexToColor(DesignTokens.warningColorHex);
+
   static Color _hexToColor(String hex) {
     final cleaned = hex.replaceAll('#', '');
     final value = int.parse('FF$cleaned', radix: 16);

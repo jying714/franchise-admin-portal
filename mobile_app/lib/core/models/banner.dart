@@ -1,2 +1,2 @@
-﻿export 'package:shared_core/src/core/models/banner.dart';
+export 'package:shared_core/src/core/models/banner.dart';
 

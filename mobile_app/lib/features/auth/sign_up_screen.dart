@@ -1,19 +1,15 @@
-﻿// ignore_for_file: unused_import, prefer_const_constructors
-import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
-import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:shared_core/src/core/services/auth_service.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:franchise_mobile_app/core/models/user.dart' as db_user;
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:shared_core/shared_core.dart' show DesignTokens;
+import 'package:shared_core/shared_core.dart' show BrandingConfig;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
-import 'package:shared_core/src/core/config/app_config.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/config/branding_config.dart';
+import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
 import 'package:franchise_mobile_app/widgets/social_sign_in_buttons.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase;
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -24,11 +20,10 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
-  final TextEditingController _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _nameController = TextEditingController();
 
   bool _loading = false;
   String? _error;
@@ -55,11 +50,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final pw = _passwordController.text;
     if (pw.length >= 12 &&
         RegExp(r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_])').hasMatch(pw)) {
-      return DesignTokens.successColor;
+      return UiConfig.successColor;
     } else if (pw.length >= 8) {
-      return DesignTokens.warningColor;
+      return UiConfig.warningColor; // add this getter to UiConfig if missing
     } else if (pw.isNotEmpty) {
-      return DesignTokens.errorColor;
+      return UiConfig.errorColor;
     } else {
       return Colors.transparent;
     }
@@ -74,19 +69,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
-  /// Ensures a Firestore user profile exists for this Firebase [user].
-  /// If not present, creates it with the default safe fields (role: 'customer').
-  Future<void> _ensureUserProfile(User user, {String? displayName}) async {
+  Future<void> _ensureUserProfile(shared.User user,
+      {String? displayName}) async {
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
-    final existing = await firestoreService.getUser(user.uid);
+        Provider.of<shared.FirestoreService>(context, listen: false);
+    final existing = await firestoreService.getUser(user.id);
     if (existing == null) {
-      final newUser = db_user.User(
-        id: user.uid,
-        name: displayName ?? user.displayName ?? "",
+      final newUser = shared.User(
+        id: user.id,
+        name: displayName ?? user.name ?? "",
         email: user.email ?? "",
         phoneNumber: user.phoneNumber,
-        roles: [db_user.User.roleCustomer],
+        roles: [shared.User.roleCustomer],
         addresses: [],
         language: "en",
         status: "active",
@@ -95,17 +89,54 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-  Future<void> _signUp(BuildContext ctx) async {
+  Future<void> _handleSocialSuccess(firebase.User? firebaseUser) async {
+    if (firebaseUser == null) return;
+    setState(() => _loading = true);
+    try {
+      final sharedUser = shared.User(
+        id: firebaseUser.uid,
+        name: firebaseUser.displayName ?? "",
+        email: firebaseUser.email ?? "",
+        phoneNumber: firebaseUser.phoneNumber,
+        roles: [shared.User.roleCustomer],
+        addresses: [],
+        language: "en",
+        status: "active",
+      );
+
+      await _ensureUserProfile(sharedUser);
+
+      final firestoreService =
+          Provider.of<shared.FirestoreService>(context, listen: false);
+      final dbUser = await firestoreService.getUser(sharedUser.id);
+
+      if (!mounted) return;
+      if (dbUser == null || !(dbUser.completeProfile ?? false)) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+          (route) => false,
+        );
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainMenuScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Profile error');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _signUp() async {
     final loc = AppLocalizations.of(context)!;
     if (!_acceptTerms) {
-      setState(() {
-        _error = loc.mustAcceptTerms;
-      });
+      setState(() => _error = loc.mustAcceptTerms);
       return;
     }
 
-    final authService = Provider.of<AuthService>(ctx, listen: false);
-
+    final authService = Provider.of<shared.AuthService>(context, listen: false);
     setState(() {
       _loading = true;
       _error = null;
@@ -124,24 +155,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
 
-    final firebaseUser =
-        await authService.createUserWithEmailAndPassword(email: email, password: password);
+    final firebaseUser = await authService.createUserWithEmailAndPassword(
+        email: email, password: password);
 
     if (!mounted) return;
     setState(() => _loading = false);
 
     if (firebaseUser != null) {
       try {
-        await authService.sendEmailVerification();
+        await authService
+            .sendEmailVerification(); // TODO: confirm method name in AuthService
         await _ensureUserProfile(firebaseUser, displayName: name);
 
-        // Fetch updated user model from Firestore
         final firestoreService =
-            Provider.of<FirestoreService>(context, listen: false);
+            Provider.of<shared.FirestoreService>(context, listen: false);
         final dbUser = await firestoreService.getUser(firebaseUser.uid);
 
         if (!mounted) return;
-        // Route to ProfileScreen if not completeProfile; else to MainMenuScreen
+
         if (dbUser == null || !(dbUser.completeProfile ?? false)) {
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (_) => const ProfileScreen()),
@@ -155,14 +186,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
         }
       } catch (e) {
         if (!mounted) return;
-        setState(() {
-          _error = loc.signUpProfileFailed;
-        });
+        setState(() => _error = loc.signUpProfileFailed);
       }
     } else {
-      setState(() {
-        _error = loc.signUpFailed;
-      });
+      setState(() => _error = loc.signUpFailed);
     }
   }
 
@@ -184,103 +211,54 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final loc = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundColor,
+      backgroundColor: UiConfig.backgroundColorDark,
       appBar: AppBar(
         title: Text(
           loc.signUp,
-          style: const TextStyle(
-            color: DesignTokens.foregroundColor,
-            fontSize: DesignTokens.titleFontSize,
-            fontWeight: DesignTokens.titleFontWeight,
-            fontFamily: DesignTokens.fontFamily,
-          ),
+          style: TextStyle(color: UiConfig.foregroundColorDark),
         ),
         centerTitle: true,
-        backgroundColor: DesignTokens.primaryColor,
+        backgroundColor: UiConfig.primaryColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: DesignTokens.foregroundColor),
+        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
       ),
       body: Center(
         child: SingleChildScrollView(
-          padding: DesignTokens.gridPadding,
+          padding: const EdgeInsets.all(24),
           child: Card(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
-            ),
-            elevation: DesignTokens.cardElevation,
-            color: DesignTokens.surfaceColor,
+                borderRadius: BorderRadius.circular(DesignTokens.cardRadius)),
+            color: UiConfig.surfaceColor,
             child: Padding(
-              padding: DesignTokens.cardPadding,
+              padding: const EdgeInsets.all(24),
               child: Form(
                 key: _formKey,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Image.asset(BrandingConfig.logoMain,
-                        height: DesignTokens.logoHeightMedium),
+                    Image.asset(UiConfig.logoMain, height: 120),
                     const SizedBox(height: 32),
-                    // --- Social sign-in buttons (Google/Phone only) ---
                     SocialSignInButtons(
-                      onSuccess: (User? user) async {
-                        if (user != null) {
-                          setState(() => _loading = true);
-                          try {
-                            await _ensureUserProfile(user);
-
-                            final firestoreService =
-                                Provider.of<FirestoreService>(context,
-                                    listen: false);
-                            final dbUser =
-                                await firestoreService.getUser(user.uid);
-
-                            if (!mounted) return;
-                            if (dbUser == null ||
-                                !(dbUser.completeProfile ?? false)) {
-                              Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(
-                                    builder: (_) => const ProfileScreen()),
-                                (route) => false,
-                              );
-                            } else {
-                              Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(
-                                    builder: (_) => const MainMenuScreen()),
-                                (route) => false,
-                              );
-                            }
-                          } catch (e) {
-                            if (!mounted) return;
-                            setState(() {
-                              _error = loc.signUpProfileFailed;
-                            });
-                          } finally {
-                            if (mounted) setState(() => _loading = false);
-                          }
-                        }
-                      },
-                      onError: (String err) {
-                        setState(() => _error = err);
-                      },
+                      onSuccess: _handleSocialSuccess,
+                      onError: (String err) => setState(() => _error = err),
                       isLoading: _loading,
                       setLoading: (bool loading) =>
                           setState(() => _loading = loading),
                       showPhone: true,
                     ),
-                    // Removed: Apple sign-in (disabled/placeholder) block
                     const Divider(height: 36, thickness: 1),
                     TextFormField(
                       controller: _nameController,
                       decoration: InputDecoration(
                         labelText: loc.name,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                              DesignTokens.formFieldRadius),
-                        ),
-                        hintStyle: TextStyle(color: DesignTokens.hintTextColor),
+                            borderRadius: BorderRadius.circular(
+                                DesignTokens.formFieldRadius)),
+                        prefixIcon: Icon(UiConfig.emailIcon), // optional
                       ),
                       validator: (value) =>
                           value == null || value.isEmpty ? loc.enterName : null,
-                      style: TextStyle(color: DesignTokens.textColor),
+                      style: TextStyle(color: UiConfig.textColorDark),
                     ),
                     const SizedBox(height: 24),
                     TextFormField(
@@ -290,15 +268,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       decoration: InputDecoration(
                         labelText: loc.email,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                              DesignTokens.formFieldRadius),
-                        ),
-                        hintStyle: TextStyle(color: DesignTokens.hintTextColor),
+                            borderRadius: BorderRadius.circular(
+                                DesignTokens.formFieldRadius)),
+                        prefixIcon: Icon(UiConfig.emailIcon),
                       ),
                       validator: (value) => value != null && value.contains('@')
                           ? null
                           : loc.validEmailRequired,
-                      style: TextStyle(color: DesignTokens.textColor),
+                      style: TextStyle(color: UiConfig.textColorDark),
                     ),
                     const SizedBox(height: 24),
                     TextFormField(
@@ -308,27 +285,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       decoration: InputDecoration(
                         labelText: loc.password,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                              DesignTokens.formFieldRadius),
-                        ),
-                        hintStyle: TextStyle(color: DesignTokens.hintTextColor),
+                            borderRadius: BorderRadius.circular(
+                                DesignTokens.formFieldRadius)),
+                        prefixIcon: Icon(UiConfig.lockIcon),
                         suffixIcon: IconButton(
-                          icon: Icon(
-                            _showPassword
-                                ? DesignTokens.visibilityOffIcon
-                                : DesignTokens.visibilityIcon,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _showPassword = !_showPassword;
-                            });
-                          },
+                          icon: Icon(_showPassword
+                              ? UiConfig.visibilityOffIcon
+                              : UiConfig.visibilityIcon),
+                          onPressed: () =>
+                              setState(() => _showPassword = !_showPassword),
                         ),
                       ),
                       validator: (value) => value == null || value.length < 6
                           ? loc.passwordTooShort
                           : null,
-                      style: TextStyle(color: DesignTokens.textColor),
+                      style: TextStyle(color: UiConfig.textColorDark),
                       onChanged: (v) => setState(() {}),
                     ),
                     if (_passwordStrengthLabel(context).isNotEmpty)
@@ -337,9 +308,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         child: Text(
                           '${loc.passwordStrength}: ${_passwordStrengthLabel(context)}',
                           style: TextStyle(
-                            color: _passwordStrengthColor(context),
-                            fontSize: 12,
-                          ),
+                              color: _passwordStrengthColor(context),
+                              fontSize: 12),
                         ),
                       ),
                     const SizedBox(height: 24),
@@ -349,28 +319,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       decoration: InputDecoration(
                         labelText: loc.confirmPassword,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                              DesignTokens.formFieldRadius),
-                        ),
-                        hintStyle: TextStyle(color: DesignTokens.hintTextColor),
+                            borderRadius: BorderRadius.circular(
+                                DesignTokens.formFieldRadius)),
+                        prefixIcon: Icon(UiConfig.lockIcon),
                         suffixIcon: IconButton(
-                          icon: Icon(
-                            _showConfirmPassword
-                                ? DesignTokens.visibilityOffIcon
-                                : DesignTokens.visibilityIcon,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _showConfirmPassword = !_showConfirmPassword;
-                            });
-                          },
+                          icon: Icon(_showConfirmPassword
+                              ? UiConfig.visibilityOffIcon
+                              : UiConfig.visibilityIcon),
+                          onPressed: () => setState(() =>
+                              _showConfirmPassword = !_showConfirmPassword),
                         ),
                       ),
                       validator: (value) =>
                           value == null || value != _passwordController.text
                               ? loc.passwordsDoNotMatch
                               : null,
-                      style: TextStyle(color: DesignTokens.textColor),
+                      style: TextStyle(color: UiConfig.textColorDark),
                     ),
                     const SizedBox(height: 32),
                     CheckboxListTile(
@@ -382,27 +346,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         children: [
                           Text('${loc.iAgreeToThe} '),
                           GestureDetector(
-                            onTap: () =>
-                                _launchURL(BrandingConfig.termsOfServiceUrl),
-                            child: Text(
-                              loc.termsOfService,
-                              style: TextStyle(
-                                color: DesignTokens.primaryColor,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
+                            onTap: () => _launchURL(BrandingConfig
+                                .termsOfServiceUrl), // or UiConfig if you prefer
+                            child: Text(loc.termsOfService,
+                                style: TextStyle(
+                                    color: UiConfig.primaryColor,
+                                    decoration: TextDecoration.underline)),
                           ),
                           Text(' ${loc.and} '),
                           GestureDetector(
                             onTap: () =>
                                 _launchURL(BrandingConfig.privacyPolicyUrl),
-                            child: Text(
-                              loc.privacyPolicy,
-                              style: TextStyle(
-                                color: DesignTokens.primaryColor,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
+                            child: Text(loc.privacyPolicy,
+                                style: TextStyle(
+                                    color: UiConfig.primaryColor,
+                                    decoration: TextDecoration.underline)),
                           ),
                         ],
                       ),
@@ -410,13 +368,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     const SizedBox(height: 16),
                     if (_error != null)
-                      Text(
-                        _error!,
-                        style: TextStyle(
-                          color: DesignTokens.errorTextColor,
-                          fontSize: DesignTokens.bodyFontSize,
-                        ),
-                      ),
+                      Text(_error!,
+                          style: TextStyle(color: UiConfig.errorColor)),
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
@@ -426,34 +379,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             : () {
                                 if (_formKey.currentState?.validate() ??
                                     false) {
-                                  _signUp(context);
+                                  _signUp();
                                 }
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: DesignTokens.primaryColor,
-                          foregroundColor: DesignTokens.foregroundColor,
-                          padding: DesignTokens.buttonPadding,
+                          backgroundColor: UiConfig.primaryColor,
+                          foregroundColor: UiConfig.foregroundColorDark,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                DesignTokens.buttonRadius),
-                          ),
-                          elevation: DesignTokens.buttonElevation,
-                          textStyle: TextStyle(
-                            fontSize: DesignTokens.bodyFontSize,
-                            fontWeight: DesignTokens.titleFontWeight,
-                            fontFamily: DesignTokens.fontFamily,
-                          ),
+                              borderRadius: BorderRadius.circular(
+                                  DesignTokens.buttonRadius)),
                         ),
                         child: _loading
                             ? const CircularProgressIndicator(
-                                color: DesignTokens.foregroundColor)
-                            : Text(
-                                loc.createAccount,
-                                style: TextStyle(
-                                  color: DesignTokens.foregroundColor,
-                                  fontSize: DesignTokens.bodyFontSize,
-                                ),
-                              ),
+                                color: Colors.white)
+                            : Text(loc.createAccount),
                       ),
                     ),
                   ],

@@ -45,4 +45,7 @@ abstract class AuthService {
 
   /// Get ID token
   Future<String?> getIdToken({bool forceRefresh = false});
+
+  /// Send email verification
+  Future<void> sendEmailVerification();
 }

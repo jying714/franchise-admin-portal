@@ -1,9 +1,9 @@
-﻿// lib/widgets/menu_item_card.dart
+// lib/widgets/menu_item_card.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/config/branding_config.dart';
+import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_core/src/core/models/menu_item.dart';
 import 'package:shared_core/src/core/models/ingredient_metadata.dart';
 import 'package:franchise_mobile_app/widgets/customization/customization_modal.dart';

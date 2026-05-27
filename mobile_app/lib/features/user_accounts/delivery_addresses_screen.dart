@@ -1,4 +1,4 @@
-﻿// ignore_for_file: unused_import
+// ignore_for_file: unused_import
 
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/widgets/Address/address_list_view.dart';
@@ -10,7 +10,7 @@ import 'package:franchise_mobile_app/widgets/Address/delivery_address_tile.dart'
 import 'package:franchise_mobile_app/widgets/confirmation_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_mobile_app/core/models/address.dart';
 import 'package:firebase_auth/firebase_auth.dart';

@@ -1,9 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/core/models/feedback_entry.dart';
 import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:franchise_mobile_app/widgets/loading_shimmer_widget.dart';
 
 enum FeedbackMode { ordering, orderExperience }

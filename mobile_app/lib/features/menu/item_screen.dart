@@ -1,4 +1,4 @@
-﻿// UN-USED FILE
+// UN-USED FILE
 // UN-USED FILE
 // UN-USED FILE
 // UN-USED FILE
@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:shared_core/src/core/config/app_config.dart';
-import 'package:franchise_mobile_app/config/branding_config.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_core/src/core/models/menu_item.dart';
 import 'package:shared_core/src/core/models/ingredient_metadata.dart';
 import 'package:franchise_mobile_app/features/ordering/cart_screen.dart';

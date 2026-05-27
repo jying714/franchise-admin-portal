@@ -1,4 +1,4 @@
-﻿class FeatureConfig {
+class FeatureConfig {
   static FeatureConfig get instance => _instance;
   static final FeatureConfig _instance = FeatureConfig._internal();
 

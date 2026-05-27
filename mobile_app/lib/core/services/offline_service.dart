@@ -1,4 +1,4 @@
-﻿// lib/core/services/offline_service.dart
+// lib/core/services/offline_service.dart
 
 // ignore_for_file: unused_import
 

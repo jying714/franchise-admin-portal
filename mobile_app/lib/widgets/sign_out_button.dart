@@ -1,5 +1,5 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:franchise_mobile_app/widgets/confirmation_dialog.dart';
 
 /// A reusable sign out button with built-in confirmation dialog.

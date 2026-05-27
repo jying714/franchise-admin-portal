@@ -1,7 +1,7 @@
-﻿// ignore: unused_import
+// ignore: unused_import
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:franchise_mobile_app/config/feature_config.dart';
 import 'package:franchise_mobile_app/core/services/notification_service.dart';
 import 'package:franchise_mobile_app/features/tracking/tracking_screen.dart';

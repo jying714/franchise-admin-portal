@@ -1,6 +1,6 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/config/branding_config.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart';
 import 'package:shared_core/src/core/models/category.dart' as model;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 

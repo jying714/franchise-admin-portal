@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 /// A versatile chip for displaying status values (order, inventory, user, etc.).
 class StatusChip extends StatelessWidget {

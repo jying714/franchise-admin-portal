@@ -1,5 +1,5 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart';
 
 /// A reusable navigation tile for profile/account menus.
 /// Handles optional icons and highlight states.

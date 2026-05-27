@@ -1,4 +1,4 @@
-﻿class ScheduledOrder {
+class ScheduledOrder {
   final String id;
   final String userId;
   final String franchiseId;
