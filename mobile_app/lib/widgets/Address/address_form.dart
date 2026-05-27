@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:franchise_mobile_app/core/models/address.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:shared_core/src/core/config/design_tokens.dart';
 
 typedef FieldValidator = String? Function(String?);
 
 class AddressForm extends StatefulWidget {
   final GlobalKey<FormState> formKey;
-  final void Function(Address address) onSubmit;
-  final Address? initialValue;
+  final void Function(shared.Address address) onSubmit;
+  final shared.Address? initialValue;
   final String? submitLabel;
   final Map<String, FieldValidator>? fieldValidators;
 
@@ -73,17 +74,17 @@ class _AddressFormState extends State<AddressForm> {
                 borderRadius:
                     BorderRadius.circular(DesignTokens.formFieldRadius),
               ),
-              hintStyle: const TextStyle(
-                color: DesignTokens.hintTextColor,
+              hintStyle: TextStyle(
+                color: UiConfig.hintTextColor,
               ),
             ),
             validator:
                 widget.fieldValidators?['label'] ?? defaultLabelValidator,
             onSaved: (value) => _label = value,
-            style: const TextStyle(
-              color: DesignTokens.textColor,
+            style: TextStyle(
+              color: UiConfig.textColor,
               fontFamily: DesignTokens.fontFamily,
-              fontWeight: DesignTokens.bodyFontWeight,
+              fontWeight: UiConfig.fontWeightNormal,
             ),
           ),
           const SizedBox(height: DesignTokens.gridSpacing),
@@ -95,17 +96,17 @@ class _AddressFormState extends State<AddressForm> {
                 borderRadius:
                     BorderRadius.circular(DesignTokens.formFieldRadius),
               ),
-              hintStyle: const TextStyle(
-                color: DesignTokens.hintTextColor,
+              hintStyle: TextStyle(
+                color: UiConfig.hintTextColor,
               ),
             ),
             validator:
                 widget.fieldValidators?['street'] ?? defaultStreetValidator,
             onSaved: (value) => _street = value,
-            style: const TextStyle(
-              color: DesignTokens.textColor,
+            style: TextStyle(
+              color: UiConfig.textColor,
               fontFamily: DesignTokens.fontFamily,
-              fontWeight: DesignTokens.bodyFontWeight,
+              fontWeight: UiConfig.fontWeightNormal,
             ),
           ),
           const SizedBox(height: DesignTokens.gridSpacing),
@@ -117,16 +118,16 @@ class _AddressFormState extends State<AddressForm> {
                 borderRadius:
                     BorderRadius.circular(DesignTokens.formFieldRadius),
               ),
-              hintStyle: const TextStyle(
-                color: DesignTokens.hintTextColor,
+              hintStyle: TextStyle(
+                color: UiConfig.hintTextColor,
               ),
             ),
             validator: widget.fieldValidators?['city'] ?? defaultCityValidator,
             onSaved: (value) => _city = value,
-            style: const TextStyle(
-              color: DesignTokens.textColor,
+            style: TextStyle(
+              color: UiConfig.textColor,
               fontFamily: DesignTokens.fontFamily,
-              fontWeight: DesignTokens.bodyFontWeight,
+              fontWeight: UiConfig.fontWeightNormal,
             ),
           ),
           const SizedBox(height: DesignTokens.gridSpacing),
@@ -138,17 +139,17 @@ class _AddressFormState extends State<AddressForm> {
                 borderRadius:
                     BorderRadius.circular(DesignTokens.formFieldRadius),
               ),
-              hintStyle: const TextStyle(
-                color: DesignTokens.hintTextColor,
+              hintStyle: TextStyle(
+                color: UiConfig.hintTextColor,
               ),
             ),
             validator:
                 widget.fieldValidators?['state'] ?? defaultStateValidator,
             onSaved: (value) => _state = value,
-            style: const TextStyle(
-              color: DesignTokens.textColor,
+            style: TextStyle(
+              color: UiConfig.textColor,
               fontFamily: DesignTokens.fontFamily,
-              fontWeight: DesignTokens.bodyFontWeight,
+              fontWeight: UiConfig.fontWeightNormal,
             ),
           ),
           const SizedBox(height: DesignTokens.gridSpacing),
@@ -160,24 +161,24 @@ class _AddressFormState extends State<AddressForm> {
                 borderRadius:
                     BorderRadius.circular(DesignTokens.formFieldRadius),
               ),
-              hintStyle: const TextStyle(
-                color: DesignTokens.hintTextColor,
+              hintStyle: TextStyle(
+                color: UiConfig.hintTextColor,
               ),
             ),
             validator: widget.fieldValidators?['zip'] ?? defaultZipValidator,
             onSaved: (value) => _zip = value,
-            style: const TextStyle(
-              color: DesignTokens.textColor,
+            style: TextStyle(
+              color: UiConfig.textColor,
               fontFamily: DesignTokens.fontFamily,
-              fontWeight: DesignTokens.bodyFontWeight,
+              fontWeight: UiConfig.fontWeightNormal,
             ),
           ),
           const SizedBox(height: DesignTokens.gridSpacing * 2),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: DesignTokens.primaryColor,
-              foregroundColor: DesignTokens.foregroundColor,
-              padding: DesignTokens.buttonPadding,
+              backgroundColor: UiConfig.primaryColor,
+              foregroundColor: UiConfig.foregroundColor,
+              padding: UiConfig.defaultPadding,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.buttonRadius),
               ),
@@ -186,12 +187,13 @@ class _AddressFormState extends State<AddressForm> {
             onPressed: () {
               if (widget.formKey.currentState!.validate()) {
                 widget.formKey.currentState!.save();
-                final address = Address(
-                  label: _label!,
-                  street: _street!,
-                  city: _city!,
-                  state: _state!,
-                  zip: _zip!,
+                final address = shared.Address(
+                  id: '', // Firestore will generate real ID on save
+                  label: _label!.trim(),
+                  street: _street!.trim(),
+                  city: _city!.trim(),
+                  state: _state!.trim(),
+                  zip: _zip!.trim(),
                 );
                 widget.onSubmit(address);
                 widget.formKey.currentState!.reset();
@@ -205,5 +207,3 @@ class _AddressFormState extends State<AddressForm> {
     );
   }
 }
-
-

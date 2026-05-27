@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/src/core/models/category.dart' as model;
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/categories/category_card.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:shared_core/src/core/config/design_tokens.dart';
 
-typedef CategoryTapCallback = void Function(Category category);
+typedef CategoryTapCallback = void Function(shared.Category category);
 
 class CategoryGrid extends StatelessWidget {
-  final List<Category> categories;
+  final List<shared.Category> categories;
   final CategoryTapCallback? onCategoryTap;
   final int? crossAxisCount;
   final double? childAspectRatio;
@@ -16,7 +17,7 @@ class CategoryGrid extends StatelessWidget {
   final Widget? loadingWidget;
 
   const CategoryGrid({
-    Key? key,
+    super.key,
     required this.categories,
     this.onCategoryTap,
     this.crossAxisCount,
@@ -24,7 +25,7 @@ class CategoryGrid extends StatelessWidget {
     this.padding,
     this.emptyWidget,
     this.loadingWidget,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -36,10 +37,10 @@ class CategoryGrid extends StatelessWidget {
           Center(
             child: Text(
               loc.noCategoriesAvailable,
-              style: const TextStyle(
-                color: DesignTokens.secondaryTextColor,
+              style: TextStyle(
+                color: UiConfig.secondaryTextColor,
                 fontSize: DesignTokens.bodyFontSize,
-                fontWeight: DesignTokens.bodyFontWeight,
+                fontWeight: UiConfig.fontWeightNormal,
                 fontFamily: DesignTokens.fontFamily,
               ),
               textAlign: TextAlign.center,
@@ -53,7 +54,7 @@ class CategoryGrid extends StatelessWidget {
         crossAxisCount ?? (MediaQuery.of(context).size.width > 600 ? 3 : 2);
 
     return GridView.builder(
-      padding: padding ?? DesignTokens.gridPadding,
+      padding: padding ?? UiConfig.defaultPadding,
       itemCount: categories.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: gridCount,
@@ -71,5 +72,3 @@ class CategoryGrid extends StatelessWidget {
     );
   }
 }
-
-

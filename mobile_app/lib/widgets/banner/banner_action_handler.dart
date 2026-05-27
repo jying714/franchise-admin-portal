@@ -1,26 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/core/models/banner.dart' as model;
-import 'package:franchise_mobile_app/core/models/category.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/features/category/category_screen.dart';
-import 'package:franchise_mobile_app/core/services/analytics_service_local_stub.dart';
+import 'package:shared_core/src/core/services/analytics_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-
-// You may inject analytics or other services here as needed.
+import 'package:franchise_mobile_app/config/ui_config.dart';
 
 class BannerActionHandler {
   /// Handles what happens when a banner or its CTA is tapped.
   static Future<void> handle(
     BuildContext context,
-    model.Banner banner, {
+    shared.Banner banner, {
     AnalyticsService? analyticsService,
     AppLocalizations? loc,
-    List<Category>? categories,
+    List<shared.Category>? categories,
   }) async {
     // Fallback for localization and analytics.
     loc ??= AppLocalizations.of(context)!;
 
     if (analyticsService != null) {
-      analyticsService.logBannerTap(banner.id);
+      analyticsService.logEvent('banner_tap', {'banner_id': banner.id});
     }
 
     switch (banner.action.type) {
@@ -28,11 +26,11 @@ class BannerActionHandler {
         if (banner.action.value != null && categories != null) {
           final matchedCat = categories.firstWhere(
             (cat) => cat.id == banner.action.value,
-            orElse: () => Category(
+            orElse: () => shared.Category(
               id: banner.action.value!,
               name: banner.action.value!,
+              image: null,
               description: '',
-              image: '',
             ),
           );
           Navigator.push(
@@ -49,9 +47,9 @@ class BannerActionHandler {
             SnackBar(
               content: Text(
                 loc.noCategoriesAvailable,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: UiConfig.textColor),
               ),
-              backgroundColor: Colors.red,
+              backgroundColor: UiConfig.errorColor,
             ),
           );
         }
@@ -63,9 +61,9 @@ class BannerActionHandler {
             SnackBar(
               content: Text(
                 '${loc.applyPromo}: ${banner.action.value}',
-                style: const TextStyle(color: Colors.black),
+                style: TextStyle(color: UiConfig.textColor),
               ),
-              backgroundColor: Colors.yellow[200],
+              backgroundColor: UiConfig.warningColor,
             ),
           );
         } else {
@@ -73,9 +71,9 @@ class BannerActionHandler {
             SnackBar(
               content: Text(
                 loc.invalidPromo,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: UiConfig.textColor),
               ),
-              backgroundColor: Colors.red,
+              backgroundColor: UiConfig.errorColor,
             ),
           );
         }
@@ -88,9 +86,9 @@ class BannerActionHandler {
           SnackBar(
             content: Text(
               loc.notImplemented,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: UiConfig.textColor),
             ),
-            backgroundColor: Colors.grey[800],
+            backgroundColor: UiConfig.surfaceColorDark,
           ),
         );
         break;

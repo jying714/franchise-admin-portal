@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_mobile_app/core/models/feedback_entry.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/loading_shimmer_widget.dart';
+import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:shared_core/src/core/config/design_tokens.dart';
 
 enum FeedbackMode { ordering, orderExperience }
 
@@ -15,12 +15,12 @@ class FeedbackSubmissionDialog extends StatefulWidget {
   final VoidCallback? onSubmitted;
 
   const FeedbackSubmissionDialog({
-    Key? key,
+    super.key,
     required this.orderId,
     required this.userId,
     this.feedbackMode = FeedbackMode.orderExperience,
     this.onSubmitted,
-  }) : super(key: key);
+  });
 
   @override
   State<FeedbackSubmissionDialog> createState() =>
@@ -33,8 +33,7 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
   bool _anonymous = false;
   bool _isSubmitting = false;
   String? _errorText;
-  final Map<String, int> _categoryRatings =
-      {}; // category label -> rating (1-5)
+  final Map<String, int> _categoryRatings = {};
   static const int _maxCommentLength = 500;
 
   @override
@@ -43,7 +42,6 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
     super.dispose();
   }
 
-  // List of feedback categories (localizable!)
   List<String> _getFeedbackCategories(AppLocalizations loc) {
     if (widget.feedbackMode == FeedbackMode.ordering) {
       return [
@@ -53,7 +51,6 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
         loc.categoryPaymentOptions,
       ];
     } else {
-      // Default (order experience)
       return [
         loc.categoryFoodQuality,
         loc.categoryService,
@@ -70,7 +67,6 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
     final loc = AppLocalizations.of(context)!;
 
     try {
-      // Only include categories with a rating
       final List<Map<String, dynamic>> categoryRatingsList =
           _categoryRatings.entries
               .where((e) => e.value != null)
@@ -80,15 +76,14 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                   })
               .toList();
 
-      final entry = FeedbackEntry(
+      final entry = shared.FeedbackEntry(
         id: UniqueKey().toString(),
         rating: _rating,
         comment: _commentController.text.trim().isNotEmpty
             ? _commentController.text.trim()
             : null,
         categories: categoryRatingsList
-            .map((e) =>
-                "${e['category']}:${e['score']}") // you can adjust this, or add extra fields to FeedbackEntry/model as needed
+            .map((e) => "${e['category']}:${e['score']}")
             .toList(),
         timestamp: DateTime.now(),
         userId: widget.userId,
@@ -98,21 +93,22 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
       );
 
       final firestoreService =
-          Provider.of<FirestoreService>(context, listen: false);
+          Provider.of<shared.FirestoreService>(context, listen: false);
 
       await firestoreService.submitOrderFeedback(
         userId: widget.userId,
         orderId: widget.orderId,
-        feedback: entry,
+        feedback: entry
+            .toFirestore(), // ← FIXED: convert model to Map<String, dynamic>
       );
 
       if (!mounted) return;
 
       await showDialog(
         context: context,
-        builder: (_) => _FeedbackThankYouDialog(),
+        builder: (_) => const _FeedbackThankYouDialog(),
       );
-      Navigator.of(context).pop(); // Close feedback form
+      Navigator.of(context).pop();
       widget.onSubmitted?.call();
     } catch (e) {
       setState(() {
@@ -142,7 +138,6 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Title
                 Text(
                   widget.feedbackMode == FeedbackMode.ordering
                       ? loc.orderingFeedbackPromptTitle
@@ -162,8 +157,6 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                   const SizedBox(height: 12),
                 ],
                 const SizedBox(height: 10),
-
-                // Overall Star Rating
                 Center(
                   child: _StarRatingSelector(
                     rating: _rating,
@@ -172,7 +165,7 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                       _errorText = null;
                     }),
                     tooltip: null,
-                    color: DesignTokens.primaryColor,
+                    color: UiConfig.primaryColor,
                   ),
                 ),
                 if (_rating == 0)
@@ -181,14 +174,12 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                     child: Text(
                       loc.ratingRequiredError,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: DesignTokens.errorColor,
+                        color: UiConfig.errorColor,
                       ),
                       textAlign: TextAlign.center,
                     ),
                   ),
                 const SizedBox(height: 20),
-
-                // Category Ratings
                 Text(
                   loc.categoriesTitle,
                   style: theme.textTheme.bodyLarge,
@@ -210,10 +201,7 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                         },
                       ),
                     )),
-
                 const SizedBox(height: 10),
-
-                // Comment Box
                 TextField(
                   controller: _commentController,
                   maxLength: _maxCommentLength,
@@ -234,8 +222,6 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 10),
-
-                // Anonymous Toggle
                 Row(
                   children: [
                     Checkbox(
@@ -252,27 +238,23 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                   ],
                 ),
                 const SizedBox(height: 10),
-
-                // Error Message
                 if (_errorText != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: Text(
                       _errorText!,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: DesignTokens.errorColor,
+                        color: UiConfig.errorColor,
                       ),
                       textAlign: TextAlign.center,
                     ),
                   ),
-
-                // Submit Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: DesignTokens.primaryColor,
-                      foregroundColor: DesignTokens.foregroundColor,
+                      backgroundColor: UiConfig.primaryColor,
+                      foregroundColor: UiConfig.foregroundColor,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
@@ -285,7 +267,6 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                         : Text(loc.feedbackSubmitButton),
                   ),
                 ),
-                // Cancel/Close
                 TextButton(
                   onPressed:
                       _isSubmitting ? null : () => Navigator.of(context).pop(),
@@ -300,7 +281,6 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
   }
 }
 
-// --- Star Rating Widget --- //
 class _StarRatingSelector extends StatelessWidget {
   final int rating;
   final ValueChanged<int> onChanged;
@@ -308,12 +288,12 @@ class _StarRatingSelector extends StatelessWidget {
   final Color? color;
 
   const _StarRatingSelector({
-    Key? key,
+    super.key,
     required this.rating,
     required this.onChanged,
     this.tooltip,
     this.color,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -343,18 +323,17 @@ class _StarRatingSelector extends StatelessWidget {
   }
 }
 
-// --- Category Rating Selector Widget --- //
 class _CategoryRatingSelector extends StatelessWidget {
   final String category;
   final int? value;
   final ValueChanged<int?> onChanged;
 
   const _CategoryRatingSelector({
-    Key? key,
+    super.key,
     required this.category,
     required this.value,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -365,24 +344,23 @@ class _CategoryRatingSelector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(category, style: theme.textTheme.bodyMedium),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         ToggleButtons(
           borderRadius: BorderRadius.circular(6),
           constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
           isSelected: isSelected,
           onPressed: (idx) {
             if (value == idx + 1) {
-              onChanged(null); // tap again to clear
+              onChanged(null);
             } else {
               onChanged(idx + 1);
             }
           },
-          fillColor:
-              DesignTokens.primaryColor, // <-- Selected toggle background
-          selectedColor: DesignTokens.foregroundColor, // <-- Text when selected
-          color: theme.textTheme.bodyMedium?.color, // Unselected text color
-          borderColor: DesignTokens.primaryColor.withOpacity(0.3),
-          selectedBorderColor: DesignTokens.primaryColor,
+          fillColor: UiConfig.primaryColor,
+          selectedColor: UiConfig.foregroundColor,
+          color: theme.textTheme.bodyMedium?.color,
+          borderColor: UiConfig.primaryColor.withOpacity(0.3),
+          selectedBorderColor: UiConfig.primaryColor,
           children: List.generate(
             5,
             (i) => Padding(
@@ -399,8 +377,9 @@ class _CategoryRatingSelector extends StatelessWidget {
   }
 }
 
-// --- Thank You Dialog --- //
 class _FeedbackThankYouDialog extends StatelessWidget {
+  const _FeedbackThankYouDialog({super.key});
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -414,8 +393,7 @@ class _FeedbackThankYouDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_circle,
-                color: DesignTokens.primaryColor, size: 56),
+            Icon(Icons.check_circle, color: UiConfig.primaryColor, size: 56),
             const SizedBox(height: 18),
             Text(
               loc.feedbackThankYouTitle,
@@ -434,8 +412,8 @@ class _FeedbackThankYouDialog extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: DesignTokens.primaryColor,
-                  foregroundColor: DesignTokens.foregroundColor,
+                  backgroundColor: UiConfig.primaryColor,
+                  foregroundColor: UiConfig.foregroundColor,
                 ),
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(loc.feedbackBackToMenu),
@@ -447,5 +425,3 @@ class _FeedbackThankYouDialog extends StatelessWidget {
     );
   }
 }
-
-

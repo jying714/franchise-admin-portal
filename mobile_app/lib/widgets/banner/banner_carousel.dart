@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:franchise_mobile_app/core/models/banner.dart' as model;
-import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/banner/promo_banner_card.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:shared_core/src/core/config/design_tokens.dart';
 
-typedef BannerTapCallback = void Function(model.Banner banner);
+typedef BannerTapCallback = void Function(shared.Banner banner);
 
 class BannerCarousel extends StatelessWidget {
-  final List<model.Banner> banners;
+  final List<shared.Banner> banners;
   final BannerTapCallback? onBannerTap;
 
   const BannerCarousel({
@@ -26,7 +25,7 @@ class BannerCarousel extends StatelessWidget {
       return const SizedBox.shrink();
     }
     return Padding(
-      padding: DesignTokens.gridPadding,
+      padding: UiConfig.defaultPadding,
       child: CarouselSlider.builder(
         itemCount: banners.length,
         itemBuilder: (context, index, realIdx) {
@@ -40,7 +39,8 @@ class BannerCarousel extends StatelessWidget {
         options: CarouselOptions(
           height: DesignTokens.bannerHeight,
           autoPlay: true,
-          autoPlayInterval: DesignTokens.bannerAutoPlayInterval,
+          autoPlayInterval:
+              Duration(seconds: DesignTokens.bannerAutoPlayInterval),
           enlargeCenterPage: true,
           viewportFraction: 1.0,
           enableInfiniteScroll: banners.length > 1,
@@ -49,20 +49,4 @@ class BannerCarousel extends StatelessWidget {
       ),
     );
   }
-
-  String _getCTAForAction(BuildContext context, String type) {
-    final loc = AppLocalizations.of(context)!;
-    switch (type) {
-      case 'linkCategory':
-        return loc.browseCategoryCta;
-      case 'linkItem':
-        return loc.orderNowCta;
-      case 'promo':
-        return loc.applyPromoCta;
-      default:
-        return loc.defaultBannerCta;
-    }
-  }
 }
-
-

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:shared_core/src/core/config/design_tokens.dart';
 
 /// Displays a shopping cart icon with a dynamic badge count.
 /// Pass in a [cartItemCountStream] that emits the item count as an integer.
@@ -14,14 +15,14 @@ class CartIconBadge extends StatelessWidget {
   final double? iconSize;
 
   const CartIconBadge({
-    Key? key,
+    super.key,
     required this.cartItemCountStream,
     this.onPressed,
     this.tooltip,
     this.iconColor,
     this.badgeColor,
     this.iconSize,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +38,7 @@ class CartIconBadge extends StatelessWidget {
               Icon(
                 Icons.shopping_cart,
                 size: iconSize ?? DesignTokens.iconSize,
-                color: iconColor ?? DesignTokens.foregroundColor,
+                color: iconColor ?? UiConfig.foregroundColor,
                 semanticLabel: tooltip,
               ),
               if (cartItems > 0)
@@ -48,7 +49,7 @@ class CartIconBadge extends StatelessWidget {
                     padding:
                         const EdgeInsets.all(DesignTokens.cartBadgePadding),
                     decoration: BoxDecoration(
-                      color: badgeColor ?? DesignTokens.errorColor,
+                      color: badgeColor ?? UiConfig.errorColor,
                       borderRadius:
                           BorderRadius.circular(DesignTokens.badgeRadius),
                     ),
@@ -58,10 +59,10 @@ class CartIconBadge extends StatelessWidget {
                     ),
                     child: Text(
                       '$cartItems',
-                      style: const TextStyle(
-                        color: DesignTokens.foregroundColor,
+                      style: TextStyle(
+                        color: UiConfig.foregroundColor,
                         fontSize: DesignTokens.captionFontSize,
-                        fontWeight: DesignTokens.titleFontWeight,
+                        fontWeight: UiConfig.fontWeightBold,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -76,5 +77,3 @@ class CartIconBadge extends StatelessWidget {
     );
   }
 }
-
-

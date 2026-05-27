@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/src/core/models/category.dart' as model;
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:shared_core/src/core/config/design_tokens.dart';
+import 'package:shared_core/src/core/config/branding_config.dart';
 
-typedef CategoryTapCallback = void Function(Category category);
+typedef CategoryTapCallback = void Function(shared.Category category);
 
 class CategoryCard extends StatelessWidget {
-  final Category category;
+  final shared.Category category;
   final CategoryTapCallback? onTap;
 
   const CategoryCard({
-    Key? key,
+    super.key,
     required this.category,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +38,7 @@ class CategoryCard extends StatelessWidget {
           child: Ink(
             decoration: BoxDecoration(
               border: Border.all(
-                color: DesignTokens.primaryColor,
+                color: UiConfig.primaryColor,
                 width: DesignTokens.categoryCardBorderWidth,
               ),
               borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
@@ -106,12 +107,12 @@ class CategoryCard extends StatelessWidget {
                       children: [
                         Text(
                           category.name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: DesignTokens.titleFontSize,
-                            fontWeight: DesignTokens.titleFontWeight,
+                            fontWeight: UiConfig.fontWeightBold,
                             color: Colors.white,
                             fontFamily: DesignTokens.fontFamily,
-                            shadows: [
+                            shadows: const [
                               Shadow(color: Colors.black54, blurRadius: 4),
                             ],
                           ),
@@ -124,12 +125,12 @@ class CategoryCard extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 4.0),
                             child: Text(
                               category.description!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: DesignTokens.captionFontSize,
                                 color: Colors.white70,
                                 fontFamily: DesignTokens.fontFamily,
-                                fontWeight: DesignTokens.bodyFontWeight,
-                                shadows: [
+                                fontWeight: UiConfig.fontWeightNormal,
+                                shadows: const [
                                   Shadow(color: Colors.black26, blurRadius: 2),
                                 ],
                               ),
@@ -149,5 +150,3 @@ class CategoryCard extends StatelessWidget {
     );
   }
 }
-
-

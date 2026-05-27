@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/core/models/address.dart';
 import 'package:franchise_mobile_app/widgets/Address/address_list_view.dart';
 import 'package:franchise_mobile_app/widgets/Address/address_form.dart';
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
 import 'package:franchise_mobile_app/widgets/confirmation_dialog.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:shared_core/src/core/config/design_tokens.dart';
 
 class DeliveryAddressesBody extends StatefulWidget {
-  final List<Address> addresses;
-  final FirestoreService firestoreService;
-  final User user;
+  final List<shared.Address> addresses;
+  final shared.FirestoreService firestoreService;
+  final firebase_auth.User user;
   final GlobalKey<FormState> formKey;
 
   const DeliveryAddressesBody({
@@ -37,7 +37,7 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
     final formKey = widget.formKey;
 
     return Padding(
-      padding: DesignTokens.cardPadding,
+      padding: UiConfig.cardPadding,
       child: SingleChildScrollView(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom +
@@ -64,24 +64,24 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                     confirmLabel: localizations.confirm,
                     cancelLabel: localizations.cancel,
                     icon: Icons.delete,
-                    confirmColor: DesignTokens.errorColor,
+                    confirmColor: UiConfig.errorColor,
                   );
                   if (shouldDelete == true) {
                     await firestoreService.removeAddressForUser(
-                        user.uid, address);
+                        user.uid, address.id);
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
                           localizations.addressRemoved,
-                          style: const TextStyle(
-                            color: DesignTokens.textColor,
+                          style: TextStyle(
+                            color: UiConfig.textColor,
                             fontFamily: DesignTokens.fontFamily,
-                            fontWeight: DesignTokens.bodyFontWeight,
+                            fontWeight: UiConfig.fontWeightNormal,
                           ),
                         ),
-                        backgroundColor: DesignTokens.surfaceColor,
-                        duration: DesignTokens.toastDuration,
+                        backgroundColor: UiConfig.surfaceColor,
+                        duration: Duration(seconds: DesignTokens.toastDuration),
                       ),
                     );
                   }
@@ -101,7 +101,7 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                     confirmLabel: localizations.confirm,
                     cancelLabel: localizations.cancel,
                     icon: Icons.add_location_alt,
-                    confirmColor: DesignTokens.primaryColor,
+                    confirmColor: UiConfig.primaryColor,
                   );
                   if (shouldAdd == true) {
                     await firestoreService.addAddressForUser(
@@ -111,14 +111,14 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                       SnackBar(
                         content: Text(
                           localizations.addressAdded,
-                          style: const TextStyle(
-                            color: DesignTokens.textColor,
+                          style: TextStyle(
+                            color: UiConfig.textColor,
                             fontFamily: DesignTokens.fontFamily,
-                            fontWeight: DesignTokens.bodyFontWeight,
+                            fontWeight: UiConfig.fontWeightNormal,
                           ),
                         ),
-                        backgroundColor: DesignTokens.surfaceColor,
-                        duration: DesignTokens.toastDuration,
+                        backgroundColor: UiConfig.surfaceColor,
+                        duration: Duration(seconds: DesignTokens.toastDuration),
                       ),
                     );
                   }
@@ -130,5 +130,3 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
     );
   }
 }
-
-

@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:franchise_mobile_app/core/models/banner.dart' as model;
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:shared_core/src/core/config/design_tokens.dart';
+import 'package:shared_core/src/core/config/branding_config.dart';
 
 class PromoBannerCard extends StatelessWidget {
-  final model.Banner banner;
+  final shared.Banner banner;
   final VoidCallback? onTap;
   final VoidCallback? onCTAPressed;
 
   const PromoBannerCard({
-    Key? key,
+    super.key,
     required this.banner,
     this.onTap,
     this.onCTAPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final loc = AppLocalizations.of(context)!;
 
     return GestureDetector(
@@ -44,7 +44,7 @@ class PromoBannerCard extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius:
                   BorderRadius.circular(DesignTokens.bannerBorderRadius),
-              color: DesignTokens.bannerOverlayColor
+              color: UiConfig.bannerOverlayColor
                   .withAlpha(DesignTokens.bannerOverlayAlpha),
             ),
           ),
@@ -60,8 +60,8 @@ class PromoBannerCard extends StatelessWidget {
                     banner.title,
                     style: TextStyle(
                       fontSize: DesignTokens.titleFontSize,
-                      color: DesignTokens.foregroundColor,
-                      fontWeight: DesignTokens.titleFontWeight,
+                      color: UiConfig.foregroundColor,
+                      fontWeight: UiConfig.fontWeightBold,
                       shadows: const [
                         Shadow(color: Colors.black54, blurRadius: 4),
                       ],
@@ -76,7 +76,7 @@ class PromoBannerCard extends StatelessWidget {
                       banner.subtitle,
                       style: TextStyle(
                         fontSize: DesignTokens.captionFontSize,
-                        color: DesignTokens.foregroundColor,
+                        color: UiConfig.foregroundColor,
                         fontWeight: FontWeight.w400,
                         shadows: const [
                           Shadow(color: Colors.black54, blurRadius: 4),
@@ -91,8 +91,8 @@ class PromoBannerCard extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 8),
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: DesignTokens.secondaryColor,
-                        foregroundColor: DesignTokens.foregroundColor,
+                        backgroundColor: UiConfig.secondaryColor,
+                        foregroundColor: UiConfig.foregroundColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24),
                         ),
@@ -127,5 +127,3 @@ class PromoBannerCard extends StatelessWidget {
     }
   }
 }
-
-
