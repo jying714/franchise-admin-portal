@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:shared_core/src/core/config/design_tokens.dart';
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/language/language_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -16,54 +18,55 @@ class LanguageScreen extends StatelessWidget {
     final languages = [
       {'code': 'en', 'label': loc.languageEnglish},
       {'code': 'es', 'label': loc.languageSpanish},
-      // Add more languages here as needed:
-      // {'code': 'fr', 'label': loc.languageFrench},
+      // Add more languages here as needed
     ];
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
           loc.language,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: DesignTokens.titleFontSize,
-            color: DesignTokens.foregroundColorDark,
-            fontWeight: DesignTokens.titleFontWeight,
+            color: UiConfig.foregroundColorDark,
+            fontWeight: UiConfig.fontWeightBold,
             fontFamily: DesignTokens.fontFamily,
           ),
         ),
-        backgroundColor: DesignTokens.primaryColor,
+        backgroundColor: UiConfig.primaryColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: DesignTokens.foregroundColorDark),
+        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
         centerTitle: true,
       ),
-      backgroundColor: DesignTokens.backgroundColor,
+      backgroundColor: UiConfig.backgroundColorDark,
       body: Padding(
-        padding: DesignTokens.cardPadding,
+        padding: UiConfig.defaultPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               loc.selectLanguage,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: DesignTokens.bodyFontSize,
-                fontWeight: DesignTokens.titleFontWeight,
-                color: DesignTokens.textColor,
+                fontWeight: UiConfig.fontWeightBold,
+                color: UiConfig.textColorDark,
                 fontFamily: DesignTokens.fontFamily,
               ),
             ),
-            const SizedBox(height: DesignTokens.gridSpacing * 2),
+            const SizedBox(height: 24),
             ...languages.map((lang) => ListTile(
                   title: Text(
                     lang['label']!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: DesignTokens.bodyFontSize,
-                      color: DesignTokens.textColor,
+                      color: UiConfig.textColorDark,
                       fontFamily: DesignTokens.fontFamily,
                     ),
                   ),
                   trailing: languageProvider.locale.languageCode == lang['code']
-                      ? const Icon(Icons.check,
-                          color: DesignTokens.primaryColor)
+                      ? Icon(
+                          Icons.check,
+                          color: UiConfig.primaryColor,
+                        )
                       : null,
                   onTap: () {
                     languageProvider.setLanguage(lang['code']!);
@@ -71,9 +74,9 @@ class LanguageScreen extends StatelessWidget {
                       SnackBar(
                         content: Text(
                           loc.languageSetTo(lang['label']!),
-                          style: const TextStyle(color: DesignTokens.textColor),
+                          style: TextStyle(color: UiConfig.textColorDark),
                         ),
-                        backgroundColor: DesignTokens.surfaceColor,
+                        backgroundColor: UiConfig.surfaceColorDark,
                       ),
                     );
                   },
@@ -84,5 +87,3 @@ class LanguageScreen extends StatelessWidget {
     );
   }
 }
-
-

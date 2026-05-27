@@ -1,13 +1,12 @@
-// ignore_for_file: prefer_const_constructors
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:franchise_mobile_app/core/models/feedback_entry.dart' as model;
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:shared_core/src/core/config/design_tokens.dart';
+import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/core/services/offline_service.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:franchise_mobile_app/core/models/feedback_entry.dart' as model;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -34,7 +33,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final loc = AppLocalizations.of(context)!;
-    // Use localized categories from ARB
     _categories = [
       loc.categoryFoodQuality,
       loc.categoryDeliverySpeed,
@@ -55,14 +53,21 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       setState(() => _error = loc.ratingRequiredError);
       return;
     }
+
     setState(() {
       _loading = true;
       _error = null;
     });
 
-    final auth = Provider.of<FirebaseAuth>(context, listen: false);
-    final userId =
-        _anonymous ? '' : (auth.currentUser?.uid ?? '');
+    final franchiseProvider =
+        Provider.of<FranchiseProvider>(context, listen: false);
+    final franchiseId = franchiseProvider.currentFranchiseId;
+    final firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
+    final offlineService = Provider.of<OfflineService>(context, listen: false);
+
+    final auth = FirebaseAuth.instance;
+    final userId = _anonymous ? '' : (auth.currentUser?.uid ?? '');
 
     final String feedbackId = const Uuid().v4();
     final feedback = model.FeedbackEntry(
@@ -77,103 +82,112 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     );
 
     try {
-      final offlineService =
-          Provider.of<OfflineService>(context, listen: false);
       await firestoreService.submitOrderFeedback(
         orderId: widget.orderId,
         userId: userId,
-        feedback: feedback,
+        feedback: feedback.toFirestore(),
+        franchiseId: franchiseId,
       );
+
       offlineService.removeQueuedFeedback(feedbackId);
+
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: Text(loc.feedbackThankYouTitle),
-          content: Text(loc.feedbackThankYouBody),
-          actions: [
-            TextButton(
-              onPressed: () =>
-                  Navigator.of(context).popUntil((route) => route.isFirst),
-              child: Text(loc.feedbackBackToMenu),
-            )
-          ],
-        ),
-      );
+      _showSuccessDialog(loc);
     } catch (e) {
-      final offlineService =
-          Provider.of<OfflineService>(context, listen: false);
       offlineService.queueFeedback(feedback);
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: Text(loc.feedbackOfflineTitle),
-          content: Text(loc.feedbackOfflineBody),
-          actions: [
-            TextButton(
-              onPressed: () =>
-                  Navigator.of(context).popUntil((route) => route.isFirst),
-              child: Text(loc.feedbackBackToMenu),
-            )
-          ],
-        ),
-      );
+      _showOfflineDialog(loc);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
+  void _showSuccessDialog(AppLocalizations loc) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(loc.feedbackThankYouTitle),
+        content: Text(loc.feedbackThankYouBody),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
+            child: Text(loc.feedbackBackToMenu),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showOfflineDialog(AppLocalizations loc) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(loc.feedbackOfflineTitle),
+        content: Text(loc.feedbackOfflineBody),
+        actions: [
+          TextButton(
+            onPressed: () =>
+                Navigator.of(context).popUntil((route) => route.isFirst),
+            child: Text(loc.feedbackBackToMenu),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
           loc.feedbackScreenTitle,
           style: TextStyle(
-            color: DesignTokens.foregroundColor,
+            color: UiConfig.foregroundColorDark,
             fontSize: DesignTokens.titleFontSize,
             fontFamily: DesignTokens.fontFamily,
-            fontWeight: DesignTokens.titleFontWeight,
+            fontWeight: UiConfig.fontWeightBold,
           ),
         ),
-        backgroundColor: DesignTokens.primaryColor,
-        iconTheme: const IconThemeData(color: DesignTokens.foregroundColor),
+        backgroundColor: UiConfig.primaryColor,
+        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
         centerTitle: true,
         elevation: 0,
       ),
-      backgroundColor: DesignTokens.backgroundColor,
+      backgroundColor: UiConfig.backgroundColorDark,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: DesignTokens.cardPadding,
+            padding: UiConfig.defaultPadding,
             child: Card(
-              color: DesignTokens.surfaceColor,
+              color: UiConfig.surfaceColorDark,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
               ),
               elevation: DesignTokens.cardElevation,
               child: Padding(
-                padding: DesignTokens.cardPadding,
+                padding: UiConfig.defaultPadding,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Image.asset(
-                      BrandingConfig.logoMain,
+                      UiConfig.logoMain,
                       height: 56,
                       errorBuilder: (_, __, ___) => Image.asset(
-                          BrandingConfig.fallbackAppIcon,
-                          height: 56),
+                        UiConfig.defaultPizzaIcon,
+                        height: 56,
+                      ),
                     ),
                     const SizedBox(height: 24),
                     Text(
                       loc.feedbackPromptTitle,
                       style: TextStyle(
                         fontSize: DesignTokens.titleFontSize,
-                        fontWeight: DesignTokens.titleFontWeight,
+                        fontWeight: UiConfig.fontWeightBold,
                         fontFamily: DesignTokens.fontFamily,
-                        color: DesignTokens.textColor,
+                        color: UiConfig.textColorDark,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -196,9 +210,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                                         : _selectedCategories.remove(cat);
                                   });
                                 },
-                                selectedColor: DesignTokens.successColor
-                                    .withAlpha((0.2 * 255).toInt()),
-                                backgroundColor: DesignTokens.surfaceColor,
+                                selectedColor:
+                                    UiConfig.successColor.withAlpha(51),
+                                backgroundColor: UiConfig.surfaceColorDark,
                               ))
                           .toList(),
                     ),
@@ -214,7 +228,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                           borderRadius: BorderRadius.circular(
                               DesignTokens.formFieldRadius),
                         ),
-                        counterStyle: const TextStyle(fontSize: 12),
+                        counterStyle: TextStyle(
+                          fontSize: DesignTokens.captionFontSize,
+                          color: UiConfig.hintTextColor,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -224,8 +241,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                           value: _anonymous,
                           onChanged: (val) =>
                               setState(() => _anonymous = val ?? false),
+                          activeColor: UiConfig.primaryColor,
                         ),
-                        Text(loc.feedbackSubmitAnonymous),
+                        Text(
+                          loc.feedbackSubmitAnonymous,
+                          style: TextStyle(color: UiConfig.textColorDark),
+                        ),
                       ],
                     ),
                     if (_error != null)
@@ -234,8 +255,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                         child: Text(
                           _error!,
                           style: TextStyle(
-                            color: DesignTokens.errorColor,
-                            fontWeight: FontWeight.bold,
+                            color: UiConfig.errorColor,
+                            fontWeight: UiConfig.fontWeightBold,
                           ),
                         ),
                       ),
@@ -243,9 +264,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                     ElevatedButton(
                       onPressed: _loading ? null : _submitFeedback,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: DesignTokens.primaryColor,
-                        foregroundColor: DesignTokens.foregroundColor,
-                        padding: DesignTokens.buttonPadding,
+                        backgroundColor: UiConfig.primaryColor,
+                        foregroundColor: UiConfig.foregroundColorDark,
+                        padding: UiConfig.defaultPadding,
                         shape: RoundedRectangleBorder(
                           borderRadius:
                               BorderRadius.circular(DesignTokens.buttonRadius),
@@ -257,7 +278,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                               height: 24,
                               width: 24,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
                           : Text(loc.feedbackSubmitButton),
                     ),
@@ -272,12 +295,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   }
 }
 
-/// Modular Star Rating Widget (accessible & reusable)
 class _StarRating extends StatelessWidget {
   final int rating;
   final ValueChanged<int> onRatingChanged;
 
   const _StarRating({
+    super.key,
     required this.rating,
     required this.onRatingChanged,
   });
@@ -293,7 +316,7 @@ class _StarRating extends StatelessWidget {
           onPressed: () => onRatingChanged(i + 1),
           icon: Icon(
             starFilled ? Icons.star : Icons.star_border,
-            color: starFilled ? DesignTokens.successColor : Colors.grey,
+            color: starFilled ? UiConfig.successColor : Colors.grey,
             size: 32,
           ),
           tooltip: loc.feedbackStarTooltip(i + 1),
@@ -302,5 +325,3 @@ class _StarRating extends StatelessWidget {
     );
   }
 }
-
-

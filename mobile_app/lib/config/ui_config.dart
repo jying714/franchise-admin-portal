@@ -101,6 +101,9 @@ class UiConfig {
   static FontWeight get fontWeightMedium => FontWeight.w500;
   static FontWeight get fontWeightNormal => FontWeight.normal;
 
+  static const String logoSmall = BrandingConfig.logoSmall;
+  static const String logoLarge = BrandingConfig.logoLarge;
+
   static Color _hexToColor(String hex) {
     final cleaned = hex.replaceAll('#', '');
     final value = int.parse('FF$cleaned', radix: 16);

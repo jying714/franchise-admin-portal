@@ -1,11 +1,9 @@
-// ignore_for_file: prefer_const_constructors
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:franchise_mobile_app/core/models/message.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:shared_core/src/core/config/design_tokens.dart';
+import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -20,7 +18,8 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   String? _userId;
   String? _chatId;
-  bool isSupportOnline = false;
+  bool _isSupportOnline = false;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -30,23 +29,43 @@ class _ChatScreenState extends State<ChatScreen> {
     _listenSupportOnline();
   }
 
-  void _initializeChat() async {
-    if (_userId == null) return;
+  Future<void> _initializeChat() async {
+    if (_userId == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    final franchiseProvider =
+        Provider.of<FranchiseProvider>(context, listen: false);
+    final franchiseId = franchiseProvider.currentFranchiseId;
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
-    final chatId = await firestoreService.createOrGetUserChat();
-    setState(() {
-      _chatId = chatId;
-    });
+        Provider.of<shared.FirestoreService>(context, listen: false);
+
+    try {
+      final chatId = await firestoreService.createOrGetUserChat(
+        _userId!,
+        franchiseId: franchiseId,
+      );
+      if (mounted) {
+        setState(() {
+          _chatId = chatId;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   void _listenSupportOnline() {
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+        Provider.of<shared.FirestoreService>(context, listen: false);
     firestoreService.streamSupportOnline().listen((status) {
-      setState(() {
-        isSupportOnline = status;
-      });
+      if (mounted) {
+        setState(() => _isSupportOnline = status);
+      }
     });
   }
 
@@ -56,74 +75,97 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  void _sendMessage(FirestoreService firestoreService) async {
+  Future<void> _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty || _userId == null || _chatId == null) return;
+
     _controller.clear();
 
-    await firestoreService.sendMessage(
-      chatId: _chatId!,
-      senderId: _userId!,
-      content: text,
-    );
+    final franchiseProvider =
+        Provider.of<FranchiseProvider>(context, listen: false);
+    final franchiseId = franchiseProvider.currentFranchiseId;
+    final firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
+
+    try {
+      await firestoreService.sendMessage(
+        franchiseId, // Positional first as per abstract/impl
+        chatId: _chatId!,
+        senderId: _userId!,
+        content: text,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send message'),
+            backgroundColor: UiConfig.errorColor,
+          ),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final franchiseProvider =
+        Provider.of<FranchiseProvider>(context, listen: true);
+    final franchiseId = franchiseProvider.currentFranchiseId;
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final localize = AppLocalizations.of(context)!;
 
     if (_userId == null) {
       return Scaffold(
         appBar: _buildAppBar(localize),
-        backgroundColor: DesignTokens.backgroundColorDark,
+        backgroundColor: UiConfig.backgroundColorDark,
         body: Center(
           child: Text(
             localize.mustSignInForChat,
             style: TextStyle(
               fontSize: DesignTokens.bodyFontSize,
-              color: DesignTokens.textColorDark,
+              color: UiConfig.textColorDark,
               fontFamily: DesignTokens.fontFamily,
-              fontWeight: FontWeight.w600,
+              fontWeight: UiConfig.fontWeightMedium,
             ),
           ),
         ),
       );
     }
 
-    if (_chatId == null) {
+    if (_isLoading || _chatId == null) {
       return Scaffold(
         appBar: _buildAppBar(localize),
-        backgroundColor: DesignTokens.backgroundColorDark,
+        backgroundColor: UiConfig.backgroundColorDark,
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
       appBar: _buildAppBar(localize),
-      backgroundColor: DesignTokens.backgroundColorDark,
+      backgroundColor: UiConfig.backgroundColorDark,
       body: Column(
         children: [
           Padding(
-            padding: DesignTokens.gridPadding,
+            padding: UiConfig.defaultPadding,
             child: Text(
-              isSupportOnline
-                  ? localize.supportIsOnline(BrandingConfig.franchiseName)
-                  : localize.supportWillReplySoon(BrandingConfig.franchiseName),
+              _isSupportOnline
+                  ? localize.supportIsOnline('Doughboys Pizzeria')
+                  : localize.supportWillReplySoon('Doughboys Pizzeria'),
               style: TextStyle(
                 fontSize: DesignTokens.bodyFontSize,
-                color: isSupportOnline
-                    ? DesignTokens.successTextColor
-                    : DesignTokens.disabledTextColor,
-                fontWeight: FontWeight.w600,
+                color: _isSupportOnline
+                    ? UiConfig.successColor
+                    : UiConfig.disabledTextColor,
+                fontWeight: UiConfig.fontWeightMedium,
                 fontFamily: DesignTokens.fontFamily,
               ),
             ),
           ),
           Expanded(
-            child: StreamBuilder<List<Message>>(
-              stream: firestoreService.streamChatMessages(_chatId!),
+            child: StreamBuilder<List<shared.Message>>(
+              stream:
+                  firestoreService.streamChatMessages(franchiseId, _chatId!),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -135,7 +177,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       localize.noMessages,
                       style: TextStyle(
                         fontSize: DesignTokens.bodyFontSize,
-                        color: DesignTokens.disabledTextColor,
+                        color: UiConfig.disabledTextColor,
                         fontFamily: DesignTokens.fontFamily,
                       ),
                     ),
@@ -143,21 +185,19 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
                 return ListView.builder(
                   reverse: true,
+                  padding: UiConfig.defaultPadding,
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final message = messages[index];
                     final isUser = message.senderId == _userId;
-                    return _MessageBubble(
-                      message: message,
-                      isUser: isUser,
-                    );
+                    return _MessageBubble(message: message, isUser: isUser);
                   },
                 );
               },
             ),
           ),
           Padding(
-            padding: DesignTokens.gridPadding,
+            padding: UiConfig.defaultPadding,
             child: Row(
               children: [
                 Expanded(
@@ -167,7 +207,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     maxLines: 3,
                     decoration: InputDecoration(
                       hintText: localize.typeYourMessage,
-                      hintStyle: TextStyle(color: DesignTokens.hintTextColor),
+                      hintStyle: TextStyle(color: UiConfig.hintTextColor),
                       border: OutlineInputBorder(
                         borderRadius:
                             BorderRadius.circular(DesignTokens.formFieldRadius),
@@ -175,7 +215,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       counterText: '',
                     ),
                     style: TextStyle(
-                      color: DesignTokens.textColorDark,
+                      color: UiConfig.textColorDark,
                       fontSize: DesignTokens.bodyFontSize,
                       fontFamily: DesignTokens.fontFamily,
                     ),
@@ -183,12 +223,12 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.send,
-                    color: DesignTokens.facebookColor,
+                    color: UiConfig.facebookColor,
                     size: DesignTokens.iconSize,
                   ),
-                  onPressed: () => _sendMessage(firestoreService),
+                  onPressed: _sendMessage,
                 ),
               ],
             ),
@@ -203,94 +243,57 @@ class _ChatScreenState extends State<ChatScreen> {
           localize.chatSupportTitle,
           style: TextStyle(
             fontSize: DesignTokens.titleFontSize,
-            color: DesignTokens.foregroundColorDark,
-            fontWeight: DesignTokens.titleFontWeight,
+            color: UiConfig.foregroundColorDark,
+            fontWeight: UiConfig.fontWeightBold,
             fontFamily: DesignTokens.fontFamily,
           ),
         ),
-        backgroundColor: DesignTokens.facebookColor,
+        backgroundColor: UiConfig.facebookColor,
         centerTitle: true,
         elevation: 0,
-        iconTheme: const IconThemeData(color: DesignTokens.foregroundColorDark),
+        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
       );
 }
 
-/// --- Custom message bubble widget for UI clarity
 class _MessageBubble extends StatelessWidget {
-  final Message message;
+  final shared.Message message;
   final bool isUser;
 
-  const _MessageBubble({required this.message, required this.isUser});
+  const _MessageBubble(
+      {super.key, required this.message, required this.isUser});
 
   @override
   Widget build(BuildContext context) {
-    // Optionally, display an avatar if you later add image URLs to Message model.
-    // final String? avatarUrl = message.senderImageUrl; // Uncomment if available
-
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-        padding: DesignTokens.cardPadding,
+        padding: UiConfig.defaultPadding,
         decoration: BoxDecoration(
           color: isUser
-              ? DesignTokens.secondaryTextColor.withAlpha(51) // ~20% opacity
-              : DesignTokens.surfaceColorDark,
+              ? UiConfig.accentColor.withAlpha(51)
+              : UiConfig.surfaceColorDark,
           borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          crossAxisAlignment:
+              isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            // If you ever add avatars to Message, uncomment and wire up below:
-            // if (!isUser && avatarUrl != null && avatarUrl.isNotEmpty)
-            //   Padding(
-            //     padding: const EdgeInsets.only(right: 8),
-            //     child: NetworkImageWidget(
-            //       imageUrl: avatarUrl,
-            //       fallbackAsset: BrandingConfig.defaultAvatarIcon,
-            //       width: 32,
-            //       height: 32,
-            //       borderRadius: BorderRadius.circular(16),
-            //     ),
-            //   ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment:
-                    isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    message.content,
-                    style: TextStyle(
-                      fontSize: DesignTokens.bodyFontSize,
-                      color: DesignTokens.textColorDark,
-                      fontFamily: DesignTokens.fontFamily,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _formatTime(message.timestamp),
-                    style: TextStyle(
-                      fontSize: DesignTokens.captionFontSize,
-                      color: DesignTokens.hintTextColor,
-                      fontFamily: DesignTokens.fontFamily,
-                    ),
-                  ),
-                  if (isUser && message.status.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        message.status,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: message.status == 'read'
-                              ? DesignTokens.successColor
-                              : DesignTokens.hintTextColor,
-                          fontFamily: DesignTokens.fontFamily,
-                        ),
-                      ),
-                    ),
-                ],
+            Text(
+              message.content,
+              style: TextStyle(
+                fontSize: DesignTokens.bodyFontSize,
+                color: UiConfig.textColorDark,
+                fontFamily: DesignTokens.fontFamily,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _formatTime(message.timestamp),
+              style: TextStyle(
+                fontSize: DesignTokens.captionFontSize,
+                color: UiConfig.hintTextColor,
+                fontFamily: DesignTokens.fontFamily,
               ),
             ),
           ],
@@ -305,5 +308,3 @@ class _MessageBubble extends StatelessWidget {
     return '$h:$m';
   }
 }
-
-
