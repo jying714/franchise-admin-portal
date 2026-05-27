@@ -1,23 +1,11 @@
-// UN-USED FILE
-// UN-USED FILE
-// UN-USED FILE
-// UN-USED FILE
-// UN-USED FILE
-// UN-USED FILE
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/config/app_config.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/src/core/models/menu_item.dart';
-import 'package:shared_core/src/core/models/ingredient_metadata.dart';
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/ordering/cart_screen.dart';
 import 'package:franchise_mobile_app/widgets/customization/customization_modal.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_mobile_app/widgets/favorite_button.dart';
 import 'package:franchise_mobile_app/widgets/dietary_allergen_chips_row.dart';
 import 'package:franchise_mobile_app/widgets/menu_item_image.dart';
@@ -27,6 +15,11 @@ import 'package:franchise_mobile_app/widgets/customize_and_add_to_cart_button.da
 import 'package:franchise_mobile_app/widgets/add_to_cart_button.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/widgets/header/profile_icon_button.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:shared_core/src/core/config/branding_config.dart';
+import 'package:shared_core/src/core/config/design_tokens.dart';
+import 'package:shared_core/src/core/models/menu_item.dart';
+import 'package:shared_core/src/core/config/app_config.dart';
 
 class ItemScreen extends StatefulWidget {
   final String itemId;
@@ -86,13 +79,8 @@ class _ItemScreenState extends State<ItemScreen> {
     double totalPrice,
     AppLocalizations loc,
   ) async {
-    print('[DEBUG] _addToCart called with:');
-    print('  item: ${item.toMap()}');
-    print('  customizations: $customizations');
-    print('  quantity: $quantity');
-    print('  totalPrice: $totalPrice');
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final franchiseProvider =
         Provider.of<FranchiseProvider>(context, listen: false);
     final franchiseId = franchiseProvider.currentFranchiseId;
@@ -110,40 +98,30 @@ class _ItemScreenState extends State<ItemScreen> {
 
     if (_userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(loc.signInToOrderMessage),
-          duration: AppConfig.toastDuration,
-        ),
+        SnackBar(content: Text(loc.signInToOrderMessage)),
       );
       return;
     }
+
     setState(() => _isProcessing = true);
+
     try {
-      print('[DEBUG] Submitting to FirestoreService.addToCart:');
-      print('  userId: $_userId');
-      print('  menuItem: ${item.toMap()}');
-      print('  customizations: $customizations');
-      print('  quantity: $quantity');
-      print('  price: $totalPrice');
-      print('  deliveryFee: $_deliveryFee');
-      print('  discount: $_discount');
-      print('  deliveryType: $_deliveryType');
-      print('  time: $_time');
-      print('  estimatedTime: $_estimatedTime');
+      // Convert customizations map to List<Customization> as expected by service
+      final List<shared.Customization> customizationList =
+          (customizations['groups'] as List<dynamic>? ?? [])
+              .map((e) =>
+                  shared.Customization.fromMap(e as Map<String, dynamic>))
+              .toList();
+
       await firestoreService.addToCart(
         userId: _userId!,
         franchiseId: franchiseId,
         menuItem: item,
-        customizations: customizations,
+        customizations: customizationList,
         quantity: quantity,
         price: totalPrice,
-        deliveryFee: _deliveryFee,
-        discount: _discount,
-        deliveryType: _deliveryType,
-        time: _time,
-        timestamp: Timestamp.now(),
-        estimatedTime: _estimatedTime,
       );
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(loc.addedToCartMessage),
@@ -152,10 +130,7 @@ class _ItemScreenState extends State<ItemScreen> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(loc.cartAddError),
-          duration: AppConfig.toastDuration,
-        ),
+        SnackBar(content: Text(loc.cartAddError)),
       );
     } finally {
       setState(() => _isProcessing = false);
@@ -165,9 +140,10 @@ class _ItemScreenState extends State<ItemScreen> {
   @override
   Widget build(BuildContext context) {
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final ingredientMetadata =
-        Provider.of<Map<String, IngredientMetadata>>(context, listen: false);
+        Provider.of<Map<String, shared.IngredientMetadata>>(context,
+            listen: false);
     final loc = AppLocalizations.of(context)!;
     //print("[DEBUG] ItemScreen menuItem: ${widget.menuItem.toMap()}");
     return Scaffold(
@@ -180,7 +156,7 @@ class _ItemScreenState extends State<ItemScreen> {
         actions: [
           ProfileIconButton(
             tooltip: loc.profile,
-            iconColor: DesignTokens.foregroundColor,
+            iconColor: UiConfig.foregroundColorDark,
             iconSize: DesignTokens.iconSize,
             onPressed: () {
               Navigator.pushNamed(context, '/profile');
@@ -188,10 +164,10 @@ class _ItemScreenState extends State<ItemScreen> {
           ),
           IconButton(
             // Cart
-            icon: const Icon(
+            icon: Icon(
               Icons.shopping_cart,
               size: DesignTokens.iconSize,
-              color: DesignTokens.foregroundColor,
+              color: UiConfig.foregroundColorDark,
             ),
             onPressed: () => Navigator.push(
               context,
@@ -201,13 +177,13 @@ class _ItemScreenState extends State<ItemScreen> {
           ),
           FavoriteButton(itemId: widget.itemId, userId: _userId),
         ],
-        backgroundColor: DesignTokens.primaryColor,
-        foregroundColor: DesignTokens.foregroundColor,
+        backgroundColor: UiConfig.primaryColor,
+        foregroundColor: UiConfig.foregroundColorDark,
         elevation: 0,
       ),
-      backgroundColor: DesignTokens.backgroundColor,
+      backgroundColor: UiConfig.backgroundColor,
       body: SingleChildScrollView(
-        padding: DesignTokens.gridPadding,
+        padding: UiConfig.defaultPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -223,20 +199,20 @@ class _ItemScreenState extends State<ItemScreen> {
             // ITEM NAME
             Text(
               widget.menuItem.name,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: DesignTokens.titleFontSize,
-                fontWeight: DesignTokens.titleFontWeight,
-                color: DesignTokens.textColor,
+                fontWeight: UiConfig.fontWeightBold,
+                color: UiConfig.textColor,
                 fontFamily: DesignTokens.fontFamily,
               ),
             ),
             // PRICE (base price, full total is in modal)
             Text(
               '\$${widget.menuItem.price.toStringAsFixed(2)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: DesignTokens.bodyFontSize,
-                color: DesignTokens.textColor,
-                fontWeight: DesignTokens.bodyFontWeight,
+                color: UiConfig.textColor,
+                fontWeight: UiConfig.fontWeightMedium,
                 fontFamily: DesignTokens.fontFamily,
               ),
             ),
@@ -244,9 +220,9 @@ class _ItemScreenState extends State<ItemScreen> {
             // DESCRIPTION
             Text(
               widget.menuItem.description,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: DesignTokens.captionFontSize,
-                color: DesignTokens.secondaryTextColor,
+                color: UiConfig.secondaryTextColor,
                 fontFamily: DesignTokens.fontFamily,
               ),
             ),
@@ -286,8 +262,8 @@ class _ItemScreenState extends State<ItemScreen> {
                           onPressed: _isProcessing
                               ? null
                               : () async {
-                                  final latestMenuItem =
-                                      await Provider.of<FirestoreService>(
+                                  final latestMenuItem = await Provider.of<
+                                      shared.FirestoreService>(
                                     context,
                                     listen: false,
                                   ).getMenuItemById(widget.itemId);

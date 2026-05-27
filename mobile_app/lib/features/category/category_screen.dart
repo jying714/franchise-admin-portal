@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_core/src/core/config/app_config.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
-import 'package:franchise_mobile_app/core/services/analytics_service.dart';
+import 'package:shared_core/src/core/services/analytics_service.dart';
 import 'package:shared_core/src/core/models/menu_item.dart';
 import 'package:shared_core/src/core/models/order.dart' as order_model;
 import 'package:franchise_mobile_app/features/ordering/cart_screen.dart';
@@ -63,7 +64,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
       double totalPrice) async {
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
-    final franchiseProvider = Provider.of<FranchiseProvider>(context, listen: false);
+    final franchiseProvider =
+        Provider.of<FranchiseProvider>(context, listen: false);
     final franchiseId = franchiseProvider.currentFranchiseId;
     final analytics = Provider.of<AnalyticsService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
@@ -77,7 +79,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
       return;
     }
 
-    var cart = await firestoreService.getCart(user.uid, franchiseId: franchiseId != 'unknown' ? franchiseId : null).first;
+    var cart = await firestoreService
+        .getCart(user.uid,
+            franchiseId: franchiseId != 'unknown' ? franchiseId : null)
+        .first;
     cart ??= order_model.Order(
       id: user.uid,
       userId: user.uid,
@@ -168,9 +173,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
             tooltip: loc.profile, // Ensure this exists in your localization
           ),
           CartIconBadge(
-            cartItemCountStream: Provider.of<FirestoreService>(context,
-                    listen: false)
-                .getCartItemCountStream(FirebaseAuth.instance.currentUser?.uid),
+            cartItemCountStream:
+                Provider.of<shared.FirestoreService>(context, listen: false)
+                    .getCartItemCountStream(
+                        FirebaseAuth.instance.currentUser?.uid ?? 'guest'),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CartScreen()),

@@ -100,4 +100,38 @@ class AnalyticsServiceImpl implements AnalyticsService {
       {required String type, int? count, String? userId}) async {}
   @override
   Future<void> runManualRollup(String franchiseId) async {}
+
+  @override
+  Future<void> logCategoryViewed(String categoryName) async {
+    try {
+      if (kDebugMode) {
+        print('📊 Analytics: Category Viewed - $categoryName');
+      }
+      // TODO: Later connect to real analytics
+    } catch (e) {
+      ErrorLogger.log(
+        message: e.toString(),
+        source: 'logCategoryViewed',
+        stack: StackTrace.current.toString(),
+      );
+    }
+  }
+
+  @override
+  Future<void> logMenuItemAddedToCart(
+      String menuItemId, String categoryName, int quantity) async {
+    try {
+      if (kDebugMode) {
+        print(
+            '📊 Analytics: Item Added to Cart - $menuItemId ($categoryName) x$quantity');
+      }
+      // TODO: Later connect to real analytics
+    } catch (e) {
+      ErrorLogger.log(
+        message: e.toString(),
+        source: 'logMenuItemAddedToCart',
+        stack: StackTrace.current.toString(),
+      );
+    }
+  }
 }
