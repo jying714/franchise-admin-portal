@@ -1,13 +1,13 @@
 import 'dart:math';
+
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:shared_core/src/core/config/design_tokens.dart';
 import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/models/order.dart' as order_model;
-import 'package:shared_core/src/core/models/menu_item.dart';
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/ordering/confirmation_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 enum DeliveryType { delivery, pickup }
@@ -73,7 +73,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(localizations.selectedTimeOutsideBusinessHours),
-          backgroundColor: DesignTokens.errorColor,
+          backgroundColor: UiConfig.errorColor,
         ),
       );
       return;
@@ -104,10 +104,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
-    final franchiseId = Provider.of<FranchiseProvider>(context, listen: false).currentFranchiseId;
+        Provider.of<shared.FirestoreService>(context, listen: false);
+    final franchiseId = Provider.of<FranchiseProvider>(context, listen: false)
+        .currentFranchiseId;
 
-    firestoreService.getCart(user.uid, franchiseId: franchiseId != 'unknown' ? franchiseId : null).first.then((cart) {
+    firestoreService
+        .getCart(user.uid,
+            franchiseId: franchiseId != 'unknown' ? franchiseId : null)
+        .first
+        .then((cart) {
       if (cart == null) return;
       double subtotal = 0.0;
       for (final item in cart.items) {
@@ -130,7 +135,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(localizations.pleaseSelectTime),
-          backgroundColor: DesignTokens.errorColor,
+          backgroundColor: UiConfig.errorColor,
         ),
       );
       return;
@@ -141,22 +146,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(localizations.signInToOrder),
-          backgroundColor: DesignTokens.errorColor,
+          backgroundColor: UiConfig.errorColor,
         ),
       );
       return;
     }
 
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
-    final franchiseId = Provider.of<FranchiseProvider>(context, listen: false).currentFranchiseId;
-    final cart = await firestoreService.getCart(user.uid, franchiseId: franchiseId != 'unknown' ? franchiseId : null).first;
+        Provider.of<shared.FirestoreService>(context, listen: false);
+    final franchiseId = Provider.of<FranchiseProvider>(context, listen: false)
+        .currentFranchiseId;
+    final cart = await firestoreService
+        .getCart(user.uid,
+            franchiseId: franchiseId != 'unknown' ? franchiseId : null)
+        .first;
     if (cart == null || cart.items.isEmpty) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(localizations.cartEmpty),
-          backgroundColor: DesignTokens.errorColor,
+          backgroundColor: UiConfig.errorColor,
         ),
       );
       return;
@@ -170,7 +179,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(localizations.paymentFailed),
-          backgroundColor: DesignTokens.errorColor,
+          backgroundColor: UiConfig.errorColor,
         ),
       );
       return;
@@ -180,7 +189,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final orderId = _generateOrderId();
     final order = cart.copyWith(
       id: orderId,
-      items: List<order_model.OrderItem>.from(cart.items), // <<<< REQUIRED LINE
+      items: List<shared.OrderItem>.from(cart.items),
       subtotal: _orderSubtotal,
       tax: _orderTax,
       deliveryFee: _deliveryFee,
@@ -210,7 +219,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(localizations.orderPlaced),
-          backgroundColor: DesignTokens.successTextColor,
+          backgroundColor: UiConfig.successColor,
         ),
       );
     } catch (e) {
@@ -218,7 +227,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${localizations.orderFailed}: $e'),
-          backgroundColor: DesignTokens.errorColor,
+          backgroundColor: UiConfig.errorColor,
         ),
       );
     }
@@ -226,14 +235,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   /// --- Allergen list for cart items in checkout ---
   List<String> _allAllergensInCart(
-    List<order_model.OrderItem> items,
-    List<MenuItem> menuItems,
+    List<shared.OrderItem> items,
+    List<shared.MenuItem> menuItems,
   ) {
     final allergens = <String>{};
     for (final item in items) {
       final menu = menuItems.firstWhere(
         (m) => m.id == item.menuItemId,
-        orElse: () => MenuItem(
+        orElse: () => shared.MenuItem(
           id: item.menuItemId,
           category: '',
           categoryId: '',
@@ -243,10 +252,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           customizationGroups: [],
           customizations: [],
           taxCategory: '',
+          available: true,
           availability: true,
         ),
       );
-      for (final allergen in menu.allergens) {
+      for (final allergen in menu.allergens ?? []) {
         if (allergen.isNotEmpty) allergens.add(allergen);
       }
     }
@@ -261,19 +271,33 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
 
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final user = FirebaseAuth.instance.currentUser;
 
+    final franchiseProvider =
+        Provider.of<FranchiseProvider>(context, listen: true);
+    final franchiseId = franchiseProvider.currentFranchiseId;
+
     // --- StreamBuilder to display allergens at checkout, just like cart ---
-    return StreamBuilder<order_model.Order?>(
-      stream: user == null ? null : firestoreService.getCart(user.uid, franchiseId: Provider.of<FranchiseProvider>(context, listen: false).currentFranchiseId != 'unknown' ? Provider.of<FranchiseProvider>(context, listen: false).currentFranchiseId : null),
+    return StreamBuilder<shared.Order?>(
+      stream: user == null
+          ? null
+          : firestoreService.getCart(user.uid,
+              franchiseId:
+                  Provider.of<FranchiseProvider>(context, listen: false)
+                              .currentFranchiseId !=
+                          'unknown'
+                      ? Provider.of<FranchiseProvider>(context, listen: false)
+                          .currentFranchiseId
+                      : null),
       builder: (context, cartSnapshot) {
         final cart = cartSnapshot.data;
         if (cart == null || cart.items.isEmpty) {
           return _emptyCheckout(localizations);
         }
-        return StreamBuilder<List<MenuItem>>(
+        return StreamBuilder<List<shared.MenuItem>>(
           stream: firestoreService.getMenuItemsByIds(
+            franchiseId,
             cart.items.map((i) => i.menuItemId).toList(),
           ),
           builder: (context, menuSnapshot) {
@@ -282,25 +306,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             final showAllergenWarning = allAllergens.isNotEmpty;
 
             return Scaffold(
-              backgroundColor: DesignTokens.backgroundColor,
+              backgroundColor: UiConfig.backgroundColor,
               appBar: AppBar(
                 title: Text(
                   localizations.checkout,
-                  style: const TextStyle(
-                    color: DesignTokens.foregroundColor,
+                  style: TextStyle(
+                    color: UiConfig.foregroundColorDark,
                     fontSize: DesignTokens.titleFontSize,
-                    fontWeight: DesignTokens.titleFontWeight,
+                    fontWeight: UiConfig.fontWeightBold,
                     fontFamily: DesignTokens.fontFamily,
                   ),
                 ),
-                backgroundColor: DesignTokens.primaryColor,
+                backgroundColor: UiConfig.primaryColor,
                 elevation: 0,
-                iconTheme:
-                    const IconThemeData(color: DesignTokens.foregroundColor),
+                iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
                 centerTitle: true,
               ),
               body: SingleChildScrollView(
-                padding: DesignTokens.cardPadding,
+                padding: UiConfig.cardPadding,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -311,22 +334,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             left: 4, right: 4, top: 2, bottom: 12),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: DesignTokens.errorBgColor.withOpacity(0.12),
+                          color: UiConfig.errorColor.withOpacity(0.12),
                           borderRadius:
                               BorderRadius.circular(DesignTokens.cardRadius),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.warning_amber_rounded,
-                                color: DesignTokens.errorColor, size: 28),
+                            Icon(Icons.warning_amber_rounded,
+                                color: UiConfig.errorColor, size: 28),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
                                 '${localizations.warning}: ${localizations.itemsInCartCouldContain}\n'
                                 '${allAllergens.join(", ")}',
                                 style: TextStyle(
-                                  color: DesignTokens.errorColor,
+                                  color: UiConfig.errorColor,
                                   fontWeight: FontWeight.bold,
                                   fontFamily: DesignTokens.fontFamily,
                                 ),
@@ -337,9 +360,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                     Text(
                       localizations.orderType,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: DesignTokens.bodyFontSize,
-                        fontWeight: DesignTokens.titleFontWeight,
+                        fontWeight: UiConfig.fontWeightBold,
                         fontFamily: DesignTokens.fontFamily,
                       ),
                     ),
@@ -386,8 +409,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                       trailing: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: DesignTokens.secondaryColor,
-                          foregroundColor: DesignTokens.foregroundColor,
+                          backgroundColor: UiConfig.secondaryColor,
+                          foregroundColor: UiConfig.foregroundColorDark,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
                                 DesignTokens.buttonRadius),
@@ -422,8 +445,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           '${localizations.promoApplied}: -\$${promoDiscount.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            color: DesignTokens.successTextColor,
+                          style: TextStyle(
+                            color: UiConfig.successColor,
                             fontSize: DesignTokens.captionFontSize,
                           ),
                         ),
@@ -431,9 +454,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     const SizedBox(height: 16),
                     Text(
                       localizations.paymentMethod,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: DesignTokens.bodyFontSize,
-                        fontWeight: DesignTokens.titleFontWeight,
+                        fontWeight: UiConfig.fontWeightBold,
                         fontFamily: DesignTokens.fontFamily,
                       ),
                     ),
@@ -452,9 +475,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         borderRadius:
                             BorderRadius.circular(DesignTokens.cardRadius),
                       ),
-                      color: DesignTokens.surfaceColor,
+                      color: UiConfig.surfaceColor,
                       child: Padding(
-                        padding: DesignTokens.cardPadding,
+                        padding: UiConfig.cardPadding,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -477,9 +500,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     const SizedBox(height: 20),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: DesignTokens.primaryColor,
-                        foregroundColor: DesignTokens.foregroundColor,
-                        padding: DesignTokens.buttonPadding,
+                        backgroundColor: UiConfig.primaryColor,
+                        foregroundColor: UiConfig.foregroundColorDark,
+                        padding: UiConfig.defaultPadding,
                         shape: RoundedRectangleBorder(
                           borderRadius:
                               BorderRadius.circular(DesignTokens.buttonRadius),
@@ -511,28 +534,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _emptyCheckout(AppLocalizations localizations) {
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundColor,
+      backgroundColor: UiConfig.backgroundColor,
       appBar: AppBar(
         title: Text(
           localizations.checkout,
-          style: const TextStyle(
-            color: DesignTokens.foregroundColor,
+          style: TextStyle(
+            color: UiConfig.foregroundColorDark,
             fontSize: DesignTokens.titleFontSize,
-            fontWeight: DesignTokens.titleFontWeight,
+            fontWeight: UiConfig.fontWeightBold,
             fontFamily: DesignTokens.fontFamily,
           ),
         ),
-        backgroundColor: DesignTokens.primaryColor,
+        backgroundColor: UiConfig.primaryColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: DesignTokens.foregroundColor),
+        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
         centerTitle: true,
       ),
       body: Center(
         child: Text(
           localizations.cartEmpty,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: DesignTokens.bodyFontSize,
-            color: DesignTokens.textColor,
+            color: UiConfig.textColor,
             fontWeight: FontWeight.bold,
             fontFamily: DesignTokens.fontFamily,
           ),
@@ -560,7 +583,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             '${value < 0 ? '-' : ''}\$${value.abs().toStringAsFixed(2)}',
             style: TextStyle(
               fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-              color: bold ? DesignTokens.primaryColor : DesignTokens.textColor,
+              color: bold ? UiConfig.primaryColor : UiConfig.textColor,
               fontSize: DesignTokens.bodyFontSize,
             ),
           ),
@@ -584,5 +607,3 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 }
-
-
