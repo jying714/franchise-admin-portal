@@ -160,6 +160,29 @@ class DesignTokens {
   static String get warningColor => warningColorHex;
   static int get toastDuration => 2; // int for most usage
 
+  // Missing tokens referenced in analyze
+  static const String bannerOverlayColorHex = '#000000';
+  static const String cardBorderColorHex = '#E0E0E0';
+  static const String fallbackAppIcon = 'assets/images/logo_small.png';
+
+  // Getters
+  static String get bannerOverlayColor => bannerOverlayColorHex;
+  static String get cardBorderColor => cardBorderColorHex;
+
+  static int get bannerAutoPlayInterval => bannerAutoPlayIntervalSeconds;
+  static double get bannerAutoPlayIntervalSecondsDouble =>
+      bannerAutoPlayIntervalSeconds.toDouble();
+
+  // FontWeight string helpers (many screens expect String)
+  static String get bold => 'bold';
+  static String get normal => 'normal';
+  static String get medium => 'medium';
+  static String get w600 => '600';
+
+  // Additional tokens needed for remaining errors
+  static const double defaultPadding = 16.0;
+  static const double buttonHeight = 56.0;
+
   // ======================
   // === FUTURE TOKENS ====
   // ======================

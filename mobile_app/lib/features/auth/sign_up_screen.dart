@@ -155,21 +155,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
 
-    final firebaseUser = await authService.createUserWithEmailAndPassword(
+    final user = await authService.createUserWithEmailAndPassword(
         email: email, password: password);
 
     if (!mounted) return;
     setState(() => _loading = false);
 
-    if (firebaseUser != null) {
+    if (user != null) {
       try {
-        await authService
-            .sendEmailVerification(); // TODO: confirm method name in AuthService
-        await _ensureUserProfile(firebaseUser, displayName: name);
+        await authService.sendEmailVerification();
+        await _ensureUserProfile(user, displayName: name);
 
         final firestoreService =
             Provider.of<shared.FirestoreService>(context, listen: false);
-        final dbUser = await firestoreService.getUser(firebaseUser.uid);
+        final dbUser = await firestoreService.getUser(user.id);
 
         if (!mounted) return;
 

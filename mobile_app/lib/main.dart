@@ -4,13 +4,17 @@ import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_core/shared_core.dart';
+
+// Shared Core (Single Source of Truth)
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:shared_core/shared_core.dart' show DesignTokens;
+// Local Providers & Config
 import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
-import 'package:franchise_mobile_app/core/services/analytics_service.dart';
 import 'package:franchise_mobile_app/features/language/language_provider.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as app_user;
-import 'package:franchise_mobile_app/config/ui_config.dart'; // ← NEW: Use this for Colors & Icons
+import 'package:franchise_mobile_app/config/ui_config.dart';
 
+// Screens & Widgets
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/complete_profile_dialog.dart';
@@ -18,10 +22,10 @@ import 'firebase_options.dart';
 
 /// Ingredient Metadata Provider (kept as-is)
 class IngredientMetadataProvider extends ChangeNotifier {
-  final Map<String, IngredientMetadata> _ingredients = {};
+  final Map<String, shared.IngredientMetadata> _ingredients = {};
   bool _isLoaded = false;
   bool get isLoaded => _isLoaded;
-  Map<String, IngredientMetadata> get ingredients => _ingredients;
+  Map<String, shared.IngredientMetadata> get ingredients => _ingredients;
 
   IngredientMetadataProvider() {
     _loadIngredients();
@@ -35,7 +39,8 @@ class IngredientMetadataProvider extends ChangeNotifier {
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final id = data['id'] ?? doc.id;
-        _ingredients[id] = IngredientMetadata.fromMap({...data, 'id': id});
+        _ingredients[id] =
+            shared.IngredientMetadata.fromMap({...data, 'id': id});
       }
       _isLoaded = true;
       notifyListeners();
@@ -61,17 +66,19 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => FranchiseProvider()),
-        Provider(create: (_) => AnalyticsService()),
+        Provider<shared.AnalyticsService>(
+            create: (_) => shared.AnalyticsServiceImpl()),
         ChangeNotifierProvider(create: (_) => IngredientMetadataProvider()),
 
         // Concrete shared_core implementations
-        Provider<AuthService>(create: (_) => AuthServiceImpl()),
-        Provider<FirestoreService>(create: (_) => FirestoreServiceImpl()),
+        Provider<shared.AuthService>(create: (_) => shared.AuthServiceImpl()),
+        Provider<shared.FirestoreService>(
+            create: (_) => shared.FirestoreServiceImpl()),
 
-        StreamProvider<User?>(
+        StreamProvider<shared.User?>(
           create: (_) {
-            final authService = AuthServiceImpl();
-            final firestoreService = FirestoreServiceImpl();
+            final authService = shared.AuthServiceImpl();
+            final firestoreService = shared.FirestoreServiceImpl();
             return authService.authStateChanges.asyncExpand((user) {
               if (user == null) return Stream.value(null);
               return firestoreService.getUserByIdStream(user.id);
@@ -91,7 +98,7 @@ class MyApp extends StatelessWidget {
             );
           }
 
-          return Provider<Map<String, IngredientMetadata>>.value(
+          return Provider<Map<String, shared.IngredientMetadata>>.value(
             value: ingredientProvider.ingredients,
             child: Consumer<LanguageProvider>(
               builder: (context, languageProvider, child) {
@@ -107,12 +114,12 @@ class MyApp extends StatelessWidget {
                       titleLarge: TextStyle(
                         fontFamily: DesignTokens.fontFamily,
                         fontSize: DesignTokens.titleFontSize,
-                        fontWeight: FontWeight.bold, // ← Fixed: proper enum
+                        fontWeight: UiConfig.fontWeightBold,
                       ),
                       bodyLarge: TextStyle(
                         fontFamily: DesignTokens.fontFamily,
                         fontSize: DesignTokens.bodyFontSize,
-                        fontWeight: FontWeight.normal,
+                        fontWeight: UiConfig.fontWeightNormal,
                       ),
                     ),
                   ),
@@ -148,7 +155,7 @@ class _HomeWrapperState extends State<HomeWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    final sharedUser = Provider.of<User?>(context);
+    final sharedUser = Provider.of<shared.User?>(context);
 
     if (sharedUser == null) {
       return const SignInScreen();

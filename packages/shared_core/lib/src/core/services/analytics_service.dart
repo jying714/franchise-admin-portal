@@ -59,6 +59,12 @@ abstract class AnalyticsService {
   Future<void> logUnauthorizedAccess(
       {required String attemptedAction, required String userId});
 
+  Future<void> logCategoryTap({
+    required String franchiseId,
+    required String categoryId,
+    required String categoryName,
+  });
+
   // === EXPORT/IMPORT ===
   Future<void> logExportAction(
       {required String type, int? count, String? userId});

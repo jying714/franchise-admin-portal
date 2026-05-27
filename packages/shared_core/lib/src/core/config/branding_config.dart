@@ -40,6 +40,12 @@ class BrandingConfig {
     return brandRedHex;
   }
 
+  // Missing statics from analyze
+  static const String fallbackAppIcon = 'assets/images/logo.png';
+
+  static String get defaultFranchiseLogo => logoMain;
+  static String get appIcon => logoSmall;
+
   // ======================
   // === FUTURE TOKENS ====
   // ======================

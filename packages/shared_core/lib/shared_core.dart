@@ -14,4 +14,7 @@ export 'src/core/services/auth_service_impl.dart';
 export 'src/core/services/firestore_service.dart';
 export 'src/core/services/firestore_service_impl.dart';
 
+export 'src/core/services/analytics_service.dart';
+export 'src/core/services/analytics_service_impl.dart';
+
 // Add more as needed in future batches

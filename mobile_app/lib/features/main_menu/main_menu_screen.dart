@@ -11,10 +11,12 @@ import 'package:shimmer/shimmer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:franchise_mobile_app/widgets/header/cart_icon_badge.dart';
 import 'package:shared_core/src/core/config/app_config.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/src/core/config/branding_config.dart';
+import 'package:shared_core/src/core/config/design_tokens.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:franchise_mobile_app/core/services/analytics_service.dart';
+import 'package:shared_core/src/core/services/analytics_service.dart';
 import 'package:shared_core/src/core/models/banner.dart';
 import 'package:shared_core/src/core/models/menu_item.dart';
 import 'package:shared_core/src/core/models/order.dart' as order_model;
@@ -40,7 +42,7 @@ class MainMenuScreen extends material.StatelessWidget {
   material.Widget build(material.BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
-        statusBarColor: DesignTokens.primaryColor,
+        statusBarColor: UiConfig.primaryColor,
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness:
             Platform.isIOS ? Brightness.dark : Brightness.light,
@@ -48,21 +50,24 @@ class MainMenuScreen extends material.StatelessWidget {
     );
 
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final analyticsService =
-        Provider.of<AnalyticsService>(context, listen: false);
-    final franchiseProvider = Provider.of<FranchiseProvider>(context, listen: true);
+        Provider.of<shared.AnalyticsService>(context, listen: false);
+    final franchiseProvider =
+        Provider.of<FranchiseProvider>(context, listen: true);
     final franchiseId = franchiseProvider.currentFranchiseId;
     final userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
     final loc = AppLocalizations.of(context)!;
 
     final cartItemCountStream = firestoreService
-        .getCart(userId, franchiseId: franchiseId != 'unknown' ? franchiseId : null)
+        .getCart(userId,
+            franchiseId: franchiseId != 'unknown' ? franchiseId : null)
         .map((order) => order?.items.length ?? 0);
 
     return material.Scaffold(
       appBar: FranchiseAppBar(
-        title: Provider.of<FranchiseProvider>(context, listen: true).restaurantName,
+        title: Provider.of<FranchiseProvider>(context, listen: true)
+            .restaurantName,
         centerTitle: true,
         actions: [
           ProfileIconButton(
@@ -83,7 +88,7 @@ class MainMenuScreen extends material.StatelessWidget {
           const material.SizedBox(width: DesignTokens.gridSpacing),
         ],
       ),
-      backgroundColor: DesignTokens.backgroundColor,
+      backgroundColor: UiConfig.backgroundColor,
       body: material.SafeArea(
         child: material.Column(
           children: [
@@ -127,7 +132,8 @@ class MainMenuScreen extends material.StatelessWidget {
                     BannerActionHandler.handle(
                       context,
                       banner,
-                      analyticsService: analyticsService,
+                      analyticsService:
+                          analyticsService as shared.AnalyticsService?,
                       loc: loc,
                     );
                   },
@@ -137,7 +143,10 @@ class MainMenuScreen extends material.StatelessWidget {
             // --- Category Grid Section ---
             material.Expanded(
               child: material.StreamBuilder<List<model.Category>>(
-                stream: firestoreService.getCategories(franchiseProvider.currentFranchiseId != 'unknown' ? franchiseProvider.currentFranchiseId : 'default'),
+                stream: firestoreService.getCategories(
+                    franchiseProvider.currentFranchiseId != 'unknown'
+                        ? franchiseProvider.currentFranchiseId
+                        : 'default'),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState ==
                       material.ConnectionState.waiting) {
@@ -165,7 +174,12 @@ class MainMenuScreen extends material.StatelessWidget {
                   return CategoryGrid(
                     categories: categories,
                     onCategoryTap: (category) {
-                      analyticsService.logCategoryTap(category.name);
+                      analyticsService.logCategoryTap(
+                        franchiseId:
+                            franchiseProvider.currentFranchiseId ?? 'default',
+                        categoryId: category.id,
+                        categoryName: category.name,
+                      );
                       material.Navigator.push(
                         context,
                         material.MaterialPageRoute(

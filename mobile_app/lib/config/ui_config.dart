@@ -64,6 +64,43 @@ class UiConfig {
 
   static Color get warningColor => _hexToColor(DesignTokens.warningColorHex);
 
+  // Additional missing colors used across screens
+  static Color get backgroundColor =>
+      _hexToColor(DesignTokens.backgroundColorHex);
+  static Color get secondaryTextColor =>
+      _hexToColor(DesignTokens.secondaryTextColorHex);
+  static Color get errorTextColor =>
+      _hexToColor(DesignTokens.errorTextColorHex);
+
+  // Icon & Style helpers
+  static IconData get favoriteIcon => Icons.favorite;
+  static IconData get favoriteBorderIcon => Icons.favorite_border;
+  static IconData get cartIcon => Icons.shopping_cart;
+
+  // Banner & Card helpers
+  static Color get bannerOverlayColor =>
+      _hexToColor(DesignTokens.bannerOverlayColorHex)
+          .withAlpha(DesignTokens.bannerOverlayAlpha);
+  static Color get cardBorderColor =>
+      _hexToColor(DesignTokens.cardBorderColorHex);
+
+  static EdgeInsets get defaultPadding =>
+      EdgeInsets.all(DesignTokens.defaultPadding);
+  static EdgeInsets get screenPadding => const EdgeInsets.all(24.0);
+
+  static FontWeight get bold => FontWeight.bold;
+  static FontWeight get normal => FontWeight.normal;
+  static FontWeight get medium => FontWeight.w500;
+
+  // Spacing & Shape
+  static EdgeInsets get defaultScreenPadding => const EdgeInsets.all(24.0);
+  static EdgeInsets get cardPadding => EdgeInsets.all(DesignTokens.cardPadding);
+
+  // Font Weights (fix String → FontWeight? errors)
+  static FontWeight get fontWeightBold => FontWeight.bold;
+  static FontWeight get fontWeightMedium => FontWeight.w500;
+  static FontWeight get fontWeightNormal => FontWeight.normal;
+
   static Color _hexToColor(String hex) {
     final cleaned = hex.replaceAll('#', '');
     final value = int.parse('FF$cleaned', radix: 16);
