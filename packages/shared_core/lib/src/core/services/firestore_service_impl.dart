@@ -21,6 +21,8 @@ import '../models/user.dart'
 import '../models/category.dart' as model;
 import '../models/feedback_entry.dart' as feedback_model;
 import '../utils/error_logger.dart';
+import '../providers/franchise_provider.dart';
+import '../models/banner.dart';
 
 class FirestoreServiceImpl implements FirestoreService {
   late final firestore.FirebaseFirestore _db;
@@ -1194,12 +1196,22 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Future<void> addBanner(Banner banner) async =>
       throw UnimplementedError(_adminOnlyMsg('addBanner'));
+
   @override
   Future<void> updateBanner(Banner banner) async =>
       throw UnimplementedError(_adminOnlyMsg('updateBanner'));
+
   @override
-  Stream<List<Banner>> getBanners() =>
-      throw UnimplementedError(_adminOnlyMsg('getBanners'));
+  Stream<List<Banner>> getBanners() {
+    return _db
+        .collection(_banners)
+        .where('active', isEqualTo: true)
+        .snapshots()
+        .map((s) => s.docs
+            .map((d) =>
+                Banner.fromFirestore(d.data() as Map<String, dynamic>, d.id))
+            .toList());
+  }
 
   // Support chats (basic customer send implemented above; heavy admin delete stubbed)
   @override
@@ -1296,17 +1308,46 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Stream<List<MenuItem>> getMenuItems(String franchiseId,
       {String? search, String? sortBy, bool descending = false}) {
-    firestore.Query q = _franchiseCollection(franchiseId, _menuItems);
+    final effectiveId = (franchiseId.isNotEmpty &&
+            franchiseId != 'unknown' &&
+            franchiseId != 'default')
+        ? franchiseId
+        : 'doughboyspizzeria';
+
+    print(
+        '🔍 [getMenuItems] Called with franchiseId: "$franchiseId" | effectiveId: "$effectiveId" | categoryFilter: "${search ?? 'none'}"');
+
+    firestore.Query q = _franchiseCollection(effectiveId, _menuItems);
+
     if (search != null && search.isNotEmpty) {
-      q = q
-          .where('name', isGreaterThanOrEqualTo: search)
-          .where('name', isLessThan: search + '\uf8ff');
+      q = q.where('categoryId', isEqualTo: search);
+      print('🔍 [getMenuItems] Applying where categoryId == $search');
     }
-    if (sortBy != null) q = q.orderBy(sortBy, descending: descending);
-    return q.snapshots().map((s) => s.docs
-        .map((d) =>
-            MenuItem.fromFirestore(d.data() as Map<String, dynamic>, d.id))
-        .toList());
+    if (sortBy != null) {
+      q = q.orderBy(sortBy, descending: descending);
+    }
+
+    return q.snapshots().map((s) {
+      print('📦 [getMenuItems] Snapshot received: ${s.docs.length} documents');
+      final list = s.docs
+          .map((d) {
+            try {
+              final item = MenuItem.fromFirestore(
+                  d.data() as Map<String, dynamic>, d.id);
+              print('   ✅ Parsed menu item: ${item.name} (id: ${item.id})');
+              return item;
+            } catch (e) {
+              print('   ❌ Failed to parse menu item ${d.id}: $e');
+              return null;
+            }
+          })
+          .where((item) => item != null)
+          .cast<MenuItem>()
+          .toList();
+
+      print('✅ [getMenuItems] Final parsed count: ${list.length}');
+      return list;
+    });
   }
 
   @override
@@ -1331,22 +1372,52 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Stream<List<MenuItem>> getMenuItemsByCategory(String categoryId,
       {String? franchiseId, String? sortBy}) {
-    firestore.Query q;
-    if (franchiseId != null) {
-      q = _franchiseCollection(franchiseId, _menuItems)
-          .where('categoryId', isEqualTo: categoryId);
-    } else {
-      q = _db
-          .collectionGroup(_menuItems)
-          .where('categoryId', isEqualTo: categoryId);
-    }
-    if (sortBy != null) {
+    print(
+        '🔍 [getMenuItemsByCategory] Called - categoryId: "$categoryId", franchiseId: "$franchiseId", sortBy: "$sortBy"');
+
+    final effectiveFranchiseId = (franchiseId != null &&
+            franchiseId.isNotEmpty &&
+            franchiseId != 'unknown')
+        ? franchiseId
+        : 'doughboyspizzeria'; // fallback for debugging
+
+    print(
+        '🔍 [getMenuItemsByCategory] Using effective franchiseId: $effectiveFranchiseId');
+
+    firestore.Query q = _franchiseCollection(effectiveFranchiseId, _menuItems)
+        .where('categoryId', isEqualTo: categoryId);
+
+    if (sortBy != null && sortBy.isNotEmpty) {
       q = q.orderBy(sortBy);
+      print('🔍 [getMenuItemsByCategory] Applied orderBy: $sortBy');
+    } else {
+      q = q.orderBy('sortOrder'); // default sort
     }
-    return q.snapshots().map((s) => s.docs
-        .map((d) =>
-            MenuItem.fromFirestore(d.data() as Map<String, dynamic>, d.id))
-        .toList());
+
+    return q.snapshots().map((s) {
+      print(
+          '📦 [getMenuItemsByCategory] Snapshot received: ${s.docs.length} documents for category $categoryId');
+      final list = s.docs
+          .map((d) {
+            try {
+              final item = MenuItem.fromFirestore(
+                  d.data() as Map<String, dynamic>, d.id);
+              print(
+                  '   ✅ Parsed menu item: ${item.name} (id: ${item.id}, categoryId: ${item.categoryId})');
+              return item;
+            } catch (e, stack) {
+              print('   ❌ Failed to parse menu item ${d.id}: $e');
+              print('   Stack: $stack');
+              return null;
+            }
+          })
+          .where((item) => item != null)
+          .cast<MenuItem>()
+          .toList();
+
+      print('✅ [getMenuItemsByCategory] Final parsed count: ${list.length}');
+      return list;
+    });
   }
 
   @override
@@ -2019,8 +2090,22 @@ class FirestoreServiceImpl implements FirestoreService {
       throw UnimplementedError(_adminOnly('deleteCategory'));
 
   @override
-  Stream<List<model.Category>> getCategories(String franchiseId) =>
-      throw UnimplementedError(_adminOnly('getCategories'));
+  Stream<List<model.Category>> getCategories(String franchiseId) {
+    final effectiveId = (franchiseId.isNotEmpty &&
+            franchiseId != 'unknown' &&
+            franchiseId != 'default')
+        ? franchiseId
+        : 'doughboyspizzeria'; // Safe fallback until provider is fully fixed
+
+    return _franchiseCollection(effectiveId, _categories)
+        .where('isActive', isEqualTo: true)
+        .orderBy('sortOrder')
+        .snapshots()
+        .map((s) => s.docs
+            .map((d) => model.Category.fromFirestore(
+                d.data() as Map<String, dynamic>, d.id))
+            .toList());
+  }
 
   @override
   Future<Map<String, dynamic>?> getCategorySchema(

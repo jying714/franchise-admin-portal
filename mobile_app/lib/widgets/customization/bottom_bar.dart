@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_mobile_app/core/utils/formatting.dart';
 
 typedef ConfirmCallback = void Function(
   Map<String, dynamic> customizations,
@@ -11,7 +10,7 @@ typedef ConfirmCallback = void Function(
 );
 
 class CustomizationBottomBar extends StatelessWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final ThemeData theme;
   final AppLocalizations loc;
   final double totalPrice;
@@ -26,7 +25,7 @@ class CustomizationBottomBar extends StatelessWidget {
   final int drinkMaxPerFlavor;
 
   const CustomizationBottomBar({
-    Key? key,
+    super.key,
     required this.menuItem,
     required this.theme,
     required this.loc,
@@ -40,112 +39,133 @@ class CustomizationBottomBar extends StatelessWidget {
     required this.sizes,
     required this.menuItemPrice,
     required this.drinkMaxPerFlavor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
+    print(
+        '🔍 [CustomizationBottomBar] build - totalPrice: $totalPrice | isDrinks: ${menuItem.category.toLowerCase() == "drinks"}');
+
     final isDrinks = menuItem.category.toLowerCase() == 'drinks';
 
-    // DRINKS-SPECIFIC: Calculate price and display total based on flavor counts.
-    final drinkPrice = (sizePrices != null && sizes?.isNotEmpty == true)
-        ? (sizePrices![sizes!.first] as num).toDouble()
-        : (menuItemPrice as num?)?.toDouble() ?? 0.0;
-    final drinkTotalCount = isDrinks
-        ? (drinkFlavorCounts.values.fold(0, (sum, v) => sum + (v ?? 0)))
-        : 0;
-    final total = isDrinks ? (drinkTotalCount * drinkPrice) : totalPrice;
+    // Safe price calculation
+    double drinkPrice = 0.0;
+    if (isDrinks) {
+      drinkPrice = (sizePrices != null &&
+              sizes?.isNotEmpty == true &&
+              sizePrices![sizes!.first] != null)
+          ? (sizePrices![sizes!.first] as num).toDouble()
+          : (menuItemPrice ?? 0.0).toDouble();
+      print('🔍 [CustomizationBottomBar] Drinks price: $drinkPrice');
+    }
 
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              loc.total,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontFamily: DesignTokens.fontFamily,
-              ),
-            ),
-            Text(
-              // You must import your currencyFormat function!
-              currencyFormat(context, total),
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: DesignTokens.primaryColor,
-                fontWeight: FontWeight.bold,
-                fontFamily: DesignTokens.fontFamily,
-              ),
-            ),
-          ],
-        ),
-        if (error != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text(
-              error!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: DesignTokens.errorTextColor,
-                fontFamily: DesignTokens.fontFamily,
-              ),
-            ),
+    final drinkTotalCount = isDrinks
+        ? drinkFlavorCounts.values.fold(0, (sum, v) => sum + (v ?? 0))
+        : 0;
+
+    final displayTotal =
+        isDrinks ? (drinkTotalCount * drinkPrice) : (totalPrice ?? 0.0);
+
+    print('🔍 [CustomizationBottomBar] Final displayTotal: $displayTotal');
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: UiConfig.surfaceColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
           ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+        ],
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: DesignTokens.secondaryColor,
-              ),
-              onPressed: onCancel,
-              child: Text(
-                loc.cancel,
-                style: TextStyle(
-                  fontFamily: DesignTokens.fontFamily,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  loc.total,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: UiConfig.bold,
+                    fontFamily: shared.DesignTokens.fontFamily,
+                  ),
                 ),
-              ),
+                Text(
+                  UiConfig.currencyFormat(context, displayTotal),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: UiConfig.primaryColor,
+                    fontWeight: UiConfig.bold,
+                    fontFamily: shared.DesignTokens.fontFamily,
+                  ),
+                ),
+              ],
             ),
-            SizedBox(width: DesignTokens.gridSpacing),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: DesignTokens.primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(DesignTokens.buttonRadius),
+            if (error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  error!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: UiConfig.errorTextColor,
+                    fontFamily: shared.DesignTokens.fontFamily,
+                  ),
                 ),
               ),
-              onPressed: isDrinks
-                  ? () {
-                      // Only proceed if at least one drink selected
-                      if (drinkTotalCount == 0) {
-                        // This assumes parent will handle error state!
-                        // (You could also pass a setError callback)
-                        return;
-                      }
-                      // For each flavor with count > 0, call onConfirm once per drink
-                      drinkFlavorCounts.forEach((ingId, count) {
-                        for (var i = 0; i < count; i++) {
-                          onConfirm({
-                            'flavor': ingId,
-                            'size': sizes?.first,
-                          }, 1, drinkPrice);
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: UiConfig.secondaryColor,
+                  ),
+                  onPressed: onCancel,
+                  child: Text(
+                    loc.cancel,
+                    style:
+                        TextStyle(fontFamily: shared.DesignTokens.fontFamily),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: UiConfig.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                          shared.DesignTokens.buttonRadius),
+                    ),
+                  ),
+                  onPressed: isDrinks
+                      ? () {
+                          if (drinkTotalCount == 0) return;
+                          // ... existing drink logic
+                          drinkFlavorCounts.forEach((ingId, count) {
+                            for (var i = 0; i < count; i++) {
+                              onConfirm({'flavor': ingId, 'size': sizes?.first},
+                                  1, drinkPrice);
+                            }
+                          });
+                          onCancel();
                         }
-                      });
-                      onCancel(); // close dialog
-                    }
-                  : onSubmit,
-              child: Text(
-                loc.addToCart,
-                style: TextStyle(
-                  fontFamily: DesignTokens.fontFamily,
+                      : onSubmit,
+                  child: Text(
+                    loc.addToCart,
+                    style:
+                        TextStyle(fontFamily: shared.DesignTokens.fontFamily),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 }
-
-

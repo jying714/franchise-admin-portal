@@ -19,6 +19,7 @@ import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart'
 import 'package:franchise_mobile_app/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
 import 'package:franchise_mobile_app/widgets/filter_dropdown.dart';
+import 'package:shared_core/src/core/config/branding_config.dart';
 
 class CategoryScreen extends StatefulWidget {
   final String categoryId; // Firestore document ID for the category
@@ -190,36 +191,53 @@ class _CategoryScreenState extends State<CategoryScreen> {
       body: StreamBuilder<List<MenuItem>>(
         stream: firestoreService.getMenuItemsByCategory(
           widget.categoryId,
+          franchiseId: Provider.of<FranchiseProvider>(context, listen: false)
+              .currentFranchiseId,
           sortBy: orderByField,
         ),
         builder: (context, snapshot) {
-          // print(
-          //     '[DEBUG] Stream event: hasData=${snapshot.hasData}, data=${snapshot.data}, error=${snapshot.error}');
-          // print('[DEBUG] StreamBuilder snapshot data: ${snapshot.data}');
+          print(
+              '🔍 [CategoryScreen] StreamBuilder Triggered for category: ${widget.categoryId} (${widget.categoryName})');
+          print('   - ConnectionState: ${snapshot.connectionState}');
+          print('   - hasData: ${snapshot.hasData}');
+          print('   - hasError: ${snapshot.hasError}');
+          print('   - Data length: ${snapshot.data?.length ?? 0}');
+
+          if (snapshot.hasError) {
+            print('   ❌ ERROR: ${snapshot.error}');
+            print('   🔧 Stack: ${snapshot.stackTrace}');
+          }
+
           if (snapshot.connectionState == ConnectionState.waiting) {
+            print('   ⏳ Waiting for data...');
             return const LoadingShimmerWidget();
           }
 
           if (snapshot.hasError) {
             return EmptyStateWidget(
-              title: loc.menuLoadError,
-              iconData: Icons.error_outline,
-              // You can add message: "Something went wrong." if desired
+              title: "Error Loading Menu Items",
+              message: "Permission or query issue.\n\n${snapshot.error}",
+              imageAsset: BrandingConfig.defaultCategoryIcon,
             );
           }
 
           final items = snapshot.data ?? [];
+          print('   ✅ Final items count: ${items.length}');
+
           if (items.isEmpty) {
+            print('   ⚠️ No items returned from query');
             return EmptyStateWidget(
               title: loc.emptyStateMessage,
-              imageAsset:
-                  null, // Will use default or set a specific image if you prefer
+              message:
+                  "No menu items found for this category.\nCheck Firestore data and rules.",
+              imageAsset: BrandingConfig.defaultCategoryIcon,
             );
           }
 
+          print('   🎉 Rendering ${items.length} menu items');
+
           return Column(
             children: [
-              // --- Sort Dropdown ---
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -237,13 +255,13 @@ class _CategoryScreenState extends State<CategoryScreen> {
                   ],
                 ),
               ),
-
               Expanded(
                 child: ListView.builder(
                   padding: EdgeInsets.all(16),
                   itemCount: items.length,
                   itemBuilder: (context, index) {
                     final item = items[index];
+                    print('   📌 Rendering item ${index + 1}: ${item.name}');
                     return MenuItemCard(
                       menuItem: item,
                       showDescription: true,

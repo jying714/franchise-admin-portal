@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
-import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/portion_selector.dart';
 import 'package:franchise_mobile_app/widgets/customization/portion_pill_toggle.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -12,16 +11,16 @@ typedef ToggleIngredient = void Function(String, String);
 typedef CanDoubleCurrentIngredient = bool Function(String? groupLabel);
 typedef IsDoughIngredient = bool Function(String);
 typedef IsRadioGroup = bool Function(String);
-typedef GetPortion = Portion Function(String);
+typedef GetPortion = shared.Portion Function(String);
 
 class CurrentIngredients extends StatelessWidget {
   final List<String> currentIngredients;
-  final MenuItem menuItem;
-  final Map<String, IngredientMetadata> ingredientMetadata;
+  final shared.MenuItem menuItem;
+  final Map<String, shared.IngredientMetadata> ingredientMetadata;
   final Map<String, int> selectedSauceCounts;
   final Map<String, int> selectedDressingCounts;
   final Map<String, String> radioSelections;
-  final Map<String, Portion> ingredientPortions;
+  final Map<String, shared.Portion> ingredientPortions;
   final Map<String, bool> doubleToppings;
   final Map<String, double> ingredientAmounts;
   final int doublesCount;
@@ -35,7 +34,7 @@ class CurrentIngredients extends StatelessWidget {
   final ToggleIngredient toggleIngredient;
 
   const CurrentIngredients({
-    Key? key,
+    super.key,
     required this.currentIngredients,
     required this.menuItem,
     required this.ingredientMetadata,
@@ -54,7 +53,7 @@ class CurrentIngredients extends StatelessWidget {
     required this.currencyFormat,
     required this.setState,
     required this.toggleIngredient,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -72,9 +71,9 @@ class CurrentIngredients extends StatelessWidget {
             child: Text(
               'Add extra toppings or double any ingredient for just +${currencyFormat(context, getSaladToppingUpcharge())}.',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: DesignTokens.secondaryTextColor,
+                color: UiConfig.secondaryTextColor,
                 fontStyle: FontStyle.italic,
-                fontFamily: DesignTokens.fontFamily,
+                fontFamily: shared.DesignTokens.fontFamily,
               ),
             ),
           )
@@ -83,7 +82,7 @@ class CurrentIngredients extends StatelessWidget {
     final showIngIds = currentIngredients.where((id) {
       final meta = ingredientMetadata[id];
       if (isDinner) {
-        if (meta?.type?.toLowerCase() == 'sauces' &&
+        if ((meta?.type ?? '').toLowerCase() == 'sauces' &&
             (meta?.amountSelectable ?? false)) {
           return true;
         }
@@ -116,9 +115,9 @@ class CurrentIngredients extends StatelessWidget {
           Text(
             loc.currentIngredientsLabel,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: DesignTokens.primaryColor,
-              fontWeight: FontWeight.bold,
-              fontFamily: DesignTokens.fontFamily,
+              color: UiConfig.primaryColor,
+              fontWeight: UiConfig.bold,
+              fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
           ...showIngIds.map((ingId) {
@@ -143,7 +142,7 @@ class CurrentIngredients extends StatelessWidget {
                     groupLabel == "Cheeses");
             final canDouble = canDoubleCurrentIngredient(groupLabel);
             final isSauceWithDropdown = isDinner &&
-                (meta?.type?.toLowerCase() == 'sauces' &&
+                ((meta?.type ?? '').toLowerCase() == 'sauces' &&
                     (meta?.amountSelectable ?? false));
             final isRemoved = removable && !currentIngredients.contains(ingId);
 
@@ -192,8 +191,8 @@ class CurrentIngredients extends StatelessWidget {
                                     ? FontWeight.normal
                                     : FontWeight.bold,
                                 color: outOfStock
-                                    ? DesignTokens.secondaryTextColor
-                                    : DesignTokens.textColor,
+                                    ? UiConfig.secondaryTextColor
+                                    : UiConfig.textColor,
                               ),
                             ),
                           ),
@@ -231,7 +230,7 @@ class CurrentIngredients extends StatelessWidget {
                         child: Text(
                           loc.ingredientRemovedLabel,
                           style: TextStyle(
-                            color: DesignTokens.primaryColor,
+                            color: UiConfig.primaryColor,
                             fontStyle: FontStyle.italic,
                             fontWeight: FontWeight.w600,
                           ),
@@ -242,11 +241,11 @@ class CurrentIngredients extends StatelessWidget {
                         padding: const EdgeInsets.only(right: 8.0),
                         child: Text(
                           "Amount",
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: DesignTokens.secondaryColor,
-                            fontFamily: DesignTokens.fontFamily,
-                            fontWeight: FontWeight.bold,
+                            color: UiConfig.secondaryColor,
+                            fontFamily: shared.DesignTokens.fontFamily,
+                            fontWeight: UiConfig.bold,
                           ),
                         ),
                       ),
@@ -274,10 +273,13 @@ class CurrentIngredients extends StatelessWidget {
                       children: [
                         const SizedBox(width: 40),
                         PortionSelector(
-                          value: ingredientPortions[ingId] ?? Portion.whole,
+                          value: ingredientPortions[ingId] ??
+                              shared.Portion.whole
+                                  as dynamic, // Bridge shared → local Portion
                           onChanged: (portion) {
                             setState(() {
-                              ingredientPortions[ingId] = portion;
+                              ingredientPortions[ingId] = portion
+                                  as shared.Portion; // Cast back to shared
                             });
                           },
                           size: 22,
@@ -304,8 +306,8 @@ class CurrentIngredients extends StatelessWidget {
                     padding: const EdgeInsets.only(left: 44.0, top: 2),
                     child: Text(
                       loc.cannotBeRemoved,
-                      style: const TextStyle(
-                        color: DesignTokens.hintTextColor,
+                      style: TextStyle(
+                        color: UiConfig.hintTextColor,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -327,5 +329,3 @@ class CurrentIngredients extends StatelessWidget {
     );
   }
 }
-
-

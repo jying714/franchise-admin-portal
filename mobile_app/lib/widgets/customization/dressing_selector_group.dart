@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class DressingSelectorGroup extends StatelessWidget {
@@ -11,10 +11,10 @@ class DressingSelectorGroup extends StatelessWidget {
   final void Function(String ingId, int newCount) onCountChanged;
   final int Function() getFreeDressingCount;
   final double Function() getExtraDressingUpcharge;
-  final Map<String, IngredientMetadata> ingredientMetadata;
+  final Map<String, shared.IngredientMetadata> ingredientMetadata;
 
   const DressingSelectorGroup({
-    Key? key,
+    super.key,
     required this.group,
     required this.theme,
     required this.loc,
@@ -23,7 +23,7 @@ class DressingSelectorGroup extends StatelessWidget {
     required this.getFreeDressingCount,
     required this.getExtraDressingUpcharge,
     required this.ingredientMetadata,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -47,9 +47,9 @@ class DressingSelectorGroup extends StatelessWidget {
           Text(
             "$groupLabel ($freeDressings free, +${extraDressingUpcharge.toStringAsFixed(2)} each extra)",
             style: theme.textTheme.titleMedium?.copyWith(
-              color: DesignTokens.secondaryColor,
-              fontWeight: FontWeight.bold,
-              fontFamily: DesignTokens.fontFamily,
+              color: UiConfig.secondaryColor,
+              fontWeight: UiConfig.bold,
+              fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
           ...ingredientIds.map((ingId) {
@@ -62,39 +62,39 @@ class DressingSelectorGroup extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.remove, size: 20),
+                    icon: const Icon(Icons.remove, size: 20),
                     onPressed: !outOfStock && count > 0
                         ? () => onCountChanged(ingId, count - 1)
                         : null,
                   ),
-                  SizedBox(width: 2),
+                  const SizedBox(width: 2),
                   Expanded(
                     child: Text(
                       meta?.name ?? ingId,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: DesignTokens.textColor,
-                        fontFamily: DesignTokens.fontFamily,
+                        color: UiConfig.textColor,
+                        fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     ),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Container(
                     width: 28,
                     alignment: Alignment.center,
                     child: Text(
                       'x$count',
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: UiConfig.bold,
                         color: count > 0
-                            ? DesignTokens.primaryColor
-                            : DesignTokens.secondaryTextColor,
-                        fontFamily: DesignTokens.fontFamily,
+                            ? UiConfig.primaryColor
+                            : UiConfig.secondaryTextColor,
+                        fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     ),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   IconButton(
-                    icon: Icon(Icons.add, size: 20),
+                    icon: const Icon(Icons.add, size: 20),
                     onPressed: !outOfStock
                         ? () => onCountChanged(ingId, count + 1)
                         : null,
@@ -102,11 +102,9 @@ class DressingSelectorGroup extends StatelessWidget {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
   }
 }
-
-

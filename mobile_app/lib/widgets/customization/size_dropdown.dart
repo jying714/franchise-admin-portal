@@ -1,30 +1,45 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
-import 'package:franchise_mobile_app/core/utils/formatting.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SizeDropdown extends StatelessWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final String? selectedSize;
   final void Function(String?) onChanged;
   final Widget? toppingCostLabel;
   final String Function(String?) normalizeSizeKey;
 
   const SizeDropdown({
-    Key? key,
+    super.key,
     required this.menuItem,
     required this.selectedSize,
     required this.onChanged,
     this.toppingCostLabel,
     required this.normalizeSizeKey,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final loc = AppLocalizations.of(context)!;
-    final sizes = menuItem.sizes!;
+    final sizes = menuItem.sizes ?? [];
+
+    print(
+        '🔍 [SizeDropdown] build - selectedSize: "$selectedSize" | Available sizes: $sizes');
+
+    // Safety: Ensure selectedSize is valid
+    String? safeSelected = selectedSize;
+    if (safeSelected == null || !sizes.contains(safeSelected)) {
+      safeSelected = sizes.isNotEmpty ? sizes.first.toString() : null;
+      print(
+          '🔄 [SizeDropdown] Auto-corrected invalid selectedSize to: $safeSelected');
+    }
+
+    if (sizes.isEmpty) {
+      print('⚠️ [SizeDropdown] No sizes available for this item');
+      return const SizedBox.shrink();
+    }
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
@@ -36,40 +51,43 @@ class SizeDropdown extends StatelessWidget {
               Text(
                 loc.sizeLabel,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: DesignTokens.secondaryColor,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: DesignTokens.fontFamily,
+                  color: UiConfig.secondaryColor,
+                  fontWeight: UiConfig.bold,
+                  fontFamily: shared.DesignTokens.fontFamily,
                 ),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               DropdownButton<String>(
-                value: selectedSize,
-                items: sizes
-                    .map((size) => DropdownMenuItem<String>(
-                          value: size,
-                          child: Text(
-                            size,
-                            style: theme.textTheme.bodyLarge,
-                          ),
-                        ))
-                    .toList(),
+                value: safeSelected,
+                items: sizes.map((size) {
+                  final sizeStr = size.toString();
+                  print('   📌 [SizeDropdown] Creating item: $sizeStr');
+                  return DropdownMenuItem<String>(
+                    value: sizeStr,
+                    child: Text(
+                      sizeStr,
+                      style: theme.textTheme.bodyLarge,
+                    ),
+                  );
+                }).toList(),
                 onChanged: onChanged,
               ),
-              if (selectedSize != null &&
+              if (safeSelected != null &&
                   menuItem.sizePrices != null &&
-                  menuItem.sizePrices![normalizeSizeKey(selectedSize)] != null)
+                  menuItem.sizePrices![normalizeSizeKey(safeSelected)] != null)
                 Padding(
                   padding: const EdgeInsets.only(left: 12.0),
                   child: Text(
-                    currencyFormat(
-                        context,
-                        (menuItem.sizePrices![normalizeSizeKey(selectedSize)]
-                                as num)
-                            .toDouble()),
+                    UiConfig.currencyFormat(
+                      context,
+                      (menuItem.sizePrices![normalizeSizeKey(safeSelected)]
+                              as num)
+                          .toDouble(),
+                    ),
                     style: theme.textTheme.titleMedium?.copyWith(
-                      color: DesignTokens.primaryColor,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: DesignTokens.fontFamily,
+                      color: UiConfig.primaryColor,
+                      fontWeight: UiConfig.bold,
+                      fontFamily: shared.DesignTokens.fontFamily,
                     ),
                   ),
                 ),
@@ -85,5 +103,3 @@ class SizeDropdown extends StatelessWidget {
     );
   }
 }
-
-

@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
-import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class WingsPortionSelector extends StatelessWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final ThemeData theme;
   final AppLocalizations loc;
   final String? selectedSize;
-  final Map<String, dynamic> ingredientMetadata;
+  final Map<String, shared.IngredientMetadata> ingredientMetadata;
   final Map<String, String> selectedDippedSauces;
   final void Function(void Function()) setState;
 
   const WingsPortionSelector({
-    Key? key,
+    super.key,
     required this.menuItem,
     required this.theme,
     required this.loc,
@@ -22,14 +21,14 @@ class WingsPortionSelector extends StatelessWidget {
     required this.ingredientMetadata,
     required this.selectedDippedSauces,
     required this.setState,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final splitCount = menuItem.dippingSplits?[selectedSize] ?? 2;
     final sauceOptions = menuItem.dippingSauceOptions ?? [];
 
-    if (splitCount == 0) return SizedBox.shrink();
+    if (splitCount == 0) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -39,17 +38,17 @@ class WingsPortionSelector extends StatelessWidget {
           Text(
             "Build Your Wings",
             style: theme.textTheme.titleMedium?.copyWith(
-              color: DesignTokens.secondaryColor,
-              fontWeight: FontWeight.bold,
-              fontFamily: DesignTokens.fontFamily,
+              color: UiConfig.secondaryColor,
+              fontWeight: UiConfig.bold,
+              fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
           Text(
             "Choose a sauce for each portion below. 'Plain' means no sauce—just crispy wings.",
             style: theme.textTheme.bodySmall?.copyWith(
-              color: DesignTokens.secondaryTextColor,
+              color: UiConfig.secondaryTextColor,
               fontStyle: FontStyle.italic,
-              fontFamily: DesignTokens.fontFamily,
+              fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
           ...List.generate(splitCount, (i) {
@@ -86,5 +85,3 @@ class WingsPortionSelector extends StatelessWidget {
     );
   }
 }
-
-

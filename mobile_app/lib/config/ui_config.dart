@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
+import 'package:intl/intl.dart';
 
 /// UI-specific branding for mobile app
 /// Bridges shared DesignTokens + BrandingConfig into Flutter types
@@ -137,5 +138,16 @@ class UiConfig {
     final cleaned = hex.replaceAll('#', '');
     final value = int.parse('FF$cleaned', radix: 16);
     return Color(value);
+  }
+
+  // === NEW METHOD: Currency Formatting (Standard across app) ===
+  static String currencyFormat(BuildContext context, double amount) {
+    // Uses locale-aware formatting. Default to USD for Doughboys Pizzeria.
+    // Can be extended later with FranchiseProvider locale.
+    return NumberFormat.currency(
+      symbol: '\$',
+      decimalDigits: 2,
+      locale: 'en_US',
+    ).format(amount);
   }
 }

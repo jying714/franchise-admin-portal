@@ -1,7 +1,5 @@
-// ignore_for_file: unused_import
-
 import 'dart:io';
-
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart' as material hide Banner, BannerLocation;
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -55,7 +53,18 @@ class MainMenuScreen extends material.StatelessWidget {
         Provider.of<shared.AnalyticsService>(context, listen: false);
     final franchiseProvider =
         Provider.of<FranchiseProvider>(context, listen: true);
+
     final franchiseId = franchiseProvider.currentFranchiseId;
+    print(
+        '🔥 MainMenuScreen - Current Franchise ID from Provider: $franchiseId');
+
+    // Temporary force for testing - remove after provider initialization is fixed
+    final effectiveFranchiseId =
+        (franchiseId != 'unknown' && franchiseId.isNotEmpty)
+            ? franchiseId
+            : 'doughboyspizzeria';
+    print('🔥 MainMenuScreen - Current Franchise ID: $franchiseId'); // Debug
+
     final userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
     final loc = AppLocalizations.of(context)!;
 
@@ -66,8 +75,7 @@ class MainMenuScreen extends material.StatelessWidget {
 
     return material.Scaffold(
       appBar: FranchiseAppBar(
-        title: Provider.of<FranchiseProvider>(context, listen: true)
-            .restaurantName,
+        title: franchiseProvider.restaurantName ?? "Doughboys Pizzeria",
         centerTitle: true,
         actions: [
           ProfileIconButton(
@@ -92,10 +100,12 @@ class MainMenuScreen extends material.StatelessWidget {
       body: material.SafeArea(
         child: material.Column(
           children: [
-            // --- Banner Section ---
+            // Banner Section (working)
             material.StreamBuilder<List<Banner>>(
               stream: firestoreService.getBanners(),
               builder: (context, snapshot) {
+                print(
+                    'Banner snapshot - connection: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, error: ${snapshot.error}');
                 if (snapshot.connectionState ==
                     material.ConnectionState.waiting) {
                   return const LoadingShimmerWidget(
@@ -105,11 +115,10 @@ class MainMenuScreen extends material.StatelessWidget {
                   );
                 }
                 if (snapshot.hasError) {
-                  return EmptyStateWidget(
-                    title: loc.promotionsLoadError,
-                    message: loc.tryAgainLater,
-                    imageAsset: BrandingConfig.bannerPlaceholder,
-                  );
+                  // Silent fail for banners - non-critical
+                  developer.log('Banner load error: ${snapshot.error}');
+                  return const material
+                      .SizedBox.shrink(); // or EmptyStateWidget if preferred
                 }
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return EmptyStateWidget(
@@ -141,13 +150,16 @@ class MainMenuScreen extends material.StatelessWidget {
               },
             ),
             // --- Category Grid Section ---
+            // --- Category Grid Section ---
             material.Expanded(
               child: material.StreamBuilder<List<model.Category>>(
                 stream: firestoreService.getCategories(
-                    franchiseProvider.currentFranchiseId != 'unknown'
-                        ? franchiseProvider.currentFranchiseId
-                        : 'default'),
+                    franchiseProvider.currentFranchiseId ??
+                        'doughboyspizzeria'),
                 builder: (context, snapshot) {
+                  print(
+                      'Category snapshot - connection: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, docs: ${snapshot.data?.length ?? 0}');
+
                   if (snapshot.connectionState ==
                       material.ConnectionState.waiting) {
                     return const LoadingShimmerWidget(
@@ -157,6 +169,7 @@ class MainMenuScreen extends material.StatelessWidget {
                     );
                   }
                   if (snapshot.hasError) {
+                    print('❌ Category error: ${snapshot.error}');
                     return EmptyStateWidget(
                       title: loc.menuLoadError,
                       message: loc.tryAgainLater,
@@ -164,6 +177,7 @@ class MainMenuScreen extends material.StatelessWidget {
                     );
                   }
                   final categories = snapshot.data ?? [];
+                  print('✅ Loaded ${categories.length} categories');
                   if (categories.isEmpty) {
                     return EmptyStateWidget(
                       title: loc.noCategoriesAvailable,
@@ -175,8 +189,8 @@ class MainMenuScreen extends material.StatelessWidget {
                     categories: categories,
                     onCategoryTap: (category) {
                       analyticsService.logCategoryTap(
-                        franchiseId:
-                            franchiseProvider.currentFranchiseId ?? 'default',
+                        franchiseId: franchiseProvider.currentFranchiseId ??
+                            'doughboyspizzeria',
                         categoryId: category.id,
                         categoryName: category.name,
                       );

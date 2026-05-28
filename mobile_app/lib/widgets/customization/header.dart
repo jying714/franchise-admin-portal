@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CustomizationHeader extends StatelessWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final ThemeData theme;
   final AppLocalizations loc;
 
   const CustomizationHeader({
-    Key? key,
+    super.key,
     required this.menuItem,
     required this.theme,
     required this.loc,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,15 +22,15 @@ class CustomizationHeader extends StatelessWidget {
       children: [
         if (menuItem.image != null && menuItem.image!.isNotEmpty)
           ClipRRect(
-            borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+            borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
             child: Image.network(
               menuItem.image!,
-              width: DesignTokens.menuItemImageWidth,
-              height: DesignTokens.menuItemImageHeight,
+              width: shared.DesignTokens.menuItemImageWidth,
+              height: shared.DesignTokens.menuItemImageHeight,
               fit: BoxFit.cover,
             ),
           ),
-        SizedBox(width: DesignTokens.gridSpacing),
+        SizedBox(width: shared.DesignTokens.gridSpacing),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,17 +38,17 @@ class CustomizationHeader extends StatelessWidget {
               Text(
                 menuItem.name,
                 style: theme.textTheme.titleLarge?.copyWith(
-                  color: DesignTokens.textColor,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: DesignTokens.fontFamily,
+                  color: UiConfig.textColor,
+                  fontWeight: UiConfig.bold,
+                  fontFamily: shared.DesignTokens.fontFamily,
                 ),
               ),
-              SizedBox(height: DesignTokens.gridSpacing / 2),
+              SizedBox(height: shared.DesignTokens.gridSpacing / 2),
               Text(
-                menuItem.description,
+                menuItem.description ?? '',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: DesignTokens.secondaryTextColor,
-                  fontFamily: DesignTokens.fontFamily,
+                  color: UiConfig.secondaryTextColor,
+                  fontFamily: shared.DesignTokens.fontFamily,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -60,5 +60,3 @@ class CustomizationHeader extends StatelessWidget {
     );
   }
 }
-
-

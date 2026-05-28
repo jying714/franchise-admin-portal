@@ -1,22 +1,19 @@
 // ignore_for_file: prefer_const_constructors
-import 'package:franchise_mobile_app/widgets/customization/pizza_sauce_selector_tab.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:franchise_mobile_app/core/utils/formatting.dart';
-import 'package:shared_core/src/core/models/menu_item.dart';
-import 'package:shared_core/src/core/models/ingredient_metadata.dart';
-import 'package:shared_core/shared_core.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/customization/pizza_sauce_selector_tab.dart';
 import 'package:franchise_mobile_app/widgets/portion_selector.dart';
+import 'package:franchise_mobile_app/widgets/customization/portion_pill_toggle.dart';
 import 'package:franchise_mobile_app/widgets/customization/dressing_selector_group.dart';
 import 'package:franchise_mobile_app/widgets/customization/sauce_selector_group.dart';
 import 'package:franchise_mobile_app/widgets/customization/checkbox_customization_group.dart';
 import 'package:franchise_mobile_app/widgets/customization/dinner_included_ingredients.dart';
 import 'package:franchise_mobile_app/widgets/customization/radio_customization_group.dart';
 import 'package:franchise_mobile_app/widgets/customization/drinks_flavor_selector.dart';
-import 'package:franchise_mobile_app/widgets/customization/portion_pill_toggle.dart';
 import 'package:franchise_mobile_app/widgets/customization/optional_addons_group.dart';
 import 'package:franchise_mobile_app/widgets/customization/wings_optional_addons_group.dart';
 import 'package:franchise_mobile_app/widgets/customization/wings_dip_sauce_selector.dart';
@@ -26,6 +23,8 @@ import 'package:franchise_mobile_app/widgets/customization/topping_cost_label.da
 import 'package:franchise_mobile_app/widgets/customization/current_ingredients.dart';
 import 'package:franchise_mobile_app/widgets/customization/header.dart';
 import 'package:franchise_mobile_app/widgets/customization/bottom_bar.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:shared_core/src/core/config/design_tokens.dart';
 
 const MAX_DOUBLES = 4;
 const DOUGH_IDS = {'dough_calzone', 'dough_pizza', 'dough'};
@@ -72,7 +71,7 @@ class PizzaSauceSelection {
 }
 
 class CustomizationModal extends StatefulWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final int initialQuantity;
   final Map<String, dynamic>? initialCustomizations;
   final void Function(
@@ -80,7 +79,7 @@ class CustomizationModal extends StatefulWidget {
     int quantity,
     double totalPrice,
   ) onConfirm;
-  final Map<String, IngredientMetadata>? ingredientMetadata;
+  final Map<String, shared.IngredientMetadata>? ingredientMetadata;
 
   const CustomizationModal({
     super.key,
@@ -103,7 +102,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
   late Map<String, String?> _radioSelections;
   String? _selectedSize;
   String? _error;
-  late Map<String, IngredientMetadata> _ingredientMetadata;
+  late Map<String, shared.IngredientMetadata> _ingredientMetadata;
 
   late List<Map<String, dynamic>> _checkboxGroups;
   late List<Map<String, dynamic>> _radioGroups;
@@ -317,9 +316,11 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
     _quantity = widget.initialQuantity;
     _ingredientMetadata = widget.ingredientMetadata ??
-        Provider.of<Map<String, IngredientMetadata>>(context, listen: false);
+        Provider.of<Map<String, shared.IngredientMetadata>>(context,
+            listen: false);
     final sizes = widget.menuItem.sizes;
-    _selectedSize = (sizes != null && sizes.isNotEmpty) ? sizes.first : null;
+    _selectedSize =
+        (sizes != null && sizes.isNotEmpty) ? sizes.first.toString() : null;
     _drinkFlavorCounts = {};
     if (_isPizza()) {
       final saucesGroup = widget.menuItem.customizationGroups?.firstWhereOrNull(
@@ -383,7 +384,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
     // --- Wings initialization ---
     if (_isWings()) {
       final sizes = widget.menuItem.sizes ?? [];
-      _selectedSize ??= sizes.isNotEmpty ? sizes.first : null;
+      _selectedSize ??= sizes.isNotEmpty ? sizes.first.toString() : null;
       final splitCount = widget.menuItem.dippingSplits?[_selectedSize] ?? 2;
       _selectedDippedSauces = {};
       final sauceOptions = widget.menuItem.dippingSauceOptions ?? [];
@@ -626,7 +627,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
     return 0.0;
   }
 
-  double _getIngredientUpcharge(IngredientMetadata? meta) {
+  double _getIngredientUpcharge(shared.IngredientMetadata? meta) {
     if (meta == null) return 0.0;
     if (meta.upcharge != null && meta.upcharge!.isNotEmpty) {
       return meta.upcharge!.values.first;
@@ -980,16 +981,15 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final loc = AppLocalizations.of(context)!;
 
     return Dialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
       ),
-      backgroundColor: DesignTokens.surfaceColor,
+      backgroundColor: UiConfig.surfaceColor,
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.85,
@@ -997,7 +997,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
           maxWidth: 440,
         ),
         child: Padding(
-          padding: DesignTokens.cardPadding,
+          padding: UiConfig.cardPadding,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1011,7 +1011,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                         theme: theme,
                         loc: loc,
                       ),
-                      SizedBox(height: DesignTokens.gridSpacing),
+                      SizedBox(height: shared.DesignTokens.gridSpacing),
                       if (widget.menuItem.category.toLowerCase() != 'drinks' &&
                           widget.menuItem.sizes != null &&
                           widget.menuItem.sizes!.isNotEmpty)
@@ -1028,7 +1028,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                   theme: theme,
                                   loc: loc,
                                   getToppingUpcharge: _getToppingUpcharge,
-                                  currencyFormat: currencyFormat,
+                                  currencyFormat: UiConfig.currencyFormat,
                                 )
                               : null,
                           normalizeSizeKey: _normalizeSizeKey,
@@ -1110,7 +1110,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               child: Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: DesignTokens.primaryColor,
+                                  color: UiConfig.primaryColor,
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 padding: const EdgeInsets.symmetric(
@@ -1219,7 +1219,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                           child: Container(
                             width: double.infinity,
                             decoration: BoxDecoration(
-                              color: DesignTokens.primaryColor,
+                              color: UiConfig.primaryColor,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             padding: const EdgeInsets.symmetric(
@@ -1257,7 +1257,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                     duration: Duration(milliseconds: 150),
                                     decoration: BoxDecoration(
                                       color: selected
-                                          ? DesignTokens.secondaryColor
+                                          ? UiConfig.secondaryColor
                                           : Colors.transparent,
                                       borderRadius: BorderRadius.circular(30),
                                     ),
@@ -1270,7 +1270,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           theme.textTheme.bodyLarge?.copyWith(
                                         color: selected
                                             ? Colors.white
-                                            : DesignTokens.secondaryColor,
+                                            : UiConfig.secondaryColor,
                                         fontWeight: selected
                                             ? FontWeight.bold
                                             : FontWeight.normal,
@@ -1393,7 +1393,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                   child: Container(
                                     width: double.infinity,
                                     decoration: BoxDecoration(
-                                      color: DesignTokens.primaryColor,
+                                      color: UiConfig.primaryColor,
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     padding: const EdgeInsets.symmetric(
@@ -1647,7 +1647,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                   child: Container(
                                     width: double.infinity,
                                     decoration: BoxDecoration(
-                                      color: DesignTokens.primaryColor,
+                                      color: UiConfig.primaryColor,
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     padding: const EdgeInsets.symmetric(
@@ -1806,7 +1806,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                   child: Container(
                                     width: double.infinity,
                                     decoration: BoxDecoration(
-                                      color: DesignTokens.primaryColor,
+                                      color: UiConfig.primaryColor,
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     padding: const EdgeInsets.symmetric(
@@ -1877,7 +1877,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                 onConfirm: widget.onConfirm,
                 drinkFlavorCounts: _drinkFlavorCounts,
                 sizePrices: widget.menuItem.sizePrices,
-                sizes: widget.menuItem.sizes,
+                sizes: widget.menuItem.sizes?.map((s) => s.toString()).toList(),
                 menuItemPrice: widget.menuItem.price,
                 drinkMaxPerFlavor: _drinkMaxPerFlavor,
               ),
@@ -1888,5 +1888,3 @@ class _CustomizationModalState extends State<CustomizationModal> {
     );
   }
 }
-
-

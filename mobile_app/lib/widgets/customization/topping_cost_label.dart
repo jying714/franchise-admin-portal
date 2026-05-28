@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 typedef GetToppingUpcharge = double Function();
@@ -12,12 +13,12 @@ class ToppingCostLabel extends StatelessWidget {
   final CurrencyFormat currencyFormat;
 
   const ToppingCostLabel({
-    Key? key,
+    super.key,
     required this.theme,
     required this.loc,
     required this.getToppingUpcharge,
     required this.currencyFormat,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,23 +28,21 @@ class ToppingCostLabel extends StatelessWidget {
         Text(
           loc.additionalToppingCostLabel ?? "Additional topping cost:",
           style: theme.textTheme.bodySmall?.copyWith(
-            color: DesignTokens.secondaryTextColor,
-            fontFamily: DesignTokens.fontFamily,
+            color: UiConfig.secondaryTextColor,
+            fontFamily: shared.DesignTokens.fontFamily,
             fontWeight: FontWeight.w500,
           ),
         ),
-        SizedBox(width: 8),
+        const SizedBox(width: 8),
         Text(
           currencyFormat(context, upcharge),
           style: theme.textTheme.bodySmall?.copyWith(
-            color: DesignTokens.primaryColor,
-            fontWeight: FontWeight.bold,
-            fontFamily: DesignTokens.fontFamily,
+            color: UiConfig.primaryColor,
+            fontWeight: UiConfig.bold,
+            fontFamily: shared.DesignTokens.fontFamily,
           ),
         ),
       ],
     );
   }
 }
-
-
