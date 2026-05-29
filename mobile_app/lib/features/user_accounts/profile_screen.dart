@@ -82,209 +82,219 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final authService = Provider.of<shared.AuthService>(context, listen: false);
     final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
-    final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: false);
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          l10n.profile,
-          style: TextStyle(
-            fontSize: DesignTokens.titleFontSize,
-            color: UiConfig.foregroundColorDark,
-            fontWeight: UiConfig.fontWeightBold,
-            fontFamily: DesignTokens.fontFamily,
-          ),
-        ),
-        backgroundColor: UiConfig.primaryColor,
-        centerTitle: true,
-        elevation: 0,
-        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
-      ),
-      backgroundColor: UiConfig.backgroundColorDark,
-      body: Padding(
-        padding: UiConfig.defaultScreenPadding,
-        child: StreamBuilder<shared.User?>(
-          stream: authService.authStateChanges,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final shared.User? user = snapshot.data;
-            if (user == null) {
-              return EmptyStateWidget(
-                title: l10n.notSignedIn,
-                message: l10n.pleaseSignInToAccessProfile,
-                iconData: Icons.person_off,
-              );
-            }
+    return Consumer<FranchiseProvider>(
+      builder: (context, franchiseProvider, child) {
+        if (!franchiseProvider.hasValidFranchise) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-            return StreamBuilder<shared.User?>(
-              stream: firestoreService.getUserByIdStream(user.id),
-              builder: (context, userSnapshot) {
-                if (userSnapshot.connectionState == ConnectionState.waiting) {
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+              l10n.profile,
+              style: TextStyle(
+                fontSize: DesignTokens.titleFontSize,
+                color: UiConfig.foregroundColorDark,
+                fontWeight: UiConfig.fontWeightBold,
+                fontFamily: DesignTokens.fontFamily,
+              ),
+            ),
+            backgroundColor: UiConfig.primaryColor,
+            centerTitle: true,
+            elevation: 0,
+            iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
+          ),
+          backgroundColor: UiConfig.backgroundColorDark,
+          body: Padding(
+            padding: UiConfig.defaultScreenPadding,
+            child: StreamBuilder<shared.User?>(
+              stream: authService.authStateChanges,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                final shared.User? fullUser = userSnapshot.data;
-                if (fullUser == null) {
+                final shared.User? user = snapshot.data;
+                if (user == null) {
                   return EmptyStateWidget(
-                    title: l10n.profileNotFound,
-                    message: l10n.couldNotRetrieveProfile,
-                    iconData: Icons.error_outline,
+                    title: l10n.notSignedIn,
+                    message: l10n.pleaseSignInToAccessProfile,
+                    iconData: Icons.person_off,
                   );
                 }
 
-                // Forced profile completion
-                // ---- FORCED PROFILE COMPLETION LOGIC ----
-                if ((fullUser.completeProfile ?? false) == false &&
-                    !_dialogShown) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) async {
-                    if (!_dialogShown && mounted) {
-                      _dialogShown = true;
-
-                      // Convert shared.User → local user_model.User for CompleteProfileDialog
-                      final localUser = user_model.User(
-                        id: fullUser.id,
-                        name: fullUser.name,
-                        email: fullUser.email,
-                        phoneNumber: fullUser.phoneNumber,
-                        roles: fullUser.roles,
-                        addresses: fullUser.addresses,
-                        language: fullUser.language,
-                        status: fullUser.status,
-                        defaultFranchise: fullUser.defaultFranchise,
-                        avatarUrl: fullUser.avatarUrl,
-                        franchiseIds: fullUser.franchiseIds,
-                        completeProfile: fullUser.completeProfile,
-                        onboardingComplete: fullUser.onboardingComplete,
-                        isActive: fullUser.isActive,
-                        updatedAt: fullUser.updatedAt,
-                      );
-
-                      await showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (_) => CompleteProfileDialog(user: localUser),
-                      );
-
-                      if (mounted) setState(() {});
-                      _dialogShown = false;
+                return StreamBuilder<shared.User?>(
+                  stream: firestoreService.getUserByIdStream(user.id),
+                  builder: (context, userSnapshot) {
+                    if (userSnapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
                     }
-                  });
-                  // Show loading indicator while waiting for dialog completion
-                  return const Center(child: CircularProgressIndicator());
-                }
+                    final shared.User? fullUser = userSnapshot.data;
+                    if (fullUser == null) {
+                      return EmptyStateWidget(
+                        title: l10n.profileNotFound,
+                        message: l10n.couldNotRetrieveProfile,
+                        iconData: Icons.error_outline,
+                      );
+                    }
 
-                return ListView(
-                  children: [
-                    InfoTile(
-                      label: l10n.name,
-                      value: fullUser.name,
-                      trailing: IconButton(
-                        icon: Icon(Icons.edit, color: UiConfig.primaryColor),
-                        tooltip: l10n.edit,
-                        onPressed: () {
-                          _showEditFieldDialog(
-                            title: l10n.editName,
-                            initialValue: fullUser.name,
-                            hintText: l10n.name,
-                            onSubmitted: (newName) async {
-                              final updatedUser =
-                                  fullUser.copyWith(name: newName);
-                              await firestoreService.updateUser(updatedUser);
-                              if (mounted) setState(() {});
-                            },
+                    // Forced profile completion
+                    if ((fullUser.completeProfile ?? false) == false &&
+                        !_dialogShown) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) async {
+                        if (!_dialogShown && mounted) {
+                          _dialogShown = true;
+
+                          final localUser = user_model.User(
+                            id: fullUser.id,
+                            name: fullUser.name,
+                            email: fullUser.email,
+                            phoneNumber: fullUser.phoneNumber,
+                            roles: fullUser.roles,
+                            addresses: fullUser.addresses,
+                            language: fullUser.language,
+                            status: fullUser.status,
+                            defaultFranchise: fullUser.defaultFranchise,
+                            avatarUrl: fullUser.avatarUrl,
+                            franchiseIds: fullUser.franchiseIds,
+                            completeProfile: fullUser.completeProfile,
+                            onboardingComplete: fullUser.onboardingComplete,
+                            isActive: fullUser.isActive,
+                            updatedAt: fullUser.updatedAt,
                           );
-                        },
-                      ),
-                    ),
-                    InfoTile(
-                      label: l10n.phoneNumber,
-                      value: fullUser.phoneNumber ?? '',
-                      trailing: IconButton(
-                        icon: Icon(Icons.edit, color: UiConfig.primaryColor),
-                        tooltip: l10n.edit,
-                        onPressed: () {
-                          _showEditFieldDialog(
-                            title: l10n.editPhoneNumber,
-                            initialValue: fullUser.phoneNumber ?? '',
-                            keyboardType: TextInputType.phone,
-                            hintText: l10n.phoneNumber,
-                            onSubmitted: (newPhone) async {
-                              final updatedUser =
-                                  fullUser.copyWith(phoneNumber: newPhone);
-                              await firestoreService.updateUser(updatedUser);
-                              if (mounted) setState(() {});
-                            },
+
+                          await showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (_) =>
+                                CompleteProfileDialog(user: localUser),
                           );
-                        },
-                      ),
-                    ),
-                    InfoTile(label: l10n.email, value: fullUser.email),
-                    const Divider(),
-                    ProfileNavTile(
-                      label: l10n.deliveryAddresses,
-                      destination: const DeliveryAddressesScreen(),
-                    ),
-                    ProfileNavTile(
-                      label: l10n.orderHistory,
-                      destination: const OrderHistoryScreen(),
-                    ),
-                    ProfileNavTile(
-                      label: l10n.favorites,
-                      destination: const FavoritesScreen(),
-                    ),
-                    ProfileNavTile(
-                      label: l10n.scheduledOrders,
-                      destination: const ScheduledOrdersScreen(),
-                    ),
-                    ProfileNavTile(
-                      label: l10n.language,
-                      destination: const LanguageScreen(),
-                    ),
-                    Consumer<FranchiseProvider>(
-                      builder: (context, fp, _) => ListTile(
-                        leading: const Icon(Icons.store),
-                        title: Text('Switch Restaurant (${fp.restaurantName})'),
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const FranchiseSelectorScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    ProfileNavTile(
-                      label: l10n.chatWithUs,
-                      destination: const ChatScreen(),
-                    ),
-                    const SizedBox(height: DesignTokens.gridSpacing * 2),
-                    SignOutButton(
-                      signOutLabel: l10n.signOut,
-                      confirmationTitle: l10n.signOut,
-                      confirmationMessage: l10n.signOutConfirmationMessage,
-                      confirmLabel: l10n.signOut,
-                      cancelLabel: l10n.cancel,
-                      onSignOut: () async {
-                        await authService.signOut();
-                        if (mounted) {
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                                builder: (_) => const HomeScreen()),
-                            (route) => false,
-                          );
+
+                          if (mounted) setState(() {});
+                          _dialogShown = false;
                         }
-                      },
-                    ),
-                  ],
+                      });
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    return ListView(
+                      children: [
+                        InfoTile(
+                          label: l10n.name,
+                          value: fullUser.name,
+                          trailing: IconButton(
+                            icon:
+                                Icon(Icons.edit, color: UiConfig.primaryColor),
+                            tooltip: l10n.edit,
+                            onPressed: () {
+                              _showEditFieldDialog(
+                                title: l10n.editName,
+                                initialValue: fullUser.name,
+                                hintText: l10n.name,
+                                onSubmitted: (newName) async {
+                                  final updatedUser =
+                                      fullUser.copyWith(name: newName);
+                                  await firestoreService
+                                      .updateUser(updatedUser);
+                                  if (mounted) setState(() {});
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                        InfoTile(
+                          label: l10n.phoneNumber,
+                          value: fullUser.phoneNumber ?? '',
+                          trailing: IconButton(
+                            icon:
+                                Icon(Icons.edit, color: UiConfig.primaryColor),
+                            tooltip: l10n.edit,
+                            onPressed: () {
+                              _showEditFieldDialog(
+                                title: l10n.editPhoneNumber,
+                                initialValue: fullUser.phoneNumber ?? '',
+                                keyboardType: TextInputType.phone,
+                                hintText: l10n.phoneNumber,
+                                onSubmitted: (newPhone) async {
+                                  final updatedUser =
+                                      fullUser.copyWith(phoneNumber: newPhone);
+                                  await firestoreService
+                                      .updateUser(updatedUser);
+                                  if (mounted) setState(() {});
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                        InfoTile(label: l10n.email, value: fullUser.email),
+                        const Divider(),
+                        ProfileNavTile(
+                          label: l10n.deliveryAddresses,
+                          destination: const DeliveryAddressesScreen(),
+                        ),
+                        ProfileNavTile(
+                          label: l10n.orderHistory,
+                          destination: const OrderHistoryScreen(),
+                        ),
+                        ProfileNavTile(
+                          label: l10n.favorites,
+                          destination: const FavoritesScreen(),
+                        ),
+                        ProfileNavTile(
+                          label: l10n.scheduledOrders,
+                          destination: const ScheduledOrdersScreen(),
+                        ),
+                        ProfileNavTile(
+                          label: l10n.language,
+                          destination: const LanguageScreen(),
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.store),
+                          title: Text(
+                              'Switch Restaurant (${franchiseProvider.restaurantName})'),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const FranchiseSelectorScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        ProfileNavTile(
+                          label: l10n.chatWithUs,
+                          destination: const ChatScreen(),
+                        ),
+                        const SizedBox(height: DesignTokens.gridSpacing * 2),
+                        SignOutButton(
+                          signOutLabel: l10n.signOut,
+                          confirmationTitle: l10n.signOut,
+                          confirmationMessage: l10n.signOutConfirmationMessage,
+                          confirmLabel: l10n.signOut,
+                          cancelLabel: l10n.cancel,
+                          onSignOut: () async {
+                            await authService.signOut();
+                            if (mounted) {
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                    builder: (_) => const HomeScreen()),
+                                (route) => false,
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                    );
+                  },
                 );
               },
-            );
-          },
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

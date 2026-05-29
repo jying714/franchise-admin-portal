@@ -279,266 +279,278 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
-    final user = FirebaseAuth.instance.currentUser;
-    final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: true);
-    final franchiseId = franchiseProvider.currentFranchiseId;
-    final firestoreService =
-        Provider.of<shared.FirestoreService>(context, listen: false);
 
-    // One-time totals update on first build only
-    if (_orderSubtotal == 0.0 && user != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _updateOrderTotals();
-      });
-    }
+    return Consumer<FranchiseProvider>(
+      builder: (context, provider, child) {
+        final user = FirebaseAuth.instance.currentUser;
+        final firestoreService =
+            Provider.of<shared.FirestoreService>(context, listen: false);
 
-    return StreamBuilder<shared.Order?>(
-      stream: user == null
-          ? null
-          : firestoreService.getCart(user.uid,
-              franchiseId: franchiseId != 'unknown' && franchiseId.isNotEmpty
-                  ? franchiseId
-                  : 'doughboyspizzeria'),
-      builder: (context, cartSnapshot) {
-        final cart = cartSnapshot.data;
+        if (!provider.hasValidFranchise) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-        if (cart == null || cart.items.isEmpty) {
+        if (user == null) {
           return _emptyCheckout(localizations);
         }
 
-        return StreamBuilder<List<shared.MenuItem>>(
-          stream: firestoreService.getMenuItemsByIds(
-            franchiseId != 'unknown' && franchiseId.isNotEmpty
-                ? franchiseId
-                : 'doughboyspizzeria',
-            cart.items.map((i) => i.menuItemId).toList(),
-          ),
-          builder: (context, menuSnapshot) {
-            final menuItems = menuSnapshot.data ?? [];
-            final allAllergens = _allAllergensInCart(cart.items, menuItems);
-            final showAllergenWarning = allAllergens.isNotEmpty;
+        // One-time totals update
+        if (_orderSubtotal == 0.0) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _updateOrderTotals();
+          });
+        }
 
-            return Scaffold(
-              backgroundColor: UiConfig.backgroundColor,
-              appBar: AppBar(
-                title: Text(
-                  localizations.checkout,
-                  style: TextStyle(
-                    color: UiConfig.foregroundColorDark,
-                    fontSize: DesignTokens.titleFontSize,
-                    fontWeight: UiConfig.fontWeightBold,
-                    fontFamily: DesignTokens.fontFamily,
-                  ),
-                ),
-                backgroundColor: UiConfig.primaryColor,
-                elevation: 0,
-                iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
-                centerTitle: true,
+        return StreamBuilder<shared.Order?>(
+          stream: firestoreService.getCart(
+            user.uid,
+            franchiseId: provider.currentFranchiseId,
+          ),
+          builder: (context, cartSnapshot) {
+            final cart = cartSnapshot.data;
+
+            if (cart == null || cart.items.isEmpty) {
+              return _emptyCheckout(localizations);
+            }
+
+            return StreamBuilder<List<shared.MenuItem>>(
+              stream: firestoreService.getMenuItemsByIds(
+                provider.currentFranchiseId,
+                cart.items.map((i) => i.menuItemId).toList(),
               ),
-              body: SingleChildScrollView(
-                padding: UiConfig.cardPadding,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (showAllergenWarning)
-                      Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.only(
-                            left: 4, right: 4, top: 2, bottom: 12),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: UiConfig.errorColor.withOpacity(0.12),
-                          borderRadius:
-                              BorderRadius.circular(DesignTokens.cardRadius),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(Icons.warning_amber_rounded,
-                                color: UiConfig.errorColor, size: 28),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                '${localizations.warning}: ${localizations.itemsInCartCouldContain}\n'
-                                '${allAllergens.join(", ")}',
-                                style: TextStyle(
-                                  color: UiConfig.errorColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: DesignTokens.fontFamily,
+              builder: (context, menuSnapshot) {
+                final menuItems = menuSnapshot.data ?? [];
+                final allAllergens = _allAllergensInCart(cart.items, menuItems);
+                final showAllergenWarning = allAllergens.isNotEmpty;
+
+                return Scaffold(
+                  backgroundColor: UiConfig.backgroundColor,
+                  appBar: AppBar(
+                    title: Text(
+                      localizations.checkout,
+                      style: TextStyle(
+                        color: UiConfig.foregroundColorDark,
+                        fontSize: DesignTokens.titleFontSize,
+                        fontWeight: UiConfig.fontWeightBold,
+                        fontFamily: DesignTokens.fontFamily,
+                      ),
+                    ),
+                    backgroundColor: UiConfig.primaryColor,
+                    elevation: 0,
+                    iconTheme: const IconThemeData(color: Colors.white),
+                    centerTitle: true,
+                  ),
+                  body: SingleChildScrollView(
+                    padding: UiConfig.cardPadding,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (showAllergenWarning)
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(
+                                left: 4, right: 4, top: 2, bottom: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: UiConfig.errorColor.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(
+                                  DesignTokens.cardRadius),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(Icons.warning_amber_rounded,
+                                    color: UiConfig.errorColor, size: 28),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    '${localizations.warning}: ${localizations.itemsInCartCouldContain}\n'
+                                    '${allAllergens.join(", ")}',
+                                    style: TextStyle(
+                                      color: UiConfig.errorColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: DesignTokens.fontFamily,
+                                    ),
+                                  ),
                                 ),
+                              ],
+                            ),
+                          ),
+                        Text(
+                          localizations.orderType,
+                          style: TextStyle(
+                            fontSize: DesignTokens.bodyFontSize,
+                            fontWeight: UiConfig.fontWeightBold,
+                            fontFamily: DesignTokens.fontFamily,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: RadioListTile<DeliveryType>(
+                                title: Text(localizations.pickup),
+                                value: DeliveryType.pickup,
+                                groupValue: _deliveryType,
+                                onChanged: (v) {
+                                  setState(() => _deliveryType = v!);
+                                  _updateOrderTotals();
+                                },
+                              ),
+                            ),
+                            Expanded(
+                              child: RadioListTile<DeliveryType>(
+                                title: Text(localizations.delivery),
+                                value: DeliveryType.delivery,
+                                groupValue: _deliveryType,
+                                onChanged: (v) {
+                                  setState(() => _deliveryType = v!);
+                                  _updateOrderTotals();
+                                },
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    Text(
-                      localizations.orderType,
-                      style: TextStyle(
-                        fontSize: DesignTokens.bodyFontSize,
-                        fontWeight: UiConfig.fontWeightBold,
-                        fontFamily: DesignTokens.fontFamily,
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: RadioListTile<DeliveryType>(
-                            title: Text(localizations.pickup),
-                            value: DeliveryType.pickup,
-                            groupValue: _deliveryType,
-                            onChanged: (v) {
-                              setState(() => _deliveryType = v!);
-                              _updateOrderTotals();
-                            },
+                        const SizedBox(height: 16),
+                        ListTile(
+                          leading: const Icon(Icons.access_time),
+                          title: Text(
+                            _selectedTime == null
+                                ? localizations.selectTime
+                                : '${localizations.time}: ${_selectedTime!.format(context)}',
+                            style: const TextStyle(
+                                fontSize: DesignTokens.bodyFontSize),
+                          ),
+                          subtitle: Text(
+                            '${localizations.businessHours}: ${_businessOpen.format(context)} - ${_businessClose.format(context)}',
+                            style: const TextStyle(
+                                fontSize: DesignTokens.captionFontSize),
+                          ),
+                          trailing: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: UiConfig.secondaryColor,
+                              foregroundColor: UiConfig.foregroundColorDark,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                    DesignTokens.buttonRadius),
+                              ),
+                            ),
+                            onPressed: () =>
+                                _selectTime(context, localizations),
+                            child: Text(localizations.pickTime),
                           ),
                         ),
-                        Expanded(
-                          child: RadioListTile<DeliveryType>(
-                            title: Text(localizations.delivery),
-                            value: DeliveryType.delivery,
-                            groupValue: _deliveryType,
-                            onChanged: (v) {
-                              setState(() => _deliveryType = v!);
-                              _updateOrderTotals();
-                            },
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _promoController,
+                          decoration: InputDecoration(
+                            labelText: localizations.promoCode,
+                            errorText: _promoError,
+                            suffixIcon: _promoApplied
+                                ? const Icon(Icons.check, color: Colors.green)
+                                : IconButton(
+                                    icon: const Icon(Icons.local_offer),
+                                    onPressed: () => _applyPromo(localizations),
+                                    tooltip: localizations.applyPromo,
+                                  ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                  DesignTokens.formFieldRadius),
+                            ),
                           ),
+                          enabled: !_promoApplied,
+                        ),
+                        if (_promoApplied)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              '${localizations.promoApplied}: -\$${promoDiscount.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                color: UiConfig.successColor,
+                                fontSize: DesignTokens.captionFontSize,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 16),
+                        Text(
+                          localizations.paymentMethod,
+                          style: TextStyle(
+                            fontSize: DesignTokens.bodyFontSize,
+                            fontWeight: UiConfig.fontWeightBold,
+                            fontFamily: DesignTokens.fontFamily,
+                          ),
+                        ),
+                        ...PaymentMethod.values.map(
+                          (pm) => RadioListTile<PaymentMethod>(
+                            title: Text(_paymentLabel(pm, localizations)),
+                            value: pm,
+                            groupValue: _selectedPayment,
+                            onChanged: (v) =>
+                                setState(() => _selectedPayment = v),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Card(
+                          elevation: DesignTokens.cardElevation,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(DesignTokens.cardRadius),
+                          ),
+                          color: UiConfig.surfaceColor,
+                          child: Padding(
+                            padding: UiConfig.cardPadding,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _orderSummaryRow(
+                                    localizations.subtotal, _orderSubtotal),
+                                _orderSummaryRow(localizations.tax, _orderTax),
+                                if (_deliveryFee > 0)
+                                  _orderSummaryRow(
+                                      localizations.deliveryFee, _deliveryFee),
+                                if (_promoApplied)
+                                  _orderSummaryRow(localizations.promoDiscount,
+                                      -_promoValue),
+                                const Divider(),
+                                _orderSummaryRow(
+                                    localizations.total, _orderTotal,
+                                    bold: true),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: UiConfig.primaryColor,
+                            foregroundColor: UiConfig.foregroundColorDark,
+                            padding: UiConfig.defaultPadding,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                  DesignTokens.buttonRadius),
+                            ),
+                            elevation: DesignTokens.buttonElevation,
+                          ),
+                          onPressed: _isPaying
+                              ? null
+                              : () => _submitOrder(localizations),
+                          child: _isPaying
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(localizations.placeOrder),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    ListTile(
-                      leading: const Icon(Icons.access_time),
-                      title: Text(
-                        _selectedTime == null
-                            ? localizations.selectTime
-                            : '${localizations.time}: ${_selectedTime!.format(context)}',
-                        style: const TextStyle(
-                            fontSize: DesignTokens.bodyFontSize),
-                      ),
-                      subtitle: Text(
-                        '${localizations.businessHours}: ${_businessOpen.format(context)} - ${_businessClose.format(context)}',
-                        style: const TextStyle(
-                            fontSize: DesignTokens.captionFontSize),
-                      ),
-                      trailing: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: UiConfig.secondaryColor,
-                          foregroundColor: UiConfig.foregroundColorDark,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                DesignTokens.buttonRadius),
-                          ),
-                        ),
-                        onPressed: () => _selectTime(context, localizations),
-                        child: Text(localizations.pickTime),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _promoController,
-                      decoration: InputDecoration(
-                        labelText: localizations.promoCode,
-                        errorText: _promoError,
-                        suffixIcon: _promoApplied
-                            ? const Icon(Icons.check, color: Colors.green)
-                            : IconButton(
-                                icon: const Icon(Icons.local_offer),
-                                onPressed: () => _applyPromo(localizations),
-                                tooltip: localizations.applyPromo,
-                              ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                              DesignTokens.formFieldRadius),
-                        ),
-                      ),
-                      enabled: !_promoApplied,
-                    ),
-                    if (_promoApplied)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          '${localizations.promoApplied}: -\$${promoDiscount.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            color: UiConfig.successColor,
-                            fontSize: DesignTokens.captionFontSize,
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 16),
-                    Text(
-                      localizations.paymentMethod,
-                      style: TextStyle(
-                        fontSize: DesignTokens.bodyFontSize,
-                        fontWeight: UiConfig.fontWeightBold,
-                        fontFamily: DesignTokens.fontFamily,
-                      ),
-                    ),
-                    ...PaymentMethod.values.map(
-                      (pm) => RadioListTile<PaymentMethod>(
-                        title: Text(_paymentLabel(pm, localizations)),
-                        value: pm,
-                        groupValue: _selectedPayment,
-                        onChanged: (v) => setState(() => _selectedPayment = v),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Card(
-                      elevation: DesignTokens.cardElevation,
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(DesignTokens.cardRadius),
-                      ),
-                      color: UiConfig.surfaceColor,
-                      child: Padding(
-                        padding: UiConfig.cardPadding,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _orderSummaryRow(
-                                localizations.subtotal, _orderSubtotal),
-                            _orderSummaryRow(localizations.tax, _orderTax),
-                            if (_deliveryFee > 0)
-                              _orderSummaryRow(
-                                  localizations.deliveryFee, _deliveryFee),
-                            if (_promoApplied)
-                              _orderSummaryRow(
-                                  localizations.promoDiscount, -_promoValue),
-                            const Divider(),
-                            _orderSummaryRow(localizations.total, _orderTotal,
-                                bold: true),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: UiConfig.primaryColor,
-                        foregroundColor: UiConfig.foregroundColorDark,
-                        padding: UiConfig.defaultPadding,
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(DesignTokens.buttonRadius),
-                        ),
-                        elevation: DesignTokens.buttonElevation,
-                      ),
-                      onPressed:
-                          _isPaying ? null : () => _submitOrder(localizations),
-                      child: _isPaying
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Text(localizations.placeOrder),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             );
           },
         );

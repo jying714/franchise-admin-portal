@@ -52,28 +52,32 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
-  Future<void> _handleSocialSuccess(firebase.User? firebaseUser) async {
-    if (firebaseUser == null) return;
-    setState(() => _loading = true);
-    try {
-      final sharedUser = shared.User(
-        id: firebaseUser.uid,
-        name: firebaseUser.displayName ?? "",
-        email: firebaseUser.email ?? "",
-        phoneNumber: firebaseUser.phoneNumber,
-        roles: [shared.User.roleCustomer],
-        addresses: [],
-        language: "en",
-        status: "active",
-      );
+  // Synchronous wrapper required by SocialSignInButtons
+  // Synchronous wrapper required by SocialSignInButtons
+  void _handleSocialSuccess(shared.User? user) {
+    // ← Changed parameter type to shared.User?
+    if (user == null) return;
+    _handleSocialSuccessAsync(user);
+  }
 
-      await _ensureUserProfile(sharedUser);
+  // Actual async logic
+  Future<void> _handleSocialSuccessAsync(shared.User user) async {
+    if (!mounted) return;
+    setState(() => _loading = true);
+
+    try {
+      await _ensureUserProfile(user);
 
       final firestoreService =
           Provider.of<shared.FirestoreService>(context, listen: false);
-      final dbUser = await firestoreService.getUser(sharedUser.id);
+      final dbUser = await firestoreService.getUser(user.id);
 
       if (!mounted) return;
+
+      final franchiseProvider =
+          Provider.of<FranchiseProvider>(context, listen: false);
+      await franchiseProvider.initializeFromUser(dbUser ?? user);
+
       if (dbUser == null || !(dbUser.completeProfile ?? false)) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (_) => const ProfileScreen()),
@@ -86,7 +90,7 @@ class _SignInScreenState extends State<SignInScreen> {
         );
       }
     } catch (e) {
-      if (mounted) setState(() => _error = 'Profile error');
+      if (mounted) setState(() => _error = 'Profile initialization error');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -110,46 +114,48 @@ class _SignInScreenState extends State<SignInScreen> {
     setState(() => _loading = false);
 
     if (user != null) {
-      try {
-        await _ensureUserProfile(user);
-
-        final firestoreService =
-            Provider.of<shared.FirestoreService>(context, listen: false);
-        final dbUser = await firestoreService.getUser(user.id);
-
-        if (!mounted) return;
-
-        final franchiseProvider =
-            Provider.of<FranchiseProvider>(context, listen: false);
-        final defaultId = dbUser?.defaultFranchise ??
-            (dbUser?.franchiseIds.isNotEmpty == true
-                ? dbUser!.franchiseIds.first
-                : null);
-        await franchiseProvider.initializeFromUser(
-            defaultFranchiseId: defaultId);
-
-        if (defaultId != null) {
-          await franchiseProvider.loadCurrentFranchiseDetails(firestoreService);
-        }
-
-        final loc = AppLocalizations.of(context)!;
-        if (dbUser == null || !(dbUser.completeProfile ?? false)) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const ProfileScreen()),
-            (route) => false,
-          );
-        } else {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const MainMenuScreen()),
-            (route) => false,
-          );
-        }
-      } catch (e) {
-        if (!mounted) return;
-        setState(() => _error = 'Profile error');
-      }
+      await _handleAuthSuccess(user);
     } else {
       setState(() => _error = 'Sign in failed');
+    }
+  }
+
+  Future<void> _handleAuthSuccess(shared.User user) async {
+    setState(() => _loading = true);
+    try {
+      await _ensureUserProfile(user);
+
+      final firestoreService =
+          Provider.of<shared.FirestoreService>(context, listen: false);
+      final dbUser = await firestoreService.getUser(user.id);
+
+      if (!mounted) return;
+
+      // Initialize FranchiseProvider cleanly
+      final franchiseProvider =
+          Provider.of<FranchiseProvider>(context, listen: false);
+      await franchiseProvider.initializeFromUser(dbUser ?? user);
+
+      // Optional: Load full franchise details for branding
+      if (franchiseProvider.hasValidFranchise) {
+        // await franchiseProvider.loadCurrentFranchiseDetails(firestoreService); // Uncomment if you re-add this method
+      }
+
+      if (dbUser == null || !(dbUser.completeProfile ?? false)) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+          (route) => false,
+        );
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainMenuScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Profile initialization error');
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -211,7 +217,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     Image.asset(UiConfig.logoMain, height: 120),
                     const SizedBox(height: 32),
                     SocialSignInButtons(
-                      onSuccess: _handleSocialSuccessWrapper,
+                      onSuccess: _handleSocialSuccess, // Keep as-is
                       onError: (String err) => setState(() => _error = err),
                       isLoading: _loading,
                       setLoading: (bool loading) =>
@@ -270,10 +276,9 @@ class _SignInScreenState extends State<SignInScreen> {
                     Row(
                       children: [
                         Checkbox(
-                          value: _rememberMe,
-                          onChanged: (v) =>
-                              setState(() => _rememberMe = v ?? false),
-                        ),
+                            value: _rememberMe,
+                            onChanged: (v) =>
+                                setState(() => _rememberMe = v ?? false)),
                         Text(loc.rememberMe),
                       ],
                     ),
@@ -283,10 +288,8 @@ class _SignInScreenState extends State<SignInScreen> {
                         onPressed: _loading
                             ? null
                             : () {
-                                if (_formKey.currentState?.validate() ??
-                                    false) {
+                                if (_formKey.currentState?.validate() ?? false)
                                   _signIn();
-                                }
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: UiConfig.primaryColor,
@@ -310,39 +313,5 @@ class _SignInScreenState extends State<SignInScreen> {
         ),
       ),
     );
-  }
-
-  void _handleSocialSuccessWrapper(shared.User? user) {
-    if (user == null) return;
-    // Fire the async logic without blocking the button callback
-    _handleSocialSuccessFromShared(user);
-  }
-
-  Future<void> _handleSocialSuccessFromShared(shared.User user) async {
-    setState(() => _loading = true);
-    try {
-      await _ensureUserProfile(user);
-
-      final firestoreService =
-          Provider.of<shared.FirestoreService>(context, listen: false);
-      final dbUser = await firestoreService.getUser(user.id);
-
-      if (!mounted) return;
-      if (dbUser == null || !(dbUser.completeProfile ?? false)) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const ProfileScreen()),
-          (route) => false,
-        );
-      } else {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const MainMenuScreen()),
-          (route) => false,
-        );
-      }
-    } catch (e) {
-      if (mounted) setState(() => _error = 'Profile error');
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
   }
 }

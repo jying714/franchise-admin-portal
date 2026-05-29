@@ -23,9 +23,13 @@ import 'package:shared_core/src/core/config/app_config.dart';
 
 class ItemScreen extends StatefulWidget {
   final String itemId;
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
 
-  const ItemScreen({super.key, required this.itemId, required this.menuItem});
+  const ItemScreen({
+    super.key,
+    required this.itemId,
+    required this.menuItem,
+  });
 
   @override
   State<ItemScreen> createState() => _ItemScreenState();
@@ -36,10 +40,9 @@ class _ItemScreenState extends State<ItemScreen> {
   int _quantity = 1;
   bool _isProcessing = false;
 
-  // --- Delivery Options ---
   final double _deliveryFee = 0.0;
   final double _discount = 0.0;
-  final String _deliveryType = "pickup"; // 'pickup' or 'delivery'
+  final String _deliveryType = "pickup";
   String _time = "";
   final int _estimatedTime = 30;
 
@@ -62,7 +65,6 @@ class _ItemScreenState extends State<ItemScreen> {
     final user = FirebaseAuth.instance.currentUser;
     _userId = user?.uid;
     _time = DateTime.now().toIso8601String().substring(0, 16);
-    //print("[DEBUG] ItemScreen menuItem: ${widget.menuItem.toMap()}");
   }
 
   bool get _hasCustomizations {
@@ -86,10 +88,9 @@ class _ItemScreenState extends State<ItemScreen> {
     final franchiseId = franchiseProvider.currentFranchiseId;
 
     print(
-        '🔍 [ItemScreen][_addToCart] START - franchiseId: $franchiseId | userId: $_userId | itemId: ${item.id} | quantity: $quantity | totalPrice: $totalPrice');
+        '🔍 [ItemScreen][_addToCart] START - franchiseId: $franchiseId | userId: $_userId');
 
-    if (franchiseId == 'unknown' || franchiseId.isEmpty) {
-      print('❌ [ItemScreen][_addToCart] ERROR: Invalid franchiseId');
+    if (franchiseId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Please select a franchise location to order.')),
       );
@@ -97,7 +98,6 @@ class _ItemScreenState extends State<ItemScreen> {
     }
 
     if (_userId == null) {
-      print('❌ [ItemScreen][_addToCart] ERROR: No userId');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.signInToOrderMessage)),
       );
@@ -113,9 +113,6 @@ class _ItemScreenState extends State<ItemScreen> {
                   shared.Customization.fromMap(e as Map<String, dynamic>))
               .toList();
 
-      print(
-          '🔍 [ItemScreen][_addToCart] Calling addToCart with ${customizationList.length} customizations');
-
       await firestoreService.addToCart(
         userId: _userId!,
         franchiseId: franchiseId,
@@ -126,12 +123,10 @@ class _ItemScreenState extends State<ItemScreen> {
         specialInstructions: customizations['specialInstructions'] as String?,
       );
 
-      print('✅ [ItemScreen][_addToCart] SUCCESS - Item added to cart');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.addedToCartMessage)),
       );
-    } catch (e, stack) {
-      print('❌ [ItemScreen][_addToCart] EXCEPTION: $e\n$stack');
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.cartAddError)),
       );
@@ -142,17 +137,12 @@ class _ItemScreenState extends State<ItemScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final firestoreService =
-        Provider.of<shared.FirestoreService>(context, listen: false);
-    final ingredientMetadata =
-        Provider.of<Map<String, shared.IngredientMetadata>>(context,
-            listen: false);
     final loc = AppLocalizations.of(context)!;
-    //print("[DEBUG] ItemScreen menuItem: ${widget.menuItem.toMap()}");
+
     return Scaffold(
       appBar: FranchiseAppBar(
         title: widget.menuItem.name,
-        centerTitle: true, // or false if you prefer
+        centerTitle: true,
         showLogo: BrandingConfig.showLogoInAppBar,
         logoAsset: BrandingConfig.appBarLogoAsset,
         logoHeight: 40,
@@ -166,12 +156,9 @@ class _ItemScreenState extends State<ItemScreen> {
             },
           ),
           IconButton(
-            // Cart
-            icon: Icon(
-              Icons.shopping_cart,
-              size: DesignTokens.iconSize,
-              color: UiConfig.foregroundColorDark,
-            ),
+            icon: Icon(Icons.shopping_cart,
+                size: DesignTokens.iconSize,
+                color: UiConfig.foregroundColorDark),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CartScreen()),
@@ -185,171 +172,185 @@ class _ItemScreenState extends State<ItemScreen> {
         elevation: 0,
       ),
       backgroundColor: UiConfig.backgroundColor,
-      body: SingleChildScrollView(
-        padding: UiConfig.defaultPadding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ITEM IMAGE
-            Center(
-              child: MenuItemImage(
-                imageUrl: widget.menuItem.image,
-                width: DesignTokens.menuItemImageWidth,
-                height: DesignTokens.menuItemImageHeight,
-              ),
-            ),
-            const SizedBox(height: DesignTokens.gridSpacing),
-            // ITEM NAME
-            Text(
-              widget.menuItem.name,
-              style: TextStyle(
-                fontSize: DesignTokens.titleFontSize,
-                fontWeight: UiConfig.fontWeightBold,
-                color: UiConfig.textColor,
-                fontFamily: DesignTokens.fontFamily,
-              ),
-            ),
-            // PRICE (base price, full total is in modal)
-            Text(
-              '\$${widget.menuItem.price.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontSize: DesignTokens.bodyFontSize,
-                color: UiConfig.textColor,
-                fontWeight: UiConfig.fontWeightMedium,
-                fontFamily: DesignTokens.fontFamily,
-              ),
-            ),
-            const SizedBox(height: DesignTokens.gridSpacing),
-            // DESCRIPTION
-            Text(
-              widget.menuItem.description,
-              style: TextStyle(
-                fontSize: DesignTokens.captionFontSize,
-                color: UiConfig.secondaryTextColor,
-                fontFamily: DesignTokens.fontFamily,
-              ),
-            ),
-            const SizedBox(height: DesignTokens.gridSpacing * 2),
+      body: Consumer<FranchiseProvider>(
+        builder: (context, provider, child) {
+          if (!provider.hasValidFranchise) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-            // DIETARY TAGS & ALLERGENS
-            DietaryAllergenChipsRow(
-              dietaryTags: widget.menuItem.dietaryTags,
-              allergens: widget.menuItem.allergens,
-            ),
-
-            // QUANTITY SELECTOR (for non-customized items only)
-            if (!_hasCustomizations)
-              QuantityStepper(
-                value: _quantity,
-                onIncrement: () => setState(() => _quantity++),
-                onDecrement: () => setState(() => _quantity--),
-                min: 1,
-                fontSize: DesignTokens.bodyFontSize,
-                iconSize: DesignTokens.iconSize,
-              ),
-            const SizedBox(height: DesignTokens.gridSpacing),
-
-            // INCLUDED INGREDIENTS (Preview)
-            IncludedIngredientsPreview(
-              includedIngredients: widget.menuItem.includedIngredients,
-            ),
-
-            // BUTTON ROW
-            Row(
+          return SingleChildScrollView(
+            padding: UiConfig.defaultPadding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: _hasCustomizations
-                      ? CustomizeAndAddToCartButton(
-                          isProcessing: _isProcessing,
-                          label: loc.customizeAndAddToCart,
-                          onPressed: _isProcessing
-                              ? null
-                              : () async {
-                                  final latestMenuItem = await Provider.of<
-                                      shared.FirestoreService>(
-                                    context,
-                                    listen: false,
-                                  ).getMenuItemById(widget.itemId);
+                // ITEM IMAGE
+                Center(
+                  child: MenuItemImage(
+                    imageUrl: widget.menuItem.image,
+                    width: DesignTokens.menuItemImageWidth,
+                    height: DesignTokens.menuItemImageHeight,
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.gridSpacing),
 
-                                  if (latestMenuItem == null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text("Item not found.")),
-                                    );
-                                    return;
-                                  }
-                                  await showDialog(
-                                    context: context,
-                                    builder: (context) => CustomizationModal(
-                                      menuItem: latestMenuItem,
-                                      ingredientMetadata: ingredientMetadata,
-                                      initialQuantity: 1,
-                                      onConfirm: (customizations, quantity,
-                                          totalPrice) {
-                                        final analyticsReadyCustomizations = {
-                                          'toppings':
-                                              (customizations['toppings']
+                // ITEM NAME + PRICE
+                Text(
+                  widget.menuItem.name,
+                  style: TextStyle(
+                    fontSize: DesignTokens.titleFontSize,
+                    fontWeight: UiConfig.fontWeightBold,
+                    color: UiConfig.textColor,
+                    fontFamily: DesignTokens.fontFamily,
+                  ),
+                ),
+                Text(
+                  '\$${widget.menuItem.price.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: DesignTokens.bodyFontSize,
+                    color: UiConfig.textColor,
+                    fontWeight: UiConfig.fontWeightMedium,
+                    fontFamily: DesignTokens.fontFamily,
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.gridSpacing),
+
+                // DESCRIPTION
+                Text(
+                  widget.menuItem.description,
+                  style: TextStyle(
+                    fontSize: DesignTokens.captionFontSize,
+                    color: UiConfig.secondaryTextColor,
+                    fontFamily: DesignTokens.fontFamily,
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.gridSpacing * 2),
+
+                // DIETARY + ALLERGENS
+                DietaryAllergenChipsRow(
+                  dietaryTags: widget.menuItem.dietaryTags,
+                  allergens: widget.menuItem.allergens,
+                ),
+
+                // QUANTITY (for non-custom items)
+                if (!_hasCustomizations)
+                  QuantityStepper(
+                    value: _quantity,
+                    onIncrement: () => setState(() => _quantity++),
+                    onDecrement: () => setState(() => _quantity--),
+                    min: 1,
+                    fontSize: DesignTokens.bodyFontSize,
+                    iconSize: DesignTokens.iconSize,
+                  ),
+                const SizedBox(height: DesignTokens.gridSpacing),
+
+                // INCLUDED INGREDIENTS
+                IncludedIngredientsPreview(
+                  includedIngredients: widget.menuItem.includedIngredients,
+                ),
+
+                const SizedBox(height: DesignTokens.gridSpacing * 2),
+
+                // ADD / CUSTOMIZE BUTTON
+                Row(
+                  children: [
+                    Expanded(
+                      child: _hasCustomizations
+                          ? CustomizeAndAddToCartButton(
+                              isProcessing: _isProcessing,
+                              label: loc.customizeAndAddToCart,
+                              onPressed: _isProcessing
+                                  ? null
+                                  : () async {
+                                      final latestMenuItem = await Provider.of<
+                                          shared.FirestoreService>(
+                                        context,
+                                        listen: false,
+                                      ).getMenuItemById(widget.itemId);
+
+                                      if (latestMenuItem == null) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text("Item not found.")),
+                                        );
+                                        return;
+                                      }
+
+                                      await showDialog(
+                                        context: context,
+                                        builder: (context) =>
+                                            CustomizationModal(
+                                          menuItem: latestMenuItem,
+                                          ingredientMetadata: const {}, // Pass real data if available
+                                          initialQuantity: 1,
+                                          onConfirm: (customizations, quantity,
+                                              totalPrice) {
+                                            final analyticsReadyCustomizations =
+                                                {
+                                              'toppings': (customizations[
+                                                              'toppings']
                                                           as List<dynamic>? ??
-                                                      <dynamic>[])
+                                                      [])
                                                   .map((e) => e.toString())
                                                   .toList(),
-                                          'addOns': (customizations['addOns']
-                                                      as List<dynamic>? ??
-                                                  <dynamic>[])
-                                              .map((e) =>
-                                                  e is Map<String, dynamic>
-                                                      ? e
-                                                      : {
-                                                          'name': e.toString(),
-                                                          'price': 0.0
-                                                        })
-                                              .toList(),
-                                          'comboSignature': customizations[
-                                                  'comboSignature'] ??
-                                              _generateComboSignature(
-                                                  customizations),
-                                          ...customizations, // keep all other original fields too
-                                        };
+                                              'addOns': (customizations[
+                                                              'addOns']
+                                                          as List<dynamic>? ??
+                                                      [])
+                                                  .map((e) =>
+                                                      e is Map<String, dynamic>
+                                                          ? e
+                                                          : {
+                                                              'name':
+                                                                  e.toString()
+                                                            })
+                                                  .toList(),
+                                              'comboSignature': customizations[
+                                                      'comboSignature'] ??
+                                                  _generateComboSignature(
+                                                      customizations),
+                                              ...customizations,
+                                            };
 
-                                        _addToCart(
-                                          latestMenuItem,
-                                          analyticsReadyCustomizations,
-                                          quantity,
-                                          totalPrice,
-                                          loc,
-                                        );
-                                      },
-                                    ),
-                                  );
-                                },
-                        )
-                      : AddToCartButton(
-                          isProcessing: _isProcessing,
-                          label: loc.addToCart,
-                          onPressed: _isProcessing
-                              ? null
-                              : () {
-                                  _addToCart(
-                                    widget.menuItem,
-                                    {
-                                      'toppings': <String>[],
-                                      'addOns': <Map<String, dynamic>>[],
-                                      'comboSignature':
-                                          '', // Optional: generate signature for combos
+                                            _addToCart(
+                                              latestMenuItem,
+                                              analyticsReadyCustomizations,
+                                              quantity,
+                                              totalPrice,
+                                              loc,
+                                            );
+                                          },
+                                        ),
+                                      );
                                     },
-                                    _quantity,
-                                    widget.menuItem.price * _quantity,
-                                    loc,
-                                  );
-                                },
-                        ),
+                            )
+                          : AddToCartButton(
+                              isProcessing: _isProcessing,
+                              label: loc.addToCart,
+                              onPressed: _isProcessing
+                                  ? null
+                                  : () {
+                                      _addToCart(
+                                        widget.menuItem,
+                                        {
+                                          'toppings': <String>[],
+                                          'addOns': <Map<String, dynamic>>[],
+                                          'comboSignature': '',
+                                        },
+                                        _quantity,
+                                        widget.menuItem.price * _quantity,
+                                        loc,
+                                      );
+                                    },
+                            ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: DesignTokens.gridSpacing),
               ],
             ),
-
-            const SizedBox(height: DesignTokens.gridSpacing),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

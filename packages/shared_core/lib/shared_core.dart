@@ -1,6 +1,6 @@
 library shared_core;
 
-// Public API - Clean Barrel (Option A Architecture)
+// Public API - Clean Barrel
 
 export 'models.dart'; // Existing models barrel
 
@@ -17,4 +17,7 @@ export 'src/core/services/firestore_service_impl.dart';
 export 'src/core/services/analytics_service.dart';
 export 'src/core/services/analytics_service_impl.dart';
 
-// Add more as needed in future batches
+// Firebase (needed for FirebaseAuth in CartIconBadge)
+export 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
+
+// Add more as needed

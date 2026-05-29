@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/shared_core.dart' show DesignTokens;
 import 'package:franchise_mobile_app/config/ui_config.dart';
@@ -47,6 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
       loading = true;
       error = '';
     });
+
     try {
       final user = isLoginMode
           ? await auth.signInWithEmailAndPassword(
@@ -60,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      // For registration, update display name (phone is handled in profile)
+      // For registration, update display name
       if (!isLoginMode) {
         final name = nameController.text.trim();
         if (name.isNotEmpty) {
@@ -77,24 +79,27 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      // Align with stabilized flow: ensure profile + franchise init
+      await _handleAuthSuccess(user);
+    } catch (e) {
+      if (mounted) setState(() => error = e.toString());
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  Future<void> _handleAuthSuccess(shared.User user) async {
+    setState(() => loading = true);
+    try {
       final firestoreService =
           Provider.of<shared.FirestoreService>(context, listen: false);
-      final franchiseProvider =
-          Provider.of<FranchiseProvider>(context, listen: false);
-
       final dbUser = await firestoreService.getUser(user.id);
+
       if (!mounted) return;
 
-      final defaultId = dbUser?.defaultFranchise ??
-          (dbUser?.franchiseIds.isNotEmpty == true
-              ? dbUser!.franchiseIds.first
-              : null);
-
-      await franchiseProvider.initializeFromUser(defaultFranchiseId: defaultId);
-      if (defaultId != null) {
-        await franchiseProvider.loadCurrentFranchiseDetails(firestoreService);
-      }
+      // Clean initialization with new FranchiseProvider
+      final franchiseProvider =
+          Provider.of<FranchiseProvider>(context, listen: false);
+      await franchiseProvider.initializeFromUser(dbUser ?? user);
 
       if (dbUser == null || !(dbUser.completeProfile ?? false)) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -108,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } catch (e) {
-      if (mounted) setState(() => error = e.toString());
+      if (mounted) setState(() => error = 'Profile initialization error');
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -333,9 +338,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                   const Divider(
-                    height: DesignTokens.gridSpacing * 4,
-                    thickness: 1,
-                  ),
+                      height: DesignTokens.gridSpacing * 4, thickness: 1),
                   SocialSignInButtons(
                     onSuccess: (user) {
                       if (user != null) {
@@ -352,7 +355,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     showPhone: true,
                   ),
                   const SizedBox(height: DesignTokens.gridSpacing * 2),
-                  // Guest & Demo always available (FeatureConfig flags removed in current config)
                   OutlinedButton.icon(
                     icon: const Icon(Icons.person_outline),
                     label: const Text("Continue as Guest"),
@@ -360,14 +362,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       foregroundColor: UiConfig.primaryColor,
                       side: BorderSide(color: UiConfig.primaryColor),
                       shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(DesignTokens.buttonRadius),
-                      ),
-                      textStyle: TextStyle(
-                        fontSize: DesignTokens.bodyFontSize,
-                        fontFamily: DesignTokens.fontFamily,
-                        fontWeight: UiConfig.fontWeightNormal,
-                      ),
+                          borderRadius:
+                              BorderRadius.circular(DesignTokens.buttonRadius)),
                     ),
                     onPressed: loading ? null : () => _handleGuest(auth),
                   ),
@@ -379,14 +375,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       foregroundColor: UiConfig.secondaryColor,
                       side: BorderSide(color: UiConfig.secondaryColor),
                       shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(DesignTokens.buttonRadius),
-                      ),
-                      textStyle: TextStyle(
-                        fontSize: DesignTokens.bodyFontSize,
-                        fontFamily: DesignTokens.fontFamily,
-                        fontWeight: UiConfig.fontWeightNormal,
-                      ),
+                          borderRadius:
+                              BorderRadius.circular(DesignTokens.buttonRadius)),
                     ),
                     onPressed: loading ? null : () => _handleDemo(auth),
                   ),

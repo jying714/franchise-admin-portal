@@ -1,25 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/models/franchise_info.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
-// design_tokens import removed for MVP compatibility; using Material defaults
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:shared_core/src/core/models/user.dart' as app_user;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 
-/// Simple Franchise Selector screen (or can be shown as bottom sheet).
-/// Lists the user's available franchises and allows switching.
-/// Pulls full FranchiseInfo using the user's franchiseIds for name/logo.
 class FranchiseSelectorScreen extends StatefulWidget {
   const FranchiseSelectorScreen({super.key});
 
   @override
-  State<FranchiseSelectorScreen> createState() => _FranchiseSelectorScreenState();
+  State<FranchiseSelectorScreen> createState() =>
+      _FranchiseSelectorScreenState();
 }
 
 class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
-  List<FranchiseInfo> _franchises = [];
+  List<shared.FranchiseInfo> _franchises = [];
   bool _loading = true;
   String? _error;
 
@@ -36,12 +32,9 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
     });
 
     try {
-      final firestore = Provider.of<FirestoreService>(context, listen: false);
-      // Get current user from the stream provider or firestore
-      // For simplicity, we assume the profile/user data has franchiseIds.
-      // In a real app you'd have the current User model easily accessible.
-      // Here we fetch fresh for the selector.
-      final currentUser = await _getCurrentUser(firestore); // simplistic
+      final firestore =
+          Provider.of<shared.FirestoreService>(context, listen: false);
+      final currentUser = await _getCurrentUser(firestore);
 
       if (currentUser == null || currentUser.franchiseIds.isEmpty) {
         setState(() {
@@ -51,7 +44,8 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
         return;
       }
 
-      final infos = await firestore.getFranchisesByIds(currentUser.franchiseIds);
+      final infos =
+          await firestore.getFranchisesByIds(currentUser.franchiseIds);
       setState(() {
         _franchises = infos;
         _loading = false;
@@ -64,10 +58,9 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
     }
   }
 
-  // Helper to get current user (in real app this would come from a UserProvider/StreamProvider)
-  Future<app_user.User?> _getCurrentUser(FirestoreService firestore) async {
-    // This is a simplification. In production you'd have a proper current user provider.
-    final fbUser = FirebaseAuth.instance.currentUser; // need import
+  Future<shared.User?> _getCurrentUser(
+      shared.FirestoreService firestore) async {
+    final fbUser = FirebaseAuth.instance.currentUser;
     if (fbUser == null) return null;
     return await firestore.getUser(fbUser.uid);
   }
@@ -79,8 +72,8 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Switch Restaurant'),
-        backgroundColor: Colors.deepOrange,
+        title: Text(loc.switchRestaurant),
+        backgroundColor: UiConfig.primaryColor, // Use your UiConfig
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -97,7 +90,8 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
                       itemCount: _franchises.length,
                       itemBuilder: (context, index) {
                         final f = _franchises[index];
-                        final isCurrent = f.id == franchiseProvider.currentFranchiseId;
+                        final isCurrent =
+                            f.id == franchiseProvider.currentFranchiseId;
 
                         return ListTile(
                           leading: f.logoUrl != null
@@ -109,23 +103,24 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
                           title: Text(
                             f.name,
                             style: TextStyle(
-                              fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                              fontWeight: isCurrent
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                               fontSize: 16,
                             ),
                           ),
                           subtitle: f.status != null ? Text(f.status!) : null,
                           trailing: isCurrent
-                              ? const Icon(Icons.check_circle, color: Colors.green)
+                              ? const Icon(Icons.check_circle,
+                                  color: Colors.green)
                               : null,
                           onTap: () async {
                             await franchiseProvider.setCurrentFranchiseId(f.id);
-                            // Load details for dynamic branding
-                            final firestore = Provider.of<FirestoreService>(context, listen: false);
-                            await franchiseProvider.loadCurrentFranchiseDetails(firestore);
 
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Switched to ${f.name}')),
+                                SnackBar(
+                                    content: Text('Switched to ${f.name}')),
                               );
                               Navigator.of(context).pop(); // close selector
                             }
@@ -136,4 +131,3 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
     );
   }
 }
-

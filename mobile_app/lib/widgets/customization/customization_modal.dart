@@ -25,6 +25,7 @@ import 'package:franchise_mobile_app/widgets/customization/header.dart';
 import 'package:franchise_mobile_app/widgets/customization/bottom_bar.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_core/src/core/config/design_tokens.dart';
+import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 
 const MAX_DOUBLES = 4;
 const DOUGH_IDS = {'dough_calzone', 'dough_pizza', 'dough'};
@@ -985,135 +986,264 @@ class _CustomizationModalState extends State<CustomizationModal> {
     final theme = Theme.of(context);
     final loc = AppLocalizations.of(context)!;
 
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
-      ),
-      backgroundColor: UiConfig.surfaceColor,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
-          minWidth: 300,
-          maxWidth: 440,
-        ),
-        child: Padding(
-          padding: UiConfig.cardPadding,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize:
-                        MainAxisSize.min, // Important for Dialog content
-                    children: [
-                      CustomizationHeader(
-                        menuItem: widget.menuItem,
-                        theme: theme,
-                        loc: loc,
-                      ),
-                      SizedBox(height: shared.DesignTokens.gridSpacing),
-                      // New version:
-                      if (widget.menuItem.category.toLowerCase() != 'drinks' &&
-                          widget.menuItem.sizes != null &&
-                          widget.menuItem.sizes!.isNotEmpty)
-                        SizedBox(
-                          width: double
-                              .infinity, // Ensures bounded width for the Row inside SizeDropdown
-                          child: SizeDropdown(
+    return Consumer<FranchiseProvider>(
+      builder: (context, provider, child) {
+        if (!provider.hasValidFranchise) {
+          return const Dialog(
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
+          ),
+          backgroundColor: UiConfig.surfaceColor,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
+              minWidth: 300,
+              maxWidth: 440,
+            ),
+            child: Padding(
+              padding: UiConfig.cardPadding,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CustomizationHeader(
                             menuItem: widget.menuItem,
-                            selectedSize: _selectedSize,
-                            onChanged: (newSize) {
-                              setState(() {
-                                _selectedSize = newSize;
-                              });
-                            },
-                            toppingCostLabel: _isPizzaOrCalzone()
-                                ? ToppingCostLabel(
-                                    theme: theme,
-                                    loc: loc,
-                                    getToppingUpcharge: _getToppingUpcharge,
-                                    currencyFormat: UiConfig.currencyFormat,
-                                  )
-                                : null,
-                            normalizeSizeKey: _normalizeSizeKey,
+                            theme: theme,
+                            loc: loc,
                           ),
-                        ),
-                      if (_isWings()) ...[
-                        WingsPortionSelector(
-                          menuItem: widget.menuItem,
-                          theme: theme,
-                          loc: loc,
-                          selectedSize: _selectedSize,
-                          ingredientMetadata: _ingredientMetadata,
-                          selectedDippedSauces: Map.fromEntries(
-                            _selectedDippedSauces.entries
-                                .where((e) => e.value != null)
-                                .map((e) => MapEntry(e.key, e.value!)),
-                          ),
-                          setState: setState,
-                        ),
-                        WingsDipSauceSelector(
-                          menuItem: widget.menuItem,
-                          theme: theme,
-                          loc: loc,
-                          ingredientMetadata: _ingredientMetadata,
-                          sideDipCounts: _sideDipCounts,
-                          wingsDipSauceTabIndex: _wingsDipSauceTabIndex,
-                          setState: setState,
-                          onTabChanged: (newIndex) {
-                            setState(() {
-                              _wingsDipSauceTabIndex = newIndex;
-                            });
-                          },
-                        ),
-                        WingsOptionalAddOnsGroup(
-                          menuItem: widget.menuItem,
-                          theme: theme,
-                          loc: loc,
-                          ingredientMetadata: _ingredientMetadata,
-                          selectedAddOns: _selectedAddOns,
-                          doubleAddOns: _doubleAddOns,
-                          setState: setState,
-                          onChanged: (ingId, checked) {
-                            if (checked) {
-                              _selectedAddOns.add(ingId);
-                              _doubleAddOns[ingId] = false;
-                            } else {
-                              _selectedAddOns.remove(ingId);
-                              _doubleAddOns.remove(ingId);
-                            }
-                          },
-                        ),
-                      ],
-                      if (widget.menuItem.category.toLowerCase() == 'drinks')
-                        DrinksFlavorSelector(
-                          menuItem: widget.menuItem,
-                          theme: theme,
-                          loc: loc,
-                          ingredientMetadata: _ingredientMetadata,
-                          selectedSauceCounts: _selectedSauceCounts,
-                          setState: setState,
-                        )
-                      else if (widget.menuItem.category.toLowerCase() ==
-                          'dinners')
-                        DinnerIncludedIngredients(
-                          menuItem: widget.menuItem,
-                          theme: theme,
-                          loc: loc,
-                          ingredientMetadata: _ingredientMetadata,
-                          currentIngredients: _currentIngredients,
-                          ingredientAmounts: _ingredientAmounts,
-                          setState: setState,
-                        )
-                      else if (_showsCurrentIngredients())
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                          SizedBox(height: shared.DesignTokens.gridSpacing),
+
+                          if (widget.menuItem.category.toLowerCase() !=
+                                  'drinks' &&
+                              widget.menuItem.sizes != null &&
+                              widget.menuItem.sizes!.isNotEmpty)
+                            SizedBox(
+                              width: double.infinity,
+                              child: SizeDropdown(
+                                menuItem: widget.menuItem,
+                                selectedSize: _selectedSize,
+                                onChanged: (newSize) {
+                                  setState(() {
+                                    _selectedSize = newSize;
+                                  });
+                                },
+                                toppingCostLabel: _isPizzaOrCalzone()
+                                    ? ToppingCostLabel(
+                                        theme: theme,
+                                        loc: loc,
+                                        getToppingUpcharge: _getToppingUpcharge,
+                                        currencyFormat: UiConfig.currencyFormat,
+                                      )
+                                    : null,
+                                normalizeSizeKey: _normalizeSizeKey,
+                              ),
+                            ),
+
+                          if (_isWings()) ...[
+                            WingsPortionSelector(
+                              menuItem: widget.menuItem,
+                              theme: theme,
+                              loc: loc,
+                              selectedSize: _selectedSize,
+                              ingredientMetadata: _ingredientMetadata,
+                              selectedDippedSauces: Map.fromEntries(
+                                _selectedDippedSauces.entries
+                                    .where((e) => e.value != null)
+                                    .map((e) => MapEntry(e.key, e.value!)),
+                              ),
+                              setState: setState,
+                            ),
+                            WingsDipSauceSelector(
+                              menuItem: widget.menuItem,
+                              theme: theme,
+                              loc: loc,
+                              ingredientMetadata: _ingredientMetadata,
+                              sideDipCounts: _sideDipCounts,
+                              wingsDipSauceTabIndex: _wingsDipSauceTabIndex,
+                              setState: setState,
+                              onTabChanged: (newIndex) {
+                                setState(() {
+                                  _wingsDipSauceTabIndex = newIndex;
+                                });
+                              },
+                            ),
+                            WingsOptionalAddOnsGroup(
+                              menuItem: widget.menuItem,
+                              theme: theme,
+                              loc: loc,
+                              ingredientMetadata: _ingredientMetadata,
+                              selectedAddOns: _selectedAddOns,
+                              doubleAddOns: _doubleAddOns,
+                              setState: setState,
+                              onChanged: (ingId, checked) {
+                                if (checked) {
+                                  _selectedAddOns.add(ingId);
+                                  _doubleAddOns[ingId] = false;
+                                } else {
+                                  _selectedAddOns.remove(ingId);
+                                  _doubleAddOns.remove(ingId);
+                                }
+                              },
+                            ),
+                          ],
+
+                          if (widget.menuItem.category.toLowerCase() ==
+                              'drinks')
+                            DrinksFlavorSelector(
+                              menuItem: widget.menuItem,
+                              theme: theme,
+                              loc: loc,
+                              ingredientMetadata: _ingredientMetadata,
+                              selectedSauceCounts: _selectedSauceCounts,
+                              setState: setState,
+                            )
+                          else if (widget.menuItem.category.toLowerCase() ==
+                              'dinners')
+                            DinnerIncludedIngredients(
+                              menuItem: widget.menuItem,
+                              theme: theme,
+                              loc: loc,
+                              ingredientMetadata: _ingredientMetadata,
+                              currentIngredients: _currentIngredients,
+                              ingredientAmounts: _ingredientAmounts,
+                              setState: setState,
+                            )
+                          else if (_showsCurrentIngredients())
+                            // ... your current ingredients column (unchanged)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      top: 10, bottom: 10),
+                                  child: Container(
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      color: UiConfig.primaryColor,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 8, horizontal: 14),
+                                    child: Text(
+                                      "Current Toppings",
+                                      style:
+                                          theme.textTheme.titleMedium?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                // ... rest of your current ingredients UI (unchanged)
+                                ..._currentIngredients.where((id) {
+                                  final meta = _ingredientMetadata[id];
+                                  final type = meta?.type?.toLowerCase() ?? '';
+                                  return !_selectedDressingCounts
+                                          .containsKey(id) &&
+                                      !_selectedSauceCounts.containsKey(id) &&
+                                      type != 'crust' &&
+                                      type != 'cheeses';
+                                }).map((ingId) {
+                                  final meta = _ingredientMetadata[ingId];
+                                  return Card(
+                                    margin: EdgeInsets.symmetric(
+                                        vertical: 2, horizontal: 0),
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                          vertical: 8, horizontal: 12),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  meta?.name ?? ingId,
+                                                  style:
+                                                      theme.textTheme.bodyLarge,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              TextButton(
+                                                style: TextButton.styleFrom(
+                                                  foregroundColor:
+                                                      theme.colorScheme.error,
+                                                ),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    _currentIngredients
+                                                        .remove(ingId);
+                                                    _doubleToppings
+                                                        .remove(ingId);
+                                                    _ingredientPortions
+                                                        .remove(ingId);
+                                                  });
+                                                },
+                                                child: Text(loc.remove),
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(height: 6),
+                                          Row(
+                                            children: [
+                                              if (!_isCalzone()) ...[
+                                                Flexible(
+                                                  fit: FlexFit.tight,
+                                                  child: PortionSelector(
+                                                    value: _ingredientPortions[
+                                                            ingId] ??
+                                                        Portion.whole,
+                                                    onChanged: (portion) =>
+                                                        _handlePortionChanged(
+                                                            ingId, portion),
+                                                  ),
+                                                ),
+                                                SizedBox(width: 10),
+                                              ],
+                                              Flexible(
+                                                fit: FlexFit.tight,
+                                                child: PortionPillToggle(
+                                                  isDouble:
+                                                      _doubleToppings[ingId] ==
+                                                          true,
+                                                  onTap: () =>
+                                                      _handleDoubleChanged(
+                                                          ingId,
+                                                          !(_doubleToppings[
+                                                                  ingId] ??
+                                                              false)),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ],
+                            ),
+
+                          // --- Begin Pizza/Calzone Topping Tabs UI ---
+                          if (_isPizzaOrCalzone() &&
+                              _toppingTabLabels.isNotEmpty)
                             Padding(
                               padding:
-                                  const EdgeInsets.only(top: 10, bottom: 10),
+                                  const EdgeInsets.only(top: 18, bottom: 4),
                               child: Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
@@ -1123,7 +1253,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                 padding: const EdgeInsets.symmetric(
                                     vertical: 8, horizontal: 14),
                                 child: Text(
-                                  "Current Toppings",
+                                  "Additional Toppings",
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -1131,767 +1261,701 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                 ),
                               ),
                             ),
-                            ..._currentIngredients.where((id) {
-                              final meta = _ingredientMetadata[id];
-                              // Exclude dressing, sauce, and crust types from "Current Toppings"
-                              final type = meta?.type?.toLowerCase() ?? '';
-                              return !_selectedDressingCounts.containsKey(id) &&
-                                  !_selectedSauceCounts.containsKey(id) &&
-                                  type != 'crust' &&
-                                  type != 'cheeses';
-                            }).map((ingId) {
-                              final meta = _ingredientMetadata[ingId];
-                              return Card(
-                                margin: EdgeInsets.symmetric(
-                                    vertical: 2, horizontal: 0),
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: 8, horizontal: 12),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      // ...rest of your row/ingredient UI...
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              meta?.name ?? ingId,
-                                              style: theme.textTheme.bodyLarge,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          TextButton(
-                                            style: TextButton.styleFrom(
-                                              foregroundColor:
-                                                  theme.colorScheme.error,
-                                            ),
-                                            onPressed: () {
-                                              setState(() {
-                                                _currentIngredients
-                                                    .remove(ingId);
-                                                _doubleToppings.remove(ingId);
-                                                _ingredientPortions
-                                                    .remove(ingId);
-                                              });
-                                            },
-                                            child: Text(loc.remove),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(height: 6),
-                                      Row(
-                                        children: [
-                                          if (!_isCalzone()) ...[
-                                            Flexible(
-                                              fit: FlexFit.tight,
-                                              child: PortionSelector(
-                                                value: _ingredientPortions[
-                                                        ingId] ??
-                                                    Portion.whole,
-                                                onChanged: (portion) =>
-                                                    _handlePortionChanged(
-                                                        ingId, portion),
-                                              ),
-                                            ),
-                                            SizedBox(width: 10),
-                                          ],
-                                          Flexible(
-                                            fit: FlexFit.tight,
-                                            child: PortionPillToggle(
-                                              isDouble:
-                                                  _doubleToppings[ingId] ==
-                                                      true,
-                                              onTap: () => _handleDoubleChanged(
-                                                  ingId,
-                                                  !_doubleToppings[ingId]!),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ],
-                        ),
 
-                      // --- Begin Pizza/Calzone Topping Tabs UI ---
-                      if (_isPizzaOrCalzone() && _toppingTabLabels.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 18, bottom: 4),
-                          child: Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: UiConfig.primaryColor,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
+                          Padding(
                             padding: const EdgeInsets.symmetric(
-                                vertical: 8, horizontal: 14),
-                            child: Text(
-                              "Additional Toppings",
-                              style: theme.textTheme.titleMedium?.copyWith(
+                                vertical: 6.0), // Much tighter vertical space
+                            child: Container(
+                              decoration: BoxDecoration(
                                 color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                                borderRadius: BorderRadius.circular(30),
+                                border: Border.all(
+                                    color: Colors.grey[300]!, width: 1),
                               ),
-                            ),
-                          ),
-                        ),
-
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 6.0), // Much tighter vertical space
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(30),
-                            border:
-                                Border.all(color: Colors.grey[300]!, width: 1),
-                          ),
-                          // The Row is now wrapped in a Container, acting like a tab bar.
-                          child: Row(
-                            children: _toppingTabLabels.map((label) {
-                              final bool selected =
-                                  _selectedToppingTab == label;
-                              return Expanded(
-                                child: GestureDetector(
-                                  onTap: () => setState(
-                                      () => _selectedToppingTab = label),
-                                  child: AnimatedContainer(
-                                    duration: Duration(milliseconds: 150),
-                                    decoration: BoxDecoration(
-                                      color: selected
-                                          ? UiConfig.secondaryColor
-                                          : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12),
-                                    alignment: Alignment.center,
-                                    child: Text(
-                                      label,
-                                      style:
-                                          theme.textTheme.bodyLarge?.copyWith(
-                                        color: selected
-                                            ? Colors.white
-                                            : UiConfig.secondaryColor,
-                                        fontWeight: selected
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
-
-                      if (_isPizzaOrCalzone() && _selectedToppingTab.isNotEmpty)
-                        Builder(
-                          builder: (context) {
-                            final group = _toppingTabGroups.firstWhereOrNull(
-                                (g) => g['label'] == _selectedToppingTab);
-                            if (group == null) return SizedBox.shrink();
-
-                            final ingredientIds =
-                                (group['ingredientIds'] as List<dynamic>? ?? [])
-                                    .map((e) => e.toString())
-                                    .toList();
-
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.only(top: 4, bottom: 4),
-                                  child: Divider(
-                                    thickness: 2,
-                                    color: Colors.grey[700],
-                                  ),
-                                ),
-                                ...ingredientIds
-                                    .where((ingId) =>
-                                        !_currentIngredients.contains(ingId))
-                                    .map((ingId) {
-                                  final meta = _ingredientMetadata[ingId];
-                                  return Card(
-                                    margin: EdgeInsets.symmetric(
-                                        vertical: 2, horizontal: 0),
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(
-                                          vertical: 8, horizontal: 12),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Expanded(
-                                            child: Text(meta?.name ?? ingId,
-                                                style:
-                                                    theme.textTheme.bodyLarge),
+                              // The Row is now wrapped in a Container, acting like a tab bar.
+                              child: Row(
+                                children: _toppingTabLabels.map((label) {
+                                  final bool selected =
+                                      _selectedToppingTab == label;
+                                  return Expanded(
+                                    child: GestureDetector(
+                                      onTap: () => setState(
+                                          () => _selectedToppingTab = label),
+                                      child: AnimatedContainer(
+                                        duration: Duration(milliseconds: 150),
+                                        decoration: BoxDecoration(
+                                          color: selected
+                                              ? UiConfig.secondaryColor
+                                              : Colors.transparent,
+                                          borderRadius:
+                                              BorderRadius.circular(30),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 12),
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          label,
+                                          style: theme.textTheme.bodyLarge
+                                              ?.copyWith(
+                                            color: selected
+                                                ? Colors.white
+                                                : UiConfig.secondaryColor,
+                                            fontWeight: selected
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
                                           ),
-                                          TextButton(
-                                            onPressed: () {
-                                              setState(() {
-                                                _currentIngredients.add(ingId);
-                                                _doubleToppings[ingId] = false;
-                                                _ingredientPortions[ingId] =
-                                                    Portion.whole;
-                                              });
-                                            },
-                                            child: Text('Click to Add',
-                                                style: TextStyle(
-                                                    color: theme
-                                                        .colorScheme.primary)),
-                                          ),
-                                        ],
+                                        ),
                                       ),
                                     ),
                                   );
-                                }),
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 10),
-                                  child: Divider(
-                                    thickness: 2,
-                                    color: Colors.grey[700],
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
+                                }).toList(),
+                              ),
+                            ),
+                          ),
 
-                      // --- End Pizza/Calzone Topping Tabs UI ---
+                          if (_isPizzaOrCalzone() &&
+                              _selectedToppingTab.isNotEmpty)
+                            Builder(
+                              builder: (context) {
+                                final group =
+                                    _toppingTabGroups.firstWhereOrNull((g) =>
+                                        g['label'] == _selectedToppingTab);
+                                if (group == null) return SizedBox.shrink();
 
-                      ..._checkboxGroups.map((group) {
-                        final label =
-                            (group['label'] ?? '').toString().toLowerCase();
-                        if (label == 'cheeses') {
-                          final cheeseIds =
-                              (group['ingredientIds'] as List<dynamic>? ?? [])
-                                  .cast<String>();
-                          final selectedCheeses = cheeseIds
-                              .where((id) => _selectedCheeses.contains(id))
-                              .toList();
-                          final summary = selectedCheeses.isEmpty
-                              ? "None"
-                              : selectedCheeses.map((id) {
-                                  final meta = _ingredientMetadata[id];
-                                  final isDouble = _cheeseIsDouble[id] == true;
-                                  final portion =
-                                      _cheesePortions[id] ?? Portion.whole;
-                                  // Only show portion if not calzone and not whole
-                                  return "${meta?.name ?? id}"
-                                      "${isDouble ? " (Double)" : ""}"
-                                      "${(!_isCalzone() && portion != Portion.whole) ? " (${portionNames[portion]})" : ""}";
-                                }).join(", ");
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 0),
-                                  child: Container(
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      color: UiConfig.primaryColor,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 8, horizontal: 14),
-                                    child: Text(
-                                      "Cheeses",
-                                      style:
-                                          theme.textTheme.titleMedium?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
+                                final ingredientIds =
+                                    (group['ingredientIds'] as List<dynamic>? ??
+                                            [])
+                                        .map((e) => e.toString())
+                                        .toList();
+
+                                return Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 4, bottom: 4),
+                                      child: Divider(
+                                        thickness: 2,
+                                        color: Colors.grey[700],
                                       ),
                                     ),
-                                  ),
-                                ),
-                                ExpansionTile(
-                                  tilePadding:
-                                      EdgeInsets.symmetric(horizontal: 0),
-                                  title: Text(
-                                    summary,
-                                    style: theme.textTheme.bodySmall
-                                        ?.copyWith(color: Colors.grey[600]),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  subtitle: Padding(
-                                    padding: const EdgeInsets.only(top: 2.0),
-                                    child: Text(
-                                      "Add extra cheeses for an additional charge.",
-                                      style:
-                                          theme.textTheme.bodySmall?.copyWith(
-                                        color: Colors.grey[500],
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                    ),
-                                  ),
-                                  children: cheeseIds.map((cheeseId) {
-                                    final meta = _ingredientMetadata[cheeseId];
-                                    final selected =
-                                        _selectedCheeses.contains(cheeseId);
-                                    return Card(
-                                      margin: EdgeInsets.symmetric(
-                                          vertical: 2, horizontal: 0),
-                                      child: Padding(
-                                        padding: EdgeInsets.symmetric(
-                                            vertical: 8, horizontal: 12),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
-                                              children: [
-                                                Expanded(
-                                                  child: Text(
-                                                    meta?.name ?? cheeseId,
+                                    ...ingredientIds
+                                        .where((ingId) => !_currentIngredients
+                                            .contains(ingId))
+                                        .map((ingId) {
+                                      final meta = _ingredientMetadata[ingId];
+                                      return Card(
+                                        margin: EdgeInsets.symmetric(
+                                            vertical: 2, horizontal: 0),
+                                        child: Padding(
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 8, horizontal: 12),
+                                          child: Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              Expanded(
+                                                child: Text(meta?.name ?? ingId,
                                                     style: theme
-                                                        .textTheme.bodyLarge,
-                                                  ),
+                                                        .textTheme.bodyLarge),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  setState(() {
+                                                    _currentIngredients
+                                                        .add(ingId);
+                                                    _doubleToppings[ingId] =
+                                                        false;
+                                                    _ingredientPortions[ingId] =
+                                                        Portion.whole;
+                                                  });
+                                                },
+                                                child: Text('Click to Add',
+                                                    style: TextStyle(
+                                                        color: theme.colorScheme
+                                                            .primary)),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 10),
+                                      child: Divider(
+                                        thickness: 2,
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+
+                          // --- End Pizza/Calzone Topping Tabs UI ---
+
+                          ..._checkboxGroups.map((group) {
+                            final label =
+                                (group['label'] ?? '').toString().toLowerCase();
+                            if (label == 'cheeses') {
+                              final cheeseIds =
+                                  (group['ingredientIds'] as List<dynamic>? ??
+                                          [])
+                                      .cast<String>();
+                              final selectedCheeses = cheeseIds
+                                  .where((id) => _selectedCheeses.contains(id))
+                                  .toList();
+                              final summary = selectedCheeses.isEmpty
+                                  ? "None"
+                                  : selectedCheeses.map((id) {
+                                      final meta = _ingredientMetadata[id];
+                                      final isDouble =
+                                          _cheeseIsDouble[id] == true;
+                                      final portion =
+                                          _cheesePortions[id] ?? Portion.whole;
+                                      // Only show portion if not calzone and not whole
+                                      return "${meta?.name ?? id}"
+                                          "${isDouble ? " (Double)" : ""}"
+                                          "${(!_isCalzone() && portion != Portion.whole) ? " (${portionNames[portion]})" : ""}";
+                                    }).join(", ");
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 10.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 0),
+                                      child: Container(
+                                        width: double.infinity,
+                                        decoration: BoxDecoration(
+                                          color: UiConfig.primaryColor,
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 8, horizontal: 14),
+                                        child: Text(
+                                          "Cheeses",
+                                          style: theme.textTheme.titleMedium
+                                              ?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    ExpansionTile(
+                                      tilePadding:
+                                          EdgeInsets.symmetric(horizontal: 0),
+                                      title: Text(
+                                        summary,
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(color: Colors.grey[600]),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      subtitle: Padding(
+                                        padding:
+                                            const EdgeInsets.only(top: 2.0),
+                                        child: Text(
+                                          "Add extra cheeses for an additional charge.",
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                            color: Colors.grey[500],
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ),
+                                      children: cheeseIds.map((cheeseId) {
+                                        final meta =
+                                            _ingredientMetadata[cheeseId];
+                                        final selected =
+                                            _selectedCheeses.contains(cheeseId);
+                                        return Card(
+                                          margin: EdgeInsets.symmetric(
+                                              vertical: 2, horizontal: 0),
+                                          child: Padding(
+                                            padding: EdgeInsets.symmetric(
+                                                vertical: 8, horizontal: 12),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.center,
+                                                  children: [
+                                                    Expanded(
+                                                      child: Text(
+                                                        meta?.name ?? cheeseId,
+                                                        style: theme.textTheme
+                                                            .bodyLarge,
+                                                      ),
+                                                    ),
+                                                    if (selected)
+                                                      TextButton(
+                                                        style: TextButton
+                                                            .styleFrom(
+                                                          foregroundColor: theme
+                                                              .colorScheme
+                                                              .error,
+                                                        ),
+                                                        onPressed: () {
+                                                          setState(() {
+                                                            _selectedCheeses
+                                                                .remove(
+                                                                    cheeseId);
+                                                            _cheesePortions
+                                                                .remove(
+                                                                    cheeseId);
+                                                            _cheeseIsDouble
+                                                                .remove(
+                                                                    cheeseId);
+                                                          });
+                                                        },
+                                                        child: Text('Remove'),
+                                                      )
+                                                    else
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          setState(() {
+                                                            _selectedCheeses
+                                                                .add(cheeseId);
+                                                            _cheesePortions[
+                                                                    cheeseId] =
+                                                                Portion.whole;
+                                                            _cheeseIsDouble[
+                                                                    cheeseId] =
+                                                                false;
+                                                          });
+                                                        },
+                                                        child: Text(
+                                                          'Click to Add',
+                                                          style: TextStyle(
+                                                              color: theme
+                                                                  .colorScheme
+                                                                  .primary),
+                                                        ),
+                                                      ),
+                                                  ],
                                                 ),
                                                 if (selected)
-                                                  TextButton(
-                                                    style: TextButton.styleFrom(
-                                                      foregroundColor: theme
-                                                          .colorScheme.error,
-                                                    ),
-                                                    onPressed: () {
-                                                      setState(() {
-                                                        _selectedCheeses
-                                                            .remove(cheeseId);
-                                                        _cheesePortions
-                                                            .remove(cheeseId);
-                                                        _cheeseIsDouble
-                                                            .remove(cheeseId);
-                                                      });
-                                                    },
-                                                    child: Text('Remove'),
-                                                  )
-                                                else
-                                                  TextButton(
-                                                    onPressed: () {
-                                                      setState(() {
-                                                        _selectedCheeses
-                                                            .add(cheeseId);
-                                                        _cheesePortions[
-                                                                cheeseId] =
-                                                            Portion.whole;
-                                                        _cheeseIsDouble[
-                                                            cheeseId] = false;
-                                                      });
-                                                    },
-                                                    child: Text(
-                                                      'Click to Add',
-                                                      style: TextStyle(
-                                                          color: theme
-                                                              .colorScheme
-                                                              .primary),
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            top: 6.0),
+                                                    child: Row(
+                                                      children: [
+                                                        if (!_isCalzone()) ...[
+                                                          Flexible(
+                                                            fit: FlexFit.tight,
+                                                            child:
+                                                                PortionSelector(
+                                                              value: _cheesePortions[
+                                                                      cheeseId] ??
+                                                                  Portion.whole,
+                                                              onChanged:
+                                                                  (portion) {
+                                                                setState(() {
+                                                                  _cheesePortions[
+                                                                          cheeseId] =
+                                                                      portion;
+                                                                });
+                                                              },
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 10),
+                                                        ],
+                                                        Flexible(
+                                                          fit: FlexFit.tight,
+                                                          child:
+                                                              PortionPillToggle(
+                                                            isDouble:
+                                                                _cheeseIsDouble[
+                                                                        cheeseId] ==
+                                                                    true,
+                                                            onTap: () {
+                                                              setState(() {
+                                                                _cheeseIsDouble[
+                                                                        cheeseId] =
+                                                                    !(_cheeseIsDouble[
+                                                                            cheeseId] ??
+                                                                        false);
+                                                              });
+                                                            },
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ),
                                               ],
                                             ),
-                                            if (selected)
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    top: 6.0),
-                                                child: Row(
-                                                  children: [
-                                                    if (!_isCalzone()) ...[
-                                                      Flexible(
-                                                        fit: FlexFit.tight,
-                                                        child: PortionSelector(
-                                                          value: _cheesePortions[
-                                                                  cheeseId] ??
-                                                              Portion.whole,
-                                                          onChanged: (portion) {
-                                                            setState(() {
-                                                              _cheesePortions[
-                                                                      cheeseId] =
-                                                                  portion;
-                                                            });
-                                                          },
-                                                        ),
-                                                      ),
-                                                      SizedBox(width: 10),
-                                                    ],
-                                                    Flexible(
-                                                      fit: FlexFit.tight,
-                                                      child: PortionPillToggle(
-                                                        isDouble:
-                                                            _cheeseIsDouble[
-                                                                    cheeseId] ==
-                                                                true,
-                                                        onTap: () {
-                                                          setState(() {
-                                                            _cheeseIsDouble[
-                                                                    cheeseId] =
-                                                                !(_cheeseIsDouble[
-                                                                        cheeseId] ??
-                                                                    false);
-                                                          });
-                                                        },
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ],
-                            ),
-                          );
-                        } else {
-                          // Non-cheese group: render as before
-                          return CheckboxCustomizationGroup(
-                            group: group,
-                            theme: theme,
-                            loc: loc,
-                            category: widget.menuItem.category,
-                            includedIngredients:
-                                widget.menuItem.includedIngredients,
-                            ingredientMetadata: _ingredientMetadata,
-                            currentIngredients: _currentIngredients,
-                            usesDynamicToppingPricing:
-                                widget.menuItem.additionalToppingPrices !=
-                                        null &&
-                                    _selectedSize != null,
-                            showPortionToggle: _showPortionToggle,
-                            getToppingUpcharge: _getToppingUpcharge,
-                            getIngredientUpcharge: _getIngredientUpcharge,
-                            toggleIngredient: _toggleIngredient,
-                            buildPortionPillToggle: (ingId) =>
-                                PortionPillToggle(
-                              isDouble: _doubleToppings[ingId] == true,
-                              onTap: () {
-                                setState(() {
-                                  if (_doubleToppings[ingId] == true) {
-                                    _doubleToppings[ingId] = false;
-                                  } else {
-                                    if (_doublesCount < MAX_DOUBLES)
-                                      _doubleToppings[ingId] = true;
-                                  }
-                                });
-                              },
-                            ),
-                          );
-                        }
-                      }),
-
-                      ..._radioGroups.map((group) {
-                        final label =
-                            (group['label'] as String?)?.toLowerCase();
-                        if (label == 'sauces') {
-                          // --- Unified Sauce Summary Logic (works for both pizza/calzone) ---
-                          final saucesGroup = group;
-                          final sauceIds =
-                              (saucesGroup['ingredientIds'] as List?)
-                                      ?.cast<String>() ??
-                                  [];
-
-                          String sauceSummary;
-
-                          if (_isCalzone()) {
-                            // CALZONE: summarize by stepper sauce count
-                            final selectedSauceIds = sauceIds
-                                .where(
-                                    (id) => (_selectedSauceCounts[id] ?? 0) > 0)
-                                .toList();
-                            if (selectedSauceIds.isEmpty) {
-                              sauceSummary = "None";
-                            } else {
-                              sauceSummary = selectedSauceIds.map((id) {
-                                final name =
-                                    _ingredientMetadata[id]?.name ?? id;
-                                final count = _selectedSauceCounts[id] ?? 0;
-                                return count > 1 ? "$name (x$count)" : "$name";
-                              }).join(", ");
-                            }
-                          } else {
-                            // PIZZA: use split/portion/amount summary
-                            final selectedSauces = _pizzaSauceSelections
-                                .where((s) => s.selected)
-                                .toList();
-                            if (selectedSauces.isEmpty) {
-                              sauceSummary = "None";
-                            } else {
-                              sauceSummary = selectedSauces.map((s) {
-                                final name =
-                                    _ingredientMetadata[s.id]?.name ?? s.name;
-                                final amount = s.amount.capitalize();
-                                if (s.portion != Portion.whole) {
-                                  final portion = portionNames[s.portion] ?? "";
-                                  return "$name ($portion, $amount)";
-                                } else {
-                                  return "$name ($amount)";
-                                }
-                              }).join(", ");
-                            }
-                          }
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 0),
-                                  child: Container(
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      color: UiConfig.primaryColor,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 8, horizontal: 14),
-                                    child: Text(
-                                      "Sauces",
-                                      style:
-                                          theme.textTheme.titleMedium?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                ExpansionTile(
-                                  tilePadding:
-                                      EdgeInsets.symmetric(horizontal: 0),
-                                  title: Text(
-                                    sauceSummary,
-                                    style: theme.textTheme.bodySmall
-                                        ?.copyWith(color: Colors.grey[600]),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  subtitle: Padding(
-                                    padding: const EdgeInsets.only(top: 2.0),
-                                    child: Text(
-                                      "Split your sauce or add extra for an additional charge.",
-                                      style:
-                                          theme.textTheme.bodySmall?.copyWith(
-                                        color: Colors.grey[500],
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                    ),
-                                  ),
-                                  children: [
-                                    SauceSelectorGroup(
-                                      group: group,
-                                      theme: theme,
-                                      loc: loc,
-                                      isPizza: _isPizza,
-                                      pizzaSauceSelections:
-                                          _pizzaSauceSelections,
-                                      ingredientMetadata: _ingredientMetadata,
-                                      sauceSplitValidationError:
-                                          _sauceSplitValidationError,
-                                      resetPizzaSauceSelections:
-                                          _resetPizzaSauceSelections,
-                                      setState: setState,
-                                      selectedSauceCounts: _selectedSauceCounts,
-                                      getFreeSauceCount: _getFreeSauceCount,
-                                      getExtraSauceUpcharge:
-                                          _getExtraSauceUpcharge,
+                                          ),
+                                        );
+                                      }).toList(),
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
-                          );
-                        } else if (label == 'dressings') {
-                          // --- Dressings logic ---
-                          return DressingSelectorGroup(
-                            group: group,
-                            theme: theme,
-                            loc: loc,
-                            selectedDressingCounts: _selectedDressingCounts,
-                            onCountChanged: (ingId, newCount) {
-                              setState(() =>
-                                  _selectedDressingCounts[ingId] = newCount);
-                            },
-                            getFreeDressingCount: _getFreeDressingCount,
-                            getExtraDressingUpcharge: _getExtraDressingUpcharge,
-                            ingredientMetadata: _ingredientMetadata,
-                          );
-                        }
-                        // DO NOT RENDER crust, cook, cut here
-                        return null;
-                      }).whereType<Widget>(),
+                              );
+                            } else {
+                              // Non-cheese group: render as before
+                              return CheckboxCustomizationGroup(
+                                group: group,
+                                theme: theme,
+                                loc: loc,
+                                category: widget.menuItem.category,
+                                includedIngredients:
+                                    widget.menuItem.includedIngredients,
+                                ingredientMetadata: _ingredientMetadata,
+                                currentIngredients: _currentIngredients,
+                                usesDynamicToppingPricing:
+                                    widget.menuItem.additionalToppingPrices !=
+                                            null &&
+                                        _selectedSize != null,
+                                showPortionToggle: _showPortionToggle,
+                                getToppingUpcharge: _getToppingUpcharge,
+                                getIngredientUpcharge: _getIngredientUpcharge,
+                                toggleIngredient: _toggleIngredient,
+                                buildPortionPillToggle: (ingId) =>
+                                    PortionPillToggle(
+                                  isDouble: _doubleToppings[ingId] == true,
+                                  onTap: () {
+                                    setState(() {
+                                      if (_doubleToppings[ingId] == true) {
+                                        _doubleToppings[ingId] = false;
+                                      } else {
+                                        if (_doublesCount < MAX_DOUBLES)
+                                          _doubleToppings[ingId] = true;
+                                      }
+                                    });
+                                  },
+                                ),
+                              );
+                            }
+                          }),
 
-                      if (!_isWings() &&
-                          widget.menuItem.optionalAddOns != null &&
-                          widget.menuItem.optionalAddOns!.isNotEmpty)
-                        OptionalAddOnsGroup(
-                          menuItem: widget.menuItem,
-                          theme: theme,
-                          loc: loc,
-                          ingredientMetadata: _ingredientMetadata,
-                          selectedAddOns: _selectedAddOns,
-                          doubleAddOns: _doubleAddOns,
-                          selectedSauceCounts: _selectedSauceCounts,
-                          usesDynamicToppingPricing:
-                              widget.menuItem.additionalToppingPrices != null &&
-                                  _selectedSize != null,
-                          getToppingUpcharge: _getToppingUpcharge,
-                          getIngredientUpcharge: _getIngredientUpcharge,
-                          onToggleAddOn: (ingId, val) {
-                            setState(() {
-                              if (val == true) {
-                                _selectedAddOns.add(ingId);
-                                _doubleAddOns[ingId] = false;
-                              } else {
-                                _selectedAddOns.remove(ingId);
-                                _doubleAddOns.remove(ingId);
-                              }
-                            });
-                          },
-                          onChangeSauceCount: (ingId, delta) {
-                            setState(() {
-                              final count = _selectedSauceCounts[ingId] ?? 0;
-                              _selectedSauceCounts[ingId] =
-                                  (count + delta).clamp(0, 100);
-                            });
-                          },
-                          buildAddOnDoublePill: (ingId, isDouble, onTap) =>
-                              PortionPillToggle(
-                            isDouble: isDouble,
-                            onTap: onTap,
-                          ),
-                          maxFreeSauces: _getFreeSauceCount(),
-                          extraSauceUpcharge: _getExtraSauceUpcharge(),
-                        ),
-
-                      // --- ORDER DETAILS SECTION: Always at the very end, collapsed by default ---
-                      Builder(
-                        builder: (context) {
-                          // Get all remaining radio groups (crust, cook, cut)
-                          final orderDetailGroups = _radioGroups.where((group) {
+                          ..._radioGroups.map((group) {
                             final label =
                                 (group['label'] as String?)?.toLowerCase();
-                            return label == 'crust' ||
-                                label == 'cook' ||
-                                label == 'cut';
-                          }).toList();
+                            if (label == 'sauces') {
+                              // --- Unified Sauce Summary Logic (works for both pizza/calzone) ---
+                              final saucesGroup = group;
+                              final sauceIds =
+                                  (saucesGroup['ingredientIds'] as List?)
+                                          ?.cast<String>() ??
+                                      [];
 
-                          // Compose summary for collapsed state
-                          String detailsSummary = orderDetailGroups
-                              .map((group) {
-                                final label = (group['label'] as String?) ?? '';
-                                final selected = _radioSelections[label];
-                                if (selected == null) return '';
-                                final meta = _ingredientMetadata[selected];
-                                return "${label.capitalize()}: ${meta?.name ?? selected}";
-                              })
-                              .where((str) => str.isNotEmpty)
-                              .join(" | ");
+                              String sauceSummary;
 
-                          return Padding(
-                            padding:
-                                const EdgeInsets.only(top: 12.0, bottom: 4),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 0),
-                                  child: Container(
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      color: UiConfig.primaryColor,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 8, horizontal: 14),
-                                    child: Text(
-                                      "Order Details",
-                                      style:
-                                          theme.textTheme.titleMedium?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
+                              if (_isCalzone()) {
+                                // CALZONE: summarize by stepper sauce count
+                                final selectedSauceIds = sauceIds
+                                    .where((id) =>
+                                        (_selectedSauceCounts[id] ?? 0) > 0)
+                                    .toList();
+                                if (selectedSauceIds.isEmpty) {
+                                  sauceSummary = "None";
+                                } else {
+                                  sauceSummary = selectedSauceIds.map((id) {
+                                    final name =
+                                        _ingredientMetadata[id]?.name ?? id;
+                                    final count = _selectedSauceCounts[id] ?? 0;
+                                    return count > 1
+                                        ? "$name (x$count)"
+                                        : "$name";
+                                  }).join(", ");
+                                }
+                              } else {
+                                // PIZZA: use split/portion/amount summary
+                                final selectedSauces = _pizzaSauceSelections
+                                    .where((s) => s.selected)
+                                    .toList();
+                                if (selectedSauces.isEmpty) {
+                                  sauceSummary = "None";
+                                } else {
+                                  sauceSummary = selectedSauces.map((s) {
+                                    final name =
+                                        _ingredientMetadata[s.id]?.name ??
+                                            s.name;
+                                    final amount = s.amount.capitalize();
+                                    if (s.portion != Portion.whole) {
+                                      final portion =
+                                          portionNames[s.portion] ?? "";
+                                      return "$name ($portion, $amount)";
+                                    } else {
+                                      return "$name ($amount)";
+                                    }
+                                  }).join(", ");
+                                }
+                              }
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 10.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 0),
+                                      child: Container(
+                                        width: double.infinity,
+                                        decoration: BoxDecoration(
+                                          color: UiConfig.primaryColor,
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 8, horizontal: 14),
+                                        child: Text(
+                                          "Sauces",
+                                          style: theme.textTheme.titleMedium
+                                              ?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                                ExpansionTile(
-                                  tilePadding:
-                                      EdgeInsets.symmetric(horizontal: 0),
-                                  title: Text(
-                                    detailsSummary.isEmpty
-                                        ? "Customize crust, cook, and cut."
-                                        : detailsSummary,
-                                    style: theme.textTheme.bodySmall
-                                        ?.copyWith(color: Colors.grey[600]),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  subtitle: Padding(
-                                    padding: const EdgeInsets.only(top: 2.0),
-                                    child: Text(
-                                      "Tap to customize crust, cook, or cut.",
-                                      style:
-                                          theme.textTheme.bodySmall?.copyWith(
-                                        color: Colors.grey[500],
-                                        fontStyle: FontStyle.italic,
+                                    ExpansionTile(
+                                      tilePadding:
+                                          EdgeInsets.symmetric(horizontal: 0),
+                                      title: Text(
+                                        sauceSummary,
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(color: Colors.grey[600]),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
+                                      subtitle: Padding(
+                                        padding:
+                                            const EdgeInsets.only(top: 2.0),
+                                        child: Text(
+                                          "Split your sauce or add extra for an additional charge.",
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                            color: Colors.grey[500],
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ),
+                                      children: [
+                                        SauceSelectorGroup(
+                                          group: group,
+                                          theme: theme,
+                                          loc: loc,
+                                          isPizza: _isPizza,
+                                          pizzaSauceSelections:
+                                              _pizzaSauceSelections,
+                                          ingredientMetadata:
+                                              _ingredientMetadata,
+                                          sauceSplitValidationError:
+                                              _sauceSplitValidationError,
+                                          resetPizzaSauceSelections:
+                                              _resetPizzaSauceSelections,
+                                          setState: setState,
+                                          selectedSauceCounts:
+                                              _selectedSauceCounts,
+                                          getFreeSauceCount: _getFreeSauceCount,
+                                          getExtraSauceUpcharge:
+                                              _getExtraSauceUpcharge,
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                  children: orderDetailGroups.map((group) {
-                                    return RadioCustomizationGroup(
-                                      group: group,
-                                      theme: theme,
-                                      loc: loc,
-                                      ingredientMetadata: _ingredientMetadata,
-                                      radioSelections: _radioSelections,
-                                      getIngredientUpcharge:
-                                          _getIngredientUpcharge,
-                                      handleRadioSelect: _handleRadioSelect,
-                                    );
-                                  }).toList(),
+                                  ],
                                 ),
-                              ],
+                              );
+                            } else if (label == 'dressings') {
+                              // --- Dressings logic ---
+                              return DressingSelectorGroup(
+                                group: group,
+                                theme: theme,
+                                loc: loc,
+                                selectedDressingCounts: _selectedDressingCounts,
+                                onCountChanged: (ingId, newCount) {
+                                  setState(() =>
+                                      _selectedDressingCounts[ingId] =
+                                          newCount);
+                                },
+                                getFreeDressingCount: _getFreeDressingCount,
+                                getExtraDressingUpcharge:
+                                    _getExtraDressingUpcharge,
+                                ingredientMetadata: _ingredientMetadata,
+                              );
+                            }
+                            // DO NOT RENDER crust, cook, cut here
+                            return null;
+                          }).whereType<Widget>(),
+
+                          if (!_isWings() &&
+                              widget.menuItem.optionalAddOns != null &&
+                              widget.menuItem.optionalAddOns!.isNotEmpty)
+                            OptionalAddOnsGroup(
+                              menuItem: widget.menuItem,
+                              theme: theme,
+                              loc: loc,
+                              ingredientMetadata: _ingredientMetadata,
+                              selectedAddOns: _selectedAddOns,
+                              doubleAddOns: _doubleAddOns,
+                              selectedSauceCounts: _selectedSauceCounts,
+                              usesDynamicToppingPricing:
+                                  widget.menuItem.additionalToppingPrices !=
+                                          null &&
+                                      _selectedSize != null,
+                              getToppingUpcharge: _getToppingUpcharge,
+                              getIngredientUpcharge: _getIngredientUpcharge,
+                              onToggleAddOn: (ingId, val) {
+                                setState(() {
+                                  if (val == true) {
+                                    _selectedAddOns.add(ingId);
+                                    _doubleAddOns[ingId] = false;
+                                  } else {
+                                    _selectedAddOns.remove(ingId);
+                                    _doubleAddOns.remove(ingId);
+                                  }
+                                });
+                              },
+                              onChangeSauceCount: (ingId, delta) {
+                                setState(() {
+                                  final count =
+                                      _selectedSauceCounts[ingId] ?? 0;
+                                  _selectedSauceCounts[ingId] =
+                                      (count + delta).clamp(0, 100);
+                                });
+                              },
+                              buildAddOnDoublePill: (ingId, isDouble, onTap) =>
+                                  PortionPillToggle(
+                                isDouble: isDouble,
+                                onTap: onTap,
+                              ),
+                              maxFreeSauces: _getFreeSauceCount(),
+                              extraSauceUpcharge: _getExtraSauceUpcharge(),
                             ),
-                          );
-                        },
+
+                          // --- ORDER DETAILS SECTION: Always at the very end, collapsed by default ---
+                          Builder(
+                            builder: (context) {
+                              // Get all remaining radio groups (crust, cook, cut)
+                              final orderDetailGroups =
+                                  _radioGroups.where((group) {
+                                final label =
+                                    (group['label'] as String?)?.toLowerCase();
+                                return label == 'crust' ||
+                                    label == 'cook' ||
+                                    label == 'cut';
+                              }).toList();
+
+                              // Compose summary for collapsed state
+                              String detailsSummary = orderDetailGroups
+                                  .map((group) {
+                                    final label =
+                                        (group['label'] as String?) ?? '';
+                                    final selected = _radioSelections[label];
+                                    if (selected == null) return '';
+                                    final meta = _ingredientMetadata[selected];
+                                    return "${label.capitalize()}: ${meta?.name ?? selected}";
+                                  })
+                                  .where((str) => str.isNotEmpty)
+                                  .join(" | ");
+
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.only(top: 12.0, bottom: 4),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 0),
+                                      child: Container(
+                                        width: double.infinity,
+                                        decoration: BoxDecoration(
+                                          color: UiConfig.primaryColor,
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 8, horizontal: 14),
+                                        child: Text(
+                                          "Order Details",
+                                          style: theme.textTheme.titleMedium
+                                              ?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    ExpansionTile(
+                                      tilePadding:
+                                          EdgeInsets.symmetric(horizontal: 0),
+                                      title: Text(
+                                        detailsSummary.isEmpty
+                                            ? "Customize crust, cook, and cut."
+                                            : detailsSummary,
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(color: Colors.grey[600]),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      subtitle: Padding(
+                                        padding:
+                                            const EdgeInsets.only(top: 2.0),
+                                        child: Text(
+                                          "Tap to customize crust, cook, or cut.",
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                            color: Colors.grey[500],
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ),
+                                      children: orderDetailGroups.map((group) {
+                                        return RadioCustomizationGroup(
+                                          group: group,
+                                          theme: theme,
+                                          loc: loc,
+                                          ingredientMetadata:
+                                              _ingredientMetadata,
+                                          radioSelections: _radioSelections,
+                                          getIngredientUpcharge:
+                                              _getIngredientUpcharge,
+                                          handleRadioSelect: _handleRadioSelect,
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                  CustomizationBottomBar(
+                    menuItem: widget.menuItem,
+                    theme: theme,
+                    loc: loc,
+                    totalPrice: _totalPrice,
+                    error: _error,
+                    onCancel: () => Navigator.of(context).pop(),
+                    onSubmit: _submit,
+                    onConfirm: widget.onConfirm,
+                    drinkFlavorCounts: _drinkFlavorCounts,
+                    sizePrices: widget.menuItem.sizePrices,
+                    sizes: widget.menuItem.sizes
+                        ?.map((s) => s.toString())
+                        .toList(),
+                    menuItemPrice: widget.menuItem.price,
+                    drinkMaxPerFlavor: _drinkMaxPerFlavor,
+                  ),
+                ],
               ),
-              CustomizationBottomBar(
-                menuItem: widget.menuItem,
-                theme: theme,
-                loc: loc,
-                totalPrice: _totalPrice,
-                error: _error,
-                onCancel: () => Navigator.of(context).pop(),
-                onSubmit: _submit,
-                onConfirm: widget.onConfirm,
-                drinkFlavorCounts: _drinkFlavorCounts,
-                sizePrices: widget.menuItem.sizePrices,
-                sizes: widget.menuItem.sizes?.map((s) => s.toString()).toList(),
-                menuItemPrice: widget.menuItem.price,
-                drinkMaxPerFlavor: _drinkMaxPerFlavor,
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

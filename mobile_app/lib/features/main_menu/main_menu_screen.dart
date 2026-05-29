@@ -8,7 +8,6 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:franchise_mobile_app/widgets/header/cart_icon_badge.dart';
-import 'package:shared_core/src/core/config/app_config.dart';
 import 'package:shared_core/src/core/config/branding_config.dart';
 import 'package:shared_core/src/core/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared;
@@ -17,12 +16,10 @@ import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:shared_core/src/core/services/analytics_service.dart';
 import 'package:shared_core/src/core/models/banner.dart';
 import 'package:shared_core/src/core/models/menu_item.dart';
-import 'package:shared_core/src/core/models/order.dart' as order_model;
 import 'package:shared_core/src/core/models/category.dart' as model;
 import 'package:franchise_mobile_app/features/category/category_screen.dart';
 import 'package:franchise_mobile_app/features/ordering/cart_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
-import 'package:franchise_mobile_app/features/menu/item_screen.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:franchise_mobile_app/widgets/header/profile_icon_button.dart';
@@ -51,31 +48,12 @@ class MainMenuScreen extends material.StatelessWidget {
         Provider.of<shared.FirestoreService>(context, listen: false);
     final analyticsService =
         Provider.of<shared.AnalyticsService>(context, listen: false);
-    final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: true);
-
-    final franchiseId = franchiseProvider.currentFranchiseId;
-    print(
-        '🔥 MainMenuScreen - Current Franchise ID from Provider: $franchiseId');
-
-    // Temporary force for testing - remove after provider initialization is fixed
-    final effectiveFranchiseId =
-        (franchiseId != 'unknown' && franchiseId.isNotEmpty)
-            ? franchiseId
-            : 'doughboyspizzeria';
-    print('🔥 MainMenuScreen - Current Franchise ID: $franchiseId'); // Debug
-
-    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
     final loc = AppLocalizations.of(context)!;
-
-    final cartItemCountStream = firestoreService
-        .getCart(userId,
-            franchiseId: franchiseId != 'unknown' ? franchiseId : null)
-        .map((order) => order?.items.length ?? 0);
 
     return material.Scaffold(
       appBar: FranchiseAppBar(
-        title: franchiseProvider.restaurantName ?? "Doughboys Pizzeria",
+        title:
+            "Doughboys Pizzeria", // Will be dynamic via Consumer below if needed
         centerTitle: true,
         actions: [
           ProfileIconButton(
@@ -85,130 +63,122 @@ class MainMenuScreen extends material.StatelessWidget {
               material.MaterialPageRoute(builder: (_) => const ProfileScreen()),
             ),
           ),
-          CartIconBadge(
-            cartItemCountStream: cartItemCountStream,
-            tooltip: loc.cart,
-            onPressed: () => material.Navigator.push(
-              context,
-              material.MaterialPageRoute(builder: (_) => const CartScreen()),
-            ),
+          const CartIconBadge(
+            tooltip: 'Cart',
+            onPressed: null, // Will be overridden in Consumer
           ),
           const material.SizedBox(width: DesignTokens.gridSpacing),
         ],
       ),
       backgroundColor: UiConfig.backgroundColor,
       body: material.SafeArea(
-        child: material.Column(
-          children: [
-            // Banner Section (working)
-            material.StreamBuilder<List<Banner>>(
-              stream: firestoreService.getBanners(),
-              builder: (context, snapshot) {
-                print(
-                    'Banner snapshot - connection: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, error: ${snapshot.error}');
-                if (snapshot.connectionState ==
-                    material.ConnectionState.waiting) {
-                  return const LoadingShimmerWidget(
-                    itemCount: 1,
-                    cardHeight: 180,
-                    cardWidth: double.infinity,
-                  );
-                }
-                if (snapshot.hasError) {
-                  // Silent fail for banners - non-critical
-                  developer.log('Banner load error: ${snapshot.error}');
-                  return const material
-                      .SizedBox.shrink(); // or EmptyStateWidget if preferred
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return EmptyStateWidget(
-                    title: loc.checkBackSoon,
-                    message: loc.noPromotionsAvailable,
-                    imageAsset: BrandingConfig.bannerPlaceholder,
-                  );
-                }
-                final banners = snapshot.data!.where((b) => b.active).toList();
-                if (banners.isEmpty) {
-                  return EmptyStateWidget(
-                    title: loc.checkBackSoon,
-                    message: loc.noPromotionsAvailable,
-                    imageAsset: BrandingConfig.bannerPlaceholder,
-                  );
-                }
-                return BannerCarousel(
-                  banners: banners,
-                  onBannerTap: (banner) {
-                    BannerActionHandler.handle(
-                      context,
-                      banner,
-                      analyticsService:
-                          analyticsService as shared.AnalyticsService?,
-                      loc: loc,
+        child: Consumer<FranchiseProvider>(
+          builder: (context, provider, child) {
+            if (!provider.hasValidFranchise) {
+              return const material.Center(
+                  child: material.CircularProgressIndicator());
+            }
+
+            final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+            // Override the CartIconBadge onPressed with proper context
+            final updatedActions = [
+              ProfileIconButton(
+                tooltip: loc.profile,
+                onPressed: () => material.Navigator.push(
+                  context,
+                  material.MaterialPageRoute(
+                      builder: (_) => const ProfileScreen()),
+                ),
+              ),
+              CartIconBadge(
+                tooltip: loc.cart,
+                onPressed: () => material.Navigator.push(
+                  context,
+                  material.MaterialPageRoute(
+                      builder: (_) => const CartScreen()),
+                ),
+              ),
+              const material.SizedBox(width: DesignTokens.gridSpacing),
+            ];
+
+            return material.Column(
+              children: [
+                // Banner
+                material.StreamBuilder<List<Banner>>(
+                  stream: firestoreService.getBanners(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState ==
+                        material.ConnectionState.waiting) {
+                      return const LoadingShimmerWidget(
+                          itemCount: 1, cardHeight: 180);
+                    }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return EmptyStateWidget(
+                        title: loc.checkBackSoon,
+                        message: loc.noPromotionsAvailable,
+                        imageAsset: BrandingConfig.bannerPlaceholder,
+                      );
+                    }
+                    final banners =
+                        snapshot.data!.where((b) => b.active).toList();
+                    return BannerCarousel(
+                      banners: banners,
+                      onBannerTap: (banner) => BannerActionHandler.handle(
+                        context,
+                        banner,
+                        analyticsService:
+                            analyticsService as shared.AnalyticsService?,
+                        loc: loc,
+                      ),
                     );
                   },
-                );
-              },
-            ),
-            // --- Category Grid Section ---
-            // --- Category Grid Section ---
-            material.Expanded(
-              child: material.StreamBuilder<List<model.Category>>(
-                stream: firestoreService.getCategories(
-                    franchiseProvider.currentFranchiseId ??
-                        'doughboyspizzeria'),
-                builder: (context, snapshot) {
-                  print(
-                      'Category snapshot - connection: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, docs: ${snapshot.data?.length ?? 0}');
+                ),
 
-                  if (snapshot.connectionState ==
-                      material.ConnectionState.waiting) {
-                    return const LoadingShimmerWidget(
-                      itemCount: 6,
-                      cardHeight: 160,
-                      cardWidth: double.infinity,
-                    );
-                  }
-                  if (snapshot.hasError) {
-                    print('❌ Category error: ${snapshot.error}');
-                    return EmptyStateWidget(
-                      title: loc.menuLoadError,
-                      message: loc.tryAgainLater,
-                      imageAsset: BrandingConfig.defaultCategoryIcon,
-                    );
-                  }
-                  final categories = snapshot.data ?? [];
-                  print('✅ Loaded ${categories.length} categories');
-                  if (categories.isEmpty) {
-                    return EmptyStateWidget(
-                      title: loc.noCategoriesAvailable,
-                      message: loc.checkBackSoon,
-                      imageAsset: BrandingConfig.defaultCategoryIcon,
-                    );
-                  }
-                  return CategoryGrid(
-                    categories: categories,
-                    onCategoryTap: (category) {
-                      analyticsService.logCategoryTap(
-                        franchiseId: franchiseProvider.currentFranchiseId ??
-                            'doughboyspizzeria',
-                        categoryId: category.id,
-                        categoryName: category.name,
-                      );
-                      material.Navigator.push(
-                        context,
-                        material.MaterialPageRoute(
-                          builder: (_) => CategoryScreen(
+                // Categories
+                material.Expanded(
+                  child: material.StreamBuilder<List<model.Category>>(
+                    stream: firestoreService
+                        .getCategories(provider.currentFranchiseId),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState ==
+                          material.ConnectionState.waiting) {
+                        return const LoadingShimmerWidget(
+                            itemCount: 6, cardHeight: 160);
+                      }
+                      final categories = snapshot.data ?? [];
+                      if (categories.isEmpty) {
+                        return EmptyStateWidget(
+                          title: loc.noCategoriesAvailable,
+                          message: loc.checkBackSoon,
+                          imageAsset: BrandingConfig.defaultCategoryIcon,
+                        );
+                      }
+                      return CategoryGrid(
+                        categories: categories,
+                        onCategoryTap: (category) {
+                          analyticsService.logCategoryTap(
+                            franchiseId: provider.currentFranchiseId,
                             categoryId: category.id,
                             categoryName: category.name,
-                          ),
-                        ),
+                          );
+                          material.Navigator.push(
+                            context,
+                            material.MaterialPageRoute(
+                              builder: (_) => CategoryScreen(
+                                categoryId: category.id,
+                                categoryName: category.name,
+                              ),
+                            ),
+                          );
+                        },
                       );
                     },
-                  );
-                },
-              ),
-            ),
-          ],
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

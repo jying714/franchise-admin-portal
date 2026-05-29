@@ -91,19 +91,20 @@ class FirestoreServiceImpl implements FirestoreService {
     return _db.collection('franchises').doc(franchiseId).collection(sub);
   }
 
-  // Add this helper at the top of the class
-  String _getEffectiveFranchiseId(String? franchiseId) {
-    final id = (franchiseId ?? '').trim();
-    if (id.isEmpty || id == 'unknown' || id == 'default') {
-      // Only log once per session or reduce frequency
-      if (id != 'null' && id != '') {
-        print(
-            '⚠️ [FirestoreServiceImpl][_getEffectiveFranchiseId] Fallback - raw: "$franchiseId" → doughboyspizzeria');
-      }
-      return 'doughboyspizzeria';
-    }
-    return id;
-  }
+  // stubbed out to fix provider.
+  // // Add this helper at the top of the class
+  // String _getEffectiveFranchiseId(String? franchiseId) {
+  //   final id = (franchiseId ?? '').trim();
+  //   if (id.isEmpty || id == 'unknown' || id == 'default') {
+  //     // Only log once per session or reduce frequency
+  //     if (id != 'null' && id != '') {
+  //       print(
+  //           '⚠️ [FirestoreServiceImpl][_getEffectiveFranchiseId] Fallback - raw: "$franchiseId" → doughboyspizzeria');
+  //     }
+  //     return 'doughboyspizzeria';
+  //   }
+  //   return id;
+  // }
 
   // ===================== INGREDIENT METADATA (common, cached) =====================
   List<IngredientMetadata>? _cachedIngredientMetadata;
@@ -112,10 +113,14 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Future<List<IngredientMetadata>> getAllIngredientMetadata(String franchiseId,
       {bool forceRefresh = false}) async {
-    final effectiveId = _getEffectiveFranchiseId(franchiseId);
-
     print(
-        '🔍 [FirestoreServiceImpl][getAllIngredientMetadata] START - Raw: "$franchiseId" | Effective: $effectiveId');
+        '🔍 [FirestoreServiceImpl][getAllIngredientMetadata] START - franchiseId: "$franchiseId"');
+
+    if (franchiseId.isEmpty) {
+      print(
+          '❌ [FirestoreServiceImpl][getAllIngredientMetadata] Missing franchiseId');
+      return [];
+    }
 
     if (!forceRefresh &&
         _cachedIngredientMetadata != null &&
@@ -128,7 +133,7 @@ class FirestoreServiceImpl implements FirestoreService {
 
     try {
       final snap =
-          await _franchiseCollection(effectiveId, _ingredientMetadata).get();
+          await _franchiseCollection(franchiseId, _ingredientMetadata).get();
       final result = snap.docs
           .map((d) => IngredientMetadata.fromMap({...d.data(), 'id': d.id}))
           .toList(growable: false);
@@ -139,9 +144,9 @@ class FirestoreServiceImpl implements FirestoreService {
           '✅ [FirestoreServiceImpl][getAllIngredientMetadata] Loaded ${result.length} ingredients');
       return result;
     } catch (e, stack) {
-      _logError('getAllIngredientMetadata', e, stack, franchiseId: effectiveId);
+      _logError('getAllIngredientMetadata', e, stack, franchiseId: franchiseId);
       print(
-          '❌ [FirestoreServiceImpl][getAllIngredientMetadata] Permission or network error - returning empty list to keep UI stable');
+          '❌ [FirestoreServiceImpl][getAllIngredientMetadata] Error - returning empty list to keep UI stable');
       return [];
     }
   }
@@ -574,17 +579,21 @@ class FirestoreServiceImpl implements FirestoreService {
   // NEW customer methods (implemented here for mobile)
   @override
   Stream<Order?> getCart(String userId, {String? franchiseId}) {
-    final effectiveFranchiseId = _getEffectiveFranchiseId(franchiseId);
+    if (franchiseId == null || franchiseId.isEmpty) {
+      print(
+          '❌ [FirestoreServiceImpl][getCart] Missing franchiseId - this should not happen with clean FranchiseProvider');
+      return Stream.value(null);
+    }
 
     print(
-        '🔍 [FirestoreServiceImpl][getCart] Listening to: franchises/$effectiveFranchiseId/carts/$userId');
+        '🔍 [FirestoreServiceImpl][getCart] Listening to: franchises/$franchiseId/carts/$userId');
 
-    return _franchiseCollection(effectiveFranchiseId, _carts)
+    return _franchiseCollection(franchiseId, _carts)
         .doc(userId)
         .snapshots()
         .map((doc) {
       print(
-          '🔍 [FirestoreServiceImpl][getCart] Snapshot received - exists: ${doc.exists} | path: franchises/$effectiveFranchiseId/carts/$userId');
+          '🔍 [FirestoreServiceImpl][getCart] Snapshot received - exists: ${doc.exists} | path: franchises/$franchiseId/carts/$userId');
 
       if (!doc.exists || doc.data() == null) {
         print(
@@ -602,18 +611,26 @@ class FirestoreServiceImpl implements FirestoreService {
 
   @override
   Future<void> updateCart(Order cart) async {
-    final effectiveId = _getEffectiveFranchiseId(cart.storeId);
+    final franchiseId = cart.storeId;
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      print(
+          '❌ [FirestoreServiceImpl][updateCart] Missing or invalid storeId on Order: $franchiseId');
+      return;
+    }
 
     print(
-        '🔍 [FirestoreServiceImpl][updateCart] Writing to: franchises/$effectiveId/carts/${cart.userId} | items count: ${cart.items.length} | total: ${cart.total}');
+        '🔍 [FirestoreServiceImpl][updateCart] Writing to: franchises/$franchiseId/carts/${cart.userId} | items: ${cart.items.length}');
 
-    await _franchiseCollection(effectiveId, _carts).doc(cart.userId).set({
+    await _franchiseCollection(franchiseId, _carts).doc(cart.userId).set({
       ...cart.toFirestore(),
       'status': 'cart',
       'updatedAt': firestore.FieldValue.serverTimestamp(),
     }, firestore.SetOptions(merge: true));
 
-    print('✅ [FirestoreServiceImpl][updateCart] Write completed successfully');
+    print(
+        '✅ [FirestoreServiceImpl][updateCart] Write completed successfully to $franchiseId');
   }
 
   @override
@@ -626,30 +643,29 @@ class FirestoreServiceImpl implements FirestoreService {
     required double price,
     String? specialInstructions,
   }) async {
-    final effectiveFranchiseId = _getEffectiveFranchiseId(franchiseId);
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      print(
+          '❌ [FirestoreServiceImpl][addToCart] Invalid franchiseId: $franchiseId');
+      return;
+    }
 
     print(
-        '🔍 [FirestoreServiceImpl][addToCart] START - Raw franchise: $franchiseId | Effective: $effectiveFranchiseId | userId: $userId | item: ${menuItem.name} | qty: $quantity | price: $price');
+        '🔍 [FirestoreServiceImpl][addToCart] START - franchiseId: $franchiseId | item: ${menuItem.name} x$quantity');
 
-    final cartRef =
-        _franchiseCollection(effectiveFranchiseId, _carts).doc(userId);
+    final cartRef = _franchiseCollection(franchiseId, _carts).doc(userId);
     final cartDoc = await cartRef.get();
-
-    print(
-        '🔍 [FirestoreServiceImpl][addToCart] Cart doc exists: ${cartDoc.exists} at path: franchises/$effectiveFranchiseId/carts/$userId');
 
     Order current;
     if (cartDoc.exists && cartDoc.data() != null) {
       current = Order.fromFirestore(
           {...cartDoc.data()!, 'status': 'cart'}, cartDoc.id);
-      print(
-          '🔍 [FirestoreServiceImpl][addToCart] Loaded existing cart with ${current.items.length} items');
     } else {
-      print('🔍 [FirestoreServiceImpl][addToCart] Creating NEW empty cart');
       current = Order(
         id: userId,
         userId: userId,
-        storeId: effectiveFranchiseId,
+        storeId: franchiseId, // ← Explicitly set here
         items: [],
         subtotal: 0,
         tax: 0,
@@ -686,29 +702,36 @@ class FirestoreServiceImpl implements FirestoreService {
           current.tax +
           current.deliveryFee -
           (current.discount ?? 0.0),
+      storeId: franchiseId, // ← Force it again in copyWith
     );
 
-    print(
-        '🔍 [FirestoreServiceImpl][addToCart] Updating cart → ${updated.items.length} items | new total: ${updated.total}');
-
     await updateCart(updated);
-    print('✅ [FirestoreServiceImpl][addToCart] SUCCESS - Item added');
+    print(
+        '✅ [FirestoreServiceImpl][addToCart] SUCCESS - Added to franchise/$franchiseId');
   }
 
   @override
   Future<void> removeFromCart(String userId, String cartItemKey,
       {String? franchiseId}) async {
-    if (franchiseId == null) return;
+    if (franchiseId == null || franchiseId.isEmpty) {
+      print('❌ [FirestoreServiceImpl][removeFromCart] Missing franchiseId');
+      return;
+    }
+
     final cart = await getCart(userId, franchiseId: franchiseId).first;
     if (cart == null) return;
+
     final filtered = cart.items
         .where((i) => (i.cartItemKey ?? i.menuItemId) != cartItemKey)
         .toList();
+
     final newSub = filtered.fold(0.0, (s, i) => s + i.price * i.quantity);
+
     await updateCart(cart.copyWith(
-        items: filtered,
-        subtotal: newSub,
-        total: newSub + cart.tax + cart.deliveryFee - cart.discount));
+      items: filtered,
+      subtotal: newSub,
+      total: newSub + cart.tax + cart.deliveryFee - cart.discount,
+    ));
   }
 
   @override

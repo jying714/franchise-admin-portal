@@ -5,22 +5,23 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// Shared Core (Single Source of Truth)
+// Shared Core
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/shared_core.dart' show DesignTokens;
+
 // Local Providers & Config
 import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/features/language/language_provider.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as app_user;
 import 'package:franchise_mobile_app/config/ui_config.dart';
 
-// Screens & Widgets
+// Screens
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/complete_profile_dialog.dart';
 import 'firebase_options.dart';
 
-/// Ingredient Metadata Provider (kept as-is)
+/// Ingredient Metadata Provider (global for now)
 class IngredientMetadataProvider extends ChangeNotifier {
   final Map<String, shared.IngredientMetadata> _ingredients = {};
   bool _isLoaded = false;
@@ -70,11 +71,12 @@ class MyApp extends StatelessWidget {
             create: (_) => shared.AnalyticsServiceImpl()),
         ChangeNotifierProvider(create: (_) => IngredientMetadataProvider()),
 
-        // Concrete shared_core implementations
+        // Shared Core Services
         Provider<shared.AuthService>(create: (_) => shared.AuthServiceImpl()),
         Provider<shared.FirestoreService>(
             create: (_) => shared.FirestoreServiceImpl()),
 
+        // User Stream
         StreamProvider<shared.User?>(
           create: (_) {
             final authService = shared.AuthServiceImpl();
@@ -105,7 +107,7 @@ class MyApp extends StatelessWidget {
                 return MaterialApp(
                   title: 'Doughboys Pizzeria',
                   theme: ThemeData(
-                    primaryColor: UiConfig.primaryColor, // ← Fixed: real Color
+                    primaryColor: UiConfig.primaryColor,
                     scaffoldBackgroundColor: UiConfig.backgroundColorDark,
                     colorScheme: ColorScheme.fromSwatch().copyWith(
                       secondary: UiConfig.secondaryColor,
@@ -156,21 +158,30 @@ class _HomeWrapperState extends State<HomeWrapper> {
   @override
   Widget build(BuildContext context) {
     final sharedUser = Provider.of<shared.User?>(context);
+    final franchiseProvider =
+        Provider.of<FranchiseProvider>(context, listen: false);
 
     if (sharedUser == null) {
       return const SignInScreen();
     }
 
-    // Convert shared.User to local app_user.User for dialog
+    // Initialize FranchiseProvider when user is available
+    if (!franchiseProvider.hasValidFranchise) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        franchiseProvider.initializeFromUser(sharedUser);
+      });
+    }
+
+    // Convert to local model for dialog
     final localUser = app_user.User(
       id: sharedUser.id,
       name: sharedUser.name,
       email: sharedUser.email,
+      phoneNumber: sharedUser.phoneNumber,
       roles: sharedUser.roles,
+      addresses: sharedUser.addresses,
       language: sharedUser.language,
       status: sharedUser.status,
-      phoneNumber: sharedUser.phoneNumber,
-      addresses: sharedUser.addresses,
       defaultFranchise: sharedUser.defaultFranchise,
       avatarUrl: sharedUser.avatarUrl,
       franchiseIds: sharedUser.franchiseIds,
@@ -185,11 +196,13 @@ class _HomeWrapperState extends State<HomeWrapper> {
         !_dialogShown) {
       _dialogShown = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => CompleteProfileDialog(user: localUser),
-        );
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => CompleteProfileDialog(user: localUser),
+          );
+        }
       });
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_core/src/core/config/app_config.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
+import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:shared_core/src/core/services/analytics_service.dart';
 import 'package:shared_core/src/core/models/menu_item.dart';
 import 'package:shared_core/src/core/models/order.dart' as order_model;
@@ -13,7 +12,7 @@ import 'package:franchise_mobile_app/features/ordering/cart_screen.dart';
 import 'package:franchise_mobile_app/widgets/menu_item_card.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
-import 'package:franchise_mobile_app/widgets/header/cart_icon_badge.dart'; // For cart badge, if you wish to use it
+import 'package:franchise_mobile_app/widgets/header/cart_icon_badge.dart';
 import 'package:franchise_mobile_app/widgets/header/profile_icon_button.dart';
 import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
 import 'package:franchise_mobile_app/widgets/loading_shimmer_widget.dart';
@@ -22,8 +21,8 @@ import 'package:franchise_mobile_app/widgets/filter_dropdown.dart';
 import 'package:shared_core/src/core/config/branding_config.dart';
 
 class CategoryScreen extends StatefulWidget {
-  final String categoryId; // Firestore document ID for the category
-  final String categoryName; // Human-friendly display name
+  final String categoryId;
+  final String categoryName;
 
   const CategoryScreen({
     super.key,
@@ -57,7 +56,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
     });
   }
 
-  /// Handles adding to cart (receives all selected customizations as Map<String, dynamic>)
   void _handleAddToCart(
       MenuItem item,
       Map<String, dynamic> selectedCustomizations,
@@ -67,98 +65,64 @@ class _CategoryScreenState extends State<CategoryScreen> {
         Provider.of<FirestoreService>(context, listen: false);
     final franchiseProvider =
         Provider.of<FranchiseProvider>(context, listen: false);
-    final franchiseId = franchiseProvider.currentFranchiseId;
     final analytics = Provider.of<AnalyticsService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.logInToOrder)),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(loc.logInToOrder)),
+        );
+      }
       return;
     }
 
-    var cart = await firestoreService
-        .getCart(user.uid,
-            franchiseId: franchiseId != 'unknown' ? franchiseId : null)
-        .first;
-    cart ??= order_model.Order(
-      id: user.uid,
-      userId: user.uid,
-      storeId: franchiseId != 'unknown' ? franchiseId : 'default',
-      items: [],
-      subtotal: 0.0,
-      tax: 0.0,
-      deliveryFee: 0.0,
-      discount: 0.0,
-      total: 0.0,
-      deliveryType: 'pickup',
-      time: '',
-      status: "cart",
-      timestamp: DateTime.now(),
-      estimatedTime: 0,
-      timestamps: {},
-      address: null,
-    );
-
-    // -- Match on item id, price, AND selected customizations for cart grouping --
-    final existingIndex = cart.items.indexWhere((cartItem) =>
-        cartItem.menuItemId == item.id &&
-        cartItem.price == totalPrice / quantity && // match effective unit price
-        _customizationsMatch(cartItem.customizations, selectedCustomizations));
-
-    if (existingIndex != -1) {
-      cart.items[existingIndex] = cart.items[existingIndex].copyWith(
-        quantity: cart.items[existingIndex].quantity + quantity,
-      );
-    } else {
-      cart.items.add(order_model.OrderItem(
-        menuItemId: item.id,
-        name: item.name,
-        price: totalPrice / quantity,
-        quantity: quantity,
-        customizations: selectedCustomizations,
-        image: item.image,
-      ));
+    final franchiseId = franchiseProvider.currentFranchiseId;
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Franchise not selected. Please try again.")),
+        );
+      }
+      return;
     }
 
-    await firestoreService.updateCart(cart);
-    analytics.logMenuItemAddedToCart(item.id, widget.categoryName, quantity);
+    try {
+      await firestoreService.addToCart(
+        userId: user.uid,
+        franchiseId: franchiseId,
+        menuItem: item,
+        customizations: [], // TODO: Convert selectedCustomizations properly later
+        quantity: quantity,
+        price: totalPrice / quantity,
+      );
 
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(loc.addedToCartMessage),
-        duration: AppConfig.toastDuration,
-      ),
-    );
+      analytics.logMenuItemAddedToCart(item.id, widget.categoryName, quantity);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(loc.addedToCartMessage)),
+        );
+      }
+    } catch (e) {
+      print('❌ Add to cart error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to add to cart")),
+        );
+      }
+    }
   }
 
-  /// Compare two customizations (for cart grouping)
   bool _customizationsMatch(dynamic a, dynamic b) {
-    // You may want to implement a robust comparison depending on structure
     return a.toString() == b.toString();
   }
 
   @override
   Widget build(BuildContext context) {
-    final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
-    _sortOptions = _sortOptions.isNotEmpty
-        ? _sortOptions
-        : [loc.sortByPopularity, loc.sortByPrice, loc.sortByName];
-    _sortBy = _sortBy.isNotEmpty ? _sortBy : _sortOptions.first;
-
-    // Choose Firestore orderBy field if any sort is selected (except popularity which is stubbed)
-    String? orderByField;
-    if (_sortBy == loc.sortByPrice) orderByField = 'price';
-    if (_sortBy == loc.sortByName) orderByField = 'name';
-
-    // print('[DEBUG] CategoryScreen loading category: ${widget.categoryName}');
-    // print('[DEBUG] Loading categoryId: ${widget.categoryId}');
 
     return Scaffold(
       appBar: FranchiseAppBar(
@@ -171,115 +135,115 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 MaterialPageRoute(builder: (_) => const ProfileScreen()),
               );
             },
-            tooltip: loc.profile, // Ensure this exists in your localization
+            tooltip: loc.profile,
           ),
           CartIconBadge(
-            cartItemCountStream:
-                Provider.of<shared.FirestoreService>(context, listen: false)
-                    .getCartItemCountStream(
-                        FirebaseAuth.instance.currentUser?.uid ?? 'guest'),
+            tooltip: loc.cartTooltip,
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CartScreen()),
             ),
-            tooltip: loc.cartTooltip,
           ),
-          const SizedBox(width: 10), // Spacing between icons
+          const SizedBox(width: 10),
         ],
       ),
       backgroundColor: Colors.white,
-      body: StreamBuilder<List<MenuItem>>(
-        stream: firestoreService.getMenuItemsByCategory(
-          widget.categoryId,
-          franchiseId: Provider.of<FranchiseProvider>(context, listen: false)
-              .currentFranchiseId,
-          sortBy: orderByField,
-        ),
-        builder: (context, snapshot) {
-          print(
-              '🔍 [CategoryScreen] StreamBuilder Triggered for category: ${widget.categoryId} (${widget.categoryName})');
-          print('   - ConnectionState: ${snapshot.connectionState}');
-          print('   - hasData: ${snapshot.hasData}');
-          print('   - hasError: ${snapshot.hasError}');
-          print('   - Data length: ${snapshot.data?.length ?? 0}');
-
-          if (snapshot.hasError) {
-            print('   ❌ ERROR: ${snapshot.error}');
-            print('   🔧 Stack: ${snapshot.stackTrace}');
+      body: Consumer<FranchiseProvider>(
+        builder: (context, provider, child) {
+          if (!provider.hasValidFranchise) {
+            return const Center(child: CircularProgressIndicator());
           }
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            print('   ⏳ Waiting for data...');
-            return const LoadingShimmerWidget();
-          }
+          return StreamBuilder<List<MenuItem>>(
+            stream: Provider.of<FirestoreService>(context, listen: false)
+                .getMenuItemsByCategory(
+              widget.categoryId,
+              franchiseId: provider.currentFranchiseId,
+              sortBy: _sortBy == loc.sortByPrice
+                  ? 'price'
+                  : _sortBy == loc.sortByName
+                      ? 'name'
+                      : null,
+            ),
+            builder: (context, snapshot) {
+              print(
+                  '🔍 [CategoryScreen] StreamBuilder Triggered for category: ${widget.categoryId} (${widget.categoryName})');
+              print('   - ConnectionState: ${snapshot.connectionState}');
+              print('   - hasData: ${snapshot.hasData}');
+              print('   - hasError: ${snapshot.hasError}');
+              print('   - Data length: ${snapshot.data?.length ?? 0}');
 
-          if (snapshot.hasError) {
-            return EmptyStateWidget(
-              title: "Error Loading Menu Items",
-              message: "Permission or query issue.\n\n${snapshot.error}",
-              imageAsset: BrandingConfig.defaultCategoryIcon,
-            );
-          }
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const LoadingShimmerWidget();
+              }
 
-          final items = snapshot.data ?? [];
-          print('   ✅ Final items count: ${items.length}');
+              if (snapshot.hasError) {
+                print('   ❌ ERROR: ${snapshot.error}');
+                return EmptyStateWidget(
+                  title: "Error Loading Menu Items",
+                  message: "Please try again later.",
+                  imageAsset: BrandingConfig.defaultCategoryIcon,
+                );
+              }
 
-          if (items.isEmpty) {
-            print('   ⚠️ No items returned from query');
-            return EmptyStateWidget(
-              title: loc.emptyStateMessage,
-              message:
-                  "No menu items found for this category.\nCheck Firestore data and rules.",
-              imageAsset: BrandingConfig.defaultCategoryIcon,
-            );
-          }
+              final items = snapshot.data ?? [];
+              print('   ✅ Final items count: ${items.length}');
 
-          print('   🎉 Rendering ${items.length} menu items');
+              if (items.isEmpty) {
+                return EmptyStateWidget(
+                  title: loc.emptyStateMessage,
+                  message: "No menu items found for this category.",
+                  imageAsset: BrandingConfig.defaultCategoryIcon,
+                );
+              }
 
-          return Column(
-            children: [
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    FilterDropdown<String>(
-                      label: loc.sortBy,
-                      options: _sortOptions,
-                      value: _sortBy,
-                      onChanged: (val) {
-                        if (val != null) setState(() => _sortBy = val);
+              return Column(
+                children: [
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        FilterDropdown<String>(
+                          label: loc.sortBy,
+                          options: _sortOptions,
+                          value: _sortBy,
+                          onChanged: (val) {
+                            if (val != null) setState(() => _sortBy = val);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        print(
+                            '   📌 Rendering item ${index + 1}: ${item.name}');
+                        return MenuItemCard(
+                          menuItem: item,
+                          showDescription: true,
+                          expanded: true,
+                          onAddToCart: (
+                            menuItem,
+                            selectedCustomizations,
+                            quantity,
+                            totalPrice,
+                          ) {
+                            _handleAddToCart(menuItem, selectedCustomizations,
+                                quantity, totalPrice);
+                          },
+                        );
                       },
                     ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  padding: EdgeInsets.all(16),
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    print('   📌 Rendering item ${index + 1}: ${item.name}');
-                    return MenuItemCard(
-                      menuItem: item,
-                      showDescription: true,
-                      expanded: true,
-                      onAddToCart: (
-                        menuItem,
-                        selectedCustomizations,
-                        quantity,
-                        totalPrice,
-                      ) {
-                        _handleAddToCart(menuItem, selectedCustomizations,
-                            quantity, totalPrice);
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
+                  ),
+                ],
+              );
+            },
           );
         },
       ),

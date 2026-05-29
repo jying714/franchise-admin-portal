@@ -1,9 +1,8 @@
 import 'dart:math' show min;
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:shared_core/src/core/config/design_tokens.dart'; // ← ADD THIS LINE
+import 'package:shared_core/src/core/config/design_tokens.dart';
 import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/ordering/checkout_screen.dart';
@@ -239,10 +238,6 @@ class _CartScreenState extends State<CartScreen> {
   Widget build(BuildContext context) {
     final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
-    final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: true);
-    final franchiseId = franchiseProvider.currentFranchiseId;
-    final user = FirebaseAuth.instance.currentUser;
     final loc = AppLocalizations.of(context)!;
 
     return Scaffold(
@@ -259,11 +254,19 @@ class _CartScreenState extends State<CartScreen> {
         backgroundColor: UiConfig.primaryColor,
         centerTitle: true,
         elevation: 0,
-        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       backgroundColor: UiConfig.backgroundColor,
-      body: user == null
-          ? Center(
+      body: Consumer<FranchiseProvider>(
+        builder: (context, provider, child) {
+          final user = FirebaseAuth.instance.currentUser;
+
+          if (!provider.hasValidFranchise) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (user == null) {
+            return Center(
               child: Text(
                 loc.mustSignInForCart,
                 style: TextStyle(
@@ -273,130 +276,135 @@ class _CartScreenState extends State<CartScreen> {
                   fontWeight: UiConfig.fontWeightMedium,
                 ),
               ),
-            )
-          : StreamBuilder<shared.Order?>(
-              key: retryKey,
-              stream:
-                  firestoreService.getCart(user.uid, franchiseId: franchiseId),
-              builder: (context, cartSnapshot) {
-                if (cartSnapshot.connectionState == ConnectionState.active &&
-                    cartSnapshot.hasData) {
-                  print(
-                      '🔍 [CartScreen] Active cart snapshot with ${cartSnapshot.data!.items.length} items');
-                }
-                if (cartSnapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (cartSnapshot.hasError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '${loc.errorLoadingCart}\n${cartSnapshot.error}',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: DesignTokens.bodyFontSize,
-                            color: UiConfig.errorColor,
-                            fontFamily: DesignTokens.fontFamily,
-                            fontWeight: UiConfig.fontWeightMedium,
+            );
+          }
+
+          return StreamBuilder<shared.Order?>(
+            key: retryKey,
+            stream: firestoreService.getCart(
+              user.uid,
+              franchiseId: provider.currentFranchiseId,
+            ),
+            builder: (context, cartSnapshot) {
+              if (cartSnapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (cartSnapshot.hasError) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${loc.errorLoadingCart}\n${cartSnapshot.error}',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: DesignTokens.bodyFontSize,
+                          color: UiConfig.errorColor,
+                          fontFamily: DesignTokens.fontFamily,
+                          fontWeight: UiConfig.fontWeightMedium,
+                        ),
+                      ),
+                      const SizedBox(height: DesignTokens.gridSpacing * 2),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: UiConfig.primaryColor,
+                          foregroundColor: UiConfig.foregroundColorDark,
+                          padding: UiConfig.defaultPadding,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                                DesignTokens.buttonRadius),
                           ),
                         ),
-                        const SizedBox(height: DesignTokens.gridSpacing * 2),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: UiConfig.primaryColor,
-                            foregroundColor: UiConfig.foregroundColorDark,
-                            padding: UiConfig.defaultPadding,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  DesignTokens.buttonRadius),
-                            ),
-                          ),
-                          onPressed: () =>
-                              setState(() => retryKey = UniqueKey()),
-                          child: Text(loc.retry),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                final cart = cartSnapshot.data;
-                if (cart == null || cart.items.isEmpty) {
-                  return buildEmptyState(context, loc);
-                }
+                        onPressed: () => setState(() => retryKey = UniqueKey()),
+                        child: Text(loc.retry),
+                      ),
+                    ],
+                  ),
+                );
+              }
 
-                return StreamBuilder<List<shared.MenuItem>>(
-                  stream: firestoreService.getMenuItemsByIds(franchiseId,
-                      cart.items.map((i) => i.menuItemId).toList()),
-                  builder: (context, menuSnapshot) {
-                    final menuItems = menuSnapshot.data ?? [];
-                    final objMap =
-                        _menuItemCustomizationObjectMap(cart.items, menuItems);
+              final cart = cartSnapshot.data;
+              if (cart == null || cart.items.isEmpty) {
+                return buildEmptyState(context, loc);
+              }
 
-                    return FutureBuilder<List<shared.IngredientMetadata>>(
-                      future: firestoreService
-                          .getAllIngredientMetadata(franchiseId),
-                      builder: (context, ingredientSnapshot) {
-                        final ingredientMetadatas =
-                            ingredientSnapshot.data ?? [];
-                        final allAllergens = _allAllergensInCart(
-                            cart.items, menuItems, ingredientMetadatas);
-                        final showAllergenWarning = allAllergens.isNotEmpty;
+              return StreamBuilder<List<shared.MenuItem>>(
+                stream: firestoreService.getMenuItemsByIds(
+                  provider.currentFranchiseId,
+                  cart.items.map((i) => i.menuItemId).toList(),
+                ),
+                builder: (context, menuSnapshot) {
+                  final menuItems = menuSnapshot.data ?? [];
+                  final objMap =
+                      _menuItemCustomizationObjectMap(cart.items, menuItems);
 
-                        return AnimatedSwitcher(
-                          duration: Duration(
-                              milliseconds: DesignTokens.animationDurationMs),
-                          child: Column(
-                            children: [
-                              if (showAllergenWarning)
-                                Container(
-                                  width: double.infinity,
-                                  margin: UiConfig.defaultPadding,
-                                  padding: UiConfig.defaultPadding,
-                                  decoration: BoxDecoration(
-                                    color:
-                                        UiConfig.errorColor.withOpacity(0.11),
-                                    borderRadius: BorderRadius.circular(
-                                        DesignTokens.cardRadius),
-                                  ),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Icon(Icons.warning_amber_rounded,
-                                          color: UiConfig.errorColor, size: 28),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          '${loc.warning}: ${loc.itemsInCartCouldContain}\n${allAllergens.join(", ")}',
-                                          style: TextStyle(
-                                            color: UiConfig.errorColor,
-                                            fontWeight: UiConfig.fontWeightBold,
-                                            fontFamily: DesignTokens.fontFamily,
-                                          ),
+                  return FutureBuilder<List<shared.IngredientMetadata>>(
+                    future: firestoreService
+                        .getAllIngredientMetadata(provider.currentFranchiseId),
+                    builder: (context, ingredientSnapshot) {
+                      final ingredientMetadatas = ingredientSnapshot.data ?? [];
+                      final allAllergens = _allAllergensInCart(
+                          cart.items, menuItems, ingredientMetadatas);
+                      final showAllergenWarning = allAllergens.isNotEmpty;
+
+                      return AnimatedSwitcher(
+                        duration: Duration(
+                            milliseconds: DesignTokens.animationDurationMs),
+                        child: Column(
+                          children: [
+                            if (showAllergenWarning)
+                              Container(
+                                width: double.infinity,
+                                margin: UiConfig.defaultPadding,
+                                padding: UiConfig.defaultPadding,
+                                decoration: BoxDecoration(
+                                  color: UiConfig.errorColor.withOpacity(0.11),
+                                  borderRadius: BorderRadius.circular(
+                                      DesignTokens.cardRadius),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.warning_amber_rounded,
+                                        color: UiConfig.errorColor, size: 28),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        '${loc.warning}: ${loc.itemsInCartCouldContain}\n${allAllergens.join(", ")}',
+                                        style: TextStyle(
+                                          color: UiConfig.errorColor,
+                                          fontWeight: UiConfig.fontWeightBold,
+                                          fontFamily: DesignTokens.fontFamily,
                                         ),
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                              Expanded(
-                                child: buildCartContent(context, cart,
-                                    firestoreService, loc, objMap),
                               ),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  },
-                );
-              },
-            ),
+                            Expanded(
+                              child: buildCartContent(
+                                context,
+                                cart,
+                                firestoreService,
+                                loc,
+                                objMap,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
-  // buildEmptyState and buildCartContent remain the same as previous (with UiConfig updates for padding/margins)
+  // buildEmptyState and buildCartContent remain unchanged (kept for brevity)
   Widget buildEmptyState(BuildContext context, AppLocalizations loc) {
     return Center(
       key: const ValueKey('empty'),

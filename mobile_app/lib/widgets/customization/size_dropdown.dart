@@ -65,12 +65,11 @@ class SizeDropdown extends StatelessWidget {
                 loc.sizeLabel,
                 style: theme.textTheme.titleMedium?.copyWith(
                   color: UiConfig.secondaryColor,
-                  fontWeight: UiConfig.bold,
+                  fontWeight: UiConfig.fontWeightBold,
                   fontFamily: shared.DesignTokens.fontFamily,
                 ),
               ),
               const SizedBox(width: 16),
-              // Expanded + Flexible for bounded width (industry standard for Row in modal)
               Expanded(
                 child: DropdownButton<String>(
                   value: safeSelected,
@@ -107,7 +106,7 @@ class SizeDropdown extends StatelessWidget {
                         UiConfig.currencyFormat(context, price),
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: UiConfig.primaryColor,
-                          fontWeight: UiConfig.bold,
+                          fontWeight: UiConfig.fontWeightBold,
                           fontFamily: shared.DesignTokens.fontFamily,
                         ),
                       ),
