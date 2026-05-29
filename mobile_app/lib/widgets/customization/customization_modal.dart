@@ -1005,6 +1005,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize:
+                        MainAxisSize.min, // Important for Dialog content
                     children: [
                       CustomizationHeader(
                         menuItem: widget.menuItem,
@@ -1012,26 +1014,31 @@ class _CustomizationModalState extends State<CustomizationModal> {
                         loc: loc,
                       ),
                       SizedBox(height: shared.DesignTokens.gridSpacing),
+                      // New version:
                       if (widget.menuItem.category.toLowerCase() != 'drinks' &&
                           widget.menuItem.sizes != null &&
                           widget.menuItem.sizes!.isNotEmpty)
-                        SizeDropdown(
-                          menuItem: widget.menuItem,
-                          selectedSize: _selectedSize,
-                          onChanged: (newSize) {
-                            setState(() {
-                              _selectedSize = newSize;
-                            });
-                          },
-                          toppingCostLabel: _isPizzaOrCalzone()
-                              ? ToppingCostLabel(
-                                  theme: theme,
-                                  loc: loc,
-                                  getToppingUpcharge: _getToppingUpcharge,
-                                  currencyFormat: UiConfig.currencyFormat,
-                                )
-                              : null,
-                          normalizeSizeKey: _normalizeSizeKey,
+                        SizedBox(
+                          width: double
+                              .infinity, // Ensures bounded width for the Row inside SizeDropdown
+                          child: SizeDropdown(
+                            menuItem: widget.menuItem,
+                            selectedSize: _selectedSize,
+                            onChanged: (newSize) {
+                              setState(() {
+                                _selectedSize = newSize;
+                              });
+                            },
+                            toppingCostLabel: _isPizzaOrCalzone()
+                                ? ToppingCostLabel(
+                                    theme: theme,
+                                    loc: loc,
+                                    getToppingUpcharge: _getToppingUpcharge,
+                                    currencyFormat: UiConfig.currencyFormat,
+                                  )
+                                : null,
+                            normalizeSizeKey: _normalizeSizeKey,
+                          ),
                         ),
                       if (_isWings()) ...[
                         WingsPortionSelector(

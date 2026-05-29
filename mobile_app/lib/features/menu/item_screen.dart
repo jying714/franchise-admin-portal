@@ -73,7 +73,7 @@ class _ItemScreenState extends State<ItemScreen> {
   }
 
   void _addToCart(
-    MenuItem item,
+    shared.MenuItem item,
     Map<String, dynamic> customizations,
     int quantity,
     double totalPrice,
@@ -85,18 +85,19 @@ class _ItemScreenState extends State<ItemScreen> {
         Provider.of<FranchiseProvider>(context, listen: false);
     final franchiseId = franchiseProvider.currentFranchiseId;
 
+    print(
+        '🔍 [ItemScreen][_addToCart] START - franchiseId: $franchiseId | userId: $_userId | itemId: ${item.id} | quantity: $quantity | totalPrice: $totalPrice');
+
     if (franchiseId == 'unknown' || franchiseId.isEmpty) {
+      print('❌ [ItemScreen][_addToCart] ERROR: Invalid franchiseId');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please select a franchise location to order.'),
-          duration: AppConfig.toastDuration,
-        ),
+        SnackBar(content: Text('Please select a franchise location to order.')),
       );
-      setState(() => _isProcessing = false);
       return;
     }
 
     if (_userId == null) {
+      print('❌ [ItemScreen][_addToCart] ERROR: No userId');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.signInToOrderMessage)),
       );
@@ -106,12 +107,14 @@ class _ItemScreenState extends State<ItemScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      // Convert customizations map to List<Customization> as expected by service
       final List<shared.Customization> customizationList =
           (customizations['groups'] as List<dynamic>? ?? [])
               .map((e) =>
                   shared.Customization.fromMap(e as Map<String, dynamic>))
               .toList();
+
+      print(
+          '🔍 [ItemScreen][_addToCart] Calling addToCart with ${customizationList.length} customizations');
 
       await firestoreService.addToCart(
         userId: _userId!,
@@ -120,15 +123,15 @@ class _ItemScreenState extends State<ItemScreen> {
         customizations: customizationList,
         quantity: quantity,
         price: totalPrice,
+        specialInstructions: customizations['specialInstructions'] as String?,
       );
 
+      print('✅ [ItemScreen][_addToCart] SUCCESS - Item added to cart');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(loc.addedToCartMessage),
-          duration: AppConfig.toastDuration,
-        ),
+        SnackBar(content: Text(loc.addedToCartMessage)),
       );
-    } catch (e) {
+    } catch (e, stack) {
+      print('❌ [ItemScreen][_addToCart] EXCEPTION: $e\n$stack');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.cartAddError)),
       );

@@ -279,6 +279,11 @@ class _CartScreenState extends State<CartScreen> {
               stream:
                   firestoreService.getCart(user.uid, franchiseId: franchiseId),
               builder: (context, cartSnapshot) {
+                if (cartSnapshot.connectionState == ConnectionState.active &&
+                    cartSnapshot.hasData) {
+                  print(
+                      '🔍 [CartScreen] Active cart snapshot with ${cartSnapshot.data!.items.length} items');
+                }
                 if (cartSnapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }

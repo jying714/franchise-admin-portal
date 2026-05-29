@@ -91,6 +91,20 @@ class FirestoreServiceImpl implements FirestoreService {
     return _db.collection('franchises').doc(franchiseId).collection(sub);
   }
 
+  // Add this helper at the top of the class
+  String _getEffectiveFranchiseId(String? franchiseId) {
+    final id = (franchiseId ?? '').trim();
+    if (id.isEmpty || id == 'unknown' || id == 'default') {
+      // Only log once per session or reduce frequency
+      if (id != 'null' && id != '') {
+        print(
+            '⚠️ [FirestoreServiceImpl][_getEffectiveFranchiseId] Fallback - raw: "$franchiseId" → doughboyspizzeria');
+      }
+      return 'doughboyspizzeria';
+    }
+    return id;
+  }
+
   // ===================== INGREDIENT METADATA (common, cached) =====================
   List<IngredientMetadata>? _cachedIngredientMetadata;
   DateTime? _lastIngredientMetadataFetch;
@@ -98,24 +112,36 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Future<List<IngredientMetadata>> getAllIngredientMetadata(String franchiseId,
       {bool forceRefresh = false}) async {
+    final effectiveId = _getEffectiveFranchiseId(franchiseId);
+
+    print(
+        '🔍 [FirestoreServiceImpl][getAllIngredientMetadata] START - Raw: "$franchiseId" | Effective: $effectiveId');
+
     if (!forceRefresh &&
         _cachedIngredientMetadata != null &&
         _lastIngredientMetadataFetch != null &&
         DateTime.now().difference(_lastIngredientMetadataFetch!).inMinutes <
             15) {
+      print('✅ [FirestoreServiceImpl][getAllIngredientMetadata] Using cache');
       return _cachedIngredientMetadata!;
     }
+
     try {
       final snap =
-          await _franchiseCollection(franchiseId, _ingredientMetadata).get();
+          await _franchiseCollection(effectiveId, _ingredientMetadata).get();
       final result = snap.docs
           .map((d) => IngredientMetadata.fromMap({...d.data(), 'id': d.id}))
           .toList(growable: false);
+
       _cachedIngredientMetadata = result;
       _lastIngredientMetadataFetch = DateTime.now();
+      print(
+          '✅ [FirestoreServiceImpl][getAllIngredientMetadata] Loaded ${result.length} ingredients');
       return result;
     } catch (e, stack) {
-      _logError('getAllIngredientMetadata', e, stack, franchiseId: franchiseId);
+      _logError('getAllIngredientMetadata', e, stack, franchiseId: effectiveId);
+      print(
+          '❌ [FirestoreServiceImpl][getAllIngredientMetadata] Permission or network error - returning empty list to keep UI stable');
       return [];
     }
   }
@@ -548,30 +574,46 @@ class FirestoreServiceImpl implements FirestoreService {
   // NEW customer methods (implemented here for mobile)
   @override
   Stream<Order?> getCart(String userId, {String? franchiseId}) {
-    if (franchiseId == null) {
-      // Fallback: try global or first franchise (transition helper)
-      return Stream.value(null);
-    }
-    return _franchiseCollection(franchiseId, _carts)
+    final effectiveFranchiseId = _getEffectiveFranchiseId(franchiseId);
+
+    print(
+        '🔍 [FirestoreServiceImpl][getCart] Listening to: franchises/$effectiveFranchiseId/carts/$userId');
+
+    return _franchiseCollection(effectiveFranchiseId, _carts)
         .doc(userId)
         .snapshots()
         .map((doc) {
-      if (!doc.exists || doc.data() == null) return null;
+      print(
+          '🔍 [FirestoreServiceImpl][getCart] Snapshot received - exists: ${doc.exists} | path: franchises/$effectiveFranchiseId/carts/$userId');
+
+      if (!doc.exists || doc.data() == null) {
+        print(
+            '⚠️ [FirestoreServiceImpl][getCart] Cart is empty or does not exist yet');
+        return null;
+      }
+
       final data = {...doc.data()!, 'status': 'cart'};
-      return Order.fromFirestore(data, doc.id);
+      final order = Order.fromFirestore(data, doc.id);
+      print(
+          '✅ [FirestoreServiceImpl][getCart] Loaded cart with ${order.items.length} items | total: ${order.total}');
+      return order;
     });
   }
 
   @override
   Future<void> updateCart(Order cart) async {
-    if (cart.storeId.isEmpty) {
-      throw ArgumentError('Cart must have storeId/franchiseId');
-    }
-    await _franchiseCollection(cart.storeId, _carts).doc(cart.userId).set({
+    final effectiveId = _getEffectiveFranchiseId(cart.storeId);
+
+    print(
+        '🔍 [FirestoreServiceImpl][updateCart] Writing to: franchises/$effectiveId/carts/${cart.userId} | items count: ${cart.items.length} | total: ${cart.total}');
+
+    await _franchiseCollection(effectiveId, _carts).doc(cart.userId).set({
       ...cart.toFirestore(),
       'status': 'cart',
       'updatedAt': firestore.FieldValue.serverTimestamp(),
     }, firestore.SetOptions(merge: true));
+
+    print('✅ [FirestoreServiceImpl][updateCart] Write completed successfully');
   }
 
   @override
@@ -584,17 +626,30 @@ class FirestoreServiceImpl implements FirestoreService {
     required double price,
     String? specialInstructions,
   }) async {
-    final cartRef = _franchiseCollection(franchiseId, _carts).doc(userId);
+    final effectiveFranchiseId = _getEffectiveFranchiseId(franchiseId);
+
+    print(
+        '🔍 [FirestoreServiceImpl][addToCart] START - Raw franchise: $franchiseId | Effective: $effectiveFranchiseId | userId: $userId | item: ${menuItem.name} | qty: $quantity | price: $price');
+
+    final cartRef =
+        _franchiseCollection(effectiveFranchiseId, _carts).doc(userId);
     final cartDoc = await cartRef.get();
+
+    print(
+        '🔍 [FirestoreServiceImpl][addToCart] Cart doc exists: ${cartDoc.exists} at path: franchises/$effectiveFranchiseId/carts/$userId');
+
     Order current;
     if (cartDoc.exists && cartDoc.data() != null) {
       current = Order.fromFirestore(
           {...cartDoc.data()!, 'status': 'cart'}, cartDoc.id);
+      print(
+          '🔍 [FirestoreServiceImpl][addToCart] Loaded existing cart with ${current.items.length} items');
     } else {
+      print('🔍 [FirestoreServiceImpl][addToCart] Creating NEW empty cart');
       current = Order(
         id: userId,
         userId: userId,
-        storeId: franchiseId,
+        storeId: effectiveFranchiseId,
         items: [],
         subtotal: 0,
         tax: 0,
@@ -617,11 +672,13 @@ class FirestoreServiceImpl implements FirestoreService {
       quantity: quantity,
       customizations: {'groups': customizations.map((c) => c.toMap()).toList()},
       specialInstructions: specialInstructions,
+      image: menuItem.image,
     );
 
     final updatedItems = [...current.items, newItem];
     final newSubtotal =
         updatedItems.fold(0.0, (sum, i) => sum + i.price * i.quantity);
+
     final updated = current.copyWith(
       items: updatedItems,
       subtotal: newSubtotal,
@@ -630,7 +687,12 @@ class FirestoreServiceImpl implements FirestoreService {
           current.deliveryFee -
           (current.discount ?? 0.0),
     );
+
+    print(
+        '🔍 [FirestoreServiceImpl][addToCart] Updating cart → ${updated.items.length} items | new total: ${updated.total}');
+
     await updateCart(updated);
+    print('✅ [FirestoreServiceImpl][addToCart] SUCCESS - Item added');
   }
 
   @override

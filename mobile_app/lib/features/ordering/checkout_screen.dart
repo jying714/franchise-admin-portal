@@ -103,21 +103,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void _updateOrderTotals() {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
+
+    final franchiseProvider =
+        Provider.of<FranchiseProvider>(context, listen: false);
     final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
-    final franchiseId = Provider.of<FranchiseProvider>(context, listen: false)
-        .currentFranchiseId;
+    final franchiseId = franchiseProvider.currentFranchiseId;
+
+    print(
+        '🔍 [CheckoutScreen][_updateOrderTotals] Fetching cart for franchise: $franchiseId');
 
     firestoreService
         .getCart(user.uid,
-            franchiseId: franchiseId != 'unknown' ? franchiseId : null)
+            franchiseId:
+                franchiseId != 'unknown' ? franchiseId : 'doughboyspizzeria')
         .first
         .then((cart) {
-      if (cart == null) return;
+      if (!mounted || cart == null) return;
+
       double subtotal = 0.0;
       for (final item in cart.items) {
         subtotal += item.price * item.quantity;
       }
+
       setState(() {
         _orderSubtotal = subtotal;
         _orderTax = (_orderSubtotal * 0.0925);
@@ -126,6 +134,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         _orderTotal = (_orderSubtotal + _orderTax + _deliveryFee - _promoValue)
             .clamp(0, double.infinity);
       });
+
+      print(
+          '✅ [CheckoutScreen][_updateOrderTotals] Updated totals - Subtotal: $_orderSubtotal | Total: $_orderTotal');
+    }).catchError((e) {
+      print('❌ [CheckoutScreen][_updateOrderTotals] Error: $e');
     });
   }
 
@@ -266,38 +279,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateOrderTotals();
-    });
-
-    final firestoreService =
-        Provider.of<shared.FirestoreService>(context, listen: false);
     final user = FirebaseAuth.instance.currentUser;
-
     final franchiseProvider =
         Provider.of<FranchiseProvider>(context, listen: true);
     final franchiseId = franchiseProvider.currentFranchiseId;
+    final firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
 
-    // --- StreamBuilder to display allergens at checkout, just like cart ---
+    // One-time totals update on first build only
+    if (_orderSubtotal == 0.0 && user != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _updateOrderTotals();
+      });
+    }
+
     return StreamBuilder<shared.Order?>(
       stream: user == null
           ? null
           : firestoreService.getCart(user.uid,
-              franchiseId:
-                  Provider.of<FranchiseProvider>(context, listen: false)
-                              .currentFranchiseId !=
-                          'unknown'
-                      ? Provider.of<FranchiseProvider>(context, listen: false)
-                          .currentFranchiseId
-                      : null),
+              franchiseId: franchiseId != 'unknown' && franchiseId.isNotEmpty
+                  ? franchiseId
+                  : 'doughboyspizzeria'),
       builder: (context, cartSnapshot) {
         final cart = cartSnapshot.data;
+
         if (cart == null || cart.items.isEmpty) {
           return _emptyCheckout(localizations);
         }
+
         return StreamBuilder<List<shared.MenuItem>>(
           stream: firestoreService.getMenuItemsByIds(
-            franchiseId,
+            franchiseId != 'unknown' && franchiseId.isNotEmpty
+                ? franchiseId
+                : 'doughboyspizzeria',
             cart.items.map((i) => i.menuItemId).toList(),
           ),
           builder: (context, menuSnapshot) {
