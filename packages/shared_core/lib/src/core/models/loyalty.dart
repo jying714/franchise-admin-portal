@@ -3,7 +3,11 @@ class Loyalty {
   final List<LoyaltyReward> redeemedRewards;
   final List<dynamic> transactions;
 
-  Loyalty({this.points = 0, this.redeemedRewards = const [], this.transactions = const []});
+  Loyalty({
+    this.points = 0,
+    this.redeemedRewards = const [],
+    this.transactions = const [],
+  });
 }
 
 class LoyaltyReward {

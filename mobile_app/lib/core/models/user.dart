@@ -4,7 +4,7 @@ class User extends shared.User {
   final List<dynamic> orders;
   final List<dynamic> favorites;
   final List<dynamic> scheduledOrders;
-  final dynamic loyalty; // Loyalty object or map
+  final dynamic loyalty;
   final String role;
 
   User({
@@ -29,8 +29,8 @@ class User extends shared.User {
     this.loyalty,
     this.role = 'customer',
   });
+
   static const String roleCustomer = 'customer';
   static const String roleAdmin = 'admin';
   static const String roleOwner = 'owner';
-  // Add factory if needed, but for compile, this may help some casts
 }

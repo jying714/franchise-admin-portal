@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:franchise_mobile_app/core/models/favorite_order.dart';
+import 'package:shared_core/src/core/models/favorite_order.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'dart:convert';
 
