@@ -1,5 +1,4 @@
 import 'package:shared_core/shared_core.dart' as shared;
-import 'address.dart';
 
 class User extends shared.User {
   final List<dynamic> orders;
