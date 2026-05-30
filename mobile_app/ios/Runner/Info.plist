@@ -45,5 +45,20 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Camera permission for real QR scanner (P2.2 production) -->
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to scan franchise QR codes for switching restaurants.</string>
+	<!-- Deep linking support for fhq:// custom scheme -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fhq</string>
+			</array>
+			<key>CFBundleURLName</key>
+			<string>com.doughboyspizzeria.fhq</string>
+		</dict>
+	</array>
 </dict>
 </plist>

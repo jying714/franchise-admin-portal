@@ -94,30 +94,30 @@ void _handleDeepLink(Uri uri) {
     final context = navigatorKey.currentContext;
     if (context != null) {
       final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
-      fp.setFranchiseId(franchiseId);
 
-      // Best-effort branding reload (mirrors bootstrap logic)
-      FirebaseFirestore.instance
-          .collection('franchises')
-          .doc(franchiseId)
-          .get()
-          .then((doc) {
-        if (doc.exists && doc.data() != null) {
-          fp.setBrandingFromFranchiseDoc(doc.data()!);
+      // Use the same pattern as QrScanScreen for consistency
+      fp.setFranchiseId(franchiseId).then((_) {
+        // Best-effort branding reload (FranchiseProvider + UiConfig)
+        FirebaseFirestore.instance
+            .collection('franchises')
+            .doc(franchiseId)
+            .get()
+            .then((doc) {
+          if (doc.exists && doc.data() != null) {
+            fp.setBrandingFromFranchiseDoc(doc.data()!);
+          }
+        }).catchError((_) {});
+
+        if (navigatorKey.currentContext != null) {
+          Navigator.of(navigatorKey.currentContext!).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const MainMenuScreen()),
+            (route) => false,
+          );
         }
       }).catchError((_) {});
-
-      // Bring user to main menu with the switched franchise active
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MainMenuScreen()),
-        (route) => false,
-      );
-    } else {
-      // Cold start: store for HomeWrapper to pick up (simple foundations approach)
-      // For now the stream + hot navigation covers most test cases
     }
   } catch (_) {
-    // invalid / unknown link - silently ignore for foundations
+    // invalid / unknown link - silently ignore
   }
 }
 
