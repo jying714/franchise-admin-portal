@@ -12,6 +12,11 @@ jobs:
   update_release_draft:
     runs-on: ubuntu-latest
     steps:
+      # Explicit Node 22 to address GitHub Actions Node 20 deprecation
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - uses: release-drafter/release-drafter@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
