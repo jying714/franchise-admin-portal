@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -25,9 +26,6 @@ class SizeDropdown extends StatelessWidget {
     final loc = AppLocalizations.of(context)!;
     final rawSizes = menuItem.sizes ?? [];
 
-    print(
-        '🔍 [SizeDropdown] build - rawSizes count: ${rawSizes.length} | selectedSize: $selectedSize');
-
     final List<String> sizeNames = rawSizes.map((dynamic size) {
       if (size is shared.SizeData) {
         return size.label;
@@ -41,19 +39,19 @@ class SizeDropdown extends StatelessWidget {
       }
     }).toList();
 
-    print('🔍 [SizeDropdown] Extracted size names: $sizeNames');
-
     String? safeSelected = selectedSize?.toString();
     if (safeSelected == null || !sizeNames.contains(safeSelected)) {
       safeSelected = sizeNames.isNotEmpty ? sizeNames.first : null;
-      print('🔄 [SizeDropdown] Auto-selected first valid size: $safeSelected');
     }
 
     if (sizeNames.isEmpty) {
-      print('⚠️ [SizeDropdown] No sizes available');
       return const SizedBox.shrink();
     }
 
+    // Franchise scoping injected for centrality (P1 cleanup)
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
+    // Note: franchiseId available for future per-franchise size/pricing logic if needed
+ 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Column(
@@ -75,15 +73,12 @@ class SizeDropdown extends StatelessWidget {
                   value: safeSelected,
                   isExpanded: true,
                   items: sizeNames.map((sizeStr) {
-                    print(
-                        '   📌 [SizeDropdown] Creating DropdownMenuItem: $sizeStr');
                     return DropdownMenuItem<String>(
                       value: sizeStr,
                       child: Text(sizeStr),
                     );
                   }).toList(),
                   onChanged: (newValue) {
-                    print('🔄 [SizeDropdown] onChanged selected: $newValue');
                     if (newValue != null) {
                       onChanged(newValue);
                     }

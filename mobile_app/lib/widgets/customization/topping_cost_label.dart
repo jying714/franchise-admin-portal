@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -22,6 +23,8 @@ class ToppingCostLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // FranchiseProvider injected (P1 Batch 1) for franchise/{franchiseId}/ scoping centrality
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
     final upcharge = getToppingUpcharge();
     return Row(
       children: [

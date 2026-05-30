@@ -1,17 +1,22 @@
-﻿import 'package:flutter/material.dart';
+﻿// P1 Duplicated Widgets Batch 1 (May 30, 2026)
+// Mobile canonical for customer flows (mobile_app/lib/widgets/banner/).
+// Web banner/ kept only for admin previews. Update to barrel only (no src/).
+// Safe for deletion in next batch if admin previews reuse via path dep on mobile_app or shared_ui pkg.
+// No critical customer preview flows touched.
+
+import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:shared_core/src/core/models/banner.dart'
-    as model;
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/widgets/network_image_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_admin_portal/widgets/banner/promo_banner_card.dart';
 
-typedef BannerTapCallback = void Function(model.Banner banner);
+typedef BannerTapCallback = void Function(shared.Banner banner);
 
 class BannerCarousel extends StatelessWidget {
-  final List<model.Banner> banners;
+  final List<shared.Banner> banners;
   final BannerTapCallback? onBannerTap;
 
   const BannerCarousel({
@@ -54,9 +59,7 @@ class BannerCarousel extends StatelessWidget {
   String _getCTAForAction(BuildContext context, String type) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[YourWidget] loc is null! Localization not available for this context.');
-      return 'Localization missing! [debug]';
+      return 'Localization missing!';
     }
     switch (type) {
       case 'linkCategory':

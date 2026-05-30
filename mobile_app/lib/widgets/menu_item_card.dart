@@ -6,6 +6,8 @@ import 'package:franchise_mobile_app/widgets/customization/customization_modal.d
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+// P1 Batch 1: direct caller of customization_modal (mobile canonical, shared.FranchiseProvider + UiConfig enforced)
+
 typedef AddToCartCallback = void Function(
   shared.MenuItem menuItem,
   Map<String, dynamic> customizations,

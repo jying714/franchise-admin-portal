@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/features/category/category_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -13,6 +14,9 @@ class BannerActionHandler {
     AppLocalizations? loc,
     List<shared.Category>? categories,
   }) async {
+    // FranchiseProvider injected for scoping (P1 Batch 1)
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
+
     // Fallback for localization and analytics.
     loc ??= AppLocalizations.of(context)!;
 

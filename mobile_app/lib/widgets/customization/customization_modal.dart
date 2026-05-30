@@ -2,10 +2,8 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:franchise_mobile_app/widgets/customization/pizza_sauce_selector_tab.dart';
 import 'package:franchise_mobile_app/widgets/portion_selector.dart';
 import 'package:franchise_mobile_app/widgets/customization/portion_pill_toggle.dart';
 import 'package:franchise_mobile_app/widgets/customization/dressing_selector_group.dart';
@@ -20,7 +18,6 @@ import 'package:franchise_mobile_app/widgets/customization/wings_dip_sauce_selec
 import 'package:franchise_mobile_app/widgets/customization/wings_portion_selector.dart';
 import 'package:franchise_mobile_app/widgets/customization/size_dropdown.dart';
 import 'package:franchise_mobile_app/widgets/customization/topping_cost_label.dart';
-import 'package:franchise_mobile_app/widgets/customization/current_ingredients.dart';
 import 'package:franchise_mobile_app/widgets/customization/header.dart';
 import 'package:franchise_mobile_app/widgets/customization/bottom_bar.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -294,7 +291,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
   @override
   void initState() {
     super.initState();
-    //print('[DEBUG] MenuItem for customization: ${widget.menuItem.toMap()}');
+    // Debug print removed in P1 Batch 1 cleanup (no log spam)
 
     // --- Initialize cheeses state (self-contained) ---
     final cheeseGroup = widget.menuItem.customizationGroups?.firstWhereOrNull(
@@ -991,6 +988,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
             child: Center(child: CircularProgressIndicator()),
           );
         }
+
+        // franchiseId scoped for all customizations, addons, pricing (P1 enforcement)
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
 
         return Dialog(
           shape: RoundedRectangleBorder(

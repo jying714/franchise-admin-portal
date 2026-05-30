@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:franchise_mobile_app/widgets/customization/portion_pill_toggle.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 typedef DoubleAddOnCallback = void Function(String ingId, bool value);

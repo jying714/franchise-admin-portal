@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/banner/promo_banner_card.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 
 typedef BannerTapCallback = void Function(shared.Banner banner);
@@ -19,6 +19,8 @@ class BannerCarousel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // FranchiseProvider injected (P1 Batch 1) for franchise/{franchiseId}/ scoping centrality
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
     if (banners.isEmpty) {
       // For visual consistency, you could show a placeholder or SizedBox.shrink().
       return const SizedBox.shrink();

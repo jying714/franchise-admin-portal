@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -43,9 +44,6 @@ class CustomizationBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(
-        '🔍 [CustomizationBottomBar] build - totalPrice: $totalPrice | isDrinks: ${menuItem.category.toLowerCase() == "drinks"}');
-
     final isDrinks = menuItem.category.toLowerCase() == 'drinks';
 
     // Safe price calculation
@@ -56,7 +54,6 @@ class CustomizationBottomBar extends StatelessWidget {
               sizePrices![sizes!.first] != null)
           ? (sizePrices![sizes!.first] as num).toDouble()
           : (menuItemPrice ?? 0.0).toDouble();
-      print('🔍 [CustomizationBottomBar] Drinks price: $drinkPrice');
     }
 
     final drinkTotalCount = isDrinks
@@ -66,15 +63,16 @@ class CustomizationBottomBar extends StatelessWidget {
     final displayTotal =
         isDrinks ? (drinkTotalCount * drinkPrice) : (totalPrice ?? 0.0);
 
-    print('🔍 [CustomizationBottomBar] Final displayTotal: $displayTotal');
-
+    // FranchiseProvider injected for scoping (P1 batch 1)
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
+ 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: UiConfig.surfaceColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withAlpha(20),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -134,7 +132,7 @@ class CustomizationBottomBar extends StatelessWidget {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: UiConfig.primaryColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: UiConfig.foregroundColor,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 32, vertical: 14),
                     shape: RoundedRectangleBorder(

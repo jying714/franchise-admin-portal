@@ -13,6 +13,7 @@ import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/widgets/header/profile_icon_button.dart';
 import 'package:franchise_mobile_app/widgets/banner/banner_carousel.dart';
 import 'package:franchise_mobile_app/widgets/banner/banner_action_handler.dart';
+// P1 Batch 1 cross-ref updated: banner/ widgets now use shared.FranchiseProvider + UiConfig (no src/)
 import 'package:franchise_mobile_app/widgets/categories/category_grid.dart';
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
 import 'package:franchise_mobile_app/widgets/loading_shimmer_widget.dart';

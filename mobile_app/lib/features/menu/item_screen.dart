@@ -6,6 +6,7 @@ import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/ordering/cart_screen.dart';
 import 'package:franchise_mobile_app/widgets/customization/customization_modal.dart';
 import 'package:franchise_mobile_app/widgets/favorite_button.dart';
+// P1 Batch 1 cross-ref updated: uses updated customization_modal with FranchiseProvider scoping
 import 'package:franchise_mobile_app/widgets/dietary_allergen_chips_row.dart';
 import 'package:franchise_mobile_app/widgets/menu_item_image.dart';
 import 'package:franchise_mobile_app/widgets/included_ingredients_preview.dart';

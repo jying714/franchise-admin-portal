@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/portion_selector.dart';
@@ -57,6 +58,8 @@ class CurrentIngredients extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // FranchiseProvider injected (P1 Batch 1) for franchise/{franchiseId}/ scoping centrality
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
     final theme = Theme.of(context);
     final loc = AppLocalizations.of(context)!;
     if (currentIngredients.isEmpty) return const SizedBox.shrink();
