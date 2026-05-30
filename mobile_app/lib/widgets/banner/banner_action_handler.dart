@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/features/category/category_screen.dart';
-import 'package:shared_core/src/core/services/analytics_service.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 
@@ -10,7 +9,7 @@ class BannerActionHandler {
   static Future<void> handle(
     BuildContext context,
     shared.Banner banner, {
-    AnalyticsService? analyticsService,
+    shared.AnalyticsService? analyticsService,
     AppLocalizations? loc,
     List<shared.Category>? categories,
   }) async {

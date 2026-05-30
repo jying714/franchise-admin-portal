@@ -3,8 +3,6 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:shared_core/src/core/config/design_tokens.dart';
-import 'package:shared_core/src/core/config/branding_config.dart';
 
 class PromoBannerCard extends StatelessWidget {
   final shared.Banner banner;
@@ -29,23 +27,23 @@ class PromoBannerCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius:
-                BorderRadius.circular(DesignTokens.bannerBorderRadius),
+                BorderRadius.circular(shared.DesignTokens.bannerBorderRadius),
             child: NetworkImageWidget(
               imageUrl: banner.image,
-              fallbackAsset: BrandingConfig.bannerPlaceholder,
+              fallbackAsset: shared.BrandingConfig.bannerPlaceholder,
               width: double.infinity,
-              height: DesignTokens.bannerHeight,
+              height: shared.DesignTokens.bannerHeight,
               fit: BoxFit.cover,
               borderRadius:
-                  BorderRadius.circular(DesignTokens.bannerBorderRadius),
+                  BorderRadius.circular(shared.DesignTokens.bannerBorderRadius),
             ),
           ),
           Container(
             decoration: BoxDecoration(
               borderRadius:
-                  BorderRadius.circular(DesignTokens.bannerBorderRadius),
+                  BorderRadius.circular(shared.DesignTokens.bannerBorderRadius),
               color: UiConfig.bannerOverlayColor
-                  .withAlpha(DesignTokens.bannerOverlayAlpha),
+                  .withAlpha(shared.DesignTokens.bannerOverlayAlpha),
             ),
           ),
           Positioned(
@@ -59,7 +57,7 @@ class PromoBannerCard extends StatelessWidget {
                   Text(
                     banner.title,
                     style: TextStyle(
-                      fontSize: DesignTokens.titleFontSize,
+                      fontSize: shared.DesignTokens.titleFontSize,
                       color: UiConfig.foregroundColor,
                       fontWeight: UiConfig.fontWeightBold,
                       shadows: const [
@@ -75,7 +73,7 @@ class PromoBannerCard extends StatelessWidget {
                     child: Text(
                       banner.subtitle,
                       style: TextStyle(
-                        fontSize: DesignTokens.captionFontSize,
+                        fontSize: shared.DesignTokens.captionFontSize,
                         color: UiConfig.foregroundColor,
                         fontWeight: FontWeight.w400,
                         shadows: const [

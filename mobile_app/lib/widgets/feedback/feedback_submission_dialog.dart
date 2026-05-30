@@ -4,7 +4,6 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:shared_core/src/core/config/design_tokens.dart';
 
 enum FeedbackMode { ordering, orderExperience }
 
@@ -127,7 +126,8 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
 
     return Dialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.dialogBorderRadius),
+        borderRadius:
+            BorderRadius.circular(shared.DesignTokens.dialogBorderRadius),
       ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
@@ -210,8 +210,8 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                   decoration: InputDecoration(
                     labelText: loc.feedbackCommentsLabel,
                     border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(DesignTokens.inputBorderRadius),
+                      borderRadius: BorderRadius.circular(
+                          shared.DesignTokens.inputBorderRadius),
                     ),
                   ),
                   onChanged: (_) {
@@ -258,7 +258,7 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
-                            DesignTokens.buttonBorderRadius),
+                            shared.DesignTokens.buttonBorderRadius),
                       ),
                     ),
                     onPressed: _canSubmit ? () => _submit(context) : null,
@@ -386,7 +386,8 @@ class _FeedbackThankYouDialog extends StatelessWidget {
     final theme = Theme.of(context);
     return Dialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.dialogBorderRadius),
+        borderRadius:
+            BorderRadius.circular(shared.DesignTokens.dialogBorderRadius),
       ),
       child: Padding(
         padding: const EdgeInsets.all(28.0),

@@ -3,7 +3,6 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/categories/category_card.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:shared_core/src/core/config/design_tokens.dart';
 
 typedef CategoryTapCallback = void Function(shared.Category category);
 
@@ -39,9 +38,9 @@ class CategoryGrid extends StatelessWidget {
               loc.noCategoriesAvailable,
               style: TextStyle(
                 color: UiConfig.secondaryTextColor,
-                fontSize: DesignTokens.bodyFontSize,
+                fontSize: shared.DesignTokens.bodyFontSize,
                 fontWeight: UiConfig.fontWeightNormal,
-                fontFamily: DesignTokens.fontFamily,
+                fontFamily: shared.DesignTokens.fontFamily,
               ),
               textAlign: TextAlign.center,
               semanticsLabel: loc.noCategoriesAvailable,
@@ -58,9 +57,10 @@ class CategoryGrid extends StatelessWidget {
       itemCount: categories.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: gridCount,
-        childAspectRatio: childAspectRatio ?? DesignTokens.gridCardAspectRatio,
-        crossAxisSpacing: DesignTokens.gridSpacing,
-        mainAxisSpacing: DesignTokens.gridSpacing,
+        childAspectRatio:
+            childAspectRatio ?? shared.DesignTokens.gridCardAspectRatio,
+        crossAxisSpacing: shared.DesignTokens.gridSpacing,
+        mainAxisSpacing: shared.DesignTokens.gridSpacing,
       ),
       itemBuilder: (context, index) {
         final category = categories[index];

@@ -24,7 +24,6 @@ import 'package:franchise_mobile_app/widgets/customization/current_ingredients.d
 import 'package:franchise_mobile_app/widgets/customization/header.dart';
 import 'package:franchise_mobile_app/widgets/customization/bottom_bar.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:shared_core/src/core/config/design_tokens.dart';
 
 const MAX_DOUBLES = 4;
 const DOUGH_IDS = {'dough_calzone', 'dough_pizza', 'dough'};

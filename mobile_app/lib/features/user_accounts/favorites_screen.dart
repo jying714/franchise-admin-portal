@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:shared_core/src/core/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/core/models/favorite_order.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
@@ -102,12 +101,12 @@ class _FavoritesScreenState extends State<FavoritesScreen>
           AppLocalizations.of(context)!.addedToCartMessage,
           style: TextStyle(
             color: UiConfig.textColor,
-            fontFamily: DesignTokens.fontFamily,
+            fontFamily: shared.DesignTokens.fontFamily,
             fontWeight: UiConfig.normal,
           ),
         ),
         backgroundColor: UiConfig.surfaceColor,
-        duration: Duration(seconds: DesignTokens.toastDurationSeconds),
+        duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
       ),
     );
   }
@@ -122,10 +121,10 @@ class _FavoritesScreenState extends State<FavoritesScreen>
           title: Text(
             localizations.favorites,
             style: TextStyle(
-              fontSize: DesignTokens.titleFontSize,
+              fontSize: shared.DesignTokens.titleFontSize,
               color: UiConfig.foregroundColor,
               fontWeight: UiConfig.bold,
-              fontFamily: DesignTokens.fontFamily,
+              fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
           backgroundColor: UiConfig.primaryColor,
@@ -138,9 +137,9 @@ class _FavoritesScreenState extends State<FavoritesScreen>
           child: Text(
             localizations.mustSignInForFavorites,
             style: TextStyle(
-              fontSize: DesignTokens.bodyFontSize,
+              fontSize: shared.DesignTokens.bodyFontSize,
               color: UiConfig.textColor,
-              fontFamily: DesignTokens.fontFamily,
+              fontFamily: shared.DesignTokens.fontFamily,
               fontWeight: UiConfig.normal,
             ),
           ),
@@ -153,10 +152,10 @@ class _FavoritesScreenState extends State<FavoritesScreen>
         title: Text(
           localizations.favorites,
           style: TextStyle(
-            fontSize: DesignTokens.titleFontSize,
+            fontSize: shared.DesignTokens.titleFontSize,
             color: UiConfig.foregroundColor,
             fontWeight: UiConfig.bold,
-            fontFamily: DesignTokens.fontFamily,
+            fontFamily: shared.DesignTokens.fontFamily,
           ),
         ),
         backgroundColor: UiConfig.primaryColor,
@@ -216,9 +215,9 @@ class FavoriteMenuItemsTab extends StatelessWidget {
             child: Text(
               localizations.noFavoriteMenuItems,
               style: TextStyle(
-                fontSize: DesignTokens.bodyFontSize,
+                fontSize: shared.DesignTokens.bodyFontSize,
                 color: UiConfig.textColor,
-                fontFamily: DesignTokens.fontFamily,
+                fontFamily: shared.DesignTokens.fontFamily,
                 fontWeight: UiConfig.normal,
               ),
             ),
@@ -231,39 +230,40 @@ class FavoriteMenuItemsTab extends StatelessWidget {
             itemBuilder: (context, index) {
               final item = items[index];
               return Card(
-                elevation: DesignTokens.cardElevation,
+                elevation: shared.DesignTokens.cardElevation,
                 margin: const EdgeInsets.symmetric(
-                  vertical: DesignTokens.gridSpacing / 2,
+                  vertical: shared.DesignTokens.gridSpacing / 2,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+                  borderRadius:
+                      BorderRadius.circular(shared.DesignTokens.cardRadius),
                 ),
                 color: UiConfig.surfaceColor,
                 child: ListTile(
                   leading: NetworkImageWidget(
                     imageUrl: item.image ?? '',
                     fallbackAsset: shared.BrandingConfig.defaultPizzaIcon,
-                    width: DesignTokens.menuItemImageWidth,
-                    height: DesignTokens.menuItemImageHeight,
+                    width: shared.DesignTokens.menuItemImageWidth,
+                    height: shared.DesignTokens.menuItemImageHeight,
                     fit: BoxFit.cover,
                     borderRadius:
-                        BorderRadius.circular(DesignTokens.imageRadius),
+                        BorderRadius.circular(shared.DesignTokens.imageRadius),
                   ),
                   title: Text(
                     item.name,
                     style: TextStyle(
-                      fontSize: DesignTokens.bodyFontSize,
+                      fontSize: shared.DesignTokens.bodyFontSize,
                       color: UiConfig.textColor,
                       fontWeight: UiConfig.bold,
-                      fontFamily: DesignTokens.fontFamily,
+                      fontFamily: shared.DesignTokens.fontFamily,
                     ),
                   ),
                   subtitle: Text(
                     item.description,
                     style: TextStyle(
-                      fontSize: DesignTokens.captionFontSize,
+                      fontSize: shared.DesignTokens.captionFontSize,
                       color: UiConfig.secondaryTextColor,
-                      fontFamily: DesignTokens.fontFamily,
+                      fontFamily: shared.DesignTokens.fontFamily,
                       fontWeight: UiConfig.normal,
                     ),
                   ),
@@ -285,13 +285,14 @@ class FavoriteMenuItemsTab extends StatelessWidget {
                             localizations.removeFromFavoritesTooltip,
                             style: TextStyle(
                               color: UiConfig.textColor,
-                              fontFamily: DesignTokens.fontFamily,
+                              fontFamily: shared.DesignTokens.fontFamily,
                               fontWeight: UiConfig.normal,
                             ),
                           ),
                           backgroundColor: UiConfig.surfaceColor,
                           duration: Duration(
-                              seconds: DesignTokens.toastDurationSeconds),
+                              seconds:
+                                  shared.DesignTokens.toastDurationSeconds),
                         ),
                       );
                     },
@@ -337,9 +338,9 @@ class FavoriteOrdersTab extends StatelessWidget {
             child: Text(
               localizations.noFavoriteOrdersSaved,
               style: TextStyle(
-                fontSize: DesignTokens.bodyFontSize,
+                fontSize: shared.DesignTokens.bodyFontSize,
                 color: UiConfig.textColor,
-                fontFamily: DesignTokens.fontFamily,
+                fontFamily: shared.DesignTokens.fontFamily,
                 fontWeight: UiConfig.normal,
               ),
             ),
@@ -352,12 +353,13 @@ class FavoriteOrdersTab extends StatelessWidget {
             itemBuilder: (context, index) {
               final order = orders[index];
               return Card(
-                elevation: DesignTokens.cardElevation,
+                elevation: shared.DesignTokens.cardElevation,
                 margin: const EdgeInsets.symmetric(
-                  vertical: DesignTokens.gridSpacing / 2,
+                  vertical: shared.DesignTokens.gridSpacing / 2,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+                  borderRadius:
+                      BorderRadius.circular(shared.DesignTokens.cardRadius),
                 ),
                 color: UiConfig.surfaceColor,
                 child: ListTile(
@@ -366,10 +368,10 @@ class FavoriteOrdersTab extends StatelessWidget {
                   title: Text(
                     order.userName ?? 'Order',
                     style: TextStyle(
-                      fontSize: DesignTokens.bodyFontSize,
+                      fontSize: shared.DesignTokens.bodyFontSize,
                       color: UiConfig.textColor,
                       fontWeight: UiConfig.bold,
-                      fontFamily: DesignTokens.fontFamily,
+                      fontFamily: shared.DesignTokens.fontFamily,
                     ),
                   ),
                   subtitle: Text(
@@ -377,9 +379,9 @@ class FavoriteOrdersTab extends StatelessWidget {
                       order.items.map((e) => e.name).join(', '),
                     ),
                     style: TextStyle(
-                      fontSize: DesignTokens.captionFontSize,
+                      fontSize: shared.DesignTokens.captionFontSize,
                       color: UiConfig.secondaryTextColor,
-                      fontFamily: DesignTokens.fontFamily,
+                      fontFamily: shared.DesignTokens.fontFamily,
                       fontWeight: UiConfig.normal,
                     ),
                   ),
@@ -420,13 +422,14 @@ class FavoriteOrdersTab extends StatelessWidget {
                                 localizations.removeFavorite,
                                 style: TextStyle(
                                   color: UiConfig.textColor,
-                                  fontFamily: DesignTokens.fontFamily,
+                                  fontFamily: shared.DesignTokens.fontFamily,
                                   fontWeight: UiConfig.normal,
                                 ),
                               ),
                               backgroundColor: UiConfig.surfaceColor,
                               duration: Duration(
-                                  seconds: DesignTokens.toastDurationSeconds),
+                                  seconds:
+                                      shared.DesignTokens.toastDurationSeconds),
                             ),
                           );
                         },

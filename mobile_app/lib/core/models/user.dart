@@ -1,7 +1,7 @@
-import 'package:shared_core/src/core/models/user.dart' as shared_user;
+import 'package:shared_core/shared_core.dart' as shared;
 import 'address.dart';
 
-class User extends shared_user.User {
+class User extends shared.User {
   final List<dynamic> orders;
   final List<dynamic> favorites;
   final List<dynamic> scheduledOrders;

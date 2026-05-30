@@ -4,7 +4,6 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/banner/promo_banner_card.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:shared_core/src/core/config/design_tokens.dart';
 
 typedef BannerTapCallback = void Function(shared.Banner banner);
 
@@ -37,10 +36,10 @@ class BannerCarousel extends StatelessWidget {
           );
         },
         options: CarouselOptions(
-          height: DesignTokens.bannerHeight,
+          height: shared.DesignTokens.bannerHeight,
           autoPlay: true,
           autoPlayInterval:
-              Duration(seconds: DesignTokens.bannerAutoPlayInterval),
+              Duration(seconds: shared.DesignTokens.bannerAutoPlayInterval),
           enlargeCenterPage: true,
           viewportFraction: 1.0,
           enableInfiniteScroll: banners.length > 1,
