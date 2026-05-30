@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:shared_core/src/core/config/design_tokens.dart';
 
 typedef FieldValidator = String? Function(String?);
 
@@ -72,7 +71,7 @@ class _AddressFormState extends State<AddressForm> {
               labelText: loc.labelExample,
               border: OutlineInputBorder(
                 borderRadius:
-                    BorderRadius.circular(DesignTokens.formFieldRadius),
+                    BorderRadius.circular(shared.DesignTokens.formFieldRadius),
               ),
               hintStyle: TextStyle(
                 color: UiConfig.hintTextColor,
@@ -83,18 +82,18 @@ class _AddressFormState extends State<AddressForm> {
             onSaved: (value) => _label = value,
             style: TextStyle(
               color: UiConfig.textColor,
-              fontFamily: DesignTokens.fontFamily,
+              fontFamily: shared.DesignTokens.fontFamily,
               fontWeight: UiConfig.fontWeightNormal,
             ),
           ),
-          const SizedBox(height: DesignTokens.gridSpacing),
+          const SizedBox(height: shared.DesignTokens.gridSpacing),
           TextFormField(
             initialValue: _street,
             decoration: InputDecoration(
               labelText: loc.street,
               border: OutlineInputBorder(
                 borderRadius:
-                    BorderRadius.circular(DesignTokens.formFieldRadius),
+                    BorderRadius.circular(shared.DesignTokens.formFieldRadius),
               ),
               hintStyle: TextStyle(
                 color: UiConfig.hintTextColor,
@@ -105,18 +104,18 @@ class _AddressFormState extends State<AddressForm> {
             onSaved: (value) => _street = value,
             style: TextStyle(
               color: UiConfig.textColor,
-              fontFamily: DesignTokens.fontFamily,
+              fontFamily: shared.DesignTokens.fontFamily,
               fontWeight: UiConfig.fontWeightNormal,
             ),
           ),
-          const SizedBox(height: DesignTokens.gridSpacing),
+          const SizedBox(height: shared.DesignTokens.gridSpacing),
           TextFormField(
             initialValue: _city,
             decoration: InputDecoration(
               labelText: loc.city,
               border: OutlineInputBorder(
                 borderRadius:
-                    BorderRadius.circular(DesignTokens.formFieldRadius),
+                    BorderRadius.circular(shared.DesignTokens.formFieldRadius),
               ),
               hintStyle: TextStyle(
                 color: UiConfig.hintTextColor,
@@ -126,18 +125,18 @@ class _AddressFormState extends State<AddressForm> {
             onSaved: (value) => _city = value,
             style: TextStyle(
               color: UiConfig.textColor,
-              fontFamily: DesignTokens.fontFamily,
+              fontFamily: shared.DesignTokens.fontFamily,
               fontWeight: UiConfig.fontWeightNormal,
             ),
           ),
-          const SizedBox(height: DesignTokens.gridSpacing),
+          const SizedBox(height: shared.DesignTokens.gridSpacing),
           TextFormField(
             initialValue: _state,
             decoration: InputDecoration(
               labelText: loc.state,
               border: OutlineInputBorder(
                 borderRadius:
-                    BorderRadius.circular(DesignTokens.formFieldRadius),
+                    BorderRadius.circular(shared.DesignTokens.formFieldRadius),
               ),
               hintStyle: TextStyle(
                 color: UiConfig.hintTextColor,
@@ -148,18 +147,18 @@ class _AddressFormState extends State<AddressForm> {
             onSaved: (value) => _state = value,
             style: TextStyle(
               color: UiConfig.textColor,
-              fontFamily: DesignTokens.fontFamily,
+              fontFamily: shared.DesignTokens.fontFamily,
               fontWeight: UiConfig.fontWeightNormal,
             ),
           ),
-          const SizedBox(height: DesignTokens.gridSpacing),
+          const SizedBox(height: shared.DesignTokens.gridSpacing),
           TextFormField(
             initialValue: _zip,
             decoration: InputDecoration(
               labelText: loc.zipCode,
               border: OutlineInputBorder(
                 borderRadius:
-                    BorderRadius.circular(DesignTokens.formFieldRadius),
+                    BorderRadius.circular(shared.DesignTokens.formFieldRadius),
               ),
               hintStyle: TextStyle(
                 color: UiConfig.hintTextColor,
@@ -169,20 +168,21 @@ class _AddressFormState extends State<AddressForm> {
             onSaved: (value) => _zip = value,
             style: TextStyle(
               color: UiConfig.textColor,
-              fontFamily: DesignTokens.fontFamily,
+              fontFamily: shared.DesignTokens.fontFamily,
               fontWeight: UiConfig.fontWeightNormal,
             ),
           ),
-          const SizedBox(height: DesignTokens.gridSpacing * 2),
+          const SizedBox(height: shared.DesignTokens.gridSpacing * 2),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: UiConfig.primaryColor,
               foregroundColor: UiConfig.foregroundColor,
               padding: UiConfig.defaultPadding,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(DesignTokens.buttonRadius),
+                borderRadius:
+                    BorderRadius.circular(shared.DesignTokens.buttonRadius),
               ),
-              elevation: DesignTokens.buttonElevation,
+              elevation: shared.DesignTokens.buttonElevation,
             ),
             onPressed: () {
               if (widget.formKey.currentState!.validate()) {

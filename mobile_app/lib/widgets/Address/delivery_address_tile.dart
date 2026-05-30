@@ -5,7 +5,6 @@ import 'package:franchise_mobile_app/widgets/Address/edit_address_dialog.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_core/src/core/config/design_tokens.dart';
 
 class DeliveryAddressTile extends StatelessWidget {
   final shared.Address address;
@@ -22,30 +21,30 @@ class DeliveryAddressTile extends StatelessWidget {
     final loc = AppLocalizations.of(context)!;
 
     return Card(
-      elevation: DesignTokens.cardElevation,
+      elevation: shared.DesignTokens.cardElevation,
       margin: EdgeInsets.symmetric(
-        vertical: DesignTokens.gridSpacing / 2,
+        vertical: shared.DesignTokens.gridSpacing / 2,
       ),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
       ),
       color: UiConfig.surfaceColor,
       child: ListTile(
         title: Text(
           address.label,
           style: TextStyle(
-            fontSize: DesignTokens.bodyFontSize,
+            fontSize: shared.DesignTokens.bodyFontSize,
             color: UiConfig.textColor,
             fontWeight: UiConfig.fontWeightBold,
-            fontFamily: DesignTokens.fontFamily,
+            fontFamily: shared.DesignTokens.fontFamily,
           ),
         ),
         subtitle: Text(
           '${address.street}, ${address.city}, ${address.state} ${address.zip}',
           style: TextStyle(
-            fontSize: DesignTokens.captionFontSize,
+            fontSize: shared.DesignTokens.captionFontSize,
             color: UiConfig.secondaryTextColor,
-            fontFamily: DesignTokens.fontFamily,
+            fontFamily: shared.DesignTokens.fontFamily,
             fontWeight: UiConfig.fontWeightNormal,
           ),
         ),
@@ -74,12 +73,13 @@ class DeliveryAddressTile extends StatelessWidget {
                           loc.addressUpdated ?? 'Address updated',
                           style: TextStyle(
                             color: UiConfig.textColor,
-                            fontFamily: DesignTokens.fontFamily,
+                            fontFamily: shared.DesignTokens.fontFamily,
                             fontWeight: UiConfig.fontWeightNormal,
                           ),
                         ),
                         backgroundColor: UiConfig.surfaceColor,
-                        duration: Duration(seconds: DesignTokens.toastDuration),
+                        duration: Duration(
+                            seconds: shared.DesignTokens.toastDuration),
                       ),
                     );
                   },

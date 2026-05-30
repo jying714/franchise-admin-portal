@@ -7,7 +7,6 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:shared_core/src/core/config/design_tokens.dart';
 
 class DeliveryAddressesBody extends StatefulWidget {
   final List<shared.Address> addresses;
@@ -76,12 +75,13 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                           localizations.addressRemoved,
                           style: TextStyle(
                             color: UiConfig.textColor,
-                            fontFamily: DesignTokens.fontFamily,
+                            fontFamily: shared.DesignTokens.fontFamily,
                             fontWeight: UiConfig.fontWeightNormal,
                           ),
                         ),
                         backgroundColor: UiConfig.surfaceColor,
-                        duration: Duration(seconds: DesignTokens.toastDuration),
+                        duration: Duration(
+                            seconds: shared.DesignTokens.toastDuration),
                       ),
                     );
                   }
@@ -113,12 +113,13 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                           localizations.addressAdded,
                           style: TextStyle(
                             color: UiConfig.textColor,
-                            fontFamily: DesignTokens.fontFamily,
+                            fontFamily: shared.DesignTokens.fontFamily,
                             fontWeight: UiConfig.fontWeightNormal,
                           ),
                         ),
                         backgroundColor: UiConfig.surfaceColor,
-                        duration: Duration(seconds: DesignTokens.toastDuration),
+                        duration: Duration(
+                            seconds: shared.DesignTokens.toastDuration),
                       ),
                     );
                   }

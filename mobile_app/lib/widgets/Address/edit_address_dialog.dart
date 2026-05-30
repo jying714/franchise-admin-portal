@@ -3,7 +3,6 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/Address/address_form.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:shared_core/src/core/config/design_tokens.dart';
 
 class EditAddressDialog extends StatefulWidget {
   final shared.Address initialValue;

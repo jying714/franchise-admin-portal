@@ -1,26 +1,15 @@
 import 'dart:io';
-import 'dart:developer' as developer;
-import 'package:flutter/material.dart' as material hide Banner, BannerLocation;
+import 'package:flutter/material.dart' as material;
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:carousel_slider/carousel_slider.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:franchise_mobile_app/widgets/header/cart_icon_badge.dart';
-import 'package:shared_core/src/core/config/branding_config.dart';
-import 'package:shared_core/src/core/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/services/analytics_service.dart';
-import 'package:shared_core/src/core/models/banner.dart';
-import 'package:shared_core/src/core/models/menu_item.dart';
-import 'package:shared_core/src/core/models/category.dart' as model;
 import 'package:franchise_mobile_app/features/category/category_screen.dart';
 import 'package:franchise_mobile_app/features/ordering/cart_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
-import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:franchise_mobile_app/widgets/header/profile_icon_button.dart';
 import 'package:franchise_mobile_app/widgets/banner/banner_carousel.dart';
 import 'package:franchise_mobile_app/widgets/banner/banner_action_handler.dart';
@@ -66,7 +55,7 @@ class MainMenuScreen extends material.StatelessWidget {
             tooltip: 'Cart',
             onPressed: null, // Will be overridden in Consumer
           ),
-          const material.SizedBox(width: DesignTokens.gridSpacing),
+          const material.SizedBox(width: shared.DesignTokens.gridSpacing),
         ],
       ),
       backgroundColor: UiConfig.backgroundColor,
@@ -98,13 +87,13 @@ class MainMenuScreen extends material.StatelessWidget {
                       builder: (_) => const CartScreen()),
                 ),
               ),
-              const material.SizedBox(width: DesignTokens.gridSpacing),
+              const material.SizedBox(width: shared.DesignTokens.gridSpacing),
             ];
 
             return material.Column(
               children: [
                 // Banner
-                material.StreamBuilder<List<Banner>>(
+                material.StreamBuilder<List<shared.Banner>>(
                   stream: firestoreService.getBanners(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState ==
@@ -116,11 +105,11 @@ class MainMenuScreen extends material.StatelessWidget {
                       return EmptyStateWidget(
                         title: loc.checkBackSoon,
                         message: loc.noPromotionsAvailable,
-                        imageAsset: BrandingConfig.bannerPlaceholder,
+                        imageAsset: shared.BrandingConfig.bannerPlaceholder,
                       );
                     }
                     final banners =
-                        snapshot.data!.where((b) => b.active).toList();
+                        (snapshot.data ?? []).where((b) => b.active).toList();
                     return BannerCarousel(
                       banners: banners,
                       onBannerTap: (banner) => BannerActionHandler.handle(
@@ -136,7 +125,7 @@ class MainMenuScreen extends material.StatelessWidget {
 
                 // Categories
                 material.Expanded(
-                  child: material.StreamBuilder<List<model.Category>>(
+                  child: material.StreamBuilder<List<shared.Category>>(
                     stream: firestoreService
                         .getCategories(provider.currentFranchiseId),
                     builder: (context, snapshot) {
@@ -150,7 +139,7 @@ class MainMenuScreen extends material.StatelessWidget {
                         return EmptyStateWidget(
                           title: loc.noCategoriesAvailable,
                           message: loc.checkBackSoon,
-                          imageAsset: BrandingConfig.defaultCategoryIcon,
+                          imageAsset: shared.BrandingConfig.defaultCategoryIcon,
                         );
                       }
                       return CategoryGrid(

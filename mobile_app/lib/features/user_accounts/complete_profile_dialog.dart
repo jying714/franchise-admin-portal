@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:shared_core/src/core/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as user_model;
@@ -95,7 +94,7 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
           false, // prevent accidental back-button dismissal (original intent)
       child: Dialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+          borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
         ),
         backgroundColor: UiConfig.surfaceColor,
         insetPadding:
@@ -115,10 +114,10 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                   Text(
                     l10n.completeProfileTitle,
                     style: TextStyle(
-                      fontSize: DesignTokens.titleFontSize,
+                      fontSize: shared.DesignTokens.titleFontSize,
                       fontWeight: UiConfig.bold,
                       color: UiConfig.textColor,
-                      fontFamily: DesignTokens.fontFamily,
+                      fontFamily: shared.DesignTokens.fontFamily,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -126,9 +125,9 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                     l10n.completeProfileMessage,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: DesignTokens.bodyFontSize,
+                      fontSize: shared.DesignTokens.bodyFontSize,
                       color: UiConfig.secondaryTextColor,
-                      fontFamily: DesignTokens.fontFamily,
+                      fontFamily: shared.DesignTokens.fontFamily,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -137,8 +136,8 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                     decoration: InputDecoration(
                       labelText: l10n.name,
                       border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(DesignTokens.formFieldRadius),
+                        borderRadius: BorderRadius.circular(
+                            shared.DesignTokens.formFieldRadius),
                       ),
                     ),
                     style: TextStyle(color: UiConfig.textColor),
@@ -153,8 +152,8 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                     decoration: InputDecoration(
                       labelText: l10n.phoneNumber,
                       border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(DesignTokens.formFieldRadius),
+                        borderRadius: BorderRadius.circular(
+                            shared.DesignTokens.formFieldRadius),
                       ),
                     ),
                     style: TextStyle(color: UiConfig.textColor),
@@ -180,7 +179,7 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                             foregroundColor: UiConfig.foregroundColor,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
-                                  DesignTokens.buttonRadius),
+                                  shared.DesignTokens.buttonRadius),
                             ),
                             padding: UiConfig.defaultPadding,
                           ),
@@ -208,7 +207,7 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                                 color: UiConfig.secondaryColor, width: 1),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
-                                  DesignTokens.buttonRadius),
+                                  shared.DesignTokens.buttonRadius),
                             ),
                             padding: UiConfig.defaultPadding,
                           ),
