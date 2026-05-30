@@ -108,9 +108,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         Provider.of<shared.FirestoreService>(context, listen: false);
     final franchiseId = franchiseProvider.currentFranchiseId;
 
-    print(
-        '🔍 [CheckoutScreen][_updateOrderTotals] Fetching cart for franchise: $franchiseId');
-
     firestoreService
         .getCart(user.uid,
             franchiseId:
@@ -132,11 +129,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         _orderTotal = (_orderSubtotal + _orderTax + _deliveryFee - _promoValue)
             .clamp(0, double.infinity);
       });
-
-      print(
-          '✅ [CheckoutScreen][_updateOrderTotals] Updated totals - Subtotal: $_orderSubtotal | Total: $_orderTotal');
     }).catchError((e) {
-      print('❌ [CheckoutScreen][_updateOrderTotals] Error: $e');
+      // Non-fatal; UI will show stale or zero totals
     });
   }
 
@@ -218,9 +212,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
 
     try {
-      print('[DEBUG] Calling addOrder...');
       await firestoreService.addOrder(order);
-      print('[DEBUG] addOrder completed.');
       await firestoreService.updateCart(order.copyWith(items: []));
       if (!context.mounted) return;
       Navigator.of(context).pushReplacement(

@@ -46,12 +46,10 @@ class IngredientMetadataProvider extends ChangeNotifier {
       }
       _isLoaded = true;
       notifyListeners();
-      print(
-          '✅ [IngredientMetadataProvider] Loaded ${_ingredients.length} ingredients');
     } catch (e) {
       _isLoaded = true;
       notifyListeners();
-      print('❌ [IngredientMetadataProvider] Failed to load ingredients: $e');
+      // Error intentionally not logged here (one-time bootstrap provider)
     }
   }
 }
@@ -181,9 +179,7 @@ class _HomeWrapperState extends State<HomeWrapper> {
     if (_isInitializing && !franchiseProvider.hasValidFranchise) {
       _isInitializing = false; // prevent multiple calls
       WidgetsBinding.instance.addPostFrameCallback((_) async {
-        print('🔄 [HomeWrapper] Starting franchise initialization...');
         await franchiseProvider.initializeWithUser(sharedUser);
-        print('✅ [HomeWrapper] Franchise initialization completed');
         if (mounted) setState(() {}); // force rebuild
       });
     }

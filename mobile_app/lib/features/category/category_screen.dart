@@ -103,7 +103,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
         );
       }
     } catch (e) {
-      print('❌ Add to cart error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Failed to add to cart")),
@@ -162,19 +161,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       : null,
             ),
             builder: (context, snapshot) {
-              print(
-                  '🔍 [CategoryScreen] StreamBuilder Triggered for category: ${widget.categoryId} (${widget.categoryName})');
-              print('   - ConnectionState: ${snapshot.connectionState}');
-              print('   - hasData: ${snapshot.hasData}');
-              print('   - hasError: ${snapshot.hasError}');
-              print('   - Data length: ${snapshot.data?.length ?? 0}');
-
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const LoadingShimmerWidget();
               }
 
               if (snapshot.hasError) {
-                print('   ❌ ERROR: ${snapshot.error}');
                 return EmptyStateWidget(
                   title: "Error Loading Menu Items",
                   message: "Please try again later.",
@@ -183,7 +174,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
               }
 
               final items = snapshot.data ?? [];
-              print('   ✅ Final items count: ${items.length}');
 
               if (items.isEmpty) {
                 return EmptyStateWidget(
@@ -218,8 +208,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       itemCount: items.length,
                       itemBuilder: (context, index) {
                         final item = items[index];
-                        print(
-                            '   📌 Rendering item ${index + 1}: ${item.name}');
                         return MenuItemCard(
                           menuItem: item,
                           showDescription: true,

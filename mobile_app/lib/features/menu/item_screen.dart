@@ -83,9 +83,6 @@ class _ItemScreenState extends State<ItemScreen> {
         Provider.of<shared.FranchiseProvider>(context, listen: false);
     final franchiseId = franchiseProvider.currentFranchiseId;
 
-    print(
-        '🔍 [ItemScreen][_addToCart] START - franchiseId: $franchiseId | userId: $_userId');
-
     if (franchiseId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Please select a franchise location to order.')),
