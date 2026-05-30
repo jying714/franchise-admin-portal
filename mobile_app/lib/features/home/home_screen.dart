@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:shared_core/src/core/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
 import 'package:franchise_mobile_app/features/auth/sign_up_screen.dart';
@@ -21,10 +20,10 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: Image.asset(
           UiConfig.logoMain,
-          height: DesignTokens.logoHeightSmall,
+          height: shared.DesignTokens.logoHeightSmall,
           errorBuilder: (c, e, s) => Image.asset(
             UiConfig.defaultPizzaIcon,
-            height: DesignTokens.logoHeightSmall,
+            height: shared.DesignTokens.logoHeightSmall,
             fit: BoxFit.contain,
             semanticLabel: loc.logoErrorTooltip,
           ),
@@ -40,9 +39,10 @@ class HomeScreen extends StatelessWidget {
             padding: UiConfig.defaultPadding,
             child: Card(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+                borderRadius:
+                    BorderRadius.circular(shared.DesignTokens.cardRadius),
               ),
-              elevation: DesignTokens.cardElevation,
+              elevation: shared.DesignTokens.cardElevation,
               color: UiConfig.surfaceColorDark,
               child: Padding(
                 padding: UiConfig.defaultPadding,
@@ -51,36 +51,36 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     Image.asset(
                       UiConfig.logoLarge,
-                      height: DesignTokens.logoHeightLarge,
+                      height: shared.DesignTokens.logoHeightLarge,
                       errorBuilder: (c, e, s) => Image.asset(
                         UiConfig.defaultPizzaIcon,
-                        height: DesignTokens.logoHeightLarge,
+                        height: shared.DesignTokens.logoHeightLarge,
                         fit: BoxFit.contain,
                         semanticLabel: loc.logoErrorTooltip,
                       ),
                     ),
-                    SizedBox(height: DesignTokens.gridSpacing * 4),
+                    SizedBox(height: shared.DesignTokens.gridSpacing * 4),
                     Text(
                       loc.welcomeTitle(shared.BrandingConfig.franchiseName),
                       style: TextStyle(
-                        fontFamily: DesignTokens.fontFamily,
+                        fontFamily: shared.DesignTokens.fontFamily,
                         fontWeight: UiConfig.fontWeightBold,
-                        fontSize: DesignTokens.titleFontSize,
+                        fontSize: shared.DesignTokens.titleFontSize,
                         color: UiConfig.textColorDark,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: DesignTokens.gridSpacing * 2),
+                    SizedBox(height: shared.DesignTokens.gridSpacing * 2),
                     Text(
                       loc.welcomeSubtitle,
                       style: TextStyle(
-                        fontFamily: DesignTokens.fontFamily,
-                        fontSize: DesignTokens.bodyFontSize,
+                        fontFamily: shared.DesignTokens.fontFamily,
+                        fontSize: shared.DesignTokens.bodyFontSize,
                         color: UiConfig.secondaryTextColor,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: DesignTokens.gridSpacing * 4),
+                    SizedBox(height: shared.DesignTokens.gridSpacing * 4),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -95,19 +95,19 @@ class HomeScreen extends StatelessWidget {
                           padding: UiConfig.defaultPadding,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
-                                DesignTokens.buttonRadius),
+                                shared.DesignTokens.buttonRadius),
                           ),
-                          elevation: DesignTokens.buttonElevation,
+                          elevation: shared.DesignTokens.buttonElevation,
                           textStyle: TextStyle(
-                            fontSize: DesignTokens.bodyFontSize,
+                            fontSize: shared.DesignTokens.bodyFontSize,
                             fontWeight: UiConfig.fontWeightBold,
-                            fontFamily: DesignTokens.fontFamily,
+                            fontFamily: shared.DesignTokens.fontFamily,
                           ),
                         ),
                         child: Text(loc.signInButton),
                       ),
                     ),
-                    SizedBox(height: DesignTokens.gridSpacing * 1.75),
+                    SizedBox(height: shared.DesignTokens.gridSpacing * 1.75),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -122,19 +122,19 @@ class HomeScreen extends StatelessWidget {
                           padding: UiConfig.defaultPadding,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
-                                DesignTokens.buttonRadius),
+                                shared.DesignTokens.buttonRadius),
                           ),
-                          elevation: DesignTokens.buttonElevation,
+                          elevation: shared.DesignTokens.buttonElevation,
                           textStyle: TextStyle(
-                            fontSize: DesignTokens.bodyFontSize,
+                            fontSize: shared.DesignTokens.bodyFontSize,
                             fontWeight: UiConfig.fontWeightBold,
-                            fontFamily: DesignTokens.fontFamily,
+                            fontFamily: shared.DesignTokens.fontFamily,
                           ),
                         ),
                         child: Text(loc.signUpNowButton),
                       ),
                     ),
-                    SizedBox(height: DesignTokens.gridSpacing * 1.75),
+                    SizedBox(height: shared.DesignTokens.gridSpacing * 1.75),
                     TextButton(
                       onPressed: () => Navigator.pushReplacement(
                         context,
@@ -144,10 +144,10 @@ class HomeScreen extends StatelessWidget {
                       style: TextButton.styleFrom(
                         foregroundColor: UiConfig.primaryColor,
                         padding: EdgeInsets.symmetric(
-                            vertical: DesignTokens.gridSpacing * 1.5),
+                            vertical: shared.DesignTokens.gridSpacing * 1.5),
                         textStyle: TextStyle(
-                          fontFamily: DesignTokens.fontFamily,
-                          fontSize: DesignTokens.bodyFontSize,
+                          fontFamily: shared.DesignTokens.fontFamily,
+                          fontSize: shared.DesignTokens.bodyFontSize,
                         ),
                       ),
                       child: Text(loc.continueAsGuestButton),

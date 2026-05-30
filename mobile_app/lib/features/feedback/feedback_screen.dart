@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:shared_core/src/core/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/core/services/offline_service.dart';
 import 'package:franchise_mobile_app/core/models/feedback_entry.dart' as model;
@@ -145,8 +144,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
           loc.feedbackScreenTitle,
           style: TextStyle(
             color: UiConfig.foregroundColorDark,
-            fontSize: DesignTokens.titleFontSize,
-            fontFamily: DesignTokens.fontFamily,
+            fontSize: shared.DesignTokens.titleFontSize,
+            fontFamily: shared.DesignTokens.fontFamily,
             fontWeight: UiConfig.fontWeightBold,
           ),
         ),
@@ -163,9 +162,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             child: Card(
               color: UiConfig.surfaceColorDark,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+                borderRadius:
+                    BorderRadius.circular(shared.DesignTokens.cardRadius),
               ),
-              elevation: DesignTokens.cardElevation,
+              elevation: shared.DesignTokens.cardElevation,
               child: Padding(
                 padding: UiConfig.defaultPadding,
                 child: Column(
@@ -183,9 +183,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                     Text(
                       loc.feedbackPromptTitle,
                       style: TextStyle(
-                        fontSize: DesignTokens.titleFontSize,
+                        fontSize: shared.DesignTokens.titleFontSize,
                         fontWeight: UiConfig.fontWeightBold,
-                        fontFamily: DesignTokens.fontFamily,
+                        fontFamily: shared.DesignTokens.fontFamily,
                         color: UiConfig.textColorDark,
                       ),
                       textAlign: TextAlign.center,
@@ -225,10 +225,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                         labelText: loc.feedbackCommentsLabel,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(
-                              DesignTokens.formFieldRadius),
+                              shared.DesignTokens.formFieldRadius),
                         ),
                         counterStyle: TextStyle(
-                          fontSize: DesignTokens.captionFontSize,
+                          fontSize: shared.DesignTokens.captionFontSize,
                           color: UiConfig.hintTextColor,
                         ),
                       ),
@@ -267,10 +267,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                         foregroundColor: UiConfig.foregroundColorDark,
                         padding: UiConfig.defaultPadding,
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(DesignTokens.buttonRadius),
+                          borderRadius: BorderRadius.circular(
+                              shared.DesignTokens.buttonRadius),
                         ),
-                        elevation: DesignTokens.buttonElevation,
+                        elevation: shared.DesignTokens.buttonElevation,
                       ),
                       child: _loading
                           ? const SizedBox(

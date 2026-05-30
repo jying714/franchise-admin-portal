@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:shared_core/src/core/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/language/language_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -26,10 +25,10 @@ class LanguageScreen extends StatelessWidget {
         title: Text(
           loc.language,
           style: TextStyle(
-            fontSize: DesignTokens.titleFontSize,
+            fontSize: shared.DesignTokens.titleFontSize,
             color: UiConfig.foregroundColorDark,
             fontWeight: UiConfig.fontWeightBold,
-            fontFamily: DesignTokens.fontFamily,
+            fontFamily: shared.DesignTokens.fontFamily,
           ),
         ),
         backgroundColor: UiConfig.primaryColor,
@@ -46,10 +45,10 @@ class LanguageScreen extends StatelessWidget {
             Text(
               loc.selectLanguage,
               style: TextStyle(
-                fontSize: DesignTokens.bodyFontSize,
+                fontSize: shared.DesignTokens.bodyFontSize,
                 fontWeight: UiConfig.fontWeightBold,
                 color: UiConfig.textColorDark,
-                fontFamily: DesignTokens.fontFamily,
+                fontFamily: shared.DesignTokens.fontFamily,
               ),
             ),
             const SizedBox(height: 24),
@@ -57,9 +56,9 @@ class LanguageScreen extends StatelessWidget {
                   title: Text(
                     lang['label']!,
                     style: TextStyle(
-                      fontSize: DesignTokens.bodyFontSize,
+                      fontSize: shared.DesignTokens.bodyFontSize,
                       color: UiConfig.textColorDark,
-                      fontFamily: DesignTokens.fontFamily,
+                      fontFamily: shared.DesignTokens.fontFamily,
                     ),
                   ),
                   trailing: languageProvider.locale.languageCode == lang['code']

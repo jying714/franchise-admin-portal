@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:shared_core/src/core/config/design_tokens.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
 /// A modular profile icon button for AppBars, easily reused across the app.
 /// Supports custom icon, tooltip, color, and onPressed logic.
@@ -23,7 +23,7 @@ class ProfileIconButton extends StatelessWidget {
     return IconButton(
       icon: Icon(
         Icons.person,
-        size: iconSize ?? DesignTokens.iconSize,
+        size: iconSize ?? shared.DesignTokens.iconSize,
         color: iconColor ?? UiConfig.foregroundColor,
         semanticLabel: tooltip,
       ),

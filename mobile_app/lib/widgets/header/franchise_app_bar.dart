@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:shared_core/src/core/config/design_tokens.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
 /// A modular, franchise-ready AppBar widget.
 /// Expandable: supports title, logo, subtitle, custom actions, colors, and more.
@@ -62,9 +62,9 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
                   title,
                   style: titleStyle ??
                       TextStyle(
-                        fontSize: DesignTokens.titleFontSize,
+                        fontSize: shared.DesignTokens.titleFontSize,
                         fontWeight: UiConfig.fontWeightBold,
-                        fontFamily: DesignTokens.fontFamily,
+                        fontFamily: shared.DesignTokens.fontFamily,
                         color: foregroundColor ?? UiConfig.foregroundColor,
                       ),
                   maxLines: 1,
@@ -77,9 +77,9 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
             title,
             style: titleStyle ??
                 TextStyle(
-                  fontSize: DesignTokens.titleFontSize,
+                  fontSize: shared.DesignTokens.titleFontSize,
                   fontWeight: UiConfig.fontWeightBold,
-                  fontFamily: DesignTokens.fontFamily,
+                  fontFamily: shared.DesignTokens.fontFamily,
                   color: foregroundColor ?? UiConfig.foregroundColor,
                 ),
             maxLines: 1,

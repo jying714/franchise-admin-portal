@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:shared_core/src/core/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -122,9 +121,9 @@ class _ChatScreenState extends State<ChatScreen> {
           child: Text(
             localize.mustSignInForChat,
             style: TextStyle(
-              fontSize: DesignTokens.bodyFontSize,
+              fontSize: shared.DesignTokens.bodyFontSize,
               color: UiConfig.textColorDark,
-              fontFamily: DesignTokens.fontFamily,
+              fontFamily: shared.DesignTokens.fontFamily,
               fontWeight: UiConfig.fontWeightMedium,
             ),
           ),
@@ -152,12 +151,12 @@ class _ChatScreenState extends State<ChatScreen> {
                   ? localize.supportIsOnline('Doughboys Pizzeria')
                   : localize.supportWillReplySoon('Doughboys Pizzeria'),
               style: TextStyle(
-                fontSize: DesignTokens.bodyFontSize,
+                fontSize: shared.DesignTokens.bodyFontSize,
                 color: _isSupportOnline
                     ? UiConfig.successColor
                     : UiConfig.disabledTextColor,
                 fontWeight: UiConfig.fontWeightMedium,
-                fontFamily: DesignTokens.fontFamily,
+                fontFamily: shared.DesignTokens.fontFamily,
               ),
             ),
           ),
@@ -175,9 +174,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: Text(
                       localize.noMessages,
                       style: TextStyle(
-                        fontSize: DesignTokens.bodyFontSize,
+                        fontSize: shared.DesignTokens.bodyFontSize,
                         color: UiConfig.disabledTextColor,
-                        fontFamily: DesignTokens.fontFamily,
+                        fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     ),
                   );
@@ -208,15 +207,15 @@ class _ChatScreenState extends State<ChatScreen> {
                       hintText: localize.typeYourMessage,
                       hintStyle: TextStyle(color: UiConfig.hintTextColor),
                       border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(DesignTokens.formFieldRadius),
+                        borderRadius: BorderRadius.circular(
+                            shared.DesignTokens.formFieldRadius),
                       ),
                       counterText: '',
                     ),
                     style: TextStyle(
                       color: UiConfig.textColorDark,
-                      fontSize: DesignTokens.bodyFontSize,
-                      fontFamily: DesignTokens.fontFamily,
+                      fontSize: shared.DesignTokens.bodyFontSize,
+                      fontFamily: shared.DesignTokens.fontFamily,
                     ),
                   ),
                 ),
@@ -225,7 +224,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   icon: Icon(
                     Icons.send,
                     color: UiConfig.facebookColor,
-                    size: DesignTokens.iconSize,
+                    size: shared.DesignTokens.iconSize,
                   ),
                   onPressed: _sendMessage,
                 ),
@@ -241,10 +240,10 @@ class _ChatScreenState extends State<ChatScreen> {
         title: Text(
           localize.chatSupportTitle,
           style: TextStyle(
-            fontSize: DesignTokens.titleFontSize,
+            fontSize: shared.DesignTokens.titleFontSize,
             color: UiConfig.foregroundColorDark,
             fontWeight: UiConfig.fontWeightBold,
-            fontFamily: DesignTokens.fontFamily,
+            fontFamily: shared.DesignTokens.fontFamily,
           ),
         ),
         backgroundColor: UiConfig.facebookColor,
@@ -272,7 +271,7 @@ class _MessageBubble extends StatelessWidget {
           color: isUser
               ? UiConfig.accentColor.withAlpha(51)
               : UiConfig.surfaceColorDark,
-          borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+          borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
         ),
         child: Column(
           crossAxisAlignment:
@@ -281,18 +280,18 @@ class _MessageBubble extends StatelessWidget {
             Text(
               message.content,
               style: TextStyle(
-                fontSize: DesignTokens.bodyFontSize,
+                fontSize: shared.DesignTokens.bodyFontSize,
                 color: UiConfig.textColorDark,
-                fontFamily: DesignTokens.fontFamily,
+                fontFamily: shared.DesignTokens.fontFamily,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               _formatTime(message.timestamp),
               style: TextStyle(
-                fontSize: DesignTokens.captionFontSize,
+                fontSize: shared.DesignTokens.captionFontSize,
                 color: UiConfig.hintTextColor,
-                fontFamily: DesignTokens.fontFamily,
+                fontFamily: shared.DesignTokens.fontFamily,
               ),
             ),
           ],

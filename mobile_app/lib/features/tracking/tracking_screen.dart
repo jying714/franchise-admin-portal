@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:shared_core/src/core/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -16,10 +15,10 @@ class TrackingScreen extends StatelessWidget {
         title: Text(
           localizations.trackOrder,
           style: TextStyle(
-            fontSize: DesignTokens.titleFontSize,
+            fontSize: shared.DesignTokens.titleFontSize,
             color: UiConfig.foregroundColor,
             fontWeight: UiConfig.bold,
-            fontFamily: DesignTokens.fontFamily,
+            fontFamily: shared.DesignTokens.fontFamily,
           ),
         ),
         backgroundColor: UiConfig.primaryColor,
@@ -33,9 +32,9 @@ class TrackingScreen extends StatelessWidget {
           '${localizations.orderNumber}: $orderId\n\nTracking info coming soon!',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: DesignTokens.bodyFontSize,
+            fontSize: shared.DesignTokens.bodyFontSize,
             color: UiConfig.textColor,
-            fontFamily: DesignTokens.fontFamily,
+            fontFamily: shared.DesignTokens.fontFamily,
             fontWeight: UiConfig.normal,
           ),
         ),

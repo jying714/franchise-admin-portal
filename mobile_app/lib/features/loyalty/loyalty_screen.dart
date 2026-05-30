@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:shared_core/src/core/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/core/models/loyalty.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -90,7 +89,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(loc.rewardClaimedSuccess),
-            duration: Duration(seconds: DesignTokens.toastDurationSeconds),
+            duration:
+                Duration(seconds: shared.DesignTokens.toastDurationSeconds),
             backgroundColor: UiConfig.surfaceColor,
           ),
         );
@@ -132,18 +132,18 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
         title: Text(
           loc.loyaltyAndRewards,
           style: TextStyle(
-            fontFamily: DesignTokens.fontFamily,
-            fontSize: DesignTokens.titleFontSize,
+            fontFamily: shared.DesignTokens.fontFamily,
+            fontSize: shared.DesignTokens.titleFontSize,
             fontWeight: UiConfig.bold,
             color: UiConfig.foregroundColor,
           ),
         ),
         centerTitle: true,
         backgroundColor: UiConfig.primaryColor,
-        elevation: DesignTokens.cardElevation,
+        elevation: shared.DesignTokens.cardElevation,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(DesignTokens.cardRadius),
+            bottom: Radius.circular(shared.DesignTokens.cardRadius),
           ),
         ),
       ),
@@ -160,8 +160,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                 child: Text(
                   loc.loyaltyErrorLoading,
                   style: TextStyle(
-                    fontFamily: DesignTokens.fontFamily,
-                    fontSize: DesignTokens.bodyFontSize,
+                    fontFamily: shared.DesignTokens.fontFamily,
+                    fontSize: shared.DesignTokens.bodyFontSize,
                     fontWeight: UiConfig.normal,
                     color: UiConfig.errorTextColor,
                   ),
@@ -185,9 +185,9 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
       child: Card(
         color: UiConfig.surfaceColor,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+          borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
         ),
-        elevation: DesignTokens.cardElevation,
+        elevation: shared.DesignTokens.cardElevation,
         child: Padding(
           padding: UiConfig.cardPadding,
           child: Column(
@@ -203,8 +203,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
               Text(
                 loc.loyaltyNoActivityTitle,
                 style: TextStyle(
-                  fontFamily: DesignTokens.fontFamily,
-                  fontSize: DesignTokens.titleFontSize,
+                  fontFamily: shared.DesignTokens.fontFamily,
+                  fontSize: shared.DesignTokens.titleFontSize,
                   fontWeight: UiConfig.bold,
                   color: UiConfig.textColor,
                 ),
@@ -213,8 +213,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
               Text(
                 loc.loyaltyNoActivitySubtitle,
                 style: TextStyle(
-                  fontFamily: DesignTokens.fontFamily,
-                  fontSize: DesignTokens.bodyFontSize,
+                  fontFamily: shared.DesignTokens.fontFamily,
+                  fontSize: shared.DesignTokens.bodyFontSize,
                   fontWeight: UiConfig.normal,
                   color: UiConfig.secondaryTextColor,
                 ),
@@ -229,7 +229,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                   foregroundColor: UiConfig.foregroundColor,
                   shape: RoundedRectangleBorder(
                     borderRadius:
-                        BorderRadius.circular(DesignTokens.buttonRadius),
+                        BorderRadius.circular(shared.DesignTokens.buttonRadius),
                   ),
                   padding: UiConfig.defaultPadding,
                 ),
@@ -258,9 +258,9 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
         Card(
           color: UiConfig.surfaceColor,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+            borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
           ),
-          elevation: DesignTokens.cardElevation,
+          elevation: shared.DesignTokens.cardElevation,
           child: Padding(
             padding: UiConfig.cardPadding,
             child: Column(
@@ -280,8 +280,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                           Text(
                             rankTitle,
                             style: TextStyle(
-                              fontFamily: DesignTokens.fontFamily,
-                              fontSize: DesignTokens.titleFontSize,
+                              fontFamily: shared.DesignTokens.fontFamily,
+                              fontSize: shared.DesignTokens.titleFontSize,
                               fontWeight: UiConfig.bold,
                               color: UiConfig.primaryColor,
                             ),
@@ -290,8 +290,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                           Text(
                             loc.loyaltyLevel(rankLevel),
                             style: TextStyle(
-                              fontFamily: DesignTokens.fontFamily,
-                              fontSize: DesignTokens.bodyFontSize,
+                              fontFamily: shared.DesignTokens.fontFamily,
+                              fontSize: shared.DesignTokens.bodyFontSize,
                               fontWeight: UiConfig.normal,
                               color: UiConfig.secondaryTextColor,
                             ),
@@ -305,8 +305,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                         Text(
                           loc.loyaltyPoints(pts),
                           style: TextStyle(
-                            fontFamily: DesignTokens.fontFamily,
-                            fontSize: DesignTokens.titleFontSize,
+                            fontFamily: shared.DesignTokens.fontFamily,
+                            fontSize: shared.DesignTokens.titleFontSize,
                             fontWeight: UiConfig.bold,
                             color: UiConfig.textColor,
                           ),
@@ -315,8 +315,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                         Text(
                           loc.loyaltyLastRedeemed,
                           style: TextStyle(
-                            fontFamily: DesignTokens.fontFamily,
-                            fontSize: DesignTokens.captionFontSize,
+                            fontFamily: shared.DesignTokens.fontFamily,
+                            fontSize: shared.DesignTokens.captionFontSize,
                             fontWeight: UiConfig.normal,
                             color: UiConfig.secondaryTextColor,
                           ),
@@ -324,8 +324,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                         Text(
                           df.format(lastRedeemed),
                           style: TextStyle(
-                            fontFamily: DesignTokens.fontFamily,
-                            fontSize: DesignTokens.captionFontSize,
+                            fontFamily: shared.DesignTokens.fontFamily,
+                            fontSize: shared.DesignTokens.captionFontSize,
                             fontWeight: UiConfig.normal,
                             color: UiConfig.secondaryTextColor,
                           ),
@@ -345,8 +345,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                 Text(
                   loc.loyaltyNextReward(100 - (pts % 100)),
                   style: TextStyle(
-                    fontFamily: DesignTokens.fontFamily,
-                    fontSize: DesignTokens.captionFontSize,
+                    fontFamily: shared.DesignTokens.fontFamily,
+                    fontSize: shared.DesignTokens.captionFontSize,
                     fontWeight: UiConfig.normal,
                     color: UiConfig.secondaryTextColor,
                   ),
@@ -359,8 +359,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
         Text(
           loc.loyaltyYourRewards,
           style: TextStyle(
-            fontFamily: DesignTokens.fontFamily,
-            fontSize: DesignTokens.titleFontSize,
+            fontFamily: shared.DesignTokens.fontFamily,
+            fontSize: shared.DesignTokens.titleFontSize,
             fontWeight: UiConfig.bold,
             color: UiConfig.primaryColor,
           ),
@@ -373,8 +373,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
           Text(
             _claimError!,
             style: TextStyle(
-              fontFamily: DesignTokens.fontFamily,
-              fontSize: DesignTokens.bodyFontSize,
+              fontFamily: shared.DesignTokens.fontFamily,
+              fontSize: shared.DesignTokens.bodyFontSize,
               fontWeight: UiConfig.normal,
               color: UiConfig.errorTextColor,
             ),
@@ -397,9 +397,9 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
       color: UiConfig.surfaceColor,
       margin: const EdgeInsets.symmetric(vertical: 6),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
       ),
-      elevation: DesignTokens.cardElevation,
+      elevation: shared.DesignTokens.cardElevation,
       child: Padding(
         padding: UiConfig.cardPadding,
         child: Row(
@@ -420,8 +420,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                   Text(
                     reward.name,
                     style: TextStyle(
-                      fontFamily: DesignTokens.fontFamily,
-                      fontSize: DesignTokens.bodyFontSize,
+                      fontFamily: shared.DesignTokens.fontFamily,
+                      fontSize: shared.DesignTokens.bodyFontSize,
                       fontWeight: UiConfig.normal,
                       color: UiConfig.textColor,
                     ),
@@ -432,8 +432,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                         ? loc.loyaltyRewardClaimedOn(df.format(DateTime.now()))
                         : loc.loyaltyRewardRequiredPoints(reward.points),
                     style: TextStyle(
-                      fontFamily: DesignTokens.fontFamily,
-                      fontSize: DesignTokens.captionFontSize,
+                      fontFamily: shared.DesignTokens.fontFamily,
+                      fontSize: shared.DesignTokens.captionFontSize,
                       fontWeight: UiConfig.normal,
                       color: UiConfig.secondaryTextColor,
                     ),
@@ -448,9 +448,9 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                       loc.rewardClaimed,
                       style: TextStyle(
                         color: UiConfig.successColor,
-                        fontSize: DesignTokens.captionFontSize,
+                        fontSize: shared.DesignTokens.captionFontSize,
                         fontWeight: UiConfig.normal,
-                        fontFamily: DesignTokens.fontFamily,
+                        fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     ),
                   )
@@ -462,8 +462,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                       backgroundColor: UiConfig.primaryColor,
                       foregroundColor: UiConfig.foregroundColor,
                       shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(DesignTokens.buttonRadius),
+                        borderRadius: BorderRadius.circular(
+                            shared.DesignTokens.buttonRadius),
                       ),
                       padding: UiConfig.defaultPadding,
                     ),

@@ -1,53 +1,62 @@
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:intl/intl.dart';
 
 /// UI-specific branding for mobile app
-/// Bridges shared DesignTokens + BrandingConfig into Flutter types
+/// Bridges shared shared.DesignTokens.+ shared.BrandingConfig.into Flutter types
 class UiConfig {
   // Assets from BrandingConfig
-  static const String logoMain = BrandingConfig.logoMain;
-  static const String defaultPizzaIcon = BrandingConfig.defaultPizzaIcon;
+  static const String logoMain = shared.BrandingConfig.logoMain;
+  static const String defaultPizzaIcon = shared.BrandingConfig.defaultPizzaIcon;
   static const String adminEmptyStateImage =
-      BrandingConfig.adminEmptyStateImage;
+      shared.BrandingConfig.adminEmptyStateImage;
   static const String menuItemPlaceholderImage =
-      BrandingConfig.menuItemPlaceholderImage;
+      shared.BrandingConfig.menuItemPlaceholderImage;
   static const String ingredientPlaceholder =
-      BrandingConfig.ingredientPlaceholder;
-  static const String defaultProfileIcon = BrandingConfig.defaultProfileIcon;
+      shared.BrandingConfig.ingredientPlaceholder;
+  static const String defaultProfileIcon =
+      shared.BrandingConfig.defaultProfileIcon;
 
   // Colors from DesignTokens
-  static Color get accentColor => _hexToColor(DesignTokens.accentColorHex);
-  static Color get brandRed => _hexToColor(BrandingConfig.brandRedHex);
+  static Color get accentColor =>
+      _hexToColor(shared.DesignTokens.accentColorHex);
+  static Color get brandRed => _hexToColor(shared.BrandingConfig.brandRedHex);
   static Color get backgroundColorDark =>
-      _hexToColor(DesignTokens.backgroundColorDarkHex);
-  static Color get textColorDark => _hexToColor(DesignTokens.textColorDarkHex);
+      _hexToColor(shared.DesignTokens.backgroundColorDarkHex);
+  static Color get textColorDark =>
+      _hexToColor(shared.DesignTokens.textColorDarkHex);
   static Color get successTextColor =>
-      _hexToColor(DesignTokens.successTextColorHex);
+      _hexToColor(shared.DesignTokens.successTextColorHex);
   static Color get disabledTextColor =>
-      _hexToColor(DesignTokens.disabledTextColorHex);
-  static Color get errorBgColor => _hexToColor(DesignTokens.errorBgColorHex);
+      _hexToColor(shared.DesignTokens.disabledTextColorHex);
+  static Color get errorBgColor =>
+      _hexToColor(shared.DesignTokens.errorBgColorHex);
   static Color get surfaceColorDark =>
-      _hexToColor(DesignTokens.surfaceColorDarkHex);
-  static Color get facebookColor => _hexToColor(DesignTokens.facebookColorHex);
+      _hexToColor(shared.DesignTokens.surfaceColorDarkHex);
+  static Color get facebookColor =>
+      _hexToColor(shared.DesignTokens.facebookColorHex);
   static Color get adminPrimaryColor =>
-      _hexToColor(DesignTokens.adminPrimaryColorHex);
-  static Color get primaryColor => _hexToColor(DesignTokens.primaryColorHex);
+      _hexToColor(shared.DesignTokens.adminPrimaryColorHex);
+  static Color get primaryColor =>
+      _hexToColor(shared.DesignTokens.primaryColorHex);
   static Color get secondaryColor =>
-      _hexToColor(DesignTokens.secondaryColorHex);
-  static Color get textColor => _hexToColor(DesignTokens.textColorHex);
+      _hexToColor(shared.DesignTokens.secondaryColorHex);
+  static Color get textColor => _hexToColor(shared.DesignTokens.textColorHex);
   static Color get foregroundColor =>
-      _hexToColor(DesignTokens.foregroundColorHex);
+      _hexToColor(shared.DesignTokens.foregroundColorHex);
   static Color get foregroundColorDark =>
-      _hexToColor(DesignTokens.foregroundColorDarkHex); // ← Added
-  static Color get hintTextColor => _hexToColor(DesignTokens.hintTextColorHex);
-  static Color get surfaceColor => _hexToColor(DesignTokens.surfaceColorHex);
-  static Color get successColor => _hexToColor(DesignTokens.successColorHex);
-  static Color get errorColor => _hexToColor(DesignTokens.errorColorHex);
+      _hexToColor(shared.DesignTokens.foregroundColorDarkHex); // ← Added
+  static Color get hintTextColor =>
+      _hexToColor(shared.DesignTokens.hintTextColorHex);
+  static Color get surfaceColor =>
+      _hexToColor(shared.DesignTokens.surfaceColorHex);
+  static Color get successColor =>
+      _hexToColor(shared.DesignTokens.successColorHex);
+  static Color get errorColor => _hexToColor(shared.DesignTokens.errorColorHex);
   static Color get shimmerBaseColor =>
-      _hexToColor(DesignTokens.shimmerBaseColorHex);
+      _hexToColor(shared.DesignTokens.shimmerBaseColorHex);
   static Color get shimmerHighlightColor =>
-      _hexToColor(DesignTokens.shimmerHighlightColorHex);
+      _hexToColor(shared.DesignTokens.shimmerHighlightColorHex);
 
   // Icons
   static IconData get emailIcon => Icons.email;
@@ -57,21 +66,22 @@ class UiConfig {
 
   // Dynamic
   static Color brandColorFor(String brandId) {
-    final hex = BrandingConfig.brandColorHexFor(brandId);
+    final hex = shared.BrandingConfig.brandColorHexFor(brandId);
     return _hexToColor(hex);
   }
 
   static const Color dashboardCardColor = Colors.white;
 
-  static Color get warningColor => _hexToColor(DesignTokens.warningColorHex);
+  static Color get warningColor =>
+      _hexToColor(shared.DesignTokens.warningColorHex);
 
   // Additional missing colors used across screens
   static Color get backgroundColor =>
-      _hexToColor(DesignTokens.backgroundColorHex);
+      _hexToColor(shared.DesignTokens.backgroundColorHex);
   static Color get secondaryTextColor =>
-      _hexToColor(DesignTokens.secondaryTextColorHex);
+      _hexToColor(shared.DesignTokens.secondaryTextColorHex);
   static Color get errorTextColor =>
-      _hexToColor(DesignTokens.errorTextColorHex);
+      _hexToColor(shared.DesignTokens.errorTextColorHex);
 
   // Icon & Style helpers
   static IconData get favoriteIcon => Icons.favorite;
@@ -80,13 +90,13 @@ class UiConfig {
 
   // Banner & Card helpers
   static Color get bannerOverlayColor =>
-      _hexToColor(DesignTokens.bannerOverlayColorHex)
-          .withAlpha(DesignTokens.bannerOverlayAlpha);
+      _hexToColor(shared.DesignTokens.bannerOverlayColorHex)
+          .withAlpha(shared.DesignTokens.bannerOverlayAlpha);
   static Color get cardBorderColor =>
-      _hexToColor(DesignTokens.cardBorderColorHex);
+      _hexToColor(shared.DesignTokens.cardBorderColorHex);
 
   static EdgeInsets get defaultPadding =>
-      EdgeInsets.all(DesignTokens.defaultPadding);
+      EdgeInsets.all(shared.DesignTokens.defaultPadding);
   static EdgeInsets get screenPadding => const EdgeInsets.all(24.0);
 
   static FontWeight get bold => FontWeight.bold;
@@ -95,42 +105,43 @@ class UiConfig {
 
   // Spacing & Shape
   static EdgeInsets get defaultScreenPadding => const EdgeInsets.all(24.0);
-  static EdgeInsets get cardPadding => EdgeInsets.all(DesignTokens.cardPadding);
+  static EdgeInsets get cardPadding =>
+      EdgeInsets.all(shared.DesignTokens.cardPadding);
 
   // Font Weights (fix String → FontWeight? errors)
   static FontWeight get fontWeightBold => FontWeight.bold;
   static FontWeight get fontWeightMedium => FontWeight.w500;
   static FontWeight get fontWeightNormal => FontWeight.normal;
 
-  static const String logoSmall = BrandingConfig.logoSmall;
-  static const String logoLarge = BrandingConfig.logoLarge;
+  static const String logoSmall = shared.BrandingConfig.logoSmall;
+  static const String logoLarge = shared.BrandingConfig.logoLarge;
 
   // Pre-built TextStyles (used across stabilized screens)
   static TextStyle get titleStyle => TextStyle(
-        fontSize: DesignTokens.titleFontSize,
+        fontSize: shared.DesignTokens.titleFontSize,
         color: foregroundColorDark,
         fontWeight: fontWeightBold,
-        fontFamily: DesignTokens.fontFamily,
+        fontFamily: shared.DesignTokens.fontFamily,
       );
 
   static TextStyle get bodyStyle => TextStyle(
-        fontSize: DesignTokens.bodyFontSize,
+        fontSize: shared.DesignTokens.bodyFontSize,
         color: textColorDark,
-        fontFamily: DesignTokens.fontFamily,
+        fontFamily: shared.DesignTokens.fontFamily,
         fontWeight: fontWeightNormal,
       );
 
   static TextStyle get bodyBoldStyle => TextStyle(
-        fontSize: DesignTokens.bodyFontSize,
+        fontSize: shared.DesignTokens.bodyFontSize,
         color: textColorDark,
         fontWeight: fontWeightBold,
-        fontFamily: DesignTokens.fontFamily,
+        fontFamily: shared.DesignTokens.fontFamily,
       );
 
   static TextStyle get captionStyle => TextStyle(
-        fontSize: DesignTokens.captionFontSize,
+        fontSize: shared.DesignTokens.captionFontSize,
         color: secondaryTextColor,
-        fontFamily: DesignTokens.fontFamily,
+        fontFamily: shared.DesignTokens.fontFamily,
         fontWeight: fontWeightNormal,
       );
 

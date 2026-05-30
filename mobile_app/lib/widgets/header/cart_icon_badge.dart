@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:shared_core/src/core/config/design_tokens.dart';
 
 class CartIconBadge extends StatelessWidget {
   final VoidCallback? onPressed;
@@ -44,7 +43,7 @@ class CartIconBadge extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.shopping_cart_outlined,
-                    size: DesignTokens.iconSize,
+                    size: shared.DesignTokens.iconSize,
                     color: UiConfig.foregroundColor,
                   ),
                   if (count > 0)
