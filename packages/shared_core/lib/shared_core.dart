@@ -23,6 +23,13 @@ export 'src/core/services/firestore_service_impl.dart';
 export 'src/core/services/analytics_service.dart';
 export 'src/core/services/analytics_service_impl.dart';
 
+// P2 QR + deep link foundations (re-exported for public barrel usage)
+export 'utils.dart' show
+    generateFranchiseQR,
+    parseFranchiseQR,
+    isFranchiseQR,
+    getFranchiseDisplayFromQR;
+
 // Firebase (needed for FirebaseAuth in CartIconBadge etc.)
 export 'package:firebase_auth/firebase_auth.dart' show FirebaseAuth;
 

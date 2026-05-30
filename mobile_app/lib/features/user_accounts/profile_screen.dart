@@ -20,6 +20,8 @@ import 'package:franchise_mobile_app/core/models/user.dart' as user_model;
 import 'package:franchise_mobile_app/features/loyalty/loyalty_screen.dart';
 import 'package:franchise_mobile_app/widgets/loyalty_points_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // P2 theme test reload only
+import 'package:qr_flutter/qr_flutter.dart'; // P2 QR display foundations
+import 'package:franchise_mobile_app/features/ordering/qr_scan_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -241,6 +243,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         // In real use this would come from FranchiseSelector + full reload.
                         _buildThemeTestSection(context, franchiseProvider, firestoreService),
 
+                        // P2: Franchise QR display (shareable deep link) - foundations
+                        _buildFranchiseQRSection(context, franchiseProvider),
+
                         ProfileNavTile(
                           label: l10n.deliveryAddresses,
                           destination: const DeliveryAddressesScreen(),
@@ -382,6 +387,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: const Text('Reload Current'),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // P2 foundations: display current franchise as scannable QR (deep link payload)
+  Widget _buildFranchiseQRSection(
+    BuildContext context,
+    shared.FranchiseProvider fp,
+  ) {
+    final fid = fp.currentFranchiseId;
+    if (!fp.hasValidFranchise || fid == 'unknown') {
+      return const SizedBox.shrink();
+    }
+
+    final qrData = shared.generateFranchiseQR(fid, name: fp.currentAppName);
+    final displayName = fp.currentAppName;
+
+    return Card(
+      color: UiConfig.surfaceColor,
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      child: Padding(
+        padding: UiConfig.cardPadding,
+        child: Column(
+          children: [
+            Text(
+              'Share this Franchise',
+              style: UiConfig.bodyBoldStyle.copyWith(color: UiConfig.primaryColor),
+            ),
+            const SizedBox(height: 8),
+            Text(displayName, style: UiConfig.captionStyle),
+            const SizedBox(height: 12),
+            QrImageView(
+              data: qrData,
+              version: QrVersions.auto,
+              size: 160,
+              backgroundColor: Colors.white,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Scan to switch to this location',
+              style: UiConfig.captionStyle.copyWith(fontSize: 11),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.qr_code_scanner),
+              label: const Text('Open Scanner'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const QrScanScreen()),
+                );
+              },
             ),
           ],
         ),
