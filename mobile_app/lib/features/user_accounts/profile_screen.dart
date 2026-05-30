@@ -339,8 +339,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE31837), // doughboys red
-                    foregroundColor: Colors.white,
+                    backgroundColor: const Color(0xFFE31837), // intentional test value
+                    foregroundColor: UiConfig.onPrimaryColor,
                   ),
                   onPressed: () async {
                     fp.setBrandingFromFranchiseDoc({
@@ -358,8 +358,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7D32), // green test
-                    foregroundColor: Colors.white,
+                    backgroundColor: const Color(0xFF2E7D32), // intentional test value
+                    foregroundColor: UiConfig.onPrimaryColor,
                   ),
                   onPressed: () async {
                     fp.setBrandingFromFranchiseDoc({
@@ -428,7 +428,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               data: qrData,
               version: QrVersions.auto,
               size: 160,
-              backgroundColor: Colors.white,
+              backgroundColor: UiConfig.cardColor,
             ),
             const SizedBox(height: 8),
             Text(

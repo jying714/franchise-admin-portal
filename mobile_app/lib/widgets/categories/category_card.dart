@@ -48,11 +48,11 @@ class CategoryCard extends StatelessWidget {
               borderRadius:
                   BorderRadius.circular(shared.DesignTokens.cardRadius),
               color: Colors.transparent,
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
-                  color: Colors.black12,
+                  color: UiConfig.shadowColor.withValues(alpha: 0.12),
                   blurRadius: 4,
-                  offset: Offset(0, 2),
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
@@ -93,7 +93,7 @@ class CategoryCard extends StatelessWidget {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withAlpha(140),
+                          UiConfig.shadowColor.withValues(alpha: 0.55),
                         ],
                         stops: const [0.5, 1.0],
                       ),
@@ -116,10 +116,12 @@ class CategoryCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: shared.DesignTokens.titleFontSize,
                             fontWeight: UiConfig.fontWeightBold,
-                            color: Colors.white,
+                            color: UiConfig.onPrimaryColor,
                             fontFamily: shared.DesignTokens.fontFamily,
-                            shadows: const [
-                              Shadow(color: Colors.black54, blurRadius: 4),
+                            shadows: [
+                              Shadow(
+                                  color: UiConfig.shadowColor.withValues(alpha: 0.34),
+                                  blurRadius: 4),
                             ],
                           ),
                           maxLines: 2,
@@ -133,11 +135,13 @@ class CategoryCard extends StatelessWidget {
                               category.description!,
                               style: TextStyle(
                                 fontSize: shared.DesignTokens.captionFontSize,
-                                color: Colors.white70,
+                                color: UiConfig.onPrimaryColor.withValues(alpha: 0.7),
                                 fontFamily: shared.DesignTokens.fontFamily,
                                 fontWeight: UiConfig.fontWeightNormal,
-                                shadows: const [
-                                  Shadow(color: Colors.black26, blurRadius: 2),
+                                shadows: [
+                                  Shadow(
+                                      color: UiConfig.shadowColor.withValues(alpha: 0.2),
+                                      blurRadius: 2),
                                 ],
                               ),
                               maxLines: 2,

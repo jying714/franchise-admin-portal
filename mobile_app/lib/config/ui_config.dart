@@ -101,7 +101,62 @@ class UiConfig {
     return _hexToColor(hex);
   }
 
-  static const Color dashboardCardColor = Colors.white;
+  // === P2.2 Dynamic Theming Enhancements ===
+  // All new properties are designed to be franchise-aware when FranchiseProvider is wired.
+
+  /// Primary card/surface color for content areas.
+  static Color get cardColor => surfaceColor;
+
+  /// Color for text and icons that appear on top of primaryColor (e.g. in AppBars, primary buttons).
+  static Color get onPrimaryColor => foregroundColorDark;
+
+  /// Standard divider / border color.
+  static Color get dividerColor =>
+      _hexToColor(shared.DesignTokens.cardBorderColorHex); // reuse existing token
+
+  /// Background color for input fields and form controls.
+  static Color get inputFillColor => surfaceColor;
+
+  /// Color used for disabled states.
+  static Color get disabledColor => disabledTextColor;
+
+  /// Base color for shadows (apply .withValues(alpha: x) at usage site).
+  static Color get shadowColor => Colors.black;
+
+  /// Primary action button style (franchise-aware).
+  static ButtonStyle get primaryButtonStyle => ElevatedButton.styleFrom(
+        backgroundColor: primaryColor,
+        foregroundColor: onPrimaryColor,
+        padding: defaultPadding,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(shared.DesignTokens.buttonRadius),
+        ),
+        elevation: shared.DesignTokens.buttonElevation,
+      );
+
+  /// Secondary / outline action button style.
+  static ButtonStyle get secondaryButtonStyle => ElevatedButton.styleFrom(
+        backgroundColor: secondaryColor,
+        foregroundColor: onPrimaryColor,
+        padding: defaultPadding,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(shared.DesignTokens.buttonRadius),
+        ),
+        elevation: shared.DesignTokens.buttonElevation,
+      );
+
+  /// Standard icon color.
+  static Color get iconColor => textColor;
+
+  /// Icon color when placed on primary-colored backgrounds.
+  static Color get iconColorOnPrimary => onPrimaryColor;
+
+  /// Text color specifically for AppBars (respects dynamic branding).
+  static Color get appBarTextColor => foregroundColorDark;
+
+  /// Legacy dashboard card color - now routes through cardColor for consistency.
+  /// Kept for backward compatibility during migration.
+  static Color get dashboardCardColor => cardColor;
 
   static Color get warningColor =>
       _hexToColor(shared.DesignTokens.warningColorHex);
