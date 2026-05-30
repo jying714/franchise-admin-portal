@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 // P1 Batch 1: direct caller of customization_modal (mobile canonical, shared.FranchiseProvider + UiConfig enforced)
+// P1 Batch 3: menu_item_card + cross-cutting widgets (FranchiseProvider injection + public barrels enforced)
 
 typedef AddToCartCallback = void Function(
   shared.MenuItem menuItem,
@@ -45,6 +46,8 @@ class _MenuItemCardState extends State<MenuItemCard> {
     final user = FirebaseAuth.instance.currentUser;
     _userId = user?.uid;
   }
+
+  // Batch 3: FranchiseProvider injected for centrality + franchise/{franchiseId}/ scoping
 
   Widget _favoriteHeart(bool isFavorited, bool enabled, AppLocalizations loc) {
     final firestoreService =
