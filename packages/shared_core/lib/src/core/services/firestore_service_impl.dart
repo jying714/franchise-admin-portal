@@ -91,21 +91,6 @@ class FirestoreServiceImpl implements FirestoreService {
     return _db.collection('franchises').doc(franchiseId).collection(sub);
   }
 
-  // stubbed out to fix provider.
-  // // Add this helper at the top of the class
-  // String _getEffectiveFranchiseId(String? franchiseId) {
-  //   final id = (franchiseId ?? '').trim();
-  //   if (id.isEmpty || id == 'unknown' || id == 'default') {
-  //     // Only log once per session or reduce frequency
-  //     if (id != 'null' && id != '') {
-  //       print(
-  //           '⚠️ [FirestoreServiceImpl][_getEffectiveFranchiseId] Fallback - raw: "$franchiseId" → doughboyspizzeria');
-  //     }
-  //     return 'doughboyspizzeria';
-  //   }
-  //   return id;
-  // }
-
   // ===================== INGREDIENT METADATA (common, cached) =====================
   List<IngredientMetadata>? _cachedIngredientMetadata;
   DateTime? _lastIngredientMetadataFetch;
@@ -1460,16 +1445,16 @@ class FirestoreServiceImpl implements FirestoreService {
     print(
         '🔍 [getMenuItemsByCategory] Called - categoryId: "$categoryId", franchiseId: "$franchiseId", sortBy: "$sortBy"');
 
-    final effectiveFranchiseId = (franchiseId != null &&
-            franchiseId.isNotEmpty &&
-            franchiseId != 'unknown')
-        ? franchiseId
-        : 'doughboyspizzeria'; // fallback for debugging
+    // No fallback — franchiseId is now guaranteed valid by shared FranchiseProvider
+    if (franchiseId == null || franchiseId.isEmpty) {
+      print(
+          '❌ [getMenuItemsByCategory] CRITICAL: franchiseId is empty or null');
+      return Stream.value([]);
+    }
 
-    print(
-        '🔍 [getMenuItemsByCategory] Using effective franchiseId: $effectiveFranchiseId');
+    print('🔍 [getMenuItemsByCategory] Using franchiseId: $franchiseId');
 
-    firestore.Query q = _franchiseCollection(effectiveFranchiseId, _menuItems)
+    firestore.Query q = _franchiseCollection(franchiseId, _menuItems)
         .where('categoryId', isEqualTo: categoryId);
 
     if (sortBy != null && sortBy.isNotEmpty) {

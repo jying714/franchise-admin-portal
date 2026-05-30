@@ -8,7 +8,6 @@ import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/core/models/scheduled_order.dart';
 import 'package:franchise_mobile_app/core/models/menu_item.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:shared_core/shared_core.dart' show BrandingConfig;
 
 class ScheduledOrdersScreen extends StatefulWidget {
@@ -43,7 +42,7 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
     bool isPaused = scheduledOrder?.isPaused ?? false;
 
     final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: false);
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
     final menuItems = await firestoreService
         .getMenuItems(franchiseProvider.currentFranchiseId)
         .first;
@@ -155,7 +154,7 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                     return;
 
                   final franchiseProvider =
-                      Provider.of<FranchiseProvider>(context, listen: false);
+                      Provider.of<shared.FranchiseProvider>(context, listen: false);
                   final now = DateTime.now();
 
                   // Convert MenuItems to OrderItems
@@ -199,7 +198,7 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
-    final franchiseProvider = Provider.of<FranchiseProvider>(context);
+    final franchiseProvider = Provider.of<shared.FranchiseProvider>(context);
 
     if (_userId == null) {
       return Scaffold(

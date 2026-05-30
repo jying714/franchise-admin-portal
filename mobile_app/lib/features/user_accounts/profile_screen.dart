@@ -8,7 +8,6 @@ import 'package:franchise_mobile_app/widgets/sign_out_button.dart';
 import 'package:franchise_mobile_app/widgets/profile_nav_tile.dart';
 import 'package:franchise_mobile_app/widgets/info_tile.dart';
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/features/user_accounts/delivery_addresses_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/order_history_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/scheduled_orders_screen.dart';
@@ -84,7 +83,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Provider.of<shared.FirestoreService>(context, listen: false);
     final l10n = AppLocalizations.of(context)!;
 
-    return Consumer<FranchiseProvider>(
+    return Consumer<shared.FranchiseProvider>(
       builder: (context, franchiseProvider, child) {
         if (!franchiseProvider.hasValidFranchise) {
           return const Scaffold(
@@ -255,7 +254,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ListTile(
                           leading: const Icon(Icons.store),
                           title: Text(
-                              'Switch Restaurant (${franchiseProvider.restaurantName})'),
+                              'Switch Restaurant (Doughboys Pizzeria)'),
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(

@@ -4,7 +4,6 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/shared_core.dart' show DesignTokens;
 import 'package:shared_core/shared_core.dart' show BrandingConfig;
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:franchise_mobile_app/widgets/feedback/feedback_submission_dialog.dart';
@@ -19,7 +18,7 @@ class OrderHistoryScreen extends StatelessWidget {
         Provider.of<shared.FirestoreService>(context, listen: false);
     final localizations = AppLocalizations.of(context)!;
 
-    return Consumer<FranchiseProvider>(
+    return Consumer<shared.FranchiseProvider>(
       builder: (context, franchiseProvider, child) {
         if (!franchiseProvider.hasValidFranchise) {
           return const Scaffold(

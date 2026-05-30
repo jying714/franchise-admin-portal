@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:shared_core/src/core/config/design_tokens.dart';
 
 class CartIconBadge extends StatelessWidget {
@@ -17,7 +16,7 @@ class CartIconBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<FranchiseProvider>(
+    return Consumer<shared.FranchiseProvider>(
       builder: (context, franchiseProvider, child) {
         if (!franchiseProvider.hasValidFranchise) {
           return IconButton(

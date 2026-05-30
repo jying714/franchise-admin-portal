@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/src/core/config/design_tokens.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/ordering/checkout_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -257,7 +256,7 @@ class _CartScreenState extends State<CartScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       backgroundColor: UiConfig.backgroundColor,
-      body: Consumer<FranchiseProvider>(
+      body: Consumer<shared.FranchiseProvider>(
         builder: (context, provider, child) {
           final user = FirebaseAuth.instance.currentUser;
 

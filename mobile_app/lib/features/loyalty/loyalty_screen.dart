@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/src/core/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/core/models/loyalty.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -33,7 +32,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
       _firestoreService =
           Provider.of<shared.FirestoreService>(context, listen: false);
       final franchiseProvider =
-          Provider.of<FranchiseProvider>(context, listen: false);
+          Provider.of<shared.FranchiseProvider>(context, listen: false);
       _franchiseId = franchiseProvider.currentFranchiseId;
       final auth = Provider.of<FirebaseAuth>(context, listen: false);
       final uid = auth.currentUser?.uid;

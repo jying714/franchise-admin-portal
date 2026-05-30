@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 
@@ -68,7 +67,7 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final franchiseProvider = Provider.of<FranchiseProvider>(context);
+    final franchiseProvider = Provider.of<shared.FranchiseProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -115,7 +114,7 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
                                   color: Colors.green)
                               : null,
                           onTap: () async {
-                            await franchiseProvider.setCurrentFranchiseId(f.id);
+                            await franchiseProvider.setFranchiseId(f.id);
 
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(

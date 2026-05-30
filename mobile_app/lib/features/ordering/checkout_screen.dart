@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/src/core/config/design_tokens.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/ordering/confirmation_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -105,7 +104,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (user == null) return;
 
     final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: false);
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
     final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
     final franchiseId = franchiseProvider.currentFranchiseId;
@@ -167,7 +166,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
-    final franchiseId = Provider.of<FranchiseProvider>(context, listen: false)
+    final franchiseId = Provider.of<shared.FranchiseProvider>(context, listen: false)
         .currentFranchiseId;
     final cart = await firestoreService
         .getCart(user.uid,
@@ -280,7 +279,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
 
-    return Consumer<FranchiseProvider>(
+    return Consumer<shared.FranchiseProvider>(
       builder: (context, provider, child) {
         final user = FirebaseAuth.instance.currentUser;
         final firestoreService =

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/ordering/cart_screen.dart';
 import 'package:franchise_mobile_app/widgets/customization/customization_modal.dart';
@@ -84,7 +83,7 @@ class _ItemScreenState extends State<ItemScreen> {
     final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
     final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: false);
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
     final franchiseId = franchiseProvider.currentFranchiseId;
 
     print(
@@ -172,7 +171,7 @@ class _ItemScreenState extends State<ItemScreen> {
         elevation: 0,
       ),
       backgroundColor: UiConfig.backgroundColor,
-      body: Consumer<FranchiseProvider>(
+      body: Consumer<shared.FranchiseProvider>(
         builder: (context, provider, child) {
           if (!provider.hasValidFranchise) {
             return const Center(child: CircularProgressIndicator());

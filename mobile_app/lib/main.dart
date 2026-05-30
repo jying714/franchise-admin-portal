@@ -4,16 +4,17 @@ import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:franchise_mobile_app/core/utils/app_local_storage.dart';
 
 // Shared Core
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/shared_core.dart' show DesignTokens;
 
 // Local Providers & Config
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/features/language/language_provider.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as app_user;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+// Note: FranchiseProvider now comes exclusively from shared_core (single source of truth)
 
 // Screens
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
@@ -45,9 +46,12 @@ class IngredientMetadataProvider extends ChangeNotifier {
       }
       _isLoaded = true;
       notifyListeners();
+      print(
+          '✅ [IngredientMetadataProvider] Loaded ${_ingredients.length} ingredients');
     } catch (e) {
       _isLoaded = true;
       notifyListeners();
+      print('❌ [IngredientMetadataProvider] Failed to load ingredients: $e');
     }
   }
 }
@@ -66,7 +70,14 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
-        ChangeNotifierProvider(create: (_) => FranchiseProvider()),
+
+        /// FranchiseProvider from shared_core ONLY (P1 cleanup: dual wrapper removed).
+        /// All franchise state + logic lives in shared_core.
+        /// The plain Provider is sufficient: Consumers use it for hasValidFranchise guards + currentFranchiseId reads.
+        Provider<shared.FranchiseProvider>(
+          create: (_) => shared.FranchiseProvider(AppLocalStorage()),
+        ),
+
         Provider<shared.AnalyticsService>(
             create: (_) => shared.AnalyticsServiceImpl()),
         ChangeNotifierProvider(create: (_) => IngredientMetadataProvider()),
@@ -154,22 +165,34 @@ class HomeWrapper extends StatefulWidget {
 
 class _HomeWrapperState extends State<HomeWrapper> {
   bool _dialogShown = false;
+  bool _isInitializing = true; // ← NEW
 
   @override
   Widget build(BuildContext context) {
     final sharedUser = Provider.of<shared.User?>(context);
     final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: false);
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
 
     if (sharedUser == null) {
       return const SignInScreen();
     }
 
-    // Initialize FranchiseProvider when user is available
-    if (!franchiseProvider.hasValidFranchise) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        franchiseProvider.initializeFromUser(sharedUser);
+    // Initialize franchise (only once)
+    if (_isInitializing && !franchiseProvider.hasValidFranchise) {
+      _isInitializing = false; // prevent multiple calls
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        print('🔄 [HomeWrapper] Starting franchise initialization...');
+        await franchiseProvider.initializeWithUser(sharedUser);
+        print('✅ [HomeWrapper] Franchise initialization completed');
+        if (mounted) setState(() {}); // force rebuild
       });
+    }
+
+    // Show loading while initializing
+    if (_isInitializing || !franchiseProvider.hasValidFranchise) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
     // Convert to local model for dialog

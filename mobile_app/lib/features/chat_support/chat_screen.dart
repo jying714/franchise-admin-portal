@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/src/core/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -36,7 +35,7 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: false);
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
     final franchiseId = franchiseProvider.currentFranchiseId;
     final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
@@ -82,7 +81,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _controller.clear();
 
     final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: false);
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
     final franchiseId = franchiseProvider.currentFranchiseId;
     final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
@@ -109,7 +108,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: true);
+        Provider.of<shared.FranchiseProvider>(context, listen: true);
     final franchiseId = franchiseProvider.currentFranchiseId;
     final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);

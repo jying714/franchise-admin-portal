@@ -5,7 +5,6 @@ import 'package:shared_core/shared_core.dart' show DesignTokens;
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/widgets/social_sign_in_buttons.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase;
@@ -75,8 +74,8 @@ class _SignInScreenState extends State<SignInScreen> {
       if (!mounted) return;
 
       final franchiseProvider =
-          Provider.of<FranchiseProvider>(context, listen: false);
-      await franchiseProvider.initializeFromUser(dbUser ?? user);
+          Provider.of<shared.FranchiseProvider>(context, listen: false);
+      await franchiseProvider.initializeWithUser(dbUser ?? user);
 
       if (dbUser == null || !(dbUser.completeProfile ?? false)) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -133,8 +132,8 @@ class _SignInScreenState extends State<SignInScreen> {
 
       // Initialize FranchiseProvider cleanly
       final franchiseProvider =
-          Provider.of<FranchiseProvider>(context, listen: false);
-      await franchiseProvider.initializeFromUser(dbUser ?? user);
+          Provider.of<shared.FranchiseProvider>(context, listen: false);
+      await franchiseProvider.initializeWithUser(dbUser ?? user);
 
       // Optional: Load full franchise details for branding
       if (franchiseProvider.hasValidFranchise) {

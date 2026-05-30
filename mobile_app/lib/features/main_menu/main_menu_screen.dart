@@ -3,7 +3,6 @@ import 'dart:developer' as developer;
 import 'package:flutter/material.dart' as material hide Banner, BannerLocation;
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -72,7 +71,7 @@ class MainMenuScreen extends material.StatelessWidget {
       ),
       backgroundColor: UiConfig.backgroundColor,
       body: material.SafeArea(
-        child: Consumer<FranchiseProvider>(
+        child: Consumer<shared.FranchiseProvider>(
           builder: (context, provider, child) {
             if (!provider.hasValidFranchise) {
               return const material.Center(

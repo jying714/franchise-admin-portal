@@ -6,7 +6,6 @@ import 'package:shared_core/shared_core.dart' show DesignTokens;
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/widgets/social_sign_in_buttons.dart';
 import 'package:franchise_mobile_app/config/feature_config.dart';
 
@@ -98,8 +97,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Clean initialization with new FranchiseProvider
       final franchiseProvider =
-          Provider.of<FranchiseProvider>(context, listen: false);
-      await franchiseProvider.initializeFromUser(dbUser ?? user);
+          Provider.of<shared.FranchiseProvider>(context, listen: false);
+      await franchiseProvider.initializeWithUser(dbUser ?? user);
 
       if (dbUser == null || !(dbUser.completeProfile ?? false)) {
         Navigator.of(context).pushAndRemoveUntil(

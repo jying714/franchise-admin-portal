@@ -25,7 +25,6 @@ import 'package:franchise_mobile_app/widgets/customization/header.dart';
 import 'package:franchise_mobile_app/widgets/customization/bottom_bar.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_core/src/core/config/design_tokens.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 
 const MAX_DOUBLES = 4;
 const DOUGH_IDS = {'dough_calzone', 'dough_pizza', 'dough'};
@@ -986,7 +985,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
     final theme = Theme.of(context);
     final loc = AppLocalizations.of(context)!;
 
-    return Consumer<FranchiseProvider>(
+    return Consumer<shared.FranchiseProvider>(
       builder: (context, provider, child) {
         if (!provider.hasValidFranchise) {
           return const Dialog(

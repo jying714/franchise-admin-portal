@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:shared_core/src/core/services/analytics_service.dart';
 import 'package:shared_core/src/core/models/menu_item.dart';
@@ -64,7 +63,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: false);
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
     final analytics = Provider.of<AnalyticsService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
 
@@ -148,7 +147,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
         ],
       ),
       backgroundColor: Colors.white,
-      body: Consumer<FranchiseProvider>(
+      body: Consumer<shared.FranchiseProvider>(
         builder: (context, provider, child) {
           if (!provider.hasValidFranchise) {
             return const Center(child: CircularProgressIndicator());

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/tracking/tracking_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -78,7 +77,7 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
 
-    return Consumer<FranchiseProvider>(
+    return Consumer<shared.FranchiseProvider>(
       builder: (context, provider, child) {
         if (!provider.hasValidFranchise) {
           return const Scaffold(

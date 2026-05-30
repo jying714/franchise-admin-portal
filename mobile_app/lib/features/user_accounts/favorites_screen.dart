@@ -6,7 +6,6 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/src/core/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/core/models/favorite_order.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'dart:convert';
 
@@ -51,7 +50,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
     final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: false);
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
     final franchiseId = franchiseProvider.currentFranchiseId;
 
     final cartStream = firestoreService.getCart(_userId!,
@@ -201,7 +200,7 @@ class FavoriteMenuItemsTab extends StatelessWidget {
     final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
     final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: false);
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
     final franchiseId = franchiseProvider.currentFranchiseId;
 
     return StreamBuilder<List<shared.MenuItem>>(
@@ -320,7 +319,7 @@ class FavoriteOrdersTab extends StatelessWidget {
     final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
     final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: false);
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
     final franchiseId = franchiseProvider.currentFranchiseId;
     final parentState =
         context.findAncestorStateOfType<_FavoritesScreenState>();
