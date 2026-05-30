@@ -1284,7 +1284,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                         decoration: BoxDecoration(
                                           color: selected
                                               ? UiConfig.secondaryColor
-                                              : Colors.transparent,
+                                              : UiConfig.cardColor.withValues(alpha: 0.0),
                                           borderRadius:
                                               BorderRadius.circular(30),
                                         ),
@@ -1296,7 +1296,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           style: theme.textTheme.bodyLarge
                                               ?.copyWith(
                                             color: selected
-                                                ? Colors.white
+                                                ? UiConfig.cardColor
                                                 : UiConfig.secondaryColor,
                                             fontWeight: selected
                                                 ? FontWeight.bold

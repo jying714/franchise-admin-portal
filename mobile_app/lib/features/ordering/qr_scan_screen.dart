@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -143,11 +144,12 @@ class _QrScanScreenState extends State<QrScanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Scan Franchise QR'),
-        backgroundColor: UiConfig.primaryColor,
-        foregroundColor: UiConfig.foregroundColorDark,
-        elevation: 0,
+      appBar: FranchiseAppBar(
+        title: 'Scan Franchise QR',
+        showLogo: true,
+        logoUrl: UiConfig.currentLogoUrl,
+        logoAsset: shared.BrandingConfig.appBarLogoAsset,
+        centerTitle: true,
         actions: [
           if (_hasCameraPermission)
             IconButton(
@@ -181,11 +183,11 @@ class _QrScanScreenState extends State<QrScanScreen> {
                       ),
                       if (!_isScanning)
                         Container(
-                          color: Colors.black54,
-                          child: const Center(
+                          color: UiConfig.shadowColor.withValues(alpha: 0.54),
+                          child: Center(
                             child: Text(
                               'Scanner Paused',
-                              style: TextStyle(color: Colors.white, fontSize: 18),
+                              style: TextStyle(color: UiConfig.onPrimaryColor, fontSize: 18),
                             ),
                           ),
                         ),
@@ -225,7 +227,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.no_photography, size: 48, color: Colors.white70),
+                      Icon(Icons.no_photography, size: 48, color: UiConfig.onPrimaryColor.withValues(alpha: 0.7)),
                       const SizedBox(height: 12),
                       Text(
                         'Camera permission required',
@@ -256,7 +258,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
               const SizedBox(height: 8),
               TextField(
                 controller: _qrController,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: UiConfig.textColor),
                 decoration: InputDecoration(
                   labelText: 'QR Payload (e.g. fhq://f/doughboys_pizzeria)',
                   labelStyle: TextStyle(color: UiConfig.secondaryTextColor),
@@ -288,7 +290,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   decoration: BoxDecoration(
                     color: _statusMessage!.startsWith('Error')
                         ? UiConfig.errorColor.withValues(alpha: 0.15)
-                        : Colors.green.withValues(alpha: 0.15),
+                        : UiConfig.successColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -296,7 +298,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                     style: TextStyle(
                       color: _statusMessage!.startsWith('Error')
                           ? UiConfig.errorColor
-                          : Colors.greenAccent,
+                          : UiConfig.successColor,
                     ),
                     textAlign: TextAlign.center,
                   ),

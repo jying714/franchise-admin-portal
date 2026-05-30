@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/shared_core.dart' show DesignTokens;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
 import 'package:franchise_mobile_app/widgets/social_sign_in_buttons.dart';
@@ -184,20 +185,12 @@ class _SignInScreenState extends State<SignInScreen> {
 
     return Scaffold(
       backgroundColor: UiConfig.backgroundColorDark,
-      appBar: AppBar(
-        title: Text(
-          loc.signIn,
-          style: TextStyle(
-            color: UiConfig.foregroundColorDark,
-            fontSize: DesignTokens.titleFontSize,
-            fontWeight: FontWeight.bold,
-            fontFamily: DesignTokens.fontFamily,
-          ),
-        ),
+      appBar: FranchiseAppBar(
+        title: loc.signIn,
+        showLogo: true,
+        logoUrl: UiConfig.currentLogoUrl,
+        logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
-        backgroundColor: UiConfig.primaryColor,
-        elevation: 0,
-        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -299,8 +292,8 @@ class _SignInScreenState extends State<SignInScreen> {
                                   DesignTokens.buttonRadius)),
                         ),
                         child: _loading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white)
+                            ? CircularProgressIndicator(
+                                color: UiConfig.onPrimaryColor)
                             : Text(loc.signIn),
                       ),
                     ),

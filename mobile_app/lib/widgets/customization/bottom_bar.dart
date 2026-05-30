@@ -72,7 +72,7 @@ class CustomizationBottomBar extends StatelessWidget {
         color: UiConfig.surfaceColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(20),
+            color: UiConfig.shadowColor.withValues(alpha: 0.2),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),

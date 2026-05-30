@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/core/services/offline_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:uuid/uuid.dart';
@@ -138,20 +139,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     final loc = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          loc.feedbackScreenTitle,
-          style: TextStyle(
-            color: UiConfig.foregroundColorDark,
-            fontSize: shared.DesignTokens.titleFontSize,
-            fontFamily: shared.DesignTokens.fontFamily,
-            fontWeight: UiConfig.fontWeightBold,
-          ),
-        ),
-        backgroundColor: UiConfig.primaryColor,
-        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
+      appBar: FranchiseAppBar(
+        title: loc.feedbackScreenTitle,
+        showLogo: true,
+        logoUrl: UiConfig.currentLogoUrl,
+        logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
-        elevation: 0,
       ),
       backgroundColor: UiConfig.backgroundColorDark,
       body: SafeArea(
@@ -272,12 +265,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                         elevation: shared.DesignTokens.buttonElevation,
                       ),
                       child: _loading
-                          ? const SizedBox(
+                          ? SizedBox(
                               height: 24,
                               width: 24,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: UiConfig.onPrimaryColor,
                               ),
                             )
                           : Text(loc.feedbackSubmitButton),
@@ -314,7 +307,7 @@ class _StarRating extends StatelessWidget {
           onPressed: () => onRatingChanged(i + 1),
           icon: Icon(
             starFilled ? Icons.star : Icons.star_border,
-            color: starFilled ? UiConfig.successColor : Colors.grey,
+            color: starFilled ? UiConfig.successColor : UiConfig.hintTextColor,
             size: 32,
           ),
           tooltip: loc.feedbackStarTooltip(i + 1),

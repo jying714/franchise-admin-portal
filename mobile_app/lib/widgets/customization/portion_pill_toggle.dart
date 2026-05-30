@@ -35,7 +35,7 @@ class PortionPillToggle extends StatelessWidget {
         child: Text(
           isDouble ? "Double" : "Regular",
           style: TextStyle(
-            color: isDouble ? Colors.white : UiConfig.textColor,
+            color: isDouble ? UiConfig.onPrimaryColor : UiConfig.textColor,
             fontWeight: UiConfig.bold,
             fontSize: 14,
             fontFamily: shared.DesignTokens.fontFamily,
