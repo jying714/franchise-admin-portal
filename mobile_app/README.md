@@ -1,16 +1,44 @@
-# doughboys_pizzeria_fresh
+# Doughboys Pizzeria — Franchise Platform
 
-A new Flutter project.
+**Monorepo** for **Web Admin Portal** + **Mobile Customer App** + **Shared Core**.
 
-## Getting Started
+- **Web**: `franchisehq.io` — Full admin dashboard (Flutter Web)
+- **Mobile**: Customer ordering app (Flutter Android/iOS)
+- **Backend**: Firebase (Firestore, Auth, Functions, Hosting)
+- **Shared Core**: Pure domain layer (`packages/shared_core`)
 
-This project is a starting point for a Flutter application.
+---
 
-A few resources to get you started if this is your first Flutter project:
+## Current Status (May 30, 2026)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+**Option B – Core Ordering Flow: COMPLETE ✅**  
+The customer ordering path is stable and device-tested on Samsung S25:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+**Login → Franchise Selection → Menu → Category → Item → Customization → Cart → Checkout → Confirmation**
+
+- FranchiseProvider unification complete (shared_core is the single source of truth).
+- All direct `src/` imports cleaned across 6 batches.
+- Duplicated models cleaned (Address, Banner, Category, MenuItem, Order, ScheduledOrder, etc.).
+- FirestoreService 3-tier split enforced.
+- No more fallback spam ("unknown"/"default").
+
+**Git Branch**: `fix/core-flow-stabilization-phase1` (active)
+
+---
+
+## Quick Start
+
+```bash
+# Clone
+git clone https://github.com/jying714/franchise-admin-portal.git
+cd franchise-admin-portal
+
+# Mobile (Customer App)
+cd mobile_app
+flutter pub get
+flutter run
+
+# Web (Admin Dashboard)
+cd ../web-app
+flutter pub get
+flutter run -d chrome
