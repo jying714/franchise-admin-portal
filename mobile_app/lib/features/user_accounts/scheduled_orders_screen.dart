@@ -3,12 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:shared_core/shared_core.dart' show DesignTokens;
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:franchise_mobile_app/core/models/scheduled_order.dart';
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
-import 'package:shared_core/shared_core.dart' show BrandingConfig;
 
 class ScheduledOrdersScreen extends StatefulWidget {
   const ScheduledOrdersScreen({super.key});
@@ -27,7 +23,7 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
   }
 
   Future<void> _showOrderEditorDialog({
-    ScheduledOrder? scheduledOrder,
+    shared.ScheduledOrder? scheduledOrder,
     required shared.FirestoreService firestoreService,
   }) async {
     final localizations = AppLocalizations.of(context)!;
@@ -49,7 +45,7 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
 
     // Convert MenuItem list to OrderItem list
     List<shared.OrderItem> selectedOrderItems = scheduledOrder?.items ?? [];
-    List<MenuItem> selectedMenuItems = menuItems
+    List<shared.MenuItem> selectedMenuItems = menuItems
         .where((m) => selectedOrderItems.any((oi) => oi.menuItemId == m.id))
         .toList();
 
@@ -154,7 +150,8 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                     return;
 
                   final franchiseProvider =
-                      Provider.of<shared.FranchiseProvider>(context, listen: false);
+                      Provider.of<shared.FranchiseProvider>(context,
+                          listen: false);
                   final now = DateTime.now();
 
                   // Convert MenuItems to OrderItems
@@ -169,7 +166,7 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                           ))
                       .toList();
 
-                  final ScheduledOrder updated = ScheduledOrder(
+                  final shared.ScheduledOrder updated = shared.ScheduledOrder(
                     id: scheduledOrder?.id ??
                         now.microsecondsSinceEpoch.toString(),
                     userId: _userId!,
@@ -254,7 +251,7 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           final scheduledOrders =
-              snapshot.data?.whereType<ScheduledOrder>().toList() ?? [];
+              (snapshot.data ?? []).whereType<shared.ScheduledOrder>().toList();
 
           if (scheduledOrders.isEmpty) {
             return Center(
@@ -274,19 +271,20 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                     order.items.isNotEmpty ? order.items.first : null;
 
                 return Card(
-                  elevation: DesignTokens.cardElevation,
+                  elevation: shared.DesignTokens.cardElevation,
                   margin: const EdgeInsets.symmetric(
-                      vertical: DesignTokens.gridSpacing / 2),
+                      vertical: shared.DesignTokens.gridSpacing / 2),
                   shape: RoundedRectangleBorder(
                     borderRadius:
-                        BorderRadius.circular(DesignTokens.cardRadius),
+                        BorderRadius.circular(shared.DesignTokens.cardRadius),
                   ),
                   color: UiConfig.surfaceColor,
                   child: ListTile(
                     leading: firstItem != null
                         ? NetworkImageWidget(
                             imageUrl: firstItem.image ?? '',
-                            fallbackAsset: BrandingConfig.defaultPizzaIcon,
+                            fallbackAsset:
+                                shared.BrandingConfig.defaultPizzaIcon,
                             width: 48,
                             height: 48,
                             fit: BoxFit.cover,

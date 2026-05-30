@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/core/services/offline_service.dart';
-import 'package:franchise_mobile_app/core/models/feedback_entry.dart' as model;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -68,7 +67,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     final userId = _anonymous ? '' : (auth.currentUser?.uid ?? '');
 
     final String feedbackId = const Uuid().v4();
-    final feedback = model.FeedbackEntry(
+    final feedback = shared.FeedbackEntry(
       id: feedbackId,
       rating: _rating,
       comment: _commentController.text.trim(),
