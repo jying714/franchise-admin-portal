@@ -7,6 +7,8 @@ import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:franchise_mobile_app/widgets/feedback/feedback_submission_dialog.dart';
+import 'package:franchise_mobile_app/widgets/status_chip.dart';
+import 'package:intl/intl.dart';
 
 class OrderHistoryScreen extends StatelessWidget {
   const OrderHistoryScreen({super.key});
@@ -107,8 +109,8 @@ class OrderHistoryScreen extends StatelessWidget {
                             ),
                             subtitle: Text(
                               localizations.orderDateAndTotal(
-                                order.timestamp.toString().substring(0, 10),
-                                order.total.toStringAsFixed(2),
+                                DateFormat.yMMMd().format(order.timestamp),
+                                UiConfig.currencyFormat(context, order.total),
                               ),
                               style: TextStyle(
                                 fontSize: DesignTokens.captionFontSize,
@@ -117,21 +119,14 @@ class OrderHistoryScreen extends StatelessWidget {
                                 fontWeight: UiConfig.fontWeightNormal,
                               ),
                             ),
+                            trailing: StatusChip(status: order.status),
                             children: [
                               Padding(
                                 padding: UiConfig.cardPadding,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      '${localizations.status}: ${order.status}',
-                                      style: TextStyle(
-                                        color: UiConfig.textColorDark,
-                                        fontSize: DesignTokens.bodyFontSize,
-                                        fontFamily: DesignTokens.fontFamily,
-                                        fontWeight: UiConfig.fontWeightNormal,
-                                      ),
-                                    ),
+                                    StatusChip(status: order.status, useIcon: true),
                                     const SizedBox(
                                         height: DesignTokens.gridSpacing / 2),
                                     Text(

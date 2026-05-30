@@ -14,11 +14,11 @@ import 'package:franchise_mobile_app/features/user_accounts/scheduled_orders_scr
 import 'package:franchise_mobile_app/features/user_accounts/favorites_screen.dart';
 import 'package:franchise_mobile_app/features/language/language_screen.dart';
 import 'package:franchise_mobile_app/features/chat_support/chat_screen.dart';
-import 'package:franchise_mobile_app/features/user_accounts/franchise_selector_screen.dart';
 import 'package:franchise_mobile_app/features/home/home_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/complete_profile_dialog.dart';
-import 'package:franchise_mobile_app/widgets/confirmation_dialog.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as user_model;
+import 'package:franchise_mobile_app/features/loyalty/loyalty_screen.dart';
+import 'package:franchise_mobile_app/widgets/loyalty_points_widget.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -231,6 +231,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         InfoTile(label: l10n.email, value: fullUser.email),
                         const Divider(),
+
+                        // Loyalty points display (foundational, franchise-aware)
+                        const LoyaltyPointsWidget(),
+
                         ProfileNavTile(
                           label: l10n.deliveryAddresses,
                           destination: const DeliveryAddressesScreen(),
@@ -244,24 +248,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           destination: const FavoritesScreen(),
                         ),
                         ProfileNavTile(
+                          label: l10n.loyalty,
+                          destination: const LoyaltyScreen(),
+                          icon: Icons.card_giftcard,
+                        ),
+                        ProfileNavTile(
                           label: l10n.scheduledOrders,
                           destination: const ScheduledOrdersScreen(),
                         ),
                         ProfileNavTile(
                           label: l10n.language,
                           destination: const LanguageScreen(),
-                        ),
-                        ListTile(
-                          leading: const Icon(Icons.store),
-                          title: Text(
-                              'Switch Restaurant (Doughboys Pizzeria)'),
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const FranchiseSelectorScreen(),
-                              ),
-                            );
-                          },
                         ),
                         ProfileNavTile(
                           label: l10n.chatWithUs,

@@ -5,8 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:shared_core/src/core/models/loyalty.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class LoyaltyScreen extends StatefulWidget {
@@ -17,73 +15,66 @@ class LoyaltyScreen extends StatefulWidget {
 }
 
 class _LoyaltyScreenState extends State<LoyaltyScreen> {
-  late shared.FirestoreService _firestoreService;
-  late String? _franchiseId;
-  Future<Loyalty?>? _loyaltyFuture;
+  Future<shared.Loyalty?>? _loyaltyFuture;
   bool _isClaiming = false;
   String? _claimError;
-  bool _initialized = false;
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_initialized) {
-      _firestoreService =
-          Provider.of<shared.FirestoreService>(context, listen: false);
-      final franchiseProvider =
-          Provider.of<shared.FranchiseProvider>(context, listen: false);
-      _franchiseId = franchiseProvider.currentFranchiseId;
-      final auth = Provider.of<FirebaseAuth>(context, listen: false);
-      final uid = auth.currentUser?.uid;
-      if (uid != null && _franchiseId != null) {
-        _loyaltyFuture = _fetchLoyalty(uid, _franchiseId!);
-      }
-      _initialized = true;
-    }
-  }
-
-  Future<Loyalty?> _fetchLoyalty(String uid, String franchiseId) async {
-    final map = await _firestoreService.getLoyaltyForUser(uid,
-        franchiseId: franchiseId);
-    if (map == null) return null;
+  Future<shared.Loyalty?> _fetchLoyalty(
+    shared.FirestoreService fs,
+    String uid,
+    String franchiseId,
+  ) async {
+    final map = await fs.getLoyaltyForUser(uid, franchiseId: franchiseId);
+    if (map == null) return shared.Loyalty();
 
     final redeemedList =
         (map['redeemedRewards'] as List<dynamic>? ?? []).map((item) {
       final r = item as Map<String, dynamic>;
-      return LoyaltyReward(
+      return shared.LoyaltyReward(
         name: r['rewardId'] ?? r['name'] ?? 'Reward',
-        points: r['points'] ?? 0,
+        points: (r['points'] as num?)?.toInt() ?? 0,
       );
     }).toList();
 
-    return Loyalty(
-      points: map['points'] ?? 0,
+    return shared.Loyalty(
+      points: (map['points'] as num?)?.toInt() ?? 0,
       redeemedRewards: redeemedList,
-      transactions: map['transactions'] ?? [],
+      transactions: map['transactions'] ?? const [],
     );
   }
 
   Future<void> _handleClaim(
-      LoyaltyReward reward, Loyalty data, AppLocalizations loc) async {
+      shared.LoyaltyReward reward, shared.Loyalty data, AppLocalizations loc) async {
     setState(() {
       _isClaiming = true;
       _claimError = null;
     });
 
-    final auth = Provider.of<FirebaseAuth>(context, listen: false);
-    final uid = auth.currentUser!.uid;
-    final franchiseId = _franchiseId;
-    if (franchiseId == null) return;
+    final authService = Provider.of<shared.AuthService>(context, listen: false);
+    final firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
+    final uid = authService.currentUser?.id;
+    final franchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final franchiseId = franchiseProvider.currentFranchiseId;
+
+    if (uid == null || !franchiseProvider.hasValidFranchise) {
+      setState(() {
+        _isClaiming = false;
+        _claimError = 'Not authenticated or no franchise selected.';
+      });
+      return;
+    }
 
     try {
-      await _firestoreService.claimReward(
+      await firestoreService.claimReward(
         uid,
         reward.name,
         franchiseId: franchiseId,
         points: reward.points,
       );
       setState(() {
-        _loyaltyFuture = _fetchLoyalty(uid, franchiseId);
+        _loyaltyFuture = _fetchLoyalty(firestoreService, uid, franchiseId);
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -126,57 +117,72 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      backgroundColor: UiConfig.backgroundColor,
-      appBar: AppBar(
-        title: Text(
-          loc.loyaltyAndRewards,
-          style: TextStyle(
-            fontFamily: shared.DesignTokens.fontFamily,
-            fontSize: shared.DesignTokens.titleFontSize,
-            fontWeight: UiConfig.bold,
-            color: UiConfig.foregroundColor,
+    return Consumer<shared.FranchiseProvider>(
+      builder: (context, franchiseProvider, child) {
+        if (!franchiseProvider.hasValidFranchise) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // Trigger fetch once we have valid franchise (franchise-scoped)
+        if (_loyaltyFuture == null) {
+          final authService =
+              Provider.of<shared.AuthService>(context, listen: false);
+          final firestoreService =
+              Provider.of<shared.FirestoreService>(context, listen: false);
+          final uid = authService.currentUser?.id;
+          final fid = franchiseProvider.currentFranchiseId;
+          if (uid != null) {
+            _loyaltyFuture = _fetchLoyalty(firestoreService, uid, fid);
+          }
+        }
+
+        return Scaffold(
+          backgroundColor: UiConfig.backgroundColorDark,
+          appBar: AppBar(
+            title: Text(
+              loc.loyaltyAndRewards,
+              style: TextStyle(
+                fontFamily: shared.DesignTokens.fontFamily,
+                fontSize: shared.DesignTokens.titleFontSize,
+                fontWeight: UiConfig.fontWeightBold,
+                color: UiConfig.foregroundColorDark,
+              ),
+            ),
+            centerTitle: true,
+            backgroundColor: UiConfig.primaryColor,
+            elevation: 0,
+            iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
           ),
-        ),
-        centerTitle: true,
-        backgroundColor: UiConfig.primaryColor,
-        elevation: shared.DesignTokens.cardElevation,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(shared.DesignTokens.cardRadius),
+          body: Padding(
+            padding: UiConfig.defaultScreenPadding,
+            child: FutureBuilder<shared.Loyalty?>(
+              future: _loyaltyFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      loc.loyaltyErrorLoading,
+                      style: UiConfig.bodyStyle.copyWith(
+                        color: UiConfig.errorTextColor,
+                      ),
+                    ),
+                  );
+                }
+                final loyalty = snapshot.data ?? shared.Loyalty();
+                if (loyalty.points == 0 && loyalty.redeemedRewards.isEmpty) {
+                  return _buildEmptyState(loc);
+                }
+                return _buildLoyaltyContent(loyalty, loc);
+              },
+            ),
           ),
-        ),
-      ),
-      body: Padding(
-        padding: UiConfig.defaultPadding,
-        child: FutureBuilder<Loyalty?>(
-          future: _loyaltyFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError) {
-              return Center(
-                child: Text(
-                  loc.loyaltyErrorLoading,
-                  style: TextStyle(
-                    fontFamily: shared.DesignTokens.fontFamily,
-                    fontSize: shared.DesignTokens.bodyFontSize,
-                    fontWeight: UiConfig.normal,
-                    color: UiConfig.errorTextColor,
-                  ),
-                ),
-              );
-            }
-            final loyalty = snapshot.data;
-            if (loyalty == null ||
-                (loyalty.points == 0 && loyalty.redeemedRewards.isEmpty)) {
-              return _buildEmptyState(loc);
-            }
-            return _buildLoyaltyContent(loyalty, loc);
-          },
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -205,8 +211,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                 style: TextStyle(
                   fontFamily: shared.DesignTokens.fontFamily,
                   fontSize: shared.DesignTokens.titleFontSize,
-                  fontWeight: UiConfig.bold,
-                  color: UiConfig.textColor,
+                  fontWeight: UiConfig.fontWeightBold,
+                  color: UiConfig.textColorDark,
                 ),
               ),
               const SizedBox(height: 8),
@@ -242,15 +248,12 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
     );
   }
 
-  Widget _buildLoyaltyContent(Loyalty data, AppLocalizations loc) {
+  Widget _buildLoyaltyContent(shared.Loyalty data, AppLocalizations loc) {
     final pts = data.points;
     final progress = (pts % 100) / 100.0;
     final df = DateFormat.yMd();
     final rankTitle = _getRankTitle(pts, loc);
     final rankLevel = _getRankLevel(pts);
-
-    // NOTE: lastRedeemed not present in current local Loyalty model.
-    // Using current time as fallback to preserve original UI logic.
     final lastRedeemed = DateTime.now();
 
     return ListView(
@@ -282,7 +285,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                             style: TextStyle(
                               fontFamily: shared.DesignTokens.fontFamily,
                               fontSize: shared.DesignTokens.titleFontSize,
-                              fontWeight: UiConfig.bold,
+                              fontWeight: UiConfig.fontWeightBold,
                               color: UiConfig.primaryColor,
                             ),
                           ),
@@ -292,7 +295,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                             style: TextStyle(
                               fontFamily: shared.DesignTokens.fontFamily,
                               fontSize: shared.DesignTokens.bodyFontSize,
-                              fontWeight: UiConfig.normal,
+                              fontWeight: UiConfig.fontWeightNormal,
                               color: UiConfig.secondaryTextColor,
                             ),
                           ),
@@ -307,8 +310,8 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                           style: TextStyle(
                             fontFamily: shared.DesignTokens.fontFamily,
                             fontSize: shared.DesignTokens.titleFontSize,
-                            fontWeight: UiConfig.bold,
-                            color: UiConfig.textColor,
+                            fontWeight: UiConfig.fontWeightBold,
+                            color: UiConfig.textColorDark,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -317,7 +320,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                           style: TextStyle(
                             fontFamily: shared.DesignTokens.fontFamily,
                             fontSize: shared.DesignTokens.captionFontSize,
-                            fontWeight: UiConfig.normal,
+                            fontWeight: UiConfig.fontWeightNormal,
                             color: UiConfig.secondaryTextColor,
                           ),
                         ),
@@ -326,7 +329,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
                           style: TextStyle(
                             fontFamily: shared.DesignTokens.fontFamily,
                             fontSize: shared.DesignTokens.captionFontSize,
-                            fontWeight: UiConfig.normal,
+                            fontWeight: UiConfig.fontWeightNormal,
                             color: UiConfig.secondaryTextColor,
                           ),
                         ),
@@ -386,7 +389,7 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
   }
 
   Widget _buildRewardCard(
-      LoyaltyReward reward, Loyalty data, AppLocalizations loc) {
+      shared.LoyaltyReward reward, shared.Loyalty data, AppLocalizations loc) {
     // All rewards in the current local model are redeemed.
     // Keeping the original conditional logic intact so the claim-button path remains reachable.
     final canClaim = false;
