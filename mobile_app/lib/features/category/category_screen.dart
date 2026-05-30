@@ -8,6 +8,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/widgets/header/cart_icon_badge.dart';
 import 'package:franchise_mobile_app/widgets/header/profile_icon_button.dart';
+// Batch 2: header/ widgets updated for FranchiseProvider + UiConfig
 import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
 import 'package:franchise_mobile_app/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';

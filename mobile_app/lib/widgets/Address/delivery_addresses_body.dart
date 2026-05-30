@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:franchise_mobile_app/widgets/Address/address_list_view.dart';
 import 'package:franchise_mobile_app/widgets/Address/address_form.dart';
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
@@ -7,6 +8,8 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+
+// P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
 
 class DeliveryAddressesBody extends StatefulWidget {
   final List<shared.Address> addresses;
@@ -29,6 +32,9 @@ class DeliveryAddressesBody extends StatefulWidget {
 class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
   @override
   Widget build(BuildContext context) {
+    // FranchiseProvider injected for franchise/{franchiseId}/ scoping (Batch 2)
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
+
     final localizations = AppLocalizations.of(context)!;
     final addresses = widget.addresses;
     final firestoreService = widget.firestoreService;

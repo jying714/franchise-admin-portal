@@ -13,6 +13,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+// Batch 2: Address/ widgets + header updated (FranchiseProvider + UiConfig + public barrels)
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
 

@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
 
+// P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
+
 class CartIconBadge extends StatelessWidget {
   final VoidCallback? onPressed;
   final String? tooltip;
@@ -17,6 +19,7 @@ class CartIconBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<shared.FranchiseProvider>(
       builder: (context, franchiseProvider, child) {
+        // Batch 2: already using FranchiseProvider for scoping + badge updates
         if (!franchiseProvider.hasValidFranchise) {
           return IconButton(
             icon: const Icon(Icons.shopping_cart_outlined),

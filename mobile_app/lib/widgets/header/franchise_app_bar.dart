@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:shared_core/shared_core.dart' as shared;
+
+// P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
 
 /// A modular, franchise-ready AppBar widget.
 /// Expandable: supports title, logo, subtitle, custom actions, colors, and more.
@@ -43,6 +46,9 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    // FranchiseProvider injected for franchise/{franchiseId}/ scoping (Batch 2)
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
+
     final bool displayLogo =
         showLogo && logoAsset != null && logoAsset!.isNotEmpty;
     final color = backgroundColor ?? UiConfig.primaryColor;

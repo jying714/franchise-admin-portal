@@ -6,6 +6,8 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+// P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
+
 class DeliveryAddressTile extends StatelessWidget {
   final shared.Address address;
   final VoidCallback onDelete;
@@ -54,6 +56,8 @@ class DeliveryAddressTile extends StatelessWidget {
             IconButton(
               icon: Icon(Icons.edit, color: UiConfig.primaryColor),
               onPressed: () async {
+                // Batch 2: FranchiseProvider scoping for address ops
+                Provider.of<shared.FranchiseProvider>(context, listen: false);
                 final firestoreService = Provider.of<shared.FirestoreService>(
                     context,
                     listen: false);

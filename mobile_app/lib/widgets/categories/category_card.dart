@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
+
+// P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
 
 typedef CategoryTapCallback = void Function(shared.Category category);
 
@@ -17,6 +20,9 @@ class CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // FranchiseProvider injected for franchise/{franchiseId}/ scoping (Batch 2)
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
+
     final loc = AppLocalizations.of(context)!;
     final String imagePath =
         (category.image != null && category.image!.isNotEmpty)
@@ -87,7 +93,7 @@ class CategoryCard extends StatelessWidget {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity(0.55),
+                          Colors.black.withAlpha(140),
                         ],
                         stops: const [0.5, 1.0],
                       ),

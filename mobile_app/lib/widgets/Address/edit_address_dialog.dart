@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/Address/address_form.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
+
+// P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
 
 class EditAddressDialog extends StatefulWidget {
   final shared.Address initialValue;
@@ -47,6 +50,9 @@ class _EditAddressDialogState extends State<EditAddressDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // FranchiseProvider injected for franchise/{franchiseId}/ scoping (Batch 2)
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
+
     final loc = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.all(24.0),
