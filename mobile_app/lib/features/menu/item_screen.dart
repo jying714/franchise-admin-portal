@@ -176,10 +176,6 @@ class _ItemScreenState extends State<ItemScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
 
-    // DEBUG: Every build
-    print(
-        "=== ITEM SCREEN BUILD DEBUG === menuItem.name = '${widget.menuItem.name}' | Length: ${widget.menuItem.name.length} | HasValidFranchise = ${Provider.of<shared.FranchiseProvider>(context, listen: false).hasValidFranchise}");
-
     return Scaffold(
       appBar: FranchiseAppBar(
         title: widget.menuItem.name,
@@ -188,7 +184,8 @@ class _ItemScreenState extends State<ItemScreen> {
           fontSize: 20,
         ),
         centerTitle: true,
-        showLogo: shared.BrandingConfig.showLogoInAppBar,
+        showLogo: true,
+        logoUrl: UiConfig.currentLogoUrl,
         logoAsset: shared.BrandingConfig.appBarLogoAsset,
         logoHeight: 40,
         actions: [
@@ -219,9 +216,6 @@ class _ItemScreenState extends State<ItemScreen> {
       backgroundColor: UiConfig.backgroundColor,
       body: Consumer<shared.FranchiseProvider>(
         builder: (context, provider, child) {
-          print(
-              "=== ITEM SCREEN CONSUMER DEBUG === hasValidFranchise = ${provider.hasValidFranchise}");
-
           if (!provider.hasValidFranchise) {
             return const Center(child: CircularProgressIndicator());
           }

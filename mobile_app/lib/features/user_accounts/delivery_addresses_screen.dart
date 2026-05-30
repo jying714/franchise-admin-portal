@@ -39,7 +39,9 @@ class _DeliveryAddressesScreenState extends State<DeliveryAddressesScreen> {
     return Scaffold(
       appBar: FranchiseAppBar(
         title: localizations.deliveryAddresses,
-        showLogo: false,
+        showLogo: true,
+        logoUrl: UiConfig.currentLogoUrl,
+        logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
         backgroundColor: UiConfig.primaryColor,
         foregroundColor: UiConfig.foregroundColor,

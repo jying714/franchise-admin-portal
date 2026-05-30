@@ -154,6 +154,17 @@ class UiConfig {
   /// Text color specifically for AppBars (respects dynamic branding).
   static Color get appBarTextColor => foregroundColorDark;
 
+  /// Remote logo URL from current franchise branding (for NetworkImageWidget).
+  static String? get currentLogoUrl {
+    final direct = _fp?.currentLogoUrl;
+    if (direct != null && direct.isNotEmpty) return direct;
+    final nested = _fp?.currentBranding;
+    if (nested is Map<String, dynamic>) {
+      return (nested['logoUrl'] as String?) ?? (nested['logo'] as String?);
+    }
+    return null;
+  }
+
   /// Legacy dashboard card color - now routes through cardColor for consistency.
   /// Kept for backward compatibility during migration.
   static Color get dashboardCardColor => cardColor;

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 
@@ -117,20 +118,12 @@ class _LoyaltyScreenState extends State<LoyaltyScreen> {
 
         return Scaffold(
           backgroundColor: UiConfig.backgroundColorDark,
-          appBar: AppBar(
-            title: Text(
-              loc.loyaltyAndRewards,
-              style: TextStyle(
-                fontFamily: shared.DesignTokens.fontFamily,
-                fontSize: shared.DesignTokens.titleFontSize,
-                fontWeight: UiConfig.fontWeightBold,
-                color: UiConfig.foregroundColorDark,
-              ),
-            ),
+          appBar: FranchiseAppBar(
+            title: loc.loyaltyAndRewards,
+            showLogo: true,
+            logoUrl: UiConfig.currentLogoUrl,
+            logoAsset: shared.BrandingConfig.appBarLogoAsset,
             centerTitle: true,
-            backgroundColor: UiConfig.primaryColor,
-            elevation: 0,
-            iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
           ),
           body: SafeArea(
             bottom: true,

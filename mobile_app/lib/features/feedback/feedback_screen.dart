@@ -171,7 +171,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Image.asset(
-                      UiConfig.logoMain,
+                      UiConfig.currentLogoUrl ?? UiConfig.logoMain,
                       height: 56,
                       errorBuilder: (_, __, ___) => Image.asset(
                         UiConfig.defaultPizzaIcon,

@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
 import 'package:franchise_mobile_app/features/auth/sign_up_screen.dart';
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
@@ -18,15 +19,12 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: UiConfig.backgroundColorDark,
       appBar: AppBar(
-        title: Image.asset(
-          UiConfig.logoMain,
+        title: NetworkImageWidget(
+          imageUrl: UiConfig.currentLogoUrl,
+          fallbackAsset: UiConfig.logoMain,
+          width: 140,
           height: shared.DesignTokens.logoHeightSmall,
-          errorBuilder: (c, e, s) => Image.asset(
-            UiConfig.defaultPizzaIcon,
-            height: shared.DesignTokens.logoHeightSmall,
-            fit: BoxFit.contain,
-            semanticLabel: loc.logoErrorTooltip,
-          ),
+          fit: BoxFit.contain,
         ),
         backgroundColor: UiConfig.primaryColor,
         centerTitle: true,

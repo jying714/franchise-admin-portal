@@ -156,6 +156,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return Scaffold(
       appBar: FranchiseAppBar(
         title: widget.categoryName,
+        showLogo: true,
+        logoUrl: UiConfig.currentLogoUrl,
+        logoAsset: shared.BrandingConfig.appBarLogoAsset,
         actions: [
           ProfileIconButton(
             onPressed: () {

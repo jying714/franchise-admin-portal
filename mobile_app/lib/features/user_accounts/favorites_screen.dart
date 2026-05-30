@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:shared_core/src/core/models/favorite_order.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
@@ -151,20 +152,12 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          localizations.favorites,
-          style: TextStyle(
-            fontSize: shared.DesignTokens.titleFontSize,
-            color: UiConfig.foregroundColor,
-            fontWeight: UiConfig.bold,
-            fontFamily: shared.DesignTokens.fontFamily,
-          ),
-        ),
-        backgroundColor: UiConfig.primaryColor,
+      appBar: FranchiseAppBar(
+        title: localizations.favorites,
+        showLogo: true,
+        logoUrl: UiConfig.currentLogoUrl,
+        logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
-        elevation: 0,
-        iconTheme: IconThemeData(color: UiConfig.foregroundColor),
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: UiConfig.foregroundColor,
