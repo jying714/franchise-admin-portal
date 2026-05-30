@@ -2043,15 +2043,15 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Future<void> addFavoriteMenuItemForUser(String userId, String menuItemId,
       {String? franchiseId}) async {
-    if (franchiseId == null) return;
-    await addFavoriteMenuItem(userId, franchiseId, menuItemId);
+    // Guard removed per regression fix — callers must now always supply franchiseId (aligned with real schema under users/{uid}/franchise_profiles/{fid})
+    await addFavoriteMenuItem(userId, franchiseId!, menuItemId);
   }
 
   @override
   Future<void> removeFavoriteMenuItemForUser(String userId, String menuItemId,
       {String? franchiseId}) async {
-    if (franchiseId == null) return;
-    await removeFavoriteMenuItem(userId, franchiseId, menuItemId);
+    // Guard removed per regression fix — callers must now always supply franchiseId (aligned with real schema under users/{uid}/franchise_profiles/{fid})
+    await removeFavoriteMenuItem(userId, franchiseId!, menuItemId);
   }
 
   @override

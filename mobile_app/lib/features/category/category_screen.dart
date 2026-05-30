@@ -212,6 +212,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           menuItem: item,
                           showDescription: true,
                           expanded: true,
+                          // Pass isFavorited from parent stream when available (see diagnostic)
+                          isFavorited: null, // TODO: wire real-time favorites IDs stream here for full reactivity
                           onAddToCart: (
                             menuItem,
                             selectedCustomizations,
