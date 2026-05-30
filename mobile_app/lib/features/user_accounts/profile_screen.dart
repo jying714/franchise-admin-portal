@@ -111,9 +111,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
           ),
           backgroundColor: UiConfig.backgroundColorDark,
-          body: Padding(
-            padding: UiConfig.defaultScreenPadding,
-            child: StreamBuilder<shared.User?>(
+          body: SafeArea(
+            bottom: true,
+            child: Padding(
+              padding: UiConfig.defaultScreenPadding,
+              child: StreamBuilder<shared.User?>(
               stream: authService.authStateChanges,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -299,6 +301,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
               },
             ),
+          ),
           ),
         );
       },

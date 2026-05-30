@@ -565,31 +565,20 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Stream<Order?> getCart(String userId, {String? franchiseId}) {
     if (franchiseId == null || franchiseId.isEmpty) {
-      print(
-          '❌ [FirestoreServiceImpl][getCart] Missing franchiseId - this should not happen with clean FranchiseProvider');
+      // Silent per Master Plan: FranchiseProvider guarantees valid id for customer flows
       return Stream.value(null);
     }
-
-    print(
-        '🔍 [FirestoreServiceImpl][getCart] Listening to: franchises/$franchiseId/carts/$userId');
 
     return _franchiseCollection(franchiseId, _carts)
         .doc(userId)
         .snapshots()
         .map((doc) {
-      print(
-          '🔍 [FirestoreServiceImpl][getCart] Snapshot received - exists: ${doc.exists} | path: franchises/$franchiseId/carts/$userId');
-
       if (!doc.exists || doc.data() == null) {
-        print(
-            '⚠️ [FirestoreServiceImpl][getCart] Cart is empty or does not exist yet');
         return null;
       }
 
       final data = {...doc.data()!, 'status': 'cart'};
       final order = Order.fromFirestore(data, doc.id);
-      print(
-          '✅ [FirestoreServiceImpl][getCart] Loaded cart with ${order.items.length} items | total: ${order.total}');
       return order;
     });
   }
@@ -1442,42 +1431,26 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Stream<List<MenuItem>> getMenuItemsByCategory(String categoryId,
       {String? franchiseId, String? sortBy}) {
-    print(
-        '🔍 [getMenuItemsByCategory] Called - categoryId: "$categoryId", franchiseId: "$franchiseId", sortBy: "$sortBy"');
-
-    // No fallback — franchiseId is now guaranteed valid by shared FranchiseProvider
     if (franchiseId == null || franchiseId.isEmpty) {
-      print(
-          '❌ [getMenuItemsByCategory] CRITICAL: franchiseId is empty or null');
       return Stream.value([]);
     }
-
-    print('🔍 [getMenuItemsByCategory] Using franchiseId: $franchiseId');
 
     firestore.Query q = _franchiseCollection(franchiseId, _menuItems)
         .where('categoryId', isEqualTo: categoryId);
 
     if (sortBy != null && sortBy.isNotEmpty) {
       q = q.orderBy(sortBy);
-      print('🔍 [getMenuItemsByCategory] Applied orderBy: $sortBy');
     } else {
       q = q.orderBy('sortOrder'); // default sort
     }
 
     return q.snapshots().map((s) {
-      print(
-          '📦 [getMenuItemsByCategory] Snapshot received: ${s.docs.length} documents for category $categoryId');
       final list = s.docs
           .map((d) {
             try {
-              final item = MenuItem.fromFirestore(
+              return MenuItem.fromFirestore(
                   d.data() as Map<String, dynamic>, d.id);
-              print(
-                  '   ✅ Parsed menu item: ${item.name} (id: ${item.id}, categoryId: ${item.categoryId})');
-              return item;
             } catch (e, stack) {
-              print('   ❌ Failed to parse menu item ${d.id}: $e');
-              print('   Stack: $stack');
               return null;
             }
           })
