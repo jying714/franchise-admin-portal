@@ -1,13 +1,16 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:shared_core/src/core/models/category.dart' as model;
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/categories/category_card.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/config/ui_config.dart';
 
-typedef CategoryTapCallback = void Function(Category category);
+// P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
+
+typedef CategoryTapCallback = void Function(shared.Category category);
 
 class CategoryGrid extends StatelessWidget {
-  final List<Category> categories;
+  final List<shared.Category> categories;
   final CategoryTapCallback? onCategoryTap;
   final int? crossAxisCount;
   final double? childAspectRatio;
@@ -16,7 +19,7 @@ class CategoryGrid extends StatelessWidget {
   final Widget? loadingWidget;
 
   const CategoryGrid({
-    Key? key,
+    super.key,
     required this.categories,
     this.onCategoryTap,
     this.crossAxisCount,
@@ -24,10 +27,13 @@ class CategoryGrid extends StatelessWidget {
     this.padding,
     this.emptyWidget,
     this.loadingWidget,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
+    // FranchiseProvider injected for franchise/{franchiseId}/ scoping (Batch 2)
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
+
     final loc = AppLocalizations.of(context)!;
 
     if (categories.isEmpty) {
@@ -36,11 +42,11 @@ class CategoryGrid extends StatelessWidget {
           Center(
             child: Text(
               loc.noCategoriesAvailable,
-              style: const TextStyle(
-                color: DesignTokens.secondaryTextColor,
-                fontSize: DesignTokens.bodyFontSize,
-                fontWeight: DesignTokens.bodyFontWeight,
-                fontFamily: DesignTokens.fontFamily,
+              style: TextStyle(
+                color: UiConfig.secondaryTextColor,
+                fontSize: shared.DesignTokens.bodyFontSize,
+                fontWeight: UiConfig.fontWeightNormal,
+                fontFamily: shared.DesignTokens.fontFamily,
               ),
               textAlign: TextAlign.center,
               semanticsLabel: loc.noCategoriesAvailable,
@@ -53,13 +59,14 @@ class CategoryGrid extends StatelessWidget {
         crossAxisCount ?? (MediaQuery.of(context).size.width > 600 ? 3 : 2);
 
     return GridView.builder(
-      padding: padding ?? DesignTokens.gridPadding,
+      padding: padding ?? UiConfig.defaultPadding,
       itemCount: categories.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: gridCount,
-        childAspectRatio: childAspectRatio ?? DesignTokens.gridCardAspectRatio,
-        crossAxisSpacing: DesignTokens.gridSpacing,
-        mainAxisSpacing: DesignTokens.gridSpacing,
+        childAspectRatio:
+            childAspectRatio ?? shared.DesignTokens.gridCardAspectRatio,
+        crossAxisSpacing: shared.DesignTokens.gridSpacing,
+        mainAxisSpacing: shared.DesignTokens.gridSpacing,
       ),
       itemBuilder: (context, index) {
         final category = categories[index];
@@ -71,5 +78,3 @@ class CategoryGrid extends StatelessWidget {
     );
   }
 }
-
-

@@ -1,8 +1,8 @@
 // mobile_app/lib/core/utils/app_local_storage.dart
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shared_core/src/core/utils/local_storage.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
-class AppLocalStorage implements LocalStorage {
+class AppLocalStorage implements shared.LocalStorage {
   static final AppLocalStorage _instance = AppLocalStorage._();
   factory AppLocalStorage() => _instance;
   AppLocalStorage._();

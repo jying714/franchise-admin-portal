@@ -1,31 +1,32 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
-import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_mobile_app/core/utils/formatting.dart';
 
 class DrinksFlavorSelector extends StatelessWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final ThemeData theme;
   final AppLocalizations loc;
-  final Map<String, IngredientMetadata> ingredientMetadata;
+  final Map<String, shared.IngredientMetadata> ingredientMetadata;
   final Map<String, int> selectedSauceCounts;
   final void Function(VoidCallback fn) setState;
 
   const DrinksFlavorSelector({
-    Key? key,
+    super.key,
     required this.menuItem,
     required this.theme,
     required this.loc,
     required this.ingredientMetadata,
     required this.selectedSauceCounts,
     required this.setState,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    final size = menuItem.sizes?.first ?? '';
+    // FranchiseProvider injected (P1 Batch 1) for franchise/{franchiseId}/ scoping centrality
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final size = menuItem.sizes?.first?.toString() ?? '';
     final price = menuItem.sizePrices != null &&
             menuItem.sizes != null &&
             menuItem.sizes!.isNotEmpty
@@ -47,34 +48,34 @@ class DrinksFlavorSelector extends StatelessWidget {
               Text(
                 "Size",
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: DesignTokens.secondaryColor,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: DesignTokens.fontFamily,
+                  color: UiConfig.secondaryColor,
+                  fontWeight: UiConfig.bold,
+                  fontFamily: shared.DesignTokens.fontFamily,
                 ),
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
                 size,
                 style: theme.textTheme.titleMedium,
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Text(
-                currencyFormat(context, price),
+                UiConfig.currencyFormat(context, price),
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: DesignTokens.primaryColor,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: DesignTokens.fontFamily,
+                  color: UiConfig.primaryColor,
+                  fontWeight: UiConfig.bold,
+                  fontFamily: shared.DesignTokens.fontFamily,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
             "Choose Flavors",
             style: theme.textTheme.titleMedium?.copyWith(
-              color: DesignTokens.secondaryColor,
-              fontWeight: FontWeight.bold,
-              fontFamily: DesignTokens.fontFamily,
+              color: UiConfig.secondaryColor,
+              fontWeight: UiConfig.bold,
+              fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
           ...flavorIds.map((id) {
@@ -87,28 +88,33 @@ class DrinksFlavorSelector extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.remove, size: 20),
+                    icon: const Icon(Icons.remove, size: 20),
                     onPressed: !outOfStock && count > 0
                         ? () => setState(() {
                               selectedSauceCounts[id] = count - 1;
                             })
                         : null,
                   ),
-                  SizedBox(width: 2),
+                  const SizedBox(width: 2),
                   Expanded(
                     child: Text(
                       meta?.name ?? id,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: DesignTokens.textColor,
-                        fontFamily: DesignTokens.fontFamily,
+                        color: UiConfig.textColor,
+                        fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     ),
                   ),
-                  SizedBox(width: 8),
-                  Text('x$count', style: theme.textTheme.bodyLarge),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
+                  Text(
+                    'x$count',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: UiConfig.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   IconButton(
-                    icon: Icon(Icons.add, size: 20),
+                    icon: const Icon(Icons.add, size: 20),
                     onPressed: !outOfStock && count < 10
                         ? () => setState(() {
                               selectedSauceCounts[id] = count + 1;
@@ -118,11 +124,9 @@ class DrinksFlavorSelector extends StatelessWidget {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
   }
 }
-
-

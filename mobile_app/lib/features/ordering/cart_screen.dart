@@ -1,17 +1,10 @@
-﻿import 'dart:math' show min;
-
+import 'dart:math' show min;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_mobile_app/config/branding_config.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/models/menu_item.dart';
-import 'package:shared_core/src/core/models/customization.dart';
-import 'package:shared_core/src/core/models/order.dart' as order_model;
-import 'package:shared_core/src/core/models/ingredient_metadata.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/ordering/checkout_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 
@@ -25,13 +18,16 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   Key retryKey = UniqueKey();
 
-  Map<String, Map<String, Customization>> _menuItemCustomizationObjectMap(
-      List<order_model.OrderItem> items, List<MenuItem> menuItems) {
-    final map = <String, Map<String, Customization>>{};
+  Map<String, Map<String, shared.Customization>>
+      _menuItemCustomizationObjectMap(
+    List<shared.OrderItem> items,
+    List<shared.MenuItem> menuItems,
+  ) {
+    final map = <String, Map<String, shared.Customization>>{};
     for (final item in items) {
       final menu = menuItems.firstWhere(
         (m) => m.id == item.menuItemId,
-        orElse: () => MenuItem(
+        orElse: () => shared.MenuItem(
           id: item.menuItemId,
           category: '',
           categoryId: '',
@@ -41,10 +37,11 @@ class _CartScreenState extends State<CartScreen> {
           customizationGroups: [],
           customizations: [],
           taxCategory: '',
+          available: true,
           availability: true,
         ),
       );
-      final customObjMap = <String, Customization>{};
+      final customObjMap = <String, shared.Customization>{};
       for (final group in menu.customizations) {
         customObjMap[group.id] = group;
         if (group.isGroup && group.options != null) {
@@ -59,14 +56,14 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Set<String> _allIngredientIdsInCart(
-    List<order_model.OrderItem> items,
-    List<MenuItem> menuItems,
+    List<shared.OrderItem> items,
+    List<shared.MenuItem> menuItems,
   ) {
     final ids = <String>{};
     for (final item in items) {
       final menu = menuItems.firstWhere(
         (m) => m.id == item.menuItemId,
-        orElse: () => MenuItem(
+        orElse: () => shared.MenuItem(
           id: item.menuItemId,
           category: '',
           categoryId: '',
@@ -76,10 +73,10 @@ class _CartScreenState extends State<CartScreen> {
           customizationGroups: [],
           customizations: [],
           taxCategory: '',
+          available: true,
           availability: true,
         ),
       );
-      // Included Ingredients
       if (menu.includedIngredients != null) {
         for (final ing in menu.includedIngredients!) {
           final ingId = ing['ingredientId'] ?? ing['id'];
@@ -90,7 +87,6 @@ class _CartScreenState extends State<CartScreen> {
           }
         }
       }
-      // Customization Groups
       if (item.customizations != null) {
         item.customizations.forEach((key, val) {
           if (val is List) {
@@ -107,8 +103,8 @@ class _CartScreenState extends State<CartScreen> {
           }
         });
       }
-      // Add-ons
-      if (item.customizations['selectedAddOns'] != null) {
+      if (item.customizations != null &&
+          item.customizations['selectedAddOns'] != null) {
         for (final selId in (item.customizations['selectedAddOns'] as List)) {
           if (selId != null && selId is String && selId.isNotEmpty) {
             ids.add(selId);
@@ -120,9 +116,9 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   List<String> _allAllergensInCart(
-    List<order_model.OrderItem> items,
-    List<MenuItem> menuItems,
-    List<IngredientMetadata> ingredientMetadatas,
+    List<shared.OrderItem> items,
+    List<shared.MenuItem> menuItems,
+    List<shared.IngredientMetadata> ingredientMetadatas,
   ) {
     final allergenSet = <String>{};
     final allIngIds = _allIngredientIdsInCart(items, menuItems);
@@ -138,7 +134,7 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget renderCustomizations(
     dynamic customizations,
-    Map<String, Customization> customObjMap,
+    Map<String, shared.Customization> customObjMap,
     AppLocalizations loc,
   ) {
     if (customizations == null ||
@@ -179,62 +175,57 @@ class _CartScreenState extends State<CartScreen> {
                 ? ' (+${loc.currencyFormat(option.price)})'
                 : '';
             optionWidgets.add(TextSpan(
-                text: '${option.name}$details$upcharge',
-                style: TextStyle(
-                  fontWeight: FontWeight.normal,
-                  color: DesignTokens.secondaryTextColor,
-                  fontFamily: DesignTokens.fontFamily,
-                )));
+              text: '${option.name}$details$upcharge',
+              style: TextStyle(
+                fontWeight: UiConfig.fontWeightNormal,
+                color: UiConfig.secondaryTextColor,
+                fontFamily: shared.DesignTokens.fontFamily,
+              ),
+            ));
             optionWidgets.add(const TextSpan(text: ', '));
           }
           if (optionWidgets.isNotEmpty) optionWidgets.removeLast();
-          rows.add(
-            RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: '$displayName: ',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: DesignTokens.secondaryTextColor,
-                      fontFamily: DesignTokens.fontFamily,
-                    ),
+          rows.add(RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: '$displayName: ',
+                  style: TextStyle(
+                    fontWeight: UiConfig.fontWeightBold,
+                    color: UiConfig.secondaryTextColor,
+                    fontFamily: shared.DesignTokens.fontFamily,
                   ),
-                  ...optionWidgets,
-                ],
-              ),
+                ),
+                ...optionWidgets,
+              ],
             ),
-          );
+          ));
         } else if (selection is bool && selection) {
           final upcharge = (custom?.price ?? 0) > 0
               ? ' (+${loc.currencyFormat(custom!.price)})'
               : '';
-          rows.add(
-            Text(
-              '$displayName$upcharge',
-              style: const TextStyle(
-                fontSize: DesignTokens.captionFontSize,
-                color: DesignTokens.secondaryTextColor,
-                fontWeight: DesignTokens.bodyFontWeight,
-                fontFamily: DesignTokens.fontFamily,
-              ),
+          rows.add(Text(
+            '$displayName$upcharge',
+            style: TextStyle(
+              fontSize: shared.DesignTokens.captionFontSize,
+              color: UiConfig.secondaryTextColor,
+              fontWeight: UiConfig.fontWeightMedium,
+              fontFamily: shared.DesignTokens.fontFamily,
             ),
-          );
+          ));
         }
       });
       return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: rows,
-      );
+          crossAxisAlignment: CrossAxisAlignment.start, children: rows);
     } else if (customizations is List) {
       final joined = customizations.join(', ');
       return Text(
         joined.substring(0, min(50, joined.length)),
-        style: const TextStyle(
-          fontSize: DesignTokens.captionFontSize,
-          color: DesignTokens.secondaryTextColor,
-          fontWeight: DesignTokens.bodyFontWeight,
-          fontFamily: DesignTokens.fontFamily,
+        style: TextStyle(
+          fontSize: shared.DesignTokens.captionFontSize,
+          color: UiConfig.secondaryTextColor,
+          fontWeight: UiConfig.fontWeightMedium,
+          fontFamily: shared.DesignTokens.fontFamily,
         ),
       );
     }
@@ -244,181 +235,177 @@ class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
-    final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: true);
-    final franchiseId = franchiseProvider.currentFranchiseId;
-    final user = FirebaseAuth.instance.currentUser;
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
           loc.cart,
-          style: const TextStyle(
-            fontSize: DesignTokens.titleFontSize,
-            color: DesignTokens.foregroundColor,
-            fontWeight: DesignTokens.titleFontWeight,
-            fontFamily: DesignTokens.fontFamily,
+          style: TextStyle(
+            fontSize: shared.DesignTokens.titleFontSize,
+            color: UiConfig.foregroundColorDark,
+            fontWeight: UiConfig.fontWeightBold,
+            fontFamily: shared.DesignTokens.fontFamily,
           ),
         ),
-        backgroundColor: DesignTokens.primaryColor,
+        backgroundColor: UiConfig.primaryColor,
         centerTitle: true,
         elevation: 0,
-        iconTheme: const IconThemeData(color: DesignTokens.foregroundColor),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      backgroundColor: DesignTokens.backgroundColor,
-      body: user == null
-          ? Center(
+      backgroundColor: UiConfig.backgroundColor,
+      body: Consumer<shared.FranchiseProvider>(
+        builder: (context, provider, child) {
+          final user = FirebaseAuth.instance.currentUser;
+
+          if (!provider.hasValidFranchise) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (user == null) {
+            return Center(
               child: Text(
                 loc.mustSignInForCart,
-                style: const TextStyle(
-                  fontSize: DesignTokens.bodyFontSize,
-                  color: DesignTokens.textColor,
-                  fontFamily: DesignTokens.fontFamily,
-                  fontWeight: DesignTokens.bodyFontWeight,
+                style: TextStyle(
+                  fontSize: shared.DesignTokens.bodyFontSize,
+                  color: UiConfig.textColor,
+                  fontFamily: shared.DesignTokens.fontFamily,
+                  fontWeight: UiConfig.fontWeightMedium,
                 ),
               ),
-            )
-          : StreamBuilder<order_model.Order?>(
-              key: retryKey,
-              stream: firestoreService.getCart(user.uid, franchiseId: franchiseId != 'unknown' ? franchiseId : null),
-              builder: (context, cartSnapshot) {
-                if (cartSnapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (cartSnapshot.hasError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '${loc.errorLoadingCart}\n${cartSnapshot.error}',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: DesignTokens.bodyFontSize,
-                            color: DesignTokens.errorTextColor,
-                            fontFamily: DesignTokens.fontFamily,
-                            fontWeight: DesignTokens.bodyFontWeight,
-                          ),
-                        ),
-                        const SizedBox(height: DesignTokens.gridSpacing * 2),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: DesignTokens.primaryColor,
-                            foregroundColor: DesignTokens.foregroundColor,
-                            padding: DesignTokens.buttonPadding,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  DesignTokens.buttonRadius),
-                            ),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              retryKey = UniqueKey();
-                            });
-                          },
-                          child: Text(loc.retry),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                final cart = cartSnapshot.data;
-                if (cart == null || cart.items.isEmpty) {
-                  return buildEmptyState(context, loc);
-                }
-                return StreamBuilder<List<MenuItem>>(
-                  stream: firestoreService.getMenuItemsByIds(
-                      cart.items.map((i) => i.menuItemId).toList()),
-                  builder: (context, menuSnapshot) {
-                    final menuItems = menuSnapshot.data ?? [];
-                    final objMap =
-                        _menuItemCustomizationObjectMap(cart.items, menuItems);
+            );
+          }
 
-                    return StreamBuilder<List<MenuItem>>(
-                      stream: firestoreService.getMenuItemsByIds(
-                          cart.items.map((i) => i.menuItemId).toList()),
-                      builder: (context, menuSnapshot) {
-                        final menuItems = menuSnapshot.data ?? [];
-                        final objMap = _menuItemCustomizationObjectMap(
-                            cart.items, menuItems);
-
-                        return FutureBuilder<List<IngredientMetadata>>(
-                          future: firestoreService.getAllIngredientMetadata(),
-                          builder: (context, ingredientSnapshot) {
-                            final ingredientMetadatas =
-                                ingredientSnapshot.data ?? [];
-                            final allAllergens = _allAllergensInCart(
-                                cart.items, menuItems, ingredientMetadatas);
-                            final showAllergenWarning = allAllergens.isNotEmpty;
-
-                            return AnimatedSwitcher(
-                              duration: DesignTokens.animationDuration,
-                              child: Column(
-                                children: [
-                                  if (showAllergenWarning)
-                                    Container(
-                                      width: double.infinity,
-                                      margin: const EdgeInsets.only(
-                                          left: 16,
-                                          right: 16,
-                                          top: 16,
-                                          bottom: 8),
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: DesignTokens.errorBgColor
-                                            .withOpacity(0.11),
-                                        borderRadius: BorderRadius.circular(
-                                            DesignTokens.cardRadius),
-                                      ),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Icon(
-                                              Icons.warning_amber_rounded,
-                                              color: DesignTokens.errorColor,
-                                              size: 28),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              '${loc.warning}: ${loc.itemsInCartCouldContain}\n'
-                                              '${allAllergens.join(", ")}',
-                                              style: TextStyle(
-                                                color: DesignTokens.errorColor,
-                                                fontWeight: FontWeight.bold,
-                                                fontFamily:
-                                                    DesignTokens.fontFamily,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  Expanded(
-                                    child: buildCartContent(
-                                      context,
-                                      cart,
-                                      firestoreService,
-                                      loc,
-                                      objMap,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
-                );
-              },
+          return StreamBuilder<shared.Order?>(
+            key: retryKey,
+            stream: firestoreService.getCart(
+              user.uid,
+              franchiseId: provider.currentFranchiseId,
             ),
+            builder: (context, cartSnapshot) {
+              if (cartSnapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (cartSnapshot.hasError) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${loc.errorLoadingCart}\n${cartSnapshot.error}',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: shared.DesignTokens.bodyFontSize,
+                          color: UiConfig.errorColor,
+                          fontFamily: shared.DesignTokens.fontFamily,
+                          fontWeight: UiConfig.fontWeightMedium,
+                        ),
+                      ),
+                      const SizedBox(
+                          height: shared.DesignTokens.gridSpacing * 2),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: UiConfig.primaryColor,
+                          foregroundColor: UiConfig.foregroundColorDark,
+                          padding: UiConfig.defaultPadding,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                                shared.DesignTokens.buttonRadius),
+                          ),
+                        ),
+                        onPressed: () => setState(() => retryKey = UniqueKey()),
+                        child: Text(loc.retry),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final cart = cartSnapshot.data;
+              if (cart == null || cart.items.isEmpty) {
+                return buildEmptyState(context, loc);
+              }
+
+              return StreamBuilder<List<shared.MenuItem>>(
+                stream: firestoreService.getMenuItemsByIds(
+                  provider.currentFranchiseId,
+                  cart.items.map((i) => i.menuItemId).toList(),
+                ),
+                builder: (context, menuSnapshot) {
+                  final menuItems = menuSnapshot.data ?? [];
+                  final objMap =
+                      _menuItemCustomizationObjectMap(cart.items, menuItems);
+
+                  return FutureBuilder<List<shared.IngredientMetadata>>(
+                    future: firestoreService
+                        .getAllIngredientMetadata(provider.currentFranchiseId),
+                    builder: (context, ingredientSnapshot) {
+                      final ingredientMetadatas = ingredientSnapshot.data ?? [];
+                      final allAllergens = _allAllergensInCart(
+                          cart.items, menuItems, ingredientMetadatas);
+                      final showAllergenWarning = allAllergens.isNotEmpty;
+
+                      return AnimatedSwitcher(
+                        duration: Duration(
+                            milliseconds:
+                                shared.DesignTokens.animationDurationMs),
+                        child: Column(
+                          children: [
+                            if (showAllergenWarning)
+                              Container(
+                                width: double.infinity,
+                                margin: UiConfig.defaultPadding,
+                                padding: UiConfig.defaultPadding,
+                                decoration: BoxDecoration(
+                                  color: UiConfig.errorColor.withOpacity(0.11),
+                                  borderRadius: BorderRadius.circular(
+                                      shared.DesignTokens.cardRadius),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.warning_amber_rounded,
+                                        color: UiConfig.errorColor, size: 28),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        '${loc.warning}: ${loc.itemsInCartCouldContain}\n${allAllergens.join(", ")}',
+                                        style: TextStyle(
+                                          color: UiConfig.errorColor,
+                                          fontWeight: UiConfig.fontWeightBold,
+                                          fontFamily:
+                                              shared.DesignTokens.fontFamily,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            Expanded(
+                              child: buildCartContent(
+                                context,
+                                cart,
+                                firestoreService,
+                                loc,
+                                objMap,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
+  // buildEmptyState and buildCartContent remain unchanged (kept for brevity)
   Widget buildEmptyState(BuildContext context, AppLocalizations loc) {
     return Center(
       key: const ValueKey('empty'),
@@ -427,23 +414,23 @@ class _CartScreenState extends State<CartScreen> {
         children: [
           Text(
             loc.yourCartIsEmpty,
-            style: const TextStyle(
-              fontSize: DesignTokens.bodyFontSize,
-              color: DesignTokens.textColor,
-              fontFamily: DesignTokens.fontFamily,
-              fontWeight: DesignTokens.bodyFontWeight,
+            style: TextStyle(
+              fontSize: shared.DesignTokens.bodyFontSize,
+              color: UiConfig.textColor,
+              fontFamily: shared.DesignTokens.fontFamily,
+              fontWeight: UiConfig.fontWeightMedium,
             ),
           ),
-          const SizedBox(height: DesignTokens.gridSpacing * 2),
+          const SizedBox(height: shared.DesignTokens.gridSpacing * 2),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: DesignTokens.secondaryColor,
-              foregroundColor: DesignTokens.foregroundColor,
-              padding: DesignTokens.buttonPadding,
+              backgroundColor: UiConfig.secondaryColor,
+              foregroundColor: UiConfig.foregroundColorDark,
+              padding: UiConfig.defaultPadding,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(DesignTokens.buttonRadius),
-              ),
-              elevation: DesignTokens.buttonElevation,
+                  borderRadius:
+                      BorderRadius.circular(shared.DesignTokens.buttonRadius)),
+              elevation: shared.DesignTokens.buttonElevation,
             ),
             onPressed: () => Navigator.pop(context),
             child: Text(loc.startShopping),
@@ -455,17 +442,17 @@ class _CartScreenState extends State<CartScreen> {
 
   Widget buildCartContent(
     BuildContext context,
-    order_model.Order cart,
-    FirestoreService firestoreService,
+    shared.Order cart,
+    shared.FirestoreService firestoreService,
     AppLocalizations loc,
-    Map<String, Map<String, Customization>> objMap,
+    Map<String, Map<String, shared.Customization>> objMap,
   ) {
-    Future<void> updateCart(order_model.Order updatedCart) async {
+    Future<void> updateCart(shared.Order updatedCart) async {
       await firestoreService.updateCart(updatedCart);
     }
 
     void removeItem(int index) async {
-      final updatedItems = List<order_model.OrderItem>.from(cart.items)
+      final updatedItems = List<shared.OrderItem>.from(cart.items)
         ..removeAt(index);
       final updatedCart = cart.copyWith(items: updatedItems);
       await updateCart(updatedCart);
@@ -474,14 +461,15 @@ class _CartScreenState extends State<CartScreen> {
         SnackBar(
           content: Text(
             loc.itemRemovedFromCart,
-            style: const TextStyle(
-              color: DesignTokens.textColor,
-              fontFamily: DesignTokens.fontFamily,
-              fontWeight: DesignTokens.bodyFontWeight,
+            style: TextStyle(
+              color: UiConfig.textColor,
+              fontFamily: shared.DesignTokens.fontFamily,
+              fontWeight: UiConfig.fontWeightMedium,
             ),
           ),
-          backgroundColor: DesignTokens.surfaceColor,
-          duration: DesignTokens.toastDuration,
+          backgroundColor: UiConfig.surfaceColor,
+          duration:
+              const Duration(seconds: shared.DesignTokens.toastDurationSeconds),
         ),
       );
     }
@@ -492,25 +480,25 @@ class _CartScreenState extends State<CartScreen> {
         builder: (context) => AlertDialog(
           title: Text(
             loc.clearCart,
-            style: const TextStyle(
-              fontWeight: DesignTokens.titleFontWeight,
-              color: DesignTokens.primaryColor,
-              fontFamily: DesignTokens.fontFamily,
+            style: TextStyle(
+              fontWeight: UiConfig.fontWeightBold,
+              color: UiConfig.primaryColor,
+              fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
           content: Text(
             loc.clearCartConfirmation,
-            style: const TextStyle(
-              color: DesignTokens.textColor,
-              fontFamily: DesignTokens.fontFamily,
-              fontWeight: DesignTokens.bodyFontWeight,
+            style: TextStyle(
+              color: UiConfig.textColor,
+              fontFamily: shared.DesignTokens.fontFamily,
+              fontWeight: UiConfig.fontWeightMedium,
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(
-                foregroundColor: DesignTokens.disabledTextColor,
+                foregroundColor: UiConfig.disabledTextColor,
               ),
               child: Text(loc.no),
             ),
@@ -523,19 +511,20 @@ class _CartScreenState extends State<CartScreen> {
                   SnackBar(
                     content: Text(
                       loc.cartCleared,
-                      style: const TextStyle(
-                        color: DesignTokens.errorTextColor,
-                        fontFamily: DesignTokens.fontFamily,
-                        fontWeight: DesignTokens.bodyFontWeight,
+                      style: TextStyle(
+                        color: UiConfig.errorColor,
+                        fontFamily: shared.DesignTokens.fontFamily,
+                        fontWeight: UiConfig.fontWeightMedium,
                       ),
                     ),
-                    backgroundColor: DesignTokens.surfaceColor,
-                    duration: DesignTokens.toastDuration,
+                    backgroundColor: UiConfig.surfaceColor,
+                    duration: const Duration(
+                        seconds: shared.DesignTokens.toastDurationSeconds),
                   ),
                 );
               },
               style: TextButton.styleFrom(
-                foregroundColor: DesignTokens.primaryColor,
+                foregroundColor: UiConfig.primaryColor,
               ),
               child: Text(loc.yes),
             ),
@@ -549,36 +538,38 @@ class _CartScreenState extends State<CartScreen> {
       children: [
         Expanded(
           child: ListView.builder(
-            padding: DesignTokens.gridPadding,
+            padding: UiConfig.defaultPadding,
             itemCount: cart.items.length,
             itemBuilder: (context, index) {
               final item = cart.items[index];
               final customMap = objMap[item.menuItemId] ?? {};
               return Card(
-                elevation: DesignTokens.cardElevation,
+                elevation: shared.DesignTokens.cardElevation,
                 margin: const EdgeInsets.symmetric(
-                    vertical: DesignTokens.gridSpacing / 2),
+                    vertical: shared.DesignTokens.gridSpacing / 2),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+                  borderRadius:
+                      BorderRadius.circular(shared.DesignTokens.cardRadius),
                 ),
-                color: DesignTokens.surfaceColor,
+                color: UiConfig.surfaceColor,
                 child: ListTile(
                   leading: NetworkImageWidget(
                     imageUrl: item.image ?? '',
-                    fallbackAsset: BrandingConfig.defaultPizzaIcon,
+                    fallbackAsset:
+                        UiConfig.defaultPizzaIcon, // Updated via UiConfig
                     width: 50,
                     height: 50,
                     fit: BoxFit.cover,
                     borderRadius:
-                        BorderRadius.circular(DesignTokens.imageRadius),
+                        BorderRadius.circular(shared.DesignTokens.imageRadius),
                   ),
                   title: Text(
                     item.name,
-                    style: const TextStyle(
-                      fontSize: DesignTokens.bodyFontSize,
-                      color: DesignTokens.textColor,
-                      fontFamily: DesignTokens.fontFamily,
-                      fontWeight: DesignTokens.bodyFontWeight,
+                    style: TextStyle(
+                      fontSize: shared.DesignTokens.bodyFontSize,
+                      color: UiConfig.textColor,
+                      fontFamily: shared.DesignTokens.fontFamily,
+                      fontWeight: UiConfig.fontWeightMedium,
                     ),
                   ),
                   subtitle:
@@ -588,18 +579,18 @@ class _CartScreenState extends State<CartScreen> {
                     children: [
                       Text(
                         '\$${(item.price * item.quantity).toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: DesignTokens.bodyFontSize,
-                          color: DesignTokens.textColor,
-                          fontWeight: DesignTokens.bodyFontWeight,
-                          fontFamily: DesignTokens.fontFamily,
+                        style: TextStyle(
+                          fontSize: shared.DesignTokens.bodyFontSize,
+                          color: UiConfig.textColor,
+                          fontWeight: UiConfig.fontWeightMedium,
+                          fontFamily: shared.DesignTokens.fontFamily,
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.delete,
-                          color: DesignTokens.errorColor,
-                          size: DesignTokens.iconSize,
+                          color: UiConfig.errorColor,
+                          size: shared.DesignTokens.iconSize,
                         ),
                         onPressed: () => removeItem(index),
                         tooltip: loc.removeItem,
@@ -612,49 +603,49 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
         Padding(
-          padding: DesignTokens.gridPadding,
+          padding: UiConfig.defaultPadding,
           child: Column(
             children: [
               Text(
                 '${loc.total}: \$${cart.total.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: DesignTokens.titleFontSize,
-                  fontWeight: DesignTokens.titleFontWeight,
-                  color: DesignTokens.textColor,
-                  fontFamily: DesignTokens.fontFamily,
+                style: TextStyle(
+                  fontSize: shared.DesignTokens.titleFontSize,
+                  fontWeight: UiConfig.fontWeightBold,
+                  color: UiConfig.textColor,
+                  fontFamily: shared.DesignTokens.fontFamily,
                 ),
               ),
-              const SizedBox(height: DesignTokens.gridSpacing),
+              const SizedBox(height: shared.DesignTokens.gridSpacing),
               Row(
                 children: [
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: DesignTokens.secondaryColor,
-                        foregroundColor: DesignTokens.foregroundColor,
-                        padding: DesignTokens.buttonPadding,
+                        backgroundColor: UiConfig.secondaryColor,
+                        foregroundColor: UiConfig.foregroundColorDark,
+                        padding: UiConfig.defaultPadding,
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(DesignTokens.buttonRadius),
+                          borderRadius: BorderRadius.circular(
+                              shared.DesignTokens.buttonRadius),
                         ),
-                        elevation: DesignTokens.buttonElevation,
+                        elevation: shared.DesignTokens.buttonElevation,
                       ),
                       onPressed: () => Navigator.pop(context),
                       child: Text(loc.addMoreItems),
                     ),
                   ),
-                  const SizedBox(width: DesignTokens.gridSpacing),
+                  const SizedBox(width: shared.DesignTokens.gridSpacing),
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: DesignTokens.disabledTextColor,
-                        foregroundColor: DesignTokens.foregroundColor,
-                        padding: DesignTokens.buttonPadding,
+                        backgroundColor: UiConfig.disabledTextColor,
+                        foregroundColor: UiConfig.foregroundColorDark,
+                        padding: UiConfig.defaultPadding,
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(DesignTokens.buttonRadius),
+                          borderRadius: BorderRadius.circular(
+                              shared.DesignTokens.buttonRadius),
                         ),
-                        elevation: DesignTokens.buttonElevation,
+                        elevation: shared.DesignTokens.buttonElevation,
                       ),
                       onPressed: clearCart,
                       child: Text(loc.clearCart),
@@ -662,17 +653,17 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: DesignTokens.gridSpacing),
+              const SizedBox(height: shared.DesignTokens.gridSpacing),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: DesignTokens.primaryColor,
-                  foregroundColor: DesignTokens.foregroundColor,
-                  padding: DesignTokens.buttonPadding,
+                  backgroundColor: UiConfig.primaryColor,
+                  foregroundColor: UiConfig.foregroundColorDark,
+                  padding: UiConfig.defaultPadding,
                   shape: RoundedRectangleBorder(
                     borderRadius:
-                        BorderRadius.circular(DesignTokens.buttonRadius),
+                        BorderRadius.circular(shared.DesignTokens.buttonRadius),
                   ),
-                  elevation: DesignTokens.buttonElevation,
+                  elevation: shared.DesignTokens.buttonElevation,
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -691,5 +682,3 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 }
-
-

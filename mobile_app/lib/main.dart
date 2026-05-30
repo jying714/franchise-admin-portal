@@ -1,29 +1,33 @@
-﻿import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:franchise_mobile_app/core/utils/app_local_storage.dart';
 
-import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
-import 'package:franchise_mobile_app/core/services/analytics_service.dart';
+// Shared Core
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:shared_core/shared_core.dart' show DesignTokens;
+
+// Local Providers & Config
 import 'package:franchise_mobile_app/features/language/language_provider.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as app_user;
-import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
-import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
+// Note: FranchiseProvider now comes exclusively from shared_core (single source of truth)
 
+// Screens
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/complete_profile_dialog.dart';
 import 'firebase_options.dart';
 
-/// Ingredient Metadata Provider
+/// Ingredient Metadata Provider (global for now)
 class IngredientMetadataProvider extends ChangeNotifier {
-  final Map<String, IngredientMetadata> _ingredients = {};
+  final Map<String, shared.IngredientMetadata> _ingredients = {};
   bool _isLoaded = false;
   bool get isLoaded => _isLoaded;
-  Map<String, IngredientMetadata> get ingredients => _ingredients;
+  Map<String, shared.IngredientMetadata> get ingredients => _ingredients;
 
   IngredientMetadataProvider() {
     _loadIngredients();
@@ -37,13 +41,15 @@ class IngredientMetadataProvider extends ChangeNotifier {
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final id = data['id'] ?? doc.id;
-        _ingredients[id] = IngredientMetadata.fromMap({...data, 'id': id});
+        _ingredients[id] =
+            shared.IngredientMetadata.fromMap({...data, 'id': id});
       }
       _isLoaded = true;
       notifyListeners();
     } catch (e) {
       _isLoaded = true;
       notifyListeners();
+      // Error intentionally not logged here (one-time bootstrap provider)
     }
   }
 }
@@ -62,24 +68,30 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
-        ChangeNotifierProvider(create: (_) => FranchiseProvider()),
-        Provider(create: (_) => AnalyticsService()),
+
+        /// FranchiseProvider from shared_core ONLY (P1 cleanup: dual wrapper removed).
+        /// All franchise state + logic lives in shared_core.
+        /// The plain Provider is sufficient: Consumers use it for hasValidFranchise guards + currentFranchiseId reads.
+        Provider<shared.FranchiseProvider>(
+          create: (_) => shared.FranchiseProvider(AppLocalStorage()),
+        ),
+
+        Provider<shared.AnalyticsService>(
+            create: (_) => shared.AnalyticsServiceImpl()),
         ChangeNotifierProvider(create: (_) => IngredientMetadataProvider()),
 
-        // Concrete implementations from shared_core
+        // Shared Core Services
         Provider<shared.AuthService>(create: (_) => shared.AuthServiceImpl()),
         Provider<shared.FirestoreService>(
             create: (_) => shared.FirestoreServiceImpl()),
 
+        // User Stream
         StreamProvider<shared.User?>(
           create: (_) {
             final authService = shared.AuthServiceImpl();
             final firestoreService = shared.FirestoreServiceImpl();
-
             return authService.authStateChanges.asyncExpand((user) {
-              if (user == null) {
-                return Stream.value(null);
-              }
+              if (user == null) return Stream.value(null);
               return firestoreService.getUserByIdStream(user.id);
             });
           },
@@ -97,28 +109,28 @@ class MyApp extends StatelessWidget {
             );
           }
 
-          return Provider<Map<String, IngredientMetadata>>.value(
+          return Provider<Map<String, shared.IngredientMetadata>>.value(
             value: ingredientProvider.ingredients,
             child: Consumer<LanguageProvider>(
               builder: (context, languageProvider, child) {
                 return MaterialApp(
                   title: 'Doughboys Pizzeria',
                   theme: ThemeData(
-                    primaryColor: DesignTokens.primaryColor,
-                    scaffoldBackgroundColor: DesignTokens.backgroundColor,
+                    primaryColor: UiConfig.primaryColor,
+                    scaffoldBackgroundColor: UiConfig.backgroundColorDark,
                     colorScheme: ColorScheme.fromSwatch().copyWith(
-                      secondary: DesignTokens.secondaryColor,
+                      secondary: UiConfig.secondaryColor,
                     ),
-                    textTheme: const TextTheme(
+                    textTheme: TextTheme(
                       titleLarge: TextStyle(
                         fontFamily: DesignTokens.fontFamily,
                         fontSize: DesignTokens.titleFontSize,
-                        fontWeight: DesignTokens.titleFontWeight,
+                        fontWeight: UiConfig.fontWeightBold,
                       ),
                       bodyLarge: TextStyle(
                         fontFamily: DesignTokens.fontFamily,
                         fontSize: DesignTokens.bodyFontSize,
-                        fontWeight: DesignTokens.bodyFontWeight,
+                        fontWeight: UiConfig.fontWeightNormal,
                       ),
                     ),
                   ),
@@ -151,25 +163,44 @@ class HomeWrapper extends StatefulWidget {
 
 class _HomeWrapperState extends State<HomeWrapper> {
   bool _dialogShown = false;
+  bool _isInitializing = true; // ← NEW
 
   @override
   Widget build(BuildContext context) {
     final sharedUser = Provider.of<shared.User?>(context);
+    final franchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
 
     if (sharedUser == null) {
       return const SignInScreen();
     }
 
-    // Convert shared.User → local app_user.User for the dialog
+    // Initialize franchise (only once)
+    if (_isInitializing && !franchiseProvider.hasValidFranchise) {
+      _isInitializing = false; // prevent multiple calls
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await franchiseProvider.initializeWithUser(sharedUser);
+        if (mounted) setState(() {}); // force rebuild
+      });
+    }
+
+    // Show loading while initializing
+    if (_isInitializing || !franchiseProvider.hasValidFranchise) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Convert to local model for dialog
     final localUser = app_user.User(
       id: sharedUser.id,
       name: sharedUser.name,
       email: sharedUser.email,
+      phoneNumber: sharedUser.phoneNumber,
       roles: sharedUser.roles,
+      addresses: sharedUser.addresses,
       language: sharedUser.language,
       status: sharedUser.status,
-      phoneNumber: sharedUser.phoneNumber,
-      addresses: sharedUser.addresses,
       defaultFranchise: sharedUser.defaultFranchise,
       avatarUrl: sharedUser.avatarUrl,
       franchiseIds: sharedUser.franchiseIds,
@@ -184,11 +215,13 @@ class _HomeWrapperState extends State<HomeWrapper> {
         !_dialogShown) {
       _dialogShown = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (_) => CompleteProfileDialog(user: localUser),
-        );
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => CompleteProfileDialog(user: localUser),
+          );
+        }
       });
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }

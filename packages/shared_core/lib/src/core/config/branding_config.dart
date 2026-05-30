@@ -1,5 +1,4 @@
 /// Pure Dart branding configuration — shared across mobile, web, and functions
-/// Contains only data that is not tied to Flutter UI or asset paths
 class BrandingConfig {
   // --------- Franchise Details (Shared) ---------
   static const String franchiseName = "Doughboys Pizzeria";
@@ -8,42 +7,46 @@ class BrandingConfig {
   static const String poweredBy = "Powered by Dough Boys Tech";
 
   // --------- Brand Identity (Hex Strings) ---------
-  static const String brandRedHex = "#D23215"; // Dough Boys Pizzeria Red
+  static const String brandRedHex = "#D23215";
   static const String accentColorHex = "#D23215";
 
-  // --------- URLs (External) ---------
-  static const String termsOfServiceUrl = 'https://doughboys.com/terms';
-  static const String privacyPolicyUrl = 'https://doughboys.com/privacy';
+  // --------- Assets (Paths - used by mobile & web) ---------
+  static const String logoMain = 'assets/images/logo.png';
+  static const String logoSmall = 'assets/images/logo_small.png';
+  static const String logoLarge = 'assets/images/logo_large.png';
+  static const String defaultPizzaIcon = 'assets/icons/pizza.png';
+  static const String defaultCategoryIcon =
+      'assets/images/default_category_icon.png';
+  static const String adminEmptyStateImage = 'assets/images/admin_empty.png';
+  static const String menuItemPlaceholderImage =
+      'assets/images/menu_item_placeholder.png';
+  static const String ingredientPlaceholder =
+      'assets/images/ingredient_placeholder.png';
+  static const String defaultProfileIcon = 'assets/images/default_profile.png';
+  static const String bannerPlaceholder =
+      'assets/images/banner_placeholder.png';
 
-  // --------- App Bar Config (Shared Logic) ---------
-  static const String appBarTitle = 'Menu Categories';
+  // --------- URLs ---------
+  static const String termsOfServiceUrl = 'https://franchisehq.io/terms';
+  static const String privacyPolicyUrl = 'https://franchisehq.io/privacy';
 
-  // --------- Contact & Support ---------
-  static const String primaryContact = 'support@doughboyspizzeria.com';
+  // --------- App Bar ---------
+  static const bool showLogoInAppBar = true;
+  static const String appBarLogoAsset = 'assets/images/logo_small.png';
 
-  // --------- KPI & Dashboard Logic ---------
+  // --------- Dynamic Logic ---------
   static String brandColorHexFor(String brandId) {
-    // Future: map brandId → color
+    // Future white-label logic
     return brandRedHex;
   }
 
-  // --------- Landing Page (Shared Data) ---------
-  static const String heroScreenshot =
-      'https://via.placeholder.com/640x300.png?text=Landing+Hero';
-  static const String adminDashboardScreenshot =
-      'https://via.placeholder.com/480x240.png?text=Admin+Dashboard';
-  static const String mobileAppScreenshot =
-      'https://via.placeholder.com/240x480.png?text=Mobile+App';
-  static const String menuEditorScreenshot =
-      'https://via.placeholder.com/480x240.png?text=Menu+Editor';
-  static const String demoVideoUrl = 'https://www.youtube.com/watch?v=yourdemo';
-  static const String logoUrl =
-      'https://via.placeholder.com/256x64.png?text=Logo';
+  // Missing statics from analyze
+  static const String fallbackAppIcon = 'assets/images/logo.png';
+
+  static String get defaultFranchiseLogo => logoMain;
+  static String get appIcon => logoSmall;
 
   // ======================
   // === FUTURE TOKENS ====
   // ======================
-  // static const String instagramHandle = "@doughboys";
-  // static const String franchiseEmail = "contact@doughboys.com";
-  // static const String franchiseSlogan = "Slice of Heaven Since 1999";
 }

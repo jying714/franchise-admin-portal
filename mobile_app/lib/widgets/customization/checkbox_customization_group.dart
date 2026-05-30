@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
-import 'package:franchise_mobile_app/core/utils/formatting.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CheckboxCustomizationGroup extends StatelessWidget {
@@ -10,17 +10,17 @@ class CheckboxCustomizationGroup extends StatelessWidget {
   final AppLocalizations loc;
   final String category;
   final List<dynamic>? includedIngredients;
-  final Map<String, IngredientMetadata> ingredientMetadata;
+  final Map<String, shared.IngredientMetadata> ingredientMetadata;
   final Set<String> currentIngredients;
   final bool usesDynamicToppingPricing;
   final bool Function(String groupLabel) showPortionToggle;
   final double Function() getToppingUpcharge;
-  final double Function(IngredientMetadata? meta) getIngredientUpcharge;
+  final double Function(shared.IngredientMetadata? meta) getIngredientUpcharge;
   final void Function(String ingId, String groupLabel) toggleIngredient;
   final Widget Function(String ingId) buildPortionPillToggle;
 
   const CheckboxCustomizationGroup({
-    Key? key,
+    super.key,
     required this.group,
     required this.theme,
     required this.loc,
@@ -34,10 +34,12 @@ class CheckboxCustomizationGroup extends StatelessWidget {
     required this.getIngredientUpcharge,
     required this.toggleIngredient,
     required this.buildPortionPillToggle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
+    // FranchiseProvider injected (P1 Batch 1) for franchise/{franchiseId}/ scoping centrality
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
     final String groupLabel = group['label'] ?? '';
     final List<String> ingredientIds =
         (group['ingredientIds'] as List<dynamic>? ?? [])
@@ -58,9 +60,9 @@ class CheckboxCustomizationGroup extends StatelessWidget {
           Text(
             groupLabel,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: DesignTokens.secondaryColor,
-              fontWeight: FontWeight.bold,
-              fontFamily: DesignTokens.fontFamily,
+              color: UiConfig.secondaryColor,
+              fontWeight: UiConfig.bold,
+              fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
           ...unselectedIds.map((ingId) {
@@ -89,18 +91,18 @@ class CheckboxCustomizationGroup extends StatelessWidget {
                     title: Text(
                       meta?.name ?? ingId,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: DesignTokens.textColor,
-                        fontFamily: DesignTokens.fontFamily,
+                        color: UiConfig.textColor,
+                        fontFamily: shared.DesignTokens.fontFamily,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
                     secondary: showUpcharge
                         ? Text(
-                            '+${currencyFormat(context, upcharge)}',
+                            '+${UiConfig.currencyFormat(context, upcharge)}',
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: DesignTokens.secondaryColor,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: DesignTokens.fontFamily,
+                              color: UiConfig.secondaryColor,
+                              fontWeight: UiConfig.bold,
+                              fontFamily: shared.DesignTokens.fontFamily,
                             ),
                           )
                         : null,
@@ -112,7 +114,7 @@ class CheckboxCustomizationGroup extends StatelessWidget {
                     padding: const EdgeInsets.only(right: 8.0),
                     child: checked
                         ? buildPortionPillToggle(ingId)
-                        : SizedBox.shrink(),
+                        : const SizedBox.shrink(),
                   ),
               ],
             );
@@ -122,5 +124,3 @@ class CheckboxCustomizationGroup extends StatelessWidget {
     );
   }
 }
-
-

@@ -798,6 +798,10 @@
   "submitted": "Submitted",
   "refresh": "Refresh",
   "feedbackAnonymous": "Anonymous",
-  "notesLabel": "Notes"
+  "notesLabel": "Notes",
+  "switchRestaurant": "Switch Restaurant",
+"@switchRestaurant": {
+  "description": "Title for franchise selector screen"
+}
 
   }

@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 
 /// A reusable navigation tile for profile/account menus.
 /// Handles optional icons and highlight states.
@@ -10,12 +11,12 @@ class ProfileNavTile extends StatelessWidget {
   final bool highlight;
 
   const ProfileNavTile({
-    Key? key,
+    super.key,
     required this.label,
     required this.destination,
     this.icon,
     this.highlight = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,24 +25,20 @@ class ProfileNavTile extends StatelessWidget {
           ? Icon(
               icon,
               color: highlight
-                  ? DesignTokens.adminPrimaryColor
-                  : DesignTokens.primaryColor,
+                  ? UiConfig.adminPrimaryColor
+                  : UiConfig.primaryColor,
             )
           : null,
       title: Text(
         label,
-        style: TextStyle(
-          fontSize: DesignTokens.bodyFontSize,
-          color: highlight
-              ? DesignTokens.adminPrimaryColor
-              : DesignTokens.textColor,
-          fontFamily: DesignTokens.fontFamily,
-          fontWeight: DesignTokens.bodyFontWeight,
+        style: UiConfig.bodyStyle.copyWith(
+          color: highlight ? UiConfig.adminPrimaryColor : UiConfig.textColor,
+          fontWeight: UiConfig.fontWeightBold,
         ),
       ),
-      trailing: const Icon(
+      trailing: Icon(
         Icons.arrow_forward,
-        color: DesignTokens.primaryColor,
+        color: UiConfig.primaryColor,
       ),
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => destination),
@@ -50,5 +47,3 @@ class ProfileNavTile extends StatelessWidget {
     );
   }
 }
-
-

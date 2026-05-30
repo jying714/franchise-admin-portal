@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'auth_service.dart';
 import '../models/user.dart' as app_user;
+import 'dart:io' show Platform;
 
 class AuthServiceImpl implements AuthService {
   final fb_auth.FirebaseAuth _auth = fb_auth.FirebaseAuth.instance;
@@ -92,4 +93,54 @@ class AuthServiceImpl implements AuthService {
   @override
   Future<String?> getIdToken({bool forceRefresh = false}) async =>
       await _auth.currentUser?.getIdToken(forceRefresh);
+
+  @override
+  Future<void> sendEmailVerification() async {
+    await _auth.currentUser?.sendEmailVerification();
+  }
+
+  @override
+  Future<void> setGuestSession() async {
+    await _auth.signInAnonymously();
+  }
+
+  @override
+  Future<void> setDemoSession() async {
+    // Demo mode currently uses anonymous auth (can be extended later with demo-specific credentials or Firestore flags)
+    await _auth.signInAnonymously();
+  }
+
+  @override
+  Future<app_user.User> signInWithGoogle() async {
+    try {
+      final fb_auth.GoogleAuthProvider googleProvider =
+          fb_auth.GoogleAuthProvider();
+
+      // Mobile: Uses plugin flow; Web/Desktop: Uses popup
+      final fb_auth.UserCredential cred;
+      if (Platform.isAndroid || Platform.isIOS) {
+        cred = await _auth.signInWithProvider(googleProvider);
+      } else {
+        cred = await _auth.signInWithPopup(googleProvider);
+      }
+
+      final fbUser = cred.user;
+      if (fbUser == null) {
+        throw Exception('Google sign-in failed: No user returned');
+      }
+
+      return app_user.User(
+        id: fbUser.uid,
+        name: fbUser.displayName ?? '',
+        email: fbUser.email ?? '',
+        phoneNumber: fbUser.phoneNumber,
+        roles: const ['customer'],
+        language: 'en',
+        status: 'active',
+        avatarUrl: fbUser.photoURL,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

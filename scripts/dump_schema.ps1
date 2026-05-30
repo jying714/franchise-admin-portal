@@ -1,70 +1,76 @@
 # scripts\dump_schema.ps1
-# Save in: C:\Users\jying\franchise_platform\scripts\dump_schema.ps1
+# Run from: C:\Users\jying\franchise_platform\scripts\
+# Output:   project_schema.txt (in project root)
 
-$root      = Get-Location
-$outputDir = Join-Path $root "scripts"
-$outputFile = Join-Path $outputDir "project_schema.txt"
+$root = Split-Path -Parent $PSScriptRoot
 
-# Ensure output folder
-if (-not (Test-Path $outputDir)) {
-    New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
-}
+$outputFile = Join-Path $root "project_schema.txt"
 
-$folders = @(
-    "web-app\lib",
-    ".\packages\shared_core\lib",
-    "mobile_app\lib"
+# Clear previous output
+"" | Out-File -FilePath $outputFile -Encoding UTF8 -Force
+
+$foldersToScan = @(
+    "mobile_app",
+    "web-app",
+    "packages/shared_core"
 )
 
-# Clear file
-"" | Out-File -FilePath $outputFile -Encoding UTF8
+$skipFolders = @(
+    ".dart_tool", "build", "android", "ios", "web", "linux", "macos", "windows",
+    "node_modules", ".git", ".github", "coverage", "test", "__pycache__",
+    ".vscode", ".idea", "artifacts"
+)
 
-function Write-TreeNode {
+function Write-Tree {
     param(
         [string]$Path,
         [string]$Prefix = "",
-        [bool]  $IsRoot = $false
+        [bool]$IsLast = $false
     )
 
-    $items = Get-ChildItem -Path $Path -Force |
-             Sort-Object @{Expression = {$_.PSIsContainer}; Descending = $true}, Name
+    $items = Get-ChildItem -Path $Path -Force | 
+             Where-Object { $_.Name -notin $skipFolders } |
+             Sort-Object @{Expression={$_.PSIsContainer}; Descending=$true}, Name
 
     $count = $items.Count
     for ($i = 0; $i -lt $count; $i++) {
-        $item     = $items[$i]
-        $isLast   = ($i -eq $count - 1)
+        $item = $items[$i]
+        $isLastItem = ($i -eq $count - 1)
 
-        # Build connector
-        $connector = if ($IsRoot) { "" } else {
-            if ($isLast) { "`--- " } else { "|-- " }
-        }
+        $connector = if ($IsLast) { "    " } else { "|   " }
+        $line = "$Prefix" + $(if ($isLastItem) {"-- "} else {"|-- "}) + $item.Name
 
-        # Build line
-        $line = "$Prefix$connector$(if ($item.PSIsContainer) {'+-- '} else {'|-- '})$($item.Name)"
         $line | Out-File -FilePath $outputFile -Append -Encoding UTF8
 
-        # Recurse into folders
         if ($item.PSIsContainer) {
-            $childPrefix = $Prefix + $(if ($isLast) { "    " } else { "|   " })
-            Write-TreeNode -Path $item.FullName -Prefix $childPrefix
+            $newPrefix = $Prefix + $(if ($isLastItem) {"    "} else {"|   "})
+            Write-Tree -Path $item.FullName -Prefix $newPrefix -IsLast $isLastItem
+        }
+        elseif ($item.Extension -match '^\.(ya?ml|dart|js|ts|html|css|json|md|ps1)$') {
+            $relPath = $item.FullName.Replace($root, "").TrimStart("\")
+            "      -- $relPath" | Out-File -FilePath $outputFile -Append -Encoding UTF8
         }
     }
 }
 
-foreach ($folder in $folders) {
+# Header
+"=================================================================================" | Out-File -FilePath $outputFile -Append -Encoding UTF8
+"DOUGHBOYS PIZZERIA - PROJECT SCHEMA DUMP" | Out-File -FilePath $outputFile -Append -Encoding UTF8
+"Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" | Out-File -FilePath $outputFile -Append -Encoding UTF8
+"=================================================================================" | Out-File -FilePath $outputFile -Append -Encoding UTF8
+"" | Out-File -FilePath $outputFile -Append -Encoding UTF8
+
+foreach ($folder in $foldersToScan) {
     $fullPath = Join-Path $root $folder
     if (Test-Path $fullPath) {
         "`n=== $folder ===" | Out-File -FilePath $outputFile -Append -Encoding UTF8
-        Write-TreeNode -Path $fullPath -IsRoot $true
+        Write-Tree -Path $fullPath -IsLast $true
     } else {
-        "WARNING: Path not found: $fullPath" | Out-File -FilePath $outputFile -Append -Encoding UTF8
+        "`nWARNING: Folder not found -> $folder" | Out-File -FilePath $outputFile -Append -Encoding UTF8
     }
 }
 
-"Schema generated at: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" |
-    Out-File -FilePath $outputFile -Append -Encoding UTF8
+"`nSchema dump completed successfully." | Out-File -FilePath $outputFile -Append -Encoding UTF8
 
-"Output saved to: $outputFile" |
-    Out-File -FilePath $outputFile -Append -Encoding UTF8
-
-Write-Host "Schema generated: $outputFile" -ForegroundColor Green
+Write-Host "✅ Project schema generated successfully!" -ForegroundColor Green
+Write-Host "   Saved to: $outputFile" -ForegroundColor Cyan

@@ -1,20 +1,20 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
-import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class DinnerIncludedIngredients extends StatelessWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final ThemeData theme;
   final AppLocalizations loc;
-  final Map<String, IngredientMetadata> ingredientMetadata;
+  final Map<String, shared.IngredientMetadata> ingredientMetadata;
   final Set<String> currentIngredients;
   final Map<String, String> ingredientAmounts;
   final void Function(VoidCallback fn) setState;
 
   const DinnerIncludedIngredients({
-    Key? key,
+    super.key,
     required this.menuItem,
     required this.theme,
     required this.loc,
@@ -22,21 +22,23 @@ class DinnerIncludedIngredients extends StatelessWidget {
     required this.currentIngredients,
     required this.ingredientAmounts,
     required this.setState,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
+    // FranchiseProvider injected (P1 Batch 1) for franchise/{franchiseId}/ scoping centrality
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
     if ((menuItem.category.toLowerCase() != 'dinners') ||
         menuItem.includedIngredients == null ||
         menuItem.includedIngredients!.isEmpty) {
-      return SizedBox.shrink();
+      return const SizedBox.shrink();
     }
 
     final visibleIngs = menuItem.includedIngredients!.where((ing) {
       final ingId = ing['ingredientId'] ?? ing['id'];
       final meta = ingredientMetadata[ingId];
       final removable = meta?.removable ?? ing['removable'] ?? false;
-      final isSauce = meta?.type?.toLowerCase() == 'sauces';
+      final isSauce = (meta?.type ?? '').toLowerCase() == 'sauces';
       final amountSelectable =
           meta?.amountSelectable ?? ing['amountSelectable'] == true;
       // Only show if removable, or if sauce with amountSelectable
@@ -51,9 +53,9 @@ class DinnerIncludedIngredients extends StatelessWidget {
           Text(
             loc.currentIngredientsLabel,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: DesignTokens.primaryColor,
-              fontWeight: FontWeight.bold,
-              fontFamily: DesignTokens.fontFamily,
+              color: UiConfig.primaryColor,
+              fontWeight: UiConfig.bold,
+              fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
           ...visibleIngs.asMap().entries.map((entry) {
@@ -64,7 +66,7 @@ class DinnerIncludedIngredients extends StatelessWidget {
             final name = meta?.name ?? ing['name'] ?? ingId;
             final removable = meta?.removable ?? ing['removable'] ?? false;
             final outOfStock = meta?.outOfStock ?? false;
-            final isSauce = meta?.type?.toLowerCase() == 'sauces';
+            final isSauce = (meta?.type ?? '').toLowerCase() == 'sauces';
             final amountSelectable =
                 meta?.amountSelectable ?? ing['amountSelectable'] == true;
             final List<String> amountOptions =
@@ -104,7 +106,7 @@ class DinnerIncludedIngredients extends StatelessWidget {
                               },
                       ),
                     if (!removable || (isSauce && amountSelectable))
-                      SizedBox(width: 18), // align w/ checkbox
+                      const SizedBox(width: 18), // align w/ checkbox
 
                     Expanded(
                       child: Row(
@@ -114,12 +116,12 @@ class DinnerIncludedIngredients extends StatelessWidget {
                               name,
                               style: theme.textTheme.bodyLarge?.copyWith(
                                 color: outOfStock
-                                    ? DesignTokens.secondaryTextColor
-                                    : DesignTokens.textColor,
+                                    ? UiConfig.secondaryTextColor
+                                    : UiConfig.textColor,
                                 fontWeight: outOfStock
                                     ? FontWeight.normal
                                     : FontWeight.w500,
-                                fontFamily: DesignTokens.fontFamily,
+                                fontFamily: shared.DesignTokens.fontFamily,
                               ),
                             ),
                           ),
@@ -156,7 +158,7 @@ class DinnerIncludedIngredients extends StatelessWidget {
                         child: Text(
                           loc.outOfStockLabel ?? "Out of Stock",
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: DesignTokens.errorTextColor,
+                            color: UiConfig.errorTextColor,
                             fontStyle: FontStyle.italic,
                             fontWeight: FontWeight.bold,
                           ),
@@ -171,7 +173,7 @@ class DinnerIncludedIngredients extends StatelessWidget {
                         child: Text(
                           loc.ingredientRemovedLabel ?? "Removed",
                           style: TextStyle(
-                            color: DesignTokens.primaryColor,
+                            color: UiConfig.primaryColor,
                             fontStyle: FontStyle.italic,
                             fontWeight: FontWeight.w600,
                           ),
@@ -190,11 +192,9 @@ class DinnerIncludedIngredients extends StatelessWidget {
                   ),
               ],
             );
-          }).toList(),
+          }),
         ],
       ),
     );
   }
 }
-
-

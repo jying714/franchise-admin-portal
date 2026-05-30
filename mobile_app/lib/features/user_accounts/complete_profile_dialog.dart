@@ -1,8 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as user_model;
 
 class CompleteProfileDialog extends StatefulWidget {
@@ -44,7 +44,8 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
     setState(() => _loading = true);
 
     try {
-      final firestore = Provider.of<FirestoreService>(context, listen: false);
+      final firestore =
+          Provider.of<shared.FirestoreService>(context, listen: false);
 
       final updatedUser = widget.user.copyWith(
         name: _nameController.text.trim(),
@@ -53,9 +54,9 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
       );
 
       await firestore.updateUser(updatedUser);
-      if (context.mounted) Navigator.of(context).pop(true);
+      if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.unexpectedError)),
         );
@@ -68,13 +69,13 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
   Future<void> _skip() async {
     setState(() => _loading = true);
     try {
-      final firestore = Provider.of<FirestoreService>(context, listen: false);
+      final firestore =
+          Provider.of<shared.FirestoreService>(context, listen: false);
       final updatedUser = widget.user.copyWith(completeProfile: true);
       await firestore.updateUser(updatedUser);
-      if (context.mounted) Navigator.of(context).pop(false);
+      if (mounted) Navigator.of(context).pop(false);
     } catch (_) {
-      // Optionally show error
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(AppLocalizations.of(context)!.unexpectedError)),
@@ -88,17 +89,18 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop:
+          false, // prevent accidental back-button dismissal (original intent)
       child: Dialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+          borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
         ),
-        backgroundColor: DesignTokens.surfaceColor,
+        backgroundColor: UiConfig.surfaceColor,
         insetPadding:
             const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
         child: Padding(
-          padding: DesignTokens.cardPadding,
+          padding: UiConfig.cardPadding,
           child: AbsorbPointer(
             absorbing: _loading,
             child: Form(
@@ -107,15 +109,15 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.account_circle,
-                      color: DesignTokens.primaryColor, size: 40),
+                      color: UiConfig.primaryColor, size: 40),
                   const SizedBox(height: 12),
                   Text(
                     l10n.completeProfileTitle,
                     style: TextStyle(
-                      fontSize: DesignTokens.titleFontSize,
-                      fontWeight: FontWeight.bold,
-                      color: DesignTokens.textColor,
-                      fontFamily: DesignTokens.fontFamily,
+                      fontSize: shared.DesignTokens.titleFontSize,
+                      fontWeight: UiConfig.bold,
+                      color: UiConfig.textColor,
+                      fontFamily: shared.DesignTokens.fontFamily,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -123,9 +125,9 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                     l10n.completeProfileMessage,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: DesignTokens.bodyFontSize,
-                      color: DesignTokens.secondaryTextColor,
-                      fontFamily: DesignTokens.fontFamily,
+                      fontSize: shared.DesignTokens.bodyFontSize,
+                      color: UiConfig.secondaryTextColor,
+                      fontFamily: shared.DesignTokens.fontFamily,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -134,11 +136,11 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                     decoration: InputDecoration(
                       labelText: l10n.name,
                       border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(DesignTokens.formFieldRadius),
+                        borderRadius: BorderRadius.circular(
+                            shared.DesignTokens.formFieldRadius),
                       ),
                     ),
-                    style: TextStyle(color: DesignTokens.textColor),
+                    style: TextStyle(color: UiConfig.textColor),
                     validator: (value) => value == null || value.trim().isEmpty
                         ? l10n.enterName
                         : null,
@@ -150,11 +152,11 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                     decoration: InputDecoration(
                       labelText: l10n.phoneNumber,
                       border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(DesignTokens.formFieldRadius),
+                        borderRadius: BorderRadius.circular(
+                            shared.DesignTokens.formFieldRadius),
                       ),
                     ),
-                    style: TextStyle(color: DesignTokens.textColor),
+                    style: TextStyle(color: UiConfig.textColor),
                     keyboardType: TextInputType.phone,
                     validator: (value) {
                       if (value != null &&
@@ -173,13 +175,13 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                         child: ElevatedButton(
                           onPressed: _loading ? null : _submit,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: DesignTokens.primaryColor,
-                            foregroundColor: DesignTokens.foregroundColor,
+                            backgroundColor: UiConfig.primaryColor,
+                            foregroundColor: UiConfig.foregroundColor,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
-                                  DesignTokens.buttonRadius),
+                                  shared.DesignTokens.buttonRadius),
                             ),
-                            padding: DesignTokens.buttonPadding,
+                            padding: UiConfig.defaultPadding,
                           ),
                           child: _loading
                               ? const SizedBox(
@@ -200,14 +202,14 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
                         child: OutlinedButton(
                           onPressed: _loading ? null : _skip,
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: DesignTokens.secondaryColor,
+                            foregroundColor: UiConfig.secondaryColor,
                             side: BorderSide(
-                                color: DesignTokens.secondaryColor, width: 1),
+                                color: UiConfig.secondaryColor, width: 1),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
-                                  DesignTokens.buttonRadius),
+                                  shared.DesignTokens.buttonRadius),
                             ),
-                            padding: DesignTokens.buttonPadding,
+                            padding: UiConfig.defaultPadding,
                           ),
                           child: Text(l10n.skipForNow),
                         ),
@@ -223,5 +225,3 @@ class _CompleteProfileDialogState extends State<CompleteProfileDialog> {
     );
   }
 }
-
-

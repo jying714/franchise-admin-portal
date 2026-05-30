@@ -1,24 +1,22 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
-import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
-import 'package:franchise_mobile_app/widgets/customization/portion_pill_toggle.dart'; // if you use the pill toggle here
-import 'package:franchise_mobile_app/core/utils/formatting.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 typedef DoubleAddOnCallback = void Function(String ingId, bool value);
 
 class OptionalAddOnsGroup extends StatelessWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final ThemeData theme;
   final AppLocalizations loc;
-  final Map<String, IngredientMetadata> ingredientMetadata;
+  final Map<String, shared.IngredientMetadata> ingredientMetadata;
   final Set<String> selectedAddOns;
   final Map<String, bool> doubleAddOns;
   final Map<String, int> selectedSauceCounts;
   final bool usesDynamicToppingPricing;
   final double Function() getToppingUpcharge;
-  final double Function(IngredientMetadata? meta) getIngredientUpcharge;
+  final double Function(shared.IngredientMetadata? meta) getIngredientUpcharge;
   final void Function(String ingId, bool? value) onToggleAddOn;
   final void Function(String ingId, int delta) onChangeSauceCount;
   final Widget Function(String ingId, bool isDouble, VoidCallback onTap)
@@ -57,9 +55,9 @@ class OptionalAddOnsGroup extends StatelessWidget {
           Text(
             loc.optionalAddOnsLabel,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: DesignTokens.secondaryColor,
-              fontWeight: FontWeight.bold,
-              fontFamily: DesignTokens.fontFamily,
+              color: UiConfig.secondaryColor,
+              fontWeight: UiConfig.bold,
+              fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
           ...menuItem.optionalAddOns!.map((addOn) {
@@ -82,7 +80,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: Icon(Icons.remove, size: 20),
+                      icon: const Icon(Icons.remove, size: 20),
                       onPressed: count > 0
                           ? () => onChangeSauceCount(ingId, -1)
                           : null,
@@ -92,8 +90,8 @@ class OptionalAddOnsGroup extends StatelessWidget {
                       child: Text(
                         meta?.name ?? addOn['name'] ?? ingId,
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          color: DesignTokens.textColor,
-                          fontFamily: DesignTokens.fontFamily,
+                          color: UiConfig.textColor,
+                          fontFamily: shared.DesignTokens.fontFamily,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -105,17 +103,17 @@ class OptionalAddOnsGroup extends StatelessWidget {
                       child: Text(
                         'x$count',
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
+                          fontWeight: UiConfig.bold,
                           color: count > 0
-                              ? DesignTokens.primaryColor
-                              : DesignTokens.secondaryTextColor,
-                          fontFamily: DesignTokens.fontFamily,
+                              ? UiConfig.primaryColor
+                              : UiConfig.secondaryTextColor,
+                          fontFamily: shared.DesignTokens.fontFamily,
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: Icon(Icons.add, size: 20),
+                      icon: const Icon(Icons.add, size: 20),
                       onPressed: () => onChangeSauceCount(ingId, 1),
                     ),
                   ],
@@ -125,7 +123,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
               final checked = selectedAddOns.contains(ingId);
               final isDouble = doubleAddOns[ingId] == true;
               final priceDisplay = upcharge > 0
-                  ? '+${currencyFormat(context, upcharge * (isDouble ? 2 : 1))}'
+                  ? '+${UiConfig.currencyFormat(context, upcharge * (isDouble ? 2 : 1))}'
                   : '';
               return Row(
                 children: [
@@ -139,8 +137,8 @@ class OptionalAddOnsGroup extends StatelessWidget {
                     child: Text(
                       meta?.name ?? addOn['name'] ?? ingId,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: DesignTokens.textColor,
-                        fontFamily: DesignTokens.fontFamily,
+                        color: UiConfig.textColor,
+                        fontFamily: shared.DesignTokens.fontFamily,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -151,9 +149,9 @@ class OptionalAddOnsGroup extends StatelessWidget {
                       child: Text(
                         priceDisplay,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: DesignTokens.secondaryColor,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: DesignTokens.fontFamily,
+                          color: UiConfig.secondaryColor,
+                          fontWeight: UiConfig.bold,
+                          fontFamily: shared.DesignTokens.fontFamily,
                         ),
                       ),
                     ),
@@ -169,7 +167,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
                 ],
               );
             }
-          }).toList(),
+          }),
           if (menuItem.optionalAddOns!.any((a) =>
               (ingredientMetadata[a['ingredientId'] ?? a['id']]
                       ?.type
@@ -179,11 +177,11 @@ class OptionalAddOnsGroup extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 6.0),
               child: Text(
-                "$maxFreeSauces free sauces, +${currencyFormat(context, extraSauceUpcharge)} each extra.",
+                "$maxFreeSauces free sauces, +${UiConfig.currencyFormat(context, extraSauceUpcharge)} each extra.",
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: DesignTokens.secondaryTextColor,
+                  color: UiConfig.secondaryTextColor,
                   fontStyle: FontStyle.italic,
-                  fontFamily: DesignTokens.fontFamily,
+                  fontFamily: shared.DesignTokens.fontFamily,
                 ),
               ),
             ),
@@ -192,5 +190,3 @@ class OptionalAddOnsGroup extends StatelessWidget {
     );
   }
 }
-
-

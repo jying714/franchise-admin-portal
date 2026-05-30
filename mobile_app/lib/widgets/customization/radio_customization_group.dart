@@ -1,20 +1,20 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_mobile_app/core/utils/formatting.dart';
 
 class RadioCustomizationGroup extends StatelessWidget {
   final Map<String, dynamic> group;
   final ThemeData theme;
   final AppLocalizations loc;
-  final Map<String, IngredientMetadata> ingredientMetadata;
+  final Map<String, shared.IngredientMetadata> ingredientMetadata;
   final Map<String, String?> radioSelections;
-  final double Function(IngredientMetadata? meta) getIngredientUpcharge;
+  final double Function(shared.IngredientMetadata? meta) getIngredientUpcharge;
   final void Function(String groupLabel, String? ingId) handleRadioSelect;
 
   const RadioCustomizationGroup({
-    Key? key,
+    super.key,
     required this.group,
     required this.theme,
     required this.loc,
@@ -22,10 +22,12 @@ class RadioCustomizationGroup extends StatelessWidget {
     required this.radioSelections,
     required this.getIngredientUpcharge,
     required this.handleRadioSelect,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
+    // FranchiseProvider injected (P1 Batch 1) for franchise/{franchiseId}/ scoping centrality
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
     final String groupLabel = group['label'] ?? '';
     final List<String> ingredientIds =
         (group['ingredientIds'] as List<dynamic>? ?? [])
@@ -40,9 +42,9 @@ class RadioCustomizationGroup extends StatelessWidget {
           Text(
             groupLabel,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: DesignTokens.secondaryColor,
-              fontWeight: FontWeight.bold,
-              fontFamily: DesignTokens.fontFamily,
+              color: UiConfig.secondaryColor,
+              fontWeight: UiConfig.bold,
+              fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
           ...ingredientIds.map((ingId) {
@@ -57,26 +59,24 @@ class RadioCustomizationGroup extends StatelessWidget {
               title: Text(
                 meta?.name ?? ingId,
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: DesignTokens.textColor,
-                  fontFamily: DesignTokens.fontFamily,
+                  color: UiConfig.textColor,
+                  fontFamily: shared.DesignTokens.fontFamily,
                 ),
               ),
               secondary: upcharge > 0
                   ? Text(
-                      '+${currencyFormat(context, upcharge)}',
+                      '+${UiConfig.currencyFormat(context, upcharge)}',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: DesignTokens.secondaryColor,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: DesignTokens.fontFamily,
+                        color: UiConfig.secondaryColor,
+                        fontWeight: UiConfig.bold,
+                        fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     )
                   : null,
             );
-          }).toList(),
+          }),
         ],
       ),
     );
   }
 }
-
-

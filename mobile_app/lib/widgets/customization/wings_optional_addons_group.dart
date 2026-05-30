@@ -1,14 +1,14 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/core/models/menu_item.dart';
-import 'package:franchise_mobile_app/core/models/ingredient_metadata.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class WingsOptionalAddOnsGroup extends StatelessWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final ThemeData theme;
   final AppLocalizations loc;
-  final Map<String, IngredientMetadata> ingredientMetadata;
+  final Map<String, shared.IngredientMetadata> ingredientMetadata;
   final Set<String> selectedAddOns;
   final Map<String, bool> doubleAddOns;
   final void Function(void Function()) setState;
@@ -17,7 +17,7 @@ class WingsOptionalAddOnsGroup extends StatelessWidget {
   final void Function(String ingId, bool checked) onChanged;
 
   const WingsOptionalAddOnsGroup({
-    Key? key,
+    super.key,
     required this.menuItem,
     required this.theme,
     required this.loc,
@@ -26,7 +26,7 @@ class WingsOptionalAddOnsGroup extends StatelessWidget {
     required this.doubleAddOns,
     required this.setState,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -48,9 +48,9 @@ class WingsOptionalAddOnsGroup extends StatelessWidget {
           Text(
             "Other Add-Ons",
             style: theme.textTheme.titleMedium?.copyWith(
-              color: DesignTokens.secondaryColor,
-              fontWeight: FontWeight.bold,
-              fontFamily: DesignTokens.fontFamily,
+              color: UiConfig.secondaryColor,
+              fontWeight: UiConfig.bold,
+              fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
           ...nonSauceAddOns.map((addOn) {
@@ -79,8 +79,8 @@ class WingsOptionalAddOnsGroup extends StatelessWidget {
                   child: Text(
                     meta?.name ?? addOn['name'] ?? ingId,
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: DesignTokens.textColor,
-                      fontFamily: DesignTokens.fontFamily,
+                      color: UiConfig.textColor,
+                      fontFamily: shared.DesignTokens.fontFamily,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -91,19 +91,17 @@ class WingsOptionalAddOnsGroup extends StatelessWidget {
                     child: Text(
                       '+${upcharge.toStringAsFixed(2)}',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: DesignTokens.secondaryColor,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: DesignTokens.fontFamily,
+                        color: UiConfig.secondaryColor,
+                        fontWeight: UiConfig.bold,
+                        fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     ),
                   ),
               ],
             );
-          }).toList(),
+          }),
         ],
       ),
     );
   }
 }
-
-

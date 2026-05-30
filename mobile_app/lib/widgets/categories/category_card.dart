@@ -1,46 +1,52 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/config/branding_config.dart';
-import 'package:shared_core/src/core/models/category.dart' as model;
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/config/ui_config.dart';
 
-typedef CategoryTapCallback = void Function(Category category);
+// P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
+
+typedef CategoryTapCallback = void Function(shared.Category category);
 
 class CategoryCard extends StatelessWidget {
-  final Category category;
+  final shared.Category category;
   final CategoryTapCallback? onTap;
 
   const CategoryCard({
-    Key? key,
+    super.key,
     required this.category,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
+    // FranchiseProvider injected for franchise/{franchiseId}/ scoping (Batch 2)
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
+
     final loc = AppLocalizations.of(context)!;
     final String imagePath =
         (category.image != null && category.image!.isNotEmpty)
             ? category.image!
-            : BrandingConfig.defaultCategoryIcon;
+            : shared.BrandingConfig.defaultCategoryIcon;
 
     return Semantics(
       label: loc.menuCategoryLabel(category.name),
       button: true,
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
-        elevation: DesignTokens.cardElevation,
+        borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
+        elevation: shared.DesignTokens.cardElevation,
         child: InkWell(
-          borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+          borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
           onTap: () => onTap?.call(category),
           child: Ink(
             decoration: BoxDecoration(
               border: Border.all(
-                color: DesignTokens.primaryColor,
-                width: DesignTokens.categoryCardBorderWidth,
+                color: UiConfig.primaryColor,
+                width: shared.DesignTokens.categoryCardBorderWidth,
               ),
-              borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+              borderRadius:
+                  BorderRadius.circular(shared.DesignTokens.cardRadius),
               color: Colors.transparent,
               boxShadow: const [
                 BoxShadow(
@@ -54,7 +60,8 @@ class CategoryCard extends StatelessWidget {
               children: [
                 // Background image fills the card.
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+                  borderRadius:
+                      BorderRadius.circular(shared.DesignTokens.cardRadius),
                   child: imagePath.startsWith('http')
                       ? Image.network(
                           imagePath,
@@ -62,7 +69,7 @@ class CategoryCard extends StatelessWidget {
                           height: double.infinity,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Image.asset(
-                            BrandingConfig.defaultCategoryIcon,
+                            shared.BrandingConfig.defaultCategoryIcon,
                             width: double.infinity,
                             height: double.infinity,
                             fit: BoxFit.cover,
@@ -80,13 +87,13 @@ class CategoryCard extends StatelessWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius:
-                          BorderRadius.circular(DesignTokens.cardRadius),
+                          BorderRadius.circular(shared.DesignTokens.cardRadius),
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity(0.55),
+                          Colors.black.withAlpha(140),
                         ],
                         stops: const [0.5, 1.0],
                       ),
@@ -106,12 +113,12 @@ class CategoryCard extends StatelessWidget {
                       children: [
                         Text(
                           category.name,
-                          style: const TextStyle(
-                            fontSize: DesignTokens.titleFontSize,
-                            fontWeight: DesignTokens.titleFontWeight,
+                          style: TextStyle(
+                            fontSize: shared.DesignTokens.titleFontSize,
+                            fontWeight: UiConfig.fontWeightBold,
                             color: Colors.white,
-                            fontFamily: DesignTokens.fontFamily,
-                            shadows: [
+                            fontFamily: shared.DesignTokens.fontFamily,
+                            shadows: const [
                               Shadow(color: Colors.black54, blurRadius: 4),
                             ],
                           ),
@@ -124,12 +131,12 @@ class CategoryCard extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 4.0),
                             child: Text(
                               category.description!,
-                              style: const TextStyle(
-                                fontSize: DesignTokens.captionFontSize,
+                              style: TextStyle(
+                                fontSize: shared.DesignTokens.captionFontSize,
                                 color: Colors.white70,
-                                fontFamily: DesignTokens.fontFamily,
-                                fontWeight: DesignTokens.bodyFontWeight,
-                                shadows: [
+                                fontFamily: shared.DesignTokens.fontFamily,
+                                fontWeight: UiConfig.fontWeightNormal,
+                                shadows: const [
                                   Shadow(color: Colors.black26, blurRadius: 2),
                                 ],
                               ),
@@ -149,5 +156,3 @@ class CategoryCard extends StatelessWidget {
     );
   }
 }
-
-

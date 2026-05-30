@@ -1,80 +1,88 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 
-/// Displays a shopping cart icon with a dynamic badge count.
-/// Pass in a [cartItemCountStream] that emits the item count as an integer.
-/// The [onPressed] callback is called when the icon is tapped.
-/// [tooltip], [iconColor], [badgeColor], [iconSize] are all customizable.
+// P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
+
 class CartIconBadge extends StatelessWidget {
-  final Stream<int> cartItemCountStream;
   final VoidCallback? onPressed;
   final String? tooltip;
-  final Color? iconColor;
-  final Color? badgeColor;
-  final double? iconSize;
 
   const CartIconBadge({
-    Key? key,
-    required this.cartItemCountStream,
+    super.key,
     this.onPressed,
     this.tooltip,
-    this.iconColor,
-    this.badgeColor,
-    this.iconSize,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<int>(
-      stream: cartItemCountStream,
-      initialData: 0,
-      builder: (context, snapshot) {
-        final cartItems = snapshot.data ?? 0;
-        return IconButton(
-          icon: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Icon(
-                Icons.shopping_cart,
-                size: iconSize ?? DesignTokens.iconSize,
-                color: iconColor ?? DesignTokens.foregroundColor,
-                semanticLabel: tooltip,
-              ),
-              if (cartItems > 0)
-                Positioned(
-                  right: -2,
-                  top: -2,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.all(DesignTokens.cartBadgePadding),
-                    decoration: BoxDecoration(
-                      color: badgeColor ?? DesignTokens.errorColor,
-                      borderRadius:
-                          BorderRadius.circular(DesignTokens.badgeRadius),
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: DesignTokens.badgeMinSize,
-                      minHeight: DesignTokens.badgeMinSize,
-                    ),
-                    child: Text(
-                      '$cartItems',
-                      style: const TextStyle(
-                        color: DesignTokens.foregroundColor,
-                        fontSize: DesignTokens.captionFontSize,
-                        fontWeight: DesignTokens.titleFontWeight,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
+    return Consumer<shared.FranchiseProvider>(
+      builder: (context, franchiseProvider, child) {
+        // Batch 2: already using FranchiseProvider for scoping + badge updates
+        if (!franchiseProvider.hasValidFranchise) {
+          return IconButton(
+            icon: const Icon(Icons.shopping_cart_outlined),
+            onPressed: onPressed,
+            tooltip: tooltip,
+          );
+        }
+
+        final userId = shared.FirebaseAuth.instance.currentUser?.uid ?? '';
+
+        return StreamBuilder<int>(
+          stream: Provider.of<shared.FirestoreService>(context, listen: false)
+              .getCartItemCountStream(
+            userId,
+            franchiseId: franchiseProvider.currentFranchiseId,
           ),
-          tooltip: tooltip,
-          onPressed: onPressed,
+          initialData: 0,
+          builder: (context, snapshot) {
+            final count = snapshot.data ?? 0;
+
+            return IconButton(
+              icon: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    Icons.shopping_cart_outlined,
+                    size: shared.DesignTokens.iconSize,
+                    color: UiConfig.foregroundColor,
+                  ),
+                  if (count > 0)
+                    Positioned(
+                      right: -4,
+                      top: -4,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: UiConfig.errorColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 18,
+                          minHeight: 18,
+                        ),
+                        child: Center(
+                          child: Text(
+                            count > 99 ? '99+' : count.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              tooltip: tooltip ?? 'Cart',
+              onPressed: onPressed,
+            );
+          },
         );
       },
     );
   }
 }
-
-

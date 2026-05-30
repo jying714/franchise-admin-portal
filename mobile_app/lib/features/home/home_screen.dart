@@ -1,10 +1,8 @@
-﻿// ignore_for_file: prefer_const_constructors
+// ignore_for_file: prefer_const_constructors
 
 import 'package:flutter/material.dart';
-// ignore: unused_import
-import 'package:shared_core/src/core/config/app_config.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/config/branding_config.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
 import 'package:franchise_mobile_app/features/auth/sign_up_screen.dart';
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
@@ -18,70 +16,71 @@ class HomeScreen extends StatelessWidget {
     final loc = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundColor,
+      backgroundColor: UiConfig.backgroundColorDark,
       appBar: AppBar(
         title: Image.asset(
-          BrandingConfig.logoMain,
-          height: DesignTokens.logoHeightSmall,
+          UiConfig.logoMain,
+          height: shared.DesignTokens.logoHeightSmall,
           errorBuilder: (c, e, s) => Image.asset(
-            BrandingConfig.fallbackAppIcon,
-            height: DesignTokens.logoHeightSmall,
+            UiConfig.defaultPizzaIcon,
+            height: shared.DesignTokens.logoHeightSmall,
             fit: BoxFit.contain,
             semanticLabel: loc.logoErrorTooltip,
           ),
         ),
-        backgroundColor: DesignTokens.primaryColor,
+        backgroundColor: UiConfig.primaryColor,
         centerTitle: true,
         elevation: 0,
-        iconTheme: const IconThemeData(color: DesignTokens.foregroundColorDark),
+        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
       ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: DesignTokens.gridPadding,
+            padding: UiConfig.defaultPadding,
             child: Card(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+                borderRadius:
+                    BorderRadius.circular(shared.DesignTokens.cardRadius),
               ),
-              elevation: DesignTokens.cardElevation,
-              color: DesignTokens.surfaceColor,
+              elevation: shared.DesignTokens.cardElevation,
+              color: UiConfig.surfaceColorDark,
               child: Padding(
-                padding: DesignTokens.cardPadding,
+                padding: UiConfig.defaultPadding,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Image.asset(
-                      BrandingConfig.logoLarge,
-                      height: DesignTokens.logoHeightLarge,
+                      UiConfig.logoLarge,
+                      height: shared.DesignTokens.logoHeightLarge,
                       errorBuilder: (c, e, s) => Image.asset(
-                        BrandingConfig.fallbackAppIcon,
-                        height: DesignTokens.logoHeightLarge,
+                        UiConfig.defaultPizzaIcon,
+                        height: shared.DesignTokens.logoHeightLarge,
                         fit: BoxFit.contain,
                         semanticLabel: loc.logoErrorTooltip,
                       ),
                     ),
-                    SizedBox(height: DesignTokens.gridSpacing * 4),
+                    SizedBox(height: shared.DesignTokens.gridSpacing * 4),
                     Text(
-                      loc.welcomeTitle(BrandingConfig.franchiseName),
+                      loc.welcomeTitle(shared.BrandingConfig.franchiseName),
                       style: TextStyle(
-                        fontFamily: DesignTokens.fontFamily,
-                        fontWeight: DesignTokens.titleFontWeight,
-                        fontSize: DesignTokens.titleFontSize,
-                        color: DesignTokens.textColor,
+                        fontFamily: shared.DesignTokens.fontFamily,
+                        fontWeight: UiConfig.fontWeightBold,
+                        fontSize: shared.DesignTokens.titleFontSize,
+                        color: UiConfig.textColorDark,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: DesignTokens.gridSpacing * 2),
+                    SizedBox(height: shared.DesignTokens.gridSpacing * 2),
                     Text(
                       loc.welcomeSubtitle,
                       style: TextStyle(
-                        fontFamily: DesignTokens.fontFamily,
-                        fontSize: DesignTokens.bodyFontSize,
-                        color: DesignTokens.secondaryTextColor,
+                        fontFamily: shared.DesignTokens.fontFamily,
+                        fontSize: shared.DesignTokens.bodyFontSize,
+                        color: UiConfig.secondaryTextColor,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: DesignTokens.gridSpacing * 4),
+                    SizedBox(height: shared.DesignTokens.gridSpacing * 4),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -91,24 +90,24 @@ class HomeScreen extends StatelessWidget {
                               builder: (_) => const SignInScreen()),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: DesignTokens.primaryColor,
-                          foregroundColor: DesignTokens.foregroundColorDark,
-                          padding: DesignTokens.buttonPadding,
+                          backgroundColor: UiConfig.primaryColor,
+                          foregroundColor: UiConfig.foregroundColorDark,
+                          padding: UiConfig.defaultPadding,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
-                                DesignTokens.buttonRadius),
+                                shared.DesignTokens.buttonRadius),
                           ),
-                          elevation: DesignTokens.buttonElevation,
+                          elevation: shared.DesignTokens.buttonElevation,
                           textStyle: TextStyle(
-                            fontSize: DesignTokens.bodyFontSize,
-                            fontWeight: DesignTokens.titleFontWeight,
-                            fontFamily: DesignTokens.fontFamily,
+                            fontSize: shared.DesignTokens.bodyFontSize,
+                            fontWeight: UiConfig.fontWeightBold,
+                            fontFamily: shared.DesignTokens.fontFamily,
                           ),
                         ),
                         child: Text(loc.signInButton),
                       ),
                     ),
-                    SizedBox(height: DesignTokens.gridSpacing * 1.75),
+                    SizedBox(height: shared.DesignTokens.gridSpacing * 1.75),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -118,24 +117,24 @@ class HomeScreen extends StatelessWidget {
                               builder: (_) => const SignUpScreen()),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: DesignTokens.secondaryColor,
-                          foregroundColor: DesignTokens.textColor,
-                          padding: DesignTokens.buttonPadding,
+                          backgroundColor: UiConfig.secondaryColor,
+                          foregroundColor: UiConfig.textColorDark,
+                          padding: UiConfig.defaultPadding,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
-                                DesignTokens.buttonRadius),
+                                shared.DesignTokens.buttonRadius),
                           ),
-                          elevation: DesignTokens.buttonElevation,
+                          elevation: shared.DesignTokens.buttonElevation,
                           textStyle: TextStyle(
-                            fontSize: DesignTokens.bodyFontSize,
-                            fontWeight: DesignTokens.titleFontWeight,
-                            fontFamily: DesignTokens.fontFamily,
+                            fontSize: shared.DesignTokens.bodyFontSize,
+                            fontWeight: UiConfig.fontWeightBold,
+                            fontFamily: shared.DesignTokens.fontFamily,
                           ),
                         ),
                         child: Text(loc.signUpNowButton),
                       ),
                     ),
-                    SizedBox(height: DesignTokens.gridSpacing * 1.75),
+                    SizedBox(height: shared.DesignTokens.gridSpacing * 1.75),
                     TextButton(
                       onPressed: () => Navigator.pushReplacement(
                         context,
@@ -143,12 +142,12 @@ class HomeScreen extends StatelessWidget {
                             builder: (_) => const MainMenuScreen()),
                       ),
                       style: TextButton.styleFrom(
-                        foregroundColor: DesignTokens.primaryColor,
+                        foregroundColor: UiConfig.primaryColor,
                         padding: EdgeInsets.symmetric(
-                            vertical: DesignTokens.gridSpacing * 1.5),
+                            vertical: shared.DesignTokens.gridSpacing * 1.5),
                         textStyle: TextStyle(
-                          fontFamily: DesignTokens.fontFamily,
-                          fontSize: DesignTokens.bodyFontSize,
+                          fontFamily: shared.DesignTokens.fontFamily,
+                          fontSize: shared.DesignTokens.bodyFontSize,
                         ),
                       ),
                       child: Text(loc.continueAsGuestButton),

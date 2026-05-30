@@ -1,0 +1,81 @@
+================================================================================
+MOBILE_APP FILE ROLES AND ARCHITECTURE OVERVIEW
+Doughboys Pizzeria Franchise Platform
+================================================================================
+
+PROJECT CONTEXT
+-------------------------------------------------------------------------------
+Customer-facing Flutter mobile application for the multi-tenant Doughboys
+Pizzeria Franchise Platform. Designed as a single published binary that can
+serve unlimited franchises.
+
+CURRENT DEVELOPMENT STATE (as of May 30, 2026)
+-------------------------------------------------------------------------------
+- Option B (Core Ordering Flow) is COMPLETE and device-tested on Samsung S25.
+- FranchiseProvider unification complete (shared_core is now the single source of truth).
+- All direct src/ imports cleaned (6 batches).
+- Duplicated models cleaned and moved to shared_core.
+- Core flow (Login → Franchise Select → Menu → Category → Customization → Cart → Checkout → Confirmation) is stable.
+- P1 (Post-Core Cleanup & Polish) is in progress.
+
+================================================================================
+HIGH-LEVEL ARCHITECTURE
+================================================================================
+- Monorepo with packages/shared_core (shared models/services) + mobile_app.
+- Feature-first organization inside lib/features/.
+- 3-tier FirestoreService pattern fully enforced.
+- FranchiseProvider as central state manager with hasValidFranchise guard.
+- Strict data scoping under franchises/{franchiseId}/...
+- State Management: Provider + ChangeNotifier.
+
+================================================================================
+DIRECTORY & FILE ROLES (Updated)
+================================================================================
+
+ROOT LEVEL (mobile_app/)
+-------------------------------------------------------------------------------
+File / Folder                  Role
+-----------------------------  -------------------------------------------------
+pubspec.yaml                   Dependencies, assets, l10n config.
+analysis_options.yaml          Linter rules.
+lib/main.dart                  App entry point + MultiProvider setup.
+lib/config/ui_config.dart      Mobile-specific UI bridge (Colors, EdgeInsets, etc.).
+lib/core/providers/            FranchiseProvider (now thin wrapper around shared).
+lib/core/models/               Thin extensions only (User). Most models deleted.
+lib/core/services/             Mobile-specific services (offline, notification).
+lib/features/                  Feature-first organization.
+
+Key Feature Folders (Core Flow)
+-------------------------------------------------------------------------------
+auth/                          SignInScreen, LoginScreen.
+main_menu/                     MainMenuScreen (banners + category grid).
+category/                      CategoryScreen.
+menu/                          ItemScreen (detail view).
+ordering/                      CartScreen, CheckoutScreen, ConfirmationScreen.
+user_accounts/                 Profile, Favorites, ScheduledOrders, etc.
+
+Shared Widgets (lib/widgets/)
+-------------------------------------------------------------------------------
+header/                        FranchiseAppBar, CartIconBadge, ProfileIconButton.
+customization/                 All customization UI (SizeDropdown, modal, etc.).
+Address/                       Address forms, tiles, dialogs.
+banner/                        BannerCarousel, PromoBannerCard, ActionHandler.
+categories/                    CategoryGrid, CategoryCard.
+Common:                        NetworkImageWidget, EmptyStateWidget, etc.
+
+Generated / Localization
+-------------------------------------------------------------------------------
+lib/generated/ + l10n/         Auto-generated localization files.
+
+================================================================================
+CURRENT PRIORITIES (P1)
+================================================================================
+- Finish duplicated widgets cleanup.
+- Profile screen + order history / loyalty foundations.
+- Reduce remaining log spam.
+- Full regression test on Samsung S25.
+
+================================================================================
+END OF DOCUMENT
+Generated during May 30, 2026 cleanup sessions.
+================================================================================

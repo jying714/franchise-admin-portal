@@ -1,0 +1,2334 @@
+================================================================================
+DOUGHBOYS PIZZERIA — COMPLETE FIRESTORE SCHEMA DUMP
+Generated: 2026-05-29T02:22:29.472Z
+Project: doughboyspizzeria-2b3d2
+Method: firebase-admin (service account) + recursive collection walk
+Sample limit: 3 documents per collection
+================================================================================
+
+NOTE: This is a live snapshot. Structure is dominated by franchises/{franchiseId}/ subcollections.
+
+Collection: alerts
+  Sampled documents: 1 (max 3)
+  --- Doc 1 (id: doughboyspizzeria_alerts) ---
+    • seen_by: array[0]   = []
+    • level: string   = warning
+    • custom_fields: map   = {}
+    • locationId: DocumentReference -> franchise_locations/main_location   = ref:franchise_locations/main_location
+    • icon: string   = warning
+    • franchiseId: DocumentReference -> franchises/doughboyspizzeria   = ref:franchises/doughboyspizzeria
+    • created_at: Timestamp   = 2025-07-11T16:32:43.018Z
+    • body: string   = Franchise payment is overdue for July.
+    • title: string   = Payment Overdue
+    • type: string   = overdue_payment
+    • dismissed_at: null   = null
+
+Collection: audit_logs
+  Sampled documents: 3 (max 3)
+  --- Doc 1 (id: 0z8ucr80EjgkNNPx3EQ3) ---
+    • action: string   = delete_menu_item
+    • userId: string   = BMBktE6xUUeneOvFCpdA9rSn4to2
+    • userEmail: string   = 
+    • targetType: string   = 
+    • targetId: string   = 
+    • details: string   = {menuItemId: 8dbe67f2-3919-4563-b49b-7e29955e71e2}
+    • timestamp: Timestamp   = 2025-08-03T00:32:38.804Z
+    • ipAddress: null   = null
+    • franchiseId: string   = test
+  --- Doc 2 (id: 2OLiE0bC2191iXBZJkjy) ---
+    • action: string   = delete_menu_item
+    • userId: string   = BMBktE6xUUeneOvFCpdA9rSn4to2
+    • userEmail: string   = 
+    • targetType: string   = 
+    • targetId: string   = 
+    • details: string   = {menuItemId: 8c709fa5-ab34-410b-aed8-66525b87d529}
+    • timestamp: Timestamp   = 2025-08-03T19:18:36.913Z
+    • ipAddress: null   = null
+    • franchiseId: string   = test
+  --- Doc 3 (id: 4GMo2ME0VNXhti7M8fnu) ---
+    • action: string   = delete_menu_item
+    • userId: string   = BMBktE6xUUeneOvFCpdA9rSn4to2
+    • userEmail: string   = 
+    • targetType: string   = 
+    • targetId: string   = 
+    • details: string   = {menuItemId: 6b519226-b8ef-4ec9-adc7-2c0c21ce848d}
+    • timestamp: Timestamp   = 2025-08-03T19:32:40.127Z
+    • ipAddress: null   = null
+    • franchiseId: string   = test
+
+Collection: banners
+  Sampled documents: 3 (max 3)
+  --- Doc 1 (id: banner_1) ---
+    • ctaText: string   = Order Now
+    • endDate: Timestamp   = 2025-05-27T02:42:06.149Z
+    • subtitle: string   = Get 20% off all large pizzas.
+    • active: boolean   = true
+    • action: map   = {"type":"linkCategory","value":"Pizza"}
+    • title: string   = Special Offer!
+    • startDate: Timestamp   = 2025-05-27T02:42:06.149Z
+    • image: string   = https://storage.googleapis.com/doughboyspizzeria-2b3d2.firebasestorage.app/banners/banner.png
+  --- Doc 2 (id: banner_2) ---
+    • ctaText: string   = View Subs
+    • endDate: Timestamp   = 2025-05-27T02:42:06.338Z
+    • subtitle: string   = Subs & drink for $8.99!
+    • active: boolean   = true
+    • action: map   = {"type":"linkCategory","value":"Subs"}
+    • title: string   = Lunch Special
+    • startDate: Timestamp   = 2025-05-27T02:42:06.338Z
+    • image: string   = https://storage.googleapis.com/doughboyspizzeria-2b3d2.firebasestorage.app/banners/banner.png
+  --- Doc 3 (id: banner_3) ---
+    • ctaText: string   = See Desserts
+    • endDate: Timestamp   = 2025-05-27T02:42:06.569Z
+    • subtitle: string   = Try our chocolate lava cake.
+    • active: boolean   = true
+    • action: map   = {"type":"linkCategory","value":"Desserts"}
+    • title: string   = New Desserts!
+    • startDate: Timestamp   = 2025-05-27T02:42:06.569Z
+    • image: string   = https://storage.googleapis.com/doughboyspizzeria-2b3d2.firebasestorage.app/banners/banner.png
+
+Collection: categories
+  Sampled documents: 0 (max 3)
+  (empty or no permission)
+
+Collection: config
+  Sampled documents: 1 (max 3)
+  --- Doc 1 (id: features) ---
+    • statusEnabled: boolean   = true
+    • inventoryEnabled: boolean   = false
+    • forceLogin: boolean   = false
+    • phoneAuthEnabled: boolean   = true
+    • dynamicPricingEnabled: boolean   = false
+    • recurrenceEnabled: boolean   = false
+    • enableGuestMode: boolean   = true
+    • enableDemoMode: boolean   = false
+    • googleAuthEnabled: boolean   = true
+    • appleAuthEnabled: boolean   = false
+    • supportEnabled: boolean   = true
+    • segmentationEnabled: boolean   = false
+    • languageEnabled: boolean   = true
+    • loyaltyEnabled: boolean   = true
+    • facebookAuthEnabled: boolean   = true
+    • nutritionEnabled: boolean   = false
+    • pizzaCustomizationConfig: map   = {"allowDoubleToppings":true,"allowExtraToppings":true,"maxToppings":8,"maxFreeToppings":3,"maxFreeDressings":1,"maxFreeSauces":2}
+
+Collection: error_logs
+  Sampled documents: 3 (max 3)
+  --- Doc 1 (id: 00HCAln20wTCqkJjh5Ro) ---
+    • message: string   = Unable to load asset: "assets/images/admin_empty.png".
+The asset does not exist or has empty data.
+    • stack: string   = dart-sdk/lib/_internal/js_dev_runtime/private/ddc_runtime/errors.dart 307:3  throw_
+packages/flutter/src/services/asset_
+    • contextData: map   = {"library":"image resource service","context":"resolving an image codec","userId":"BMBktE6xUUeneOvFCpdA9rSn4to2","userEmail":"j.ying714@gmail.com"}
+    • source: string   = FlutterError
+    • severity: string   = fatal
+    • screen: string   = main
+    • userId: null   = null
+    • userEmail: null   = null
+    • env: string   = production
+    • createdAt: Timestamp   = 2025-07-30T21:53:33.371Z
+  --- Doc 2 (id: 00RYfGKC4eGw8feX5EYx) ---
+    • message: string   = Could not navigate to initial route.
+The requested route name was: "/platform-owner/dashboard"
+There was no correspondin
+    • stack: string   = 
+    • contextData: map   = {"library":"Flutter framework","context":"null","userId":"BMBktE6xUUeneOvFCpdA9rSn4to2","userEmail":"j.ying714@gmail.com"}
+    • source: string   = FlutterError
+    • severity: string   = fatal
+    • screen: string   = main
+    • userId: null   = null
+    • userEmail: null   = null
+    • env: string   = production
+    • createdAt: Timestamp   = 2025-07-16T01:30:42.850Z
+  --- Doc 3 (id: 00YgrsFamqVzDQ9nvC95) ---
+    • message: string   = Unable to load asset: "assets/images/admin_empty.png".
+The asset does not exist or has empty data.
+    • stack: string   = dart-sdk/lib/_internal/js_dev_runtime/private/ddc_runtime/errors.dart 307:3  throw_
+packages/flutter/src/services/asset_
+    • contextData: map   = {"library":"image resource service","context":"resolving an image codec","userId":"BMBktE6xUUeneOvFCpdA9rSn4to2","userEmail":"j.ying714@gmail.com"}
+    • source: string   = FlutterError
+    • severity: string   = fatal
+    • screen: string   = main
+    • userId: null   = null
+    • userEmail: null   = null
+    • env: string   = production
+    • createdAt: Timestamp   = 2025-08-04T17:41:28.376Z
+
+Collection: feedback
+  Sampled documents: 0 (max 3)
+  (empty or no permission)
+
+Collection: franchise_subscriptions
+  Sampled documents: 2 (max 3)
+  --- Doc 1 (id: d7TcV0qoU1uMc2O1e04R) ---
+    • franchiseId: string   = test
+    • platformPlanId: string   = premium_all
+    • nextBillingDate: Timestamp   = 2025-08-25T00:44:22.704Z
+    • billingCycleInDays: number   = 30
+    • billingInterval: string   = monthly
+    • autoRenew: boolean   = true
+    • priceAtSubscription: number   = 89
+    • active: boolean   = true
+    • status: string   = active
+    • planSnapshot: map   = {"name":"Premium (All-in-One)","description":"","features":["web_ordering","mobile_app","menu_item_customization"],"currency":"USD","price":89,"billingInterval":"monthly","isCustom
+    • paymentProviderCustomerId: null   = null
+    • cardLast4: null   = null
+    • cardBrand: null   = null
+    • paymentMethodId: null   = null
+    • billingEmail: null   = null
+    • paymentStatus: null   = null
+    • receiptUrl: null   = null
+    • subscribedAt: Timestamp   = 2025-07-26T00:44:22.898Z
+    • startDate: Timestamp   = 2025-07-26T00:44:22.898Z
+  --- Doc 2 (id: kO5VXcQqbMER2cnjfKPJ) ---
+    • franchiseId: string   = doughboyspizzeria
+    • platformPlanId: string   = premium_all
+    • nextBillingDate: Timestamp   = 2025-08-25T23:45:55.045Z
+    • billingCycleInDays: number   = 30
+    • billingInterval: string   = monthly
+    • autoRenew: boolean   = true
+    • priceAtSubscription: number   = 89
+    • active: boolean   = true
+    • status: string   = active
+    • planSnapshot: map   = {"name":"Premium (All-in-One)","description":"","features":["web_ordering","mobile_ordering","menu_item_customization"],"currency":"USD","price":89,"billingInterval":"monthly","isC
+    • paymentProviderCustomerId: null   = null
+    • cardLast4: null   = null
+    • cardBrand: null   = null
+    • paymentMethodId: null   = null
+    • billingEmail: null   = null
+    • paymentStatus: null   = null
+    • receiptUrl: null   = null
+    • subscribedAt: Timestamp   = 2025-07-26T23:45:56.142Z
+    • startDate: Timestamp   = 2025-07-26T23:45:56.142Z
+
+Collection: franchisee_invitations
+  Sampled documents: 2 (max 3)
+  --- Doc 1 (id: ABC123TOKEN) ---
+    • email: string   = alice@example.com
+    • acceptedAt: null   = null
+    • brandId: string   = doughboys
+    • role: string   = owner
+    • isNewUser: boolean   = true
+    • token: string   = ABC123TOKEN
+    • inviterUserId: string   = adminUser123
+    • revokedBy: null   = null
+    • notes: string   = Imported by script
+    • extraField2: string   = 
+    • extraField1: null   = null
+    • franchiseName: string   = Pizza Hub
+    • invitedUserId: string   = newUser456
+    • inviteUrl: string   = https://franchisehq.io/invite-accept?token=ABC123TOKEN
+    • createdAt: Timestamp   = 2025-07-16T02:32:10.344Z
+    • lastSentAt: Timestamp   = 2025-07-16T02:32:10.344Z
+    • revokedAt: Timestamp   = 2025-07-16T03:12:03.743Z
+    • status: string   = pending
+  --- Doc 2 (id: oh84m9QVZsOWhAWBxmU6) ---
+    • passwordResetLink: string   = https://doughboyspizzeria-2b3d2.firebaseapp.com/__/auth/action?mode=resetPassword&oobCode=GgJKTIO3brmIsjV9n4OBgpf1WmgDcL
+    • inviterUserId: string   = BMBktE6xUUeneOvFCpdA9rSn4to2
+    • notes: string   = test
+    • role: string   = hq_owner
+    • lastSentAt: Timestamp   = 2025-07-18T18:15:09.023Z
+    • isNewUser: boolean   = false
+    • expiresAt: Timestamp   = 2025-07-25T18:15:08.997Z
+    • token: string   = oh84m9QVZsOWhAWBxmU6
+    • createdAt: Timestamp   = 2025-07-18T18:15:09.023Z
+    • invitedUserId: string   = 8Y9M7ohq7gOKoFCBZNfa7yhfjDk1
+    • inviteUrl: string   = https://franchisehq.io/#/invite-accept?token=oh84m9QVZsOWhAWBxmU6
+    • email: string   = keniayingling@gmail.com
+    • franchiseName: string   = test
+    • acceptedBy: string   = 8Y9M7ohq7gOKoFCBZNfa7yhfjDk1
+    • status: string   = accepted
+    • acceptedAt: Timestamp   = 2025-07-18T18:16:06.654Z
+
+Collection: franchises
+  Sampled documents: 2 (max 3)
+  --- Doc 1 (id: doughboyspizzeria) ---
+    • createdAt: Timestamp   = 2025-07-09T04:46:22.179Z
+    • franchiseId: string   = doughboyspizzeria
+    • brandColor: string   = #C62828
+    • notes: string   = 
+    • updatedBy: string   = admin_user_001
+    • address: map   = {"zip":"12345","city":"Pizzatown","street":"123 Pizza Ave","state":"NY"}
+    • contactEmail: string   = info@doughboyspizzeria.com
+    • timezone: string   = America/New_York
+    • businessHours: map   = {"sunday":"11:00-21:00","saturday":"10:00-23:00","tuesday":"10:00-22:00","friday":"10:00-23:00","thursday":"10:00-22:00","wednesday":"10:00-22:00","monday":"10:00-22:00"}
+    • logoUrl: string   = https://your-cdn.com/logos/doughboyspizzeria.png
+    • billingInfo: map   = {"billingContact":"Jane Manager","billingEmail":"billing@doughboyspizzeria.com"}
+    • createdBy: string   = admin_user_001
+    • legalInfo: map   = {"licenseNumber":"NY-12345","EIN":"12-3456789"}
+    • defaultCurrency: string   = USD
+    • ownerUserId: string   = admin_user_001
+    • contactPhone: string   = (555) 555-1234
+    • config: map   = {"currency":"USD","locale":"en_US"}
+    • updatedAt: Timestamp   = 2025-07-09T05:37:17.644Z
+    • custom_fields: map   = {}
+    • name: string   = Doughboys Pizzeria #101
+    • support_note: string   = 
+    • bank_account_id: DocumentReference -> bank_accounts/main_bank_account   = ref:bank_accounts/main_bank_account
+    • fee_schedule_id: DocumentReference -> fee_schedules/doughboys_fee_schedule   = ref:fee_schedules/doughboys_fee_schedule
+    • multi_currency: boolean   = false
+    • updated_at: Timestamp   = 2025-07-11T16:18:57.360Z
+    • location_ids: array[1]   = ["ref:franchise_locations/main_location"]
+    • brandId: DocumentReference -> brands/doughboys_brand   = ref:brands/doughboys_brand
+    • primary_owner_id: DocumentReference -> users/admin_user_001   = ref:users/admin_user_001
+    • created_at: Timestamp   = 2025-07-11T16:18:57.360Z
+    • status: string   = active
+  --- Doc 2 (id: test) ---
+    • businessEmail: string   = keniayingling@gmail.com
+    • website: string   = www.test.com
+    • address: map   = {"zip":"12345","city":"test","street":"123 test st","state":"tn"}
+    • supportPhone: string   = 123 123 1234
+    • EIN: string   = 12345
+    • ownerId: string   = 8Y9M7ohq7gOKoFCBZNfa7yhfjDk1
+    • logoUrl: string   = 
+    • createdAt: Timestamp   = 2025-07-18T18:16:00.845Z
+    • ownerName: string   = test test
+    • phone: string   = 123 123 1234
+    • name: string   = test
+    • ownerUserId: string   = 8Y9M7ohq7gOKoFCBZNfa7yhfjDk1
+    • franchiseId: string   = test
+    • category: string   = test
+    • status: string   = active
+    • updatedAt: Timestamp   = 2025-07-18T18:16:00.845Z
+    • hours: array[0]   = []
+    • onboardingStatus: string   = complete
+    • restaurantType: string   = pizzeria
+    • onboardingCompletedAt: Timestamp   = 2025-08-06T02:50:44.952Z
+  Collection: franchises/doughboyspizzeria/admin_upload_logs
+    Sampled documents: 1 (max 3)
+    --- Doc 1 (id: FoFUAFu91OBx4PGu3ZRG) ---
+      • initiatedBy: string   = admin_user_001
+      • itemsValid: number   = 38
+      • timestamp: string   = 2025-06-15T20:00:00Z
+      • filename: string   = menu_bulk_upload_2025_06_15.csv
+      • itemsAttempted: number   = 40
+      • errorRows: array[1]   = [{"rowNumber":12,"errors":["[nested]"]}]
+      • duration: number   = 0
+      • errorType: string   = 
+      • processedAt: Timestamp   = 2025-07-09T05:55:10.250Z
+      • resultSummary: string   = 
+      • status: string   = success
+  Collection: franchises/doughboyspizzeria/analytics_summaries
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: default_2025-04) ---
+      • toppingCounts: map   = {"mushrooms":1,"bacon":4,"sausage":3}
+      • uniqueCustomers: number   = 2
+      • totalOrders: number   = 11
+      • cancelledOrders: number   = 0
+      • updatedAt: string   = 2025-05-01T10:05:41.850000Z
+      • addOnRevenue: number   = 10
+      • orderStatusBreakdown: map   = {"Placed":6,"Delivered":5}
+      • comboCounts: map   = {"Party Pack":2}
+      • averageOrderValue: number   = 31.6105
+      • addOnCounts: map   = {"buffalo_sauce":1,"cheese":7}
+      • mostPopularItem: string   = Meat Lovers Pizza
+      • period: string   = 2025-04
+      • totalRevenue: number   = 347.7155
+      • reportType: string   = monthly
+      • createdAt: Timestamp   = 2025-07-09T05:54:11.092Z
+      • deletedAt: null   = null
+      • notes: string   = 
+      • updatedBy: string   = 
+      • createdBy: string   = 
+      • franchiseId: string   = doughboyspizzeria
+      • customMetrics: map   = {}
+    --- Doc 2 (id: default_2025-05) ---
+      • toppingCounts: map   = {"green_peppers":2,"onions":3,"pepperoni":6}
+      • uniqueCustomers: number   = 3
+      • totalOrders: number   = 11
+      • cancelledOrders: number   = 1
+      • updatedAt: string   = 2025-06-01T14:20:33.120000Z
+      • addOnRevenue: number   = 7.5
+      • orderStatusBreakdown: map   = {"Placed":8,"Cancelled":1,"Delivered":2}
+      • comboCounts: map   = {"Lunch Combo":3,"Family Feast":1}
+      • averageOrderValue: number   = 42.783
+      • addOnCounts: map   = {"jalapenos":2,"ranch":4}
+      • mostPopularItem: string   = Deluxe Calzone
+      • period: string   = 2025-05
+      • totalRevenue: number   = 471.85
+      • reportType: string   = monthly
+      • createdAt: Timestamp   = 2025-07-09T05:54:11.166Z
+      • deletedAt: null   = null
+      • notes: string   = 
+      • updatedBy: string   = 
+      • createdBy: string   = 
+      • franchiseId: string   = doughboyspizzeria
+      • customMetrics: map   = {}
+    --- Doc 3 (id: default_2025-06) ---
+      • toppingCounts: map   = {}
+      • uniqueCustomers: number   = 1
+      • feedbackStats: map   = {"totalFeedbacks":10,"appFeedback":{"avgStarRating":4,"count":3,"avgCategories":{"Checkout process":"[nested]","Finding items":"[nested]","Ease of use":"[nested]","Payment options"
+      • totalOrders: number   = 23
+      • cancelledOrders: number   = 0
+      • updatedAt: string   = 2025-06-22T00:25:26.188000+00:00
+      • addOnRevenue: number   = 0
+      • orderStatusBreakdown: map   = {"Placed":23}
+      • comboCounts: map   = {}
+      • averageOrderValue: number   = 23.188391304347824
+      • addOnCounts: map   = {}
+      • mostPopularItem: string   = Cheese Calzone
+      • period: string   = 2025-06
+      • totalRevenue: number   = 533.333
+      • reportType: string   = monthly
+      • createdAt: Timestamp   = 2025-07-09T05:54:11.252Z
+      • deletedAt: null   = null
+      • notes: string   = 
+      • updatedBy: string   = 
+      • createdBy: string   = 
+      • franchiseId: string   = doughboyspizzeria
+      • customMetrics: map   = {}
+  Collection: franchises/doughboyspizzeria/cart
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: BMBktE6xUUeneOvFCpdA9rSn4to2) ---
+      • timestamp: string   = 2025-07-06T23:22:03.477631+00:00
+      • address: null   = null
+      • userId: string   = BMBktE6xUUeneOvFCpdA9rSn4to2
+      • refundStatus: null   = null
+      • userName: null   = null
+      • subtotal: number   = 10.95
+      • time: string   = 6:21 PM
+      • total: number   = 11.962874999999999
+      • deliveryFee: number   = 0
+      • deliveryAddress: null   = null
+      • status: string   = Placed
+      • timestamps: map   = {"placed":"2025-07-06T18:22:03.477631"}
+      • tax: number   = 1.012875
+      • estimatedTime: number   = 30
+      • items: array[0]   = []
+      • discount: number   = 0
+      • specialInstructions: null   = null
+      • deliveryType: string   = Pickup
+      • createdAt: Timestamp   = 2025-07-09T06:01:11.165Z
+      • cartStatus: string   = active
+      • deletedAt: null   = null
+      • notes: string   = 
+      • updatedBy: string   = 
+      • lastItemAddedAt: null   = null
+      • franchiseId: string   = doughboyspizzeria
+      • isActive: boolean   = true
+      • updatedAt: Timestamp   = 2025-07-09T06:01:11.165Z
+    --- Doc 2 (id: Wj0MKxvLepOO1fyzh9jXwmDEoen1) ---
+      • timestamp: string   = 2025-06-14T01:04:23.435140+00:00
+      • address: null   = null
+      • userId: string   = Wj0MKxvLepOO1fyzh9jXwmDEoen1
+      • refundStatus: null   = null
+      • userName: null   = null
+      • subtotal: number   = 0
+      • time: string   = 
+      • total: number   = 0
+      • deliveryFee: number   = 0
+      • deliveryAddress: null   = null
+      • status: string   = cart
+      • timestamps: map   = {}
+      • tax: number   = 0
+      • estimatedTime: number   = 0
+      • items: array[0]   = []
+      • discount: number   = 0
+      • specialInstructions: null   = null
+      • deliveryType: string   = pickup
+      • createdAt: Timestamp   = 2025-07-09T06:01:11.250Z
+      • cartStatus: string   = active
+      • deletedAt: null   = null
+      • notes: string   = 
+      • updatedBy: string   = 
+      • lastItemAddedAt: null   = null
+      • franchiseId: string   = doughboyspizzeria
+      • isActive: boolean   = true
+      • updatedAt: Timestamp   = 2025-07-09T06:01:11.250Z
+    --- Doc 3 (id: bkx6vIVDNzWxvZraq8aT2iupplj1) ---
+      • timestamp: string   = 2025-05-25T23:33:55.902612+00:00
+      • address: map   = {"label":"","city":"","street":"","state":"","zip":""}
+      • userId: string   = bkx6vIVDNzWxvZraq8aT2iupplj1
+      • refundStatus: null   = null
+      • userName: null   = null
+      • subtotal: number   = 0
+      • time: string   = 
+      • total: number   = 0
+      • deliveryFee: number   = 0
+      • status: string   = cart
+      • timestamps: map   = {}
+      • tax: number   = 0
+      • estimatedTime: number   = 0
+      • items: array[1]   = [{"price":9.95,"menuItemId":"appetizers_fried_chicken_tenders","image":"https://storage.googleapis.com/doughboyspizzeria-2b3d2.firebasestorage.app/menu_items/friedchickentenders.jp
+      • discount: number   = 0
+      • deliveryType: string   = pickup
+      • createdAt: Timestamp   = 2025-07-09T06:01:11.342Z
+      • cartStatus: string   = active
+      • deletedAt: null   = null
+      • notes: string   = 
+      • updatedBy: string   = 
+      • lastItemAddedAt: null   = null
+      • franchiseId: string   = doughboyspizzeria
+      • isActive: boolean   = true
+      • updatedAt: Timestamp   = 2025-07-09T06:01:11.342Z
+  Collection: franchises/doughboyspizzeria/carts
+    Sampled documents: 1 (max 3)
+    --- Doc 1 (id: BMBktE6xUUeneOvFCpdA9rSn4to2) ---
+      • address: null   = null
+      • refundStatus: null   = null
+      • discount: number   = 0
+      • userName: null   = null
+      • userId: string   = BMBktE6xUUeneOvFCpdA9rSn4to2
+      • deliveryFee: number   = 0
+      • deliveryAddress: null   = null
+      • specialInstructions: null   = null
+      • status: string   = cart
+      • estimatedTime: number   = 30
+      • deliveryType: string   = Pickup
+      • tax: number   = 0.578125
+      • storeId: string   = doughboyspizzeria
+      • total: number   = 6.828125
+      • subtotal: number   = 6.25
+      • timestamps: map   = {"placed":"2026-05-28T21:14:28.596259"}
+      • time: string   = 4:14 PM
+      • items: array[0]   = []
+      • timestamp: Timestamp   = 2026-05-29T02:14:28.596Z
+      • updatedAt: Timestamp   = 2026-05-29T02:14:28.929Z
+  Collection: franchises/doughboyspizzeria/cash_flow_forecasts
+    Sampled documents: 2 (max 3)
+    --- Doc 1 (id: 2025-08) ---
+      • forecastSource: string   = scripted_seed
+      • note: string   = Initial forecast generated by script.
+      • franchiseId: string   = doughboyspizzeria
+      • projectedInflow: number   = 8500
+      • openingBalance: number   = 5000
+      • period: string   = 2025-08
+      • forecastVersion: number   = 1
+      • projectedClosingBalance: number   = 9400
+      • projectedOutflow: number   = 4100
+      • createdAt: Timestamp   = 2025-07-12T03:54:42.073Z
+    --- Doc 2 (id: 2025-09) ---
+      • franchiseId: string   = doughboyspizzeria
+      • period: string   = 2025-09
+      • openingBalance: number   = 9400
+      • projectedInflow: number   = 181.76529166666668
+      • projectedOutflow: number   = 0
+      • projectedClosingBalance: number   = 9581.765291666667
+      • forecastSource: string   = auto
+      • note: string   = Auto-generated from analytics summaries.
+      • forecastVersion: number   = 1
+      • startDate: Timestamp   = 2025-09-01T00:00:00.000Z
+      • endDate: Timestamp   = 2025-09-30T23:59:59.000Z
+      • createdAt: Timestamp   = 2025-08-01T04:00:06.154Z
+  Collection: franchises/doughboyspizzeria/categories
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: appetizers) ---
+      • name: string   = Appetizers
+      • description: string   = Tasty starters to kick off your meal.
+      • notes: string   = 
+      • updatedBy: string   = 
+      • displayName: string   = Appetizers
+      • categoryCode: string   = 
+      • isActive: boolean   = true
+      • createdAt: Timestamp   = 2025-07-09T05:51:18.328Z
+      • deletedAt: null   = null
+      • createdBy: string   = 
+      • sortOrder: number   = 0
+      • franchiseId: string   = doughboyspizzeria
+      • parentCategory: string   = 
+      • status: string   = active
+      • updatedAt: Timestamp   = 2025-07-09T05:51:18.328Z
+      • image: string   = https://storage.googleapis.com/doughboyspizzeria-2b3d2.firebasestorage.app/categories/appetizers.jpg
+    --- Doc 2 (id: calzones) ---
+      • name: string   = Calzones
+      • description: string   = Stuffed calzones made to order.
+      • notes: string   = 
+      • updatedBy: string   = 
+      • displayName: string   = Calzones
+      • categoryCode: string   = 
+      • isActive: boolean   = true
+      • createdAt: Timestamp   = 2025-07-09T05:51:18.425Z
+      • deletedAt: null   = null
+      • createdBy: string   = 
+      • sortOrder: number   = 0
+      • franchiseId: string   = doughboyspizzeria
+      • parentCategory: string   = 
+      • status: string   = active
+      • updatedAt: Timestamp   = 2025-07-09T05:51:18.425Z
+      • image: string   = https://storage.googleapis.com/doughboyspizzeria-2b3d2.firebasestorage.app/categories/calzones.jpg
+    --- Doc 3 (id: desserts) ---
+      • name: string   = Desserts
+      • image: string   = https://storage.googleapis.com/doughboyspizzeria-2b3d2.firebasestorage.app/categories/deserts.jpg
+      • description: string   = Sweet treats and desserts.
+      • notes: string   = 
+      • updatedBy: string   = 
+      • displayName: string   = Desserts
+      • categoryCode: string   = 
+      • isActive: boolean   = true
+      • createdAt: Timestamp   = 2025-07-09T05:51:18.518Z
+      • deletedAt: null   = null
+      • createdBy: string   = 
+      • sortOrder: number   = 0
+      • franchiseId: string   = doughboyspizzeria
+      • parentCategory: string   = 
+      • status: string   = active
+      • updatedAt: Timestamp   = 2025-07-09T05:51:18.518Z
+  Collection: franchises/doughboyspizzeria/category_schemas
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: appetizers) ---
+      • requiredCustomizationGroups: array[0]   = []
+      • category: string   = appetizers
+      • includedIngredients: array[1]   = [{"name":{"hint":"[nested]","type":"[nested]","label":"[nested]"},"ingredientId":{"hint":"[nested]","required":"[nested]","label":"[nested]","type":"[nested]","inputMode":"[nested]
+      • optionalAddOns: array[1]   = [{"name":{"hint":"[nested]","type":"[nested]","label":"[nested]"},"ingredientId":{"hint":"[nested]","required":"[nested]","label":"[nested]","type":"[nested]","inputMode":"[nested]
+      • fields: map   = {"maxFreeSauces":{"label":{"en":"[nested]"},"required":false,"order":14,"min":0,"default":2,"type":"number","max":10,"hint":{"en":"[nested]"}},"sizes":{"default":["[nested]"],"requ
+      • customizations: array[2]   = [{"templateRef":"veggies"},{"templateRef":"sauces"}]
+      • schemaVersion: number   = 1
+      • requiredFields: array[1]   = ["includedIngredients"]
+      • notes: string   = 
+      • updatedBy: string   = 
+      • description: string   = 
+      • isActive: boolean   = true
+      • schemaName: string   = 
+      • createdAt: Timestamp   = 2025-07-09T05:49:04.557Z
+      • deletedAt: null   = null
+      • createdBy: string   = 
+      • versionHistory: array[0]   = []
+      • franchiseId: string   = doughboyspizzeria
+      • lockedGroups: array[0]   = []
+      • status: string   = active
+      • updatedAt: Timestamp   = 2025-07-09T05:49:04.557Z
+    --- Doc 2 (id: calzones) ---
+      • requiredCustomizationGroups: array[2]   = ["Cook","Sauces"]
+      • category: string   = calzones
+      • includedIngredients: array[1]   = [{"name":{"hint":"[nested]","type":"[nested]","label":"[nested]"},"ingredientId":{"hint":"[nested]","required":"[nested]","label":"[nested]","type":"[nested]","inputMode":"[nested]
+      • optionalAddOns: array[1]   = [{"name":{"hint":"[nested]","type":"[nested]","label":"[nested]"},"ingredientId":{"hint":"[nested]","required":"[nested]","label":"[nested]","type":"[nested]","inputMode":"[nested]
+      • fields: map   = {"sizePrices":{"default":{"Large":"[nested]","Small":"[nested]"},"required":true,"order":11,"type":"map","label":{"en":"[nested]"},"hint":{"en":"[nested]"}},"sizes":{"default":["[n
+      • customizations: array[5]   = [{"templateRef":"meats"},{"templateRef":"cook"},{"templateRef":"veggies"}]
+      • schemaVersion: number   = 1
+      • requiredFields: array[2]   = ["includedIngredients","customizations"]
+      • notes: string   = 
+      • updatedBy: string   = 
+      • description: string   = 
+      • isActive: boolean   = true
+      • schemaName: string   = 
+      • createdAt: Timestamp   = 2025-07-09T05:49:04.651Z
+      • deletedAt: null   = null
+      • createdBy: string   = 
+      • versionHistory: array[0]   = []
+      • franchiseId: string   = doughboyspizzeria
+      • lockedGroups: array[0]   = []
+      • status: string   = active
+      • updatedAt: Timestamp   = 2025-07-09T05:49:04.651Z
+    --- Doc 3 (id: default) ---
+      • requiredCustomizationGroups: array[0]   = []
+      • includedIngredients: array[0]   = []
+      • optionalAddOns: array[0]   = []
+      • fields: map   = {}
+      • customizations: array[0]   = []
+      • schemaVersion: number   = 1
+      • requiredFields: array[0]   = []
+      • notes: string   = 
+      • updatedBy: string   = 
+      • description: string   = 
+      • isActive: boolean   = true
+      • schemaName: string   = 
+      • createdAt: Timestamp   = 2025-07-09T05:49:04.741Z
+      • deletedAt: null   = null
+      • createdBy: string   = 
+      • versionHistory: array[0]   = []
+      • franchiseId: string   = doughboyspizzeria
+      • lockedGroups: array[0]   = []
+      • status: string   = active
+      • updatedAt: Timestamp   = 2025-07-09T05:49:04.741Z
+  Collection: franchises/doughboyspizzeria/config
+    Sampled documents: 1 (max 3)
+    --- Doc 1 (id: features) ---
+      • statusEnabled: boolean   = true
+      • inventoryEnabled: boolean   = false
+      • forceLogin: boolean   = false
+      • phoneAuthEnabled: boolean   = true
+      • dynamicPricingEnabled: boolean   = false
+      • recurrenceEnabled: boolean   = false
+      • enableGuestMode: boolean   = true
+      • enableDemoMode: boolean   = false
+      • googleAuthEnabled: boolean   = true
+      • appleAuthEnabled: boolean   = false
+      • supportEnabled: boolean   = true
+      • segmentationEnabled: boolean   = false
+      • pizzaCustomizationConfig: map   = {"maxFreeSauces":2,"allowDoubleToppings":true,"maxFreeDressings":1,"maxFreeToppings":3,"allowExtraToppings":true,"maxToppings":8}
+      • languageEnabled: boolean   = true
+      • loyaltyEnabled: boolean   = true
+      • facebookAuthEnabled: boolean   = true
+      • nutritionEnabled: boolean   = false
+      • createdAt: Timestamp   = 2025-07-09T06:02:16.756Z
+      • deletedAt: null   = null
+      • environment: string   = production
+      • notes: string   = 
+      • updatedBy: string   = 
+      • configVersion: number   = 1
+      • createdBy: string   = 
+      • lastPublishedAt: null   = null
+      • franchiseId: string   = doughboyspizzeria
+      • isActive: boolean   = true
+      • region: string   = 
+      • updatedAt: Timestamp   = 2025-07-09T06:02:16.756Z
+  Collection: franchises/doughboyspizzeria/customization_templates
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: cheeses) ---
+      • label: map   = {"en":"Cheeses"}
+      • templateId: string   = cheeses
+      • optionsSource: string   = ingredient_metadata
+      • ingredientIds: array[5]   = ["cheese_mozzarella","cheese_cheddar","cheese_provolone"]
+      • locked: boolean   = true
+      • inputMode: string   = dropdownOrText
+      • hint: map   = {"en":"Pick cheeses to include as options.","es":"Elige quesos para incluir como opciones."}
+      • createdAt: Timestamp   = 2025-07-09T06:00:32.631Z
+      • deletedAt: null   = null
+      • notes: string   = 
+      • updatedBy: string   = 
+      • createdBy: string   = 
+      • displayOrder: number   = 0
+      • franchiseId: string   = doughboyspizzeria
+      • category: string   = 
+      • isActive: boolean   = true
+      • updatedAt: Timestamp   = 2025-07-09T06:00:32.631Z
+    --- Doc 2 (id: cook) ---
+      • label: map   = {"en":"Cook"}
+      • templateId: string   = cook
+      • optionsSource: string   = ingredient_metadata
+      • ingredientIds: array[2]   = ["cook_regular","cook_crispy"]
+      • locked: boolean   = true
+      • inputMode: string   = dropdownOrText
+      • hint: map   = {"en":"Choose how the item should be cooked.","es":"Elige cómo se debe cocinar el artículo."}
+      • createdAt: Timestamp   = 2025-07-09T06:00:32.723Z
+      • deletedAt: null   = null
+      • notes: string   = 
+      • updatedBy: string   = 
+      • createdBy: string   = 
+      • displayOrder: number   = 0
+      • franchiseId: string   = doughboyspizzeria
+      • category: string   = 
+      • isActive: boolean   = true
+      • updatedAt: Timestamp   = 2025-07-09T06:00:32.723Z
+    --- Doc 3 (id: crust) ---
+      • label: map   = {"en":"Crust"}
+      • templateId: string   = crust
+      • optionsSource: string   = ingredient_metadata
+      • ingredientIds: array[3]   = ["crust_thin","crust_hand_tossed","crust_pan"]
+      • locked: boolean   = true
+      • inputMode: string   = dropdownOrText
+      • hint: map   = {"en":"Select the crust style.","es":"Selecciona el tipo de corteza."}
+      • createdAt: Timestamp   = 2025-07-09T06:00:32.815Z
+      • deletedAt: null   = null
+      • notes: string   = 
+      • updatedBy: string   = 
+      • createdBy: string   = 
+      • displayOrder: number   = 0
+      • franchiseId: string   = doughboyspizzeria
+      • category: string   = 
+      • isActive: boolean   = true
+      • updatedAt: Timestamp   = 2025-07-09T06:00:32.815Z
+  Collection: franchises/doughboyspizzeria/feature_metadata
+    Sampled documents: 1 (max 3)
+    --- Doc 1 (id: doughboyspizzeria) ---
+      • plugin_registry: map   = {"enabled":false,"features":{}}
+      • feature_toggles: map   = {"enabled":false,"features":{}}
+      • schema_management: map   = {"enabled":false,"features":{}}
+      • updatedAt: Timestamp   = 2025-07-26T23:45:56.017Z
+      • combo_meals: map   = {"features":{},"enabled":true}
+      • nutritional_info: map   = {"features":{},"enabled":true}
+      • support_chat: map   = {"features":{},"enabled":true}
+      • loyalty: map   = {"features":{},"enabled":true}
+      • inventory: map   = {"features":{},"enabled":true}
+      • multi_location: map   = {"features":{},"enabled":true}
+      • analytics_reporting: map   = {"features":{},"enabled":true}
+      • feedback: map   = {"features":{},"enabled":true}
+      • menu_item_customization: map   = {"features":{},"enabled":true}
+      • promo_banners: map   = {"features":{},"enabled":true}
+      • staff_access: map   = {"features":{},"enabled":true}
+      • branding_customization: map   = {"features":{},"enabled":true}
+      • mobile_ordering: map   = {"features":{},"enabled":true}
+      • chat_support: map   = {"features":{},"enabled":true}
+      • web_ordering: map   = {"features":{},"enabled":true}
+      • discount_codes: map   = {"features":{},"enabled":true}
+      • order_tracking: map   = {"features":{},"enabled":true}
+      • language_support: map   = {"features":{},"enabled":true}
+  Collection: franchises/doughboyspizzeria/feature_toggles
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: default) ---
+      • segmentationEnabled: boolean   = false
+      • statusEnabled: boolean   = true
+      • languageEnabled: boolean   = false
+      • updatedBy: string   = admin1
+      • inventoryEnabled: boolean   = true
+      • updatedAt: Timestamp   = 2025-07-09T04:46:22.617Z
+    --- Doc 2 (id: global) ---
+      • statusEnabled: boolean   = false
+      • feedback_enabled: boolean   = true
+      • inventoryEnabled: boolean   = true
+      • chatManagementEnabled: boolean   = false
+      • promo_banners_enabled: boolean   = true
+      • trackOrderEnabled: boolean   = false
+      • order_tracking_enabled: boolean   = true
+      • segmentationEnabled: boolean   = true
+      • supportEnabled: boolean   = false
+      • inventory_enabled: boolean   = true
+      • languageEnabled: boolean   = false
+      • loyaltyEnabled: boolean   = false
+      • chat_support_enabled: boolean   = true
+      • loyalty_enabled: boolean   = true
+      • staffAccessEnabled: boolean   = false
+      • featureToggleUIEnabled: boolean   = false
+    --- Doc 3 (id: settings) ---
+      • order_status: boolean   = true
+      • chat_management: boolean   = false
+      • multi_language_support: boolean   = false
+      • phone_auth: boolean   = true
+      • _meta: map   = {"order_status":{"owner_togglable":false,"description":"Order status updates/tracking","paid_service":false},"facebook_auth":{"owner_togglable":false,"description":"Login via Faceb
+      • force_login: boolean   = false
+      • google_auth: boolean   = true
+      • dynamic_pricing: boolean   = false
+      • analytics_dashboard: boolean   = true
+      • promo_bulk_upload: boolean   = false
+      • loyalty: boolean   = false
+      • guest_mode: boolean   = false
+      • order_tracking: boolean   = false
+      • feedback_management: boolean   = false
+      • apple_auth: boolean   = false
+      • feature_toggle_ui: boolean   = true
+      • inventory: boolean   = false
+      • demo_mode: boolean   = false
+      • analytics_export: boolean   = false
+      • _audit: map   = {"script_version":"1.0","last_updated":"2025-07-10T16:25:36.674185+00:00","updated_by_script":true,"meta_keys":["loyalty","inventory","order_status"],"fields_present":["loyalty","i
+      • promo_export: boolean   = false
+      • support: boolean   = true
+      • segmentation: boolean   = true
+      • facebook_auth: boolean   = false
+      • nutrition: boolean   = true
+      • admin_dashboard: boolean   = true
+      • banner_promo_management: boolean   = true
+      • staff_access: boolean   = true
+      • recurring_orders: boolean   = true
+  Collection: franchises/doughboyspizzeria/feedback
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: [#350e7]) ---
+      • orderId: string   = A51TGLTGLO
+      • rating: number   = 5
+      • userId: string   = BMBktE6xUUeneOvFCpdA9rSn4to2
+      • categories: array[4]   = ["Checkout process:3","Ease of use:4","Finding items:3"]
+      • anonymous: boolean   = false
+      • subject: string   = 
+      • message: string   = 
+      • comment: null   = null
+      • createdAt: string   = 2025-06-21T01:54:20.874000+00:00
+      • deletedAt: null   = null
+      • notes: string   = 
+      • updatedBy: string   = 
+      • createdBy: string   = BMBktE6xUUeneOvFCpdA9rSn4to2
+      • response: string   = 
+      • feedbackMode: string   = 
+      • franchiseId: string   = doughboyspizzeria
+      • respondedAt: null   = null
+      • isActive: boolean   = true
+      • feedbackType: string   = 
+      • updatedAt: Timestamp   = 2025-07-09T06:01:40.889Z
+      • timestamp: Timestamp   = 2025-06-21T01:54:20.874Z
+    --- Doc 2 (id: [#3c420]) ---
+      • orderId: string   = 32QTZ67D4V
+      • rating: number   = 3
+      • userId: string   = BMBktE6xUUeneOvFCpdA9rSn4to2
+      • feedbackMode: string   = orderExperience
+      • categories: array[4]   = ["Food Quality:4","Service:3","Delivery Speed:5"]
+      • anonymous: boolean   = false
+      • subject: string   = 
+      • message: string   = 
+      • comment: string   = hi
+      • createdAt: string   = 2025-06-21T02:32:08.709000+00:00
+      • deletedAt: null   = null
+      • notes: string   = 
+      • updatedBy: string   = 
+      • createdBy: string   = BMBktE6xUUeneOvFCpdA9rSn4to2
+      • response: string   = 
+      • franchiseId: string   = doughboyspizzeria
+      • respondedAt: null   = null
+      • isActive: boolean   = true
+      • feedbackType: string   = 
+      • updatedAt: Timestamp   = 2025-07-09T06:01:40.981Z
+      • timestamp: Timestamp   = 2025-06-21T02:32:08.709Z
+    --- Doc 3 (id: [#51898]) ---
+      • orderId: string   = 75JS1ZG64A
+      • rating: number   = 4
+      • userId: string   = BMBktE6xUUeneOvFCpdA9rSn4to2
+      • feedbackMode: string   = ordering
+      • categories: array[4]   = ["Ease of use:3","Checkout process:4","Finding items:4"]
+      • anonymous: boolean   = false
+      • subject: string   = 
+      • message: string   = 
+      • comment: null   = null
+      • createdAt: string   = 2025-06-21T02:10:04.938000+00:00
+      • deletedAt: null   = null
+      • notes: string   = 
+      • updatedBy: string   = 
+      • createdBy: string   = BMBktE6xUUeneOvFCpdA9rSn4to2
+      • response: string   = 
+      • franchiseId: string   = doughboyspizzeria
+      • respondedAt: null   = null
+      • isActive: boolean   = true
+      • feedbackType: string   = 
+      • updatedAt: Timestamp   = 2025-07-09T06:01:41.068Z
+      • timestamp: Timestamp   = 2025-06-21T02:10:04.938Z
+  Collection: franchises/doughboyspizzeria/ingredient_metadata
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: Crispy) ---
+      • isAllergen: boolean   = false
+      • vendor: string   = 
+      • franchiseId: string   = doughboyspizzeria
+      • unit: string   = 
+      • inventoryTrackingEnabled: boolean   = true
+      • franchiseIds: array[3]   = ["global","franchise_a","franchise_b"]
+      • createdAt: Timestamp   = 2025-07-09T05:40:15.458Z
+      • minStockWarning: number   = 0
+      • category: string   = 
+      • currentStock: number   = 0
+      • deletedAt: null   = null
+      • isActive: boolean   = true
+      • sku: string   = 
+      • name: string   = Crispy
+      • updatedAt: Timestamp   = 2025-07-09T05:40:15.458Z
+      • costPerUnit: number   = 0
+      • updatedBy: string   = 
+      • id: string   = Crispy
+      • createdBy: string   = 
+      • type: string   = Cook
+    --- Doc 2 (id: Regular) ---
+      • isAllergen: boolean   = false
+      • vendor: string   = 
+      • franchiseId: string   = doughboyspizzeria
+      • unit: string   = 
+      • inventoryTrackingEnabled: boolean   = true
+      • franchiseIds: array[3]   = ["global","franchise_a","franchise_b"]
+      • createdAt: Timestamp   = 2025-07-09T05:40:15.548Z
+      • minStockWarning: number   = 0
+      • category: string   = 
+      • currentStock: number   = 0
+      • deletedAt: null   = null
+      • isActive: boolean   = true
+      • sku: string   = 
+      • name: string   = Regular
+      • updatedAt: Timestamp   = 2025-07-09T05:40:15.548Z
+      • costPerUnit: number   = 0
+      • updatedBy: string   = 
+      • id: string   = Regular
+      • createdBy: string   = 
+      • type: string   = Cook
+    --- Doc 3 (id: alfredo_sauce) ---
+      • isAllergen: boolean   = false
+      • vendor: string   = 
+      • franchiseId: string   = doughboyspizzeria
+      • unit: string   = 
+      • inventoryTrackingEnabled: boolean   = true
+      • franchiseIds: array[3]   = ["global","franchise_a","franchise_b"]
+      • createdAt: Timestamp   = 2025-07-09T05:40:15.739Z
+      • minStockWarning: number   = 0
+      • category: string   = 
+      • currentStock: number   = 0
+      • deletedAt: null   = null
+      • sku: string   = 
+      • isActive: boolean   = true
+      • removable: boolean   = true
+      • name: string   = Alfredo Sauce
+      • updatedAt: Timestamp   = 2025-07-09T05:40:15.739Z
+      • costPerUnit: number   = 0
+      • updatedBy: string   = 
+      • id: string   = alfredo_sauce
+      • createdBy: string   = 
+      • type: string   = Sauces
+  Collection: franchises/doughboyspizzeria/ingredient_types
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: breads) ---
+      • isRequiredGroup: boolean   = false
+      • config: map   = {}
+      • name: string   = Breads
+      • icon: string   = 🍞
+      • createdAt: Timestamp   = 2025-07-24T02:42:13.286Z
+      • sortOrder: number   = 12
+      • updatedAt: Timestamp   = 2025-07-24T02:42:28.231Z
+    --- Doc 2 (id: cheeses) ---
+      • isRequiredGroup: boolean   = true
+      • config: map   = {}
+      • icon: string   = 🧀
+      • name: string   = Cheeses
+      • createdAt: Timestamp   = 2025-07-24T02:42:13.286Z
+      • sortOrder: number   = 0
+      • updatedAt: Timestamp   = 2025-07-24T02:42:28.231Z
+    --- Doc 3 (id: crust_toppings) ---
+      • name: string   = Crust Toppings
+      • isRequiredGroup: boolean   = false
+      • config: map   = {}
+      • icon: string   = 🌾
+      • createdAt: Timestamp   = 2025-07-24T02:42:13.286Z
+      • sortOrder: number   = 8
+      • updatedAt: Timestamp   = 2025-07-24T02:42:28.231Z
+  Collection: franchises/doughboyspizzeria/ingredients
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: Crispy) ---
+      • name: string   = Crispy
+      • id: string   = Crispy
+      • type: string   = Cook
+      • franchiseIds: array[3]   = ["global","franchise_a","franchise_b"]
+      • updatedBy: string   = 
+      • isActive: boolean   = true
+      • minStockWarning: number   = 0
+      • inventoryTrackingEnabled: boolean   = true
+      • createdAt: Timestamp   = 2025-07-09T05:40:15.458Z
+      • deletedAt: null   = null
+      • unit: string   = 
+      • createdBy: string   = 
+      • isAllergen: boolean   = false
+      • vendor: string   = 
+      • currentStock: number   = 0
+      • franchiseId: string   = doughboyspizzeria
+      • category: string   = 
+      • sku: string   = 
+      • costPerUnit: number   = 0
+      • updatedAt: Timestamp   = 2025-07-09T05:40:15.458Z
+    --- Doc 2 (id: Regular) ---
+      • name: string   = Regular
+      • id: string   = Regular
+      • type: string   = Cook
+      • franchiseIds: array[3]   = ["global","franchise_a","franchise_b"]
+      • updatedBy: string   = 
+      • isActive: boolean   = true
+      • minStockWarning: number   = 0
+      • inventoryTrackingEnabled: boolean   = true
+      • createdAt: Timestamp   = 2025-07-09T05:40:15.548Z
+      • deletedAt: null   = null
+      • unit: string   = 
+      • createdBy: string   = 
+      • isAllergen: boolean   = false
+      • vendor: string   = 
+      • currentStock: number   = 0
+      • franchiseId: string   = doughboyspizzeria
+      • category: string   = 
+      • sku: string   = 
+      • costPerUnit: number   = 0
+      • updatedAt: Timestamp   = 2025-07-09T05:40:15.548Z
+    --- Doc 3 (id: SuP65ArrwosD20xput8w) ---
+      • isActive: boolean   = true
+      • name: string   = Cheese
+      • updatedBy: string   = 
+      • minStockWarning: number   = 0
+      • inventoryTrackingEnabled: boolean   = true
+      • createdAt: Timestamp   = 2025-07-09T05:40:15.633Z
+      • deletedAt: null   = null
+      • unit: string   = 
+      • createdBy: string   = 
+      • isAllergen: boolean   = false
+      • vendor: string   = 
+      • currentStock: number   = 0
+      • franchiseId: string   = doughboyspizzeria
+      • category: string   = 
+      • sku: string   = 
+      • costPerUnit: number   = 0
+      • updatedAt: Timestamp   = 2025-07-09T05:40:15.633Z
+  Collection: franchises/doughboyspizzeria/inventory_transactions
+    Sampled documents: 1 (max 3)
+    --- Doc 1 (id: DJXVM2v5NA94oBFahrsB) ---
+      • notes: string   = Deducted for order DBP-0001
+      • orderId: string   = order123
+      • ingredientId: string   = cheese
+      • menuItemId: string   = classic_cheese_pizza
+      • userId: string   = admin1
+      • type: string   = sale
+      • quantityChange: number   = -2
+      • timestamp: Timestamp   = 2025-07-09T04:46:22.529Z
+      • reason: string   = 
+      • deletedAt: null   = null
+      • linkedDocument: string   = 
+      • afterQuantity: null   = null
+      • createdBy: string   = 
+      • transactionStatus: string   = completed
+      • approvedBy: string   = 
+      • franchiseId: string   = doughboyspizzeria
+      • location: string   = 
+      • beforeQuantity: null   = null
+  Collection: franchises/doughboyspizzeria/menu_items
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: anti_pasta_salad) ---
+      • sizes: array[1]   = ["Regular"]
+      • sizePrices: map   = {"Regular":9.95}
+      • includedIngredients: array[8]   = [{"name":"Lettuce","ingredientId":"lettuce","type":"Veggies","removable":true},{"name":"Salami","ingredientId":"topping_salami","type":"Meats","removable":true},{"name":"Ham","ingr
+      • category: string   = Salads
+      • image: string   = https://storage.googleapis.com/doughboyspizzeria-2b3d2.firebasestorage.app/menu_items/chefsalad.jpg
+      • extraSauceUpcharge: number   = 0.5
+      • customizationGroups: array[3]   = [{"label":"Cheeses","ingredientIds":["[nested]"]},{"label":"Ingredients","ingredientIds":["[nested]","[nested]","[nested]"]},{"label":"Dressings","ingredientIds":["[nested]","[nest
+      • name: string   = Anti Pasta Salad
+      • freeSauceCount: number   = 2
+      • categoryId: string   = salads
+      • optionalAddOns: array[0]   = []
+      • price: number   = 9.95
+      • validationErrors: array[0]   = []
+      • schemaVersion: number   = 1
+      • description: string   = Lettuce, salami, ham, mozzarella, tomatoes, black olives, banana peppers, onions, choice of dressing.
+      • nutritionalInfo: map   = {}
+      • updatedBy: string   = 
+      • available: boolean   = true
+      • isActive: boolean   = true
+      • allergens: array[0]   = []
+      • tags: array[0]   = []
+      • taxCategory: string   = 
+      • isAvailableForOnlineOrder: boolean   = true
+      • createdAt: Timestamp   = 2025-07-09T05:41:18.678Z
+      • deletedAt: null   = null
+      • createdBy: string   = 
+      • sortOrder: number   = 0
+      • franchiseId: string   = doughboyspizzeria
+      • isFeatured: boolean   = false
+      • sku: string   = 
+      • updatedAt: Timestamp   = 2025-07-09T05:41:18.678Z
+    --- Doc 2 (id: appetizers_cheese_garlic_bread) ---
+      • maxFreeSauces: number   = 2
+      • sizePrices: map   = {"Regular":6.25}
+      • created: boolean   = true
+      • includedIngredients: array[3]   = [{"name":"Garlic Bread","ingredientId":"garlic_bread","type":"Bread","removable":true},{"name":"Mozzarella Cheese","ingredientId":"cheese_mozzarella","type":"Cheeses","removable":t
+      • available: boolean   = true
+      • category: string   = appetizers
+      • image: string   = https://storage.googleapis.com/doughboyspizzeria-2b3d2.firebasestorage.app/menu_items/friedchickentenders.jpg
+      • extraSauceUpcharge: number   = 0.5
+      • notes: string   = 
+      • name: string   = Cheese Garlic Bread
+      • freeSauceCount: number   = 2
+      • categoryId: string   = appetizers
+      • price: number   = 6.25
+      • optionalAddOns: array[2]   = [{"name":"Marinara Sauce","ingredientId":"marinara_sauce","type":"Sauces","removable":true,"upcharge":{"Regular":"[nested]"}},{"name":"Ranch Dressing","ingredientId":"ranch_dressin
+      • customizations: array[0]   = []
+      • nutrition: map   = {}
+      • validationErrors: array[0]   = []
+      • schemaVersion: number   = 1
+      • description: string   = Fresh-baked bread topped with garlic butter and mozzarella cheese. Served with a side of sauce.
+      • sizes: array[1]   = ["Regular"]
+      • nutritionalInfo: map   = {}
+      • updatedBy: string   = 
+      • isActive: boolean   = true
+      • allergens: array[0]   = []
+      • tags: array[0]   = []
+      • taxCategory: string   = 
+      • isAvailableForOnlineOrder: boolean   = true
+      • createdAt: Timestamp   = 2025-07-09T05:41:18.773Z
+      • deletedAt: null   = null
+      • createdBy: string   = 
+      • sortOrder: number   = 0
+      • franchiseId: string   = doughboyspizzeria
+      • isFeatured: boolean   = false
+      • sku: string   = 
+      • updatedAt: Timestamp   = 2025-07-09T05:41:18.773Z
+    --- Doc 3 (id: appetizers_fried_mushrooms) ---
+      • maxFreeSauces: number   = 1
+      • sizePrices: map   = {"Regular":6.25}
+      • created: boolean   = true
+      • includedIngredients: array[1]   = [{"name":"Fried Mushrooms","ingredientId":"fried_mushrooms","type":"Appetizer","removable":true}]
+      • available: boolean   = true
+      • category: string   = appetizers
+      • image: string   = https://storage.googleapis.com/doughboyspizzeria-2b3d2.firebasestorage.app/menu_items/friedchickentenders.jpg
+      • extraSauceUpcharge: number   = 0.5
+      • notes: string   = 
+      • name: string   = Fried Mushrooms
+      • freeSauceCount: number   = 1
+      • categoryId: string   = appetizers
+      • price: number   = 6.25
+      • optionalAddOns: array[1]   = [{"name":"Ranch Dressing","ingredientId":"ranch_dressing","type":"Sauces","removable":true,"upcharge":{"Regular":"[nested]"}}]
+      • customizations: array[0]   = []
+      • nutrition: map   = {}
+      • validationErrors: array[0]   = []
+      • schemaVersion: number   = 1
+      • description: string   = Deep-fried mushrooms served with ranch dressing.
+      • sizes: array[1]   = ["Regular"]
+      • nutritionalInfo: map   = {}
+      • updatedBy: string   = 
+      • isActive: boolean   = true
+      • allergens: array[0]   = []
+      • tags: array[0]   = []
+      • taxCategory: string   = 
+      • isAvailableForOnlineOrder: boolean   = true
+      • createdAt: Timestamp   = 2025-07-09T05:41:18.865Z
+      • deletedAt: null   = null
+      • createdBy: string   = 
+      • sortOrder: number   = 0
+      • franchiseId: string   = doughboyspizzeria
+      • isFeatured: boolean   = false
+      • sku: string   = 
+      • updatedAt: Timestamp   = 2025-07-09T05:41:18.865Z
+  Collection: franchises/doughboyspizzeria/orders
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: 325W586NHZ) ---
+      • userId: string   = BMBktE6xUUeneOvFCpdA9rSn4to2
+      • hasFeedback: boolean   = true
+      • feedbackId: string   = [#659de]
+      • subtotal: number   = 15.95
+      • time: string   = 4:00 PM
+      • total: number   = 17.425375
+      • deliveryFee: number   = 0
+      • deliveryAddress: null   = null
+      • status: string   = Placed
+      • tax: number   = 1.4753749999999999
+      • estimatedTime: number   = 30
+      • discount: number   = 0
+      • specialInstructions: null   = null
+      • deliveryType: string   = Pickup
+      • notes: string   = 
+      • orderNumber: string   = 
+      • timestamps: map   = {"placed":"2025-07-09T05:43:56.203Z","prepared":null,"accepted":null,"delivered":null,"outForDelivery":null}
+      • refundStatus: string   = 
+      • outForDeliveryAt: null   = null
+      • isTestOrder: boolean   = false
+      • createdAt: Timestamp   = 2025-07-09T05:43:56.203Z
+      • feedbackSubmittedAt: null   = null
+      • franchiseId: string   = doughboyspizzeria
+      • tip: number   = 0
+      • paymentStatus: string   = 
+      • refundAmount: number   = 0
+      • updatedAt: Timestamp   = 2025-07-09T05:43:56.203Z
+      • orderSource: string   = 
+      • scheduledTime: null   = null
+      • updatedBy: string   = 
+      • address: map   = {"zip":"","city":"","street":"","label":"","state":""}
+      • fulfillmentMethod: string   = 
+      • userName: string   = 
+      • customerName: string   = 
+      • deliveredAt: null   = null
+      • deliveryInstructions: string   = 
+      • promoApplied: boolean   = false
+      • deletedAt: null   = null
+      • statusHistory: array[0]   = []
+      • preparedAt: null   = null
+      • paymentMethod: string   = 
+      • lastModified: Timestamp   = 2025-07-09T05:43:56.203Z
+      • couponCode: string   = 
+      • items: array[0]   = []
+      • timestamp: Timestamp   = 2025-06-20T16:07:02.405Z
+    --- Doc 2 (id: 32QTZ67D4V) ---
+      • userId: string   = BMBktE6xUUeneOvFCpdA9rSn4to2
+      • hasFeedback: boolean   = true
+      • feedbackId: string   = [#3c420]
+      • subtotal: number   = 49.349999999999994
+      • time: string   = 4:25 PM
+      • total: number   = 53.914874999999995
+      • deliveryFee: number   = 0
+      • deliveryAddress: null   = null
+      • status: string   = Placed
+      • tax: number   = 4.564875
+      • estimatedTime: number   = 30
+      • discount: number   = 0
+      • specialInstructions: null   = null
+      • deliveryType: string   = Pickup
+      • notes: string   = 
+      • orderNumber: string   = 
+      • timestamps: map   = {"placed":"2025-07-09T05:43:56.299Z","prepared":null,"accepted":null,"delivered":null,"outForDelivery":null}
+      • refundStatus: string   = 
+      • outForDeliveryAt: null   = null
+      • isTestOrder: boolean   = false
+      • createdAt: Timestamp   = 2025-07-09T05:43:56.299Z
+      • feedbackSubmittedAt: null   = null
+      • franchiseId: string   = doughboyspizzeria
+      • tip: number   = 0
+      • paymentStatus: string   = 
+      • refundAmount: number   = 0
+      • updatedAt: Timestamp   = 2025-07-09T05:43:56.299Z
+      • orderSource: string   = 
+      • scheduledTime: null   = null
+      • updatedBy: string   = 
+      • address: map   = {"zip":"","city":"","street":"","label":"","state":""}
+      • fulfillmentMethod: string   = 
+      • userName: string   = 
+      • customerName: string   = 
+      • deliveredAt: null   = null
+      • deliveryInstructions: string   = 
+      • promoApplied: boolean   = false
+      • deletedAt: null   = null
+      • statusHistory: array[0]   = []
+      • preparedAt: null   = null
+      • paymentMethod: string   = 
+      • lastModified: Timestamp   = 2025-07-09T05:43:56.299Z
+      • couponCode: string   = 
+      • items: array[0]   = []
+      • timestamp: Timestamp   = 2025-06-20T04:25:23.651Z
+    --- Doc 3 (id: 3DABC3JJAZ) ---
+      • userId: string   = BMBktE6xUUeneOvFCpdA9rSn4to2
+      • subtotal: number   = 81.25
+      • time: string   = 3:00 PM
+      • total: number   = 88.765625
+      • deliveryFee: number   = 0
+      • deliveryAddress: null   = null
+      • status: string   = Placed
+      • tax: number   = 7.515625
+      • estimatedTime: number   = 30
+      • discount: number   = 0
+      • specialInstructions: null   = null
+      • deliveryType: string   = Pickup
+      • notes: string   = 
+      • orderNumber: string   = 
+      • timestamps: map   = {"placed":"2025-07-09T05:43:56.440Z","prepared":null,"accepted":null,"delivered":null,"outForDelivery":null}
+      • refundStatus: string   = 
+      • outForDeliveryAt: null   = null
+      • isTestOrder: boolean   = false
+      • createdAt: Timestamp   = 2025-07-09T05:43:56.440Z
+      • feedbackSubmittedAt: null   = null
+      • franchiseId: string   = doughboyspizzeria
+      • tip: number   = 0
+      • paymentStatus: string   = 
+      • refundAmount: number   = 0
+      • updatedAt: Timestamp   = 2025-07-09T05:43:56.440Z
+      • orderSource: string   = 
+      • scheduledTime: null   = null
+      • updatedBy: string   = 
+      • address: map   = {"zip":"","city":"","street":"","label":"","state":""}
+      • fulfillmentMethod: string   = 
+      • userName: string   = 
+      • customerName: string   = 
+      • deliveredAt: null   = null
+      • deliveryInstructions: string   = 
+      • promoApplied: boolean   = false
+      • deletedAt: null   = null
+      • statusHistory: array[0]   = []
+      • preparedAt: null   = null
+      • paymentMethod: string   = 
+      • lastModified: Timestamp   = 2025-07-09T05:43:56.440Z
+      • couponCode: string   = 
+      • items: array[0]   = []
+      • timestamp: Timestamp   = 2025-06-20T04:42:11.221Z
+  Collection: franchises/doughboyspizzeria/promotions
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: [#b0b04]) ---
+      • name: string   = Test
+      • description: string   = Test
+      • code: string   = TEST
+      • type: string   = TEST
+      • items: array[0]   = []
+      • discount: number   = 10
+      • maxUses: number   = 99
+      • maxUsesType: string   = total
+      • minOrderValue: number   = 20
+      • startDate: Timestamp   = 2025-07-10T03:17:46.539Z
+      • endDate: Timestamp   = 2025-08-09T03:17:46.539Z
+      • active: boolean   = true
+      • target: null   = null
+      • timeRules: null   = null
+    --- Doc 2 (id: promo_1) ---
+      • title: string   = Spring Promo
+      • rules: map   = {"minOrder":15}
+      • targetAudience: string   = all
+      • value: number   = 15
+      • type: string   = percentage
+      • active: boolean   = true
+      • maxUses: null   = null
+      • createdAt: Timestamp   = 2025-07-09T05:48:19.265Z
+      • deletedAt: null   = null
+      • code: string   = 
+      • notes: string   = 
+      • updatedBy: string   = 
+      • createdBy: string   = 
+      • description: string   = 
+      • franchiseId: string   = doughboyspizzeria
+      • usageHistory: array[0]   = []
+      • usageCount: number   = 0
+      • updatedAt: Timestamp   = 2025-07-09T05:48:19.265Z
+      • endDate: Timestamp   = 2025-05-30T03:55:58.959Z
+      • startDate: Timestamp   = 2025-05-30T03:55:58.959Z
+    --- Doc 3 (id: promo_2) ---
+      • title: string   = Free Drink with Any Sub
+      • rules: map   = {}
+      • targetAudience: string   = subs
+      • value: string   = free_drink
+      • type: string   = item
+      • active: boolean   = true
+      • maxUses: null   = null
+      • createdAt: Timestamp   = 2025-07-09T05:48:19.368Z
+      • deletedAt: null   = null
+      • code: string   = 
+      • notes: string   = 
+      • updatedBy: string   = 
+      • createdBy: string   = 
+      • description: string   = 
+      • franchiseId: string   = doughboyspizzeria
+      • usageHistory: array[0]   = []
+      • usageCount: number   = 0
+      • updatedAt: Timestamp   = 2025-07-09T05:48:19.368Z
+      • endDate: Timestamp   = 2025-05-30T03:55:59.144Z
+      • startDate: Timestamp   = 2025-05-30T03:55:59.144Z
+  Collection: franchises/doughboyspizzeria/support_chats
+    Sampled documents: 1 (max 3)
+    --- Doc 1 (id: BMBktE6xUUeneOvFCpdA9rSn4to2) ---
+      • status: string   = open
+      • createdAt: string   = 2025-06-18T04:07:22.357000+00:00
+      • lastSenderId: string   = support
+      • userId: string   = support
+      • lastMessageAt: string   = 2025-06-23T18:27:58.659000+00:00
+      • __subcollection__:messages: map   = {"Jv2k3qd1feeYw6h3KFNC":{"role":"support","timestamp":"2025-06-18T04:41:26.760000+00:00","status":"sent","senderId":"support","content":"what"},"sSseq7eZNXf0EameJBbO":{"role":"supp
+      • lastMessage: string   = what
+      • deletedAt: null   = null
+      • updatedBy: string   = 
+      • createdBy: string   = support
+      • subject: string   = 
+      • franchiseId: string   = doughboyspizzeria
+      • topic: string   = 
+      • participants: array[1]   = ["support"]
+      • updatedAt: Timestamp   = 2025-07-09T05:46:20.407Z
+  Collection: franchises/doughboyspizzeria/users
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: BMBktE6xUUeneOvFCpdA9rSn4to2) ---
+      • addresses: array[0]   = []
+      • email: string   = j.ying714@gmail.com
+      • createdAt: string   = 2025-06-01T14:28:02.685000+00:00
+      • favorites: array[0]   = []
+      • completeProfile: boolean   = true
+      • phoneNumber: string   = 6183391104
+      • language: string   = en
+      • name: string   = Joshua Yingling
+      • favoritesMenuItemIds: array[1]   = ["appetizers_cheese_garlic_bread"]
+      • scheduled_orders: array[0]   = []
+      • loyalty: null   = null
+      • __subcollection__:addresses: map   = {"qykwV9YMHu6TrXX3mjXZ":{"label":"Home","street":"6493 highway 114 west","city":"Clarksville","state":"tn","zip":"36468"}}
+      • orders: array[0]   = []
+      • lastLogin: null   = null
+      • secondaryEmails: array[0]   = []
+      • invitedBy: string   = 
+      • notes: string   = 
+      • updatedBy: string   = 
+      • isActive: boolean   = true
+      • invitationAcceptedAt: null   = null
+      • profilePhotoUrl: string   = 
+      • deletedAt: null   = null
+      • createdBy: string   = 
+      • permissions: array[0]   = []
+      • userTags: array[0]   = []
+      • updatedAt: Timestamp   = 2025-07-09T05:45:03.558Z
+      • franchiseId: string   = doughboyspizzeria
+      • roles: array[2]   = ["developer","hq_owner"]
+    --- Doc 2 (id: KGBLuKi26PIZvmyY6gn0) ---
+      • email: string   = manager@doughboys.com
+      • displayName: string   = Manager Name
+      • createdAt: Timestamp   = 2025-07-09T04:46:22.706Z
+      • favorites: array[0]   = []
+      • lastLogin: null   = null
+      • secondaryEmails: array[0]   = []
+      • scheduled_orders: array[0]   = []
+      • addresses: array[0]   = []
+      • invitedBy: string   = 
+      • notes: string   = 
+      • updatedBy: string   = 
+      • loyalty: map   = {}
+      • language: string   = en
+      • completeProfile: boolean   = false
+      • isActive: boolean   = true
+      • invitationAcceptedAt: null   = null
+      • profilePhotoUrl: string   = 
+      • deletedAt: null   = null
+      • phoneNumber: string   = 
+      • createdBy: string   = 
+      • permissions: array[0]   = []
+      • name: string   = 
+      • franchiseId: string   = doughboyspizzeria
+      • userTags: array[0]   = []
+      • orders: array[0]   = []
+      • favoritesMenuItemIds: array[0]   = []
+      • updatedAt: Timestamp   = 2025-07-09T05:45:03.819Z
+      • roles: array[1]   = ["owner"]
+    --- Doc 3 (id: O3GILKvEnzem8dpLjgyiCAiA8Vm1) ---
+      • name: string   = joshua yingling
+      • email: string   = joshuayingling116@gmail.com
+      • completeProfile: boolean   = false
+      • phoneNumber: null   = null
+      • createdAt: string   = 2025-05-30T17:37:04.220000+00:00
+      • favorites: array[0]   = []
+      • lastLogin: null   = null
+      • secondaryEmails: array[0]   = []
+      • scheduled_orders: array[0]   = []
+      • addresses: array[0]   = []
+      • invitedBy: string   = 
+      • notes: string   = 
+      • updatedBy: string   = 
+      • loyalty: map   = {}
+      • language: string   = en
+      • isActive: boolean   = true
+      • invitationAcceptedAt: null   = null
+      • profilePhotoUrl: string   = 
+      • deletedAt: null   = null
+      • createdBy: string   = 
+      • permissions: array[0]   = []
+      • franchiseId: string   = doughboyspizzeria
+      • userTags: array[0]   = []
+      • orders: array[0]   = []
+      • favoritesMenuItemIds: array[0]   = []
+      • updatedAt: Timestamp   = 2025-07-09T05:45:03.993Z
+      • roles: array[1]   = ["customer"]
+  Collection: franchises/test/analytics_summaries
+    Sampled documents: 1 (max 3)
+    --- Doc 1 (id: weekly) ---
+      • endDate: Timestamp   = 2026-05-28T02:03:03.231Z
+      • totalRevenue: number   = 0
+      • period: string   = weekly
+      • startDate: Timestamp   = 2026-05-21T02:03:03.231Z
+      • totalOrders: number   = 0
+      • updatedAt: Timestamp   = 2026-05-28T02:03:03.331Z
+  Collection: franchises/test/cash_flow_forecasts
+    Sampled documents: 1 (max 3)
+    --- Doc 1 (id: 2025-09) ---
+      • franchiseId: string   = test
+      • period: string   = 2025-09
+      • openingBalance: number   = 0
+      • projectedInflow: number   = 0
+      • projectedOutflow: number   = 0
+      • projectedClosingBalance: number   = 0
+      • forecastSource: string   = auto
+      • note: string   = Auto-generated from analytics summaries.
+      • forecastVersion: number   = 1
+      • startDate: Timestamp   = 2025-09-01T00:00:00.000Z
+      • endDate: Timestamp   = 2025-09-30T23:59:59.000Z
+      • createdAt: Timestamp   = 2025-08-01T04:00:06.393Z
+  Collection: franchises/test/categories
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: [#6e462]) ---
+      • name: string   = test
+      • description: string   = test
+      • sortOrder: number   = 6
+    --- Doc 2 (id: calzones) ---
+      • name: string   = Calzones
+      • description: string   = Stuffed calzone-style pizzas.
+      • sortOrder: number   = 0
+    --- Doc 3 (id: desserts) ---
+      • name: string   = Desserts
+      • description: string   = Sweet treats to finish your meal.
+      • sortOrder: number   = 1
+  Collection: franchises/test/config
+    Sampled documents: 1 (max 3)
+    --- Doc 1 (id: feature_metadata) ---
+  Collection: franchises/test/feature_metadata
+    Sampled documents: 1 (max 3)
+    --- Doc 1 (id: test) ---
+      • mobile_app: map   = {"enabled":false,"features":{}}
+      • plugin_registry: map   = {"enabled":false,"features":{}}
+      • feature_toggles: map   = {"enabled":false,"features":{}}
+      • schema_management: map   = {"enabled":false,"features":{}}
+      • updatedAt: Timestamp   = 2025-07-26T00:44:22.785Z
+      • language_support: map   = {"features":{},"enabled":true}
+      • menu_item_customization: map   = {"features":{},"enabled":true}
+      • combo_meals: map   = {"features":{},"enabled":true}
+      • nutritional_info: map   = {"features":{},"enabled":true}
+      • support_chat: map   = {"features":{},"enabled":true}
+      • loyalty: map   = {"features":{},"enabled":true}
+      • inventory: map   = {"features":{},"enabled":true}
+      • multi_location: map   = {"features":{},"enabled":true}
+      • feedback: map   = {"features":{},"enabled":true}
+      • promo_banners: map   = {"features":{},"enabled":true}
+      • staff_access: map   = {"features":{},"enabled":true}
+      • chat_support: map   = {"features":{},"enabled":true}
+      • web_ordering: map   = {"features":{},"enabled":true}
+      • discount_codes: map   = {"features":{},"enabled":true}
+      • order_tracking: map   = {"features":{},"enabled":true}
+      • branding_customization: map   = {"features":{},"enabled":true}
+      • analytics_reporting: map   = {"features":{},"enabled":true}
+      • liveSnapshotEnabled: boolean   = true
+  Collection: franchises/test/ingredient_metadata
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: cheese_cheddar) ---
+      • id: string   = cheese_cheddar
+      • name: string   = Cheddar Cheese
+      • typeId: string   = cheeses
+      • type: string   = Cheeses
+      • allergens: array[1]   = ["dairy"]
+      • removable: boolean   = true
+      • upcharge: map   = {"Large":1.25,"Small":0.75}
+      • supportsExtra: boolean   = true
+      • sidesAllowed: boolean   = true
+      • notes: string   = Mild yellow cheddar
+      • outOfStock: boolean   = false
+      • amountSelectable: boolean   = true
+      • amountOptions: array[3]   = ["Light","Regular","Extra"]
+    --- Doc 2 (id: cheese_mozzarella) ---
+      • id: string   = cheese_mozzarella
+      • name: string   = Extra Cheese
+      • type: string   = 
+      • allergens: array[0]   = []
+      • removable: boolean   = true
+      • supportsExtra: boolean   = false
+      • sidesAllowed: boolean   = false
+      • outOfStock: boolean   = false
+      • amountSelectable: boolean   = false
+    --- Doc 3 (id: cheese_parmesan) ---
+      • id: string   = cheese_parmesan
+      • name: string   = Parmesan
+      • typeId: string   = cheeses
+      • allergens: array[1]   = ["dairy"]
+      • removable: boolean   = true
+      • supportsExtra: boolean   = true
+      • sidesAllowed: boolean   = true
+      • notes: string   = Grated aged parmesan
+      • outOfStock: boolean   = false
+      • amountSelectable: boolean   = true
+      • amountOptions: array[3]   = ["Light","Regular","Extra"]
+      • type: string   = Cheeses
+  Collection: franchises/test/ingredient_types
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: Nb8TvwelA7jxzsWDUyCt) ---
+      • name: string   = Pasta
+      • description: null   = null
+      • sortOrder: number   = 1
+      • systemTag: null   = null
+      • visibleInApp: boolean   = true
+      • createdAt: Timestamp   = 2025-08-09T17:47:29.298Z
+      • updatedAt: Timestamp   = 2025-08-09T17:47:29.298Z
+    --- Doc 2 (id: breads) ---
+      • name: string   = Breads
+      • isRequiredGroup: boolean   = false
+      • sortOrder: number   = 13
+      • icon: string   = 🍞
+      • config: map   = {}
+      • createdAt: Timestamp   = 2025-08-04T03:36:43.023Z
+      • updatedAt: Timestamp   = 2025-08-04T03:36:43.023Z
+    --- Doc 3 (id: cheeses) ---
+      • config: map   = {}
+      • icon: string   = 🧀
+      • isRequiredGroup: boolean   = true
+      • sortOrder: number   = 1
+      • name: string   = Cheeses
+      • createdAt: Timestamp   = 2025-08-04T03:36:43.023Z
+      • updatedAt: Timestamp   = 2025-08-04T03:36:43.023Z
+  Collection: franchises/test/menu_items
+    Sampled documents: 1 (max 3)
+    --- Doc 1 (id: 56b3b66c-90b2-4698-afc1-51735146bbf3) ---
+      • dressingOptions: array[0]   = []
+      • notes: string   = Popular during lunch hours.
+      • optionalAddOns: array[2]   = [{"id":"meat_chicken","name":"Extra Chicken","typeId":"meats","isRemovable":true,"upcharge":2.5},{"id":"cheese_mozzarella","name":"Extra Cheese","typeId":"cheeses","isRemovable":tr
+      • sauceOptions: array[3]   = ["sauce_bbq","sauce_tomato","sauce_ranch"]
+      • available: boolean   = true
+      • templateRefs: array[1]   = ["default_pizza_template"]
+      • description: string   = Sweet and smoky BBQ sauce, grilled chicken, red onions, and mozzarella on your choice of crust.
+      • allowSpecialInstructions: boolean   = true
+      • cookTypes: array[3]   = ["Regular","Crispy","Well Done"]
+      • archived: boolean   = false
+      • createdAt: Timestamp   = 2025-07-25T05:23:33.922Z
+      • sideDipUpcharge: map   = {}
+      • dippingSauceOptions: array[0]   = []
+      • sizes: array[3]   = [{"label":"Small","basePrice":10.99,"toppingPrice":0.85},{"label":"Medium","basePrice":12.99,"toppingPrice":1.35},{"label":"Large","basePrice":14.99,"toppingPrice":1.95}]
+      • price: number   = 14.99
+      • dippingSplits: map   = {}
+      • extraSauceUpcharge: number   = 0.75
+      • customizationsUpdatedAt: Timestamp   = 2025-07-25T05:23:33.922Z
+      • maxFreeDressings: number   = 0
+      • sku: string   = PZ-002
+      • exportId: string   = exp_pz_002
+      • sideDipSauceOptions: array[0]   = []
+      • image: string   = https://example.com/images/bbq_chicken_pizza.jpg
+      • freeDipCupCount: map   = {}
+      • highlightTags: array[2]   = ["fan-favorite","chicken"]
+      • customizationGroups: array[4]   = [{"id":"","label":"Meats","selectionLimit":1,"ingredients":["[nested]","[nested]","[nested]"]},{"id":"","label":"Veggies","selectionLimit":1,"ingredients":["[nested]","[nested]","[
+      • freeSauceCount: map   = {"Small":1,"Medium":1,"Large":2}
+      • maxToppings: number   = 10
+      • maxFreeToppings: number   = 4
+      • maxFreeSauces: number   = 1
+      • allergens: array[2]   = ["gluten","dairy"]
+      • prepTime: number   = 14
+      • taxCategory: string   = prepared_food
+      • hideInMenu: boolean   = false
+      • bundleItems: array[0]   = []
+      • crustTypes: array[4]   = ["Thin","Regular","Thick"]
+      • nutrition: map   = {"sodium":820,"carbs":32,"protein":18,"fat":10,"calories":310}
+      • cutStyles: array[2]   = ["Pie","Square"]
+      • includedIngredients: array[4]   = [{"id":"sauce_bbq","name":"BBQ Sauce","typeId":"sauces","isRemovable":true},{"id":"cheese_mozzarella","name":"Mozzarella","typeId":"cheeses","isRemovable":true},{"id":"meat_chicken
+      • sortOrder: number   = 0
+      • name: string   = BBQ Chicken Pizza
+      • category: string   = Pizzas
+      • freeDressingCount: number   = 0
+      • categoryId: string   = pizzas
+      • customizations: array[0]   = []
+      • dietaryTags: array[2]   = ["contains-dairy","contains-gluten"]
+      • extraDressingUpcharge: number   = 0
+
+Collection: integrations
+  Sampled documents: 1 (max 3)
+  --- Doc 1 (id: doughboyspizzeria_integrations) ---
+    • error_message: string   = 
+    • updated_at: Timestamp   = 2025-07-11T16:33:10.170Z
+    • custom_fields: map   = {}
+    • franchiseId: DocumentReference -> franchises/doughboyspizzeria   = ref:franchises/doughboyspizzeria
+    • created_at: Timestamp   = 2025-07-11T16:33:10.170Z
+    • error_code: string   = 
+    • type: string   = stripe
+    • config: map   = {"account_id":"acct_123456","last_sync":"2025-07-11T16:33:10.170Z","api_keys":"****"}
+    • status: string   = connected
+
+Collection: invoices
+  Sampled documents: 1 (max 3)
+  --- Doc 1 (id: h61sRRQTkx56qdk0Lfl8) ---
+    • voided_at: null   = null
+    • custom_fields: map   = {}
+    • tax: number   = 84.38
+    • support_notes: array[0]   = []
+    • attached_files: array[0]   = []
+    • paid_at: null   = null
+    • period_end: Timestamp   = 2024-07-31T00:00:00.000Z
+    • total: number   = 1084.38
+    • audit_trail: array[0]   = []
+    • refunded_at: null   = null
+    • period_start: Timestamp   = 2024-07-01T00:00:00.000Z
+    • locationId: DocumentReference -> franchise_locations/main_location   = ref:franchise_locations/main_location
+    • overdue_reminders: array[0]   = []
+    • subtotal: number   = 1000
+    • brandId: DocumentReference -> brands/doughboys_brand   = ref:brands/doughboys_brand
+    • franchiseId: DocumentReference -> franchises/doughboyspizzeria   = ref:franchises/doughboyspizzeria
+    • currency: string   = USD
+    • paid_by: null   = null
+    • items: array[1]   = [{"notes":"","amount":500,"type":"royalty","custom_fields":{},"label":"Monthly Royalty Fee","tax":42.19}]
+    • payment_method: string   = stripe
+    • escalation_history: array[0]   = []
+    • dunning_state: string   = none
+    • payment_plan: null   = null
+    • customer_address: string   = 
+    • payout_id: string   = 
+    • accounting_id: string   = 
+    • updated_at: Timestamp   = 2025-07-14T17:51:03.289Z
+    • customer_email: string   = unknown@example.com
+    • tax_breakdown: map   = {}
+    • customer_name: string   = Unknown Customer
+    • invoice_number: string   = h61sRRQTkx56qdk0Lfl8
+    • due_at: Timestamp   = 2024-06-02T00:00:00.579Z
+    • status: string   = open
+    • issued_at: Timestamp   = 2025-05-11T16:25:08.670Z
+
+Collection: menu_items
+  Sampled documents: 0 (max 3)
+  (empty or no permission)
+
+Collection: onboarding_progress
+  Sampled documents: 2 (max 3)
+  --- Doc 1 (id: doughboyspizzeria) ---
+    • ingredients: boolean   = false
+    • onboarding_feature_setup: boolean   = true
+    • updatedAt: Timestamp   = 2025-07-27T04:14:20.638Z
+  --- Doc 2 (id: test) ---
+    • onboarding_feature_setup: boolean   = true
+    • categories: boolean   = true
+    • menu_items: boolean   = true
+    • ingredientTypes: boolean   = true
+    • ingredients: boolean   = true
+    • updatedAt: Timestamp   = 2025-08-09T17:41:52.803Z
+
+Collection: orders
+  Sampled documents: 0 (max 3)
+  (empty or no permission)
+
+Collection: payouts
+  Sampled documents: 1 (max 3)
+  --- Doc 1 (id: ku8k46ktl1TIDCqlIATa) ---
+    • error_message: string   = 
+    • bank_account_id: DocumentReference -> bank_accounts/main_bank_account   = ref:bank_accounts/main_bank_account
+    • amount: number   = 1234.56
+    • method: string   = ach
+    • custom_fields: map   = {}
+    • scheduled_at: Timestamp   = 2024-08-01T00:00:00.000Z
+    • sent_at: null   = null
+    • audit_trail: array[0]   = []
+    • locationId: DocumentReference -> franchise_locations/main_location   = ref:franchise_locations/main_location
+    • retry_count: number   = 0
+    • franchiseId: DocumentReference -> franchises/doughboyspizzeria   = ref:franchises/doughboyspizzeria
+    • currency: string   = USD
+    • error_code: string   = 
+    • confirmed_at: null   = null
+    • source_invoice_id: DocumentReference -> invoices/example_invoice_id   = ref:invoices/example_invoice_id
+    • comments: array[1]   = [{"message":"Test","createdAt":"2025-07-15T18:46:19.909Z","userId":null}]
+    • status: string   = pending
+    • updated_at: Timestamp   = 2025-07-15T19:27:09.343Z
+
+Collection: platform_features
+  Sampled documents: 3 (max 3)
+  --- Doc 1 (id: analytics_reporting) ---
+    • defaultEnabled: boolean   = false
+    • module: string   = reporting
+    • icon: string   = bar_chart
+    • developerOnly: boolean   = false
+    • deprecated: boolean   = false
+    • key: string   = analytics_reporting
+    • tags: array[2]   = ["optional","analytics"]
+    • description: string   = Gain insights with sales reports, trends, and business analytics.
+    • name: string   = Analytics & Reporting
+  --- Doc 2 (id: branding_customization) ---
+    • defaultEnabled: boolean   = false
+    • module: string   = design
+    • icon: string   = palette
+    • developerOnly: boolean   = false
+    • deprecated: boolean   = false
+    • key: string   = branding_customization
+    • tags: array[2]   = ["design","branding"]
+    • description: string   = Customize logos, color schemes, and other brand assets.
+    • name: string   = Branding Customization
+  --- Doc 3 (id: chat_support) ---
+    • defaultEnabled: boolean   = false
+    • module: string   = communication
+    • icon: string   = support_agent
+    • developerOnly: boolean   = false
+    • deprecated: boolean   = false
+    • key: string   = chat_support
+    • tags: array[2]   = ["internal","support"]
+    • description: string   = Internal support system for staff and management.
+    • name: string   = Internal Chat Support
+
+Collection: platform_invoices
+  Sampled documents: 3 (max 3)
+  --- Doc 1 (id: 1a9600a5-9e32-45e5-b886-1d2d7a3917f9) ---
+    • franchiseeId: string   = test
+    • invoiceNumber: string   = TEST-250721-2109-1A9600
+    • amount: number   = 99
+    • currency: string   = USD
+    • createdAt: Timestamp   = 2025-07-22T02:09:01.702Z
+    • dueDate: Timestamp   = 2025-07-29T02:08:35.837Z
+    • status: string   = unpaid
+    • issuedBy: string   = platform
+    • paymentIds: array[0]   = []
+    • lineItems: map   = {"mockItem":{"label":"Dev Item","amount":9999}}
+    • note: string   = Test invoice for QA
+    • isTest: boolean   = true
+  --- Doc 2 (id: 2025-07_FRANCHISE_ABC123) ---
+    • amount_paid: number   = 0
+    • billingEmail: string   = billing@pizzapalace.com
+    • franchiseId: string   = ABC123
+    • payment_method: string   = credit_card
+    • due_date: Timestamp   = 2025-07-11T00:00:00.000Z
+    • line_items: array[1]   = [{"desc":"SaaS Subscription Fee (Tier 2)","total":199,"unit_price":199,"qty":1}]
+    • notes: string   = 
+    • is_void: boolean   = false
+    • period_end: Timestamp   = 2025-07-31T23:59:59.000Z
+    • issued_at: Timestamp   = 2025-07-16T17:06:16.994Z
+    • updated_at: Timestamp   = 2025-07-16T17:06:16.994Z
+    • status: string   = pending
+    • paid_at: null   = null
+    • amount_due: number   = 199
+    • escalation_history: array[0]   = []
+    • franchiseName: string   = Pizza Palace
+    • payment_plan: null   = null
+    • dunning_state: string   = first_notice
+    • period_start: Timestamp   = 2025-07-01T00:00:00.000Z
+    • type: string   = subscription
+    • overdue_reminders: array[0]   = []
+    • invoiceId: string   = 2025-07_FRANCHISE_ABC123
+    • created_at: Timestamp   = 2025-07-16T17:06:16.994Z
+  --- Doc 3 (id: 44b2ba53-6233-4b6d-b002-1f2e19de784e) ---
+    • notes: string   = Test unpaid invoice for QA/debug purposes.
+    • franchiseId: string   = test
+    • amount_due: number   = 119.99
+    • franchiseeId: string   = 8Y9M7ohq7gOKoFCBZNfa7yhfjDk1
+    • currency: string   = USD
+    • id: string   = 44b2ba53-6233-4b6d-b002-1f2e19de784e
+    • invoiceNumber: string   = INV-20250718-0916
+    • createdAt: Timestamp   = 2025-07-18T19:41:23.434Z
+    • dueDate: Timestamp   = 2025-07-18T19:41:23.434Z
+    • updatedAt: Timestamp   = 2025-07-18T19:41:23.434Z
+    • status: string   = overdue
+
+Collection: platform_payments
+  Sampled documents: 3 (max 3)
+  --- Doc 1 (id: 13e11b1f-94b1-4fea-9bae-1f714d54c250) ---
+    • note: string   = Test one_time payment for fran_002
+    • receiptUrl: null   = null
+    • sourceSystem: string   = dev_script
+    • currency: string   = USD
+    • attempts: number   = 0
+    • executedAt: Timestamp   = 2025-07-18T16:24:34.029Z
+    • recurringRule: null   = null
+    • methodDetails: map   = {"maskedCard":"**** **** **** 4242","cardType":"Visa"}
+    • confirmedBy: null   = null
+    • franchiseLocationId: string   = location_001
+    • externalTransactionId: string   = 5baa7239-f7c3-46e8-b720-46bf38edbf4b
+    • amount: number   = 199.99
+    • errorCode: null   = null
+    • status: string   = pending
+    • paymentMethod: string   = debit_card
+    • taxBreakdown: map   = {"platformFee":10,"stateTax":5.25}
+    • franchiseeId: string   = fran_002
+    • paymentGroupId: null   = null
+    • isTest: boolean   = true
+    • type: string   = one_time
+    • invoiceId: null   = null
+    • createdAt: Timestamp   = 2025-07-18T16:24:32.850Z
+  --- Doc 2 (id: 1cd702e9-04fd-4a1f-9dca-79ec1cbf35a2) ---
+    • note: string   = Test one_time payment for fran_001
+    • receiptUrl: null   = null
+    • sourceSystem: string   = dev_script
+    • currency: string   = USD
+    • attempts: number   = 0
+    • executedAt: Timestamp   = 2025-07-18T16:24:33.187Z
+    • recurringRule: null   = null
+    • methodDetails: map   = {"maskedCard":"**** **** **** 4242","cardType":"Visa"}
+    • confirmedBy: null   = null
+    • franchiseLocationId: string   = location_001
+    • externalTransactionId: string   = db6483b0-33b0-4cf1-93c6-04e8bebcb826
+    • amount: number   = 199.99
+    • errorCode: null   = null
+    • status: string   = pending
+    • paymentMethod: string   = debit_card
+    • taxBreakdown: map   = {"platformFee":10,"stateTax":5.25}
+    • franchiseeId: string   = fran_001
+    • paymentGroupId: null   = null
+    • isTest: boolean   = true
+    • type: string   = one_time
+    • invoiceId: null   = null
+    • createdAt: Timestamp   = 2025-07-18T16:24:32.339Z
+  --- Doc 3 (id: 4b96ada8-dae0-47c6-a5bf-0548a37ebb57) ---
+    • note: string   = Test one_time payment for fran_003
+    • receiptUrl: null   = null
+    • sourceSystem: string   = dev_script
+    • currency: string   = USD
+    • attempts: number   = 0
+    • executedAt: Timestamp   = 2025-07-18T16:24:34.473Z
+    • recurringRule: null   = null
+    • methodDetails: map   = {"maskedCard":"**** **** **** 4242","cardType":"Visa"}
+    • confirmedBy: null   = null
+    • franchiseLocationId: string   = location_001
+    • externalTransactionId: string   = f8b0f0da-966b-4743-80c1-7c6c1a4b21eb
+    • amount: number   = 199.99
+    • errorCode: null   = null
+    • status: string   = pending
+    • paymentMethod: string   = debit_card
+    • taxBreakdown: map   = {"platformFee":10,"stateTax":5.25}
+    • franchiseeId: string   = fran_003
+    • paymentGroupId: null   = null
+    • isTest: boolean   = true
+    • type: string   = one_time
+    • invoiceId: null   = null
+    • createdAt: Timestamp   = 2025-07-18T16:24:33.290Z
+
+Collection: platform_plans
+  Sampled documents: 3 (max 3)
+  --- Doc 1 (id: enterprise_custom) ---
+    • name: string   = Enterprise (Custom Quote)
+    • isCustom: boolean   = true
+    • id: string   = enterprise_custom
+    • price: number   = 0
+    • active: boolean   = true
+    • createdAt: Timestamp   = 2025-07-19T02:34:00.351Z
+    • features: array[9]   = ["web_ordering","mobile_ordering","menu_item_customization"]
+  --- Doc 2 (id: growth_bundle) ---
+    • name: string   = Growth (Web + Mobile)
+    • isCustom: boolean   = false
+    • id: string   = growth_bundle
+    • price: number   = 59
+    • active: boolean   = true
+    • createdAt: Timestamp   = 2025-07-19T02:34:00.168Z
+    • features: array[5]   = ["web_ordering","mobile_ordering","menu_item_customization"]
+  --- Doc 3 (id: premium_all) ---
+    • name: string   = Premium (All-in-One)
+    • isCustom: boolean   = false
+    • id: string   = premium_all
+    • price: number   = 89
+    • active: boolean   = true
+    • createdAt: Timestamp   = 2025-07-19T02:34:00.255Z
+    • features: array[21]   = ["web_ordering","mobile_ordering","menu_item_customization"]
+
+Collection: promotions
+  Sampled documents: 0 (max 3)
+  (empty or no permission)
+
+Collection: restaurant_types
+  Sampled documents: 3 (max 3)
+  --- Doc 1 (id: Bakery) ---
+    • name: string   = Bakery
+  --- Doc 2 (id: Chinese) ---
+    • name: string   = Chinese
+  --- Doc 3 (id: bbq) ---
+    • name: string   = Bbq
+
+Collection: support_chats
+  Sampled documents: 0 (max 3)
+  (empty or no permission)
+
+Collection: support_requests
+  Sampled documents: 1 (max 3)
+  --- Doc 1 (id: doughboyspizzeria_support_requests) ---
+    • opened_by: DocumentReference -> users/admin_user_001   = ref:users/admin_user_001
+    • custom_fields: map   = {}
+    • locationId: DocumentReference -> franchise_locations/main_location   = ref:franchise_locations/main_location
+    • subject: string   = Billing question
+    • franchiseId: DocumentReference -> franchises/doughboyspizzeria   = ref:franchises/doughboyspizzeria
+    • messages: array[1]   = [{"attachments":[],"sent_at":"2025-07-11T16:31:26.955Z","user_id":"ref:users/admin_user_001","text":"Please explain this month's invoice."}]
+    • created_at: Timestamp   = 2025-07-11T16:31:26.072Z
+    • type: string   = billing
+    • assigned_to: DocumentReference -> users/admin_user_001   = ref:users/admin_user_001
+    • status: string   = open
+    • last_updated_by: null   = null
+    • closed_at: null   = null
+    • updated_at: Timestamp   = 2025-07-14T03:50:04.756Z
+    • paymentId: null   = null
+    • invoiceId: null   = null
+    • resolution_notes: string   = 
+    • support_notes: array[0]   = []
+
+Collection: tax_reports
+  Sampled documents: 1 (max 3)
+  --- Doc 1 (id: CtXAn6ai9TDwXg7N5hUJ) ---
+    • amount_paid: null   = null
+    • locationId: DocumentReference -> franchise_locations/main_location   = ref:franchise_locations/main_location
+    • franchiseId: DocumentReference -> franchises/doughboyspizzeria   = ref:franchises/doughboyspizzeria
+    • paid_by: null   = null
+    • brandId: DocumentReference -> brands/doughboys_brand   = ref:brands/doughboys_brand
+    • date_filed: null   = null
+    • filing_url: null   = null
+    • confirmation_number: null   = null
+    • custom_fields: map   = {}
+    • report_type: string   = franchise_tax
+    • notes: string   = 
+    • attached_files: array[0]   = []
+    • period_end: Timestamp   = 2024-07-31T00:00:00.000Z
+    • status: string   = pending
+    • filing_deadline: Timestamp   = 2024-08-10T00:00:00.000Z
+    • amount_due: number   = 1084.38
+    • period_start: Timestamp   = 2024-07-01T00:00:00.000Z
+    • reminders_sent: array[0]   = []
+    • tax_authority: null   = null
+    • filing_method: null   = null
+    • date_paid: null   = null
+    • updated_at: Timestamp   = 2025-07-14T03:48:04.260Z
+    • created_at: Timestamp   = 2025-07-14T03:48:04.260Z
+
+Collection: users
+  Sampled documents: 3 (max 3)
+  --- Doc 1 (id: 8Y9M7ohq7gOKoFCBZNfa7yhfjDk1) ---
+    • createdAt: Timestamp   = 2025-07-18T18:15:08.952Z
+    • roles: array[1]   = ["hq_owner"]
+    • email: string   = keniayingling@gmail.com
+    • defaultFranchise: string   = test
+    • franchiseIds: array[1]   = ["test"]
+    • status: string   = active
+    • invitationAcceptedAt: Timestamp   = 2025-07-18T18:16:06.746Z
+    • updatedAt: Timestamp   = 2025-07-18T18:16:12.734Z
+    • completeProfile: boolean   = true
+    • isActive: boolean   = true
+    • name: string   = Keni Yingling
+    • phoneNumber: string   = 1231231234
+  --- Doc 2 (id: BMBktE6xUUeneOvFCpdA9rSn4to2) ---
+    • email: string   = j.ying714@gmail.com
+    • permissions: array[0]   = []
+    • createdAt: string   = 2025-06-01T14:28:02.685000+00:00
+    • invitationAcceptedAt: null   = null
+    • emailVerified: boolean   = true
+    • completeProfile: boolean   = true
+    • isActive: boolean   = true
+    • language: string   = en
+    • isSuspended: boolean   = false
+    • updatedAt: Timestamp   = 2025-07-09T05:45:03.558Z
+    • settings: map   = {"notificationsEnabled":true,"theme":"light"}
+    • updatedBy: string   = 
+    • lastLogin: null   = null
+    • createdBy: string   = 
+    • primaryFranchiseId: string   = doughboyspizzeria
+    • secondaryEmails: array[0]   = []
+    • userTags: array[0]   = []
+    • deletedAt: null   = null
+    • notes: string   = 
+    • name: string   = Joshua Yingling
+    • profilePhotoUrl: string   = 
+    • invitedBy: string   = 
+    • uid: string   = BMBktE6xUUeneOvFCpdA9rSn4to2
+    • roles: array[3]   = ["platform_owner","hq_owner","developer"]
+    • phoneNumber: string   = 6183391104
+    • franchiseIds: array[2]   = ["doughboyspizzeria","test"]
+  --- Doc 3 (id: Wj0MKxvLepOO1fyzh9jXwmDEoen1) ---
+    • name: string   = Mark Yingling
+    • email: string   = markyingling1@gmail.com
+    • phoneNumber: string   = 
+    • role: string   = admin
+    • onboarded: boolean   = false
+    • createdAt: Timestamp   = 2025-08-08T03:00:36.740Z
+  Collection: users/BMBktE6xUUeneOvFCpdA9rSn4to2/addresses
+    Sampled documents: 1 (max 3)
+    --- Doc 1 (id: qykwV9YMHu6TrXX3mjXZ) ---
+      • zip: string   = 36468
+      • state: string   = tn
+      • street: string   = 6493 highway 114 west
+      • city: string   = Clarksville
+      • label: string   = Home
+  Collection: users/BMBktE6xUUeneOvFCpdA9rSn4to2/franchise_profiles
+    Sampled documents: 1 (max 3)
+    --- Doc 1 (id: doughboyspizzeria) ---
+      • favoritesMenuItemIds: array[1]   = ["appetizers_cheese_garlic_bread"]
+      • scheduled_orders: array[0]   = []
+      • orders: array[0]   = []
+      • completeProfile: boolean   = true
+      • loyalty: null   = null
+
+Collection: onboarding_templates
+  Sampled documents: 1 (max 3)
+  --- Doc 1 (id: pizzeria) ---
+  Collection: onboarding_templates/pizzeria/categories
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: calzones) ---
+      • name: string   = Calzones
+      • sortOrder: number   = 1
+      • image: null   = null
+      • description: string   = Stuffed calzone-style pizzas.
+    --- Doc 2 (id: desserts) ---
+      • name: string   = Desserts
+      • sortOrder: number   = 5
+      • image: null   = null
+      • description: string   = Sweet treats to finish your meal.
+    --- Doc 3 (id: drinks) ---
+      • name: string   = Drinks
+      • sortOrder: number   = 4
+      • image: null   = null
+      • description: string   = Soft drinks and bottled beverages.
+  Collection: onboarding_templates/pizzeria/ingredient_metadata
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: cheese_cheddar) ---
+      • supportsExtra: boolean   = true
+      • sidesAllowed: boolean   = true
+      • createdAt: Timestamp   = 2025-07-24T13:59:46.009Z
+      • upcharge: map   = {"Large":1.25,"Small":0.75}
+      • allergens: array[1]   = ["dairy"]
+      • name: string   = Cheddar Cheese
+      • removable: boolean   = true
+      • typeId: string   = cheese
+      • notes: string   = Mild yellow cheddar
+      • outOfStock: boolean   = false
+      • id: string   = cheese_cheddar
+      • amountSelectable: boolean   = true
+      • amountOptions: array[3]   = ["Light","Regular","Extra"]
+      • type: string   = Cheeses
+    --- Doc 2 (id: cheese_mozzarella) ---
+      • supportsExtra: boolean   = true
+      • sidesAllowed: boolean   = true
+      • createdAt: Timestamp   = 2025-07-24T13:59:46.009Z
+      • upcharge: null   = null
+      • allergens: array[1]   = ["dairy"]
+      • name: string   = Mozzarella
+      • removable: boolean   = true
+      • typeId: string   = cheese
+      • notes: string   = Shredded mozzarella cheese
+      • outOfStock: boolean   = false
+      • id: string   = cheese_mozzarella
+      • amountSelectable: boolean   = true
+      • amountOptions: array[3]   = ["Light","Regular","Extra"]
+      • type: string   = Cheeses
+    --- Doc 3 (id: cheese_parmesan) ---
+      • supportsExtra: boolean   = true
+      • sidesAllowed: boolean   = true
+      • createdAt: Timestamp   = 2025-07-24T13:59:46.009Z
+      • upcharge: null   = null
+      • allergens: array[1]   = ["dairy"]
+      • name: string   = Parmesan
+      • removable: boolean   = true
+      • typeId: string   = cheese
+      • notes: string   = Grated aged parmesan
+      • outOfStock: boolean   = false
+      • id: string   = cheese_parmesan
+      • amountSelectable: boolean   = true
+      • amountOptions: array[3]   = ["Light","Regular","Extra"]
+      • type: string   = Cheeses
+  Collection: onboarding_templates/pizzeria/ingredient_types
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: breads) ---
+      • name: string   = Breads
+      • updatedAt: Timestamp   = 2025-07-23T22:53:56.558Z
+      • config: map   = {}
+      • icon: string   = 🍞
+      • createdAt: Timestamp   = 2025-07-23T22:53:56.558Z
+      • sortOrder: number   = 13
+      • isRequiredGroup: boolean   = false
+    --- Doc 2 (id: cheeses) ---
+      • name: string   = Cheeses
+      • updatedAt: Timestamp   = 2025-07-23T22:53:56.558Z
+      • config: map   = {}
+      • icon: string   = 🧀
+      • createdAt: Timestamp   = 2025-07-23T22:53:56.558Z
+      • sortOrder: number   = 1
+      • isRequiredGroup: boolean   = true
+    --- Doc 3 (id: crust_toppings) ---
+      • name: string   = Crust Toppings
+      • updatedAt: Timestamp   = 2025-07-23T22:53:56.558Z
+      • config: map   = {}
+      • icon: string   = 🌾
+      • createdAt: Timestamp   = 2025-07-23T22:53:56.558Z
+      • sortOrder: number   = 9
+      • isRequiredGroup: boolean   = false
+  Collection: onboarding_templates/pizzeria/menu_items
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: baked_ziti) ---
+      • sizePrices: map   = {"Regular":13.49}
+      • maxToppings: number   = 5
+      • dressingOptions: array[3]   = ["ranch","italian","blue_cheese"]
+      • sku: string   = DIN-004
+      • customizationGroups: array[4]   = [{"label":"Proteins","ingredientIds":["[nested]","[nested]","[nested]"]},{"label":"Cheeses","ingredientIds":["[nested]","[nested]","[nested]"]},{"label":"Sauces","ingredientIds":["
+      • sideDipSauceOptions: array[0]   = []
+      • sideDipUpcharge: map   = {"Regular":0}
+      • cutStyles: array[0]   = []
+      • maxFreeToppings: number   = 2
+      • archived: boolean   = false
+      • templateRefs: array[1]   = ["default_dinner_template"]
+      • freeDressingCount: map   = {"Regular":1}
+      • dietaryTags: array[3]   = ["vegetarian","contains-dairy","contains-gluten"]
+      • maxFreeDressings: number   = 1
+      • extraDressingUpcharge: number   = 0.5
+      • includedIngredients: array[6]   = [{"name":"Ziti Pasta","ingredientId":"pasta_ziti","type":"pasta","removable":false},{"name":"Marinara Sauce","ingredientId":"sauce_marinara","type":"sauce","removable":false},{"nam
+      • available: boolean   = true
+      • allergens: array[2]   = ["gluten","dairy"]
+      • hideInMenu: boolean   = false
+      • cookTypes: array[1]   = ["Regular"]
+      • notes: string   = Make it meaty with ground beef or sausage.
+      • taxCategory: string   = prepared_food
+      • optionalAddOns: array[2]   = [{"price":2,"ingredientId":"beef_ground","type":"protein","removable":true,"name":"Add Ground Beef"},{"price":3.49,"ingredientId":"side_salad","type":"side","removable":true,"name"
+      • customizations: array[0]   = []
+      • exportId: string   = exp_din_004
+      • crustTypes: array[0]   = []
+      • sizes: array[1]   = ["Regular"]
+      • createdAt: Timestamp   = 2025-07-25T06:10:13.183Z
+      • category: string   = Dinner
+      • sortOrder: number   = 4
+      • image: string   = https://example.com/images/baked_ziti.jpg
+      • prepTime: number   = 20
+      • additionalToppingPrices: map   = {"Regular":1.5}
+      • freeSauceCount: map   = {"Regular":1}
+      • sauceOptions: array[3]   = ["sauce_marinara","sauce_meat","sauce_alfredo"]
+      • categoryId: string   = cat_dinner
+      • rawCustomizations: array[0]   = []
+      • price: number   = 13.49
+      • customizationsUpdatedAt: Timestamp   = 2025-07-25T06:10:13.183Z
+      • extraCharges: map   = {"add_meat":2,"extra_cheese":1.25}
+      • bundleItems: array[0]   = []
+      • nutrition: map   = {"fat":44,"carbs":98,"sodium":2150,"calories":1020,"protein":35}
+      • dippingSauceOptions: array[0]   = []
+      • id: string   = baked_ziti
+      • description: string   = Oven-baked ziti pasta with layers of marinara, ricotta, mozzarella, and parmesan cheese. Served with garlic bread and op
+      • maxFreeSauces: number   = 1
+      • lastModified: string   = 2025-07-25T00:00:00Z
+      • extraSauceUpcharge: number   = 0.85
+      • freeDipCupCount: map   = {"Regular":0}
+      • bundleDiscount: null   = null
+      • name: string   = Baked Ziti
+      • dippingSplits: map   = {}
+      • highlightTags: array[3]   = ["baked","cheesy","comfort_food"]
+      • allowSpecialInstructions: boolean   = true
+      • lastModifiedBy: string   = admin
+      • comboId: null   = null
+    --- Doc 2 (id: bbq_chicken_pizza) ---
+      • sizePrices: map   = {"Large":14.99,"Medium":12.99,"Small":10.99}
+      • maxToppings: number   = 10
+      • dressingOptions: array[0]   = []
+      • sku: string   = PZ-002
+      • customizationGroups: array[4]   = [{"label":"Meats","ingredientIds":["[nested]","[nested]","[nested]"]},{"label":"Veggies","ingredientIds":["[nested]","[nested]","[nested]"]},{"label":"Cheeses","ingredientIds":["[n
+      • sideDipSauceOptions: array[0]   = []
+      • sideDipUpcharge: map   = {}
+      • cutStyles: array[2]   = ["Pie","Square"]
+      • maxFreeToppings: number   = 4
+      • archived: boolean   = false
+      • templateRefs: array[1]   = ["default_pizza_template"]
+      • freeDressingCount: number   = 0
+      • dietaryTags: array[2]   = ["contains-dairy","contains-gluten"]
+      • maxFreeDressings: number   = 0
+      • extraDressingUpcharge: number   = 0
+      • includedIngredients: array[4]   = [{"name":"BBQ Sauce","ingredientId":"sauce_bbq","type":"sauce","removable":true},{"name":"Mozzarella","ingredientId":"cheese_mozzarella","type":"cheese","removable":true},{"name":"
+      • available: boolean   = true
+      • allergens: array[2]   = ["gluten","dairy"]
+      • hideInMenu: boolean   = false
+      • cookTypes: array[3]   = ["Regular","Crispy","Well Done"]
+      • notes: string   = Popular during lunch hours.
+      • taxCategory: string   = prepared_food
+      • optionalAddOns: array[2]   = [{"price":2.5,"ingredientId":"extra_chicken","type":"meat","removable":true,"name":"Extra Chicken"},{"price":1.75,"ingredientId":"extra_cheese","type":"cheese","removable":true,"na
+      • customizations: array[0]   = []
+      • exportId: string   = exp_pz_002
+      • crustTypes: array[4]   = ["Thin","Regular","Thick"]
+      • sizes: array[3]   = ["Small","Medium","Large"]
+      • createdAt: Timestamp   = 2025-07-25T05:23:33.922Z
+      • category: string   = Pizzas
+      • sortOrder: number   = 2
+      • image: string   = https://example.com/images/bbq_chicken_pizza.jpg
+      • prepTime: number   = 14
+      • additionalToppingPrices: map   = {"Large":1.95,"Medium":1.35,"Small":0.85}
+      • freeSauceCount: map   = {"Large":2,"Medium":1,"Small":1}
+      • sauceOptions: array[3]   = ["sauce_bbq","sauce_tomato","sauce_ranch"]
+      • categoryId: string   = cat_pizza
+      • rawCustomizations: array[0]   = []
+      • price: number   = 14.99
+      • customizationsUpdatedAt: Timestamp   = 2025-07-25T05:23:33.922Z
+      • extraCharges: map   = {"double_meat":2.5,"stuffed_crust":3}
+      • bundleItems: array[0]   = []
+      • nutrition: map   = {"fat":10,"carbs":32,"sodium":820,"calories":310,"protein":18}
+      • dippingSauceOptions: array[0]   = []
+      • id: string   = bbq_chicken_pizza
+      • description: string   = Sweet and smoky BBQ sauce, grilled chicken, red onions, and mozzarella on your choice of crust.
+      • maxFreeSauces: number   = 1
+      • lastModified: string   = 2025-07-25T00:00:00Z
+      • extraSauceUpcharge: number   = 0.75
+      • freeDipCupCount: map   = {}
+      • bundleDiscount: null   = null
+      • name: string   = BBQ Chicken Pizza
+      • dippingSplits: map   = {}
+      • highlightTags: array[2]   = ["fan-favorite","chicken"]
+      • allowSpecialInstructions: boolean   = true
+      • lastModifiedBy: string   = admin
+      • comboId: null   = null
+    --- Doc 3 (id: bbq_pulled_pork_pizza) ---
+      • sizePrices: map   = {"Large":14.99,"Medium":12.99,"Small":10.99}
+      • maxToppings: number   = 10
+      • dressingOptions: array[0]   = []
+      • sku: string   = PIZ-016
+      • customizationGroups: array[4]   = [{"label":"Meats","ingredientIds":["[nested]","[nested]","[nested]"]},{"label":"Cheeses","ingredientIds":["[nested]","[nested]","[nested]"]},{"label":"Veggies","ingredientIds":["[n
+      • sideDipSauceOptions: array[0]   = []
+      • sideDipUpcharge: map   = {}
+      • cutStyles: array[2]   = ["Pie","Square"]
+      • maxFreeToppings: number   = 4
+      • archived: boolean   = false
+      • templateRefs: array[1]   = ["default_pizza_template"]
+      • freeDressingCount: number   = 0
+      • dietaryTags: array[2]   = ["contains-dairy","contains-gluten"]
+      • maxFreeDressings: number   = 0
+      • extraDressingUpcharge: number   = 0
+      • includedIngredients: array[5]   = [{"name":"BBQ Sauce","ingredientId":"sauce_bbq","type":"sauce","removable":false},{"name":"Pulled Pork","ingredientId":"pork_pulled","type":"protein","removable":true},{"name":"Moz
+      • available: boolean   = true
+      • allergens: array[2]   = ["gluten","dairy"]
+      • hideInMenu: boolean   = false
+      • cookTypes: array[3]   = ["Regular","Crispy","Well Done"]
+      • notes: string   = Pairs great with jalapeños or pickles.
+      • taxCategory: string   = prepared_food
+      • optionalAddOns: array[2]   = [{"price":0.75,"ingredientId":"jalapeño","type":"veggie","removable":true,"name":"Add Jalapeños"},{"price":0.75,"ingredientId":"pickle_sliced","type":"veggie","removable":true,"nam
+      • customizations: array[0]   = []
+      • exportId: string   = exp_piz_016
+      • crustTypes: array[4]   = ["Regular","Thin","Thick"]
+      • sizes: array[3]   = ["Small","Medium","Large"]
+      • createdAt: Timestamp   = 2025-07-25T05:50:36.594Z
+      • category: string   = Pizza
+      • sortOrder: number   = 16
+      • image: string   = https://example.com/images/bbq_pulled_pork_pizza.jpg
+      • prepTime: number   = 13
+      • additionalToppingPrices: map   = {"Large":2.25,"Medium":1.75,"Small":1.25}
+      • freeSauceCount: map   = {"Large":1,"Medium":1,"Small":1}
+      • sauceOptions: array[3]   = ["sauce_bbq","sauce_white_garlic","sauce_tomato"]
+      • categoryId: string   = cat_pizza
+      • rawCustomizations: array[0]   = []
+      • price: number   = 14.99
+      • customizationsUpdatedAt: Timestamp   = 2025-07-25T05:50:36.594Z
+      • extraCharges: map   = {"double_meat":2.5,"extra_cheese":1.25}
+      • bundleItems: array[0]   = []
+      • nutrition: map   = {"fat":65,"carbs":128,"sodium":2350,"calories":1450,"protein":60}
+      • dippingSauceOptions: array[0]   = []
+      • id: string   = bbq_pulled_pork_pizza
+      • description: string   = Tender pulled pork with sweet and smoky BBQ sauce, red onions, mozzarella and cheddar cheeses on a hand-tossed crust.
+      • maxFreeSauces: number   = 1
+      • lastModified: string   = 2025-07-25T00:00:00Z
+      • extraSauceUpcharge: number   = 0.75
+      • freeDipCupCount: map   = {}
+      • bundleDiscount: null   = null
+      • name: string   = BBQ Pulled Pork Pizza
+      • dippingSplits: map   = {}
+      • highlightTags: array[3]   = ["bbq","smoky","pork"]
+      • allowSpecialInstructions: boolean   = true
+      • lastModifiedBy: string   = admin
+      • comboId: null   = null
+  Collection: onboarding_templates/pizzeria/sizes
+    Sampled documents: 3 (max 3)
+    --- Doc 1 (id: calzone_sizes) ---
+      • label: string   = Calzone Sizes
+      • sizes: array[2]   = [{"label":"Regular","toppingPrice":1.25,"basePrice":9.95},{"label":"Large","toppingPrice":1.75,"basePrice":12.95}]
+      • id: string   = calzone_sizes
+      • sortOrder: number   = 1
+    --- Doc 2 (id: dessert_sizes) ---
+      • label: string   = Dessert Sizes
+      • sizes: array[2]   = [{"label":"Single Slice","toppingPrice":0,"basePrice":3.25},{"label":"Whole Pie","toppingPrice":0,"basePrice":15.95}]
+      • id: string   = dessert_sizes
+      • sortOrder: number   = 3
+    --- Doc 3 (id: drink_sizes) ---
+      • label: string   = Drink Sizes
+      • sizes: array[3]   = [{"label":"Small 16 oz","toppingPrice":0,"basePrice":1.95},{"label":"Medium 24 oz","toppingPrice":0,"basePrice":2.45},{"label":"Large 32 oz","toppingPrice":0,"basePrice":2.95}]
+      • id: string   = drink_sizes
+      • sortOrder: number   = 4
+
+
+================================================================================
+END OF SCHEMA DUMP
+Total collections explored (including subcollections): 63
+================================================================================

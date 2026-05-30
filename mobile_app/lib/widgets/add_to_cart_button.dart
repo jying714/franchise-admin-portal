@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 
 /// Button for adding an item directly to the cart (no customization flow).
 /// Accepts loading state and a callback for tap.
@@ -19,17 +20,17 @@ class AddToCartButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: DesignTokens.primaryColor,
-        foregroundColor: DesignTokens.foregroundColor,
-        padding: DesignTokens.buttonPadding,
+        backgroundColor: UiConfig.primaryColor,
+        foregroundColor: UiConfig.foregroundColor,
+        padding: UiConfig.defaultPadding,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.buttonRadius),
+          borderRadius: BorderRadius.circular(shared.DesignTokens.buttonRadius),
         ),
-        elevation: DesignTokens.buttonElevation,
-        textStyle: const TextStyle(
-          fontSize: DesignTokens.bodyFontSize,
-          fontWeight: DesignTokens.titleFontWeight,
-          fontFamily: DesignTokens.fontFamily,
+        elevation: shared.DesignTokens.buttonElevation,
+        textStyle: TextStyle(
+          fontSize: shared.DesignTokens.bodyFontSize,
+          fontWeight: UiConfig.fontWeightBold,
+          fontFamily: shared.DesignTokens.fontFamily,
         ),
       ),
       onPressed: isProcessing ? null : onPressed,
@@ -43,5 +44,3 @@ class AddToCartButton extends StatelessWidget {
     );
   }
 }
-
-

@@ -1,6 +1,6 @@
-﻿import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:logging/logging.dart';
-import 'package:shared_core/src/core/config/feature_config.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
 class NotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
@@ -50,7 +50,7 @@ class NotificationService {
   Future<void> sendNotification(String token, String title, String body) async {
     _logger.info('Sending notification to $token: $title - $body');
     // Check if status notifications are enabled by feature toggle:
-    if (!FeatureConfig.instance.statusEnabled) {
+    if (!shared.FeatureConfig.instance.statusEnabled) {
       _logger.info('Notifications are disabled by feature toggle.');
       return;
     }

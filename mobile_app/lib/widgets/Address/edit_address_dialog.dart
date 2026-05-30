@@ -1,12 +1,15 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:franchise_mobile_app/core/models/address.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/Address/address_form.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/config/ui_config.dart';
+
+// P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
 
 class EditAddressDialog extends StatefulWidget {
-  final Address initialValue;
-  final Future<void> Function(Address updatedAddress) onSave;
+  final shared.Address initialValue;
+  final Future<void> Function(shared.Address updatedAddress) onSave;
 
   const EditAddressDialog({
     super.key,
@@ -16,8 +19,8 @@ class EditAddressDialog extends StatefulWidget {
 
   static Future<void> show(
     BuildContext context, {
-    required Address initialValue,
-    required Future<void> Function(Address updatedAddress) onSave,
+    required shared.Address initialValue,
+    required Future<void> Function(shared.Address updatedAddress) onSave,
   }) {
     return showDialog(
       context: context,
@@ -37,7 +40,7 @@ class EditAddressDialog extends StatefulWidget {
 
 class _EditAddressDialogState extends State<EditAddressDialog> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  late Address _editedAddress;
+  late shared.Address _editedAddress;
 
   @override
   void initState() {
@@ -47,6 +50,9 @@ class _EditAddressDialogState extends State<EditAddressDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // FranchiseProvider injected for franchise/{franchiseId}/ scoping (Batch 2)
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
+
     final loc = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -57,7 +63,7 @@ class _EditAddressDialogState extends State<EditAddressDialog> {
             Text(
               loc.editAddress,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: DesignTokens.primaryColor,
+                    color: UiConfig.primaryColor,
                     fontWeight: FontWeight.bold,
                   ),
             ),
@@ -77,5 +83,3 @@ class _EditAddressDialogState extends State<EditAddressDialog> {
     );
   }
 }
-
-

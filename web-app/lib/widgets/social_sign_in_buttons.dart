@@ -1,4 +1,9 @@
-﻿import 'package:flutter/material.dart';
+﻿﻿// P1 Batch 3: Duplicated widget (exact filename match with mobile_app).
+// Mobile canonical in mobile_app/lib/widgets/.
+// Safe for deletion in next batch if admin previews can reuse via shared_ui package or path dependency.
+// Changes in Batch 3 were mobile-only + these markers.
+
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_core/src/core/services/auth_service.dart';

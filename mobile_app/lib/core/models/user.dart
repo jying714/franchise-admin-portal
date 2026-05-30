@@ -1,11 +1,10 @@
-﻿import 'package:shared_core/src/core/models/user.dart' as shared_user;
-import 'address.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
-class User extends shared_user.User {
+class User extends shared.User {
   final List<dynamic> orders;
   final List<dynamic> favorites;
   final List<dynamic> scheduledOrders;
-  final dynamic loyalty; // Loyalty object or map
+  final dynamic loyalty;
   final String role;
 
   User({
@@ -31,5 +30,7 @@ class User extends shared_user.User {
     this.role = 'customer',
   });
 
-  // Add factory if needed, but for compile, this may help some casts
+  static const String roleCustomer = 'customer';
+  static const String roleAdmin = 'admin';
+  static const String roleOwner = 'owner';
 }

@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class TrackingScreen extends StatelessWidget {
@@ -12,34 +13,32 @@ class TrackingScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          localizations.trackOrder, // "Track Order" from ARB
-          style: const TextStyle(
-            fontSize: DesignTokens.titleFontSize,
-            color: DesignTokens.foregroundColor,
-            fontWeight: DesignTokens.titleFontWeight,
-            fontFamily: DesignTokens.fontFamily,
+          localizations.trackOrder,
+          style: TextStyle(
+            fontSize: shared.DesignTokens.titleFontSize,
+            color: UiConfig.foregroundColor,
+            fontWeight: UiConfig.bold,
+            fontFamily: shared.DesignTokens.fontFamily,
           ),
         ),
-        backgroundColor: DesignTokens.primaryColor,
+        backgroundColor: UiConfig.primaryColor,
         centerTitle: true,
         elevation: 0,
-        iconTheme: const IconThemeData(color: DesignTokens.foregroundColor),
+        iconTheme: IconThemeData(color: UiConfig.foregroundColor),
       ),
-      backgroundColor: DesignTokens.backgroundColor,
+      backgroundColor: UiConfig.backgroundColor,
       body: Center(
         child: Text(
           '${localizations.orderNumber}: $orderId\n\nTracking info coming soon!',
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: DesignTokens.bodyFontSize,
-            color: DesignTokens.textColor,
-            fontFamily: DesignTokens.fontFamily,
-            fontWeight: DesignTokens.bodyFontWeight,
+          style: TextStyle(
+            fontSize: shared.DesignTokens.bodyFontSize,
+            color: UiConfig.textColor,
+            fontFamily: shared.DesignTokens.fontFamily,
+            fontWeight: UiConfig.normal,
           ),
         ),
       ),
     );
   }
 }
-
-

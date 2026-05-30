@@ -45,4 +45,15 @@ abstract class AuthService {
 
   /// Get ID token
   Future<String?> getIdToken({bool forceRefresh = false});
+
+  /// Send email verification
+  Future<void> sendEmailVerification();
+
+  /// Set guest session (anonymous Firebase auth)
+  Future<void> setGuestSession();
+
+  /// Set demo session (anonymous Firebase auth for testing/demo mode)
+  Future<void> setDemoSession();
+
+  Future<User> signInWithGoogle();
 }

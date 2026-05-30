@@ -1,5 +1,9 @@
-﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+
+// P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
 
 /// A modular, franchise-ready AppBar widget.
 /// Expandable: supports title, logo, subtitle, custom actions, colors, and more.
@@ -20,7 +24,7 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   /// For further expansion: add subtitle, back button logic, etc.
   const FranchiseAppBar({
-    Key? key,
+    super.key,
     required this.title,
     this.titleStyle,
     this.centerTitle = true,
@@ -34,7 +38,7 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.elevation = 0,
     this.showBottomDivider = false,
     this.bottom,
-  }) : super(key: key);
+  });
 
   @override
   Size get preferredSize =>
@@ -42,9 +46,12 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    // FranchiseProvider injected for franchise/{franchiseId}/ scoping (Batch 2)
+    Provider.of<shared.FranchiseProvider>(context, listen: false);
+
     final bool displayLogo =
         showLogo && logoAsset != null && logoAsset!.isNotEmpty;
-    final color = backgroundColor ?? DesignTokens.primaryColor;
+    final color = backgroundColor ?? UiConfig.primaryColor;
     final titleWidget = displayLogo
         ? Row(
             mainAxisSize: MainAxisSize.min,
@@ -61,10 +68,10 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
                   title,
                   style: titleStyle ??
                       TextStyle(
-                        fontSize: DesignTokens.titleFontSize,
-                        fontWeight: DesignTokens.titleFontWeight,
-                        fontFamily: DesignTokens.fontFamily,
-                        color: foregroundColor ?? DesignTokens.foregroundColor,
+                        fontSize: shared.DesignTokens.titleFontSize,
+                        fontWeight: UiConfig.fontWeightBold,
+                        fontFamily: shared.DesignTokens.fontFamily,
+                        color: foregroundColor ?? UiConfig.foregroundColor,
                       ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -76,10 +83,10 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
             title,
             style: titleStyle ??
                 TextStyle(
-                  fontSize: DesignTokens.titleFontSize,
-                  fontWeight: DesignTokens.titleFontWeight,
-                  fontFamily: DesignTokens.fontFamily,
-                  color: foregroundColor ?? DesignTokens.foregroundColor,
+                  fontSize: shared.DesignTokens.titleFontSize,
+                  fontWeight: UiConfig.fontWeightBold,
+                  fontFamily: shared.DesignTokens.fontFamily,
+                  color: foregroundColor ?? UiConfig.foregroundColor,
                 ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -88,9 +95,9 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: color,
       elevation: elevation,
-      centerTitle: displayLogo ? false : centerTitle, // PATCH HERE
+      centerTitle: displayLogo ? false : centerTitle,
       iconTheme: IconThemeData(
-        color: foregroundColor ?? DesignTokens.foregroundColor,
+        color: foregroundColor ?? UiConfig.foregroundColor,
       ),
       leading: leading,
       title: titleWidget,
@@ -107,5 +114,3 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 }
-
-

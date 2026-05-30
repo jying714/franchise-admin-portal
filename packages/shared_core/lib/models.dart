@@ -48,6 +48,9 @@ export 'src/core/models/size_template.dart';
 export 'src/core/models/staff.dart';
 export 'src/core/models/user.dart';
 export 'src/core/models/error_log_summary.dart';
+export 'src/core/models/scheduled_order.dart';
+export 'src/core/models/favorite_order.dart';
+export 'src/core/models/loyalty.dart';
 
 // enriched subfolder
 export 'src/core/models/enriched/enriched_franchise_subscription.dart';

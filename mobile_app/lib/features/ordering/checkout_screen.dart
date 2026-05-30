@@ -1,13 +1,11 @@
-﻿import 'dart:math';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/design_tokens.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:franchise_mobile_app/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/models/order.dart' as order_model;
-import 'package:shared_core/src/core/models/menu_item.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/ordering/confirmation_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 enum DeliveryType { delivery, pickup }
@@ -73,7 +71,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(localizations.selectedTimeOutsideBusinessHours),
-          backgroundColor: DesignTokens.errorColor,
+          backgroundColor: UiConfig.errorColor,
         ),
       );
       return;
@@ -103,16 +101,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void _updateOrderTotals() {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
-    final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
-    final franchiseId = Provider.of<FranchiseProvider>(context, listen: false).currentFranchiseId;
 
-    firestoreService.getCart(user.uid, franchiseId: franchiseId != 'unknown' ? franchiseId : null).first.then((cart) {
-      if (cart == null) return;
+    final franchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
+    final franchiseId = franchiseProvider.currentFranchiseId;
+
+    firestoreService
+        .getCart(user.uid,
+            franchiseId:
+                franchiseId != 'unknown' ? franchiseId : 'doughboyspizzeria')
+        .first
+        .then((cart) {
+      if (!mounted || cart == null) return;
+
       double subtotal = 0.0;
       for (final item in cart.items) {
         subtotal += item.price * item.quantity;
       }
+
       setState(() {
         _orderSubtotal = subtotal;
         _orderTax = (_orderSubtotal * 0.0925);
@@ -121,6 +129,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         _orderTotal = (_orderSubtotal + _orderTax + _deliveryFee - _promoValue)
             .clamp(0, double.infinity);
       });
+    }).catchError((e) {
+      // Non-fatal; UI will show stale or zero totals
     });
   }
 
@@ -130,7 +140,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(localizations.pleaseSelectTime),
-          backgroundColor: DesignTokens.errorColor,
+          backgroundColor: UiConfig.errorColor,
         ),
       );
       return;
@@ -141,22 +151,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(localizations.signInToOrder),
-          backgroundColor: DesignTokens.errorColor,
+          backgroundColor: UiConfig.errorColor,
         ),
       );
       return;
     }
 
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
-    final franchiseId = Provider.of<FranchiseProvider>(context, listen: false).currentFranchiseId;
-    final cart = await firestoreService.getCart(user.uid, franchiseId: franchiseId != 'unknown' ? franchiseId : null).first;
+        Provider.of<shared.FirestoreService>(context, listen: false);
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .currentFranchiseId;
+    final cart = await firestoreService
+        .getCart(user.uid,
+            franchiseId: franchiseId != 'unknown' ? franchiseId : null)
+        .first;
     if (cart == null || cart.items.isEmpty) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(localizations.cartEmpty),
-          backgroundColor: DesignTokens.errorColor,
+          backgroundColor: UiConfig.errorColor,
         ),
       );
       return;
@@ -170,7 +185,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(localizations.paymentFailed),
-          backgroundColor: DesignTokens.errorColor,
+          backgroundColor: UiConfig.errorColor,
         ),
       );
       return;
@@ -180,7 +195,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final orderId = _generateOrderId();
     final order = cart.copyWith(
       id: orderId,
-      items: List<order_model.OrderItem>.from(cart.items), // <<<< REQUIRED LINE
+      items: List<shared.OrderItem>.from(cart.items),
       subtotal: _orderSubtotal,
       tax: _orderTax,
       deliveryFee: _deliveryFee,
@@ -197,9 +212,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
 
     try {
-      print('[DEBUG] Calling addOrder...');
       await firestoreService.addOrder(order);
-      print('[DEBUG] addOrder completed.');
       await firestoreService.updateCart(order.copyWith(items: []));
       if (!context.mounted) return;
       Navigator.of(context).pushReplacement(
@@ -210,7 +223,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(localizations.orderPlaced),
-          backgroundColor: DesignTokens.successTextColor,
+          backgroundColor: UiConfig.successColor,
         ),
       );
     } catch (e) {
@@ -218,7 +231,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${localizations.orderFailed}: $e'),
-          backgroundColor: DesignTokens.errorColor,
+          backgroundColor: UiConfig.errorColor,
         ),
       );
     }
@@ -226,14 +239,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   /// --- Allergen list for cart items in checkout ---
   List<String> _allAllergensInCart(
-    List<order_model.OrderItem> items,
-    List<MenuItem> menuItems,
+    List<shared.OrderItem> items,
+    List<shared.MenuItem> menuItems,
   ) {
     final allergens = <String>{};
     for (final item in items) {
       final menu = menuItems.firstWhere(
         (m) => m.id == item.menuItemId,
-        orElse: () => MenuItem(
+        orElse: () => shared.MenuItem(
           id: item.menuItemId,
           category: '',
           categoryId: '',
@@ -243,10 +256,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           customizationGroups: [],
           customizations: [],
           taxCategory: '',
+          available: true,
           availability: true,
         ),
       );
-      for (final allergen in menu.allergens) {
+      for (final allergen in menu.allergens ?? []) {
         if (allergen.isNotEmpty) allergens.add(allergen);
       }
     }
@@ -256,252 +270,279 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateOrderTotals();
-    });
 
-    final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
-    final user = FirebaseAuth.instance.currentUser;
+    return Consumer<shared.FranchiseProvider>(
+      builder: (context, provider, child) {
+        final user = FirebaseAuth.instance.currentUser;
+        final firestoreService =
+            Provider.of<shared.FirestoreService>(context, listen: false);
 
-    // --- StreamBuilder to display allergens at checkout, just like cart ---
-    return StreamBuilder<order_model.Order?>(
-      stream: user == null ? null : firestoreService.getCart(user.uid, franchiseId: Provider.of<FranchiseProvider>(context, listen: false).currentFranchiseId != 'unknown' ? Provider.of<FranchiseProvider>(context, listen: false).currentFranchiseId : null),
-      builder: (context, cartSnapshot) {
-        final cart = cartSnapshot.data;
-        if (cart == null || cart.items.isEmpty) {
+        if (!provider.hasValidFranchise) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (user == null) {
           return _emptyCheckout(localizations);
         }
-        return StreamBuilder<List<MenuItem>>(
-          stream: firestoreService.getMenuItemsByIds(
-            cart.items.map((i) => i.menuItemId).toList(),
-          ),
-          builder: (context, menuSnapshot) {
-            final menuItems = menuSnapshot.data ?? [];
-            final allAllergens = _allAllergensInCart(cart.items, menuItems);
-            final showAllergenWarning = allAllergens.isNotEmpty;
 
-            return Scaffold(
-              backgroundColor: DesignTokens.backgroundColor,
-              appBar: AppBar(
-                title: Text(
-                  localizations.checkout,
-                  style: const TextStyle(
-                    color: DesignTokens.foregroundColor,
-                    fontSize: DesignTokens.titleFontSize,
-                    fontWeight: DesignTokens.titleFontWeight,
-                    fontFamily: DesignTokens.fontFamily,
-                  ),
-                ),
-                backgroundColor: DesignTokens.primaryColor,
-                elevation: 0,
-                iconTheme:
-                    const IconThemeData(color: DesignTokens.foregroundColor),
-                centerTitle: true,
+        // One-time totals update
+        if (_orderSubtotal == 0.0) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _updateOrderTotals();
+          });
+        }
+
+        return StreamBuilder<shared.Order?>(
+          stream: firestoreService.getCart(
+            user.uid,
+            franchiseId: provider.currentFranchiseId,
+          ),
+          builder: (context, cartSnapshot) {
+            final cart = cartSnapshot.data;
+
+            if (cart == null || cart.items.isEmpty) {
+              return _emptyCheckout(localizations);
+            }
+
+            return StreamBuilder<List<shared.MenuItem>>(
+              stream: firestoreService.getMenuItemsByIds(
+                provider.currentFranchiseId,
+                cart.items.map((i) => i.menuItemId).toList(),
               ),
-              body: SingleChildScrollView(
-                padding: DesignTokens.cardPadding,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (showAllergenWarning)
-                      Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.only(
-                            left: 4, right: 4, top: 2, bottom: 12),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: DesignTokens.errorBgColor.withOpacity(0.12),
-                          borderRadius:
-                              BorderRadius.circular(DesignTokens.cardRadius),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Icon(Icons.warning_amber_rounded,
-                                color: DesignTokens.errorColor, size: 28),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                '${localizations.warning}: ${localizations.itemsInCartCouldContain}\n'
-                                '${allAllergens.join(", ")}',
-                                style: TextStyle(
-                                  color: DesignTokens.errorColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: DesignTokens.fontFamily,
+              builder: (context, menuSnapshot) {
+                final menuItems = menuSnapshot.data ?? [];
+                final allAllergens = _allAllergensInCart(cart.items, menuItems);
+                final showAllergenWarning = allAllergens.isNotEmpty;
+
+                return Scaffold(
+                  backgroundColor: UiConfig.backgroundColor,
+                  appBar: AppBar(
+                    title: Text(
+                      localizations.checkout,
+                      style: TextStyle(
+                        color: UiConfig.foregroundColorDark,
+                        fontSize: shared.DesignTokens.titleFontSize,
+                        fontWeight: UiConfig.fontWeightBold,
+                        fontFamily: shared.DesignTokens.fontFamily,
+                      ),
+                    ),
+                    backgroundColor: UiConfig.primaryColor,
+                    elevation: 0,
+                    iconTheme: const IconThemeData(color: Colors.white),
+                    centerTitle: true,
+                  ),
+                  body: SingleChildScrollView(
+                    padding: UiConfig.cardPadding,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (showAllergenWarning)
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(
+                                left: 4, right: 4, top: 2, bottom: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: UiConfig.errorColor.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(
+                                  shared.DesignTokens.cardRadius),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(Icons.warning_amber_rounded,
+                                    color: UiConfig.errorColor, size: 28),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    '${localizations.warning}: ${localizations.itemsInCartCouldContain}\n'
+                                    '${allAllergens.join(", ")}',
+                                    style: TextStyle(
+                                      color: UiConfig.errorColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily:
+                                          shared.DesignTokens.fontFamily,
+                                    ),
+                                  ),
                                 ),
+                              ],
+                            ),
+                          ),
+                        Text(
+                          localizations.orderType,
+                          style: TextStyle(
+                            fontSize: shared.DesignTokens.bodyFontSize,
+                            fontWeight: UiConfig.fontWeightBold,
+                            fontFamily: shared.DesignTokens.fontFamily,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: RadioListTile<DeliveryType>(
+                                title: Text(localizations.pickup),
+                                value: DeliveryType.pickup,
+                                groupValue: _deliveryType,
+                                onChanged: (v) {
+                                  setState(() => _deliveryType = v!);
+                                  _updateOrderTotals();
+                                },
+                              ),
+                            ),
+                            Expanded(
+                              child: RadioListTile<DeliveryType>(
+                                title: Text(localizations.delivery),
+                                value: DeliveryType.delivery,
+                                groupValue: _deliveryType,
+                                onChanged: (v) {
+                                  setState(() => _deliveryType = v!);
+                                  _updateOrderTotals();
+                                },
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    Text(
-                      localizations.orderType,
-                      style: const TextStyle(
-                        fontSize: DesignTokens.bodyFontSize,
-                        fontWeight: DesignTokens.titleFontWeight,
-                        fontFamily: DesignTokens.fontFamily,
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: RadioListTile<DeliveryType>(
-                            title: Text(localizations.pickup),
-                            value: DeliveryType.pickup,
-                            groupValue: _deliveryType,
-                            onChanged: (v) {
-                              setState(() => _deliveryType = v!);
-                              _updateOrderTotals();
-                            },
+                        const SizedBox(height: 16),
+                        ListTile(
+                          leading: const Icon(Icons.access_time),
+                          title: Text(
+                            _selectedTime == null
+                                ? localizations.selectTime
+                                : '${localizations.time}: ${_selectedTime!.format(context)}',
+                            style: const TextStyle(
+                                fontSize: shared.DesignTokens.bodyFontSize),
+                          ),
+                          subtitle: Text(
+                            '${localizations.businessHours}: ${_businessOpen.format(context)} - ${_businessClose.format(context)}',
+                            style: const TextStyle(
+                                fontSize: shared.DesignTokens.captionFontSize),
+                          ),
+                          trailing: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: UiConfig.secondaryColor,
+                              foregroundColor: UiConfig.foregroundColorDark,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                    shared.DesignTokens.buttonRadius),
+                              ),
+                            ),
+                            onPressed: () =>
+                                _selectTime(context, localizations),
+                            child: Text(localizations.pickTime),
                           ),
                         ),
-                        Expanded(
-                          child: RadioListTile<DeliveryType>(
-                            title: Text(localizations.delivery),
-                            value: DeliveryType.delivery,
-                            groupValue: _deliveryType,
-                            onChanged: (v) {
-                              setState(() => _deliveryType = v!);
-                              _updateOrderTotals();
-                            },
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _promoController,
+                          decoration: InputDecoration(
+                            labelText: localizations.promoCode,
+                            errorText: _promoError,
+                            suffixIcon: _promoApplied
+                                ? const Icon(Icons.check, color: Colors.green)
+                                : IconButton(
+                                    icon: const Icon(Icons.local_offer),
+                                    onPressed: () => _applyPromo(localizations),
+                                    tooltip: localizations.applyPromo,
+                                  ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(
+                                  shared.DesignTokens.formFieldRadius),
+                            ),
                           ),
+                          enabled: !_promoApplied,
+                        ),
+                        if (_promoApplied)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              '${localizations.promoApplied}: -\$${promoDiscount.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                color: UiConfig.successColor,
+                                fontSize: shared.DesignTokens.captionFontSize,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 16),
+                        Text(
+                          localizations.paymentMethod,
+                          style: TextStyle(
+                            fontSize: shared.DesignTokens.bodyFontSize,
+                            fontWeight: UiConfig.fontWeightBold,
+                            fontFamily: shared.DesignTokens.fontFamily,
+                          ),
+                        ),
+                        ...PaymentMethod.values.map(
+                          (pm) => RadioListTile<PaymentMethod>(
+                            title: Text(_paymentLabel(pm, localizations)),
+                            value: pm,
+                            groupValue: _selectedPayment,
+                            onChanged: (v) =>
+                                setState(() => _selectedPayment = v),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Card(
+                          elevation: shared.DesignTokens.cardElevation,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                                shared.DesignTokens.cardRadius),
+                          ),
+                          color: UiConfig.surfaceColor,
+                          child: Padding(
+                            padding: UiConfig.cardPadding,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _orderSummaryRow(
+                                    localizations.subtotal, _orderSubtotal),
+                                _orderSummaryRow(localizations.tax, _orderTax),
+                                if (_deliveryFee > 0)
+                                  _orderSummaryRow(
+                                      localizations.deliveryFee, _deliveryFee),
+                                if (_promoApplied)
+                                  _orderSummaryRow(localizations.promoDiscount,
+                                      -_promoValue),
+                                const Divider(),
+                                _orderSummaryRow(
+                                    localizations.total, _orderTotal,
+                                    bold: true),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: UiConfig.primaryColor,
+                            foregroundColor: UiConfig.foregroundColorDark,
+                            padding: UiConfig.defaultPadding,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                  shared.DesignTokens.buttonRadius),
+                            ),
+                            elevation: shared.DesignTokens.buttonElevation,
+                          ),
+                          onPressed: _isPaying
+                              ? null
+                              : () => _submitOrder(localizations),
+                          child: _isPaying
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(localizations.placeOrder),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    ListTile(
-                      leading: const Icon(Icons.access_time),
-                      title: Text(
-                        _selectedTime == null
-                            ? localizations.selectTime
-                            : '${localizations.time}: ${_selectedTime!.format(context)}',
-                        style: const TextStyle(
-                            fontSize: DesignTokens.bodyFontSize),
-                      ),
-                      subtitle: Text(
-                        '${localizations.businessHours}: ${_businessOpen.format(context)} - ${_businessClose.format(context)}',
-                        style: const TextStyle(
-                            fontSize: DesignTokens.captionFontSize),
-                      ),
-                      trailing: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: DesignTokens.secondaryColor,
-                          foregroundColor: DesignTokens.foregroundColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                DesignTokens.buttonRadius),
-                          ),
-                        ),
-                        onPressed: () => _selectTime(context, localizations),
-                        child: Text(localizations.pickTime),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _promoController,
-                      decoration: InputDecoration(
-                        labelText: localizations.promoCode,
-                        errorText: _promoError,
-                        suffixIcon: _promoApplied
-                            ? const Icon(Icons.check, color: Colors.green)
-                            : IconButton(
-                                icon: const Icon(Icons.local_offer),
-                                onPressed: () => _applyPromo(localizations),
-                                tooltip: localizations.applyPromo,
-                              ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                              DesignTokens.formFieldRadius),
-                        ),
-                      ),
-                      enabled: !_promoApplied,
-                    ),
-                    if (_promoApplied)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          '${localizations.promoApplied}: -\$${promoDiscount.toStringAsFixed(2)}',
-                          style: const TextStyle(
-                            color: DesignTokens.successTextColor,
-                            fontSize: DesignTokens.captionFontSize,
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 16),
-                    Text(
-                      localizations.paymentMethod,
-                      style: const TextStyle(
-                        fontSize: DesignTokens.bodyFontSize,
-                        fontWeight: DesignTokens.titleFontWeight,
-                        fontFamily: DesignTokens.fontFamily,
-                      ),
-                    ),
-                    ...PaymentMethod.values.map(
-                      (pm) => RadioListTile<PaymentMethod>(
-                        title: Text(_paymentLabel(pm, localizations)),
-                        value: pm,
-                        groupValue: _selectedPayment,
-                        onChanged: (v) => setState(() => _selectedPayment = v),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Card(
-                      elevation: DesignTokens.cardElevation,
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(DesignTokens.cardRadius),
-                      ),
-                      color: DesignTokens.surfaceColor,
-                      child: Padding(
-                        padding: DesignTokens.cardPadding,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _orderSummaryRow(
-                                localizations.subtotal, _orderSubtotal),
-                            _orderSummaryRow(localizations.tax, _orderTax),
-                            if (_deliveryFee > 0)
-                              _orderSummaryRow(
-                                  localizations.deliveryFee, _deliveryFee),
-                            if (_promoApplied)
-                              _orderSummaryRow(
-                                  localizations.promoDiscount, -_promoValue),
-                            const Divider(),
-                            _orderSummaryRow(localizations.total, _orderTotal,
-                                bold: true),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: DesignTokens.primaryColor,
-                        foregroundColor: DesignTokens.foregroundColor,
-                        padding: DesignTokens.buttonPadding,
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(DesignTokens.buttonRadius),
-                        ),
-                        elevation: DesignTokens.buttonElevation,
-                      ),
-                      onPressed:
-                          _isPaying ? null : () => _submitOrder(localizations),
-                      child: _isPaying
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Text(localizations.placeOrder),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             );
           },
         );
@@ -511,30 +552,30 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _emptyCheckout(AppLocalizations localizations) {
     return Scaffold(
-      backgroundColor: DesignTokens.backgroundColor,
+      backgroundColor: UiConfig.backgroundColor,
       appBar: AppBar(
         title: Text(
           localizations.checkout,
-          style: const TextStyle(
-            color: DesignTokens.foregroundColor,
-            fontSize: DesignTokens.titleFontSize,
-            fontWeight: DesignTokens.titleFontWeight,
-            fontFamily: DesignTokens.fontFamily,
+          style: TextStyle(
+            color: UiConfig.foregroundColorDark,
+            fontSize: shared.DesignTokens.titleFontSize,
+            fontWeight: UiConfig.fontWeightBold,
+            fontFamily: shared.DesignTokens.fontFamily,
           ),
         ),
-        backgroundColor: DesignTokens.primaryColor,
+        backgroundColor: UiConfig.primaryColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: DesignTokens.foregroundColor),
+        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
         centerTitle: true,
       ),
       body: Center(
         child: Text(
           localizations.cartEmpty,
-          style: const TextStyle(
-            fontSize: DesignTokens.bodyFontSize,
-            color: DesignTokens.textColor,
+          style: TextStyle(
+            fontSize: shared.DesignTokens.bodyFontSize,
+            color: UiConfig.textColor,
             fontWeight: FontWeight.bold,
-            fontFamily: DesignTokens.fontFamily,
+            fontFamily: shared.DesignTokens.fontFamily,
           ),
         ),
       ),
@@ -551,8 +592,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               label,
               style: TextStyle(
                 fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-                fontFamily: DesignTokens.fontFamily,
-                fontSize: DesignTokens.bodyFontSize,
+                fontFamily: shared.DesignTokens.fontFamily,
+                fontSize: shared.DesignTokens.bodyFontSize,
               ),
             ),
           ),
@@ -560,8 +601,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             '${value < 0 ? '-' : ''}\$${value.abs().toStringAsFixed(2)}',
             style: TextStyle(
               fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-              color: bold ? DesignTokens.primaryColor : DesignTokens.textColor,
-              fontSize: DesignTokens.bodyFontSize,
+              color: bold ? UiConfig.primaryColor : UiConfig.textColor,
+              fontSize: shared.DesignTokens.bodyFontSize,
             ),
           ),
         ],
@@ -584,5 +625,3 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 }
-
-

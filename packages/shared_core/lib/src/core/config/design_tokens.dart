@@ -14,7 +14,7 @@ class DesignTokens {
   static const double adminTableFontSize = 15.0;
   static const double appBarTitleFontSize = 20.0;
 
-  // ----------- Font Weights (as strings for Firestore/theme mapping) -----------
+  // ----------- Font Weights -----------
   static const String titleFontWeight = 'bold';
   static const String bodyFontWeight = 'normal';
   static const String appBarTitleFontWeight = 'bold';
@@ -56,19 +56,22 @@ class DesignTokens {
   static const double logoHeightLarge = 80.0;
   static const double appBarLogoHeight = 40.0;
 
-  // ----------- Spacing & Padding Values -----------
+  // ----------- Spacing & Padding -----------
   static const double gridSpacing = 8.0;
   static const double adminGridPadding = 16.0;
   static const double adminCardSpacing = 8.0;
   static const double adminSpacing = 16.0;
   static const double paddingMd = 16.0;
   static const double paddingLg = 24.0;
+  static const double cardPadding = 16.0;
+  static const double buttonPadding = 16.0;
+  static const double gridPadding = 16.0;
 
   // ----------- Borders -----------
   static const double cardBorderWidth = 2.0;
   static const double categoryCardBorderWidth = 2.0;
 
-  // ----------- Elevation (as double) -----------
+  // ----------- Elevation -----------
   static const double cardElevation = 4.0;
   static const double buttonElevation = 2.0;
   static const double adminCardElevation = 2.0;
@@ -80,10 +83,12 @@ class DesignTokens {
   static const int toastDurationSeconds = 2;
   static const int animationDurationMs = 300;
   static const int bannerAutoPlayIntervalSeconds = 5;
+  static const double animationDuration = 300.0;
 
   // ----------- Overlay Opacity -----------
   static const int bannerOverlayAlpha = 128;
   static const int gridCardOverlayAlpha = 80;
+  static const double bannerOverlayAlphaDouble = 0.5;
 
   // ----------- Icon Names (as strings) -----------
   static const String favoriteIcon = 'favorite';
@@ -99,8 +104,84 @@ class DesignTokens {
   static const String emailIcon = 'email';
   static const String lockIcon = 'lock';
 
-  // ----------- Admin-Specific (Shared) -----------
-  static const String appBarFontFamily = 'YourFontFamily';
+  // ----------- Colors (Hex strings for shared use) -----------
+  static const String accentColorHex = '#E31837';
+  static const String backgroundColorDarkHex = '#121212';
+  static const String textColorDarkHex = '#FFFFFF';
+  static const String successTextColorHex = '#4CAF50';
+  static const String disabledTextColorHex = '#9E9E9E';
+  static const String errorBgColorHex = '#FFEBEE';
+  static const String surfaceColorDarkHex = '#1E1E1E';
+  static const String facebookColorHex = '#1877F2';
+  static const String adminPrimaryColorHex = '#E31837';
+  static const String primaryColorHex = '#E31837';
+  static const String secondaryColorHex = '#FFD700';
+  static const String textColorHex = '#FFFFFF';
+  static const String foregroundColorHex = '#FFFFFF';
+  static const String hintTextColorHex = '#9E9E9E';
+  static const String surfaceColorHex = '#1E1E1E';
+  static const String successColorHex = '#4CAF50';
+  static const String errorColorHex = '#F44336';
+  static const String shimmerBaseColorHex = '#E0E0E0';
+  static const String shimmerHighlightColorHex = '#F5F5F5';
+
+  // ----------- Direct Getters for All Screens -----------
+  static String get accentColor => accentColorHex;
+  static String get backgroundColorDark => backgroundColorDarkHex;
+  static String get textColorDark => textColorDarkHex;
+  static String get successTextColor => successTextColorHex;
+  static String get disabledTextColor => disabledTextColorHex;
+  static String get errorBgColor => errorBgColorHex;
+  static String get surfaceColorDark => surfaceColorDarkHex;
+  static String get facebookColor => facebookColorHex;
+  static String get adminPrimaryColor => adminPrimaryColorHex;
+  static String get primaryColor => primaryColorHex;
+  static String get secondaryColor => secondaryColorHex;
+  static String get textColor => textColorHex;
+  static String get foregroundColor => foregroundColorHex;
+  static String get hintTextColor => hintTextColorHex;
+  static String get surfaceColor => surfaceColorHex;
+  static String get successColor => successColorHex;
+  static String get errorColor => errorColorHex;
+  static String get shimmerBaseColor => shimmerBaseColorHex;
+  static String get shimmerHighlightColor => shimmerHighlightColorHex;
+
+  // ----------- Missing Getters from Full Analyze (All Screens) -----------
+  static const String backgroundColorHex = '#121212';
+  static const String foregroundColorDarkHex = '#FFFFFF';
+  static const String secondaryTextColorHex = '#9E9E9E';
+  static const String errorTextColorHex = '#F44336';
+  static const String warningColorHex = '#FF9800';
+
+  static String get backgroundColor => backgroundColorHex;
+  static String get foregroundColorDark => foregroundColorDarkHex;
+  static String get secondaryTextColor => secondaryTextColorHex;
+  static String get errorTextColor => errorTextColorHex;
+  static String get warningColor => warningColorHex;
+  static int get toastDuration => 2; // int for most usage
+
+  // Missing tokens referenced in analyze
+  static const String bannerOverlayColorHex = '#000000';
+  static const String cardBorderColorHex = '#E0E0E0';
+  static const String fallbackAppIcon = 'assets/images/logo_small.png';
+
+  // Getters
+  static String get bannerOverlayColor => bannerOverlayColorHex;
+  static String get cardBorderColor => cardBorderColorHex;
+
+  static int get bannerAutoPlayInterval => bannerAutoPlayIntervalSeconds;
+  static double get bannerAutoPlayIntervalSecondsDouble =>
+      bannerAutoPlayIntervalSeconds.toDouble();
+
+  // FontWeight string helpers (many screens expect String)
+  static String get bold => 'bold';
+  static String get normal => 'normal';
+  static String get medium => 'medium';
+  static String get w600 => '600';
+
+  // Additional tokens needed for remaining errors
+  static const double defaultPadding = 16.0;
+  static const double buttonHeight = 56.0;
 
   // ======================
   // === FUTURE TOKENS ====

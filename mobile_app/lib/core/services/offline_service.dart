@@ -1,4 +1,4 @@
-﻿// lib/core/services/offline_service.dart
+// lib/core/services/offline_service.dart
 
 // ignore_for_file: unused_import
 
@@ -7,14 +7,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
 import 'dart:io';
 import 'dart:convert';
-import 'package:shared_core/src/core/models/customization.dart';
-import 'package:shared_core/src/core/models/menu_item.dart';
 import 'package:flutter/material.dart' as material hide Banner, BannerLocation;
-import 'package:shared_core/src/core/models/order.dart' as order_model;
-import 'package:shared_core/src/core/models/feedback_entry.dart'
-    as feedback_model;
-import 'package:shared_core/src/core/models/chat.dart';
-import 'package:shared_core/src/core/models/nutrition_info.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
 class OfflineService {
   Database? _database;
@@ -90,7 +84,7 @@ class OfflineService {
 
   // --- MENU ITEMS ---
 
-  Future<void> cacheMenuItems(List<MenuItem> items) async {
+  Future<void> cacheMenuItems(List<shared.MenuItem> items) async {
     final db = await database;
     await db.delete('menu_items');
     for (var item in items) {
@@ -119,11 +113,11 @@ class OfflineService {
     }
   }
 
-  Future<List<MenuItem>> getCachedMenuItems() async {
+  Future<List<shared.MenuItem>> getCachedMenuItems() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('menu_items');
     return maps.map((map) {
-      return MenuItem(
+      return shared.MenuItem(
         id: map['id'] ?? '',
         available: map['availability'] == 1,
         availability: map['availability'] == 1,
@@ -143,7 +137,7 @@ class OfflineService {
             : <String>[],
         prepTime: map['prepTime'],
         nutrition: map['nutrition'] != null
-            ? NutritionInfo.fromFirestore(jsonDecode(map['nutrition']))
+            ? shared.NutritionInfo.fromFirestore(jsonDecode(map['nutrition']))
             : null,
         includedIngredients: map['includedIngredients'] != null &&
                 map['includedIngredients'] != ''
@@ -160,20 +154,20 @@ class OfflineService {
             ? List<Map<String, dynamic>>.from(jsonDecode(map['optionalAddOns']))
             : null,
         // ---- FIXED: Pass customizations as required ----
-        customizations: (map['customizations'] != null &&
-                map['customizations'] != '')
-            ? (jsonDecode(map['customizations']) as List)
-                .map((e) =>
-                    Customization.fromFirestore(Map<String, dynamic>.from(e)))
-                .toList()
-            : [],
+        customizations:
+            (map['customizations'] != null && map['customizations'] != '')
+                ? (jsonDecode(map['customizations']) as List)
+                    .map((e) => shared.Customization.fromFirestore(
+                        Map<String, dynamic>.from(e)))
+                    .toList()
+                : [],
       );
     }).toList();
   }
 
   // --- CART ---
 
-  Future<void> cacheCart(order_model.Order order) async {
+  Future<void> cacheCart(shared.Order order) async {
     final db = await database;
     await db.insert(
       'cart',
@@ -187,7 +181,7 @@ class OfflineService {
     );
   }
 
-  Future<order_model.Order?> getCachedCart(String userId) async {
+  Future<shared.Order?> getCachedCart(String userId) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'cart',
@@ -196,7 +190,7 @@ class OfflineService {
     );
     if (maps.isEmpty) return null;
     // Note: Deserialization of items needs to match your order item model!
-    return order_model.Order(
+    return shared.Order(
       id: maps[0]['id'] ?? '',
       userId: maps[0]['userId'] ?? '',
       storeId: maps[0]['storeId'] ?? 'default',
@@ -217,7 +211,7 @@ class OfflineService {
 
   // --- FEEDBACK (queue for offline submission) ---
 
-  Future<void> cacheFeedback(feedback_model.FeedbackEntry feedback) async {
+  Future<void> cacheFeedback(shared.FeedbackEntry feedback) async {
     final db = await database;
     await db.insert(
       'feedback',
@@ -235,11 +229,11 @@ class OfflineService {
     );
   }
 
-  Future<List<feedback_model.FeedbackEntry>> getCachedFeedback() async {
+  Future<List<shared.FeedbackEntry>> getCachedFeedback() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('feedback');
     return maps.map((map) {
-      return feedback_model.FeedbackEntry(
+      return shared.FeedbackEntry(
         id: map['id'],
         rating: map['rating'],
         comment: map['comment'],
@@ -255,7 +249,7 @@ class OfflineService {
   }
 
   // --- Queue Feedback for Sync ---
-  Future<void> queueFeedback(feedback_model.FeedbackEntry feedback) async {
+  Future<void> queueFeedback(shared.FeedbackEntry feedback) async {
     await cacheFeedback(feedback);
   }
 
@@ -271,7 +265,7 @@ class OfflineService {
 
   // --- CHATS ---
 
-  Future<void> cacheChat(Chat chat) async {
+  Future<void> cacheChat(shared.Chat chat) async {
     final db = await database;
     await db.insert(
       'chats',
@@ -287,7 +281,7 @@ class OfflineService {
     );
   }
 
-  Future<List<Chat>> getCachedChats(String userId) async {
+  Future<List<shared.Chat>> getCachedChats(String userId) async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'chats',
@@ -295,7 +289,7 @@ class OfflineService {
       whereArgs: [userId],
     );
     return maps.map((map) {
-      return Chat(
+      return shared.Chat(
         id: map['id'],
         userId: map['userId'],
         lastMessage: map['lastMessage'] ?? '',

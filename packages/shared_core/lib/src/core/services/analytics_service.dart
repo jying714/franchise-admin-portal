@@ -59,6 +59,12 @@ abstract class AnalyticsService {
   Future<void> logUnauthorizedAccess(
       {required String attemptedAction, required String userId});
 
+  Future<void> logCategoryTap({
+    required String franchiseId,
+    required String categoryId,
+    required String categoryName,
+  });
+
   // === EXPORT/IMPORT ===
   Future<void> logExportAction(
       {required String type, int? count, String? userId});
@@ -67,4 +73,11 @@ abstract class AnalyticsService {
 
   /// Triggers manual analytics rollup via Cloud Function
   Future<void> runManualRollup(String franchiseId);
+
+  /// Logs when a user views a category (used in CategoryScreen)
+  Future<void> logCategoryViewed(String categoryName);
+
+  /// Logs when a user adds an item to cart
+  Future<void> logMenuItemAddedToCart(
+      String menuItemId, String categoryName, int quantity);
 }

@@ -5,16 +5,20 @@ import 'package:shared_core/src/core/models/franchise_info.dart';
 import 'package:shared_core/src/core/utils/local_storage.dart';
 
 /// Pure business logic for franchise selection and user context
-/// NO Flutter, NO ChangeNotifier, NO VoidCallback
 class FranchiseProvider {
-  Function()?
-      onFranchiseChanged; // <-- Fixed: Function() instead of VoidCallback
+  Function()? onFranchiseChanged;
+
   String _franchiseId = 'unknown';
   bool _loading = true;
   admin_user.User? _adminUser;
   final LocalStorage _storage;
 
-  String get franchiseId => _franchiseId.isEmpty ? 'unknown' : _franchiseId;
+  // Main getters
+  String get currentFranchiseId =>
+      _franchiseId.isEmpty ? 'unknown' : _franchiseId;
+  String get franchiseId =>
+      currentFranchiseId; // alias for backward compatibility
+
   bool get loading => _loading;
   bool get isFranchiseSelected =>
       _franchiseId != 'unknown' && _franchiseId.isNotEmpty;
@@ -36,14 +40,15 @@ class FranchiseProvider {
     final id = await _storage.getString('selectedFranchiseId');
     _franchiseId = (id != null && id.isNotEmpty) ? id : 'unknown';
     _loading = false;
+    if (onFranchiseChanged != null) onFranchiseChanged!();
   }
 
   Future<void> setFranchiseId(String id) async {
     if (id.isEmpty || _franchiseId == id) return;
 
     _franchiseId = id;
-    if (onFranchiseChanged != null) onFranchiseChanged!();
     await _storage.setString('selectedFranchiseId', id);
+    if (onFranchiseChanged != null) onFranchiseChanged!();
   }
 
   Future<void> setInitialFranchiseId(String id) async {
@@ -54,18 +59,7 @@ class FranchiseProvider {
     if (existing != id) {
       await _storage.setString('selectedFranchiseId', id);
     }
-  }
-
-  Future<void> clear() async {
-    _franchiseId = 'unknown';
-    _adminUser = null;
-    await _storage.remove('selectedFranchiseId');
-  }
-
-  List<FranchiseInfo> _allFranchises = [];
-  List<FranchiseInfo> get allFranchises => List.unmodifiable(_allFranchises);
-  void setAllFranchises(List<FranchiseInfo> franchises) {
-    _allFranchises = franchises;
+    if (onFranchiseChanged != null) onFranchiseChanged!();
   }
 
   Future<void> initializeWithUser(admin_user.User user) async {
@@ -83,11 +77,29 @@ class FranchiseProvider {
         user.defaultFranchise!.isNotEmpty) {
       _franchiseId = user.defaultFranchise!;
       await _storage.setString('selectedFranchiseId', _franchiseId);
+    } else if (user.franchiseIds.isNotEmpty) {
+      _franchiseId = user.franchiseIds.first; // fallback to first available
+      await _storage.setString('selectedFranchiseId', _franchiseId);
     } else {
       _franchiseId = 'unknown';
     }
 
     _loading = false;
+    if (onFranchiseChanged != null) onFranchiseChanged!();
+  }
+
+  Future<void> clear() async {
+    _franchiseId = 'unknown';
+    _adminUser = null;
+    await _storage.remove('selectedFranchiseId');
+    if (onFranchiseChanged != null) onFranchiseChanged!();
+  }
+
+  List<FranchiseInfo> _allFranchises = [];
+  List<FranchiseInfo> get allFranchises => List.unmodifiable(_allFranchises);
+
+  void setAllFranchises(List<FranchiseInfo> franchises) {
+    _allFranchises = franchises;
   }
 
   List<FranchiseInfo> get viewableFranchises {
@@ -102,7 +114,7 @@ class FranchiseProvider {
   }
 
   void clearFranchiseContext() {
-    _franchiseId = '';
+    _franchiseId = 'unknown';
     _allFranchises = [];
     _adminUser = null;
   }
