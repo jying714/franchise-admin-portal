@@ -7,6 +7,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// Reusable loyalty points summary widget for Profile and other screens.
 /// Franchise-scoped via FranchiseProvider. Taps through to full LoyaltyScreen.
+/// P2: Colors (primary) now fully dynamic via UiConfig (driven by FranchiseProvider branding).
 /// Uses only public shared_core barrel.
 class LoyaltyPointsWidget extends StatefulWidget {
   const LoyaltyPointsWidget({super.key});

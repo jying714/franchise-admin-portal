@@ -75,6 +75,8 @@ class MyApp extends StatelessWidget {
         Provider<shared.FranchiseProvider>(
           create: (_) => shared.FranchiseProvider(AppLocalStorage()),
         ),
+        // P2: FranchiseProvider is now the single source for dynamic branding/theme.
+        // UiConfig and ThemeData react to it (via version + live getters).
 
         Provider<shared.AnalyticsService>(
             create: (_) => shared.AnalyticsServiceImpl()),
@@ -109,41 +111,53 @@ class MyApp extends StatelessWidget {
             );
           }
 
+          // P2 white-label: wire live FranchiseProvider so all UiConfig.* (colors, appName)
+          // and downstream ThemeData become dynamic immediately.
+          final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
+          UiConfig.setFranchiseProvider(fp);
+
           return Provider<Map<String, shared.IngredientMetadata>>.value(
             value: ingredientProvider.ingredients,
             child: Consumer<LanguageProvider>(
               builder: (context, languageProvider, child) {
-                return MaterialApp(
-                  title: 'Doughboys Pizzeria',
-                  theme: ThemeData(
-                    primaryColor: UiConfig.primaryColor,
-                    scaffoldBackgroundColor: UiConfig.backgroundColorDark,
-                    colorScheme: ColorScheme.fromSwatch().copyWith(
-                      secondary: UiConfig.secondaryColor,
-                    ),
-                    textTheme: TextTheme(
-                      titleLarge: TextStyle(
-                        fontFamily: DesignTokens.fontFamily,
-                        fontSize: DesignTokens.titleFontSize,
-                        fontWeight: UiConfig.fontWeightBold,
+                // P2: Theme + title are now fully dynamic from FranchiseProvider branding.
+                // Selector on configVersion ensures only theme shell rebuilds on franchise switch.
+                return Selector<shared.FranchiseProvider, int>(
+                  selector: (ctx, p) => p.currentConfigVersion,
+                  builder: (context, version, _) {
+                    return MaterialApp(
+                      title: UiConfig.dynamicAppName,
+                      theme: ThemeData(
+                        primaryColor: UiConfig.primaryColor,
+                        scaffoldBackgroundColor: UiConfig.backgroundColorDark,
+                        colorScheme: ColorScheme.fromSwatch().copyWith(
+                          secondary: UiConfig.secondaryColor,
+                        ),
+                        textTheme: TextTheme(
+                          titleLarge: TextStyle(
+                            fontFamily: DesignTokens.fontFamily,
+                            fontSize: DesignTokens.titleFontSize,
+                            fontWeight: UiConfig.fontWeightBold,
+                          ),
+                          bodyLarge: TextStyle(
+                            fontFamily: DesignTokens.fontFamily,
+                            fontSize: DesignTokens.bodyFontSize,
+                            fontWeight: UiConfig.fontWeightNormal,
+                          ),
+                        ),
                       ),
-                      bodyLarge: TextStyle(
-                        fontFamily: DesignTokens.fontFamily,
-                        fontSize: DesignTokens.bodyFontSize,
-                        fontWeight: UiConfig.fontWeightNormal,
-                      ),
-                    ),
-                  ),
-                  locale: languageProvider.locale,
-                  supportedLocales: AppLocalizations.supportedLocales,
-                  localizationsDelegates: const [
-                    AppLocalizations.delegate,
-                    GlobalMaterialLocalizations.delegate,
-                    GlobalWidgetsLocalizations.delegate,
-                    GlobalCupertinoLocalizations.delegate,
-                  ],
-                  home: const HomeWrapper(),
-                  debugShowCheckedModeBanner: false,
+                      locale: languageProvider.locale,
+                      supportedLocales: AppLocalizations.supportedLocales,
+                      localizationsDelegates: const [
+                        AppLocalizations.delegate,
+                        GlobalMaterialLocalizations.delegate,
+                        GlobalWidgetsLocalizations.delegate,
+                        GlobalCupertinoLocalizations.delegate,
+                      ],
+                      home: const HomeWrapper(),
+                      debugShowCheckedModeBanner: false,
+                    );
+                  },
                 );
               },
             ),
@@ -180,7 +194,28 @@ class _HomeWrapperState extends State<HomeWrapper> {
       _isInitializing = false; // prevent multiple calls
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await franchiseProvider.initializeWithUser(sharedUser);
-        if (mounted) setState(() {}); // force rebuild
+
+        // P2 foundations: fetch full franchise doc and push branding into provider.
+        // This makes UiConfig colors + appName + ThemeData live for this franchise.
+        try {
+          final doc = await FirebaseFirestore.instance
+              .collection('franchises')
+              .doc(franchiseProvider.currentFranchiseId)
+              .get();
+          if (doc.exists && doc.data() != null) {
+            franchiseProvider.setBrandingFromFranchiseDoc(doc.data()!);
+          } else {
+            franchiseProvider.setBrandingFromFranchiseDoc({
+              'name': 'Doughboys Pizzeria',
+              'primaryColorHex': '#E31837',
+              'secondaryColorHex': '#FFD700',
+            });
+          }
+        } catch (_) {
+          // Silent fallback to DesignTokens/UiConfig statics
+        }
+
+        if (mounted) setState(() {}); // force rebuild (version bump also triggers Selector)
       });
     }
 

@@ -3,8 +3,23 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:intl/intl.dart';
 
 /// UI-specific branding for mobile app
-/// Bridges shared shared.DesignTokens.+ shared.BrandingConfig.into Flutter types
+/// Bridges shared shared.DesignTokens + shared.BrandingConfig into Flutter types.
+/// P2: Fully dynamic when FranchiseProvider.setFranchiseProvider(...) is called early.
+/// Brand accent colors now come from current franchise doc (fallbacks preserved).
 class UiConfig {
+  static shared.FranchiseProvider? _fp;
+
+  /// Wire the live FranchiseProvider (single source for branding) once at bootstrap.
+  /// After this, UiConfig.primaryColor / secondaryColor etc. are per-franchise.
+  static void setFranchiseProvider(shared.FranchiseProvider provider) {
+    _fp = provider;
+  }
+
+  static shared.FranchiseProvider? get franchiseProvider => _fp;
+
+  /// Current franchise app name (for dynamic titles, etc.).
+  static String get dynamicAppName => _fp?.currentAppName ?? 'Franchise App';
+
   // Assets from BrandingConfig
   static const String logoMain = shared.BrandingConfig.logoMain;
   static const String defaultPizzaIcon = shared.BrandingConfig.defaultPizzaIcon;
@@ -35,12 +50,20 @@ class UiConfig {
       _hexToColor(shared.DesignTokens.surfaceColorDarkHex);
   static Color get facebookColor =>
       _hexToColor(shared.DesignTokens.facebookColorHex);
-  static Color get adminPrimaryColor =>
-      _hexToColor(shared.DesignTokens.adminPrimaryColorHex);
-  static Color get primaryColor =>
-      _hexToColor(shared.DesignTokens.primaryColorHex);
-  static Color get secondaryColor =>
-      _hexToColor(shared.DesignTokens.secondaryColorHex);
+  static Color get adminPrimaryColor {
+    // For white-label foundations, adminPrimary aliases the live primary (or static fallback)
+    final hex = _fp?.currentPrimaryColorHex ?? shared.DesignTokens.adminPrimaryColorHex;
+    return _hexToColor(hex);
+  }
+  static Color get primaryColor {
+    final hex = _fp?.currentPrimaryColorHex ?? shared.DesignTokens.primaryColorHex;
+    return _hexToColor(hex);
+  }
+
+  static Color get secondaryColor {
+    final hex = _fp?.currentSecondaryColorHex ?? shared.DesignTokens.secondaryColorHex;
+    return _hexToColor(hex);
+  }
   static Color get textColor => _hexToColor(shared.DesignTokens.textColorHex);
   static Color get foregroundColor =>
       _hexToColor(shared.DesignTokens.foregroundColorHex);
@@ -64,8 +87,11 @@ class UiConfig {
   static IconData get visibilityIcon => Icons.visibility;
   static IconData get visibilityOffIcon => Icons.visibility_off;
 
-  // Dynamic
+  // Dynamic (P2 white-label aware)
   static Color brandColorFor(String brandId) {
+    if (_fp != null && brandId == _fp!.currentFranchiseId) {
+      return primaryColor;
+    }
     final hex = shared.BrandingConfig.brandColorHexFor(brandId);
     return _hexToColor(hex);
   }

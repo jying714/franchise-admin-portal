@@ -19,6 +19,7 @@ import 'package:franchise_mobile_app/features/user_accounts/complete_profile_dia
 import 'package:franchise_mobile_app/core/models/user.dart' as user_model;
 import 'package:franchise_mobile_app/features/loyalty/loyalty_screen.dart';
 import 'package:franchise_mobile_app/widgets/loyalty_points_widget.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // P2 theme test reload only
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -235,6 +236,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         // Loyalty points display (foundational, franchise-aware)
                         const LoyaltyPointsWidget(),
 
+                        // P2 dev-only: simple live theme switcher for white-label testing.
+                        // Toggles UiConfig + app-wide ThemeData via FranchiseProvider branding.
+                        // In real use this would come from FranchiseSelector + full reload.
+                        _buildThemeTestSection(context, franchiseProvider, firestoreService),
+
                         ProfileNavTile(
                           label: l10n.deliveryAddresses,
                           destination: const DeliveryAddressesScreen(),
@@ -291,6 +297,95 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         );
       },
+    );
+  }
+
+  // P2 test helper - simple theme switcher (dev foundations only).
+  // Demonstrates live color/appName propagation without full app restart.
+  Widget _buildThemeTestSection(
+    BuildContext context,
+    shared.FranchiseProvider fp,
+    shared.FirestoreService fs,
+  ) {
+    // l10n available for future localization of test labels
+    return Card(
+      color: UiConfig.surfaceColor,
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      child: Padding(
+        padding: UiConfig.cardPadding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '🧪 Theme Test (P2 Dev)',
+              style: UiConfig.bodyBoldStyle.copyWith(color: UiConfig.primaryColor),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Tap to live-switch branding. Affects this screen + global ThemeData.',
+              style: UiConfig.captionStyle,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE31837), // doughboys red
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () async {
+                    fp.setBrandingFromFranchiseDoc({
+                      'name': 'Doughboys Pizzeria',
+                      'appName': 'Doughboys Pizzeria',
+                      'primaryColorHex': '#E31837',
+                      'secondaryColorHex': '#FFD700',
+                      'logoUrl': null,
+                    });
+                    // Optional: also change the logical franchise id for full flow
+                    await fp.setFranchiseId('doughboys_pizzeria');
+                    if (mounted) setState(() {});
+                  },
+                  child: const Text('Doughboys (Red/Gold)'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2E7D32), // green test
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () async {
+                    fp.setBrandingFromFranchiseDoc({
+                      'name': 'Test Green Bistro',
+                      'appName': 'Green Bistro',
+                      'primaryColorHex': '#2E7D32',
+                      'secondaryColorHex': '#81C784',
+                    });
+                    await fp.setFranchiseId('test_green');
+                    if (mounted) setState(() {});
+                  },
+                  child: const Text('Test Green'),
+                ),
+                OutlinedButton(
+                  onPressed: () async {
+                    // Re-load real data for current id (if exists in Firestore)
+                    try {
+                      final doc = await FirebaseFirestore.instance
+                          .collection('franchises')
+                          .doc(fp.currentFranchiseId)
+                          .get();
+                      if (doc.exists) {
+                        fp.setBrandingFromFranchiseDoc(doc.data()!);
+                      }
+                    } catch (_) {}
+                    if (mounted) setState(() {});
+                  },
+                  child: const Text('Reload Current'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

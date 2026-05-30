@@ -4,6 +4,7 @@ import 'package:franchise_mobile_app/config/ui_config.dart';
 
 /// A reusable navigation tile for profile/account menus.
 /// Handles optional icons and highlight states.
+/// P2: All colors (primary/adminPrimary/text) now respect live FranchiseProvider via UiConfig.
 class ProfileNavTile extends StatelessWidget {
   final String label;
   final Widget destination;
