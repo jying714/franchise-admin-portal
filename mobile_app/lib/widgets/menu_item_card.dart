@@ -22,7 +22,8 @@ class MenuItemCard extends StatefulWidget {
   final bool showDescription;
   final bool expanded;
   final EdgeInsets? margin;
-  final bool? isFavorited;  // Optional: parent (e.g. CategoryScreen) can provide via its own favorites stream for reactivity
+  final bool?
+      isFavorited; // Optional: parent (e.g. CategoryScreen) can provide via its own favorites stream for reactivity
 
   const MenuItemCard({
     super.key,
@@ -72,10 +73,12 @@ class _MenuItemCardState extends State<MenuItemCard> {
 
               if (isFavorited) {
                 await firestoreService.removeFavoriteMenuItemForUser(
-                    _userId!, widget.menuItem.id, franchiseId: franchiseId);
+                    _userId!, widget.menuItem.id,
+                    franchiseId: franchiseId);
               } else {
                 await firestoreService.addFavoriteMenuItemForUser(
-                    _userId!, widget.menuItem.id, franchiseId: franchiseId);
+                    _userId!, widget.menuItem.id,
+                    franchiseId: franchiseId);
               }
               setState(() {});
             }
@@ -205,11 +208,12 @@ class _MenuItemCardState extends State<MenuItemCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // NAME
+                  // NAME - HIGH CONTRAST FIX (guaranteed visible on light card background)
                   Text(
                     widget.menuItem.name,
                     style: UiConfig.titleStyle.copyWith(
-                      color: UiConfig.textColor,
+                      color: Colors.black, // Explicit high-contrast black
+                      fontWeight: FontWeight.w600,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -346,9 +350,14 @@ class _MenuItemCardState extends State<MenuItemCard> {
                       _userId == null
                           ? _favoriteHeart(false, false, loc)
                           : StreamBuilder<List<shared.MenuItem>>(
-                              stream: firestoreService.getFavoriteMenuItemsForUser(
+                              stream:
+                                  firestoreService.getFavoriteMenuItemsForUser(
                                 _userId!,
-                                franchiseId: Provider.of<shared.FranchiseProvider>(context, listen: false).currentFranchiseId,
+                                franchiseId:
+                                    Provider.of<shared.FranchiseProvider>(
+                                            context,
+                                            listen: false)
+                                        .currentFranchiseId,
                               ),
                               builder: (context, snapshot) {
                                 if (snapshot.connectionState ==

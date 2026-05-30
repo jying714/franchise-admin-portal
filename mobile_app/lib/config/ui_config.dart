@@ -52,18 +52,23 @@ class UiConfig {
       _hexToColor(shared.DesignTokens.facebookColorHex);
   static Color get adminPrimaryColor {
     // For white-label foundations, adminPrimary aliases the live primary (or static fallback)
-    final hex = _fp?.currentPrimaryColorHex ?? shared.DesignTokens.adminPrimaryColorHex;
+    final hex =
+        _fp?.currentPrimaryColorHex ?? shared.DesignTokens.adminPrimaryColorHex;
     return _hexToColor(hex);
   }
+
   static Color get primaryColor {
-    final hex = _fp?.currentPrimaryColorHex ?? shared.DesignTokens.primaryColorHex;
+    final hex =
+        _fp?.currentPrimaryColorHex ?? shared.DesignTokens.primaryColorHex;
     return _hexToColor(hex);
   }
 
   static Color get secondaryColor {
-    final hex = _fp?.currentSecondaryColorHex ?? shared.DesignTokens.secondaryColorHex;
+    final hex =
+        _fp?.currentSecondaryColorHex ?? shared.DesignTokens.secondaryColorHex;
     return _hexToColor(hex);
   }
+
   static Color get textColor => _hexToColor(shared.DesignTokens.textColorHex);
   static Color get foregroundColor =>
       _hexToColor(shared.DesignTokens.foregroundColorHex);

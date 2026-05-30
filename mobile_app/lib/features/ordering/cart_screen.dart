@@ -603,7 +603,9 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
         Padding(
-          padding: UiConfig.defaultPadding,
+          padding: UiConfig.defaultPadding.copyWith(
+            bottom: UiConfig.defaultPadding.bottom + 32, // extra padding for S25 system navigation bar
+          ),
           child: Column(
             children: [
               Text(

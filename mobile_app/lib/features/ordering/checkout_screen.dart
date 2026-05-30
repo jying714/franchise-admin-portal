@@ -139,8 +139,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(localizations.pleaseSelectTime),
-          backgroundColor: UiConfig.errorColor,
+          content: Text(
+            localizations.pleaseSelectTime,
+            style: TextStyle(color: UiConfig.textColor),
+          ),
+          backgroundColor: UiConfig.surfaceColor,
+          duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -150,8 +155,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(localizations.signInToOrder),
-          backgroundColor: UiConfig.errorColor,
+          content: Text(
+            localizations.signInToOrder,
+            style: TextStyle(color: UiConfig.textColor),
+          ),
+          backgroundColor: UiConfig.surfaceColor,
+          duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -170,8 +180,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(localizations.cartEmpty),
-          backgroundColor: UiConfig.errorColor,
+          content: Text(
+            localizations.cartEmpty,
+            style: TextStyle(color: UiConfig.textColor),
+          ),
+          backgroundColor: UiConfig.surfaceColor,
+          duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -333,9 +348,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     iconTheme: const IconThemeData(color: Colors.white),
                     centerTitle: true,
                   ),
-                  body: SingleChildScrollView(
-                    padding: UiConfig.cardPadding,
-                    child: Column(
+                  body: SafeArea(
+                    bottom: true,
+                    child: SingleChildScrollView(
+                      padding: UiConfig.cardPadding,
+                      child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         if (showAllergenWarning)
@@ -513,8 +530,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
+                        Padding(
+                          padding: EdgeInsets.only(
+                            bottom: MediaQuery.of(context).padding.bottom + 16,
+                          ),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
                             backgroundColor: UiConfig.primaryColor,
                             foregroundColor: UiConfig.foregroundColorDark,
                             padding: UiConfig.defaultPadding,
@@ -537,10 +558,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   ),
                                 )
                               : Text(localizations.placeOrder),
+                          ),
                         ),
                       ],
                     ),
                   ),
+                  ), // SafeArea close
                 );
               },
             );
