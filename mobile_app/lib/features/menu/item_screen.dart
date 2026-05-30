@@ -15,10 +15,6 @@ import 'package:franchise_mobile_app/widgets/add_to_cart_button.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/widgets/header/profile_icon_button.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:shared_core/src/core/config/branding_config.dart';
-import 'package:shared_core/src/core/config/design_tokens.dart';
-import 'package:shared_core/src/core/models/menu_item.dart';
-import 'package:shared_core/src/core/config/app_config.dart';
 
 class ItemScreen extends StatefulWidget {
   final String itemId;
@@ -142,21 +138,21 @@ class _ItemScreenState extends State<ItemScreen> {
       appBar: FranchiseAppBar(
         title: widget.menuItem.name,
         centerTitle: true,
-        showLogo: BrandingConfig.showLogoInAppBar,
-        logoAsset: BrandingConfig.appBarLogoAsset,
+        showLogo: shared.BrandingConfig.showLogoInAppBar,
+        logoAsset: shared.BrandingConfig.appBarLogoAsset,
         logoHeight: 40,
         actions: [
           ProfileIconButton(
             tooltip: loc.profile,
             iconColor: UiConfig.foregroundColorDark,
-            iconSize: DesignTokens.iconSize,
+            iconSize: shared.DesignTokens.iconSize,
             onPressed: () {
               Navigator.pushNamed(context, '/profile');
             },
           ),
           IconButton(
             icon: Icon(Icons.shopping_cart,
-                size: DesignTokens.iconSize,
+                size: shared.DesignTokens.iconSize,
                 color: UiConfig.foregroundColorDark),
             onPressed: () => Navigator.push(
               context,
@@ -186,43 +182,43 @@ class _ItemScreenState extends State<ItemScreen> {
                 Center(
                   child: MenuItemImage(
                     imageUrl: widget.menuItem.image,
-                    width: DesignTokens.menuItemImageWidth,
-                    height: DesignTokens.menuItemImageHeight,
+                    width: shared.DesignTokens.menuItemImageWidth,
+                    height: shared.DesignTokens.menuItemImageHeight,
                   ),
                 ),
-                const SizedBox(height: DesignTokens.gridSpacing),
+                const SizedBox(height: shared.DesignTokens.gridSpacing),
 
                 // ITEM NAME + PRICE
                 Text(
                   widget.menuItem.name,
                   style: TextStyle(
-                    fontSize: DesignTokens.titleFontSize,
+                    fontSize: shared.DesignTokens.titleFontSize,
                     fontWeight: UiConfig.fontWeightBold,
                     color: UiConfig.textColor,
-                    fontFamily: DesignTokens.fontFamily,
+                    fontFamily: shared.DesignTokens.fontFamily,
                   ),
                 ),
                 Text(
                   '\$${widget.menuItem.price.toStringAsFixed(2)}',
                   style: TextStyle(
-                    fontSize: DesignTokens.bodyFontSize,
+                    fontSize: shared.DesignTokens.bodyFontSize,
                     color: UiConfig.textColor,
                     fontWeight: UiConfig.fontWeightMedium,
-                    fontFamily: DesignTokens.fontFamily,
+                    fontFamily: shared.DesignTokens.fontFamily,
                   ),
                 ),
-                const SizedBox(height: DesignTokens.gridSpacing),
+                const SizedBox(height: shared.DesignTokens.gridSpacing),
 
                 // DESCRIPTION
                 Text(
                   widget.menuItem.description,
                   style: TextStyle(
-                    fontSize: DesignTokens.captionFontSize,
+                    fontSize: shared.DesignTokens.captionFontSize,
                     color: UiConfig.secondaryTextColor,
-                    fontFamily: DesignTokens.fontFamily,
+                    fontFamily: shared.DesignTokens.fontFamily,
                   ),
                 ),
-                const SizedBox(height: DesignTokens.gridSpacing * 2),
+                const SizedBox(height: shared.DesignTokens.gridSpacing * 2),
 
                 // DIETARY + ALLERGENS
                 DietaryAllergenChipsRow(
@@ -237,17 +233,17 @@ class _ItemScreenState extends State<ItemScreen> {
                     onIncrement: () => setState(() => _quantity++),
                     onDecrement: () => setState(() => _quantity--),
                     min: 1,
-                    fontSize: DesignTokens.bodyFontSize,
-                    iconSize: DesignTokens.iconSize,
+                    fontSize: shared.DesignTokens.bodyFontSize,
+                    iconSize: shared.DesignTokens.iconSize,
                   ),
-                const SizedBox(height: DesignTokens.gridSpacing),
+                const SizedBox(height: shared.DesignTokens.gridSpacing),
 
                 // INCLUDED INGREDIENTS
                 IncludedIngredientsPreview(
                   includedIngredients: widget.menuItem.includedIngredients,
                 ),
 
-                const SizedBox(height: DesignTokens.gridSpacing * 2),
+                const SizedBox(height: shared.DesignTokens.gridSpacing * 2),
 
                 // ADD / CUSTOMIZE BUTTON
                 Row(
@@ -345,7 +341,7 @@ class _ItemScreenState extends State<ItemScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: DesignTokens.gridSpacing),
+                const SizedBox(height: shared.DesignTokens.gridSpacing),
               ],
             ),
           );

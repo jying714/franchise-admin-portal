@@ -2,11 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/services/analytics_service.dart';
-import 'package:shared_core/src/core/models/menu_item.dart';
-import 'package:shared_core/src/core/models/order.dart' as order_model;
 import 'package:franchise_mobile_app/features/ordering/cart_screen.dart';
 import 'package:franchise_mobile_app/widgets/menu_item_card.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -17,7 +12,6 @@ import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart'
 import 'package:franchise_mobile_app/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
 import 'package:franchise_mobile_app/widgets/filter_dropdown.dart';
-import 'package:shared_core/src/core/config/branding_config.dart';
 
 class CategoryScreen extends StatefulWidget {
   final String categoryId;
@@ -41,7 +35,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final analytics = Provider.of<AnalyticsService>(context, listen: false);
+      final analytics =
+          Provider.of<shared.AnalyticsService>(context, listen: false);
       analytics.logCategoryViewed(widget.categoryName);
       final loc = AppLocalizations.of(context)!;
       setState(() {
@@ -56,15 +51,16 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   void _handleAddToCart(
-      MenuItem item,
+      shared.MenuItem item,
       Map<String, dynamic> selectedCustomizations,
       int quantity,
       double totalPrice) async {
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final franchiseProvider =
         Provider.of<shared.FranchiseProvider>(context, listen: false);
-    final analytics = Provider.of<AnalyticsService>(context, listen: false);
+    final analytics =
+        Provider.of<shared.AnalyticsService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
 
     final user = FirebaseAuth.instance.currentUser;
@@ -153,8 +149,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          return StreamBuilder<List<MenuItem>>(
-            stream: Provider.of<FirestoreService>(context, listen: false)
+          return StreamBuilder<List<shared.MenuItem>>(
+            stream: Provider.of<shared.FirestoreService>(context, listen: false)
                 .getMenuItemsByCategory(
               widget.categoryId,
               franchiseId: provider.currentFranchiseId,
@@ -181,7 +177,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 return EmptyStateWidget(
                   title: "Error Loading Menu Items",
                   message: "Please try again later.",
-                  imageAsset: BrandingConfig.defaultCategoryIcon,
+                  imageAsset: shared.BrandingConfig.defaultCategoryIcon,
                 );
               }
 
@@ -192,7 +188,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 return EmptyStateWidget(
                   title: loc.emptyStateMessage,
                   message: "No menu items found for this category.",
-                  imageAsset: BrandingConfig.defaultCategoryIcon,
+                  imageAsset: shared.BrandingConfig.defaultCategoryIcon,
                 );
               }
 

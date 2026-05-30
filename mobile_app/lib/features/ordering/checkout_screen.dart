@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:shared_core/src/core/config/design_tokens.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/ordering/confirmation_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -166,8 +165,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
-    final franchiseId = Provider.of<shared.FranchiseProvider>(context, listen: false)
-        .currentFranchiseId;
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .currentFranchiseId;
     final cart = await firestoreService
         .getCart(user.uid,
             franchiseId: franchiseId != 'unknown' ? franchiseId : null)
@@ -331,9 +331,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       localizations.checkout,
                       style: TextStyle(
                         color: UiConfig.foregroundColorDark,
-                        fontSize: DesignTokens.titleFontSize,
+                        fontSize: shared.DesignTokens.titleFontSize,
                         fontWeight: UiConfig.fontWeightBold,
-                        fontFamily: DesignTokens.fontFamily,
+                        fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     ),
                     backgroundColor: UiConfig.primaryColor,
@@ -355,7 +355,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             decoration: BoxDecoration(
                               color: UiConfig.errorColor.withOpacity(0.12),
                               borderRadius: BorderRadius.circular(
-                                  DesignTokens.cardRadius),
+                                  shared.DesignTokens.cardRadius),
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -370,7 +370,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     style: TextStyle(
                                       color: UiConfig.errorColor,
                                       fontWeight: FontWeight.bold,
-                                      fontFamily: DesignTokens.fontFamily,
+                                      fontFamily:
+                                          shared.DesignTokens.fontFamily,
                                     ),
                                   ),
                                 ),
@@ -380,9 +381,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         Text(
                           localizations.orderType,
                           style: TextStyle(
-                            fontSize: DesignTokens.bodyFontSize,
+                            fontSize: shared.DesignTokens.bodyFontSize,
                             fontWeight: UiConfig.fontWeightBold,
-                            fontFamily: DesignTokens.fontFamily,
+                            fontFamily: shared.DesignTokens.fontFamily,
                           ),
                         ),
                         Row(
@@ -419,12 +420,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 ? localizations.selectTime
                                 : '${localizations.time}: ${_selectedTime!.format(context)}',
                             style: const TextStyle(
-                                fontSize: DesignTokens.bodyFontSize),
+                                fontSize: shared.DesignTokens.bodyFontSize),
                           ),
                           subtitle: Text(
                             '${localizations.businessHours}: ${_businessOpen.format(context)} - ${_businessClose.format(context)}',
                             style: const TextStyle(
-                                fontSize: DesignTokens.captionFontSize),
+                                fontSize: shared.DesignTokens.captionFontSize),
                           ),
                           trailing: ElevatedButton(
                             style: ElevatedButton.styleFrom(
@@ -432,7 +433,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               foregroundColor: UiConfig.foregroundColorDark,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
-                                    DesignTokens.buttonRadius),
+                                    shared.DesignTokens.buttonRadius),
                               ),
                             ),
                             onPressed: () =>
@@ -455,7 +456,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(
-                                  DesignTokens.formFieldRadius),
+                                  shared.DesignTokens.formFieldRadius),
                             ),
                           ),
                           enabled: !_promoApplied,
@@ -467,7 +468,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               '${localizations.promoApplied}: -\$${promoDiscount.toStringAsFixed(2)}',
                               style: TextStyle(
                                 color: UiConfig.successColor,
-                                fontSize: DesignTokens.captionFontSize,
+                                fontSize: shared.DesignTokens.captionFontSize,
                               ),
                             ),
                           ),
@@ -475,9 +476,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         Text(
                           localizations.paymentMethod,
                           style: TextStyle(
-                            fontSize: DesignTokens.bodyFontSize,
+                            fontSize: shared.DesignTokens.bodyFontSize,
                             fontWeight: UiConfig.fontWeightBold,
-                            fontFamily: DesignTokens.fontFamily,
+                            fontFamily: shared.DesignTokens.fontFamily,
                           ),
                         ),
                         ...PaymentMethod.values.map(
@@ -491,10 +492,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                         const SizedBox(height: 16),
                         Card(
-                          elevation: DesignTokens.cardElevation,
+                          elevation: shared.DesignTokens.cardElevation,
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(DesignTokens.cardRadius),
+                            borderRadius: BorderRadius.circular(
+                                shared.DesignTokens.cardRadius),
                           ),
                           color: UiConfig.surfaceColor,
                           child: Padding(
@@ -527,9 +528,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             padding: UiConfig.defaultPadding,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
-                                  DesignTokens.buttonRadius),
+                                  shared.DesignTokens.buttonRadius),
                             ),
-                            elevation: DesignTokens.buttonElevation,
+                            elevation: shared.DesignTokens.buttonElevation,
                           ),
                           onPressed: _isPaying
                               ? null
@@ -565,9 +566,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           localizations.checkout,
           style: TextStyle(
             color: UiConfig.foregroundColorDark,
-            fontSize: DesignTokens.titleFontSize,
+            fontSize: shared.DesignTokens.titleFontSize,
             fontWeight: UiConfig.fontWeightBold,
-            fontFamily: DesignTokens.fontFamily,
+            fontFamily: shared.DesignTokens.fontFamily,
           ),
         ),
         backgroundColor: UiConfig.primaryColor,
@@ -579,10 +580,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         child: Text(
           localizations.cartEmpty,
           style: TextStyle(
-            fontSize: DesignTokens.bodyFontSize,
+            fontSize: shared.DesignTokens.bodyFontSize,
             color: UiConfig.textColor,
             fontWeight: FontWeight.bold,
-            fontFamily: DesignTokens.fontFamily,
+            fontFamily: shared.DesignTokens.fontFamily,
           ),
         ),
       ),
@@ -599,8 +600,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               label,
               style: TextStyle(
                 fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-                fontFamily: DesignTokens.fontFamily,
-                fontSize: DesignTokens.bodyFontSize,
+                fontFamily: shared.DesignTokens.fontFamily,
+                fontSize: shared.DesignTokens.bodyFontSize,
               ),
             ),
           ),
@@ -609,7 +610,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             style: TextStyle(
               fontWeight: bold ? FontWeight.bold : FontWeight.normal,
               color: bold ? UiConfig.primaryColor : UiConfig.textColor,
-              fontSize: DesignTokens.bodyFontSize,
+              fontSize: shared.DesignTokens.bodyFontSize,
             ),
           ),
         ],

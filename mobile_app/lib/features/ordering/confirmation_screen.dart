@@ -6,7 +6,6 @@ import 'package:franchise_mobile_app/features/tracking/tracking_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/feedback/feedback_submission_dialog.dart';
 import 'package:franchise_mobile_app/core/services/notification_service.dart';
-import 'package:shared_core/src/core/config/design_tokens.dart';
 
 class ConfirmationScreen extends StatefulWidget {
   final String orderId;
@@ -92,9 +91,9 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
               localizations.orderConfirmed,
               style: TextStyle(
                 color: UiConfig.foregroundColorDark,
-                fontSize: DesignTokens.titleFontSize,
+                fontSize: shared.DesignTokens.titleFontSize,
                 fontWeight: UiConfig.fontWeightBold,
-                fontFamily: DesignTokens.fontFamily,
+                fontFamily: shared.DesignTokens.fontFamily,
               ),
             ),
             backgroundColor: UiConfig.primaryColor,
@@ -113,25 +112,25 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                     color: UiConfig.secondaryColor,
                     size: 72,
                   ),
-                  SizedBox(height: DesignTokens.gridSpacing * 2),
+                  SizedBox(height: shared.DesignTokens.gridSpacing * 2),
                   Text(
                     localizations.thankYouForYourOrder ??
                         'Thank you for your order!',
                     style: TextStyle(
                       color: UiConfig.primaryColor,
-                      fontSize: DesignTokens.titleFontSize,
+                      fontSize: shared.DesignTokens.titleFontSize,
                       fontWeight: UiConfig.fontWeightBold,
-                      fontFamily: DesignTokens.fontFamily,
+                      fontFamily: shared.DesignTokens.fontFamily,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  SizedBox(height: DesignTokens.gridSpacing),
+                  SizedBox(height: shared.DesignTokens.gridSpacing),
                   Text(
                     localizations.yourOrderIdIs ?? 'Your order ID is:',
                     style: TextStyle(
                       color: UiConfig.textColor,
-                      fontSize: DesignTokens.bodyFontSize,
-                      fontFamily: DesignTokens.fontFamily,
+                      fontSize: shared.DesignTokens.bodyFontSize,
+                      fontFamily: shared.DesignTokens.fontFamily,
                       fontWeight: UiConfig.fontWeightMedium,
                     ),
                     textAlign: TextAlign.center,
@@ -140,20 +139,20 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                     widget.orderId,
                     style: TextStyle(
                       color: UiConfig.accentColor,
-                      fontSize: DesignTokens.bodyFontSize,
+                      fontSize: shared.DesignTokens.bodyFontSize,
                       fontWeight: FontWeight.bold,
-                      fontFamily: DesignTokens.fontFamily,
+                      fontFamily: shared.DesignTokens.fontFamily,
                     ),
                   ),
-                  SizedBox(height: DesignTokens.gridSpacing * 2),
+                  SizedBox(height: shared.DesignTokens.gridSpacing * 2),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: UiConfig.primaryColor,
                       foregroundColor: UiConfig.foregroundColorDark,
                       padding: UiConfig.defaultPadding,
                       shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(DesignTokens.buttonRadius),
+                        borderRadius: BorderRadius.circular(
+                            shared.DesignTokens.buttonRadius),
                       ),
                     ),
                     onPressed: () =>
@@ -161,14 +160,14 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                     child: Text(
                       localizations.returnToHome ?? 'Return to Home',
                       style: TextStyle(
-                        fontSize: DesignTokens.bodyFontSize,
-                        fontFamily: DesignTokens.fontFamily,
+                        fontSize: shared.DesignTokens.bodyFontSize,
+                        fontFamily: shared.DesignTokens.fontFamily,
                         fontWeight: UiConfig.fontWeightMedium,
                       ),
                     ),
                   ),
                   if (_trackOrderEnabled) ...[
-                    SizedBox(height: DesignTokens.gridSpacing),
+                    SizedBox(height: shared.DesignTokens.gridSpacing),
                     ElevatedButton.icon(
                       icon: const Icon(Icons.delivery_dining),
                       style: ElevatedButton.styleFrom(
@@ -176,15 +175,15 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
                         foregroundColor: UiConfig.foregroundColorDark,
                         padding: UiConfig.defaultPadding,
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(DesignTokens.buttonRadius),
+                          borderRadius: BorderRadius.circular(
+                              shared.DesignTokens.buttonRadius),
                         ),
                       ),
                       label: Text(
                         localizations.trackOrder,
                         style: TextStyle(
-                          fontSize: DesignTokens.bodyFontSize,
-                          fontFamily: DesignTokens.fontFamily,
+                          fontSize: shared.DesignTokens.bodyFontSize,
+                          fontFamily: shared.DesignTokens.fontFamily,
                           fontWeight: UiConfig.fontWeightMedium,
                         ),
                       ),
