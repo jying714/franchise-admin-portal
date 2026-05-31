@@ -145,7 +145,6 @@ void main() {
         stack: details.stack?.toString(),
         source: 'FlutterError',
         severity: 'fatal',
-        screen: 'main',
         contextData: {
           'library': details.library,
           'context':
@@ -164,7 +163,7 @@ void main() {
           ChangeNotifierProvider(
               create: (_) {
                 final fp = shared.FranchiseProvider(storage);
-                DesignTokens.setshared.FranchiseProvider(fp); // P2.5 dynamic theming bridge
+                DesignTokens.setFranchiseProvider(fp); // P2.5 dynamic theming bridge
                 return fp;
               }), // P2.5: ctor fixed + UiConfig/DesignTokens wired
           ChangeNotifierProvider<shared.AuthService>.value(value: authService),
@@ -186,7 +185,6 @@ void main() {
       stack: stack.toString(),
       source: 'runZonedGuarded',
       severity: 'fatal',
-      screen: 'main',
     );
   });
 }
