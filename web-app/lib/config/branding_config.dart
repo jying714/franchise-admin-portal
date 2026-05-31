@@ -34,9 +34,13 @@ class BrandingConfig {
     return DesignTokens.primaryColor;
   }
 
-  // Live from FranchiseProvider (via DesignTokens bridge)
+  // Live from FranchiseProvider (via DesignTokens bridge) - P2.5 dynamic
   static String? get currentLogoUrl => DesignTokens.currentLogoUrl;
   static String get currentAppName => DesignTokens.currentAppName;
+
+  // Back-compat getters used by many screens (delegate to dynamic when available)
+  static String? get logoUrl => DesignTokens.currentLogoUrl;
+  static String get logoMain => 'assets/images/logo.png'; // keep asset default, dynamic via currentLogoUrl in widgets
 
   static Color _hexToColor(String hex) {
     final cleaned = hex.replaceAll('#', '');

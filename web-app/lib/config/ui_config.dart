@@ -1,16 +1,13 @@
 // web_app/lib/core/config/ui_config.dart
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:intl/intl.dart';
 
 class UiConfig {
-  // Legacy env (minimal breakage)
-  static final shared.AppConfig env = shared.AppConfig(
-    apiBaseUrl: 'https://api.yourdomain.com',
-    brandingColorHex: '#C62828',
-    isProduction: true,
-  );
+  // Delegates to local AppConfig layer (which wraps shared_core)
+  static final shared.AppConfig env = AppConfig.env; // legacy env for compat
 
   static const String adminEmptyStateImage = 'assets/images/admin_empty.png';
 
