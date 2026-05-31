@@ -10,7 +10,7 @@ import 'package:franchise_mobile_app/config/ui_config.dart';
 void main() {
   group('Franchise switching (P2 white-label)', () {
     testWidgets('FranchiseProvider setFranchiseId updates currentFranchiseId and UiConfig', (tester) async {
-      final fp = shared.FranchiseProvider(shared.LocalStorage());
+      final fp = shared.FranchiseProvider(_InMemoryStorage());
 
       await tester.pumpWidget(
         Provider<shared.FranchiseProvider>.value(
@@ -37,3 +37,14 @@ void main() {
     });
   });
 }
+
+class _InMemoryStorage extends shared.LocalStorage {
+  final Map<String, String> _data = {};
+  @override
+  String? getString(String key) => _data[key];
+  @override
+  Future<void> setString(String key, String value) async => _data[key] = value;
+  @override
+  Future<void> remove(String key) async => _data.remove(key);
+}
+
