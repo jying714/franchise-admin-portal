@@ -103,7 +103,7 @@ class MenuItemListTile extends StatelessWidget {
                     await shared.ErrorLogger.log(
                       message: 'menu_item_delete_failed',
                       source: 'MenuItemListTile',
-                      screen: 'menu_item_list_tile.dart',
+                      source: 'menu_item_list_tile.dart' /* was screen, Phase 4 fix */,
                       severity: 'error',
                       stack: stack.toString(),
                       contextData: {'itemId': item.id},
@@ -121,6 +121,7 @@ class MenuItemListTile extends StatelessWidget {
     );
   }
 }
+
 
 
 

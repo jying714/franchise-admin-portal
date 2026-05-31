@@ -50,7 +50,7 @@ class IngredientTypeJsonPreviewTable extends StatelessWidget {
       shared.ErrorLogger.log(
         message: 'Failed to parse ingredient type JSON preview',
         source: 'ingredient_type_json_preview_table.dart',
-        screen: 'ingredient_type_management_screen',
+        source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
         severity: 'warning',
         stack: stack.toString(),
         contextData: {'rawInput': rawJson},
@@ -101,6 +101,7 @@ class IngredientTypeJsonPreviewTable extends StatelessWidget {
     );
   }
 }
+
 
 
 

@@ -136,7 +136,7 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
                       await shared.ErrorLogger.log(
                         message: e.toString(),
                         source: 'bulk_upload_dialog',
-                        screen: 'BulkUploadDialog',
+                        source: 'BulkUploadDialog' /* was screen, Phase 4 fix */,
                         stack: stack.toString(),
                         severity: 'error',
                         contextData: {
@@ -164,6 +164,7 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
     );
   }
 }
+
 
 
 

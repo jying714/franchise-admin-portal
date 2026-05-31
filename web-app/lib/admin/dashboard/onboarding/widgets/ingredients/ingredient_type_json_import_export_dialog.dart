@@ -94,7 +94,7 @@ class _IngredientTypeJsonImportExportDialogState
         message: 'Error parsing preview JSON in dialog',
         source: 'ingredient_type_json_import_export_dialog.dart',
         severity: 'warning',
-        screen: 'ingredient_type_management_screen',
+        source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
         stack: stack.toString(),
         contextData: {'input': val},
       );
@@ -120,7 +120,7 @@ class _IngredientTypeJsonImportExportDialogState
         message: 'JSON import preview parse error',
         source: 'ingredient_type_json_import_export_dialog.dart',
         severity: 'warning',
-        screen: 'ingredient_type_management_screen',
+        source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
         stack: stack.toString(),
         contextData: {
           'input': _jsonController.text,
@@ -147,7 +147,7 @@ class _IngredientTypeJsonImportExportDialogState
         message: 'Failed to save imported ingredient types',
         source: 'ingredient_type_json_import_export_dialog.dart',
         severity: 'error',
-        screen: 'ingredient_type_management_screen',
+        source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
         stack: stack.toString(),
         contextData: {
           'franchiseId': franchiseId,
@@ -268,6 +268,7 @@ class _IngredientTypeJsonImportExportDialogState
     );
   }
 }
+
 
 
 

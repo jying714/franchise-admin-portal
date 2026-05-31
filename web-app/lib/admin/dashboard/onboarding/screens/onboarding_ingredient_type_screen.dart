@@ -119,7 +119,7 @@ class _IngredientTypeManagementScreenState
         message: 'Failed to toggle onboarding step "ingredientTypes"',
         stack: stack.toString(),
         source: 'OnboardingIngredientTypeScreen',
-        screen: 'onboarding_ingredient_type_screen',
+        source: 'onboarding_ingredient_type_screen' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {'error': e.toString()},
       );
@@ -143,7 +143,7 @@ class _IngredientTypeManagementScreenState
       await shared.ErrorLogger.log(
         message: 'Failed to persist ingredient type reorder',
         source: 'IngredientTypeManagementScreen',
-        screen: 'ingredient_type_management_screen',
+        source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
         severity: 'error',
         stack: stack.toString(),
         contextData: {'franchiseId': franchiseId},
@@ -589,7 +589,7 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
               await shared.ErrorLogger.log(
                 message: 'Failed to save ingredient type',
                 source: 'IngredientTypeFormDialog',
-                screen: 'ingredient_type_management_screen',
+                source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
                 severity: 'error',
                 stack: stack.toString(),
                 contextData: {
@@ -605,6 +605,7 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
     );
   }
 }
+
 
 
 

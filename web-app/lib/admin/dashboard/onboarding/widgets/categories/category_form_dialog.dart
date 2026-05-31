@@ -98,7 +98,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
         message: 'Failed to save category',
         stack: stack.toString(),
         source: 'CategoryFormDialog',
-        screen: 'onboarding_categories_screen',
+        source: 'onboarding_categories_screen' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {
           'franchiseId': franchiseId,
@@ -203,6 +203,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
     );
   }
 }
+
 
 
 

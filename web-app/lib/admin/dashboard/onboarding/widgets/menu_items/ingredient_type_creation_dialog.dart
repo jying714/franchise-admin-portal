@@ -57,7 +57,7 @@ class _IngredientTypeCreationDialogState
         message: 'ingredient_type_creation_failed',
         source: 'IngredientTypeCreationDialog',
         stack: stack.toString(),
-        screen: 'ingredient_type_creation_dialog.dart',
+        source: 'ingredient_type_creation_dialog.dart' /* was screen, Phase 4 fix */,
         severity: 'error',
       );
       ScaffoldMessenger.of(context).showSnackBar(
@@ -127,6 +127,7 @@ class _IngredientTypeCreationDialogState
     );
   }
 }
+
 
 
 

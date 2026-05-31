@@ -108,7 +108,7 @@ class _OnboardingCategoriesScreenState
       await shared.ErrorLogger.log(
         message: 'onboarding_mark_complete_toggle_failed',
         source: 'onboarding_categories_screen.dart',
-        screen: 'onboarding_categories_screen',
+        source: 'onboarding_categories_screen' /* was screen, Phase 4 fix */,
         severity: 'warning',
         stack: stack.toString(),
         contextData: {'step': 'categories'},
@@ -138,7 +138,7 @@ class _OnboardingCategoriesScreenState
       await shared.ErrorLogger.log(
         message: 'Failed to save categories',
         source: 'onboarding_categories_screen.dart',
-        screen: 'onboarding_categories_screen',
+        source: 'onboarding_categories_screen' /* was screen, Phase 4 fix */,
         severity: 'error',
         stack: stack.toString(),
         contextData: {'franchiseId': franchiseId},
@@ -193,7 +193,7 @@ class _OnboardingCategoriesScreenState
           message: 'bulk_delete_categories_failed',
           stack: stack.toString(),
           source: 'OnboardingCategoriesScreen',
-          screen: 'onboarding_categories_screen',
+          source: 'onboarding_categories_screen' /* was screen, Phase 4 fix */,
           severity: 'error',
           contextData: {'selectedCount': deletedCount},
         );
@@ -397,6 +397,7 @@ class _OnboardingCategoriesScreenState
     );
   }
 }
+
 
 
 

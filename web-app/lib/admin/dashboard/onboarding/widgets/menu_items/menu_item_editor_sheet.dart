@@ -731,7 +731,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       shared.ErrorLogger.log(
         message: 'Failed to apply template into editor state',
         source: 'menu_item_editor_sheet.dart',
-        screen: 'menu_item_editor_sheet.dart',
+        source: 'menu_item_editor_sheet.dart' /* was screen, Phase 4 fix */,
         severity: 'warning',
         stack: st.toString(),
         contextData: {
@@ -1218,6 +1218,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     super.dispose();
   }
 }
+
 
 
 

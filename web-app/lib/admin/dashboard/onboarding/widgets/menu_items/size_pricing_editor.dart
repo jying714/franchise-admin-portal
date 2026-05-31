@@ -44,7 +44,7 @@ class _SizePricingEditorState extends State<SizePricingEditor> {
       shared.ErrorLogger.log(
         message: 'Failed to update size pricing',
         source: 'SizePricingEditor',
-        screen: 'menu_item_editor_sheet',
+        source: 'menu_item_editor_sheet' /* was screen, Phase 4 fix */,
         severity: 'error',
         stack: stack.toString(),
         contextData: {'sizes': _localSizes.map((s) => s.toMap()).toList()},
@@ -205,6 +205,7 @@ class _SizePricingEditorState extends State<SizePricingEditor> {
     );
   }
 }
+
 
 
 

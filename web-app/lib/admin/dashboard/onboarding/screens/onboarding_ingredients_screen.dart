@@ -208,7 +208,7 @@ class _OnboardingIngredientsScreenState
         message: 'Failed to toggle onboarding step completion',
         stack: stack.toString(),
         source: '_markComplete',
-        screen: 'onboarding_ingredients_screen',
+        source: 'onboarding_ingredients_screen' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {'ingredientsCount': provider.ingredients.length},
       );
@@ -273,7 +273,7 @@ class _OnboardingIngredientsScreenState
         await shared.ErrorLogger.log(
           message: 'Bulk delete ingredients failed',
           source: 'OnboardingIngredientsScreen',
-          screen: 'onboarding_ingredients_screen',
+          source: 'onboarding_ingredients_screen' /* was screen, Phase 4 fix */,
           severity: 'error',
           stack: stack.toString(),
           contextData: {'selectedCount': deletedCount},
@@ -573,7 +573,7 @@ class _OnboardingIngredientsScreenState
                               message: 'ingredient_save_error',
                               stack: stack.toString(),
                               source: 'onboarding_ingredients_screen',
-                              screen: 'onboarding_ingredients_screen',
+                              source: 'onboarding_ingredients_screen' /* was screen, Phase 4 fix */,
                               severity: 'error',
                             );
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -756,6 +756,7 @@ class _OnboardingIngredientsScreenState
     super.dispose();
   }
 }
+
 
 
 

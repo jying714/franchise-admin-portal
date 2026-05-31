@@ -81,7 +81,7 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
                   message:
                       'Missing or invalid restaurantType during template prefill',
                   source: 'MenuItemTemplateDropdown',
-                  screen: 'menu_item_editor_sheet.dart',
+                  source: 'menu_item_editor_sheet.dart' /* was screen, Phase 4 fix */,
                   severity: 'error',
                 );
                 if (mounted) {
@@ -111,7 +111,7 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
                 message: 'Failed to apply template',
                 stack: stack.toString(),
                 source: 'MenuItemTemplateDropdown',
-                screen: 'menu_item_editor_sheet.dart',
+                source: 'menu_item_editor_sheet.dart' /* was screen, Phase 4 fix */,
                 severity: 'error',
                 contextData: {'templateId': templateId},
               );
@@ -136,6 +136,7 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
     );
   }
 }
+
 
 
 

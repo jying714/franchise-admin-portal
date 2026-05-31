@@ -29,7 +29,7 @@ class CategoryManagementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RoleGuard(
+    return shared.RoleGuard(
       requireAnyRole: [
         'platform_owner',
         'hq_owner',
@@ -38,7 +38,7 @@ class CategoryManagementScreen extends StatelessWidget {
         'admin',
       ],
       featureName: 'category_management_screen',
-      screen: 'CategoryManagementScreen',
+      source: 'CategoryManagementScreen' /* was screen, Phase 4 fix */,
       child: const CategoryManagementScreenContent(),
     );
   }
@@ -126,7 +126,7 @@ class _CategoryManagementScreenContentState
               message: e.toString(),
               stack: stack.toString(),
               source: 'category_management_screen',
-              screen: 'CategoryManagementScreen',
+              source: 'CategoryManagementScreen' /* was screen, Phase 4 fix */,
               contextData: {
                 'franchiseId': franchiseId,
                 'userId': userId,
@@ -191,7 +191,7 @@ class _CategoryManagementScreenContentState
           message: e.toString(),
           stack: stack.toString(),
           source: 'category_management_screen',
-          screen: 'CategoryManagementScreen',
+          source: 'CategoryManagementScreen' /* was screen, Phase 4 fix */,
           contextData: {
             'franchiseId': franchiseId,
             'userId': userId,
@@ -221,7 +221,7 @@ class _CategoryManagementScreenContentState
                 message: e.toString(),
                 stack: stack.toString(),
                 source: 'category_management_screen',
-                screen: 'CategoryManagementScreen',
+                source: 'CategoryManagementScreen' /* was screen, Phase 4 fix */,
                 contextData: {
                   'franchiseId': franchiseId,
                   'userId': userId,
@@ -601,6 +601,8 @@ class _CategoryManagementScreenContentState
     );
   }
 }
+
+
 
 
 

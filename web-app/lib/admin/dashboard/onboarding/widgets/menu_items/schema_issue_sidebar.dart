@@ -246,7 +246,7 @@ class SchemaIssueSidebar extends StatelessWidget {
         message: 'schema_issue_sidebar_repair_failed',
         stack: stack.toString(),
         source: 'schema_issue_sidebar.dart',
-        screen: 'schema_issue_sidebar',
+        source: 'schema_issue_sidebar' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {
           'issueType': issue.typeKey,
@@ -309,7 +309,7 @@ class _CategoryRepairTile extends StatelessWidget {
           message: 'category_stage_failed',
           stack: stack.toString(),
           source: '_CategoryRepairTile',
-          screen: 'schema_issue_sidebar.dart',
+          source: 'schema_issue_sidebar.dart' /* was screen, Phase 4 fix */,
           severity: 'error',
           contextData: {
             'categoryName': newCategory.name,
@@ -424,7 +424,7 @@ class _IngredientRepairTile extends StatelessWidget {
           message: 'ingredient_stage_failed',
           stack: stack.toString(),
           source: '_IngredientRepairTile',
-          screen: 'schema_issue_sidebar.dart',
+          source: 'schema_issue_sidebar.dart' /* was screen, Phase 4 fix */,
           severity: 'error',
           contextData: {
             'ingredientName': newIngredient.name,
@@ -538,7 +538,7 @@ class _IngredientTypeRepairTile extends StatelessWidget {
           message: 'ingredient_type_stage_failed',
           stack: stack.toString(),
           source: '_IngredientTypeRepairTile',
-          screen: 'schema_issue_sidebar.dart',
+          source: 'schema_issue_sidebar.dart' /* was screen, Phase 4 fix */,
           severity: 'error',
           contextData: {
             'typeName': newType.name,
@@ -704,6 +704,7 @@ class _ResolvedIssueTile extends StatelessWidget {
     );
   }
 }
+
 
 
 

@@ -100,7 +100,7 @@ class _EditableIngredientTypeRowState extends State<EditableIngredientTypeRow> {
         stack: stack.toString(),
         severity: 'error',
         source: 'EditableIngredientTypeRow',
-        screen: 'ingredient_type_management_screen',
+        source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
         contextData: {
           'franchiseId': franchiseId,
           'typeId': widget.type.id,
@@ -208,6 +208,7 @@ class _EditableIngredientTypeRowState extends State<EditableIngredientTypeRow> {
     );
   }
 }
+
 
 
 

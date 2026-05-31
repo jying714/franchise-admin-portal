@@ -120,7 +120,7 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
         message: 'Failed to update ingredient (local only): $e',
         stack: stack.toString(),
         source: 'IngredientFormCard',
-        screen: 'OnboardingIngredientsScreen',
+        source: 'OnboardingIngredientsScreen' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {'ingredientName': ingredient.name},
       );
@@ -278,6 +278,7 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
         ));
   }
 }
+
 
 
 

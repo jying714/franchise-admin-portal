@@ -50,7 +50,7 @@ class _OnboardingFeatureSetupScreenState
           message: 'Failed to fetch platform_features from Firestore',
           stack: st.toString(),
           source: 'onboarding_feature_setup_screen.dart',
-          screen: 'OnboardingFeatureSetupScreen',
+          source: 'OnboardingFeatureSetupScreen' /* was screen, Phase 4 fix */,
         );
       }
 
@@ -212,7 +212,7 @@ class _OnboardingFeatureSetupScreenState
         message: 'Failed to save onboarding features',
         stack: st.toString(),
         source: 'onboarding_feature_setup_screen.dart',
-        screen: 'OnboardingFeatureSetupScreen',
+        source: 'OnboardingFeatureSetupScreen' /* was screen, Phase 4 fix */,
         contextData: {'franchiseId': franchiseId},
       );
 
@@ -259,7 +259,7 @@ class _OnboardingFeatureSetupScreenState
         message: 'Failed to toggle onboarding step "onboarding_feature_setup"',
         stack: stack.toString(),
         source: 'OnboardingFeatureSetupScreen',
-        screen: 'onboarding_feature_setup_screen',
+        source: 'onboarding_feature_setup_screen' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {'error': e.toString()},
       );
@@ -271,6 +271,7 @@ class _OnboardingFeatureSetupScreenState
     }
   }
 }
+
 
 
 

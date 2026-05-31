@@ -65,7 +65,7 @@ class _InlineAddIngredientTypeRowState
         message: 'Failed to add new ingredient type inline',
         stack: stack.toString(),
         severity: 'error',
-        screen: 'ingredient_type_management_screen',
+        source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
         source: 'InlineAddIngredientTypeRow',
         contextData: {
           'nameAttempted': name,
@@ -140,6 +140,7 @@ class _InlineAddIngredientTypeRowState
     );
   }
 }
+
 
 
 

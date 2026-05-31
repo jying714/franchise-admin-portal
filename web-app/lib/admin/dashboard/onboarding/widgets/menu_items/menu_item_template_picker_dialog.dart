@@ -37,7 +37,7 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
       shared.ErrorLogger.log(
         message: 'Missing or invalid restaurant type',
         source: 'MenuItemTemplatePickerDialog',
-        screen: 'onboarding_menu_items_screen.dart',
+        source: 'onboarding_menu_items_screen.dart' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {
           'franchiseId': franchiseId,
@@ -108,7 +108,7 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
                         await shared.ErrorLogger.log(
                           message: 'Failed to load menu item template',
                           source: 'MenuItemTemplatePickerDialog',
-                          screen: 'onboarding_menu_items_screen.dart',
+                          source: 'onboarding_menu_items_screen.dart' /* was screen, Phase 4 fix */,
                           severity: 'error',
                           stack: stack.toString(),
                           contextData: {
@@ -144,6 +144,7 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
     );
   }
 }
+
 
 
 

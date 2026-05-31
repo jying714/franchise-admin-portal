@@ -116,7 +116,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       shared.ErrorLogger.log(
         message: "No dashboard sections registered.",
         source: "AdminDashboardScreen",
-        screen: "AdminDashboardScreen",
+        source: "AdminDashboardScreen" /* was screen, Phase 4 fix */,
         severity: "error",
         contextData: {},
       );
@@ -162,7 +162,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
             const SizedBox(width: 20),
             if (!isMobile) const Spacer(),
-            RoleGuard(
+            shared.RoleGuard(
               requireAnyRole: ['developer', 'platform_owner', 'hq_owner'],
               featureName: 'franchise_picker_dropdown',
               child: Padding(
@@ -172,7 +172,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
             const SizedBox(width: 8),
             DashboardSwitcherDropdown(
-              currentScreen: widget.currentScreen,
+              currentsource: widget.currentScreen /* was screen, Phase 4 fix */,
               user: appUser,
             ),
             const SizedBox(width: 8),
@@ -254,7 +254,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                           message:
                                               'Dashboard section error: $e',
                                           source: 'AdminDashboardScreen',
-                                          screen: section.title,
+                                          source: section.title /* was screen, Phase 4 fix */,
                                           stack: stack.toString(),
                                           severity: 'error',
                                           contextData: {
@@ -405,6 +405,8 @@ class _SidebarSectionTile extends StatelessWidget {
     );
   }
 }
+
+
 
 
 

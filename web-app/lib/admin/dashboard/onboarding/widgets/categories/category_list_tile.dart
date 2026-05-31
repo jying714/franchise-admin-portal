@@ -107,7 +107,7 @@ class CategoryListTile extends StatelessWidget {
                     await shared.ErrorLogger.log(
                       message: 'Failed to delete category',
                       source: 'CategoryListTile',
-                      screen: 'onboarding_categories_screen',
+                      source: 'onboarding_categories_screen' /* was screen, Phase 4 fix */,
                       severity: 'error',
                       stack: stack.toString(),
                       contextData: {
@@ -129,6 +129,7 @@ class CategoryListTile extends StatelessWidget {
     );
   }
 }
+
 
 
 

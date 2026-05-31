@@ -70,7 +70,7 @@ class _IngredientMetadataTemplatePickerDialogState
       await shared.ErrorLogger.log(
         message: 'ingredient_metadata_template_load_failed',
         stack: stack.toString(),
-        screen: 'onboarding_ingredients_screen',
+        source: 'onboarding_ingredients_screen' /* was screen, Phase 4 fix */,
         source: 'IngredientMetadataTemplatePickerDialog',
         severity: 'error',
         contextData: {
@@ -181,6 +181,7 @@ class _IngredientMetadataTemplatePickerDialogState
     super.dispose();
   }
 }
+
 
 
 

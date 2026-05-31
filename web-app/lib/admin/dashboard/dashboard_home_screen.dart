@@ -100,10 +100,10 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                     height: _expandedSnapshot
                         ? (3 * 120 + 2 * 12) // 3 rows + 2 gaps in expanded mode
                         : null, // auto height when collapsed
-                    child: RoleGuard(
+                    child: shared.RoleGuard(
                       requireAnyRole: ['platform_owner', 'hq_owner'],
                       featureName: 'real_time_ops_snapshot',
-                      screen: 'dashboard_home_screen.dart',
+                      source: 'dashboard_home_screen.dart' /* was screen, Phase 4 fix */,
                       child: Card(
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
@@ -165,8 +165,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                                                 source:
                                                     'DashboardHomeScreen.onChanged',
                                                 severity: 'error',
-                                                screen:
-                                                    'dashboard_home_screen.dart',
+                                                source: 'dashboard_home_screen.dart' /* was screen, Phase 4 fix */,
                                                 contextData: {
                                                   'franchiseId': franchiseId,
                                                   'newValue': value,
@@ -226,6 +225,8 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     );
   }
 }
+
+
 
 
 

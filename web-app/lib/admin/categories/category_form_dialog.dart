@@ -175,7 +175,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                         await shared.ErrorLogger.log(
                           message: e.toString(),
                           source: 'category_form_dialog',
-                          screen: 'CategoryFormDialog',
+                          source: 'CategoryFormDialog' /* was screen, Phase 4 fix */,
                           stack: stack.toString(),
                           severity: 'error',
                           contextData: {
@@ -214,6 +214,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
     );
   }
 }
+
 
 
 

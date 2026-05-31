@@ -108,7 +108,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         message: 'Invite fetch failed: $e',
         stack: st.toString(),
         source: 'InviteAcceptScreen',
-        screen: 'invite_accept',
+        source: 'invite_accept' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {'token': token},
       );
@@ -169,7 +169,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         message: 'Invite accept failed: $e',
         stack: st.toString(),
         source: 'InviteAcceptScreen',
-        screen: 'invite_accept',
+        source: 'invite_accept' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {'token': _effectiveToken},
       );
@@ -415,6 +415,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
     );
   }
 }
+
 
 
 

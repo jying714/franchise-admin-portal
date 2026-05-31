@@ -86,7 +86,7 @@ class _MissingTypeResolutionDialogState
         message: 'Failed to create new ingredient type',
         stack: stack.toString(),
         source: 'MissingTypeResolutionDialog',
-        screen: 'onboarding_ingredients_screen',
+        source: 'onboarding_ingredients_screen' /* was screen, Phase 4 fix */,
         severity: 'error',
       );
       setState(() => _addingType = false);
@@ -262,6 +262,7 @@ class _MissingTypeResolutionDialogState
     super.deactivate();
   }
 }
+
 
 
 

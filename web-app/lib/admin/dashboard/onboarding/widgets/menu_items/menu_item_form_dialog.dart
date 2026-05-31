@@ -77,7 +77,7 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
       await shared.ErrorLogger.log(
         message: 'Failed to create menu item',
         source: 'menu_item_form_dialog',
-        screen: 'menu_item_form_dialog',
+        source: 'menu_item_form_dialog' /* was screen, Phase 4 fix */,
         severity: 'error',
         stack: stack.toString(),
         contextData: {
@@ -151,6 +151,7 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
     );
   }
 }
+
 
 
 

@@ -556,7 +556,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
     final canEdit = true;
     final canDeleteOrExport = true;
 
-    return RoleGuard(
+    return shared.RoleGuard(
       allowedRoles: const [
         'platform_owner',
         'hq_owner',
@@ -565,7 +565,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
         'admin'
       ],
       featureName: 'menu_editor_screen',
-      screen: 'MenuEditorScreen',
+      source: 'MenuEditorScreen' /* was screen, Phase 4 fix */,
       child: SubscriptionAccessGuard(
         child: Scaffold(
           backgroundColor: colorScheme.background,
@@ -996,6 +996,8 @@ extension _LocTry on AppLocalizations {
     }
   }
 }
+
+
 
 
 

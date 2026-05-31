@@ -91,7 +91,7 @@ class MenuItemJsonImportExportDialog {
                 await shared.ErrorLogger.log(
                   message: 'Invalid JSON in MenuItemJsonImportExportDialog',
                   source: 'MenuItemJsonImportExportDialog',
-                  screen: 'onboarding_menu_items_screen.dart',
+                  source: 'onboarding_menu_items_screen.dart' /* was screen, Phase 4 fix */,
                   severity: 'warning',
                   stack: stack.toString(),
                   contextData: {
@@ -114,6 +114,7 @@ class MenuItemJsonImportExportDialog {
     );
   }
 }
+
 
 
 

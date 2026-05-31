@@ -703,7 +703,7 @@ class _FranchiseAuthenticatedRootState
                 print('[main.dart] Routing to PlatformOwnerDashboardScreen');
                 return MaterialPageRoute(
                   builder: (context) => const PlatformOwnerDashboardScreen(
-                    currentScreen: '/platform-owner/dashboard',
+                    currentsource: '/platform-owner/dashboard' /* was screen, Phase 4 fix */,
                   ),
                 );
               }
@@ -713,7 +713,7 @@ class _FranchiseAuthenticatedRootState
                 return MaterialPageRoute(
                   builder: (context) => const FranchiseGate(
                     child: OwnerHQDashboardScreen(
-                      currentScreen: '/hq-owner/dashboard',
+                      currentsource: '/hq-owner/dashboard' /* was screen, Phase 4 fix */,
                     ),
                   ),
                 );
@@ -724,7 +724,7 @@ class _FranchiseAuthenticatedRootState
                 return MaterialPageRoute(
                   builder: (context) => const FranchiseGate(
                     child: DeveloperDashboardScreen(
-                      currentScreen: '/developer/dashboard',
+                      currentsource: '/developer/dashboard' /* was screen, Phase 4 fix */,
                     ),
                   ),
                 );
@@ -734,7 +734,7 @@ class _FranchiseAuthenticatedRootState
               return MaterialPageRoute(
                 builder: (context) => const FranchiseGate(
                   child: AdminDashboardScreen(
-                    currentScreen: '/admin/dashboard',
+                    currentsource: '/admin/dashboard' /* was screen, Phase 4 fix */,
                   ),
                 ),
               );
@@ -760,7 +760,7 @@ class _FranchiseAuthenticatedRootState
               return MaterialPageRoute(
                 builder: (context) => const FranchiseGate(
                   child: DeveloperDashboardScreen(
-                      currentScreen: '/developer/dashboard'),
+                      currentsource: '/developer/dashboard' /* was screen, Phase 4 fix */),
                 ),
               );
             }
@@ -775,7 +775,7 @@ class _FranchiseAuthenticatedRootState
               return MaterialPageRoute(
                 builder: (context) => const FranchiseGate(
                   child: OwnerHQDashboardScreen(
-                      currentScreen: '/hq-owner/dashboard'),
+                      currentsource: '/hq-owner/dashboard' /* was screen, Phase 4 fix */),
                 ),
               );
             }
@@ -783,7 +783,7 @@ class _FranchiseAuthenticatedRootState
               print('[main.dart] Routing to PlatformOwnerDashboardScreen');
               return MaterialPageRoute(
                 builder: (context) => const PlatformOwnerDashboardScreen(
-                    currentScreen: '/platform-owner/dashboard'),
+                    currentsource: '/platform-owner/dashboard' /* was screen, Phase 4 fix */),
               );
             }
             if (uri.path == '/platform/plans') {
@@ -995,7 +995,7 @@ class _FranchiseAuthenticatedRootState
                                 '[ROUTER] âœ… Navigating to AdminDashboardScreen with section "$targetSectionKey"');
                             return AdminDashboardScreen(
                               key: ValueKey(
-                                  'AdminDashboardScreen:$targetSectionKey'),
+                                  'AdminDashboardsource: $targetSectionKey' /* was screen, Phase 4 fix */),
                               initialSectionKey: targetSectionKey,
                             );
                           },
@@ -1077,7 +1077,7 @@ class _FranchiseAuthenticatedRootState
                   '[main.dart] Routing to FranchiseOnboardingScreen, token=$token');
               if (token == null || token.isEmpty) {
                 print(
-                    '[main.dart] FranchiseOnboardingScreen: Invalid or missing token!');
+                    '[main.dart] FranchiseOnboardingsource: Invalid or missing token!' /* was screen, Phase 4 fix */);
                 return MaterialPageRoute(
                   builder: (context) => Scaffold(
                     appBar: AppBar(title: const Text('Invalid Invite')),
@@ -1322,5 +1322,6 @@ final ThemeData _darkTheme = ThemeData(
   dividerColor: DesignTokens.dividerColorDark,
   iconTheme: IconThemeData(color: DesignTokens.textColorDark),
 );
+
 
 

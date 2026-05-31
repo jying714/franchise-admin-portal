@@ -70,7 +70,7 @@ class _CategoriesTemplatePickerDialogState
       await shared.ErrorLogger.log(
         message: 'category_template_load_failed',
         stack: stack.toString(),
-        screen: 'onboarding_categories_screen',
+        source: 'onboarding_categories_screen' /* was screen, Phase 4 fix */,
         source: 'CategoriesTemplatePickerDialog',
         severity: 'error',
         contextData: {
@@ -174,6 +174,7 @@ class _CategoriesTemplatePickerDialogState
     );
   }
 }
+
 
 
 

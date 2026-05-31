@@ -67,7 +67,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
       await shared.ErrorLogger.log(
         message: 'onboarding_mark_menu_item_complete_failed',
         source: 'onboarding_menu_items_screen.dart',
-        screen: 'onboarding_menu_items_screen',
+        source: 'onboarding_menu_items_screen' /* was screen, Phase 4 fix */,
         severity: 'warning',
         stack: stack.toString(),
       );
@@ -90,7 +90,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
       typeProvider: context.read<IngredientTypeProvider>(),
     );
     // print(
-    //     '[DEBUG] MenuItems in screen: ${provider.menuItems.map((m) => m.toJson())}');
+    //     '[DEBUG] MenuItems in source: ${provider.menuItems.map((m /* was screen, Phase 4 fix */) => m.toJson())}');
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -401,7 +401,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                     stack: st.toString(),
                     source: 'onboarding_menu_items_screen.dart',
                     severity: 'error',
-                    screen: 'OnboardingMenuItemsScreen',
+                    source: 'OnboardingMenuItemsScreen' /* was screen, Phase 4 fix */,
                     contextData: {'exception': err.toString()},
                   );
                 });
@@ -412,7 +412,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                   stack: st.toString(),
                   source: 'onboarding_menu_items_screen.dart',
                   severity: 'error',
-                  screen: 'OnboardingMenuItemsScreen',
+                  source: 'OnboardingMenuItemsScreen' /* was screen, Phase 4 fix */,
                   contextData: {
                     'exception': e.toString(),
                   },
@@ -567,5 +567,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     );
   }
 }
+
 
 

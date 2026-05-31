@@ -88,7 +88,7 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
         message: 'ingredient_creation_failed',
         stack: stack.toString(),
         source: 'IngredientCreationDialog',
-        screen: 'ingredient_creation_dialog.dart',
+        source: 'ingredient_creation_dialog.dart' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {
           'name': _nameController.text,
@@ -208,6 +208,7 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
     );
   }
 }
+
 
 
 

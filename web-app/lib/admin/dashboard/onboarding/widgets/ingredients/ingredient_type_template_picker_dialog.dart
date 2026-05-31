@@ -79,7 +79,7 @@ class _IngredientTypeTemplatePickerDialogState
       await shared.ErrorLogger.log(
         message: 'ingredient_type_template_load_failed',
         stack: stack.toString(),
-        screen: 'ingredient_type_management_screen',
+        source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
         source: 'IngredientTypeTemplatePickerDialog',
         severity: 'error',
         contextData: {
@@ -184,6 +184,7 @@ class _IngredientTypeTemplatePickerDialogState
     );
   }
 }
+
 
 
 

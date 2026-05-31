@@ -108,7 +108,7 @@ class _CategoryJsonImportExportDialogState
       await shared.ErrorLogger.log(
         message: 'category_json_import_error',
         source: 'CategoryJsonImportExportDialog',
-        screen: 'onboarding_categories_screen',
+        source: 'onboarding_categories_screen' /* was screen, Phase 4 fix */,
         severity: 'error',
         stack: stack.toString(),
         contextData: {'franchiseId': franchiseId, 'raw': _controller.text},
@@ -199,6 +199,7 @@ class _CategoryJsonImportExportDialogState
     );
   }
 }
+
 
 
 

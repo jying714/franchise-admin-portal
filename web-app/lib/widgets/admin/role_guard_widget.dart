@@ -1,4 +1,4 @@
-// web-app/lib/widgets/admin/role_guard_widget.dart
+﻿// web-app/lib/widgets/admin/role_guard_widget.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -6,8 +6,8 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/core/providers/admin_user_provider_impl.dart' show AdminUserProvider;
 
-/// Flutter wrapper — UI only
-class RoleGuard extends StatelessWidget {
+/// Flutter wrapper â€” UI only
+class shared.RoleGuard extends StatelessWidget {
   final List<String>? allowedRoles;
   final List<String>? requireAnyRole;
   final List<String>? requireAllRoles;
@@ -18,7 +18,7 @@ class RoleGuard extends StatelessWidget {
   final String? screen;
   final String? featureName;
 
-  const RoleGuard({
+  const shared.RoleGuard({
     Key? key,
     required this.child,
     this.allowedRoles,
@@ -119,3 +119,4 @@ class RoleGuard extends StatelessWidget {
     );
   }
 }
+

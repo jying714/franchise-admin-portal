@@ -101,7 +101,7 @@ class _IngredientMetadataJsonImportExportDialogState
             'Error parsing preview JSON in ingredient_metadata_json_import_export_dialog.dart',
         source: 'ingredient_metadata_json_import_export_dialog.dart',
         severity: 'warning',
-        screen: 'onboarding_ingredients_screen',
+        source: 'onboarding_ingredients_screen' /* was screen, Phase 4 fix */,
         stack: stack.toString(),
         contextData: {'input': val},
       );
@@ -131,7 +131,7 @@ class _IngredientMetadataJsonImportExportDialogState
         message: 'JSON import preview parse error',
         source: 'ingredient_metadata_json_import_export_dialog.dart',
         severity: 'warning',
-        screen: 'onboarding_ingredients_screen',
+        source: 'onboarding_ingredients_screen' /* was screen, Phase 4 fix */,
         stack: stack.toString(),
         contextData: {'input': _jsonController.text},
       );
@@ -197,7 +197,7 @@ class _IngredientMetadataJsonImportExportDialogState
         message: 'Failed to save imported ingredient metadata',
         source: 'ingredient_metadata_json_import_export_dialog.dart',
         severity: 'error',
-        screen: 'onboarding_ingredients_screen',
+        source: 'onboarding_ingredients_screen' /* was screen, Phase 4 fix */,
         stack: stack.toString(),
         contextData: {'franchiseId': franchiseId},
       );
@@ -337,6 +337,7 @@ class _IngredientMetadataJsonImportExportDialogState
     );
   }
 }
+
 
 
 

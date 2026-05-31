@@ -181,7 +181,7 @@ class IngredientListTile extends StatelessWidget {
                       shared.ErrorLogger.log(
                         message: 'Failed to delete ingredient: $e',
                         stack: stack.toString(),
-                        screen: 'IngredientListTile',
+                        source: 'IngredientListTile' /* was screen, Phase 4 fix */,
                         source: 'deleteIngredientMetadata',
                         contextData: {
                           'ingredientId': ingredient.id,
@@ -206,6 +206,7 @@ class IngredientListTile extends StatelessWidget {
     }
   }
 }
+
 
 
 

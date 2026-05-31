@@ -62,7 +62,7 @@ class _AccountDetailsPanelState extends State<AccountDetailsPanel> {
         message: 'Failed to update profile: $e',
         stack: st.toString(),
         source: 'AccountDetailsPanel',
-        screen: 'account_details_panel',
+        source: 'account_details_panel' /* was screen, Phase 4 fix */,
         severity: 'error',
       );
     } finally {
@@ -216,6 +216,7 @@ class _AccountDetailsPanelState extends State<AccountDetailsPanel> {
     );
   }
 }
+
 
 
 
