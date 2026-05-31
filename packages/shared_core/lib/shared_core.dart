@@ -20,6 +20,9 @@ export 'src/core/services/auth_service_impl.dart';
 export 'src/core/services/firestore_service.dart';
 export 'src/core/services/firestore_service_impl.dart';
 
+// Error logging (P2.3 production resilience)
+export 'src/core/utils/error_logger.dart';
+
 export 'src/core/services/analytics_service.dart';
 export 'src/core/services/analytics_service_impl.dart';
 
