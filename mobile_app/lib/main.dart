@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show FlutterError, FlutterErrorDetails;
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -39,7 +40,18 @@ class IngredientMetadataProvider extends ChangeNotifier {
 
   Future<void> _loadIngredients() async {
     try {
+      // P2.3 hardening: ingredient_metadata is under franchises/{franchiseId}/ingredient_metadata per schema.
+      // Use last selected (from storage) or safe default to avoid global collectionGroup/top-level leak.
+      String fid = 'doughboyspizzeria';
+      try {
+        final stored = await AppLocalStorage().getString('selectedFranchiseId');
+        if (stored != null && stored.isNotEmpty && stored != 'unknown') {
+          fid = stored;
+        }
+      } catch (_) {}
       final snapshot = await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(fid)
           .collection('ingredient_metadata')
           .get();
       for (var doc in snapshot.docs) {
@@ -61,6 +73,13 @@ class IngredientMetadataProvider extends ChangeNotifier {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // P2.3: Basic error boundary / global error handler for production readiness
+  FlutterError.onError = (FlutterErrorDetails details) {
+    // In prod, forward to ErrorLogger or Crashlytics. For now log + present.
+    // Avoid crashing the app shell on widget errors.
+    FlutterError.presentError(details);
+  };
 
   // P2 deep link foundations (app_links)
   _initDeepLinks();

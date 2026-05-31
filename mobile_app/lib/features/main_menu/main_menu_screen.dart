@@ -115,7 +115,7 @@ class MainMenuScreen extends material.StatelessWidget {
               children: [
                 // Banner
                 material.StreamBuilder<List<shared.Banner>>(
-                  stream: firestoreService.getBanners(),
+                  stream: firestoreService.getBanners(franchiseId: provider.currentFranchiseId),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState ==
                         material.ConnectionState.waiting) {

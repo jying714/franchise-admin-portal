@@ -212,7 +212,7 @@ class OrderHistoryScreen extends StatelessWidget {
                                         height: DesignTokens.gridSpacing),
                                     FutureBuilder<bool>(
                                       future: firestoreService
-                                          .hasOrderFeedback(order.id),
+                                          .hasOrderFeedback(order.id, franchiseId: franchiseProvider.currentFranchiseId),
                                       builder: (context, snapshot) {
                                         final feedbackExists =
                                             snapshot.data == true;

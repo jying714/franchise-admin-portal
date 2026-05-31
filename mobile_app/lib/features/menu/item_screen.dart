@@ -316,7 +316,8 @@ class _ItemScreenState extends State<ItemScreen> {
                                           shared.FirestoreService>(
                                         context,
                                         listen: false,
-                                      ).getMenuItemById(widget.itemId);
+                                      ).getMenuItemById(widget.itemId,
+                                          franchiseId: Provider.of<shared.FranchiseProvider>(context, listen: false).currentFranchiseId);
 
                                       if (latestMenuItem == null) {
                                         ScaffoldMessenger.of(context)
