@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/shared_core.dart' show DesignTokens;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/sign_out_button.dart';
 import 'package:franchise_mobile_app/widgets/profile_nav_tile.dart';
@@ -95,20 +96,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
 
         return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              l10n.profile,
-              style: TextStyle(
-                fontSize: DesignTokens.titleFontSize,
-                color: UiConfig.foregroundColorDark,
-                fontWeight: UiConfig.fontWeightBold,
-                fontFamily: DesignTokens.fontFamily,
-              ),
-            ),
-            backgroundColor: UiConfig.primaryColor,
+          appBar: FranchiseAppBar(
+            title: l10n.profile,
+            showLogo: true,
+            logoUrl: UiConfig.currentLogoUrl,
+            logoAsset: shared.BrandingConfig.appBarLogoAsset,
             centerTitle: true,
-            elevation: 0,
-            iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
           ),
           backgroundColor: UiConfig.backgroundColorDark,
           body: SafeArea(

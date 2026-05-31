@@ -4,6 +4,7 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/shared_core.dart' show DesignTokens;
 import 'package:shared_core/shared_core.dart' show BrandingConfig;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:franchise_mobile_app/widgets/feedback/feedback_submission_dialog.dart';
@@ -31,20 +32,12 @@ class OrderHistoryScreen extends StatelessWidget {
         final authUser = authService.currentUser;
 
         return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              localizations.orderHistory,
-              style: TextStyle(
-                fontSize: DesignTokens.titleFontSize,
-                color: UiConfig.foregroundColorDark,
-                fontWeight: UiConfig.fontWeightBold,
-                fontFamily: DesignTokens.fontFamily,
-              ),
-            ),
-            backgroundColor: UiConfig.primaryColor,
+          appBar: FranchiseAppBar(
+            title: localizations.orderHistory,
+            showLogo: true,
+            logoUrl: UiConfig.currentLogoUrl,
+            logoAsset: shared.BrandingConfig.appBarLogoAsset,
             centerTitle: true,
-            elevation: 0,
-            iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
           ),
           backgroundColor: UiConfig.backgroundColorDark,
           body: SafeArea(

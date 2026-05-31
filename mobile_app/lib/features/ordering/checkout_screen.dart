@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/features/ordering/confirmation_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -333,19 +334,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                 return Scaffold(
                   backgroundColor: UiConfig.backgroundColor,
-                  appBar: AppBar(
-                    title: Text(
-                      localizations.checkout,
-                      style: TextStyle(
-                        color: UiConfig.foregroundColorDark,
-                        fontSize: shared.DesignTokens.titleFontSize,
-                        fontWeight: UiConfig.fontWeightBold,
-                        fontFamily: shared.DesignTokens.fontFamily,
-                      ),
-                    ),
-                    backgroundColor: UiConfig.primaryColor,
-                    elevation: 0,
-                    iconTheme: const IconThemeData(color: Colors.white),
+                  appBar: FranchiseAppBar(
+                    title: localizations.checkout,
+                    showLogo: true,
+                    logoUrl: UiConfig.currentLogoUrl,
+                    logoAsset: shared.BrandingConfig.appBarLogoAsset,
                     centerTitle: true,
                   ),
                   body: SafeArea(
@@ -576,19 +569,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _emptyCheckout(AppLocalizations localizations) {
     return Scaffold(
       backgroundColor: UiConfig.backgroundColor,
-      appBar: AppBar(
-        title: Text(
-          localizations.checkout,
-          style: TextStyle(
-            color: UiConfig.foregroundColorDark,
-            fontSize: shared.DesignTokens.titleFontSize,
-            fontWeight: UiConfig.fontWeightBold,
-            fontFamily: shared.DesignTokens.fontFamily,
-          ),
-        ),
-        backgroundColor: UiConfig.primaryColor,
-        elevation: 0,
-        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
+      appBar: FranchiseAppBar(
+        title: localizations.checkout,
+        showLogo: true,
+        logoUrl: UiConfig.currentLogoUrl,
+        logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
       ),
       body: Center(

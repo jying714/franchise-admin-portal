@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/features/tracking/tracking_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/feedback/feedback_submission_dialog.dart';
@@ -86,20 +87,12 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
 
         return Scaffold(
           backgroundColor: UiConfig.backgroundColor,
-          appBar: AppBar(
-            title: Text(
-              localizations.orderConfirmed,
-              style: TextStyle(
-                color: UiConfig.foregroundColorDark,
-                fontSize: shared.DesignTokens.titleFontSize,
-                fontWeight: UiConfig.fontWeightBold,
-                fontFamily: shared.DesignTokens.fontFamily,
-              ),
-            ),
-            backgroundColor: UiConfig.primaryColor,
-            elevation: 0,
+          appBar: FranchiseAppBar(
+            title: localizations.orderConfirmed,
+            showLogo: true,
+            logoUrl: UiConfig.currentLogoUrl,
+            logoAsset: shared.BrandingConfig.appBarLogoAsset,
             centerTitle: true,
-            iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
           ),
           body: Center(
             child: Padding(
