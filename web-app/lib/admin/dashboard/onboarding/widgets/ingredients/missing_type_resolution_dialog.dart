@@ -2,11 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../package:shared_core/src/core/models/ingredient_metadata.dart';
-import '../package:shared_core/src/core/models/ingredient_type_model.dart';
-import '../package:shared_core/src/core/providers/ingredient_type_provider.dart';
-import '../package:shared_core/src/core/utils/error_logger.dart';
-import '../package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 
 class MissingTypeResolutionDialog extends StatefulWidget {
   /// Ingredients that reference a typeId not present in current ingredient types

@@ -16,10 +16,7 @@ import 'package:shared_core/shared_core.dart' show MenuItem;
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dietary_allergen_chips_row.dart';
-import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/filter_dropdown.dart';
@@ -28,12 +25,8 @@ import 'package:franchise_admin_portal/admin/menu/menu_item_customizations_dialo
 import 'package:franchise_admin_portal/admin/menu/customization_types.dart'
     as ct;
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 const menuItemColumns = [
   {"key": "image", "width": 56.0, "header": "Image"},

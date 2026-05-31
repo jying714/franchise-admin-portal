@@ -1,13 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import '../package:shared_core/src/core/models/ingredient_metadata.dart';
-import '../package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:provider/provider.dart';
-import '../package:shared_core/src/core/providers/ingredient_metadata_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_tag_selector.dart';
-import '../package:shared_core/src/core/providers/ingredient_type_provider.dart';
-import '../package:shared_core/src/core/models/ingredient_type_model.dart';
 
 class IngredientFormCard extends StatefulWidget {
   final IngredientMetadata? initialData;

@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
-import '../package:shared_core/src/core/models/menu_item.dart';
-import '../package:shared_core/src/core/providers/menu_item_provider.dart';
-import '../package:shared_core/src/core/providers/franchise_provider.dart';
-import '../package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 

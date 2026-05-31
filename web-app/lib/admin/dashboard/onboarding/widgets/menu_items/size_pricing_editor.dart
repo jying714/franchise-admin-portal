@@ -1,8 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../package:shared_core/src/core/models/size_template.dart';
-import '../package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 
 class SizePricingEditor extends StatefulWidget {
   final List<SizeData> sizes;

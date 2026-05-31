@@ -5,14 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import '../package:shared_core/src/core/services/firestore_service.dart';
-import '../package:shared_core/src/core/utils/error_logger.dart';
-import '../package:shared_core/src/core/providers/franchise_provider.dart';
-import '../package:shared_core/src/core/providers/franchise_info_provider.dart';
-import '../package:shared_core/src/core/providers/onboarding_progress_provider.dart';
-import '../package:shared_core/src/core/models/category.dart';
-import '../package:shared_core/src/core/utils/schema_templates.dart';
-import '../package:shared_core/src/core/providers/category_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 
 class CategoryJsonImportExportDialog extends StatefulWidget {
   final AppLocalizations loc;

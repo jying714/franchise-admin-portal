@@ -5,15 +5,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
-import '../package:shared_core/src/core/services/firestore_service.dart';
-import '../package:shared_core/src/core/utils/schema_templates.dart';
+import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../package:shared_core/src/core/models/ingredient_metadata.dart';
-import '../package:shared_core/src/core/providers/franchise_provider.dart';
-import '../package:shared_core/src/core/providers/ingredient_metadata_provider.dart';
-import '../package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/widgets/scrolling_json_editor.dart';
-import '../package:shared_core/src/core/providers/ingredient_type_provider.dart';
 import 'ingredient_metadata_json_preview_table.dart';
 
 class IngredientMetadataJsonImportExportDialog extends StatefulWidget {

@@ -1,8 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import '../package:shared_core/src/core/models/menu_item.dart';
-import '../package:shared_core/src/core/models/ingredient_reference.dart';
-import '../package:shared_core/src/core/models/customization_group.dart';
-import '../package:shared_core/src/core/models/nutrition_info.dart';
+import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 /// âœ… Production-ready card UI to preview a MenuItem as it would appear

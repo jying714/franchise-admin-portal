@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../package:shared_core/src/core/models/onboarding_validation_issue.dart';
+import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 
 /// Confirmation modal shown before onboarding publish.
 /// - Lists any remaining blocking issues (should be empty if UI is correct)

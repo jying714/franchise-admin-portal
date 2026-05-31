@@ -2,14 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../package:shared_core/src/core/models/menu_item_schema_issue.dart';
-import '../package:shared_core/src/core/providers/category_provider.dart';
-import '../package:shared_core/src/core/providers/ingredient_metadata_provider.dart';
-import '../package:shared_core/src/core/providers/ingredient_type_provider.dart';
-import '../package:shared_core/src/core/models/category.dart';
-import '../package:shared_core/src/core/models/ingredient_metadata.dart';
-import '../package:shared_core/src/core/models/ingredient_type_model.dart';
-import '../package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/ingredient_creation_dialog.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/ingredient_type_creation_dialog.dart';

@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import '../package:shared_core/src/core/models/category.dart';
+import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 import 'package:uuid/uuid.dart';
 
 class CategoryCreationDialog extends StatefulWidget {

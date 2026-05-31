@@ -3,10 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import '../package:shared_core/src/core/providers/onboarding_review_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 import 'package:franchise_admin_portal/widgets/confirmation_dialog.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/review/publish_confirmation_dialog.dart';
-import '../package:shared_core/src/core/models/onboarding_validation_issue.dart';
 
 // You will implement PublishConfirmationDialog as a separate file/component
 

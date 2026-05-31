@@ -3,10 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/financials/dashboard_stat_card.dart';
 import 'package:franchise_admin_portal/widgets/financials/revenue_stat_card.dart';
 import 'package:franchise_admin_portal/widgets/financials/kpi_card.dart';
@@ -15,7 +11,6 @@ import 'package:franchise_admin_portal/widgets/dashboard/activity_feed_widget.da
 import 'package:franchise_admin_portal/widgets/dashboard/urgent_status_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/notifications_panel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/live_operational_snapshot_widget.dart';
 

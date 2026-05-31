@@ -4,14 +4,12 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 // Web-only import:
 import 'dart:html' as html;
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class ExportMenuDialog extends StatefulWidget {
   const ExportMenuDialog({Key? key}) : super(key: key);
