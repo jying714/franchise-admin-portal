@@ -28,6 +28,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String? _promoError;
   bool _isPaying = false;
 
+  // P2.3: Wired MockPaymentService (foundations for real gateway later)
+  late final shared.PaymentService _paymentService = shared.createPaymentService();
+
   static const String validPromoCode = "PIZZA10";
   static const double promoDiscount = 10.0;
 
@@ -88,9 +91,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Future<bool> _processPayment() async {
     setState(() => _isPaying = true);
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _isPaying = false);
-    return true;
+
+    try {
+      final result = await _paymentService.processPayment(
+        amount: _orderTotal,
+        currency: 'USD',
+        paymentMethod: _selectedPayment?.name ?? 'posMock',
+        metadata: {
+          'franchiseId': Provider.of<shared.FranchiseProvider>(context, listen: false).currentFranchiseId,
+          'userId': FirebaseAuth.instance.currentUser?.uid,
+        },
+      );
+
+      setState(() => _isPaying = false);
+      return result.success;
+    } catch (e) {
+      setState(() => _isPaying = false);
+      shared.ErrorLogger.log(
+        message: 'Payment processing error: $e',
+        source: 'CheckoutScreen',
+        severity: 'error',
+      );
+      return false;
+    }
   }
 
   String _generateOrderId() {

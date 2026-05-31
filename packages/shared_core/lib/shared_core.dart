@@ -23,6 +23,9 @@ export 'src/core/services/firestore_service_impl.dart';
 export 'src/core/services/analytics_service.dart';
 export 'src/core/services/analytics_service_impl.dart';
 
+// P2.3 payment foundations (mock ready for real gateway swap)
+export 'src/core/services/mock_payment_service.dart';
+
 // P2 QR + deep link foundations (re-exported for public barrel usage)
 export 'utils.dart' show
     generateFranchiseQR,
