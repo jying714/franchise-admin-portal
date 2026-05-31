@@ -2,6 +2,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show FlutterError, FlutterErrorDetails;
 import 'package:provider/provider.dart';
+import 'dart:async' show Zone, runZonedGuarded;
+import 'package:franchise_mobile_app/core/widgets/global_error_boundary.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -74,17 +76,58 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // P2.3: Basic error boundary / global error handler for production readiness
+  // P2.3 Production Readiness: Comprehensive error boundaries + resilience
+  // 1. Flutter framework errors
   FlutterError.onError = (FlutterErrorDetails details) {
-    // In prod, forward to ErrorLogger or Crashlytics. For now log + present.
-    // Avoid crashing the app shell on widget errors.
+    shared.ErrorLogger.log(
+      message: 'FlutterError: ${details.exception}',
+      source: 'FlutterError',
+      severity: 'fatal',
+      stack: details.stack?.toString(),
+      contextData: {
+        'library': details.library,
+        'context': details.context?.toString(),
+      },
+    );
     FlutterError.presentError(details);
   };
+
+  // 2. Async / Zone errors (catches errors in Futures, streams, etc. outside try/catch)
+  void _reportZoneError(Object error, StackTrace stack) {
+    shared.ErrorLogger.log(
+      message: 'Uncaught async error: $error',
+      source: 'Zone',
+      severity: 'fatal',
+      stack: stack.toString(),
+      contextData: {'phase': 'runApp'},
+    );
+  }
+
+  // 3. Wire shared.ErrorLogger (can be overridden later with Crashlytics etc.)
+  shared.ErrorLogger.setCustomLogger(({
+    required String message,
+    String? source,
+    String? severity,
+    String? stack,
+    Map<String, dynamic>? contextData,
+  }) {
+    // Example: also send to Firebase Crashlytics in prod builds if package added
+    // if (kReleaseMode) FirebaseCrashlytics.instance.recordError(...);
+    // For now the default + our log above is sufficient
+  });
 
   // P2 deep link foundations (app_links)
   _initDeepLinks();
 
-  runApp(const MyApp());
+  // Run inside a guarded zone for full async coverage + wrap root with GlobalErrorBoundary
+  runZonedGuarded(() {
+    runApp(
+      GlobalErrorBoundary(
+        screenName: 'root',
+        child: const MyApp(),
+      ),
+    );
+  }, _reportZoneError);
 }
 
 /// P2: Initialize app_links for franchise deep links (fhq://f/{id} and https://franchisehq.io/f/{id})
@@ -237,6 +280,13 @@ class MyApp extends StatelessWidget {
                       ],
                       home: const HomeWrapper(),
                       debugShowCheckedModeBanner: false,
+                      // P2.3: Per-route error boundary for deep resilience (catches widget build errors in any screen)
+                      builder: (context, child) {
+                        return GlobalErrorBoundary(
+                          screenName: 'route',
+                          child: child ?? const SizedBox.shrink(),
+                        );
+                      },
                     );
                   },
                 );
