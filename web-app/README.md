@@ -1,16 +1,17 @@
-# franchise_admin_portal
+# Doughboys Pizzeria Web Admin Portal
 
-A new Flutter project.
+Flutter Web admin dashboard for franchise owners and platform admins.
 
-## Getting Started
+## Features
+- Menu / Category / Ingredient management
+- Onboarding wizard
+- Orders, analytics, staff management
+- Subscription & billing tools
+- Dynamic branding editor (in progress)
 
-This project is a starting point for a Flutter application.
+## Development
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+cd web-app
+flutter pub get
+flutter run -d chrome
