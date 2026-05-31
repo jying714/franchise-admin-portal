@@ -16,7 +16,7 @@ import 'package:shared_core/src/core/utils/user_permissions.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
-import 'package:shared_core/src/core/providers/role_guard.dart';
+import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 import 'package:shared_core/src/core/providers/admin_user_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 

@@ -16,7 +16,7 @@ import 'package:franchise_admin_portal/widgets/dashboard/urgent_status_card.dart
 import 'package:franchise_admin_portal/widgets/dashboard/notifications_panel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_core/src/core/providers/admin_user_provider.dart';
-import 'package:shared_core/src/core/providers/role_guard.dart';
+import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/live_operational_snapshot_widget.dart';
 
 /// ---------------------------------------------------------------------------

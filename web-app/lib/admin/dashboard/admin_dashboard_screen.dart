@@ -20,7 +20,7 @@ import 'package:shared_core/src/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 import 'package:shared_core/src/core/providers/franchise_selector.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/providers/role_guard.dart';
+import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
 import 'package:shared_core/src/core/providers/admin_user_provider.dart';
 import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';

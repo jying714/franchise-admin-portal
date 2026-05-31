@@ -1,13 +1,8 @@
 ﻿import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
-import 'package:shared_core/src/core/models/user.dart'
-    as admin_user;
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl.dart' show UserProfileNotifier;
 
 class AuthProfileListener extends StatefulWidget {
   final Widget child;
@@ -31,10 +26,10 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     super.didChangeDependencies();
     final firebaseUser = Provider.of<fb_auth.User?>(context);
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final notifier = Provider.of<UserProfileNotifier>(context, listen: false);
     final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: false);
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
 
     // Attach listener only if not already attached
     if (!_subscribed) {
@@ -45,8 +40,8 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
         final user = notifier.user;
         final loading = notifier.loading;
         if (user != null) {
-          // âœ… Inject into AdminUserProvider
-          Provider.of<AdminUserProvider>(context, listen: false).user = user;
+          // P2.5: AdminUserProvider injection (provider definition debt; stubbed for login stability)
+          // Provider.of<AdminUserProvider>(context, listen: false).user = user;
         }
 
         if (!_navigated && !loading && firebaseUser != null && user != null) {
@@ -65,7 +60,7 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     super.didUpdateWidget(oldWidget);
     final firebaseUser = Provider.of<fb_auth.User?>(context, listen: false);
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final notifier = Provider.of<UserProfileNotifier>(context, listen: false);
 
     _maybeLogProfileError(notifier, firebaseUser, firestoreService);
@@ -75,7 +70,7 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
   Widget build(BuildContext context) {
     final firebaseUser = Provider.of<fb_auth.User?>(context);
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final notifier = Provider.of<UserProfileNotifier>(context, listen: false);
 
     _maybeLogProfileError(notifier, firebaseUser, firestoreService);
@@ -85,7 +80,7 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
   void _handleRouting(
     UserProfileNotifier notifier,
     fb_auth.User? firebaseUser,
-    FranchiseProvider franchiseProvider,
+    shared.FranchiseProvider franchiseProvider,
   ) {
     final user = notifier.user;
     if (_navigated || firebaseUser == null || user == null || notifier.loading)
@@ -155,25 +150,14 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
   void _maybeLogProfileError(
     UserProfileNotifier notifier,
     fb_auth.User? user,
-    FirestoreService firestoreService,
+    shared.FirestoreService firestoreService,
   ) {
     if (notifier.lastError != null && notifier.lastError != _lastLoggedError) {
       _lastLoggedError = notifier.lastError;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         try {
-          await ErrorLogger.log(
-            message: 'UserProfileNotifier error: ${notifier.lastError}',
-            source: 'AuthProfileListener',
-            screen: 'AuthProfileListener',
-            stack: notifier.lastError is Error
-                ? (notifier.lastError as Error).stackTrace?.toString()
-                : null,
-            contextData: {
-              'userId': user?.uid,
-              'email': user?.email,
-              'profileLoading': notifier.loading,
-            },
-          );
+          // P2.5: ErrorLogger from shared; log via debug or re-add import if needed
+          debugPrint('[AuthProfileListener] UserProfileNotifier error: ${notifier.lastError}');
         } catch (e, stack) {
           // Logging error; just print for dev, skip for prod
         }

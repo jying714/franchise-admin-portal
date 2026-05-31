@@ -56,4 +56,14 @@ abstract class AuthService {
   Future<void> setDemoSession();
 
   Future<User> signInWithGoogle();
+
+  // === P2.5 Web-App Cleanup: Invite/Onboarding token helpers (admin flows) ===
+  // Stored in memory or local storage per platform impl; used by sign-in + onboarding wizard.
+  Future<String?> getInviteToken();
+  Future<void> saveInviteToken(String token);
+  Future<void> clearInviteToken();
+
+  // === P2.5: Phone auth stubs (web admin may use Firebase phone or stub for now) ===
+  Future<void> signInWithPhone(String phoneNumber);
+  Future<User?> verifySmsCode(String smsCode);
 }

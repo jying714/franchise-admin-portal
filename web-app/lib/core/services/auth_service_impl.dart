@@ -1,8 +1,7 @@
 // web-app/lib/core/services/auth_service_impl.dart
 
 import 'package:firebase_auth/firebase_auth.dart' as firebase;
-import 'package:shared_core/src/core/services/auth_service.dart';
-import 'package:shared_core/src/core/models/user.dart';
+import 'package:shared_core/shared_core.dart' show AuthService, User;
 
 class AuthServiceImpl implements AuthService {
   final firebase.FirebaseAuth _auth = firebase.FirebaseAuth.instance;
@@ -114,5 +113,56 @@ class AuthServiceImpl implements AuthService {
       onboardingComplete: false,
       updatedAt: null,
     );
+  }
+
+  // === Missing overrides from shared AuthService (P2.5 web cleanup) ===
+  @override
+  Future<void> sendEmailVerification() async {
+    final user = _auth.currentUser;
+    if (user != null && !user.emailVerified) {
+      await user.sendEmailVerification();
+    }
+  }
+
+  @override
+  Future<void> setGuestSession() async {
+    await _auth.signInAnonymously();
+  }
+
+  @override
+  Future<void> setDemoSession() async {
+    // Demo: anonymous + flag; in real would set custom claims or local flag
+    await _auth.signInAnonymously();
+  }
+
+  @override
+  Future<User> signInWithGoogle() async {
+    final credential = await _auth.signInWithPopup(firebase.GoogleAuthProvider());
+    final fbUser = credential.user!;
+    return _mapFirebaseUser(fbUser);
+  }
+
+  // === P2.5 Invite token helpers (web uses in-memory; persist via onboarding if needed) ===
+  String? _inviteToken;
+  @override
+  Future<String?> getInviteToken() async => _inviteToken;
+  @override
+  Future<void> saveInviteToken(String token) async {
+    _inviteToken = token;
+  }
+  @override
+  Future<void> clearInviteToken() async {
+    _inviteToken = null;
+  }
+
+  // P2.5 phone stubs for admin web (can enhance with firebase phone provider + captcha)
+  @override
+  Future<void> signInWithPhone(String phoneNumber) async {
+    throw UnimplementedError('Phone sign-in stubbed for P2.5 web cleanup; implement with Firebase auth phone flow + UI state.');
+  }
+
+  @override
+  Future<User?> verifySmsCode(String smsCode) async {
+    throw UnimplementedError('Phone verify stubbed for P2.5; requires verificationId from prior signInWithPhone.');
   }
 }

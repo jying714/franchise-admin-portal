@@ -1,14 +1,9 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/models/category.dart';
-import 'package:shared_core/src/core/providers/category_provider.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/franchise_info_provider.dart';
-import 'package:shared_core/src/core/providers/onboarding_progress_provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/core/providers/category_provider_impl.dart' show CategoryProviderImplImpl;
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/categories/category_list_tile.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/categories/category_form_dialog.dart';
@@ -36,10 +31,10 @@ class _OnboardingCategoriesScreenState
     super.didChangeDependencies();
     if (_hasInitialized) return;
 
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
 
     if (franchiseId.isNotEmpty && franchiseId != 'unknown') {
-      final provider = context.read<CategoryProvider>();
+      final provider = context.read<CategoryProviderImpl>();
 
       // ðŸ”¹ Force reload from Firestore to ensure UI shows latest categories
       provider
@@ -66,7 +61,7 @@ class _OnboardingCategoriesScreenState
 
   Future<void> _openCategoryForm([Category? category]) async {
     final loc = AppLocalizations.of(context)!;
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
 
     final result = await CategoryFormDialog.show(
       parentContext: context,
@@ -75,7 +70,7 @@ class _OnboardingCategoriesScreenState
     );
 
     if (result != null) {
-      context.read<CategoryProvider>().addOrUpdateCategory(result);
+      context.read<CategoryProviderImpl>().addOrUpdateCategory(result);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.categorySaved)),
       );
@@ -128,9 +123,9 @@ class _OnboardingCategoriesScreenState
 
   Future<void> _saveChanges() async {
     final loc = AppLocalizations.of(context)!;
-    final provider = context.read<CategoryProvider>();
+    final provider = context.read<CategoryProviderImpl>();
     final onboarding = context.read<OnboardingProgressProvider>();
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
 
     try {
       await provider.saveCategories();
@@ -180,7 +175,7 @@ class _OnboardingCategoriesScreenState
     );
 
     if (confirmed == true) {
-      final provider = context.read<CategoryProvider>();
+      final provider = context.read<CategoryProviderImpl>();
       final deletedCount = _stagedForDelete.length;
 
       try {
@@ -215,7 +210,7 @@ class _OnboardingCategoriesScreenState
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final provider = context.watch<CategoryProvider>();
+    final provider = context.watch<CategoryProviderImpl>();
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -377,7 +372,7 @@ class _OnboardingCategoriesScreenState
                             },
                             onEdit: () => _openCategoryForm(cat),
                             onDelete: () async {
-                              final provider = context.read<CategoryProvider>();
+                              final provider = context.read<CategoryProviderImpl>();
                               final loc = AppLocalizations.of(context)!;
                               final scaffold = ScaffoldMessenger.of(context);
 
