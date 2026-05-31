@@ -11,7 +11,7 @@ import '../package:shared_core/src/core/models/ingredient_metadata.dart';
 import '../package:shared_core/src/core/models/ingredient_type_model.dart';
 import '../package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/ingredient_creation_dialog.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/ingredient_type_creation_dialog.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/category_creation_dialog.dart';
 

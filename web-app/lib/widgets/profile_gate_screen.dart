@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
 import 'package:shared_core/src/core/services/firestore_service.dart';

@@ -4,7 +4,7 @@ import '../package:shared_core/src/core/models/ingredient_reference.dart';
 import '../package:shared_core/src/core/providers/ingredient_metadata_provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/multi_ingredient_selector.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 /// Allows devs to define multiple customization groups (e.g. Sauce, Toppings, Bread)
 /// within a menu item. Each group can specify label, limit, and list of ingredients.

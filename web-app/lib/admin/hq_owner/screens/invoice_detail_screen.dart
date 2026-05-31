@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 import 'package:shared_core/src/core/models/invoice.dart';
 import 'package:shared_core/src/core/services/firestore_service.dart';

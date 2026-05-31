@@ -2,7 +2,7 @@
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/src/core/models/category.dart';
 import 'package:franchise_admin_portal/widgets/categories/category_card.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 typedef CategoryTapCallback = void Function(Category category);
 

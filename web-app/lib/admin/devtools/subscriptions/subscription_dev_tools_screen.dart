@@ -1,5 +1,5 @@
 ﻿// File: lib/admin/developer/subscriptions/subscription_dev_tools_screen.dart
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/admin/devtools/subscriptions/manual_subscription_injector.dart';
 import 'package:franchise_admin_portal/admin/devtools/subscriptions/subscription_state_toggler.dart';

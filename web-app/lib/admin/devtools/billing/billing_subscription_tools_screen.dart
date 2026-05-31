@@ -5,7 +5,7 @@ import 'package:franchise_admin_portal/admin/devtools/billing/test_invoice_gener
 import 'package:franchise_admin_portal/admin/devtools/billing/test_invoice_cleaner.dart';
 import 'package:franchise_admin_portal/admin/devtools/billing/clear_all_test_invoices_button.dart';
 import 'package:franchise_admin_portal/admin/devtools/billing/mock_payment_tester.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class BillingSubscriptionToolsScreen extends StatelessWidget {
   const BillingSubscriptionToolsScreen({super.key});

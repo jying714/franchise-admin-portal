@@ -13,7 +13,7 @@ import 'package:franchise_admin_portal/admin/features/feature_settings_screen.da
 import 'package:franchise_admin_portal/admin/chat/chat_management_screen.dart';
 import 'package:franchise_admin_portal/admin/error_logs/error_logs_screen.dart';
 import 'package:franchise_admin_portal/admin/developer/platform/platform_plans_section.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_categories_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredients_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_items_screen.dart';

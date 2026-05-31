@@ -4,7 +4,7 @@ import 'package:shared_core/src/core/models/ingredient_metadata.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/portion_selector.dart';
 import 'package:franchise_admin_portal/widgets/customization/portion_pill_toggle.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 typedef CurrencyFormat = String Function(BuildContext context, num value);
 typedef GetSaladToppingUpcharge = double Function();

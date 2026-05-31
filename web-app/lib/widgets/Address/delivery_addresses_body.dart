@@ -6,7 +6,7 @@ import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/confirmation_dialog.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class DeliveryAddressesBody extends StatefulWidget {

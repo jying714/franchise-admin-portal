@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/src/core/models/user.dart';
 import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:shared_core/src/core/utils/error_logger.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class AccountDetailsPanel extends StatefulWidget {
   final User user;

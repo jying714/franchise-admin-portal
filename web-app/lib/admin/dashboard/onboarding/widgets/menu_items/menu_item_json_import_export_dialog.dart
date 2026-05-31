@@ -1,7 +1,7 @@
 ﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../package:shared_core/src/core/models/menu_item.dart';
 import '../package:shared_core/src/core/providers/menu_item_provider.dart';

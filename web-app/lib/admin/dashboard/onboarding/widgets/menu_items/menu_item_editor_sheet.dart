@@ -32,7 +32,7 @@ import '../package:shared_core/src/core/providers/ingredient_type_provider.dart'
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_utility.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../package:shared_core/src/core/providers/ingredient_type_provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import '../package:shared_core/src/core/models/category.dart'
     as app_models;
 

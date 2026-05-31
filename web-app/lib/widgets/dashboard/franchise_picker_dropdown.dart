@@ -2,7 +2,7 @@
 import 'package:provider/provider.dart';
 import 'package:shared_core/src/core/providers/franchise_provider.dart';
 import 'package:shared_core/src/core/models/franchise_info.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/src/core/providers/admin_user_provider.dart';
 
 class FranchisePickerDropdown extends StatelessWidget {

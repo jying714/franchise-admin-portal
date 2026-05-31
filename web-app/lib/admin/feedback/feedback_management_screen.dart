@@ -6,7 +6,7 @@ import 'package:shared_core/src/core/models/feedback_entry.dart'
 import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/src/core/providers/franchise_provider.dart';
 import 'package:franchise_admin_portal/widgets/feedback/feedback_detail_dialog.dart';
 

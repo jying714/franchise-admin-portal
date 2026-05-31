@@ -1,7 +1,7 @@
 ﻿import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'config/design_tokens.dart';
 import 'config/branding_config.dart';
 import 'widgets/empty_state_widget.dart';

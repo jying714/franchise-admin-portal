@@ -2,7 +2,7 @@
 import 'package:franchise_admin_portal/admin/devtools/platform/seed_platform_features_form.dart';
 import 'package:franchise_admin_portal/admin/devtools/platform/seed_platform_plans_form.dart';
 import 'package:franchise_admin_portal/admin/devtools/platform/remove_platform_plans_form.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/devtools/platform/remove_platform_features_form.dart';
 
 class PlatformFeaturePlanToolsScreen extends StatelessWidget {

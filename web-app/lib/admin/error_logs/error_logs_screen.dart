@@ -8,7 +8,7 @@ import 'widgets/error_log_stats_bar.dart';
 import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
 import 'package:franchise_admin_portal/widgets/clear_filters_button.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_empty_state_widget.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/src/core/providers/franchise_provider.dart';
 import 'package:shared_core/src/core/providers/admin_user_provider.dart';
 

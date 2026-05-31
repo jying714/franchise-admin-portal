@@ -1,7 +1,7 @@
 ﻿// File: lib/admin/dashboard/onboarding/widgets/feature_toggle_tile.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/src/core/providers/franchise_feature_provider.dart';
 import 'package:shared_core/src/core/providers/franchise_info_provider.dart';

@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/src/core/providers/admin_user_provider.dart';
 import 'package:shared_core/src/core/models/dashboard_section.dart';
 import 'package:shared_core/src/core/services/firestore_service.dart';

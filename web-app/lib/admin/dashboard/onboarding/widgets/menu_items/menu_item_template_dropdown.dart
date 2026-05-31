@@ -4,7 +4,7 @@ import '../package:shared_core/src/core/models/menu_item.dart';
 import '../package:shared_core/src/core/providers/menu_item_provider.dart';
 import '../package:shared_core/src/core/providers/franchise_info_provider.dart';
 import '../package:shared_core/src/core/utils/error_logger.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class MenuItemTemplateDropdown extends StatefulWidget {
   final void Function(MenuItem template) onTemplateApplied;

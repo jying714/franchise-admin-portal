@@ -4,7 +4,7 @@ import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.d
 import 'package:shared_core/src/core/models/alert_model.dart';
 import 'package:shared_core/src/core/services/firestore_service.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/src/core/providers/role_guard.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/src/core/providers/admin_user_provider.dart';

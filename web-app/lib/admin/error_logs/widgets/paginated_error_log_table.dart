@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_core/src/core/models/error_log.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'error_log_detail_drawer.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 String _truncateTooltip(String text, [int max = 150]) {
   if (text.length <= max) return text;

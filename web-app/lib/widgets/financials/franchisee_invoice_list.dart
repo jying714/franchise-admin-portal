@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/src/core/models/platform_invoice.dart';
 import 'package:franchise_admin_portal/widgets/financials/franchisee_invoice_tile.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_empty_state_widget.dart';

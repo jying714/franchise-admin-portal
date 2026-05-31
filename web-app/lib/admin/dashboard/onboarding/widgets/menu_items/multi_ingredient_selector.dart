@@ -4,7 +4,7 @@ import '../package:shared_core/src/core/models/ingredient_reference.dart';
 import '../package:shared_core/src/core/models/ingredient_metadata.dart';
 import '../package:shared_core/src/core/providers/ingredient_metadata_provider.dart';
 import '../package:shared_core/src/core/utils/error_logger.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 /// A reusable multi-selector for choosing ingredients from metadata.
