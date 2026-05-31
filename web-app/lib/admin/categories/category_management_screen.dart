@@ -9,7 +9,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_core/src/core/providers/franchise_provider.dart';
 import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
 import 'package:shared_core/src/core/utils/user_permissions.dart';
-import 'package:shared_core/src/core/providers/role_guard.dart';
+import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/active_plan_banner.dart';

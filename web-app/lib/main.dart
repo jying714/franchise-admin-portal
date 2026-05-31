@@ -16,6 +16,7 @@ import 'package:franchise_admin_portal/core/utils/app_local_storage.dart';
 import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl.dart' show UserProfileNotifier;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/core/services/auth_service_impl.dart' show AuthServiceImpl;
+import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/landing_page.dart';
 import 'package:franchise_admin_portal/admin/sign_in/sign_in_screen.dart';
 import 'package:franchise_admin_portal/widgets/profile_gate_screen.dart';
@@ -161,7 +162,11 @@ void main() {
         providers: [
           ChangeNotifierProvider(create: (_) => UserProfileNotifier()),
           ChangeNotifierProvider(
-              create: (_) => shared.FranchiseProvider(storage)), // P2.5: ctor fixed
+              create: (_) {
+                final fp = shared.FranchiseProvider(storage);
+                DesignTokens.setFranchiseProvider(fp); // P2.5 dynamic theming bridge
+                return fp;
+              }), // P2.5: ctor fixed + UiConfig/DesignTokens wired
           ChangeNotifierProvider<shared.AuthService>.value(value: authService),
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           Provider<shared.FirestoreService>.value(value: firestoreService),
@@ -323,7 +328,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
         return MultiProvider(
           providers: [
             ChangeNotifierProvider(create: (_) => AdminUserProvider()),
-            ChangeNotifierProxyProvider<FranchiseProvider,
+            ChangeNotifierProxyProvider<shared.FranchiseProvider,
                 FranchiseSubscriptionNotifier>(
               create: (_) => FranchiseSubscriptionNotifier(
                 service: FranchiseSubscriptionService(),
@@ -354,7 +359,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
             ChangeNotifierProvider(
                 create: (_) => PlatformPlanSelectionProvider()),
             // FirestoreService is provided at the root level above.
-            ChangeNotifierProxyProvider2<FranchiseProvider, FirestoreService,
+            ChangeNotifierProxyProvider2<shared.FranchiseProvider, shared.FirestoreService,
                 FranchiseInfoProvider>(
               create: (_) => FranchiseInfoProvider(
                 firestore: Provider.of<shared.FirestoreService>(_, listen: false),
@@ -371,7 +376,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 return provider;
               },
             ),
-            ChangeNotifierProxyProvider2<FranchiseProvider, FirestoreService,
+            ChangeNotifierProxyProvider2<shared.FranchiseProvider, shared.FirestoreService,
                 FranchiseFeatureProvider>(
               create: (_) => FranchiseFeatureProvider(
                 service: FranchiseFeatureService(),
@@ -458,7 +463,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 return provider;
               },
             ),
-            ChangeNotifierProxyProvider3<FirestoreService, FranchiseProvider,
+            ChangeNotifierProxyProvider3<shared.FirestoreService, shared.FranchiseProvider,
                 FranchiseInfoProvider, MenuItemProvider>(
               create: (_) => MenuItemProvider(
                 firestoreService:
