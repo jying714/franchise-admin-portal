@@ -1,22 +1,14 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/models/order.dart'
+import 'package:shared_core/shared_core.dart' as shared; // Phase 5 final cleanup
     as order_model;
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/orders/order_detail_dialog.dart';
 
 class OrderManagementScreen extends StatelessWidget {

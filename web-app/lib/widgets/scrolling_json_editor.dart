@@ -59,7 +59,7 @@ class _ScrollingJsonEditorState extends State<ScrollingJsonEditor> {
       shared.ErrorLogger.log(
         message: 'Invalid JSON in ScrollingJsonEditor',
         source: 'scrolling_json_editor.dart',
-        screen: 'ingredient_type_management_screen',
+        source: 'ingredient_type_management_screen' /* was screen, Phase 5 */,
         severity: 'warning',
         stack: stack.toString(),
         contextData: {
@@ -154,6 +154,7 @@ class _ScrollingJsonEditorState extends State<ScrollingJsonEditor> {
     );
   }
 }
+
 
 
 

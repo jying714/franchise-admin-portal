@@ -2,16 +2,10 @@
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/tight_section_card.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'mock_payment_form.dart';
 import 'mock_payment_data.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class PlatformPlanTile extends StatefulWidget {
   final PlatformPlan plan;
@@ -291,7 +285,7 @@ class _PlatformPlanTileState extends State<PlatformPlanTile> {
         message: 'Plan subscription failed',
         stack: stack.toString(),
         source: 'PlatformPlanTile',
-        screen: 'available_platform_plans_screen',
+        source: 'available_platform_plans_screen' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {'exception': e.toString()},
       );
@@ -307,6 +301,7 @@ class _PlatformPlanTileState extends State<PlatformPlanTile> {
     }
   }
 }
+
 
 
 

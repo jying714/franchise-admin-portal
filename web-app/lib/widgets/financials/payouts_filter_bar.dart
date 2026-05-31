@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class PayoutsFilterBar extends StatefulWidget {
   final bool developerMode;
@@ -138,7 +137,7 @@ class _PayoutsFilterBarState extends State<PayoutsFilterBar> {
                           'Failed to update search query in PayoutsFilterBar: $e',
                       stack: stack.toString(),
                       source: 'PayoutsFilterBar',
-                      screen: 'payouts_filter_bar.dart',
+                      source: 'payouts_filter_bar.dart' /* was screen, Phase 5 */,
                       severity: 'warning',
                     );
                   }
@@ -169,6 +168,7 @@ class _PayoutsFilterBarState extends State<PayoutsFilterBar> {
     );
   }
 }
+
 
 
 

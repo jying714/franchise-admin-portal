@@ -4,9 +4,6 @@ import 'package:uuid/uuid.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class TestInvoiceGenerator extends StatefulWidget {
   const TestInvoiceGenerator({super.key});
@@ -49,7 +46,7 @@ class _TestInvoiceGeneratorState extends State<TestInvoiceGenerator> {
         message: 'Failed to load franchises: $e',
         stack: stack.toString(),
         source: 'TestInvoiceGenerator',
-        screen: 'test_invoice_generator',
+        source: 'test_invoice_generator' /* was screen, Phase 5 */,
         severity: 'error',
       );
     }
@@ -104,7 +101,7 @@ class _TestInvoiceGeneratorState extends State<TestInvoiceGenerator> {
         message: 'Failed to generate test invoice: $e',
         stack: stack.toString(),
         source: 'TestInvoiceGenerator',
-        screen: 'test_invoice_generator',
+        source: 'test_invoice_generator' /* was screen, Phase 5 */,
         severity: 'error',
       );
       if (!mounted) return;
@@ -199,6 +196,7 @@ class _TestInvoiceGeneratorState extends State<TestInvoiceGenerator> {
     );
   }
 }
+
 
 
 

@@ -3,9 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class ImpersonationDialog extends StatefulWidget {
   final String franchiseId;
@@ -79,7 +76,7 @@ class _ImpersonationDialogState extends State<ImpersonationDialog> {
         message: 'Failed to fetch users for impersonation: $e',
         stack: stack.toString(),
         source: 'ImpersonationDialog',
-        screen: 'DeveloperDashboardScreen',
+        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -400,6 +397,7 @@ class ImpersonationUser {
     required this.role,
   });
 }
+
 
 
 

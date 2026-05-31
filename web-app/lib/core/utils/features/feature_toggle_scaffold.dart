@@ -3,7 +3,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FeatureToggleScaffold extends StatelessWidget {
   final Map<String, bool> currentState;

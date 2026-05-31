@@ -2,8 +2,6 @@
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AddStaffDialog extends StatefulWidget {
   final AppLocalizations loc;
@@ -27,7 +25,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
         message:
             'AppLocalizations.of(context) returned null in AddStaffDialog.',
         source: 'show_add_staff_dialog.dart',
-        screen: 'AddStaffDialog',
+        source: 'AddStaffDialog' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {
           'widget': 'AddStaffDialog',
@@ -131,7 +129,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
                   message: e.toString(),
                   stack: stack.toString(),
                   source: 'staff_access_screen',
-                  screen: 'AddStaffDialog',
+                  source: 'AddStaffDialog' /* was screen, Phase 5 */,
                   severity: 'error',
                   contextData: {
                     'franchiseId': franchiseId,
@@ -150,6 +148,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
     );
   }
 }
+
 
 
 

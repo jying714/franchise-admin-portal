@@ -2,8 +2,6 @@
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 /// InvoiceDetailScreen
@@ -61,7 +59,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
             shared.ErrorLogger.log(
               message: snapshot.error.toString(),
               source: 'InvoiceDetailScreen',
-              screen: 'FutureBuilder',
+              source: 'FutureBuilder' /* was screen, Phase 5 */,
               severity: 'error',
               contextData: {'invoiceId': widget.invoiceId},
             );
@@ -307,6 +305,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     }
   }
 }
+
 
 
 

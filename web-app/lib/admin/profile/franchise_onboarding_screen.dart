@@ -2,22 +2,14 @@
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
 import 'package:franchise_admin_portal/widgets/business/business_hours_editor.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 String roleToDashboardRoute(List<String> roles) {
   if (roles.contains('platform_owner')) return '/platform-owner/dashboard';
@@ -132,7 +124,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
         message: 'Error loading invite: $e',
         stack: st.toString(),
         source: 'FranchiseOnboardingScreen',
-        screen: 'franchise_onboarding',
+        source: 'franchise_onboarding' /* was screen, Phase 5 */,
         severity: 'error',
       );
       setState(() {
@@ -313,7 +305,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
         message: 'Failed to save franchise profile: $e',
         stack: st.toString(),
         source: 'FranchiseOnboardingScreen',
-        screen: 'franchise_onboarding',
+        source: 'franchise_onboarding' /* was screen, Phase 5 */,
         severity: 'error',
       );
       print('[FranchiseOnboardingScreen] ERROR: $e\n$st');
@@ -570,6 +562,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
     );
   }
 }
+
 
 
 

@@ -3,8 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class PluginConfigDialog extends StatefulWidget {
   final String pluginId;
@@ -64,7 +62,7 @@ class _PluginConfigDialogState extends State<PluginConfigDialog> {
         message: 'Failed to save plugin config: $e',
         stack: stack.toString(),
         source: 'PluginConfigDialog',
-        screen: 'PluginConfigDialog',
+        source: 'PluginConfigDialog' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -304,6 +302,7 @@ class _ComingSoonCard extends StatelessWidget {
     );
   }
 }
+
 
 
 

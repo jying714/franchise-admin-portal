@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/src/core/models/order.dart'
+import 'package:shared_core/shared_core.dart' as shared; // Phase 5 final cleanup
     as order_model;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 

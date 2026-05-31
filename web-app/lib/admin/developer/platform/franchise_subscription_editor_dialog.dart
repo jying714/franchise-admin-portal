@@ -3,13 +3,7 @@ import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FranchiseSubscriptionEditorDialog extends StatefulWidget {
   final FranchiseSubscription? subscription; // null if creating new
@@ -103,7 +97,7 @@ class _FranchiseSubscriptionEditorDialogState
         message: 'Failed to load platform plans: $e',
         stack: st.toString(),
         source: 'FranchiseSubscriptionEditorDialog',
-        screen: 'franchise_subscription_editor',
+        source: 'franchise_subscription_editor' /* was screen, Phase 5 */,
         severity: 'error',
       );
     }
@@ -152,7 +146,7 @@ class _FranchiseSubscriptionEditorDialogState
         message: 'Failed to save franchise subscription: $e',
         stack: st.toString(),
         source: 'FranchiseSubscriptionEditorDialog',
-        screen: 'franchise_subscription_editor',
+        source: 'franchise_subscription_editor' /* was screen, Phase 5 */,
         severity: 'error',
       );
       ScaffoldMessenger.of(context).showSnackBar(
@@ -322,6 +316,7 @@ class _FranchiseSubscriptionEditorDialogState
     );
   }
 }
+
 
 
 

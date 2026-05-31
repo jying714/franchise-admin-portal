@@ -18,7 +18,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class LiveOperationalSnapshotWidget extends StatelessWidget {
   final String franchiseId;
@@ -67,7 +66,7 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
             stack: snapshot.error.toString(),
             source: 'LiveOperationalSnapshotWidget',
             severity: 'error',
-            screen: 'dashboard_home_screen.dart',
+            source: 'dashboard_home_screen.dart' /* was screen, Phase 5 */,
             contextData: {'franchiseId': franchiseId},
           );
           return const Text('Error loading live metrics.');
@@ -182,7 +181,7 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
             stack: st.toString(),
             source: 'LiveOperationalSnapshotWidget',
             severity: 'error',
-            screen: 'dashboard_home_screen.dart',
+            source: 'dashboard_home_screen.dart' /* was screen, Phase 5 */,
             contextData: {'franchiseId': franchiseId, 'docCount': docs.length},
           );
           return const Text('Error calculating metrics.');
@@ -216,6 +215,7 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
     );
   }
 }
+
 
 
 

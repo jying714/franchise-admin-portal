@@ -2,9 +2,6 @@
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class PlanSwapperTool extends StatefulWidget {
   const PlanSwapperTool({super.key});
@@ -34,7 +31,7 @@ class _PlanSwapperToolState extends State<PlanSwapperTool> {
       await shared.ErrorLogger.log(
         message: 'Plan manually swapped by developer',
         source: 'PlanSwapperTool',
-        screen: 'subscription_dev_tools_screen',
+        source: 'subscription_dev_tools_screen' /* was screen, Phase 5 */,
         contextData: {
           'franchiseId': _selectedSub!.franchiseId,
           'newPlanId': _selectedPlan!.id,
@@ -55,7 +52,7 @@ class _PlanSwapperToolState extends State<PlanSwapperTool> {
       await shared.ErrorLogger.log(
         message: 'Failed to swap plan: $e',
         source: 'PlanSwapperTool',
-        screen: 'subscription_dev_tools_screen',
+        source: 'subscription_dev_tools_screen' /* was screen, Phase 5 */,
         stack: stack.toString(),
         severity: 'error',
       );
@@ -148,6 +145,7 @@ class _PlanSwapperToolState extends State<PlanSwapperTool> {
     );
   }
 }
+
 
 
 

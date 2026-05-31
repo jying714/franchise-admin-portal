@@ -58,7 +58,7 @@ class _MockPaymentEditorState extends State<MockPaymentEditor> {
         message: 'MockPaymentEditor error: $e',
         stack: stack.toString(),
         source: 'MockPaymentEditor',
-        screen: 'mock_payment_editor',
+        source: 'mock_payment_editor' /* was screen, Phase 5 */,
         severity: 'error',
       );
       if (!mounted) return;
@@ -141,6 +141,7 @@ class _MockPaymentEditorState extends State<MockPaymentEditor> {
     );
   }
 }
+
 
 
 

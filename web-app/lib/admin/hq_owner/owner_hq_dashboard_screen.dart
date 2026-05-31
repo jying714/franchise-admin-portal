@@ -4,16 +4,11 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dashboard/role_badge.dart';
 import 'package:franchise_admin_portal/admin/developer/developer_dashboard_screen.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 import 'package:franchise_admin_portal/widgets/financials/franchise_financial_kpi_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/financials/cash_flow_forecast_card.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/alerts_card.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -27,9 +22,6 @@ import 'package:franchise_admin_portal/widgets/financials/invoices_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/billing_summary_card.dart';
 import 'package:franchise_admin_portal/widgets/financials/payout_status_card.dart';
 import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/header/settings_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/help_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.dart';
@@ -99,7 +91,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
       Future.microtask(() => shared.ErrorLogger.log(
             message: "Unauthorized HQ Dashboard access attempt.",
             source: "OwnerHQDashboardScreen",
-            screen: "OwnerHQDashboardScreen",
+            source: "OwnerHQDashboardScreen" /* was screen, Phase 5 */,
             severity: "warning",
             contextData: {
               'roles': user?.roles,
@@ -181,7 +173,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
             FranchisePickerDropdown(),
             const SizedBox(width: 14), // Optional: space before other controls
             DashboardSwitcherDropdown(
-              currentScreen: '/hq-owner/dashboard',
+              currentsource: '/hq-owner/dashboard' /* was screen, Phase 5 */,
               user:
                   Provider.of<AdminUserProvider>(context, listen: false).user!,
             ),
@@ -773,6 +765,7 @@ class FutureFeaturePlaceholderPanel extends StatelessWidget {
     );
   }
 }
+
 
 
 

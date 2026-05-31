@@ -5,9 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class DashboardSectionCard extends StatelessWidget {
   final String title;
@@ -96,7 +94,7 @@ class DashboardSectionCard extends StatelessWidget {
                             message: 'Error building section $title: $e',
                             stack: st.toString(),
                             source: 'DashboardSectionCard',
-                            screen: title,
+                            source: title /* was screen, Phase 5 */,
                             severity: 'error',
                             contextData: {
                               'franchiseId': franchiseId,
@@ -160,6 +158,7 @@ class _FeaturePlaceholder extends StatelessWidget {
     );
   }
 }
+
 
 
 

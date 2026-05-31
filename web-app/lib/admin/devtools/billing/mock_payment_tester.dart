@@ -3,9 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:uuid/uuid.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/mock_payment_data.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/mock_payment_form.dart';
 
@@ -130,7 +127,7 @@ class _MockPaymentTesterState extends State<MockPaymentTester> {
         message: 'Failed to simulate payment: $e',
         stack: stack.toString(),
         source: 'MockPaymentTester',
-        screen: 'dev_tools_screen',
+        source: 'dev_tools_screen' /* was screen, Phase 5 */,
         severity: 'error',
       );
 
@@ -142,6 +139,7 @@ class _MockPaymentTesterState extends State<MockPaymentTester> {
     }
   }
 }
+
 
 
 

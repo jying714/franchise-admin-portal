@@ -4,8 +4,6 @@ import 'dart:convert';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dynamic_form/smart_dropdown_or_text_field.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dynamic_form/dynamic_field_input.dart';
 import 'package:franchise_admin_portal/widgets/dynamic_form/dynamic_array_editor.dart';
 import 'package:franchise_admin_portal/widgets/dynamic_form/customization_group_editor.dart';

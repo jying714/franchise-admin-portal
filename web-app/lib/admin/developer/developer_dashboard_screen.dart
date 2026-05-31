@@ -1,15 +1,11 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_sidebar.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_bottom_nav_bar.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dialogs/franchise_selector_dialog_content.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/developer/overview_section.dart';
 import 'package:franchise_admin_portal/widgets/developer/impersonation_tools_section.dart';
 import 'package:franchise_admin_portal/widgets/developer/error_logs_section.dart';
@@ -19,7 +15,6 @@ import 'package:franchise_admin_portal/widgets/developer/schema_browser_section.
 import 'package:franchise_admin_portal/widgets/developer/audit_trail_section.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/owner_hq_dashboard_screen.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/devtools/billing/billing_subscription_tools_screen.dart';
 import 'package:franchise_admin_portal/admin/devtools/widgets/dev_tools_sidebar_group.dart';
 import 'package:franchise_admin_portal/admin/devtools/subscriptions/subscription_dev_tools_screen.dart';
@@ -78,7 +73,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
     final appUser = Provider.of<AdminUserProvider>(context).user;
     if (appUser == null) {
       print(
-          '[DEBUG] DeveloperDashboardScreen: appUser is null, showing spinner');
+          '[DEBUG] DeveloperDashboardsource: appUser is null /* was screen, Phase 5 */, showing spinner');
       return Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -129,7 +124,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
           FranchisePickerDropdown(),
           const SizedBox(width: 8),
           DashboardSwitcherDropdown(
-            currentScreen: '/developer/dashboard',
+            currentsource: '/developer/dashboard' /* was screen, Phase 5 */,
             user: appUser,
           ),
           // IconButton(
@@ -188,7 +183,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
                           shared.ErrorLogger.log(
                             message: 'Developer dashboard section error: $e',
                             source: 'DeveloperDashboardScreen',
-                            screen: section.title,
+                            source: section.title /* was screen, Phase 5 */,
                             stack: stack.toString(),
                             severity: 'error',
                             contextData: {
@@ -319,6 +314,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
     ];
   }
 }
+
 
 
 

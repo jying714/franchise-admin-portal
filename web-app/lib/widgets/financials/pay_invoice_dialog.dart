@@ -4,10 +4,6 @@ import 'package:provider/provider.dart';
 
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class PayInvoiceDialog extends StatefulWidget {
   final PlatformInvoice invoice;
@@ -37,7 +33,7 @@ class _PayInvoiceDialogState extends State<PayInvoiceDialog> {
     return RoleGuard(
       allowedRoles: ['developer', 'hq_owner'],
       featureName: 'PayPlatformInvoice',
-      screen: 'PayInvoiceDialog',
+      source: 'PayInvoiceDialog' /* was screen, Phase 5 */,
       child: AlertDialog(
         title: Text(loc.payInvoice),
         content: Column(
@@ -98,7 +94,7 @@ class _PayInvoiceDialogState extends State<PayInvoiceDialog> {
                         message: e.toString(),
                         stack: stack.toString(),
                         source: 'PayInvoiceDialog',
-                        screen: 'PayInvoiceDialog',
+                        source: 'PayInvoiceDialog' /* was screen, Phase 5 */,
                         severity: 'error',
                         contextData: {
                           'invoiceId': widget.invoice.id,
@@ -121,6 +117,7 @@ class _PayInvoiceDialogState extends State<PayInvoiceDialog> {
     );
   }
 }
+
 
 
 

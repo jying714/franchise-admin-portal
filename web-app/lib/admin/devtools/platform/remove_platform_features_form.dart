@@ -36,7 +36,7 @@ class _RemovePlatformFeaturesFormState
       await shared.ErrorLogger.log(
         message: 'Failed to fetch platform_features for deletion',
         stack: st.toString(),
-        screen: 'RemovePlatformFeaturesForm',
+        source: 'RemovePlatformFeaturesForm' /* was screen, Phase 5 */,
         source: 'remove_platform_features_form.dart',
         severity: 'warning',
       );
@@ -68,7 +68,7 @@ class _RemovePlatformFeaturesFormState
       await shared.ErrorLogger.log(
         message: 'Failed to delete platform_feature',
         stack: st.toString(),
-        screen: 'RemovePlatformFeaturesForm',
+        source: 'RemovePlatformFeaturesForm' /* was screen, Phase 5 */,
         source: 'remove_platform_features_form.dart',
         contextData: {'featureKey': _selectedFeatureKey},
         severity: 'error',
@@ -155,6 +155,7 @@ class _RemovePlatformFeaturesFormState
     );
   }
 }
+
 
 
 

@@ -3,10 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/developer/plugin_config_dialog.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class PluginRegistrySection extends StatefulWidget {
   final String? franchiseId;
@@ -79,7 +76,7 @@ class _PluginRegistrySectionState extends State<PluginRegistrySection> {
         message: 'Failed to load plugins: $e',
         stack: stack.toString(),
         source: 'PluginRegistrySection',
-        screen: 'DeveloperDashboardScreen',
+        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -100,7 +97,7 @@ class _PluginRegistrySectionState extends State<PluginRegistrySection> {
       await shared.ErrorLogger.log(
         message: 'Plugin toggled: ${plugin.key} -> $enabled',
         source: 'PluginRegistrySection',
-        screen: 'DeveloperDashboardScreen',
+        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'info',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -113,7 +110,7 @@ class _PluginRegistrySectionState extends State<PluginRegistrySection> {
         message: 'Failed to toggle plugin: $e',
         stack: stack.toString(),
         source: 'PluginRegistrySection',
-        screen: 'DeveloperDashboardScreen',
+        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -458,6 +455,7 @@ class PluginIntegration {
     );
   }
 }
+
 
 
 

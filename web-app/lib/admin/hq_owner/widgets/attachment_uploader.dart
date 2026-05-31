@@ -5,7 +5,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 /// AttachmentUploader
 /// For payout attachments (detail or bulk), reusable for other models.
@@ -73,7 +72,7 @@ class _AttachmentUploaderState extends State<AttachmentUploader> {
         message: 'AttachmentUploader: Failed to upload - $e',
         stack: stack.toString(),
         source: 'AttachmentUploader',
-        screen: 'attachment_uploader.dart',
+        source: 'attachment_uploader.dart' /* was screen, Phase 5 */,
         severity: 'error',
       );
       setState(() {
@@ -93,7 +92,7 @@ class _AttachmentUploaderState extends State<AttachmentUploader> {
         message: 'AttachmentUploader: Failed to delete attachment - $e',
         stack: stack.toString(),
         source: 'AttachmentUploader',
-        screen: 'attachment_uploader.dart',
+        source: 'attachment_uploader.dart' /* was screen, Phase 5 */,
         severity: 'error',
       );
       setState(() {
@@ -190,6 +189,7 @@ class _AttachmentUploaderState extends State<AttachmentUploader> {
     );
   }
 }
+
 
 
 

@@ -6,10 +6,6 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FullPlatformPlansScreen extends StatefulWidget {
   const FullPlatformPlansScreen({super.key});
@@ -36,7 +32,7 @@ class _FullPlatformPlansScreenState extends State<FullPlatformPlansScreen> {
         message: 'load_platform_plans_failed',
         stack: stack.toString(),
         source: 'FullPlatformPlansScreen',
-        screen: 'full_platform_plans_screen',
+        source: 'full_platform_plans_screen' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {'exception': e.toString()},
       );
@@ -164,6 +160,7 @@ class _FullPlatformPlansScreenState extends State<FullPlatformPlansScreen> {
     );
   }
 }
+
 
 
 

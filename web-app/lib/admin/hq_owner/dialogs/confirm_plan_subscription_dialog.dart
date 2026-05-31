@@ -3,8 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class ConfirmPlanSubscriptionDialog extends StatelessWidget {
@@ -87,7 +85,7 @@ class ConfirmPlanSubscriptionDialog extends StatelessWidget {
                 message: 'Subscription failed: $e',
                 stack: st.toString(),
                 source: 'ConfirmPlanSubscriptionDialog',
-                screen: 'available_platform_plans_screen',
+                source: 'available_platform_plans_screen' /* was screen, Phase 5 */,
                 severity: 'error',
               );
               ScaffoldMessenger.of(context).showSnackBar(
@@ -104,6 +102,7 @@ class ConfirmPlanSubscriptionDialog extends StatelessWidget {
     );
   }
 }
+
 
 
 

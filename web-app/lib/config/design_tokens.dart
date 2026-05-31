@@ -10,10 +10,10 @@ class DesignTokens {
   static shared.FranchiseProvider? _fp;
 
   /// Public getter for other delegation layers (AppConfig, etc.).
-  static shared.FranchiseProvider? get shared.FranchiseProvider => _fp;
+  static shared.FranchiseProvider? get shared.franchiseProvider => _fp;
 
   /// Call once early (e.g. main.dart after MultiProvider) so all static getters see live branding.
-  static void setshared.FranchiseProvider(shared.FranchiseProvider? provider) {
+  static void setFranchiseProvider(shared.FranchiseProvider? provider) {
     _fp = provider;
   }
 
@@ -201,4 +201,5 @@ class DesignTokens {
     return Color(int.parse('FF$cleaned', radix: 16));
   }
 }
+
 

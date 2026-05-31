@@ -5,9 +5,6 @@ import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 
 class CashFlowForecastCard extends StatefulWidget {
@@ -64,7 +61,7 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
       await shared.ErrorLogger.log(
         message: 'Failed to load cash flow forecast: $e',
         source: 'CashFlowForecastCard',
-        screen: 'CashFlowForecastCard',
+        source: 'CashFlowForecastCard' /* was screen, Phase 5 */,
         stack: st.toString(),
         severity: 'error',
         contextData: {
@@ -302,6 +299,7 @@ class _FeaturePlaceholder extends StatelessWidget {
     );
   }
 }
+
 
 
 

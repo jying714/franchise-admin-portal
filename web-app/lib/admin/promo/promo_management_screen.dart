@@ -1,23 +1,14 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/admin/promo/promo_form_dialog.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class PromoManagementScreen extends StatelessWidget {
   const PromoManagementScreen({super.key});
@@ -53,7 +44,7 @@ class PromoManagementScreen extends StatelessWidget {
         'admin'
       ],
       featureName: 'promo_management_screen',
-      screen: 'PromoManagementScreen',
+      source: 'PromoManagementScreen' /* was screen, Phase 5 */,
       child: SubscriptionAccessGuard(
         child: Scaffold(
           backgroundColor: colorScheme.background,
@@ -108,7 +99,7 @@ class PromoManagementScreen extends StatelessWidget {
                                           await shared.ErrorLogger.log(
                                             message: e.toString(),
                                             source: 'promo_management_screen',
-                                            screen: 'PromoManagementScreen',
+                                            source: 'PromoManagementScreen' /* was screen, Phase 5 */,
                                             stack: stack.toString(),
                                             contextData: {
                                               'franchiseId': franchiseId,
@@ -200,8 +191,7 @@ class PromoManagementScreen extends StatelessWidget {
                                                       message: e.toString(),
                                                       source:
                                                           'promo_management_screen',
-                                                      screen:
-                                                          'PromoManagementScreen',
+                                                      source: 'PromoManagementScreen' /* was screen, Phase 5 */,
                                                       stack: stack.toString(),
                                                       contextData: {
                                                         'franchiseId':
@@ -283,7 +273,7 @@ class PromoManagementScreen extends StatelessWidget {
                 await shared.ErrorLogger.log(
                   message: e.toString(),
                   source: 'promo_management_screen',
-                  screen: 'PromoManagementScreen',
+                  source: 'PromoManagementScreen' /* was screen, Phase 5 */,
                   stack: stack.toString(),
                   contextData: {
                     'franchiseId': franchiseId,
@@ -304,6 +294,7 @@ class PromoManagementScreen extends StatelessWidget {
     );
   }
 }
+
 
 
 

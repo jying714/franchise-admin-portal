@@ -4,19 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/profile/account_details_panel.dart';
 import 'package:franchise_admin_portal/widgets/financials/franchisee_invoice_list.dart';
 import 'package:franchise_admin_portal/widgets/financials/franchisee_payment_list.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/financials/pay_invoice_dialog.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 // FUTURE: Modular import for payment methods and plan management
 // import 'package:franchise_admin_portal/widgets/financials/payment_method_manager.dart';
@@ -89,7 +83,7 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
         message: e.toString(),
         stack: stack.toString(),
         source: 'UniversalProfileScreen',
-        screen: 'profile',
+        source: 'profile' /* was screen, Phase 5 */,
         severity: 'error',
       );
       setState(() {
@@ -363,6 +357,7 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
     );
   }
 }
+
 
 
 

@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/models/feedback_entry.dart'
+import 'package:shared_core/shared_core.dart' as shared; // Phase 5 final cleanup
     as model;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 

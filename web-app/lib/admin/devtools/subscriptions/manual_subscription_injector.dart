@@ -2,10 +2,6 @@
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class ManualSubscriptionInjector extends StatefulWidget {
   const ManualSubscriptionInjector({super.key});
@@ -59,7 +55,7 @@ class _ManualSubscriptionInjectorState
         message: 'Manual Subscription Injection Failed',
         stack: stack.toString(),
         source: 'ManualSubscriptionInjector',
-        screen: 'manual_subscription_injector.dart',
+        source: 'manual_subscription_injector.dart' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {
           'franchiseId': selectedFranchiseId,
@@ -151,6 +147,7 @@ class _ManualSubscriptionInjectorState
     );
   }
 }
+
 
 
 

@@ -3,13 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class PlatformPlansSummaryCard extends StatelessWidget {
   const PlatformPlansSummaryCard({super.key});
@@ -36,7 +32,7 @@ class PlatformPlansSummaryCard extends StatelessWidget {
           shared.ErrorLogger.log(
             message: 'platform_plans_summary_card_error',
             source: 'PlatformPlansSummaryCard',
-            screen: 'platform_owner_dashboard',
+            source: 'platform_owner_dashboard' /* was screen, Phase 5 */,
             severity: 'error',
             contextData: {'error': snapshot.error.toString()},
           );
@@ -112,6 +108,7 @@ class PlatformPlansSummaryCard extends StatelessWidget {
     );
   }
 }
+
 
 
 

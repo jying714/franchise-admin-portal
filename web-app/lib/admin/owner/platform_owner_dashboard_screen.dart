@@ -6,17 +6,10 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:shared_core/src/core/models/user.dart' as app;
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dialogs/franchisee_invitation_dialog.dart';
 import 'package:franchise_admin_portal/widgets/financials/platform_revenue_summary_panel.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/owner/sections/platform_plans_summary_card.dart';
 import 'package:franchise_admin_portal/admin/owner/sections/franchise_subscription_summary_card.dart';
 import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
@@ -68,7 +61,7 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
       shared.ErrorLogger.log(
         message: 'Unauthorized PlatformOwnerDashboardScreen access',
         source: 'PlatformOwnerDashboardScreen',
-        screen: 'PlatformOwnerDashboardScreen',
+        source: 'PlatformOwnerDashboardScreen' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {
           'userId': user?.id,
@@ -159,7 +152,7 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
             ),
             actions: [
               DashboardSwitcherDropdown(
-                currentScreen: '/platform-owner/dashboard',
+                currentsource: '/platform-owner/dashboard' /* was screen, Phase 5 */,
                 user: user,
               ),
               // Padding(
@@ -859,5 +852,6 @@ class OwnerAnnouncementsPanel extends StatelessWidget {
     );
   }
 }
+
 
 

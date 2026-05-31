@@ -6,15 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/models/user.dart'
+import 'package:shared_core/shared_core.dart' as shared; // Phase 5 final cleanup
     as admin_user;
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import '../config/design_tokens.dart';
 import '../config/branding_config.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class ProfileGateScreen extends StatefulWidget {
   const ProfileGateScreen({Key? key}) : super(key: key);
@@ -97,7 +92,7 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
         source: 'profile_gate_screen',
         stack: stack?.toString(),
         severity: 'error',
-        screen: 'ProfileGateScreen',
+        source: 'ProfileGateScreen' /* was screen, Phase 5 */,
         contextData: {
           if (error != null) 'error': error.toString(),
         },
@@ -506,6 +501,7 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
     );
   }
 }
+
 
 
 

@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 /// A banner widget that alerts HQ owners or developers if their subscription is overdue or in grace period.
 class GracePeriodBanner extends StatelessWidget {

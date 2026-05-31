@@ -6,10 +6,6 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/developer/platform/franchise_subscription_editor_dialog.dart';
 import 'package:franchise_admin_portal/admin/owner/widgets/franchise_subscription_list_tile.dart';
 
@@ -60,7 +56,7 @@ class _FullFranchiseSubscriptionListScreenState
         message: 'load_enriched_subscriptions_failed',
         stack: stack.toString(),
         source: 'FullFranchiseSubscriptionListScreen',
-        screen: 'full_franchise_subscription_list_screen',
+        source: 'full_franchise_subscription_list_screen' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {'exception': e.toString()},
       );
@@ -134,6 +130,7 @@ class _FullFranchiseSubscriptionListScreenState
     );
   }
 }
+
 
 
 

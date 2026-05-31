@@ -3,9 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class SchemaBrowserSection extends StatefulWidget {
   final String? franchiseId;
@@ -76,7 +73,7 @@ class _SchemaBrowserSectionState extends State<SchemaBrowserSection> {
         message: 'Failed to load schemas: $e',
         stack: stack.toString(),
         source: 'SchemaBrowserSection',
-        screen: 'DeveloperDashboardScreen',
+        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -408,6 +405,7 @@ class SchemaSummary {
     required this.status,
   });
 }
+
 
 
 

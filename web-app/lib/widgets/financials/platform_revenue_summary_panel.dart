@@ -1,7 +1,5 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
@@ -71,7 +69,7 @@ class _PlatformRevenueSummaryPanelState
         message: e.toString(),
         stack: stack.toString(),
         source: 'PlatformRevenueSummaryPanel',
-        screen: '_loadPlatformFinancials',
+        source: '_loadPlatformFinancials' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {
           'userEmail': Provider.of<AdminUserProvider>(context, listen: false)
@@ -197,6 +195,7 @@ class _PlatformRevenueSummaryPanelState
     );
   }
 }
+
 
 
 

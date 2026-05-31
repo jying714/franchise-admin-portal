@@ -3,12 +3,7 @@ import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class PlatformPlansSection extends StatefulWidget {
   const PlatformPlansSection({super.key});
@@ -35,7 +30,7 @@ class _PlatformPlansSectionState extends State<PlatformPlansSection> {
         message: "platform_plans_load_error",
         stack: stack.toString(),
         source: 'PlatformPlansSection',
-        screen: 'platform_plans_section',
+        source: 'platform_plans_section' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {'exception': e.toString()},
       );
@@ -163,6 +158,7 @@ class _PlatformPlansSectionState extends State<PlatformPlansSection> {
     );
   }
 }
+
 
 
 

@@ -3,9 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FeatureTogglesSection extends StatefulWidget {
   final String? franchiseId;
@@ -72,7 +69,7 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
         message: 'Failed to load feature toggles: $e',
         stack: stack.toString(),
         source: 'FeatureTogglesSection',
-        screen: 'DeveloperDashboardScreen',
+        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -94,7 +91,7 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
       await shared.ErrorLogger.log(
         message: 'Feature toggle updated: ${toggle.key} -> $enabled',
         source: 'FeatureTogglesSection',
-        screen: 'DeveloperDashboardScreen',
+        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'info',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -108,7 +105,7 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
         message: 'Failed to update feature toggle: $e',
         stack: stack.toString(),
         source: 'FeatureTogglesSection',
-        screen: 'DeveloperDashboardScreen',
+        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -366,6 +363,7 @@ class FeatureToggle {
     );
   }
 }
+
 
 
 

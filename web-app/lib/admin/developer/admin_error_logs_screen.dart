@@ -3,9 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AdminErrorLogsScreen extends StatefulWidget {
   const AdminErrorLogsScreen({Key? key}) : super(key: key);
@@ -43,7 +40,7 @@ class _AdminErrorLogsScreenState extends State<AdminErrorLogsScreen> {
           timestamp: DateTime.now().subtract(const Duration(minutes: 14)),
           message: 'Customer order failed during checkout.',
           severity: 'error',
-          screen: 'CheckoutScreen',
+          source: 'CheckoutScreen' /* was screen, Phase 5 */,
           franchiseId: franchiseId,
         ),
         AdminErrorLog(
@@ -51,7 +48,7 @@ class _AdminErrorLogsScreenState extends State<AdminErrorLogsScreen> {
           timestamp: DateTime.now().subtract(const Duration(hours: 2)),
           message: 'Receipt printer not responding.',
           severity: 'warning',
-          screen: 'OrderScreen',
+          source: 'OrderScreen' /* was screen, Phase 5 */,
           franchiseId: franchiseId,
         ),
         AdminErrorLog(
@@ -59,7 +56,7 @@ class _AdminErrorLogsScreenState extends State<AdminErrorLogsScreen> {
           timestamp: DateTime.now().subtract(const Duration(days: 1)),
           message: 'Loyalty points failed to sync for customer.',
           severity: 'error',
-          screen: 'CustomerLoyaltyScreen',
+          source: 'CustomerLoyaltyScreen' /* was screen, Phase 5 */,
           franchiseId: franchiseId,
         ),
       ];
@@ -74,7 +71,7 @@ class _AdminErrorLogsScreenState extends State<AdminErrorLogsScreen> {
         message: 'Failed to fetch admin error logs: $e',
         stack: stack.toString(),
         source: 'AdminErrorLogsScreen',
-        screen: 'AdminErrorLogsScreen',
+        source: 'AdminErrorLogsScreen' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {
           'franchiseId': franchiseId,
@@ -413,6 +410,7 @@ class AdminErrorLog {
     required this.franchiseId,
   });
 }
+
 
 
 

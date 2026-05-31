@@ -35,7 +35,7 @@ class _RemovePlatformPlansFormState extends State<RemovePlatformPlansForm> {
       await shared.ErrorLogger.log(
         message: 'Failed to fetch platform_plans for deletion',
         stack: st.toString(),
-        screen: 'RemovePlatformPlansForm',
+        source: 'RemovePlatformPlansForm' /* was screen, Phase 5 */,
         source: 'remove_platform_plans_form.dart',
         severity: 'warning',
       );
@@ -64,7 +64,7 @@ class _RemovePlatformPlansFormState extends State<RemovePlatformPlansForm> {
       await shared.ErrorLogger.log(
         message: 'Failed to delete platform_plan',
         stack: st.toString(),
-        screen: 'RemovePlatformPlansForm',
+        source: 'RemovePlatformPlansForm' /* was screen, Phase 5 */,
         source: 'remove_platform_plans_form.dart',
         contextData: {'planId': _selectedPlanId},
         severity: 'error',
@@ -149,6 +149,7 @@ class _RemovePlatformPlansFormState extends State<RemovePlatformPlansForm> {
     );
   }
 }
+
 
 
 

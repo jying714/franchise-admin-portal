@@ -3,15 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/developer/platform/franchise_subscription_editor_dialog.dart';
 import 'package:franchise_admin_portal/admin/categories/bulk_action_bar.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 final DashboardSection franchiseSubscriptionsSection = DashboardSection(
   key: 'franchiseSubscriptions',
@@ -52,7 +47,7 @@ class _FranchiseSubscriptionsSectionState
         message: 'load_franchise_subscriptions_failed',
         stack: stack.toString(),
         source: 'FranchiseSubscriptionsSection',
-        screen: 'franchise_subscriptions_section',
+        source: 'franchise_subscriptions_section' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {'exception': e.toString()},
       );
@@ -88,7 +83,7 @@ class _FranchiseSubscriptionsSectionState
           message: 'Failed to delete subscription: $e',
           stack: st.toString(),
           source: 'FranchiseSubscriptionsSection',
-          screen: 'franchise_subscriptions_section',
+          source: 'franchise_subscriptions_section' /* was screen, Phase 5 */,
           severity: 'error',
         );
         ScaffoldMessenger.of(context)
@@ -299,6 +294,7 @@ class _FranchiseSubscriptionsSectionState
     );
   }
 }
+
 
 
 

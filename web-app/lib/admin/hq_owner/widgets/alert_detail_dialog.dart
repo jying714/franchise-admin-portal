@@ -2,11 +2,8 @@
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AlertDetailDialog extends StatelessWidget {
   final AlertModel alert;
@@ -132,7 +129,7 @@ class AlertDetailDialog extends StatelessWidget {
                             franchiseId,
                             alert.id,
                             user?.id ?? '',
-                            screen: "AlertDetailDialog",
+                            source: "AlertDetailDialog" /* was screen, Phase 5 */,
                           );
                           onDismissed?.call();
                           Navigator.of(context).pop();
@@ -146,7 +143,7 @@ class AlertDetailDialog extends StatelessWidget {
                             message: 'Failed to dismiss alert: $e',
                             stack: stack.toString(),
                             source: 'alert_detail_dialog',
-                            screen: 'AlertDetailDialog',
+                            source: 'AlertDetailDialog' /* was screen, Phase 5 */,
                             severity: 'error',
                             contextData: {
                               'franchiseId': franchiseId,
@@ -243,6 +240,7 @@ class _DetailLine extends StatelessWidget {
         ),
       );
 }
+
 
 
 

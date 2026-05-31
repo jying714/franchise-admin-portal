@@ -2,18 +2,8 @@
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/active_plan_banner.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/platform_plan_tile.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AvailablePlatformPlansScreen extends StatefulWidget {
   const AvailablePlatformPlansScreen({super.key});
@@ -48,7 +38,7 @@ class _AvailablePlatformPlansScreenState
         message: 'platform_plans_load_error',
         stack: stack.toString(),
         source: 'AvailablePlatformPlansScreen',
-        screen: 'available_platform_plans_screen',
+        source: 'available_platform_plans_screen' /* was screen, Phase 5 */,
         severity: 'error',
       );
       return [];
@@ -158,6 +148,7 @@ class _AvailablePlatformPlansScreenState
     );
   }
 }
+
 
 
 

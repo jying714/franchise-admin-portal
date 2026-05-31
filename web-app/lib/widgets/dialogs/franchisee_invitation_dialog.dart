@@ -2,9 +2,6 @@
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class FranchiseeInvitationDialog extends StatefulWidget {
@@ -196,7 +193,7 @@ class _FranchiseeInvitationDialogState
         stack: stack.toString(),
         severity: 'error',
         source: 'FranchiseeInvitationDialog',
-        screen: 'PlatformOwnerDashboardScreen',
+        source: 'PlatformOwnerDashboardScreen' /* was screen, Phase 5 */,
         contextData: {
           'exception': e.toString(),
         },
@@ -208,5 +205,6 @@ class _FranchiseeInvitationDialogState
     }
   }
 }
+
 
 

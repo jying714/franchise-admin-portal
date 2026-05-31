@@ -3,9 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class OverviewSection extends StatefulWidget {
   final String? franchiseId;
@@ -71,7 +68,7 @@ class _OverviewSectionState extends State<OverviewSection> {
         stack: stack.toString(),
         source: 'OverviewSection',
         severity: 'warning',
-        screen: 'DeveloperDashboardScreen',
+        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         contextData: {
           'franchiseId': widget.franchiseId,
           // Add other context fields as needed
@@ -507,6 +504,7 @@ class _ComingSoonCard extends StatelessWidget {
     );
   }
 }
+
 
 
 

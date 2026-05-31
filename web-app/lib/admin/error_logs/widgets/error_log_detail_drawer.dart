@@ -4,10 +4,8 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/widgets/collapsible_panel.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 String _truncateTooltip(String text, [int max = 150]) {
   if (text.length <= max) return text;
@@ -501,7 +499,7 @@ extension ErrorLogCopyWith on ErrorLog {
       message: message ?? this.message,
       severity: severity ?? this.severity,
       source: source ?? this.source,
-      screen: screen ?? this.screen,
+      source: screen ?? this.screen /* was screen, Phase 5 */,
       stackTrace: stackTrace ?? this.stackTrace,
       contextData: contextData ?? this.contextData,
       deviceInfo: deviceInfo ?? this.deviceInfo,
@@ -516,6 +514,7 @@ extension ErrorLogCopyWith on ErrorLog {
     );
   }
 }
+
 
 
 

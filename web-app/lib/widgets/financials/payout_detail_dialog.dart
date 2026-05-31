@@ -1,8 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 
@@ -57,7 +55,7 @@ class _PayoutDetailDialogState extends State<PayoutDetailDialog> {
               shared.ErrorLogger.log(
                 message: 'Failed to load payout details: ${snapshot.error}',
                 stack: snapshot.stackTrace?.toString(),
-                screen: 'PayoutDetailDialog',
+                source: 'PayoutDetailDialog' /* was screen, Phase 5 */,
                 source: 'PayoutDetailDialog',
                 severity: 'error',
                 contextData: {'payoutId': widget.payoutId},
@@ -303,6 +301,7 @@ class _AuditTrailSection extends StatelessWidget {
     );
   }
 }
+
 
 
 

@@ -3,14 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FeatureSettingsScreen extends StatefulWidget {
   const FeatureSettingsScreen({super.key});
@@ -51,7 +45,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
       await shared.ErrorLogger.log(
         message: 'Unauthorized feature toggle attempt by ${user.email}',
         source: 'FeatureSettingsScreen',
-        screen: 'FeatureSettingsScreen',
+        source: 'FeatureSettingsScreen' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {
           'roles': user.roles,
@@ -156,7 +150,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
           await shared.ErrorLogger.log(
             message: 'Unauthorized feature settings access by ${user.email}',
             source: 'FeatureSettingsScreen',
-            screen: 'FeatureSettingsScreen',
+            source: 'FeatureSettingsScreen' /* was screen, Phase 5 */,
             severity: 'warning',
             contextData: {
               'roles': user.roles,
@@ -255,6 +249,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
     );
   }
 }
+
 
 
 

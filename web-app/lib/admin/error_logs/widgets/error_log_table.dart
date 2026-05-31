@@ -4,12 +4,10 @@ import 'package:intl/intl.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'error_log_detail_drawer.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class ErrorLogTable extends StatefulWidget {
   final List<ErrorLog> logs;

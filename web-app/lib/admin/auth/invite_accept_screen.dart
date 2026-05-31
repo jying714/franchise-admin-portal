@@ -5,10 +5,8 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/profile/franchise_onboarding_screen.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'dart:html' as html;
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class InviteAcceptScreen extends StatefulWidget {
   final String? inviteToken;

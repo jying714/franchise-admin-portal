@@ -1,16 +1,12 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'widgets/paginated_error_log_table.dart';
 import 'widgets/error_log_filter_bar.dart';
 import 'widgets/error_log_stats_bar.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/clear_filters_button.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_empty_state_widget.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class ErrorLogsScreen extends StatefulWidget {
   const ErrorLogsScreen({super.key});
@@ -132,7 +128,7 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
               child: ErrorLogFilterBar(
                 severity: _severity,
                 source: _source,
-                screen: _screen,
+                source: _screen /* was screen, Phase 5 */,
                 start: _start,
                 end: _end,
                 search: _search,
@@ -213,7 +209,7 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
                       franchiseId,
                       severity: querySeverity,
                       source: _source,
-                      screen: _screen,
+                      source: _screen /* was screen, Phase 5 */,
                       start: _start,
                       end: _end,
                       search: _search,
@@ -256,6 +252,7 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
     );
   }
 }
+
 
 
 

@@ -8,7 +8,6 @@ import 'package:path_provider/path_provider.dart'
     if (dart.library.io) 'package:path_provider/path_provider.dart';
 import 'dart:io' if (dart.library.io) 'dart:io';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'dart:html' as html; // For web file download
 
 class PromoExportDialog extends StatefulWidget {

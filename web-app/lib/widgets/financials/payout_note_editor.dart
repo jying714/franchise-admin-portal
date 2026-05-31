@@ -3,7 +3,6 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 /// Widget to add/view notes/comments on a payout.
 class PayoutNoteEditor extends StatefulWidget {
@@ -48,7 +47,7 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
         message: 'Failed to fetch payout comments: $e',
         stack: stack.toString(),
         source: 'PayoutNoteEditor',
-        screen: 'payout_note_editor.dart',
+        source: 'payout_note_editor.dart' /* was screen, Phase 5 */,
         severity: 'error',
       );
     }
@@ -87,7 +86,7 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
         message: 'Failed to add payout note: $e',
         stack: stack.toString(),
         source: 'PayoutNoteEditor',
-        screen: 'payout_note_editor.dart',
+        source: 'payout_note_editor.dart' /* was screen, Phase 5 */,
         severity: 'error',
       );
       setState(() {
@@ -118,7 +117,7 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
         message: 'Failed to remove payout note: $e',
         stack: stack.toString(),
         source: 'PayoutNoteEditor',
-        screen: 'payout_note_editor.dart',
+        source: 'payout_note_editor.dart' /* was screen, Phase 5 */,
         severity: 'error',
       );
       ScaffoldMessenger.of(context).showSnackBar(
@@ -278,6 +277,7 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
     }
   }
 }
+
 
 
 

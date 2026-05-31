@@ -1,19 +1,13 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/models/user.dart'
+import 'package:shared_core/shared_core.dart' as shared; // Phase 5 final cleanup
     as admin_user;
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
 import 'package:franchise_admin_portal/widgets/staff/show_add_staff_dialog.dart';
@@ -49,7 +43,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
         'admin'
       ],
       featureName: 'staff_access_screen',
-      screen: 'StaffAccessScreen',
+      source: 'StaffAccessScreen' /* was screen, Phase 5 */,
       child: SubscriptionAccessGuard(
         child: Scaffold(
           backgroundColor: colorScheme.background,
@@ -92,7 +86,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                                     message:
                                         'AppLocalizations.of(context) returned null.',
                                     source: 'staff_access_screen',
-                                    screen: 'StaffAccessScreen',
+                                    source: 'StaffAccessScreen' /* was screen, Phase 5 */,
                                     severity: 'error',
                                     contextData: {
                                       'widget': 'FloatingActionButton',
@@ -117,7 +111,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                                               message:
                                                   'Localization still null after Localizations.override.',
                                               source: 'staff_access_screen',
-                                              screen: 'StaffAccessScreen',
+                                              source: 'StaffAccessScreen' /* was screen, Phase 5 */,
                                               severity: 'error',
                                               contextData: {
                                                 'widget': 'AddStaffDialog',
@@ -243,7 +237,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                   message: e.toString(),
                   stack: stack.toString(),
                   source: 'staff_access_screen',
-                  screen: 'StaffAccessScreen',
+                  source: 'StaffAccessScreen' /* was screen, Phase 5 */,
                   severity: 'error',
                   contextData: {
                     'franchiseId': franchiseId,
@@ -262,6 +256,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
     );
   }
 }
+
 
 
 

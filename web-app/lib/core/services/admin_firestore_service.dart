@@ -17,9 +17,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 // Explicitly pull the *shared lightweight* FirestoreServiceImpl (customer + common).
 // We hide the name from the main shared_core barrel to avoid clashing with the local thin wrapper in this package.
 import 'package:shared_core/shared_core.dart' hide FirestoreServiceImpl;
-import 'package:shared_core/src/core/services/firestore_service_impl.dart' show FirestoreServiceImpl;
-import 'package:shared_core/src/core/models/category.dart' as model;
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // Phase 5 final cleanup
 
 class AdminFirestoreService extends FirestoreServiceImpl {
   AdminFirestoreService({

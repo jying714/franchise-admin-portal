@@ -5,7 +5,6 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/mock_payment_data.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/tight_section_card.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'dart:math' as math;
 
 class MockPaymentForm extends StatefulWidget {
@@ -189,7 +188,7 @@ class _MockPaymentFormState extends State<MockPaymentForm> {
         message: 'Mock payment validation failed',
         stack: stack.toString(),
         source: 'MockPaymentForm',
-        screen: 'available_platform_plans_screen',
+        source: 'available_platform_plans_screen' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {'exception': e.toString()},
       );
@@ -251,6 +250,7 @@ class _ExpiryDateFormatter extends TextInputFormatter {
     );
   }
 }
+
 
 
 

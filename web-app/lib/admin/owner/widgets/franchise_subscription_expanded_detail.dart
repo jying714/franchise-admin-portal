@@ -2,9 +2,6 @@
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
 
@@ -45,7 +42,7 @@ class _FranchiseSubscriptionExpandedDetailState
     } catch (e, stack) {
       await shared.ErrorLogger.log(
         message: 'invoice_fetch_failed',
-        screen: 'franchise_subscription_expanded_detail',
+        source: 'franchise_subscription_expanded_detail' /* was screen, Phase 5 */,
         source: 'ExpandedDetailInit',
         stack: stack.toString(),
         contextData: {
@@ -157,6 +154,7 @@ class _FranchiseSubscriptionExpandedDetailState
     return enriched.latestInvoice!.status;
   }
 }
+
 
 
 

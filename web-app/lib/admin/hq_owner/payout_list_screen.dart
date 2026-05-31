@@ -2,12 +2,8 @@
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/financials/payouts_filter_bar.dart';
@@ -15,7 +11,6 @@ import 'package:franchise_admin_portal/widgets/financials/payout_detail_dialog.d
 import 'package:franchise_admin_portal/widgets/financials/payout_note_editor.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/attachment_uploader.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/bulk_ops_bar.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class PayoutListScreen extends StatefulWidget {
   const PayoutListScreen({Key? key}) : super(key: key);
@@ -56,7 +51,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
         message: 'Bulk update status failed: $e',
         stack: stack.toString(),
         source: 'PayoutListScreen',
-        screen: 'bulkUpdateStatus',
+        source: 'bulkUpdateStatus' /* was screen, Phase 5 */,
         severity: 'error',
       );
       setState(() {
@@ -83,7 +78,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
         message: 'Export payouts failed: $e',
         stack: stack.toString(),
         source: 'PayoutListScreen',
-        screen: 'exportSelectedPayouts',
+        source: 'exportSelectedPayouts' /* was screen, Phase 5 */,
         severity: 'error',
       );
     }
@@ -103,7 +98,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
         message: 'Bulk delete payouts failed: $e',
         stack: stack.toString(),
         source: 'PayoutListScreen',
-        screen: 'deleteSelectedPayouts',
+        source: 'deleteSelectedPayouts' /* was screen, Phase 5 */,
         severity: 'error',
       );
     }
@@ -203,7 +198,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
             await shared.ErrorLogger.log(
               message: "Unauthorized PayoutListScreen access attempt.",
               source: "PayoutListScreen",
-              screen: "PayoutListScreen",
+              source: "PayoutListScreen" /* was screen, Phase 5 */,
               severity: "warning",
               contextData: {
                 'roles': user.roles,
@@ -375,7 +370,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
                           try {
                             shared.ErrorLogger.log(
                               message:
-                                  'PayoutListScreen: failed to load payouts\n${snapshot.error}',
+                                  'PayoutListsource: failed to load payouts\n${snapshot.error}' /* was screen, Phase 5 */,
                               stack: snapshot.stackTrace?.toString(),
                             );
                           } catch (e) {}
@@ -610,7 +605,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
         message: 'Unexpected error in PayoutListScreen build: $e',
         stack: stack.toString(),
         source: 'PayoutListScreen',
-        screen: 'build',
+        source: 'build' /* was screen, Phase 5 */,
         severity: 'error',
       );
       return Center(
@@ -671,6 +666,7 @@ class _StatusChip extends StatelessWidget {
     );
   }
 }
+
 
 
 

@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/models/user.dart' as app;
+import 'package:shared_core/shared_core.dart' as shared; // Phase 5 final cleanup
 
 class DashboardSwitcherDropdown extends StatelessWidget {
   final String currentScreen;

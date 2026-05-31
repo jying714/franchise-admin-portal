@@ -3,9 +3,7 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FranchiseSubscriptionSummary extends StatelessWidget {
   final FranchiseSubscription subscription;
@@ -173,7 +171,7 @@ class FranchiseSubscriptionSummary extends StatelessWidget {
       shared.ErrorLogger.log(
         message: 'franchise_subscription_summary_render_error',
         source: 'FranchiseSubscriptionSummary',
-        screen: 'franchise_subscription_list_screen',
+        source: 'franchise_subscription_list_screen' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {'exception': e.toString()},
         stack: stack.toString(),
@@ -182,6 +180,7 @@ class FranchiseSubscriptionSummary extends StatelessWidget {
     }
   }
 }
+
 
 
 

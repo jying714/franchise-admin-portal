@@ -1,9 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/models/user.dart'
+import 'package:shared_core/shared_core.dart' as shared; // Phase 5 final cleanup
     as admin_user;
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
 
 class StaffDirectoryScreen extends StatefulWidget {

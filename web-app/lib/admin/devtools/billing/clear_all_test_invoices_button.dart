@@ -64,7 +64,7 @@ class _ClearAllTestInvoicesButtonState
         message: 'Failed to clear test invoices: $e',
         stack: stack.toString(),
         source: 'ClearAllTestInvoicesButton',
-        screen: 'dev_tools',
+        source: 'dev_tools' /* was screen, Phase 5 */,
         severity: 'fatal',
       );
       if (mounted) {
@@ -87,6 +87,7 @@ class _ClearAllTestInvoicesButtonState
     );
   }
 }
+
 
 
 

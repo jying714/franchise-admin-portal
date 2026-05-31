@@ -90,7 +90,7 @@ class _SeedPlatformFeaturesFormState extends State<SeedPlatformFeaturesForm> {
         message: 'Failed to seed platform_features',
         stack: st.toString(),
         source: 'SeedPlatformFeaturesForm',
-        screen: 'seed_platform_features_form',
+        source: 'seed_platform_features_form' /* was screen, Phase 5 */,
         severity: 'error',
       );
       setState(() => _statusMessage = loc.devtoolsSeedError);
@@ -241,6 +241,7 @@ class _SeedPlatformFeaturesFormState extends State<SeedPlatformFeaturesForm> {
     );
   }
 }
+
 
 
 

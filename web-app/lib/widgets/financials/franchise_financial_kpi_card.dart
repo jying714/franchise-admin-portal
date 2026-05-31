@@ -5,9 +5,6 @@ import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/src/core/utils/formatting.dart'
     as formatting;
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 
@@ -71,7 +68,7 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
       shared.ErrorLogger.log(
         message: 'Failed to load KPIs: $e',
         source: 'FranchiseFinancialKpiCard',
-        screen: 'FranchiseFinancialKpiCard',
+        source: 'FranchiseFinancialKpiCard' /* was screen, Phase 5 */,
         stack: st.toString(),
         severity: 'error',
         contextData: {
@@ -355,6 +352,7 @@ class _FeaturePlaceholder extends StatelessWidget {
     );
   }
 }
+
 
 
 

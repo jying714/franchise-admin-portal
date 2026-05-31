@@ -1,9 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AdminWebhookSimulator extends StatefulWidget {
   const AdminWebhookSimulator({super.key});
@@ -43,7 +40,7 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
     } catch (e, stack) {
       await shared.ErrorLogger.log(
         source: 'AdminWebhookSimulator',
-        screen: 'dev_tools_screen',
+        source: 'dev_tools_screen' /* was screen, Phase 5 */,
         message: 'Failed to load franchises: $e',
         stack: stack.toString(),
         severity: 'error',
@@ -85,7 +82,7 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
       setState(() => _loading = false);
       await shared.ErrorLogger.log(
         source: 'AdminWebhookSimulator',
-        screen: 'dev_tools_screen',
+        source: 'dev_tools_screen' /* was screen, Phase 5 */,
         message: 'Failed to load test invoices: $e',
         stack: stack.toString(),
         severity: 'warning',
@@ -113,7 +110,7 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
 
       await shared.ErrorLogger.log(
         source: 'AdminWebhookSimulator',
-        screen: 'dev_tools_screen',
+        source: 'dev_tools_screen' /* was screen, Phase 5 */,
         message:
             'Simulated webhook $_selectedEvent for invoice ${invoice.id} with $_delaySeconds sec delay.',
         severity: 'info',
@@ -136,7 +133,7 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
     } catch (e, stack) {
       await shared.ErrorLogger.log(
         source: 'AdminWebhookSimulator',
-        screen: 'dev_tools_screen',
+        source: 'dev_tools_screen' /* was screen, Phase 5 */,
         message: 'Webhook simulation failed: $e',
         stack: stack.toString(),
         severity: 'error',
@@ -274,6 +271,7 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
     );
   }
 }
+
 
 
 

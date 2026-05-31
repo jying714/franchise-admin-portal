@@ -3,9 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AuditTrailSection extends StatefulWidget {
   final String? franchiseId;
@@ -85,7 +82,7 @@ class _AuditTrailSectionState extends State<AuditTrailSection> {
         message: 'Failed to load audit trail: $e',
         stack: stack.toString(),
         source: 'AuditTrailSection',
-        screen: 'DeveloperDashboardScreen',
+        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -388,6 +385,7 @@ class AuditEntry {
     this.franchiseId,
   });
 }
+
 
 
 

@@ -3,8 +3,6 @@ import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AlertsCard extends StatelessWidget {
   final String franchiseId;
@@ -99,7 +97,7 @@ class AlertsCard extends StatelessWidget {
                   shared.ErrorLogger.log(
                     message: 'Failed to load active alerts: ${snapshot.error}',
                     source: 'alerts_card',
-                    screen: 'AlertsCard',
+                    source: 'AlertsCard' /* was screen, Phase 5 */,
                     stack: snapshot.stackTrace?.toString(),
                     severity: 'error',
                     contextData: {
@@ -297,6 +295,7 @@ class _AlertError extends StatelessWidget {
         ),
       );
 }
+
 
 
 

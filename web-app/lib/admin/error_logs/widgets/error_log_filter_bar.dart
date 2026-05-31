@@ -75,7 +75,7 @@ class ErrorLogFilterBar extends StatelessWidget {
                           ? null
                           : val,
                       source: source,
-                      screen: screen,
+                      source: screen /* was screen, Phase 5 */,
                       start: start,
                       end: end,
                       search: search,
@@ -96,7 +96,7 @@ class ErrorLogFilterBar extends StatelessWidget {
                       onChanged: (val) => onFilterChanged(
                         severity: severity,
                         source: val.trim().isEmpty ? null : val.trim(),
-                        screen: screen,
+                        source: screen /* was screen, Phase 5 */,
                         start: start,
                         end: end,
                         search: search,
@@ -118,7 +118,7 @@ class ErrorLogFilterBar extends StatelessWidget {
                       onChanged: (val) => onFilterChanged(
                         severity: severity,
                         source: source,
-                        screen: val.trim().isEmpty ? null : val.trim(),
+                        source: val.trim( /* was screen, Phase 5 */).isEmpty ? null : val.trim(),
                         start: start,
                         end: end,
                         search: search,
@@ -140,7 +140,7 @@ class ErrorLogFilterBar extends StatelessWidget {
                       onChanged: (val) => onFilterChanged(
                         severity: severity,
                         source: source,
-                        screen: screen,
+                        source: screen /* was screen, Phase 5 */,
                         start: start,
                         end: end,
                         search: val.trim().isEmpty ? null : val.trim(),
@@ -182,7 +182,7 @@ class ErrorLogFilterBar extends StatelessWidget {
                         onFilterChanged(
                           severity: severity,
                           source: source,
-                          screen: screen,
+                          source: screen /* was screen, Phase 5 */,
                           start: picked.start,
                           end: picked.end,
                           search: search,
@@ -201,7 +201,7 @@ class ErrorLogFilterBar extends StatelessWidget {
                         onFilterChanged(
                           severity: severity,
                           source: source,
-                          screen: screen,
+                          source: screen /* was screen, Phase 5 */,
                           start: null,
                           end: null,
                           search: search,
@@ -221,5 +221,6 @@ class ErrorLogFilterBar extends StatelessWidget {
     );
   }
 }
+
 
 

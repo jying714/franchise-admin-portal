@@ -5,7 +5,6 @@ import 'package:franchise_admin_portal/widgets/financials/franchisee_invoice_til
 import 'package:franchise_admin_portal/widgets/admin/admin_empty_state_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FranchiseeInvoiceList extends StatelessWidget {
   final List<PlatformInvoice> invoices;
@@ -24,7 +23,7 @@ class FranchiseeInvoiceList extends StatelessWidget {
       shared.ErrorLogger.log(
         message: 'Localization context is null',
         source: 'FranchiseeInvoiceList',
-        screen: 'franchisee_invoice_list.dart',
+        source: 'franchisee_invoice_list.dart' /* was screen, Phase 5 */,
         severity: 'warning',
       );
       return const SizedBox.shrink();
@@ -62,7 +61,7 @@ class FranchiseeInvoiceList extends StatelessWidget {
               shared.ErrorLogger.log(
                 message: 'User triggered retry on empty invoice list',
                 source: 'FranchiseeInvoiceList',
-                screen: 'franchisee_invoice_list.dart',
+                source: 'franchisee_invoice_list.dart' /* was screen, Phase 5 */,
                 severity: 'info',
               );
             },
@@ -86,6 +85,7 @@ class FranchiseeInvoiceList extends StatelessWidget {
     );
   }
 }
+
 
 
 

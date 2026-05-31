@@ -1,10 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class SubscriptionStateToggler extends StatefulWidget {
   const SubscriptionStateToggler({super.key});
@@ -37,7 +34,7 @@ class _SubscriptionStateTogglerState extends State<SubscriptionStateToggler> {
       await shared.ErrorLogger.log(
         message: 'Manually updated subscription status',
         source: 'SubscriptionStateToggler',
-        screen: 'subscription_dev_tools_screen',
+        source: 'subscription_dev_tools_screen' /* was screen, Phase 5 */,
         contextData: {
           'franchiseId': _selectedSubscription!.franchiseId,
           'newStatus': _selectedState,
@@ -55,7 +52,7 @@ class _SubscriptionStateTogglerState extends State<SubscriptionStateToggler> {
       await shared.ErrorLogger.log(
         message: 'Failed to update subscription status: $e',
         source: 'SubscriptionStateToggler',
-        screen: 'subscription_dev_tools_screen',
+        source: 'subscription_dev_tools_screen' /* was screen, Phase 5 */,
         severity: 'error',
         stack: stack.toString(),
       );
@@ -151,6 +148,7 @@ class _SubscriptionStateTogglerState extends State<SubscriptionStateToggler> {
     );
   }
 }
+
 
 
 

@@ -5,7 +5,6 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
 
 class QuickLinksCard extends StatelessWidget {
@@ -29,7 +28,7 @@ class QuickLinksCard extends StatelessWidget {
         shared.ErrorLogger.log(
           message: 'quick_links_navigation_failed',
           source: 'QuickLinksCard',
-          screen: 'platform_owner_dashboard',
+          source: 'platform_owner_dashboard' /* was screen, Phase 5 */,
           severity: 'error',
           contextData: {
             'exception': e.toString(),
@@ -123,6 +122,7 @@ class _QuickLinkTile extends StatelessWidget {
     );
   }
 }
+
 
 
 

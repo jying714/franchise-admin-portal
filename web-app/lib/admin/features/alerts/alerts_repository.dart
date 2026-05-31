@@ -2,10 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AlertsRepository {
   final FirebaseFirestore _firestore;
@@ -78,7 +75,7 @@ class AlertsRepository {
         message: 'Failed to fetch all alerts: $e',
         source: 'alerts_repository_fetchAllAlerts',
         stack: stack.toString(),
-        screen: 'AlertsRepository',
+        source: 'AlertsRepository' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {
           'franchiseId': franchiseId,
@@ -108,7 +105,7 @@ class AlertsRepository {
         message: 'Failed to dismiss alert: $e',
         source: 'alerts_repository_dismissAlert',
         stack: stack.toString(),
-        screen: screen ?? 'AlertsRepository',
+        source: screen ?? 'AlertsRepository' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {
           'franchiseId': franchiseId,
@@ -136,7 +133,7 @@ class AlertsRepository {
         message: 'Failed to mark alert as seen: $e',
         source: 'alerts_repository_markAlertSeen',
         stack: stack.toString(),
-        screen: screen ?? 'AlertsRepository',
+        source: screen ?? 'AlertsRepository' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {
           'franchiseId': franchiseId,
@@ -148,6 +145,7 @@ class AlertsRepository {
     }
   }
 }
+
 
 
 

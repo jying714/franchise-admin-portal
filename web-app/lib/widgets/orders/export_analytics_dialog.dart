@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 

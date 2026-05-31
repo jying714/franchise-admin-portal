@@ -3,9 +3,6 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_search_bar.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_empty_state_widget.dart';
@@ -141,7 +138,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                     shared.ErrorLogger.log(
                       message: snapshot.error.toString(),
                       source: 'InvoiceListScreen',
-                      screen: 'StreamBuilder',
+                      source: 'StreamBuilder' /* was screen, Phase 5 */,
                     );
                     return Center(child: Text(loc.errorLoadingInvoices));
                   }
@@ -212,7 +209,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                       shared.ErrorLogger.log(
                         message: 'Could not launch PDF: $url',
                         source: 'InvoiceListScreen',
-                        screen: '_buildInvoiceListView',
+                        source: '_buildInvoiceListView' /* was screen, Phase 5 */,
                       );
                     }
                   },
@@ -278,6 +275,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
     }
   }
 }
+
 
 
 
