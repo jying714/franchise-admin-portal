@@ -1,8 +1,8 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 
 class FranchiseSelector extends StatelessWidget {
-  final List<FranchiseInfo> items;
+  final List<shared.FranchiseInfo> items;
   final String? selectedFranchiseId;
   final void Function(String franchiseId) onSelected;
 

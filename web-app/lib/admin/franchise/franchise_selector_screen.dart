@@ -14,13 +14,13 @@ class FranchiseSelectorScreen extends StatefulWidget {
 }
 
 class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
-  late Future<List<FranchiseInfo>> _franchisesFuture;
+  late Future<List<shared.FranchiseInfo>> _franchisesFuture;
 
   @override
   void initState() {
     super.initState();
     final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+        Provider.of<shared.FirestoreService>(context, listen: false);
     _franchisesFuture = firestoreService.fetchFranchiseList();
     print('[FranchiseSelectorScreen] initState: fetching franchise list...');
   }
@@ -38,7 +38,7 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
         body: Center(child: Text('Localization missing! [debug]')),
       );
     }
-    final shared.FranchiseProvider =
+    final franchiseProvider =
         Provider.of<shared.FranchiseProvider>(context, listen: false);
 
     return Scaffold(
@@ -74,13 +74,13 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
               padding: const EdgeInsets.all(16.0),
               child: FranchiseSelector(
                 items: franchises,
-                selectedFranchiseId: shared.FranchiseProvider.franchiseId,
+                selectedFranchiseId: franchiseProvider.franchiseId,
                 onSelected: (franchiseId) {
                   print(
                       '[FranchiseSelectorScreen] onSelected fired with: $franchiseId');
-                  shared.FranchiseProvider.setFranchiseId(franchiseId).then((_) {
+                  franchiseProvider.setFranchiseId(franchiseId).then((_) {
                     print(
-                        '[FranchiseSelectorScreen] shared.FranchiseProvider updated.');
+                        '[FranchiseSelectorScreen] franchiseProvider updated.');
                     Navigator.of(context)
                         .pushReplacementNamed('/admin/dashboard');
                     print('[Routing] Navigating to /admin/dashboard');
