@@ -25,7 +25,7 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final firebaseUser = Provider.of<fb_auth.User?>(context);
-    final firestoreService =
+    final shared.firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
     final notifier = Provider.of<UserProfileNotifier>(context, listen: false);
     final shared.FranchiseProvider =
@@ -45,35 +45,35 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
         }
 
         if (!_navigated && !loading && firebaseUser != null && user != null) {
-          _maybeLogProfileError(notifier, firebaseUser, firestoreService);
+          _maybeLogProfileError(notifier, firebaseUser, shared.firestoreService);
           _handleRouting(notifier, firebaseUser, shared.FranchiseProvider);
         }
       });
     }
 
     // Franchise-agnostic: only pass uid!
-    notifier.listenToUser(firestoreService, firebaseUser?.uid);
+    notifier.listenToUser(shared.firestoreService, firebaseUser?.uid);
   }
 
   @override
   void didUpdateWidget(AuthProfileListener oldWidget) {
     super.didUpdateWidget(oldWidget);
     final firebaseUser = Provider.of<fb_auth.User?>(context, listen: false);
-    final firestoreService =
+    final shared.firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
     final notifier = Provider.of<UserProfileNotifier>(context, listen: false);
 
-    _maybeLogProfileError(notifier, firebaseUser, firestoreService);
+    _maybeLogProfileError(notifier, firebaseUser, shared.firestoreService);
   }
 
   @override
   Widget build(BuildContext context) {
     final firebaseUser = Provider.of<fb_auth.User?>(context);
-    final firestoreService =
+    final shared.firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
     final notifier = Provider.of<UserProfileNotifier>(context, listen: false);
 
-    _maybeLogProfileError(notifier, firebaseUser, firestoreService);
+    _maybeLogProfileError(notifier, firebaseUser, shared.firestoreService);
     return widget.child;
   }
 
@@ -150,7 +150,7 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
   void _maybeLogProfileError(
     UserProfileNotifier notifier,
     fb_auth.User? user,
-    shared.FirestoreService firestoreService,
+    shared.FirestoreService shared.firestoreService,
   ) {
     if (notifier.lastError != null && notifier.lastError != _lastLoggedError) {
       _lastLoggedError = notifier.lastError;
@@ -165,6 +165,7 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     }
   }
 }
+
 
 
 

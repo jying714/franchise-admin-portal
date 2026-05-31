@@ -18,8 +18,8 @@ class PromoManagementScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
-    final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+    final shared.firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final userProvider = context.watch<AdminUserProvider>();
     final user = userProvider.user;
     final loading = userProvider.loading;
@@ -85,7 +85,7 @@ class PromoManagementScreen extends StatelessWidget {
                                     builder: (_) => PromoFormDialog(
                                       onSave: (promo) async {
                                         try {
-                                          await firestoreService.addPromo(
+                                          await shared.firestoreService.addPromo(
                                               franchiseId, promo);
                                           await AuditLogService().addLog(
                                             franchiseId: franchiseId,
@@ -119,7 +119,7 @@ class PromoManagementScreen extends StatelessWidget {
                       ),
                       Expanded(
                         child: StreamBuilder<List<Promo>>(
-                          stream: firestoreService.getPromos(franchiseId),
+                          stream: shared.firestoreService.getPromos(franchiseId),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
@@ -171,7 +171,7 @@ class PromoManagementScreen extends StatelessWidget {
                                                 promo: promo,
                                                 onSave: (updated) async {
                                                   try {
-                                                    await firestoreService
+                                                    await shared.firestoreService
                                                         .updatePromo(
                                                             franchiseId,
                                                             updated);
@@ -213,7 +213,7 @@ class PromoManagementScreen extends StatelessWidget {
                                               color: Colors.red),
                                           onPressed: () => _confirmDelete(
                                             context,
-                                            firestoreService,
+                                            shared.firestoreService,
                                             promo.id,
                                             user,
                                           ),
@@ -238,7 +238,7 @@ class PromoManagementScreen extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, FirestoreService service,
+  void _confirmDelete(BuildContext context, shared.FirestoreService service,
       String promoId, admin_user.User user) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -294,6 +294,7 @@ class PromoManagementScreen extends StatelessWidget {
     );
   }
 }
+
 
 
 

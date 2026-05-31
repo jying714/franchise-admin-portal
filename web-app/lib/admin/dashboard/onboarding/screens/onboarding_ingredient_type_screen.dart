@@ -85,7 +85,7 @@ class _IngredientTypeManagementScreenState
   Future<void> _markComplete() async {
     final loc = AppLocalizations.of(context)!;
     final onboardingProvider =
-        Provider.of<OnboardingProgressProvider>(context, listen: false);
+        Provider.of<shared.OnboardingProgressProvider>(context, listen: false);
     final provider =
         Provider.of<IngredientTypeProvider>(context, listen: false);
 
@@ -605,6 +605,7 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
     );
   }
 }
+
 
 
 

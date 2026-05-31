@@ -38,7 +38,7 @@ class _SchemaBrowserSectionState extends State<SchemaBrowserSection> {
       _errorMsg = null;
     });
     try {
-      // TODO: Replace with real FirestoreService call for schema metadata
+      // TODO: Replace with real shared.FirestoreService call for schema metadata
       await Future.delayed(const Duration(milliseconds: 500));
       _schemas = [
         SchemaSummary(
@@ -405,6 +405,7 @@ class SchemaSummary {
     required this.status,
   });
 }
+
 
 
 

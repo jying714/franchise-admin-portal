@@ -24,8 +24,8 @@ class CategoryFormDialog extends StatefulWidget {
     required String franchiseId,
   }) {
     final loc = AppLocalizations.of(parentContext)!;
-    final categoryProvider =
-        Provider.of<CategoryProvider>(parentContext, listen: false);
+    final shared.categoryProvider =
+        Provider.of<shared.CategoryProvider>(parentContext, listen: false);
     final shared.FranchiseProvider =
         Provider.of<shared.FranchiseProvider>(parentContext, listen: false);
 
@@ -34,8 +34,8 @@ class CategoryFormDialog extends StatefulWidget {
       builder: (dialogContext) =>
           ChangeNotifierProvider<shared.FranchiseProvider>.value(
         value: shared.FranchiseProvider,
-        child: ChangeNotifierProvider<CategoryProvider>.value(
-          value: categoryProvider,
+        child: ChangeNotifierProvider<shared.CategoryProvider>.value(
+          value: shared.categoryProvider,
           child: CategoryFormDialog(
             initialCategory: initialCategory,
             franchiseId: franchiseId,
@@ -78,8 +78,8 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
 
     setState(() => _loading = true);
     final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
-    final firestore = context.read<FirestoreService>();
-    final categoryProvider = context.read<CategoryProvider>();
+    final firestore = context.read<shared.FirestoreService>();
+    final shared.categoryProvider = context.read<shared.CategoryProvider>();
 
     final isEdit = widget.initialCategory != null;
     final id = widget.initialCategory?.id ?? UniqueKey().toString();
@@ -88,7 +88,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
       name: _nameController.text.trim(),
       description: _descriptionController.text.trim(),
       sortOrder: widget.initialCategory?.sortOrder ??
-          categoryProvider.categories.length,
+          shared.categoryProvider.categories.length,
     );
 
     try {
@@ -203,6 +203,8 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
     );
   }
 }
+
+
 
 
 

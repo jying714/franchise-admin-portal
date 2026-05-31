@@ -1,10 +1,10 @@
-// web-app/lib/core/services/firestore_service_impl.dart
+﻿// web-app/lib/core/services/firestore_service_impl.dart
 //
 // Thin compatibility wrapper for the web admin portal.
 // All real logic lives in AdminFirestoreService (which extends the shared lightweight impl).
 //
-// This file exists so that existing code using `FirestoreServiceImpl()`, `FirestoreService()`,
-// and `Provider<FirestoreService>` continues to work without mass changes.
+// This file exists so that existing code using `FirestoreServiceImpl()`, `shared.FirestoreService()`,
+// and `Provider<shared.FirestoreService>` continues to work without mass changes.
 
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
@@ -31,3 +31,4 @@ FirestoreServiceImpl createFirestoreService() => FirestoreServiceImpl();
 // - packages/shared_core/.../firestore_service_impl.dart (lightweight customer + common)
 // - web-app/.../admin_firestore_service.dart (full admin heavy logic)
 // This thin file provides a drop-in replacement for all previous Provider and direct instantiation sites.
+

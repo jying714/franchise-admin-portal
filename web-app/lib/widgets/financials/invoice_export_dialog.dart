@@ -11,7 +11,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 /// Supports export format selection (CSV, PDF placeholder),
 /// date range filtering, and selection of all or filtered invoices.
 ///
-/// Integrates with FirestoreService to fetch data,
+/// Integrates with shared.FirestoreService to fetch data,
 /// uses ExportUtils for CSV generation,
 /// and logs errors with shared.ErrorLogger.
 ///
@@ -28,7 +28,7 @@ class InvoiceExportDialog extends StatefulWidget {
 }
 
 class _InvoiceExportDialogState extends State<InvoiceExportDialog> {
-  late final FirestoreService _firestoreService;
+  late final shared.FirestoreService _firestoreService;
 
   DateTime? _startDate;
   DateTime? _endDate;
@@ -39,7 +39,7 @@ class _InvoiceExportDialogState extends State<InvoiceExportDialog> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _firestoreService = Provider.of<FirestoreService>(context, listen: false);
+    _firestoreService = Provider.of<shared.FirestoreService>(context, listen: false);
   }
 
   @override
@@ -200,6 +200,7 @@ class _InvoiceExportDialogState extends State<InvoiceExportDialog> {
     }
   }
 }
+
 
 
 

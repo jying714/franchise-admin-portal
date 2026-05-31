@@ -48,7 +48,7 @@ class _PlatformRevenueSummaryPanelState
 
     try {
       // You should implement/extend these methods in firestore_service.dart
-      final fs = Provider.of<FirestoreService>(context, listen: false);
+      final fs = Provider.of<shared.FirestoreService>(context, listen: false);
       final financials = await fs.fetchPlatformRevenueOverview();
       final kpis = await fs.fetchPlatformFinancialKpis();
 
@@ -195,6 +195,7 @@ class _PlatformRevenueSummaryPanelState
     );
   }
 }
+
 
 
 

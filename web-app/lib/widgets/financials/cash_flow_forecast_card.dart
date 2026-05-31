@@ -45,19 +45,19 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
 
   Future<CashFlowForecast?> _loadForecast() async {
     try {
-      final firestoreService =
-          Provider.of<FirestoreService>(context, listen: false);
+      final shared.firestoreService =
+          Provider.of<shared.FirestoreService>(context, listen: false);
       // Replace with your Firestore structure for forecast data:
       final doc =
-          await firestoreService.getCashFlowForecast(widget.franchiseId);
+          await shared.firestoreService.getCashFlowForecast(widget.franchiseId);
       print('Loaded cash flow forecast: $doc');
       print("CashFlowForecastCard franchiseId: ${widget.franchiseId}");
       if (doc == null) return null;
       // Use period as the id if available, or "" if not present:
       return CashFlowForecast.fromFirestore(doc, doc['period'] ?? '');
     } catch (e, st) {
-      final firestoreService =
-          Provider.of<FirestoreService>(context, listen: false);
+      final shared.firestoreService =
+          Provider.of<shared.FirestoreService>(context, listen: false);
       await shared.ErrorLogger.log(
         message: 'Failed to load cash flow forecast: $e',
         source: 'CashFlowForecastCard',
@@ -299,6 +299,7 @@ class _FeaturePlaceholder extends StatelessWidget {
     );
   }
 }
+
 
 
 

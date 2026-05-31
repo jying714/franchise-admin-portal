@@ -24,7 +24,7 @@ class _PayoutDetailDialogState extends State<PayoutDetailDialog> {
   void initState() {
     super.initState();
     _futurePayoutDetails =
-        FirestoreService().getPayoutDetailsWithAudit(widget.payoutId);
+        shared.FirestoreService().getPayoutDetailsWithAudit(widget.payoutId);
   }
 
   @override
@@ -65,7 +65,7 @@ class _PayoutDetailDialogState extends State<PayoutDetailDialog> {
                 message: loc.tryAgainLater,
                 imageAsset: BrandingConfig.bannerPlaceholder,
                 onRetry: () => setState(() {
-                  _futurePayoutDetails = FirestoreService()
+                  _futurePayoutDetails = shared.FirestoreService()
                       .getPayoutDetailsWithAudit(widget.payoutId);
                 }),
                 buttonText: loc.retry,
@@ -78,7 +78,7 @@ class _PayoutDetailDialogState extends State<PayoutDetailDialog> {
                 message: loc.payoutNotFound ?? 'Payout not found.',
                 imageAsset: BrandingConfig.bannerPlaceholder,
                 onRetry: () => setState(() {
-                  _futurePayoutDetails = FirestoreService()
+                  _futurePayoutDetails = shared.FirestoreService()
                       .getPayoutDetailsWithAudit(widget.payoutId);
                 }),
                 buttonText: loc.retry,
@@ -102,7 +102,7 @@ class _PayoutDetailDialogState extends State<PayoutDetailDialog> {
                     icon: const Icon(Icons.refresh),
                     tooltip: loc.retry,
                     onPressed: () => setState(() {
-                      _futurePayoutDetails = FirestoreService()
+                      _futurePayoutDetails = shared.FirestoreService()
                           .getPayoutDetailsWithAudit(widget.payoutId);
                     }),
                   ),
@@ -132,11 +132,11 @@ class _PayoutDetailDialogState extends State<PayoutDetailDialog> {
                           payout.customFields['attachments'] ?? [],
                       onUploaded: () => setState(() {
                         // Re-fetch details to get new attachments
-                        _futurePayoutDetails = FirestoreService()
+                        _futurePayoutDetails = shared.FirestoreService()
                             .getPayoutDetailsWithAudit(widget.payoutId);
                       }),
                       onDeleted: () => setState(() {
-                        _futurePayoutDetails = FirestoreService()
+                        _futurePayoutDetails = shared.FirestoreService()
                             .getPayoutDetailsWithAudit(widget.payoutId);
                       }),
                     ),
@@ -301,6 +301,7 @@ class _AuditTrailSection extends StatelessWidget {
     );
   }
 }
+
 
 
 

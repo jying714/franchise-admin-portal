@@ -48,7 +48,7 @@ class _PromoBulkUploadDialogState extends State<PromoBulkUploadDialog> {
 
     setState(() => isLoading = true);
     for (final promo in previewPromos) {
-      await Provider.of<FirestoreService>(context, listen: false)
+      await Provider.of<shared.FirestoreService>(context, listen: false)
           .addPromo(franchiseId, promo);
     }
     setState(() => isLoading = false);
@@ -106,6 +106,7 @@ class _PromoBulkUploadDialogState extends State<PromoBulkUploadDialog> {
     );
   }
 }
+
 
 
 

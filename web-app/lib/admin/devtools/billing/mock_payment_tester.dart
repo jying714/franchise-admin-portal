@@ -76,7 +76,7 @@ class _MockPaymentTesterState extends State<MockPaymentTester> {
   }
 
   Future<void> _submitMockPayment(BuildContext context) async {
-    final fs = context.read<FirestoreService>();
+    final fs = context.read<shared.FirestoreService>();
     final invoice = widget.invoice;
     final mock = _mockData!;
     final loc = AppLocalizations.of(context)!;
@@ -139,6 +139,7 @@ class _MockPaymentTesterState extends State<MockPaymentTester> {
     }
   }
 }
+
 
 
 

@@ -20,7 +20,7 @@ class _FeatureToggleDialogState extends State<FeatureToggleDialog> {
 
   Future<void> _save() async {
     // You'll want to save updated toggles to Firestore here, e.g.:
-    // await FirestoreService().updateFeatureToggles(featureMap);
+    // await shared.FirestoreService().updateFeatureToggles(featureMap);
     if (widget.onChanged != null) widget.onChanged!();
     Navigator.pop(context);
   }
@@ -50,5 +50,6 @@ class _FeatureToggleDialogState extends State<FeatureToggleDialog> {
     );
   }
 }
+
 
 

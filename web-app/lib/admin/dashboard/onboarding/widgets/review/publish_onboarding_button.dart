@@ -29,7 +29,7 @@ class _PublishOnboardingButtonState extends State<PublishOnboardingButton> {
   String? _publishStatusMsg;
 
   Future<void> _handlePublish(
-      BuildContext context, OnboardingReviewProvider provider) async {
+      BuildContext context, shared.OnboardingReviewProvider provider) async {
     // Trigger confirmation dialog first
     final confirmed = await showDialog<bool>(
       context: context,
@@ -76,7 +76,7 @@ class _PublishOnboardingButtonState extends State<PublishOnboardingButton> {
 
   @override
   Widget build(BuildContext context) {
-    final reviewProvider = Provider.of<OnboardingReviewProvider>(context);
+    final reviewProvider = Provider.of<shared.OnboardingReviewProvider>(context);
     final colorScheme = Theme.of(context).colorScheme;
     final canPublish = reviewProvider.isPublishable && !_publishing;
 
@@ -137,5 +137,6 @@ class _PublishOnboardingButtonState extends State<PublishOnboardingButton> {
     );
   }
 }
+
 
 

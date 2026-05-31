@@ -5,12 +5,12 @@ import 'package:shared_core/shared_core.dart' as shared;
 /// Single source of truth bridge:
 /// - Delegates scalars/radii/elevation/fonts to shared_core.DesignTokens
 /// - Dynamic colors (primary/secondary) pulled from shared.FranchiseProvider.current* (white-label)
-/// - Set via DesignTokens.setshared.FranchiseProvider(...) once at bootstrap (main.dart)
+/// - Set via DesignTokens.setFranchiseProvider(...) once at bootstrap (main.dart)
 class DesignTokens {
   static shared.FranchiseProvider? _fp;
 
   /// Public getter for other delegation layers (AppConfig, etc.).
-  static shared.FranchiseProvider? get shared.franchiseProvider => _fp;
+  static shared.FranchiseProvider? get franchiseProvider => _fp;
 
   /// Call once early (e.g. main.dart after MultiProvider) so all static getters see live branding.
   static void setFranchiseProvider(shared.FranchiseProvider? provider) {

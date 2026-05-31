@@ -5,12 +5,12 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:collection/collection.dart';
 
-class MenuItemProviderImpl extends ChangeNotifier implements MenuItemProvider {
-  final FirestoreService _firestoreService;
+class MenuItemProviderImpl extends ChangeNotifier implements shared.MenuItemProvider {
+  final shared.FirestoreService _firestoreService;
   final FranchiseInfoProvider _franchiseInfoProvider;
 
   late IngredientMetadataProvider _ingredientProvider;
-  late CategoryProvider _categoryProvider;
+  late shared.CategoryProvider _categoryProvider;
   late IngredientTypeProvider _typeProvider;
 
   List<MenuTemplateRef> _templateRefs = [];
@@ -29,9 +29,9 @@ class MenuItemProviderImpl extends ChangeNotifier implements MenuItemProvider {
   String? _loadedFranchiseId;
 
   MenuItemProviderImpl({
-    required FirestoreService firestoreService,
+    required shared.FirestoreService shared.firestoreService,
     required FranchiseInfoProvider franchiseInfoProvider,
-  })  : _firestoreService = firestoreService,
+  })  : _firestoreService = shared.firestoreService,
         _franchiseInfoProvider = franchiseInfoProvider;
 
   @override
@@ -371,4 +371,6 @@ class MenuItemProviderImpl extends ChangeNotifier implements MenuItemProvider {
     return ids.toList();
   }
 }
+
+
 

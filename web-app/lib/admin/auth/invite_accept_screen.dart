@@ -70,7 +70,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
       _inviteData = null;
     });
     try {
-      final doc = await Provider.of<FirestoreService>(context, listen: false)
+      final doc = await Provider.of<shared.FirestoreService>(context, listen: false)
           .getFranchiseeInvitationByToken(token);
       if (doc == null) {
         setState(() => _error = "Invitation not found or expired.");
@@ -155,7 +155,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
       }
 
       // Call cloud function to mark as accepted
-      await Provider.of<FirestoreService>(context, listen: false)
+      await Provider.of<shared.FirestoreService>(context, listen: false)
           .callAcceptInvitationFunction(_effectiveToken!);
 
       Navigator.of(context).pushReplacementNamed(
@@ -413,6 +413,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
     );
   }
 }
+
 
 
 

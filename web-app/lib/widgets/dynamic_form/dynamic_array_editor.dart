@@ -39,9 +39,9 @@ class _DynamicArrayEditorState extends State<DynamicArrayEditor> {
       return TextEditingController(text: _items[i]['type'] ?? '');
     });
 
-    // Load ingredient metadata if available via Provider or FirestoreService
+    // Load ingredient metadata if available via Provider or shared.FirestoreService
     Future.microtask(() async {
-      final fs = Provider.of<FirestoreService>(context, listen: false);
+      final fs = Provider.of<shared.FirestoreService>(context, listen: false);
       final result = await fs.fetchIngredientMetadataAsMaps(widget.franchiseId);
       if (mounted) {
         setState(() {
@@ -318,6 +318,7 @@ class _DynamicArrayEditorState extends State<DynamicArrayEditor> {
             .replaceAllMapped(RegExp(r'[A-Z]'), (m) => ' ${m.group(0)}');
   }
 }
+
 
 
 

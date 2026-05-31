@@ -8,7 +8,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 /// Displays full invoice detail: line items, totals, status, notes, audit trail.
 ///
 /// Features:
-/// - Fetches invoice by ID via FirestoreService.
+/// - Fetches invoice by ID via shared.FirestoreService.
 /// - Shows detailed line items with quantities and prices.
 /// - Displays invoice metadata: invoice number, dates, status, totals.
 /// - Shows audit trail with timestamps and user actions.
@@ -28,14 +28,14 @@ class InvoiceDetailScreen extends StatefulWidget {
 }
 
 class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
-  late final FirestoreService _firestoreService;
+  late final shared.FirestoreService _firestoreService;
 
   late Future<Invoice?> _invoiceFuture;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _firestoreService = Provider.of<FirestoreService>(context, listen: false);
+    _firestoreService = Provider.of<shared.FirestoreService>(context, listen: false);
     _invoiceFuture = _firestoreService.getInvoiceById(widget.invoiceId);
   }
 
@@ -305,6 +305,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     }
   }
 }
+
 
 
 

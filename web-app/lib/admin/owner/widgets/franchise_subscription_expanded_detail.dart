@@ -31,7 +31,7 @@ class _FranchiseSubscriptionExpandedDetailState
 
   Future<void> _loadInvoices() async {
     try {
-      final firestore = context.read<FirestoreService>();
+      final firestore = context.read<shared.FirestoreService>();
       final invoices = await firestore.getPlatformInvoicesForFranchisee(
         widget.enriched.franchiseId,
       );
@@ -154,6 +154,7 @@ class _FranchiseSubscriptionExpandedDetailState
     return enriched.latestInvoice!.status;
   }
 }
+
 
 
 

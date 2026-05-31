@@ -67,7 +67,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
     }
 
     try {
-      await Provider.of<FirestoreService>(context, listen: false)
+      await Provider.of<shared.FirestoreService>(context, listen: false)
           .updateFeatureToggle(franchiseId, key, value);
       await AuditLogService().addLog(
         franchiseId: franchiseId,
@@ -249,6 +249,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
     );
   }
 }
+
 
 
 

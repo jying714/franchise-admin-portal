@@ -29,7 +29,7 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
     final theme = Theme.of(context);
     final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
     final franchiseInfo = context.read<FranchiseInfoProvider>().franchise;
-    final menuItemProvider = context.read<MenuItemProvider>();
+    final shared.menuItemProvider = context.read<shared.MenuItemProvider>();
 
     final restaurantType = franchiseInfo?.restaurantType;
 
@@ -100,7 +100,7 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
                             .toList();
 
                         for (final item in items) {
-                          menuItemProvider.addOrUpdateMenuItem(item);
+                          shared.menuItemProvider.addOrUpdateMenuItem(item);
                         }
 
                         Navigator.pop(context);
@@ -144,6 +144,7 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
     );
   }
 }
+
 
 
 

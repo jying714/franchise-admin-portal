@@ -21,7 +21,7 @@ class FranchiseSubscriptionSummaryCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return FutureBuilder<List<FranchiseSubscription>>(
-      future: FirestoreService.getFranchiseSubscriptions(),
+      future: shared.FirestoreService.getFranchiseSubscriptions(),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());
@@ -107,6 +107,7 @@ class FranchiseSubscriptionSummaryCard extends StatelessWidget {
     );
   }
 }
+
 
 
 

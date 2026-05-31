@@ -162,7 +162,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
 
   Future<void> _deleteMenuItems(String franchiseId, BuildContext context,
       List<MenuItem> items, admin_user.User user) async {
-    final firestore = Provider.of<FirestoreService>(context, listen: false);
+    final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
     if (!UserPermissions.canDeleteMenu(user)) {
       await _logUnauthorizedAttempt(franchiseId, user, 'delete_menu_items');
       _showUnauthorizedDialog();
@@ -223,7 +223,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
       _showUnauthorizedDialog();
       return;
     }
-    final firestore = Provider.of<FirestoreService>(context, listen: false);
+    final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
 
     // Use shared mapping utilities
     final List<ct.CustomizationGroup> groups =
@@ -518,7 +518,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
   @override
   Widget build(BuildContext context) {
     final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
-    final firestore = Provider.of<FirestoreService>(context, listen: false);
+    final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
     final user = Provider.of<AdminUserProvider>(context).user;
     final isLoading = context.watch<AdminUserProvider>().loading;
     final loc = AppLocalizations.of(context);
@@ -996,6 +996,7 @@ extension _LocTry on AppLocalizations {
     }
   }
 }
+
 
 
 

@@ -22,8 +22,8 @@ class StaffAccessScreen extends StatefulWidget {
 class _StaffAccessScreenState extends State<StaffAccessScreen> {
   @override
   Widget build(BuildContext context) {
-    final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+    final shared.firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       return const Scaffold(
@@ -137,7 +137,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                       ),
                       Expanded(
                         child: StreamBuilder<List<admin_user.User>>(
-                          stream: firestoreService.getStaffUsers(franchiseId),
+                          stream: shared.firestoreService.getStaffUsers(franchiseId),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
@@ -185,7 +185,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                                         color: colorScheme.error),
                                     tooltip: loc.staffRemoveTooltip,
                                     onPressed: () => _confirmRemoveStaff(
-                                        context, firestoreService, user, loc),
+                                        context, shared.firestoreService, user, loc),
                                   ),
                                 );
                               },
@@ -205,7 +205,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
     );
   }
 
-  void _confirmRemoveStaff(BuildContext context, FirestoreService service,
+  void _confirmRemoveStaff(BuildContext context, shared.FirestoreService service,
       admin_user.User user, AppLocalizations loc) {
     final colorScheme = Theme.of(context).colorScheme;
     showDialog(
@@ -256,6 +256,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
     );
   }
 }
+
 
 
 

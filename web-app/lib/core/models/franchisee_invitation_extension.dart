@@ -39,7 +39,7 @@ extension FranchiseeInvitationFirestore on FranchiseeInvitation {
   }
 
   /// Save to Firestore
-  Future<void> save(FirestoreService firestore) async {
+  Future<void> save(shared.FirestoreService firestore) async {
     try {
       final collection =
           firestore.invitationCollection; // â† Now defined in impl
@@ -62,7 +62,7 @@ extension FranchiseeInvitationFirestore on FranchiseeInvitation {
     required String inviterUserId,
     String? franchiseName,
     String? token,
-    required FirestoreService firestore,
+    required shared.FirestoreService firestore,
   }) async {
     final collection = firestore.invitationCollection;
     final docRef = collection.doc();
@@ -79,4 +79,5 @@ extension FranchiseeInvitationFirestore on FranchiseeInvitation {
     return invitation;
   }
 }
+
 

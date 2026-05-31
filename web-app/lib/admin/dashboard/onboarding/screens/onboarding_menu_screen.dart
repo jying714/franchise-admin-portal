@@ -62,13 +62,13 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
     final franchise = franchiseInfoProvider.franchise;
     final isLoading = franchiseInfoProvider.loading;
 
-    final onboardingProgressProvider =
-        context.watch<OnboardingProgressProvider>();
-    final progress = onboardingProgressProvider.stepStatus;
+    final shared.onboardingProgressProvider =
+        context.watch<shared.OnboardingProgressProvider>();
+    final progress = shared.onboardingProgressProvider.stepStatus;
 
     print('[OnboardingMenuScreen] progress: $progress');
 
-    if (isLoading || onboardingProgressProvider.loading) {
+    if (isLoading || shared.onboardingProgressProvider.loading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -223,6 +223,7 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
     );
   }
 }
+
 
 
 

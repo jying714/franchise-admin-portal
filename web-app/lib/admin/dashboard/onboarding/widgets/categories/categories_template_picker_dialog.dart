@@ -17,12 +17,12 @@ class CategoriesTemplatePickerDialog extends StatefulWidget {
   static Future<void> show(BuildContext parentContext) {
     final loc = AppLocalizations.of(parentContext)!;
     final provider =
-        Provider.of<CategoryProvider>(parentContext, listen: false);
+        Provider.of<shared.CategoryProvider>(parentContext, listen: false);
 
     return showDialog(
       context: parentContext,
       builder: (dialogContext) =>
-          ChangeNotifierProvider<CategoryProvider>.value(
+          ChangeNotifierProvider<shared.CategoryProvider>.value(
         value: provider,
         child: CategoriesTemplatePickerDialog(
             loc: loc, parentContext: parentContext), // add param
@@ -41,7 +41,7 @@ class _CategoriesTemplatePickerDialogState
 
   Future<void> _loadTemplate(String templateId) async {
     final loc = widget.loc;
-    final provider = context.read<CategoryProvider>();
+    final provider = context.read<shared.CategoryProvider>();
     final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
 
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
@@ -174,6 +174,7 @@ class _CategoriesTemplatePickerDialogState
     );
   }
 }
+
 
 
 

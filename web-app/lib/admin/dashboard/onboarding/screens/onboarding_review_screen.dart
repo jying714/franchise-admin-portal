@@ -22,7 +22,7 @@ class OnboardingReviewScreen extends StatefulWidget {
 }
 
 class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
-  OnboardingReviewProvider? _reviewProvider;
+  shared.OnboardingReviewProvider? _reviewProvider;
   bool _providerReady = false;
   bool _loading = true;
   String? _error;
@@ -50,22 +50,22 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
             Provider.of<IngredientTypeProvider>(context, listen: false);
         final ingredientMetadataProvider =
             Provider.of<IngredientMetadataProvider>(context, listen: false);
-        final categoryProvider =
-            Provider.of<CategoryProvider>(context, listen: false);
-        final menuItemProvider =
-            Provider.of<MenuItemProvider>(context, listen: false);
-        final firestoreService =
-            Provider.of<FirestoreService>(context, listen: false);
+        final shared.categoryProvider =
+            Provider.of<shared.CategoryProvider>(context, listen: false);
+        final shared.menuItemProvider =
+            Provider.of<shared.MenuItemProvider>(context, listen: false);
+        final shared.firestoreService =
+            Provider.of<shared.FirestoreService>(context, listen: false);
         final auditLogService =
             Provider.of<AuditLogService>(context, listen: false);
 
-        _reviewProvider = OnboardingReviewProvider(
+        _reviewProvider = shared.OnboardingReviewProvider(
           franchiseFeatureProvider: franchiseFeatureProvider,
           ingredientTypeProvider: ingredientTypeProvider,
           ingredientMetadataProvider: ingredientMetadataProvider,
-          categoryProvider: categoryProvider,
-          menuItemProvider: menuItemProvider,
-          firestoreService: firestoreService,
+          shared.categoryProvider: shared.categoryProvider,
+          shared.menuItemProvider: shared.menuItemProvider,
+          shared.firestoreService: shared.firestoreService,
           auditLogService: auditLogService,
         );
 
@@ -88,8 +88,8 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
   bool _providersReady() {
     final types = context.read<IngredientTypeProvider>().ingredientTypes;
     final ingredients = context.read<IngredientMetadataProvider>().ingredients;
-    final categories = context.read<CategoryProvider>().categories;
-    final menuItems = context.read<MenuItemProvider>().menuItems;
+    final categories = context.read<shared.CategoryProvider>().categories;
+    final menuItems = context.read<shared.MenuItemProvider>().menuItems;
 
     return types != null &&
         ingredients != null &&
@@ -132,10 +132,10 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
       await Provider.of<IngredientTypeProvider>(context, listen: false)
           .loadIngredientTypes(franchiseId, forceReloadFromFirestore: false);
 
-      await Provider.of<CategoryProvider>(context, listen: false)
+      await Provider.of<shared.CategoryProvider>(context, listen: false)
           .loadCategories(franchiseId, forceReloadFromFirestore: false);
 
-      await Provider.of<MenuItemProvider>(context, listen: false)
+      await Provider.of<shared.MenuItemProvider>(context, listen: false)
           .loadMenuItems(franchiseId, forceReloadFromFirestore: false);
 
       debugPrint(
@@ -171,8 +171,8 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
     final _ = (
       context.watch<IngredientTypeProvider>().ingredientTypes,
       context.watch<IngredientMetadataProvider>().ingredients,
-      context.watch<CategoryProvider>().categories,
-      context.watch<MenuItemProvider>().menuItems
+      context.watch<shared.CategoryProvider>().categories,
+      context.watch<shared.MenuItemProvider>().menuItems
     );
 
     if (!_providerReady || _reviewProvider == null) {
@@ -190,7 +190,7 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
 
     _scheduleFirstValidation();
 
-    return ChangeNotifierProvider<OnboardingReviewProvider>.value(
+    return ChangeNotifierProvider<shared.OnboardingReviewProvider>.value(
       value: _reviewProvider!,
       child: Scaffold(
         backgroundColor: DesignTokens.backgroundColor,
@@ -243,7 +243,7 @@ class _OnboardingReviewContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final loc = AppLocalizations.of(context)!;
-    final reviewProvider = Provider.of<OnboardingReviewProvider>(context);
+    final reviewProvider = Provider.of<shared.OnboardingReviewProvider>(context);
     final franchiseId =
         Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
     final userId =
@@ -406,6 +406,8 @@ class _OnboardingReviewContent extends StatelessWidget {
     );
   }
 }
+
+
 
 
 

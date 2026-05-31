@@ -6,15 +6,15 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class AlertsRepository {
   final FirebaseFirestore _firestore;
-  final FirestoreService _firestoreService;
+  final shared.FirestoreService _firestoreService;
   final AppConfig? _appConfig;
 
   AlertsRepository({
     FirebaseFirestore? firestore,
-    required FirestoreService firestoreService,
+    required shared.FirestoreService shared.firestoreService,
     AppConfig? appConfig,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _firestoreService = firestoreService,
+        _firestoreService = shared.firestoreService,
         _appConfig = appConfig;
 
   /// Stream all active alerts for the given franchise/location.
@@ -145,6 +145,7 @@ class AlertsRepository {
     }
   }
 }
+
 
 
 

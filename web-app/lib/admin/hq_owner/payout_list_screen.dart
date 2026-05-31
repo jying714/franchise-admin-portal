@@ -34,7 +34,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
       _bulkError = null;
     });
     try {
-      await Provider.of<FirestoreService>(context, listen: false).bulkUpdatePayoutStatus(
+      await Provider.of<shared.FirestoreService>(context, listen: false).bulkUpdatePayoutStatus(
         _selectedPayoutIds.toList(),
         status,
       );
@@ -65,7 +65,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
     try {
       final franchiseId =
           Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
-      await Provider.of<FirestoreService>(context, listen: false).exportPayoutsToCsv(
+      await Provider.of<shared.FirestoreService>(context, listen: false).exportPayoutsToCsv(
         franchiseId: franchiseId,
       );
       ScaffoldMessenger.of(context).showSnackBar(
@@ -87,7 +87,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
   Future<void> _deleteSelectedPayouts() async {
     try {
       for (final id in _selectedPayoutIds) {
-        await Provider.of<FirestoreService>(context, listen: false).deletePayout(id);
+        await Provider.of<shared.FirestoreService>(context, listen: false).deletePayout(id);
       }
       setState(() => _selectedPayoutIds.clear());
       ScaffoldMessenger.of(context).showSnackBar(
@@ -351,7 +351,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
                 child: Consumer<PayoutFilterProvider>(
                   builder: (context, filterProvider, _) {
                     return FutureBuilder<List<Map<String, dynamic>>>(
-                      future: Provider.of<FirestoreService>(context, listen: false).getPayoutsForFranchise(
+                      future: Provider.of<shared.FirestoreService>(context, listen: false).getPayoutsForFranchise(
                         franchiseId: franchiseId,
                         status: filterProvider.status == 'all'
                             ? null
@@ -518,7 +518,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
                                             );
                                             _retry();
                                           } else if (v == 'ResetPending') {
-                                            await Provider.of<FirestoreService>(context, listen: false)
+                                            await Provider.of<shared.FirestoreService>(context, listen: false)
                                                 .retryPayout(payout['id']);
                                             _retry();
                                           } else {
@@ -666,6 +666,7 @@ class _StatusChip extends StatelessWidget {
     );
   }
 }
+
 
 
 

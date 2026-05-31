@@ -42,10 +42,10 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
           .read<IngredientMetadataProvider>()
           .load(forceReloadFromFirestore: true);
       context
-          .read<CategoryProvider>()
+          .read<shared.CategoryProvider>()
           .loadCategories(franchiseId, forceReloadFromFirestore: true);
       context
-          .read<MenuItemProvider>()
+          .read<shared.MenuItemProvider>()
           .loadMenuItems(franchiseId, forceReloadFromFirestore: true);
     }
 
@@ -53,7 +53,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
   }
 
   Future<void> _markComplete() async {
-    final onboarding = context.read<OnboardingProgressProvider>();
+    final onboarding = context.read<shared.OnboardingProgressProvider>();
     final loc = AppLocalizations.of(context)!;
 
     try {
@@ -83,10 +83,10 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
   Widget build(BuildContext context) {
     print('[DEBUG][OnboardingMenuScreen] build called');
     final loc = AppLocalizations.of(context)!;
-    final provider = context.watch<MenuItemProvider>();
+    final provider = context.watch<shared.MenuItemProvider>();
     provider.injectDependencies(
       ingredientProvider: context.read<IngredientMetadataProvider>(),
-      categoryProvider: context.read<CategoryProvider>(),
+      shared.categoryProvider: context.read<shared.CategoryProvider>(),
       typeProvider: context.read<IngredientTypeProvider>(),
     );
     // print(
@@ -98,7 +98,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     final ingredientTypes =
         context.watch<IngredientTypeProvider>().ingredientTypes;
     final ingredients = context.watch<IngredientMetadataProvider>().ingredients;
-    final categories = context.watch<CategoryProvider>().categories;
+    final categories = context.watch<shared.CategoryProvider>().categories;
 
     final missingSteps = <String>[];
     if (ingredientTypes.isEmpty) missingSteps.add(loc.stepIngredientTypes);
@@ -176,7 +176,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
 
     // Helper to check and maybe show schema sidebar
     void checkForSchemaIssues(MenuItem menuItem) {
-      final categories = context.read<CategoryProvider>().categories;
+      final categories = context.read<shared.CategoryProvider>().categories;
       final ingredients =
           context.read<IngredientMetadataProvider>().ingredients;
       final ingredientTypes =
@@ -243,7 +243,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
       final List<MenuItemSchemaIssue> remainingIssues =
           MenuItemSchemaIssue.detectAllIssues(
         menuItem: repaired,
-        categories: context.read<CategoryProvider>().categories,
+        categories: context.read<shared.CategoryProvider>().categories,
         ingredients: context.read<IngredientMetadataProvider>().allIngredients,
         ingredientTypes: context.read<IngredientTypeProvider>().ingredientTypes,
       );
@@ -266,7 +266,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
 
     // Reusable openEditor with schema checking logic
     void openEditor({MenuItem? item}) {
-      final provider = context.read<MenuItemProvider>();
+      final provider = context.read<shared.MenuItemProvider>();
 
       showModalBottomSheet(
         isScrollControlled: true,
@@ -302,7 +302,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                             franchiseId:
                                 context.read<shared.FranchiseProvider>().franchiseId,
                             onSave: (updatedItem) async {
-                              final provider = context.read<MenuItemProvider>();
+                              final provider = context.read<shared.MenuItemProvider>();
                               provider.addOrUpdateMenuItem(
                                   updatedItem); // modifies local cache
 
@@ -391,7 +391,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                   print('[DEBUG][FAB] Navigation pushNamed returned: $result');
                   if (result is MenuItem) {
                     context
-                        .read<MenuItemProvider>()
+                        .read<shared.MenuItemProvider>()
                         .addOrUpdateMenuItem(result);
                   }
                 }).catchError((err, st) async {
@@ -455,29 +455,29 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                           onPressed: () async {
                             final ingredientProvider =
                                 context.read<IngredientMetadataProvider>();
-                            final categoryProvider =
-                                context.read<CategoryProvider>();
+                            final shared.categoryProvider =
+                                context.read<shared.CategoryProvider>();
                             final typeProvider =
                                 context.read<IngredientTypeProvider>();
-                            final menuItemProvider =
-                                context.read<MenuItemProvider>();
+                            final shared.menuItemProvider =
+                                context.read<shared.MenuItemProvider>();
 
                             // Inject dependencies
-                            menuItemProvider.injectDependencies(
+                            shared.menuItemProvider.injectDependencies(
                               ingredientProvider: ingredientProvider,
-                              categoryProvider: categoryProvider,
+                              shared.categoryProvider: shared.categoryProvider,
                               typeProvider: typeProvider,
                             );
                             print('[DEBUG] --- Staged Data Snapshot ---');
                             print(
                                 '[DEBUG] Staged Ingredients: ${ingredientProvider.stagedIngredientCount}');
                             print(
-                                '[DEBUG] Staged Categories: ${categoryProvider.stagedCategoryCount}');
+                                '[DEBUG] Staged Categories: ${shared.categoryProvider.stagedCategoryCount}');
                             print(
                                 '[DEBUG] Staged Ingredient Types: ${typeProvider.stagedTypes.length}');
 
                             // Call persist once deps injected
-                            await menuItemProvider.persistChanges();
+                            await shared.menuItemProvider.persistChanges();
                           },
                           child: Text(loc.saveChanges),
                         ),
@@ -567,6 +567,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     );
   }
 }
+
 
 
 

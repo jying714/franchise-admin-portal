@@ -8,9 +8,9 @@ class FranchiseSelectorDialogContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final firestoreService =
+    final shared.firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
-    final franchiseProvider =
+    final shared.franchiseProvider =
         Provider.of<shared.FranchiseProvider>(context, listen: false);
     final loc = AppLocalizations.of(context);
     if (loc == null) {
@@ -24,7 +24,7 @@ class FranchiseSelectorDialogContent extends StatelessWidget {
 
     return FutureBuilder<List<shared.FranchiseInfo>>(
       future:
-          firestoreService.getFranchises(), // must return List<FranchiseInfo>
+          shared.firestoreService.getFranchises(), // must return List<FranchiseInfo>
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Padding(
@@ -51,7 +51,7 @@ class FranchiseSelectorDialogContent extends StatelessWidget {
               title: Text(franchise.name ?? franchise.id),
               subtitle: Text('ID: ${franchise.id}'),
               onTap: () {
-                franchiseProvider.setFranchiseId(franchise.id);
+                shared.franchiseProvider.setFranchiseId(franchise.id);
                 Navigator.of(context).pop(); // Close dialog
               },
             );
@@ -61,6 +61,7 @@ class FranchiseSelectorDialogContent extends StatelessWidget {
     );
   }
 }
+
 
 
 

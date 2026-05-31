@@ -30,7 +30,7 @@ class _AdminErrorLogsScreenState extends State<AdminErrorLogsScreen> {
       _errorMsg = null;
     });
     try {
-      // TODO: Replace with real FirestoreService error log query scoped to this franchise.
+      // TODO: Replace with real shared.FirestoreService error log query scoped to this franchise.
       await Future.delayed(const Duration(milliseconds: 500));
       final franchiseId =
           Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
@@ -410,6 +410,7 @@ class AdminErrorLog {
     required this.franchiseId,
   });
 }
+
 
 
 

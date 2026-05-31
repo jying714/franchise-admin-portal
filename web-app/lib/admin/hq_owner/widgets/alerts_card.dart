@@ -37,7 +37,7 @@ class AlertsCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final appConfig = AppConfig.instance;
-    final fireService = Provider.of<FirestoreService>(context, listen: false);
+    final fireService = Provider.of<shared.FirestoreService>(context, listen: false);
 
     // --- ROLE/PERMISSION DEBUGGING ---
     print(
@@ -47,7 +47,7 @@ class AlertsCard extends StatelessWidget {
 
     final repo = repository ??
         AlertsRepository(
-          firestoreService: fireService,
+          shared.firestoreService: fireService,
           appConfig: appConfig,
         );
 
@@ -295,6 +295,7 @@ class _AlertError extends StatelessWidget {
         ),
       );
 }
+
 
 
 

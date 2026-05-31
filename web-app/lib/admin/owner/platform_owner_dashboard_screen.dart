@@ -194,8 +194,8 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
                 ChangeNotifierProvider(
                   create: (context) => FranchiseeInvitationProvider(
                     service: FranchiseeInvitationService(
-                      firestoreService:
-                          Provider.of<FirestoreService>(context, listen: false),
+                      shared.firestoreService:
+                          Provider.of<shared.FirestoreService>(context, listen: false),
                     ),
                   )..fetchInvitations(),
                   child: FranchiseInvitationPanel(
@@ -852,6 +852,7 @@ class OwnerAnnouncementsPanel extends StatelessWidget {
     );
   }
 }
+
 
 
 

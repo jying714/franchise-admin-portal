@@ -176,7 +176,7 @@ class _OnboardingIngredientsScreenState
 
   Future<void> _markComplete() async {
     final provider = context.read<IngredientMetadataProvider>();
-    final onboardingProvider = context.read<OnboardingProgressProvider>();
+    final onboardingProvider = context.read<shared.OnboardingProgressProvider>();
 
     if (provider.ingredients.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -558,7 +558,7 @@ class _OnboardingIngredientsScreenState
                           final metadataProvider =
                               context.read<IngredientMetadataProvider>();
                           final onboardingProvider =
-                              context.read<OnboardingProgressProvider>();
+                              context.read<shared.OnboardingProgressProvider>();
 
                           try {
                             await metadataProvider.saveAllChanges(franchiseId);
@@ -756,6 +756,7 @@ class _OnboardingIngredientsScreenState
     super.dispose();
   }
 }
+
 
 
 

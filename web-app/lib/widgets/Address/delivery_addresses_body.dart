@@ -10,7 +10,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class DeliveryAddressesBody extends StatefulWidget {
   final List<Address> addresses;
-  final FirestoreService firestoreService;
+  final shared.FirestoreService shared.firestoreService;
   final User user;
   final GlobalKey<FormState> formKey;
   final String franchiseId;
@@ -18,7 +18,7 @@ class DeliveryAddressesBody extends StatefulWidget {
   const DeliveryAddressesBody({
     super.key,
     required this.addresses,
-    required this.firestoreService,
+    required this.shared.firestoreService,
     required this.user,
     required this.formKey,
     required this.franchiseId,
@@ -33,7 +33,7 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
     final addresses = widget.addresses;
-    final firestoreService = widget.firestoreService;
+    final shared.firestoreService = widget.shared.firestoreService;
     final user = widget.user;
     final formKey = widget.formKey;
 
@@ -68,7 +68,7 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                     confirmColor: DesignTokens.errorColor,
                   );
                   if (shouldDelete == true) {
-                    await firestoreService.removeAddressForUser(
+                    await shared.firestoreService.removeAddressForUser(
                         user.uid, address.id);
                     if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -105,7 +105,7 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                     confirmColor: DesignTokens.primaryColor,
                   );
                   if (shouldAdd == true) {
-                    await firestoreService.addAddressForUser(
+                    await shared.firestoreService.addAddressForUser(
                         user.uid, newAddress);
 
                     if (!mounted) return;
@@ -132,6 +132,7 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
     );
   }
 }
+
 
 
 

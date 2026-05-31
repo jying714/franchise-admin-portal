@@ -22,7 +22,7 @@ class UserProfileNotifier extends ChangeNotifier
   @override
   Object? get lastError => _lastError;
 
-  FirestoreService? _firestoreService;
+  shared.FirestoreService? _firestoreService;
   String? _lastUid;
   StreamSubscription? _sub;
 
@@ -107,11 +107,12 @@ class UserProfileNotifier extends ChangeNotifier
 
   // === HELPER: delayedUserStream ===
   Stream<admin_user.User?> delayedUserStream(
-      FirestoreService firestore, String uid) {
+      shared.FirestoreService firestore, String uid) {
     return firestore.userStream(uid).asyncMap((u) async {
       await Future.delayed(const Duration(milliseconds: 100)); // debounce
       return u;
     });
   }
 }
+
 

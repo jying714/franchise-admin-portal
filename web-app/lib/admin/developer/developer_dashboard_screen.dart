@@ -78,8 +78,8 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         body: Center(child: CircularProgressIndicator()),
       );
     }
-    final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+    final shared.firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     final isMobile = MediaQuery.of(context).size.width < 800;
     final loc = AppLocalizations.of(context);
@@ -314,6 +314,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
     ];
   }
 }
+
 
 
 

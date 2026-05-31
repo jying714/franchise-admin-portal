@@ -42,7 +42,7 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
 
     try {
       final user = Provider.of<AdminUserProvider>(context, listen: false).user;
-      final firestore = Provider.of<FirestoreService>(context, listen: false);
+      final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
 
       if (user == null) {
         setState(() {
@@ -155,7 +155,7 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
             final provider =
                 Provider.of<AdminUserProvider>(context, listen: false);
             provider.listenToAdminUser(
-              Provider.of<FirestoreService>(context, listen: false),
+              Provider.of<shared.FirestoreService>(context, listen: false),
               user.id,
               Provider.of<shared.FranchiseProvider>(context, listen: false),
             );
@@ -357,6 +357,7 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
     );
   }
 }
+
 
 
 

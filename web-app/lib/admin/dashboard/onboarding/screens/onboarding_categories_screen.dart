@@ -83,7 +83,7 @@ class _OnboardingCategoriesScreenState
   }
 
   Future<void> _markComplete() async {
-    final onboarding = context.read<OnboardingProgressProvider>();
+    final onboarding = context.read<shared.OnboardingProgressProvider>();
     final loc = AppLocalizations.of(context)!;
 
     final isCompleted = onboarding.isStepComplete('categories');
@@ -124,7 +124,7 @@ class _OnboardingCategoriesScreenState
   Future<void> _saveChanges() async {
     final loc = AppLocalizations.of(context)!;
     final provider = context.read<CategoryProviderImpl>();
-    final onboarding = context.read<OnboardingProgressProvider>();
+    final onboarding = context.read<shared.OnboardingProgressProvider>();
     final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
 
     try {
@@ -397,6 +397,7 @@ class _OnboardingCategoriesScreenState
     );
   }
 }
+
 
 
 

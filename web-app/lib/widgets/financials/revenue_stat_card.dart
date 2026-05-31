@@ -40,7 +40,7 @@ class _RevenueStatCardState extends State<RevenueStatCard> {
   }
 
   Future<double> _getValue(BuildContext context, String franchiseId) {
-    final firestore = context.read<FirestoreService>();
+    final firestore = context.read<shared.FirestoreService>();
     switch (_period) {
       case RevenuePeriod.daily:
         return firestore.getTotalRevenueToday(franchiseId);
@@ -225,6 +225,7 @@ class _RevenueStatCardState extends State<RevenueStatCard> {
     );
   }
 }
+
 
 
 

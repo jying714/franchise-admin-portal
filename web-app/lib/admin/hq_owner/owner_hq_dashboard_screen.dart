@@ -45,11 +45,11 @@ class OwnerHQDashboardScreen extends StatelessWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final shared.FranchiseProvider =
           Provider.of<shared.FranchiseProvider>(context, listen: false);
-      final firestoreService =
-          Provider.of<FirestoreService>(context, listen: false);
+      final shared.firestoreService =
+          Provider.of<shared.FirestoreService>(context, listen: false);
 
       if (shared.FranchiseProvider.allFranchises.isEmpty) {
-        final franchises = await firestoreService.getFranchises();
+        final franchises = await shared.firestoreService.getFranchises();
         shared.FranchiseProvider.setAllFranchises(franchises);
       }
 
@@ -80,8 +80,8 @@ class OwnerHQDashboardScreen extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final user = Provider.of<AdminUserProvider>(context).user;
     final franchiseId = Provider.of<shared.FranchiseProvider>(context).franchiseId;
-    final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+    final shared.firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final userProfileUrl =
         user?.avatarUrl ?? FirebaseAuth.instance.currentUser?.photoURL ?? '';
     // HQ/Owner-only guard (not visible to regular managers, staff, etc)
@@ -141,9 +141,9 @@ class OwnerHQDashboardScreen extends StatelessWidget {
           Provider.of<shared.FranchiseProvider>(context, listen: false);
       if (shared.FranchiseProvider.allFranchises.isEmpty) {
         try {
-          final firestoreService =
-              Provider.of<FirestoreService>(context, listen: false);
-          final franchises = await firestoreService.getFranchises();
+          final shared.firestoreService =
+              Provider.of<shared.FirestoreService>(context, listen: false);
+          final franchises = await shared.firestoreService.getFranchises();
           shared.FranchiseProvider.setAllFranchises(franchises);
         } catch (e) {
           // Optional: Show error/snackbar if needed
@@ -223,7 +223,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                   ConstrainedBox(
                     constraints: BoxConstraints(minHeight: 220),
                     child: FutureBuilder<Map<String, dynamic>>(
-                      future: Provider.of<FirestoreService>(context, listen: false)
+                      future: Provider.of<shared.FirestoreService>(context, listen: false)
                           .getInvoiceStatsForFranchise(franchiseId),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
@@ -765,6 +765,7 @@ class FutureFeaturePlaceholderPanel extends StatelessWidget {
     );
   }
 }
+
 
 
 

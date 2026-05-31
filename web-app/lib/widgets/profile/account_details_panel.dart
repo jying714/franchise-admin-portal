@@ -49,7 +49,7 @@ class _AccountDetailsPanelState extends State<AccountDetailsPanel> {
       _error = null;
     });
     try {
-      await Provider.of<FirestoreService>(context, listen: false).updateUserProfile(widget.user.id, {
+      await Provider.of<shared.FirestoreService>(context, listen: false).updateUserProfile(widget.user.id, {
         'name': _nameController.text.trim(),
         'phoneNumber': _phoneController.text.trim(),
         'language': _language,
@@ -216,6 +216,7 @@ class _AccountDetailsPanelState extends State<AccountDetailsPanel> {
     );
   }
 }
+
 
 
 

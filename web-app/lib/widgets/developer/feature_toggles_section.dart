@@ -37,7 +37,7 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
       _errorMsg = null;
     });
     try {
-      // TODO: Replace with real FirestoreService feature toggle fetch
+      // TODO: Replace with real shared.FirestoreService feature toggle fetch
       await Future.delayed(const Duration(milliseconds: 500));
       _toggles = [
         FeatureToggle(
@@ -80,7 +80,7 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
 
   Future<void> _setFeatureToggle(FeatureToggle toggle, bool enabled) async {
     try {
-      // TODO: Persist feature toggle change with FirestoreService
+      // TODO: Persist feature toggle change with shared.FirestoreService
       await Future.delayed(const Duration(milliseconds: 350));
       setState(() {
         _toggles = _toggles
@@ -363,6 +363,7 @@ class FeatureToggle {
     );
   }
 }
+
 
 
 

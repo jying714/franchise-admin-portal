@@ -46,7 +46,7 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
         'timestamp': DateTime.now().toIso8601String(),
       };
       await context
-          .read<FirestoreService>()
+          .read<shared.FirestoreService>()
           .addCommentToErrorLog(franchiseId, log.id, comment);
       setState(() {
         log = log.copyWith(
@@ -67,7 +67,7 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
     setState(() => _isResolving = true);
     try {
       await context
-          .read<FirestoreService>()
+          .read<shared.FirestoreService>()
           .setErrorLogStatus(franchiseId, log.id, resolved: !(log.resolved));
       setState(() {
         log = log.copyWith(resolved: !log.resolved);
@@ -83,7 +83,7 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
     setState(() => _isArchiving = true);
     try {
       await context
-          .read<FirestoreService>()
+          .read<shared.FirestoreService>()
           .setErrorLogStatus(franchiseId, log.id, archived: !(log.archived));
       setState(() {
         log = log.copyWith(archived: !log.archived);
@@ -514,6 +514,7 @@ extension ErrorLogCopyWith on ErrorLog {
     );
   }
 }
+
 
 
 

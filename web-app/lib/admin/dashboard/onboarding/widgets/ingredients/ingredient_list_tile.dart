@@ -35,7 +35,7 @@ class IngredientListTile extends StatelessWidget {
       final theme = Theme.of(context);
       final t = AppLocalizations.of(context)!;
       final colorScheme = theme.colorScheme;
-      final firestore = context.read<FirestoreService>();
+      final firestore = context.read<shared.FirestoreService>();
 
       return Card(
         elevation: 1,
@@ -206,6 +206,7 @@ class IngredientListTile extends StatelessWidget {
     }
   }
 }
+
 
 
 

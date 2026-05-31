@@ -19,18 +19,18 @@ class CategoryJsonImportExportDialog extends StatefulWidget {
 
   static Future<void> show(BuildContext parentContext) {
     final loc = AppLocalizations.of(parentContext)!;
-    final categoryProvider =
-        Provider.of<CategoryProvider>(parentContext, listen: false);
+    final shared.categoryProvider =
+        Provider.of<shared.CategoryProvider>(parentContext, listen: false);
     final onboardingProvider =
-        Provider.of<OnboardingProgressProvider>(parentContext, listen: false);
+        Provider.of<shared.OnboardingProgressProvider>(parentContext, listen: false);
 
     return showDialog(
       context: parentContext,
       builder: (dialogContext) =>
-          ChangeNotifierProvider<OnboardingProgressProvider>.value(
+          ChangeNotifierProvider<shared.OnboardingProgressProvider>.value(
         value: onboardingProvider,
-        child: ChangeNotifierProvider<CategoryProvider>.value(
-          value: categoryProvider,
+        child: ChangeNotifierProvider<shared.CategoryProvider>.value(
+          value: shared.categoryProvider,
           child: CategoryJsonImportExportDialog(
             loc: loc,
             parentContext: parentContext,
@@ -68,9 +68,9 @@ class _CategoryJsonImportExportDialogState
   Future<void> _importCategories() async {
     final loc = widget.loc;
     final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
-    final firestore = context.read<FirestoreService>();
+    final firestore = context.read<shared.FirestoreService>();
     final onboardingProgress =
-        context.read<OnboardingProgressProvider>().stepStatus;
+        context.read<shared.OnboardingProgressProvider>().stepStatus;
 
     setState(() {
       _isImporting = true;
@@ -90,7 +90,7 @@ class _CategoryJsonImportExportDialogState
 
       if (onboardingProgress['categories'] != true) {
         await context
-            .read<OnboardingProgressProvider>()
+            .read<shared.OnboardingProgressProvider>()
             .markStepComplete('categories');
       }
 
@@ -199,6 +199,8 @@ class _CategoryJsonImportExportDialogState
     );
   }
 }
+
+
 
 
 

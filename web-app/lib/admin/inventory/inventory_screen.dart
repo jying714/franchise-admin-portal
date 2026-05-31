@@ -32,7 +32,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   Future<void> _addOrEditInventory(String franchiseId, BuildContext context,
       {Inventory? item}) async {
-    final firestore = Provider.of<FirestoreService>(context, listen: false);
+    final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       print(
@@ -137,7 +137,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   Future<void> _deleteInventory(
       String franchiseId, BuildContext context, Inventory item) async {
-    final firestore = Provider.of<FirestoreService>(context, listen: false);
+    final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       print(
@@ -205,7 +205,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
   @override
   Widget build(BuildContext context) {
     final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
-    final firestore = Provider.of<FirestoreService>(context, listen: false);
+    final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -434,6 +434,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 }
+
 
 
 

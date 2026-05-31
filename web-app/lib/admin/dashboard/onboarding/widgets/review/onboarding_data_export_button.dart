@@ -7,7 +7,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 
 /// Button for exporting onboarding data (including issues) as JSON.
-/// - Pulls from OnboardingReviewProvider.exportDataAsJson()
+/// - Pulls from shared.OnboardingReviewProvider.exportDataAsJson()
 /// - Notifies user on copy/export.
 /// - Ready for CSV export or true download integration (see notes).
 class OnboardingDataExportButton extends StatefulWidget {
@@ -24,7 +24,7 @@ class _OnboardingDataExportButtonState
   String? _lastStatusMsg;
 
   Future<void> _exportJson(
-      BuildContext context, OnboardingReviewProvider provider) async {
+      BuildContext context, shared.OnboardingReviewProvider provider) async {
     setState(() {
       _copying = true;
       _lastStatusMsg = null;
@@ -60,7 +60,7 @@ class _OnboardingDataExportButtonState
 
   // Placeholder for future CSV export logic (not implemented yet)
   Future<void> _exportCsv(
-      BuildContext context, OnboardingReviewProvider provider) async {
+      BuildContext context, shared.OnboardingReviewProvider provider) async {
     setState(() => _copying = true);
     try {
       // You may implement your CSV export logic here.
@@ -80,7 +80,7 @@ class _OnboardingDataExportButtonState
 
   @override
   Widget build(BuildContext context) {
-    final reviewProvider = Provider.of<OnboardingReviewProvider>(context);
+    final reviewProvider = Provider.of<shared.OnboardingReviewProvider>(context);
     final colorScheme = Theme.of(context).colorScheme;
 
     return Column(
@@ -180,5 +180,6 @@ class _OnboardingDataExportButtonState
     );
   }
 }
+
 
 

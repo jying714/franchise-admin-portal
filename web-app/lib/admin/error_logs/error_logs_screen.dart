@@ -205,7 +205,7 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
             child: Container(
               color: colorScheme.background,
               child: StreamBuilder<List<ErrorLog>>(
-                stream: context.read<FirestoreService>().streamErrorLogs(
+                stream: context.read<shared.FirestoreService>().streamErrorLogs(
                       franchiseId,
                       severity: querySeverity,
                       source: _source,
@@ -252,6 +252,7 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
     );
   }
 }
+
 
 
 

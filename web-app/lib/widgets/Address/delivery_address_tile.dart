@@ -52,8 +52,8 @@ class DeliveryAddressTile extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.edit, color: DesignTokens.primaryColor),
               onPressed: () async {
-                final firestoreService =
-                    FirestoreService(); // Or use Provider if that's your pattern
+                final shared.firestoreService =
+                    shared.FirestoreService(); // Or use Provider if that's your pattern
                 final user = FirebaseAuth.instance.currentUser;
                 final localizations = AppLocalizations.of(context)!;
                 if (user == null) return;
@@ -64,7 +64,7 @@ class DeliveryAddressTile extends StatelessWidget {
                     final franchiseId =
                         Provider.of<shared.FranchiseProvider>(context, listen: false)
                             .franchiseId;
-                    await firestoreService.updateAddressForUser(
+                    await shared.firestoreService.updateAddressForUser(
                       user.uid,
                       updatedAddress,
                     );
@@ -97,6 +97,7 @@ class DeliveryAddressTile extends StatelessWidget {
     );
   }
 }
+
 
 
 

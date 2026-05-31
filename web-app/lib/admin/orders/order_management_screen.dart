@@ -49,7 +49,7 @@ class _OrderManagementScreenContentState
   Future<void> _updateOrderStatus(String franchiseId, order_model.Order order,
       String newStatus, admin_user.User user) async {
     await context
-        .read<FirestoreService>()
+        .read<shared.FirestoreService>()
         .updateOrderStatus(franchiseId, order.id, newStatus);
     await AuditLogService().addLog(
       franchiseId: franchiseId,
@@ -64,7 +64,7 @@ class _OrderManagementScreenContentState
   Future<void> _processRefund(String franchiseId, order_model.Order order,
       double amount, admin_user.User user) async {
     await context
-        .read<FirestoreService>()
+        .read<shared.FirestoreService>()
         .refundOrder(franchiseId, order.id, amount: amount);
     await AuditLogService().addLog(
       franchiseId: franchiseId,
@@ -199,7 +199,7 @@ class _OrderManagementScreenContentState
     final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     final user = context.watch<AdminUserProvider>().user;
     final loading = context.watch<AdminUserProvider>().loading;
-    final firestoreService = context.read<FirestoreService>();
+    final shared.firestoreService = context.read<shared.FirestoreService>();
     final colorScheme = Theme.of(context).colorScheme;
 
     if (user == null) {
@@ -305,7 +305,7 @@ class _OrderManagementScreenContentState
                       Expanded(
                         child: StreamBuilder<List<order_model.Order>>(
                           stream:
-                              firestoreService.getAllOrdersStream(franchiseId),
+                              shared.firestoreService.getAllOrdersStream(franchiseId),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
@@ -404,6 +404,7 @@ class _OrderManagementScreenContentState
     );
   }
 }
+
 
 
 

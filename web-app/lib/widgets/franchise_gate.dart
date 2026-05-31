@@ -11,8 +11,8 @@ class FranchiseGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final franchiseProvider = Provider.of<shared.FranchiseProvider>(context, listen: false);
-    final user = franchiseProvider.adminUser;
+    final shared.franchiseProvider = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final user = shared.franchiseProvider.adminUser;
 
     if (user == null) {
       return const Scaffold(
@@ -25,16 +25,16 @@ class FranchiseGate extends StatelessWidget {
         roles.contains('developer') ||
         roles.contains('hq_owner');
 
-    if (franchiseProvider.loading) {
+    if (shared.franchiseProvider.loading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (!franchiseProvider.isFranchiseSelected && !isFranchiseOptionalRole) {
+    if (!shared.franchiseProvider.isFranchiseSelected && !isFranchiseOptionalRole) {
       return Scaffold(
         body: FranchiseSelector(
-          onSelected: (id) => franchiseProvider.setFranchiseId(id),
+          onSelected: (id) => shared.franchiseProvider.setFranchiseId(id),
         ),
       );
     }
@@ -42,4 +42,5 @@ class FranchiseGate extends StatelessWidget {
     return child;
   }
 }
+
 

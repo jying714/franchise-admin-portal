@@ -29,7 +29,7 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
 
     // Preload templateRefs if needed
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final provider = context.read<MenuItemProvider>();
+      final provider = context.read<shared.MenuItemProvider>();
       if (provider.templateRefs.isEmpty && !provider.templateRefsLoading) {
         await provider.loadTemplateRefs();
       }
@@ -39,8 +39,8 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final templateRefs = context.watch<MenuItemProvider>().templateRefs;
-    final loading = context.watch<MenuItemProvider>().templateRefsLoading;
+    final templateRefs = context.watch<shared.MenuItemProvider>().templateRefs;
+    final loading = context.watch<shared.MenuItemProvider>().templateRefsLoading;
 
     print('[DEBUG] selectedTemplateId: $_selectedTemplateId');
     // print(
@@ -93,7 +93,7 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
               }
 
               final template = await context
-                  .read<MenuItemProvider>()
+                  .read<shared.MenuItemProvider>()
                   .fetchMenuItemTemplateById(
                     restaurantType: restaurantType,
                     templateId: templateId!,
@@ -136,6 +136,7 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
     );
   }
 }
+
 
 
 

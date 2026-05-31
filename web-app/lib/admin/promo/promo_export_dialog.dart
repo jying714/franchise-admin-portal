@@ -25,7 +25,7 @@ class _PromoExportDialogState extends State<PromoExportDialog> {
     final franchiseId =
         Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
     setState(() => isExporting = true);
-    final promos = await Provider.of<FirestoreService>(context, listen: false)
+    final promos = await Provider.of<shared.FirestoreService>(context, listen: false)
         .getPromos(franchiseId)
         .first;
     final csvHeader = [/* ... */];
@@ -78,6 +78,7 @@ class _PromoExportDialogState extends State<PromoExportDialog> {
     );
   }
 }
+
 
 
 

@@ -38,7 +38,7 @@ class _PluginRegistrySectionState extends State<PluginRegistrySection> {
       _errorMsg = null;
     });
     try {
-      // TODO: Replace with real FirestoreService fetch for plugins by franchiseId
+      // TODO: Replace with real shared.FirestoreService fetch for plugins by franchiseId
       await Future.delayed(const Duration(milliseconds: 500));
       _plugins = [
         PluginIntegration(
@@ -87,7 +87,7 @@ class _PluginRegistrySectionState extends State<PluginRegistrySection> {
 
   Future<void> _togglePlugin(PluginIntegration plugin, bool enabled) async {
     try {
-      // TODO: Implement actual plugin enable/disable logic in FirestoreService
+      // TODO: Implement actual plugin enable/disable logic in shared.FirestoreService
       await Future.delayed(const Duration(milliseconds: 350));
       setState(() {
         _plugins = _plugins
@@ -455,6 +455,7 @@ class PluginIntegration {
     );
   }
 }
+
 
 
 

@@ -18,8 +18,8 @@ class _StaffDirectoryScreenState extends State<StaffDirectoryScreen> {
   void initState() {
     super.initState();
     final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
-    final firestoreService = context.read<FirestoreService>();
-    _staffFuture = firestoreService.allUsers(franchiseId: franchiseId).first;
+    final shared.firestoreService = context.read<shared.FirestoreService>();
+    _staffFuture = shared.firestoreService.allUsers(franchiseId: franchiseId).first;
   }
 
   @override
@@ -72,6 +72,7 @@ class _StaffDirectoryScreenState extends State<StaffDirectoryScreen> {
     );
   }
 }
+
 
 
 

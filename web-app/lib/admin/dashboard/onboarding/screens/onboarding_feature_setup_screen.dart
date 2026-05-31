@@ -173,7 +173,7 @@ class _OnboardingFeatureSetupScreenState
   Future<void> _handleSave() async {
     setState(() => _isSaving = true);
     final featureProvider = context.read<FranchiseFeatureProvider>();
-    final onboarding = context.read<OnboardingProgressProvider>();
+    final onboarding = context.read<shared.OnboardingProgressProvider>();
     final franchiseId =
         context.read<FranchiseInfoProvider>().franchise?.id ?? 'unknown';
 
@@ -233,7 +233,7 @@ class _OnboardingFeatureSetupScreenState
   Future<void> _markComplete() async {
     final loc = AppLocalizations.of(context)!;
     final onboardingProvider =
-        Provider.of<OnboardingProgressProvider>(context, listen: false);
+        Provider.of<shared.OnboardingProgressProvider>(context, listen: false);
 
     final isCompleted =
         onboardingProvider.isStepComplete('onboarding_feature_setup');
@@ -271,6 +271,7 @@ class _OnboardingFeatureSetupScreenState
     }
   }
 }
+
 
 
 

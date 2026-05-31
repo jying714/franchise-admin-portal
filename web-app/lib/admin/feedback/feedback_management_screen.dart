@@ -22,7 +22,7 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
   String _search = '';
 
   void _confirmDelete(
-      BuildContext context, FirestoreService service, String feedbackId) {
+      BuildContext context, shared.FirestoreService service, String feedbackId) {
     final loc = AppLocalizations.of(context);
     final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
     if (loc == null) return;
@@ -149,7 +149,7 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
-    final firestoreService = context.read<FirestoreService>();
+    final shared.firestoreService = context.read<shared.FirestoreService>();
     final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
@@ -256,7 +256,7 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
                   const SizedBox(height: 12),
                   Expanded(
                     child: StreamBuilder<List<feedback_model.FeedbackEntry>>(
-                      stream: firestoreService.getFeedbackEntries(franchiseId),
+                      stream: shared.firestoreService.getFeedbackEntries(franchiseId),
                       builder: (context, snapshot) {
                         if (!snapshot.hasData || snapshot.data!.isEmpty) {
                           return Center(child: Text(loc.noFeedbackSubmitted));
@@ -436,7 +436,7 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
                                 onSelected: (val) {
                                   if (val == 'delete') {
                                     _confirmDelete(
-                                        context, firestoreService, feedback.id);
+                                        context, shared.firestoreService, feedback.id);
                                   }
                                 },
                                 itemBuilder: (context) => [
@@ -491,6 +491,7 @@ class _TypeIcon extends StatelessWidget {
     );
   }
 }
+
 
 
 

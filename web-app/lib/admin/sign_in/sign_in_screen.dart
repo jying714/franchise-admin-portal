@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_core/shared_core.dart' as shared;
@@ -53,11 +53,11 @@ class _SignInScreenState extends State<SignInScreen> {
     if (user != null) {
       // getIdToken handled via authService if needed; shared.User has no direct method
       debugPrint('User signed in: ${user.email}');
-      final firestoreService =
+      final shared.firestoreService =
           Provider.of<shared.FirestoreService>(context, listen: false);
 
       // --- NEW: Check Firestore user status ---
-      final userDoc = await firestoreService.getUser(user.uid);
+      final userDoc = await shared.firestoreService.getUser(user.uid);
       if (userDoc == null) {
         // Not invited or user doc deleted
         await FirebaseAuth.instance.signOut();
@@ -78,7 +78,7 @@ class _SignInScreenState extends State<SignInScreen> {
       // Existing logic:
       final userProfileNotifier =
           Provider.of<UserProfileNotifier>(context, listen: false);
-      userProfileNotifier.listenToUser(firestoreService, user.id);
+      userProfileNotifier.listenToUser(shared.firestoreService, user.id);
 
       final token =
           Provider.of<shared.AuthService>(context, listen: false).getInviteToken();
@@ -314,5 +314,6 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 }
+
 
 

@@ -24,7 +24,7 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
   bool _claimsRefreshed = false;
   bool _retrying = false;
   static const _timeoutSeconds = 10;
-  late FirestoreService _firestoreService;
+  late shared.FirestoreService _firestoreService;
   late UserProfileNotifier _profileNotifier;
   admin_user.User? _lastSetUser;
 
@@ -44,7 +44,7 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _profileNotifier =
           Provider.of<UserProfileNotifier>(context, listen: false);
-      _firestoreService = Provider.of<FirestoreService>(context, listen: false);
+      _firestoreService = Provider.of<shared.FirestoreService>(context, listen: false);
       final fbUser = fb_auth.FirebaseAuth.instance.currentUser;
 
       print('[ProfileGateScreen] initState START');
@@ -501,6 +501,7 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
     );
   }
 }
+
 
 
 

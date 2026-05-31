@@ -80,7 +80,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       return;
     }
     try {
-      final fs = Provider.of<FirestoreService>(context, listen: false);
+      final fs = Provider.of<shared.FirestoreService>(context, listen: false);
       final invite = await fs.getFranchiseeInvitationByToken(_effectiveToken!);
       if (invite == null) {
         setState(() {
@@ -142,7 +142,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
     });
 
     try {
-      final firestore = Provider.of<FirestoreService>(context, listen: false);
+      final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
       final userId = _inviteData?['invitedUserId'] as String?;
       if (userId == null) throw Exception('No user linked to invite.');
 
@@ -562,6 +562,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
     );
   }
 }
+
 
 
 

@@ -8,7 +8,7 @@ import 'dart:convert';
 
 class IngredientTypeProviderImpl extends ChangeNotifier
     implements IngredientTypeProvider {
-  final FirestoreService _firestoreService;
+  final shared.FirestoreService _firestoreService;
   String _franchiseId = '';
   String? _loadedFranchiseId;
   bool _loading = false;
@@ -19,8 +19,8 @@ class IngredientTypeProviderImpl extends ChangeNotifier
   final List<IngredientType> _stagedTypes = [];
   final Set<String> _stagedForDelete = {};
 
-  IngredientTypeProviderImpl({required FirestoreService firestoreService})
-      : _firestoreService = firestoreService;
+  IngredientTypeProviderImpl({required shared.FirestoreService shared.firestoreService})
+      : _firestoreService = shared.firestoreService;
 
   @override
   String get franchiseId => _franchiseId;
@@ -476,4 +476,5 @@ class IngredientTypeProviderImpl extends ChangeNotifier
     return issues;
   }
 }
+
 

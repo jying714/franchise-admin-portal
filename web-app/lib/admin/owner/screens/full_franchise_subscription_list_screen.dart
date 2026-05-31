@@ -30,7 +30,7 @@ class _FullFranchiseSubscriptionListScreenState
   Future<List<EnrichedFranchiseSubscription>>
       _loadEnrichedSubscriptions() async {
     try {
-      final firestore = context.read<FirestoreService>();
+      final firestore = context.read<shared.FirestoreService>();
       final enricher = FranchiseSubscriptionEnricher(firestore);
       final enriched = await enricher.enrichAllSubscriptions();
 
@@ -130,6 +130,7 @@ class _FullFranchiseSubscriptionListScreenState
     );
   }
 }
+
 
 
 

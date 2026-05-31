@@ -39,7 +39,7 @@ class _FranchiseSubscriptionsSectionState
 
   Future<List<FranchiseSubscription>> _loadSubscriptions() async {
     try {
-      final result = await FirestoreService.getFranchiseSubscriptions();
+      final result = await shared.FirestoreService.getFranchiseSubscriptions();
       _subs = result;
       return result;
     } catch (e, stack) {
@@ -294,6 +294,7 @@ class _FranchiseSubscriptionsSectionState
     );
   }
 }
+
 
 
 

@@ -37,7 +37,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
       );
     }
 
-    final service = Provider.of<FirestoreService>(context, listen: false);
+    final service = Provider.of<shared.FirestoreService>(context, listen: false);
     final franchiseId =
         Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
     final colorScheme = Theme.of(context).colorScheme;
@@ -148,6 +148,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
     );
   }
 }
+
 
 
 

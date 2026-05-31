@@ -33,7 +33,7 @@ class _ImpersonationDialogState extends State<ImpersonationDialog> {
       _users = [];
     });
     try {
-      // TODO: Replace with real FirestoreService user query, optionally using [query].
+      // TODO: Replace with real shared.FirestoreService user query, optionally using [query].
       await Future.delayed(const Duration(milliseconds: 400));
       final all = [
         ImpersonationUser(
@@ -397,6 +397,7 @@ class ImpersonationUser {
     required this.role,
   });
 }
+
 
 
 

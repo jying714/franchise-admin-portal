@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
 
 class OnboardingProgressProviderImpl extends ChangeNotifier
-    implements OnboardingProgressProvider {
-  final FirestoreService _firestore;
+    implements shared.OnboardingProgressProvider {
+  final shared.FirestoreService _firestore;
   final String _franchiseId;
 
   Map<String, bool> _stepStatus = {};
   bool _loading = true;
 
   OnboardingProgressProviderImpl({
-    required FirestoreService firestore,
+    required shared.FirestoreService firestore,
     required String franchiseId,
   })  : _firestore = firestore,
         _franchiseId = franchiseId {
@@ -113,4 +113,6 @@ class OnboardingProgressProviderImpl extends ChangeNotifier
     }
   }
 }
+
+
 

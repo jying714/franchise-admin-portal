@@ -155,7 +155,7 @@ class _IngredientMetadataJsonImportExportDialogState
     }
 
     try {
-      final firestore = context.read<FirestoreService>();
+      final firestore = context.read<shared.FirestoreService>();
       print('[Dialog] got firestore');
       final validTypeIds = await firestore.fetchIngredientTypeIds(franchiseId);
       print('[Dialog] validTypeIds: $validTypeIds');
@@ -337,6 +337,7 @@ class _IngredientMetadataJsonImportExportDialogState
     );
   }
 }
+
 
 
 

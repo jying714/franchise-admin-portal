@@ -57,7 +57,7 @@ class _IngredientTypeTemplatePickerDialogState
     setState(() => _loading = true);
 
     try {
-      await FirestoreService.copyIngredientTypesFromTemplate(
+      await shared.FirestoreService.copyIngredientTypesFromTemplate(
         franchiseId: franchiseId,
         templateId: templateId,
       );
@@ -184,6 +184,7 @@ class _IngredientTypeTemplatePickerDialogState
     );
   }
 }
+
 
 
 

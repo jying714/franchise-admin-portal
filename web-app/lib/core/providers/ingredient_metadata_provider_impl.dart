@@ -7,7 +7,7 @@ import 'package:collection/collection.dart';
 
 class IngredientMetadataProviderImpl extends ChangeNotifier
     implements IngredientMetadataProvider {
-  final FirestoreService _firestore;
+  final shared.FirestoreService _firestore;
   final String _franchiseId;
 
   List<IngredientMetadata> _original = [];
@@ -26,9 +26,9 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
   final Map<String, GlobalKey> fieldGlobalKeys = {};
 
   IngredientMetadataProviderImpl({
-    required FirestoreService firestoreService,
+    required shared.FirestoreService shared.firestoreService,
     required String franchiseId,
-  })  : _firestore = firestoreService,
+  })  : _firestore = shared.firestoreService,
         _franchiseId = franchiseId;
 
   @override
@@ -511,4 +511,5 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
     return issues;
   }
 }
+
 

@@ -47,15 +47,15 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
 
   Future<Map<String, dynamic>> _loadKpis() async {
     try {
-      final firestoreService =
-          Provider.of<FirestoreService>(context, listen: false);
+      final shared.firestoreService =
+          Provider.of<shared.FirestoreService>(context, listen: false);
 
-      final analytics = await firestoreService
+      final analytics = await shared.firestoreService
           .getFranchiseAnalyticsSummary(widget.franchiseId);
       final outstanding =
-          await firestoreService.getOutstandingInvoices(widget.franchiseId);
+          await shared.firestoreService.getOutstandingInvoices(widget.franchiseId);
       final lastPayout =
-          await firestoreService.getLastPayout(widget.franchiseId);
+          await shared.firestoreService.getLastPayout(widget.franchiseId);
 
       return {
         'analytics': analytics,
@@ -63,8 +63,8 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
         'lastPayout': lastPayout,
       };
     } catch (e, st) {
-      final firestoreService =
-          Provider.of<FirestoreService>(context, listen: false);
+      final shared.firestoreService =
+          Provider.of<shared.FirestoreService>(context, listen: false);
       shared.ErrorLogger.log(
         message: 'Failed to load KPIs: $e',
         source: 'FranchiseFinancialKpiCard',
@@ -352,6 +352,7 @@ class _FeaturePlaceholder extends StatelessWidget {
     );
   }
 }
+
 
 
 

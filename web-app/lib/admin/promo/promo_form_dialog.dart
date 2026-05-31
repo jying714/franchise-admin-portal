@@ -73,10 +73,10 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
     } else {
       // Fallback: Dialog saves directly if no callback supplied (legacy usage)
       if (widget.promo != null) {
-        await Provider.of<FirestoreService>(context, listen: false)
+        await Provider.of<shared.FirestoreService>(context, listen: false)
             .updatePromo(franchiseId, promo);
       } else {
-        await Provider.of<FirestoreService>(context, listen: false)
+        await Provider.of<shared.FirestoreService>(context, listen: false)
             .addPromo(franchiseId, promo);
       }
     }
@@ -193,6 +193,7 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
     );
   }
 }
+
 
 
 

@@ -91,12 +91,12 @@ class CategoryListTile extends StatelessWidget {
                 );
 
                 if (confirmed == true) {
-                  final provider = context.read<CategoryProvider>();
+                  final provider = context.read<shared.CategoryProvider>();
                   final franchiseId =
                       context.read<shared.FranchiseProvider>().franchiseId;
 
                   try {
-                    await context.read<FirestoreService>().deleteCategory(
+                    await context.read<shared.FirestoreService>().deleteCategory(
                           franchiseId: franchiseId,
                           categoryId: category.id,
                         );
@@ -129,6 +129,8 @@ class CategoryListTile extends StatelessWidget {
     );
   }
 }
+
+
 
 
 

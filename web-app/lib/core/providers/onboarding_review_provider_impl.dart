@@ -6,13 +6,13 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 
 class OnboardingReviewProviderImpl extends ChangeNotifier
-    implements OnboardingReviewProvider {
+    implements shared.OnboardingReviewProvider {
   final FranchiseFeatureProvider _franchiseFeatureProvider;
   final IngredientTypeProvider _ingredientTypeProvider;
   final IngredientMetadataProvider _ingredientMetadataProvider;
-  final CategoryProvider _categoryProvider;
-  final MenuItemProvider _menuItemProvider;
-  final FirestoreService _firestoreService;
+  final shared.CategoryProvider _categoryProvider;
+  final shared.MenuItemProvider _menuItemProvider;
+  final shared.FirestoreService _firestoreService;
   final AuditLogService _auditLogService;
 
   Map<String, List<OnboardingValidationIssue>> _issuesBySection = {};
@@ -23,16 +23,16 @@ class OnboardingReviewProviderImpl extends ChangeNotifier
     required FranchiseFeatureProvider franchiseFeatureProvider,
     required IngredientTypeProvider ingredientTypeProvider,
     required IngredientMetadataProvider ingredientMetadataProvider,
-    required CategoryProvider categoryProvider,
-    required MenuItemProvider menuItemProvider,
-    required FirestoreService firestoreService,
+    required shared.CategoryProvider shared.categoryProvider,
+    required shared.MenuItemProvider shared.menuItemProvider,
+    required shared.FirestoreService shared.firestoreService,
     required AuditLogService auditLogService,
   })  : _franchiseFeatureProvider = franchiseFeatureProvider,
         _ingredientTypeProvider = ingredientTypeProvider,
         _ingredientMetadataProvider = ingredientMetadataProvider,
-        _categoryProvider = categoryProvider,
-        _menuItemProvider = menuItemProvider,
-        _firestoreService = firestoreService,
+        _categoryProvider = shared.categoryProvider,
+        _menuItemProvider = shared.menuItemProvider,
+        _firestoreService = shared.firestoreService,
         _auditLogService = auditLogService;
 
   @override
@@ -359,4 +359,6 @@ class OnboardingReviewProviderImpl extends ChangeNotifier
   @override
   List<OnboardingValidationIssue> get validationResults => issues;
 }
+
+
 

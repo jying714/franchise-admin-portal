@@ -64,7 +64,7 @@ class _DynamicMenuItemEditorScreenState
       _schema = null;
     });
 
-    final firestore = Provider.of<FirestoreService>(context, listen: false);
+    final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
 
     try {
       final schema = await firestore.getCategorySchema(franchiseId, categoryId);
@@ -120,7 +120,7 @@ class _DynamicMenuItemEditorScreenState
 
   Future<List<Map<String, dynamic>>> _resolveCustomizations(
       String franchiseId, List<dynamic> rawCustomizations) async {
-    final firestore = Provider.of<FirestoreService>(context, listen: false);
+    final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
     final List<Map<String, dynamic>> resolved = [];
 
     for (final entry in rawCustomizations) {
@@ -158,7 +158,7 @@ class _DynamicMenuItemEditorScreenState
         body: Center(child: Text('Localization missing! [debug]')),
       );
     }
-    final firestore = Provider.of<FirestoreService>(context, listen: false);
+    final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
     final colorScheme = Theme.of(context).colorScheme;
 
     return FutureBuilder<List<String>>(
@@ -256,6 +256,7 @@ class _DynamicMenuItemEditorScreenState
     );
   }
 }
+
 
 
 

@@ -31,7 +31,7 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
   }
 
   Future<void> _loadFranchises() async {
-    final fs = context.read<FirestoreService>();
+    final fs = context.read<shared.FirestoreService>();
     try {
       final list = await fs.getAllFranchises();
       setState(() {
@@ -59,7 +59,7 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
       return;
     }
 
-    final fs = context.read<FirestoreService>();
+    final fs = context.read<shared.FirestoreService>();
     try {
       setState(() {
         _loading = true;
@@ -98,7 +98,7 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
     final delay = Duration(milliseconds: (_delaySeconds * 1000).round());
 
     try {
-      await context.read<FirestoreService>().logSimulatedWebhookEvent({
+      await context.read<shared.FirestoreService>().logSimulatedWebhookEvent({
         'eventType': _selectedEvent,
         'invoiceId': invoice.id,
         'franchiseeId': invoice.franchiseeId,
@@ -271,6 +271,7 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
     );
   }
 }
+
 
 
 

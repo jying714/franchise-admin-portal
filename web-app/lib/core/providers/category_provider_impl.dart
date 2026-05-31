@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_core/shared_core.dart';
 import 'package:collection/collection.dart';
 
-class CategoryProviderImpl extends ChangeNotifier implements CategoryProvider {
-  final FirestoreService _firestore;
+class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProvider {
+  final shared.FirestoreService _firestore;
   String _franchiseId;
 
   List<Category> _original = [];
@@ -20,7 +20,7 @@ class CategoryProviderImpl extends ChangeNotifier implements CategoryProvider {
   final List<Category> _categories = [];
 
   CategoryProviderImpl({
-    required FirestoreService firestore,
+    required shared.FirestoreService firestore,
     required String franchiseId,
   })  : _firestore = firestore,
         _franchiseId = franchiseId;
@@ -449,4 +449,6 @@ class CategoryProviderImpl extends ChangeNotifier implements CategoryProvider {
     return issues;
   }
 }
+
+
 

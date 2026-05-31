@@ -18,8 +18,8 @@ class ChatManagementScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
-    final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+    final shared.firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final user = Provider.of<AdminUserProvider>(context, listen: false).user;
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
@@ -68,7 +68,7 @@ class ChatManagementScreen extends StatelessWidget {
                       ),
                       Expanded(
                         child: StreamBuilder<List<Chat>>(
-                          stream: firestoreService.getSupportChats(franchiseId),
+                          stream: shared.firestoreService.getSupportChats(franchiseId),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
@@ -113,7 +113,7 @@ class ChatManagementScreen extends StatelessWidget {
                                     tooltip: loc.deleteChatTooltip,
                                     onPressed: () => _confirmDelete(
                                       context,
-                                      firestoreService,
+                                      shared.firestoreService,
                                       chat.id,
                                       user!,
                                       loc,
@@ -151,7 +151,7 @@ class ChatManagementScreen extends StatelessWidget {
 
   void _confirmDelete(
     BuildContext context,
-    FirestoreService service,
+    shared.FirestoreService service,
     String chatId,
     admin_user.User user,
     AppLocalizations loc,
@@ -203,6 +203,7 @@ class ChatManagementScreen extends StatelessWidget {
     );
   }
 }
+
 
 
 

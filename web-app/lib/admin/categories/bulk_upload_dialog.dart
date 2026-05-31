@@ -50,8 +50,8 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
   Widget build(BuildContext context) {
     final franchiseId = widget.franchiseId;
 
-    final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+    final shared.firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       print(
@@ -121,7 +121,7 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
                       ));
                     }
                     for (final cat in cats) {
-                      await firestoreService.addCategory(
+                      await shared.firestoreService.addCategory(
                         franchiseId: franchiseId,
                         category: cat,
                       );
@@ -164,6 +164,7 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
     );
   }
 }
+
 
 
 

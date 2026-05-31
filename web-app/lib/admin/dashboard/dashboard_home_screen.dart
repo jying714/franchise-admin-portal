@@ -70,7 +70,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                     label: 'Orders Today',
                     icon: Icons.shopping_cart,
                     getValue: () => context
-                        .read<FirestoreService>()
+                        .read<shared.FirestoreService>()
                         .getTotalOrdersTodayCount(franchiseId: franchiseId),
                     tooltip: 'Total orders placed today',
                     semanticLabel: 'Total orders placed today',
@@ -225,6 +225,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     );
   }
 }
+
 
 
 

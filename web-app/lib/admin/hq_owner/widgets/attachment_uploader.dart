@@ -60,7 +60,7 @@ class _AttachmentUploaderState extends State<AttachmentUploader> {
         // 'url': ..., // Add if implementing storage!
       };
 
-      await Provider.of<FirestoreService>(context, listen: false)
+      await Provider.of<shared.FirestoreService>(context, listen: false)
           .addAttachmentToPayout(widget.payoutId, meta);
       widget.onUploaded?.call();
       setState(() {
@@ -84,7 +84,7 @@ class _AttachmentUploaderState extends State<AttachmentUploader> {
 
   Future<void> _deleteAttachment(Map<String, dynamic> att) async {
     try {
-      await Provider.of<FirestoreService>(context, listen: false)
+      await Provider.of<shared.FirestoreService>(context, listen: false)
           .removeAttachmentFromPayout(widget.payoutId, att);
       widget.onDeleted?.call();
     } catch (e, stack) {
@@ -189,6 +189,7 @@ class _AttachmentUploaderState extends State<AttachmentUploader> {
     );
   }
 }
+
 
 
 

@@ -34,7 +34,7 @@ class FeatureToggleList extends StatelessWidget {
       );
     }
     return StreamBuilder<Map<String, dynamic>>(
-      stream: Provider.of<FirestoreService>(context, listen: false)
+      stream: Provider.of<shared.FirestoreService>(context, listen: false)
           .streamFranchiseFeatureToggles(franchiseId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -230,6 +230,7 @@ class _FeatureToggleTileState extends State<FeatureToggleTile> {
     );
   }
 }
+
 
 
 

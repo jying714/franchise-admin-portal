@@ -33,9 +33,9 @@ class _TestInvoiceGeneratorState extends State<TestInvoiceGenerator> {
 
   Future<void> _loadFranchises() async {
     try {
-      final firestoreService =
-          Provider.of<FirestoreService>(context, listen: false);
-      final franchises = await firestoreService.fetchFranchiseList();
+      final shared.firestoreService =
+          Provider.of<shared.FirestoreService>(context, listen: false);
+      final franchises = await shared.firestoreService.fetchFranchiseList();
       if (mounted) {
         setState(() {
           _franchises = franchises;
@@ -90,9 +90,9 @@ class _TestInvoiceGeneratorState extends State<TestInvoiceGenerator> {
         note: _noteController.text.trim(),
       );
 
-      final firestoreService =
-          Provider.of<FirestoreService>(context, listen: false);
-      await firestoreService.createPlatformInvoice(invoice);
+      final shared.firestoreService =
+          Provider.of<shared.FirestoreService>(context, listen: false);
+      await shared.firestoreService.createPlatformInvoice(invoice);
 
       if (!mounted) return;
       setState(() => _statusMessage = 'Test invoice created: $invoiceNumber');
@@ -196,6 +196,7 @@ class _TestInvoiceGeneratorState extends State<TestInvoiceGenerator> {
     );
   }
 }
+
 
 
 

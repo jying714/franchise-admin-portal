@@ -84,7 +84,7 @@ class _DeveloperErrorLogsScreenState extends State<DeveloperErrorLogsScreen> {
                     : _franchiseId;
 
             return StreamBuilder<List<ErrorLog>>(
-              stream: Provider.of<FirestoreService>(context, listen: false)
+              stream: Provider.of<shared.FirestoreService>(context, listen: false)
                   .streamErrorLogsGlobal(
                 franchiseId: selectedFranchiseId,
                 severity: _severity,
@@ -424,6 +424,7 @@ class _ComingSoonCard extends StatelessWidget {
     );
   }
 }
+
 
 
 

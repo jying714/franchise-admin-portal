@@ -40,7 +40,7 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
     });
 
     try {
-      final allLogs = await Provider.of<FirestoreService>(context, listen: false)
+      final allLogs = await Provider.of<shared.FirestoreService>(context, listen: false)
           .getErrorLogSummaries();
 
       print('âœ… Retrieved ${allLogs.length} logs from Firestore');
@@ -404,6 +404,7 @@ class ErrorLogSummary {
     this.franchiseId,
   });
 }
+
 
 
 

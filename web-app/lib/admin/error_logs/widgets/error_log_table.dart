@@ -162,7 +162,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
   Future<void> _bulkResolve(bool resolved) async {
     String franchiseId =
         Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
-    final service = context.read<FirestoreService>();
+    final service = context.read<shared.FirestoreService>();
     final ids = _selectedIds.toList();
     for (final id in ids) {
       await service.setErrorLogStatus(franchiseId, id, resolved: resolved);
@@ -180,7 +180,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
   Future<void> _bulkArchive(bool archived) async {
     String franchiseId =
         Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
-    final service = context.read<FirestoreService>();
+    final service = context.read<shared.FirestoreService>();
     final ids = _selectedIds.toList();
     for (final id in ids) {
       await service.setErrorLogStatus(franchiseId, id, archived: archived);
@@ -201,7 +201,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
   Future<void> _bulkDelete() async {
     String franchiseId =
         Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
-    final service = context.read<FirestoreService>();
+    final service = context.read<shared.FirestoreService>();
     final ids = _selectedIds.toList();
     for (final id in ids) {
       await service.deleteErrorLog(franchiseId, id);
@@ -227,7 +227,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
       'timestamp': DateTime.now().toIso8601String(),
     };
     await context
-        .read<FirestoreService>()
+        .read<shared.FirestoreService>()
         .addCommentToErrorLog(franchiseId, logId, comment);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -555,7 +555,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
                                       ? "Mark Unresolved"
                                       : "Mark Resolved",
                                   onPressed: () => context
-                                      .read<FirestoreService>()
+                                      .read<shared.FirestoreService>()
                                       .setErrorLogStatus(
                                         franchiseId,
                                         log.id,
@@ -574,7 +574,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
                                   ),
                                   tooltip: archived ? "Unarchive" : "Archive",
                                   onPressed: () => context
-                                      .read<FirestoreService>()
+                                      .read<shared.FirestoreService>()
                                       .setErrorLogStatus(
                                         franchiseId,
                                         log.id,
@@ -657,6 +657,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
     );
   }
 }
+
 
 
 

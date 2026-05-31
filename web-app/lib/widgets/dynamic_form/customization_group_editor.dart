@@ -40,7 +40,7 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
       _loadingIngredients = true;
     });
 
-    final fs = Provider.of<FirestoreService>(context, listen: false);
+    final fs = Provider.of<shared.FirestoreService>(context, listen: false);
 
     // Await both futures first
     final results = await Future.wait([
@@ -339,6 +339,7 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
     );
   }
 }
+
 
 
 

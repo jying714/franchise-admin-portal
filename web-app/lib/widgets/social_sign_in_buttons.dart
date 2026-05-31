@@ -1,4 +1,4 @@
-// P1 Batch 3: Duplicated widget (exact filename match with mobile_app).
+﻿// P1 Batch 3: Duplicated widget (exact filename match with mobile_app).
 // Mobile canonical in mobile_app/lib/widgets/.
 // Safe for deletion in next batch if admin previews can reuse via shared_ui package or path dependency.
 // Changes in Batch 3 were mobile-only + these markers.
@@ -52,9 +52,9 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
 
   Future<void> _defaultEnsureUserProfile(
       BuildContext context, User user) async {
-    final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
-    final existing = await firestoreService.getUser(user.uid);
+    final shared.firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
+    final existing = await shared.firestoreService.getUser(user.uid);
     if (existing == null) {
       final newUser = admin_user.User(
         id: user.uid,
@@ -66,7 +66,7 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
         roles: [admin_user.User.roleAdmin],
         status: "active",
       );
-      await firestoreService.addUser(newUser);
+      await shared.firestoreService.addUser(newUser);
     }
   }
 
@@ -84,10 +84,10 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
         }
         if (!mounted) return;
         // --- ADD THIS BLOCK ---
-        final firestoreService =
-            Provider.of<FirestoreService>(context, listen: false);
+        final shared.firestoreService =
+            Provider.of<shared.FirestoreService>(context, listen: false);
         Provider.of<UserProfileNotifier>(context, listen: false)
-            .listenToUser(firestoreService, user.uid);
+            .listenToUser(shared.firestoreService, user.uid);
         // --- END BLOCK ---
         widget.onSuccess?.call(user);
       } else {
@@ -269,5 +269,6 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
     );
   }
 }
+
 
 

@@ -25,7 +25,7 @@ class SchemaIssueSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasIssues = issues.isNotEmpty;
-    final categoryProvider = context.watch<CategoryProvider>();
+    final shared.categoryProvider = context.watch<shared.CategoryProvider>();
     final ingredientProvider = context.watch<IngredientMetadataProvider>();
     final ingredientTypeProvider = context.watch<IngredientTypeProvider>();
     final resolvedCount = issues.where((issue) => issue.resolved).length;
@@ -103,7 +103,7 @@ class SchemaIssueSidebar extends StatelessWidget {
                           final loc = AppLocalizations.of(context)!;
                           return _CategoryRepairTile(
                             issue: issue,
-                            provider: categoryProvider,
+                            provider: shared.categoryProvider,
                             onRepair: (newValue) =>
                                 _handleRepair(context, issue, newValue),
                             loc: loc,
@@ -270,7 +270,7 @@ class SchemaIssueSidebar extends StatelessWidget {
 
 class _CategoryRepairTile extends StatelessWidget {
   final MenuItemSchemaIssue issue;
-  final CategoryProvider provider;
+  final shared.CategoryProvider provider;
   final ValueChanged<String> onRepair;
   final AppLocalizations loc;
 
@@ -704,6 +704,7 @@ class _ResolvedIssueTile extends StatelessWidget {
     );
   }
 }
+
 
 
 

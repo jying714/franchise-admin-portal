@@ -17,7 +17,7 @@ class ReviewSummaryTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final reviewProvider = Provider.of<OnboardingReviewProvider>(context);
+    final reviewProvider = Provider.of<shared.OnboardingReviewProvider>(context);
     final issuesBySection = reviewProvider.allIssuesBySection;
 
     return Material(
@@ -386,6 +386,7 @@ class ReviewSummaryTable extends StatelessWidget {
     );
   }
 }
+
 
 
 

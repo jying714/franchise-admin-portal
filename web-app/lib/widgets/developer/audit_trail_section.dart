@@ -39,7 +39,7 @@ class _AuditTrailSectionState extends State<AuditTrailSection> {
       _errorMsg = null;
     });
     try {
-      // TODO: Replace with FirestoreService audit log query (by franchiseId/type/actor)
+      // TODO: Replace with shared.FirestoreService audit log query (by franchiseId/type/actor)
       await Future.delayed(const Duration(milliseconds: 500));
       _entries = [
         AuditEntry(
@@ -385,6 +385,7 @@ class AuditEntry {
     this.franchiseId,
   });
 }
+
 
 
 

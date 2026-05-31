@@ -100,8 +100,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       );
     }
 
-    final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+    final shared.firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final isMobile = MediaQuery.of(context).size.width < 800;
     final colorScheme = Theme.of(context).colorScheme;
     final loc = AppLocalizations.of(context);
@@ -405,6 +405,7 @@ class _SidebarSectionTile extends StatelessWidget {
     );
   }
 }
+
 
 
 

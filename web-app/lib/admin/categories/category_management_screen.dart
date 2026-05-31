@@ -54,7 +54,7 @@ class CategoryManagementScreenContent extends StatefulWidget {
 
 class _CategoryManagementScreenContentState
     extends State<CategoryManagementScreenContent> {
-  late FirestoreService firestoreService;
+  late shared.FirestoreService shared.firestoreService;
   List<Category> _allCategories = [];
   List<Category> _filteredCategories = [];
   Set<String> _selectedIds = {};
@@ -67,7 +67,7 @@ class _CategoryManagementScreenContentState
   @override
   void initState() {
     super.initState();
-    firestoreService = Provider.of<FirestoreService>(context, listen: false);
+    shared.firestoreService = Provider.of<shared.FirestoreService>(context, listen: false);
   }
 
   bool get _canManage {
@@ -105,7 +105,7 @@ class _CategoryManagementScreenContentState
                   ?.id;
           try {
             if (category == null) {
-              await firestoreService.addCategory(
+              await shared.firestoreService.addCategory(
                 franchiseId: franchiseId,
                 category: saved,
               );
@@ -114,7 +114,7 @@ class _CategoryManagementScreenContentState
                     content: Text(AppLocalizations.of(context)!.categoryAdded)),
               );
             } else {
-              await firestoreService.updateCategory(franchiseId, saved);
+              await shared.firestoreService.updateCategory(franchiseId, saved);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content:
@@ -182,7 +182,7 @@ class _CategoryManagementScreenContentState
     if (confirm == true) {
       setState(() => _isLoading = true);
       try {
-        await firestoreService.deleteCategory(
+        await shared.firestoreService.deleteCategory(
           franchiseId: franchiseId,
           categoryId: category.id,
         );
@@ -212,7 +212,7 @@ class _CategoryManagementScreenContentState
           onUndo: () async {
             setState(() => _isLoading = true);
             try {
-              await firestoreService.addCategory(
+              await shared.firestoreService.addCategory(
                 franchiseId: franchiseId,
                 category: category,
               );
@@ -360,7 +360,7 @@ class _CategoryManagementScreenContentState
                         const SizedBox(height: 12),
                         Expanded(
                           child: StreamBuilder<List<Category>>(
-                            stream: firestoreService.getCategories(franchiseId),
+                            stream: shared.firestoreService.getCategories(franchiseId),
                             builder: (context, snapshot) {
                               if (snapshot.hasError) {
                                 return EmptyStateWidget(
@@ -601,6 +601,7 @@ class _CategoryManagementScreenContentState
     );
   }
 }
+
 
 
 

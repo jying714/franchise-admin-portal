@@ -56,7 +56,7 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
 
   void _logReviewState(BuildContext context, {String at = ''}) {
     final reviewProvider =
-        Provider.of<OnboardingReviewProvider>(context, listen: false);
+        Provider.of<shared.OnboardingReviewProvider>(context, listen: false);
     final issuesBySection = reviewProvider.allIssuesBySection;
 
     debugPrint('[IssueDetailsExpansion] $at '
@@ -82,7 +82,7 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
 
   @override
   Widget build(BuildContext context) {
-    final reviewProvider = Provider.of<OnboardingReviewProvider>(context);
+    final reviewProvider = Provider.of<shared.OnboardingReviewProvider>(context);
     final issuesBySection = reviewProvider.allIssuesBySection;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -406,6 +406,7 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
     );
   }
 }
+
 
 
 

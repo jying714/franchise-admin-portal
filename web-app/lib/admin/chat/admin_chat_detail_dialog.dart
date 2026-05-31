@@ -32,7 +32,7 @@ class _AdminChatDetailDialogState extends State<AdminChatDetailDialog> {
     if (text.isEmpty) return;
     setState(() => _sending = true);
     try {
-      final firestore = Provider.of<FirestoreService>(context, listen: false);
+      final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
       final franchiseId = widget.franchiseId;
       await firestore.sendSupportReply(
         franchiseId: franchiseId,
@@ -48,7 +48,7 @@ class _AdminChatDetailDialogState extends State<AdminChatDetailDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final firestore = Provider.of<FirestoreService>(context, listen: false);
+    final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
     return Dialog(
       child: SizedBox(
         width: 380,
@@ -152,6 +152,7 @@ class _AdminChatDetailDialogState extends State<AdminChatDetailDialog> {
     );
   }
 }
+
 
 
 

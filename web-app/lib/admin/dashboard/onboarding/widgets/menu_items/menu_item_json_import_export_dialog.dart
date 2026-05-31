@@ -12,10 +12,10 @@ class MenuItemJsonImportExportDialog {
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final menuItemProvider = context.read<MenuItemProvider>();
+    final shared.menuItemProvider = context.read<shared.MenuItemProvider>();
     final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
 
-    final itemsJson = menuItemProvider.menuItems.map((e) {
+    final itemsJson = shared.menuItemProvider.menuItems.map((e) {
       final map = e.toMap();
       map.updateAll((key, value) {
         if (value is Timestamp) return value.toDate().toIso8601String();
@@ -81,9 +81,9 @@ class MenuItemJsonImportExportDialog {
                   return MenuItem.fromMap(Map<String, dynamic>.from(e));
                 }).toList();
 
-                await menuItemProvider.loadMenuItems(franchiseId);
+                await shared.menuItemProvider.loadMenuItems(franchiseId);
                 for (final item in items) {
-                  menuItemProvider.addOrUpdateMenuItem(item);
+                  shared.menuItemProvider.addOrUpdateMenuItem(item);
                 }
 
                 Navigator.pop(context);
@@ -114,6 +114,7 @@ class MenuItemJsonImportExportDialog {
     );
   }
 }
+
 
 
 

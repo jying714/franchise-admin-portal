@@ -5,14 +5,14 @@ import 'package:shared_core/shared_core.dart';
 
 class FranchiseInfoProviderImpl extends ChangeNotifier
     implements FranchiseInfoProvider {
-  final FirestoreService _firestore;
+  final shared.FirestoreService _firestore;
   final shared.FranchiseProvider _shared.FranchiseProvider;
 
   FranchiseInfo? _franchise;
   bool _loading = false;
 
   FranchiseInfoProviderImpl({
-    required FirestoreService firestore,
+    required shared.FirestoreService firestore,
     required shared.FranchiseProvider shared.FranchiseProvider,
   })  : _firestore = firestore,
         _shared.FranchiseProvider = shared.FranchiseProvider;
@@ -67,4 +67,5 @@ class FranchiseInfoProviderImpl extends ChangeNotifier
     notifyListeners();
   }
 }
+
 

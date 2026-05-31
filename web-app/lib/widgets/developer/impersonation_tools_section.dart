@@ -36,7 +36,7 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
       _errorMsg = null;
     });
     try {
-      // TODO: Replace with real FirestoreService user query, filtered by franchiseId
+      // TODO: Replace with real shared.FirestoreService user query, filtered by franchiseId
       await Future.delayed(const Duration(milliseconds: 500));
       // Placeholder users; replace with real query results
       _users = [
@@ -66,7 +66,7 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
 
   Future<void> _fetchRecentImpersonations() async {
     try {
-      // TODO: Replace with real FirestoreService query for recent impersonations
+      // TODO: Replace with real shared.FirestoreService query for recent impersonations
       await Future.delayed(const Duration(milliseconds: 300));
       // Placeholder impersonations
       _recentImpersonations = [
@@ -499,6 +499,7 @@ class ImpersonationRecord {
   final DateTime timestamp;
   ImpersonationRecord({required this.userEmail, required this.timestamp});
 }
+
 
 
 

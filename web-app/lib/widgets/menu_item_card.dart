@@ -55,8 +55,8 @@ class _MenuItemCardState extends State<MenuItemCard> {
   }
 
   Widget _favoriteHeart(bool isFavorited, bool enabled, AppLocalizations loc) {
-    final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+    final shared.firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     return IconButton(
       icon: Icon(
         isFavorited ? Icons.favorite : Icons.favorite_border,
@@ -71,13 +71,13 @@ class _MenuItemCardState extends State<MenuItemCard> {
       onPressed: enabled
           ? () async {
               if (isFavorited) {
-                await firestoreService.removeFavoriteMenuItem(
+                await shared.firestoreService.removeFavoriteMenuItem(
                   _userId!,
                   widget.franchiseId,
                   widget.menuItem.id,
                 );
               } else {
-                await firestoreService.addFavoriteMenuItem(
+                await shared.firestoreService.addFavoriteMenuItem(
                   _userId!,
                   widget.franchiseId,
                   widget.menuItem.id,
@@ -136,8 +136,8 @@ class _MenuItemCardState extends State<MenuItemCard> {
         body: Center(child: Text('Localization missing! [debug]')),
       );
     }
-    final firestoreService =
-        Provider.of<FirestoreService>(context, listen: false);
+    final shared.firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final isWide = MediaQuery.of(context).size.width > 600;
 
     // *** PULL INGREDIENT METADATA HERE ***
@@ -368,14 +368,14 @@ class _MenuItemCardState extends State<MenuItemCard> {
                           ? _favoriteHeart(false, false, loc)
                           : StreamBuilder<List<String>>(
                               stream:
-                                  firestoreService.favoritesMenuItemIdsStream(
+                                  shared.firestoreService.favoritesMenuItemIdsStream(
                                       _userId!, widget.franchiseId),
                               builder: (context, idSnapshot) {
                                 if (!idSnapshot.hasData)
                                   return _favoriteHeart(false, false, loc);
                                 final ids = idSnapshot.data!;
                                 return StreamBuilder<List<MenuItem>>(
-                                  stream: firestoreService.getMenuItemsByIds(
+                                  stream: shared.firestoreService.getMenuItemsByIds(
                                       widget.franchiseId, ids),
                                   builder: (context, itemSnapshot) {
                                     if (itemSnapshot.connectionState ==
@@ -425,6 +425,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
     );
   }
 }
+
 
 
 

@@ -30,7 +30,7 @@ class ErrorLogStatsBar extends StatelessWidget {
     Color _chipText(Color? token, Color fallback) => token ?? fallback;
 
     return StreamBuilder<List<ErrorLog>>(
-      stream: context.read<FirestoreService>().streamErrorLogs(
+      stream: context.read<shared.FirestoreService>().streamErrorLogs(
             franchiseId,
             severity: severity,
             start: start,
@@ -113,6 +113,7 @@ class ErrorLogStatsBar extends StatelessWidget {
     );
   }
 }
+
 
 
 

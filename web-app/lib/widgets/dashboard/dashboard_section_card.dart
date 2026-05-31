@@ -88,7 +88,7 @@ class DashboardSectionCard extends StatelessWidget {
                         try {
                           return builder(context);
                         } catch (e, st) {
-                          final fs = Provider.of<FirestoreService>(context,
+                          final fs = Provider.of<shared.FirestoreService>(context,
                               listen: false);
                           shared.ErrorLogger.log(
                             message: 'Error building section $title: $e',
@@ -158,6 +158,7 @@ class _FeaturePlaceholder extends StatelessWidget {
     );
   }
 }
+
 
 
 

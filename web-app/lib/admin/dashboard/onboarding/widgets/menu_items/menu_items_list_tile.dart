@@ -94,7 +94,7 @@ class MenuItemListTile extends StatelessWidget {
                 if (confirmed == true) {
                   try {
                     await context
-                        .read<MenuItemProvider>()
+                        .read<shared.MenuItemProvider>()
                         .deleteFromFirestore(item.id);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(loc.menuItemDeleted)),
@@ -121,6 +121,7 @@ class MenuItemListTile extends StatelessWidget {
     );
   }
 }
+
 
 
 

@@ -142,7 +142,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       final franchise = context.read<FranchiseInfoProvider>().franchise;
       if (franchise?.restaurantType != null) {
         await context
-            .read<MenuItemProvider>()
+            .read<shared.MenuItemProvider>()
             .loadSizeTemplates(franchise!.restaurantType!);
       }
       await context
@@ -155,7 +155,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     required BuildContext context,
     required String menuItemId,
   }) {
-    final categories = context.read<CategoryProvider>().categories;
+    final categories = context.read<shared.CategoryProvider>().categories;
     final ingredients =
         context.read<IngredientMetadataProvider>().allIngredients;
     final ingredientTypes =
@@ -229,7 +229,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
 
     final ingredientProvider = context.read<IngredientMetadataProvider>();
     final typeProvider = context.read<IngredientTypeProvider>();
-    final categoryProvider = context.read<CategoryProvider>();
+    final shared.categoryProvider = context.read<shared.CategoryProvider>();
 
     setState(() {
       print('[repairSchemaIssue] Resolving issue: '
@@ -242,15 +242,15 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
           categoryId = newValue;
           print('[repairSchemaIssue] Assigned new categoryId: $categoryId');
 
-          final alreadyExists = categoryProvider.categories
+          final alreadyExists = shared.categoryProvider.categories
                   .any((c) => c.id == newValue) ||
-              categoryProvider.stagedCategories.any((c) => c.id == newValue);
+              shared.categoryProvider.stagedCategories.any((c) => c.id == newValue);
 
           print('[repairSchemaIssue] Category exists=$alreadyExists');
 
           if (!alreadyExists) {
             try {
-              categoryProvider.stageCategory(
+              shared.categoryProvider.stageCategory(
                 app_models.Category(
                   id: newValue,
                   name: issue.label ?? 'Unnamed Category',
@@ -349,7 +349,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
         nutrition: nutrition,
         selectedTemplateRefs: selectedTemplateRefs,
         sizeData: sizeData,
-        categories: categoryProvider.categories,
+        categories: shared.categoryProvider.categories,
         notes: notes,
         sku: sku,
         dietaryTags: dietaryTags,
@@ -390,7 +390,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
 
       final freshIssues = MenuItemSchemaIssue.detectAllIssues(
         menuItem: freshItem,
-        categories: categoryProvider.categories,
+        categories: shared.categoryProvider.categories,
         ingredients: ingredientProvider.allIngredients,
         ingredientTypes: typeProvider.ingredientTypes,
       );
@@ -536,7 +536,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
   }
 
   void _checkForSchemaIssues() {
-    final categories = context.read<CategoryProvider>().categories;
+    final categories = context.read<shared.CategoryProvider>().categories;
     final ingredients =
         context.read<IngredientMetadataProvider>().allIngredients;
     final ingredientTypes =
@@ -598,7 +598,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
 
     final freshIssues = MenuItemSchemaIssue.detectAllIssues(
       menuItem: tempItem,
-      categories: context.read<CategoryProvider>().categories,
+      categories: context.read<shared.CategoryProvider>().categories,
       ingredients: context.read<IngredientMetadataProvider>().allIngredients,
       ingredientTypes: context.read<IngredientTypeProvider>().ingredientTypes,
     );
@@ -779,7 +779,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
         'optionalAddOns=${optionalAddOns.length}, customizations=${customizations.length}, '
         'customizationGroups=${customizationGroups.length}, sizeData=${sizeData.length}, '
         'selectedTemplateRefs=$selectedTemplateRefs, nutrition=$nutrition, outOfStock=$outOfStock');
-    final categories = context.read<CategoryProvider>().categories;
+    final categories = context.read<shared.CategoryProvider>().categories;
     if (!_formKey.currentState!.validate()) return;
 
     if (categoryId == null || categoryId!.isEmpty) {
@@ -874,9 +874,9 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = context.watch<CategoryProvider>().categories;
-    final templates = context.read<MenuItemProvider>().templateRefs;
-    final availableTemplates = context.watch<MenuItemProvider>().sizeTemplates;
+    final categories = context.watch<shared.CategoryProvider>().categories;
+    final templates = context.read<shared.MenuItemProvider>().templateRefs;
+    final availableTemplates = context.watch<shared.MenuItemProvider>().sizeTemplates;
     final hasCategories = categories.isNotEmpty;
     final hasIngredients =
         context.read<IngredientMetadataProvider>().allIngredients.isNotEmpty;
@@ -1218,6 +1218,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     super.dispose();
   }
 }
+
 
 
 

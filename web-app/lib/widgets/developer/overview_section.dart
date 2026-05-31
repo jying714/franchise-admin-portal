@@ -38,8 +38,8 @@ class _OverviewSectionState extends State<OverviewSection> {
     });
     try {
       // Fetch your analytics, revenue, order stats, and system health here.
-      // Placeholder: Replace with FirestoreService or your stats service.
-      // Example: FirestoreService().getDashboardStats(franchiseId)
+      // Placeholder: Replace with shared.FirestoreService or your stats service.
+      // Example: shared.FirestoreService().getDashboardStats(franchiseId)
       await Future.delayed(
           const Duration(milliseconds: 600)); // Simulate network
 
@@ -61,8 +61,8 @@ class _OverviewSectionState extends State<OverviewSection> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      final firestoreService =
-          Provider.of<FirestoreService>(context, listen: false);
+      final shared.firestoreService =
+          Provider.of<shared.FirestoreService>(context, listen: false);
       shared.ErrorLogger.log(
         message: 'Failed to fetch dashboard stats: $e',
         stack: stack.toString(),
@@ -504,6 +504,7 @@ class _ComingSoonCard extends StatelessWidget {
     );
   }
 }
+
 
 
 
