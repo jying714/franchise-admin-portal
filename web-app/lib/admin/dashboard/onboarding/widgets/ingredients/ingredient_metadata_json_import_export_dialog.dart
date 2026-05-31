@@ -102,7 +102,7 @@ class _IngredientMetadataJsonImportExportDialogState
       if (decoded is! List) return null;
       return decoded.map((e) => IngredientMetadata.fromMap(e)).toList();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message:
             'Error parsing preview JSON in ingredient_metadata_json_import_export_dialog.dart',
         source: 'ingredient_metadata_json_import_export_dialog.dart',
@@ -133,7 +133,7 @@ class _IngredientMetadataJsonImportExportDialogState
     } catch (e, stack) {
       setState(() => _previewIngredients = null);
       print('[Dialog] JSON parse error');
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'JSON import preview parse error',
         source: 'ingredient_metadata_json_import_export_dialog.dart',
         severity: 'warning',
@@ -150,7 +150,7 @@ class _IngredientMetadataJsonImportExportDialogState
   Future<void> _saveImport() async {
     print('[Dialog] _saveImport called');
     final loc = widget.loc;
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
     print('[Dialog] got franchiseId: $franchiseId');
     final provider = context.read<IngredientMetadataProvider>();
     print('[Dialog] got provider hashCode: ${provider.hashCode}');
@@ -199,7 +199,7 @@ class _IngredientMetadataJsonImportExportDialogState
       }
     } catch (e, stack) {
       print('[Dialog] Caught exception: $e');
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to save imported ingredient metadata',
         source: 'ingredient_metadata_json_import_export_dialog.dart',
         severity: 'error',
@@ -343,5 +343,6 @@ class _IngredientMetadataJsonImportExportDialogState
     );
   }
 }
+
 
 

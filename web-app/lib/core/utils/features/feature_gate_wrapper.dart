@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/src/core/utils/features/feature_gate.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 ///
 /// ðŸ§± FeatureGateWrapper
@@ -45,5 +45,6 @@ class FeatureGateWrapper extends StatelessWidget {
     );
   }
 }
+
 
 

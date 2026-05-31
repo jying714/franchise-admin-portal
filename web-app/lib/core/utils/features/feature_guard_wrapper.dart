@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/providers/franchise_feature_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 /// Defines how `FeatureGuardWrapper` handles feature-gated content.
 enum FeatureFallbackStyle {
@@ -103,5 +103,6 @@ class FeatureGuardWrapper extends StatelessWidget {
     }
   }
 }
+
 
 

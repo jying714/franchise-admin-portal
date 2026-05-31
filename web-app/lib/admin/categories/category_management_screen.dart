@@ -1,16 +1,16 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/models/category.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
-import 'package:shared_core/src/core/utils/user_permissions.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/active_plan_banner.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
@@ -94,7 +94,7 @@ class _CategoryManagementScreenContentState
   }
 
   Future<void> _openCategoryDialog({Category? category}) async {
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
     if (!_canManage || _isLoading || _bulkLoading) return;
 
     await showDialog<Category>(
@@ -127,7 +127,7 @@ class _CategoryManagementScreenContentState
               );
             }
           } catch (e, stack) {
-            await ErrorLogger.log(
+            await shared.ErrorLogger.log(
               message: e.toString(),
               stack: stack.toString(),
               source: 'category_management_screen',
@@ -157,7 +157,7 @@ class _CategoryManagementScreenContentState
 
   Future<void> _deleteCategory(Category category,
       {bool showUndo = true}) async {
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     if (!_canManage || _isLoading || _bulkLoading) return;
     final loc = AppLocalizations.of(context)!;
     final userId =
@@ -192,7 +192,7 @@ class _CategoryManagementScreenContentState
           categoryId: category.id,
         );
       } catch (e, stack) {
-        await ErrorLogger.log(
+        await shared.ErrorLogger.log(
           message: e.toString(),
           stack: stack.toString(),
           source: 'category_management_screen',
@@ -222,7 +222,7 @@ class _CategoryManagementScreenContentState
                 category: category,
               );
             } catch (e, stack) {
-              await ErrorLogger.log(
+              await shared.ErrorLogger.log(
                 message: e.toString(),
                 stack: stack.toString(),
                 source: 'category_management_screen',
@@ -250,7 +250,7 @@ class _CategoryManagementScreenContentState
 
   void _showBulkUploadDialog() async {
     if (!_canManage || _isLoading || _bulkLoading) return;
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
 
     final uploaded = await showDialog<bool>(
       context: context,
@@ -292,7 +292,7 @@ class _CategoryManagementScreenContentState
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     final loc = AppLocalizations.of(context)!;
     final isMobile = MediaQuery.of(context).size.width < 600;
     final colorScheme = Theme.of(context).colorScheme;
@@ -606,5 +606,7 @@ class _CategoryManagementScreenContentState
     );
   }
 }
+
+
 
 

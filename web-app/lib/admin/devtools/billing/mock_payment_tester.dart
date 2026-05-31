@@ -2,10 +2,10 @@
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:uuid/uuid.dart';
-import 'package:shared_core/src/core/models/platform_invoice.dart';
-import 'package:shared_core/src/core/models/platform_payment.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/mock_payment_data.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/mock_payment_form.dart';
 
@@ -126,7 +126,7 @@ class _MockPaymentTesterState extends State<MockPaymentTester> {
         SnackBar(content: Text(loc.mockPaymentValidated)),
       );
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to simulate payment: $e',
         stack: stack.toString(),
         source: 'MockPaymentTester',
@@ -142,5 +142,7 @@ class _MockPaymentTesterState extends State<MockPaymentTester> {
     }
   }
 }
+
+
 
 

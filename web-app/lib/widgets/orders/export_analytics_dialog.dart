@@ -1,8 +1,8 @@
 ﻿import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/models/analytics_summary.dart';
-import 'package:shared_core/src/core/utils/export_utils.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -123,5 +123,6 @@ class ExportAnalyticsDialogSingleSummary extends StatelessWidget {
     );
   }
 }
+
 
 

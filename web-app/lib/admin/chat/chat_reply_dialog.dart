@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
 
 class ChatReplyDialog extends StatefulWidget {
@@ -20,7 +20,7 @@ class _ChatReplyDialogState extends State<ChatReplyDialog> {
     final reply = _controller.text.trim();
     if (reply.isEmpty) return;
     setState(() => isSending = true);
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     await Provider.of<FirestoreService>(context, listen: false).sendMessage(
       franchiseId,
       chatId: widget.chatId,
@@ -56,5 +56,7 @@ class _ChatReplyDialogState extends State<ChatReplyDialog> {
     );
   }
 }
+
+
 
 

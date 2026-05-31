@@ -1,9 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/models/platform_invoice.dart';
-import 'package:shared_core/src/core/models/franchise_info.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AdminWebhookSimulator extends StatefulWidget {
   const AdminWebhookSimulator({super.key});
@@ -41,7 +41,7 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
         _franchises = list;
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         source: 'AdminWebhookSimulator',
         screen: 'dev_tools_screen',
         message: 'Failed to load franchises: $e',
@@ -83,7 +83,7 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
       });
     } catch (e, stack) {
       setState(() => _loading = false);
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         source: 'AdminWebhookSimulator',
         screen: 'dev_tools_screen',
         message: 'Failed to load test invoices: $e',
@@ -111,7 +111,7 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
         'simulated': true,
       });
 
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         source: 'AdminWebhookSimulator',
         screen: 'dev_tools_screen',
         message:
@@ -134,7 +134,7 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
         ),
       );
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         source: 'AdminWebhookSimulator',
         screen: 'dev_tools_screen',
         message: 'Webhook simulation failed: $e',
@@ -274,5 +274,7 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
     );
   }
 }
+
+
 
 

@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class TestInvoiceCleaner extends StatefulWidget {
   const TestInvoiceCleaner({super.key});
@@ -36,7 +36,7 @@ class _TestInvoiceCleanerState extends State<TestInvoiceCleaner> {
       }
       return _invoices;
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to load test invoices: $e',
         stack: stack.toString(),
         source: 'TestInvoiceCleaner',
@@ -58,7 +58,7 @@ class _TestInvoiceCleanerState extends State<TestInvoiceCleaner> {
       );
       _refresh();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to delete invoice: $e',
         stack: stack.toString(),
         source: 'TestInvoiceCleaner',
@@ -85,7 +85,7 @@ class _TestInvoiceCleanerState extends State<TestInvoiceCleaner> {
       );
       _refresh();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to reset invoice: $e',
         stack: stack.toString(),
         source: 'TestInvoiceCleaner',
@@ -230,5 +230,7 @@ class _TestInvoiceCleanerState extends State<TestInvoiceCleaner> {
     );
   }
 }
+
+
 
 

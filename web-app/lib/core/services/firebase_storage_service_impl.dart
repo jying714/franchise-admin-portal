@@ -1,9 +1,9 @@
-// web-app/lib/core/services/firebase_storage_service_impl.dart
+﻿// web-app/lib/core/services/firebase_storage_service_impl.dart
 
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
-import 'package:shared_core/src/core/services/firebase_storage_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FirebaseStorageServiceImpl implements FirebaseStorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
@@ -38,3 +38,4 @@ class FirebaseStorageServiceImpl implements FirebaseStorageService {
     }
   }
 }
+

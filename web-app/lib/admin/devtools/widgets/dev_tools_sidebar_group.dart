@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/src/core/models/dashboard_section.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class DevToolsSidebarGroup extends StatefulWidget {
@@ -111,5 +111,6 @@ class _DevToolsSidebarGroupState extends State<DevToolsSidebarGroup> {
     );
   }
 }
+
 
 

@@ -1,11 +1,11 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/models/franchise_subscription_model.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FranchiseSubscriptionSummary extends StatelessWidget {
   final FranchiseSubscription subscription;
@@ -170,7 +170,7 @@ class FranchiseSubscriptionSummary extends StatelessWidget {
         ),
       );
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'franchise_subscription_summary_render_error',
         source: 'FranchiseSubscriptionSummary',
         screen: 'franchise_subscription_list_screen',
@@ -182,5 +182,7 @@ class FranchiseSubscriptionSummary extends StatelessWidget {
     }
   }
 }
+
+
 
 

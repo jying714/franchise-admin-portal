@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class ClearAllTestInvoicesButton extends StatefulWidget {
   final VoidCallback? onCleared; // Optional callback to refresh parent UI
@@ -60,7 +60,7 @@ class _ClearAllTestInvoicesButtonState
 
       widget.onCleared?.call();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to clear test invoices: $e',
         stack: stack.toString(),
         source: 'ClearAllTestInvoicesButton',
@@ -87,5 +87,7 @@ class _ClearAllTestInvoicesButtonState
     );
   }
 }
+
+
 
 

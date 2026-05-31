@@ -3,10 +3,10 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/models/platform_invoice.dart';
-import 'package:shared_core/src/core/models/franchise_info.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class TestInvoiceGenerator extends StatefulWidget {
   const TestInvoiceGenerator({super.key});
@@ -45,7 +45,7 @@ class _TestInvoiceGeneratorState extends State<TestInvoiceGenerator> {
         });
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to load franchises: $e',
         stack: stack.toString(),
         source: 'TestInvoiceGenerator',
@@ -100,7 +100,7 @@ class _TestInvoiceGeneratorState extends State<TestInvoiceGenerator> {
       if (!mounted) return;
       setState(() => _statusMessage = 'Test invoice created: $invoiceNumber');
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to generate test invoice: $e',
         stack: stack.toString(),
         source: 'TestInvoiceGenerator',
@@ -199,5 +199,7 @@ class _TestInvoiceGeneratorState extends State<TestInvoiceGenerator> {
     );
   }
 }
+
+
 
 

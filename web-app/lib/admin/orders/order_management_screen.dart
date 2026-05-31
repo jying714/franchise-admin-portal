@@ -2,21 +2,21 @@
 import 'package:provider/provider.dart';
 import 'package:shared_core/src/core/models/order.dart'
     as order_model;
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/services/audit_log_service.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
-import 'package:shared_core/src/core/providers/role_guard.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/orders/order_detail_dialog.dart';
 
 class OrderManagementScreen extends StatelessWidget {
@@ -85,7 +85,7 @@ class _OrderManagementScreenContentState
   }
 
   void _showRefundDialog(order_model.Order order, admin_user.User user) {
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
     final controller =
         TextEditingController(text: order.total.toStringAsFixed(2));
     final colorScheme = Theme.of(context).colorScheme;
@@ -121,7 +121,7 @@ class _OrderManagementScreenContentState
   }
 
   void _showStatusDialog(order_model.Order order, admin_user.User user) {
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
     const allowedStatuses = [
       'Placed',
       'Preparing',
@@ -204,7 +204,7 @@ class _OrderManagementScreenContentState
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     final user = context.watch<AdminUserProvider>().user;
     final loading = context.watch<AdminUserProvider>().loading;
     final firestoreService = context.read<FirestoreService>();
@@ -412,5 +412,7 @@ class _OrderManagementScreenContentState
     );
   }
 }
+
+
 
 

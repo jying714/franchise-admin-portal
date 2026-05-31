@@ -2,7 +2,7 @@
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class UserAvatarMenu extends StatelessWidget {
@@ -75,5 +75,6 @@ class UserAvatarMenu extends StatelessWidget {
 }
 
 enum _AvatarMenuAction { profile, signout }
+
 
 

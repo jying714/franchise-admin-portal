@@ -1,23 +1,23 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/admin/chat/admin_chat_detail_dialog.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
-import 'package:shared_core/src/core/services/audit_log_service.dart';
-import 'package:shared_core/src/core/models/chat.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
-import 'package:shared_core/src/core/utils/user_permissions.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
 import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class ChatManagementScreen extends StatelessWidget {
@@ -25,7 +25,7 @@ class ChatManagementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final user = Provider.of<AdminUserProvider>(context, listen: false).user;
@@ -166,7 +166,7 @@ class ChatManagementScreen extends StatelessWidget {
     ColorScheme colorScheme,
   ) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -211,5 +211,7 @@ class ChatManagementScreen extends StatelessWidget {
     );
   }
 }
+
+
 
 

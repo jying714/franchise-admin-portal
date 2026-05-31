@@ -1,13 +1,13 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/models/category.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 // Optionally: If your user profile notifier/provider is named differently, update this import.
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class CategoryFormDialog extends StatefulWidget {
   final String franchiseId;
@@ -176,7 +176,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                                 listen: false)
                             .user
                             ?.id;
-                        await ErrorLogger.log(
+                        await shared.ErrorLogger.log(
                           message: e.toString(),
                           source: 'category_form_dialog',
                           screen: 'CategoryFormDialog',
@@ -218,5 +218,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
     );
   }
 }
+
+
 
 

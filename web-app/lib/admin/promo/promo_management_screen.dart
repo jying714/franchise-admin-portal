@@ -1,23 +1,23 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/models/promo.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/services/audit_log_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/admin/promo/promo_form_dialog.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
-import 'package:shared_core/src/core/utils/user_permissions.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
-import 'package:shared_core/src/core/providers/role_guard.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class PromoManagementScreen extends StatelessWidget {
   const PromoManagementScreen({super.key});
@@ -26,7 +26,7 @@ class PromoManagementScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final userProvider = context.watch<AdminUserProvider>();
@@ -105,7 +105,7 @@ class PromoManagementScreen extends StatelessWidget {
                                             details: {'name': promo.name},
                                           );
                                         } catch (e, stack) {
-                                          await ErrorLogger.log(
+                                          await shared.ErrorLogger.log(
                                             message: e.toString(),
                                             source: 'promo_management_screen',
                                             screen: 'PromoManagementScreen',
@@ -196,7 +196,7 @@ class PromoManagementScreen extends StatelessWidget {
                                                       },
                                                     );
                                                   } catch (e, stack) {
-                                                    await ErrorLogger.log(
+                                                    await shared.ErrorLogger.log(
                                                       message: e.toString(),
                                                       source:
                                                           'promo_management_screen',
@@ -267,7 +267,7 @@ class PromoManagementScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: () async {
               final franchiseId =
-                  Provider.of<FranchiseProvider>(context, listen: false)
+                  Provider.of<shared.FranchiseProvider>(context, listen: false)
                       .franchiseId;
               try {
                 await service.deletePromo(franchiseId, promoId);
@@ -280,7 +280,7 @@ class PromoManagementScreen extends StatelessWidget {
                   details: {},
                 );
               } catch (e, stack) {
-                await ErrorLogger.log(
+                await shared.ErrorLogger.log(
                   message: e.toString(),
                   source: 'promo_management_screen',
                   screen: 'PromoManagementScreen',
@@ -304,5 +304,7 @@ class PromoManagementScreen extends StatelessWidget {
     );
   }
 }
+
+
 
 

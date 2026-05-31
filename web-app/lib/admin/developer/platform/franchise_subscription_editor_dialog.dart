@@ -2,14 +2,14 @@
 import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
-import 'package:shared_core/src/core/models/dashboard_section.dart';
-import 'package:shared_core/src/core/models/platform_plan_model.dart';
-import 'package:shared_core/src/core/models/franchise_subscription_model.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/providers/role_guard.dart';
-import 'package:shared_core/src/core/services/franchise_subscription_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FranchiseSubscriptionEditorDialog extends StatefulWidget {
   final FranchiseSubscription? subscription; // null if creating new
@@ -99,7 +99,7 @@ class _FranchiseSubscriptionEditorDialogState
         }
       });
     } catch (e, st) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to load platform plans: $e',
         stack: st.toString(),
         source: 'FranchiseSubscriptionEditorDialog',
@@ -148,7 +148,7 @@ class _FranchiseSubscriptionEditorDialogState
       await fs.saveFranchiseSubscription(newSub);
       Navigator.of(context).pop(true); // Signal success
     } catch (e, st) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to save franchise subscription: $e',
         stack: st.toString(),
         source: 'FranchiseSubscriptionEditorDialog',
@@ -322,5 +322,7 @@ class _FranchiseSubscriptionEditorDialogState
     );
   }
 }
+
+
 
 

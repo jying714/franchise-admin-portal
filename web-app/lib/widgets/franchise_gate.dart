@@ -1,4 +1,4 @@
-// web_app/lib/core/widgets/franchise_gate.dart
+﻿// web_app/lib/core/widgets/franchise_gate.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -10,7 +10,7 @@ class FranchiseGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final franchiseProvider = Provider.of<FranchiseProvider>(context);
+    final shared.FranchiseProvider = Provider.of<shared.FranchiseProvider>(context);
     final user = Provider.of<AdminUserProvider>(context).user;
 
     if (user == null) {
@@ -24,16 +24,16 @@ class FranchiseGate extends StatelessWidget {
         roles.contains('developer') ||
         roles.contains('hq_owner');
 
-    if (franchiseProvider.loading) {
+    if (shared.FranchiseProvider.loading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (!franchiseProvider.isFranchiseSelected && !isFranchiseOptionalRole) {
+    if (!shared.FranchiseProvider.isFranchiseSelected && !isFranchiseOptionalRole) {
       return Scaffold(
         body: FranchiseSelector(
-          onSelected: (id) => franchiseProvider.setFranchiseId(id),
+          onSelected: (id) => shared.FranchiseProvider.setFranchiseId(id),
         ),
       );
     }
@@ -41,3 +41,4 @@ class FranchiseGate extends StatelessWidget {
     return child;
   }
 }
+

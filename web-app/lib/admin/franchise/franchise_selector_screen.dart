@@ -1,13 +1,13 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/admin/admin_sidebar.dart';
 import 'package:franchise_admin_portal/widgets/admin/franchise_selector.dart';
-import 'package:shared_core/src/core/models/franchise_info.dart';
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
-import 'package:shared_core/src/core/utils/franchise_utils.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FranchiseSelectorScreen extends StatefulWidget {
   const FranchiseSelectorScreen({super.key});
@@ -42,8 +42,8 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
         body: Center(child: Text('Localization missing! [debug]')),
       );
     }
-    final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: false);
+    final shared.FranchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
@@ -78,13 +78,13 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
               padding: const EdgeInsets.all(16.0),
               child: FranchiseSelector(
                 items: franchises,
-                selectedFranchiseId: franchiseProvider.franchiseId,
+                selectedFranchiseId: shared.FranchiseProvider.franchiseId,
                 onSelected: (franchiseId) {
                   print(
                       '[FranchiseSelectorScreen] onSelected fired with: $franchiseId');
-                  franchiseProvider.setFranchiseId(franchiseId).then((_) {
+                  shared.FranchiseProvider.setFranchiseId(franchiseId).then((_) {
                     print(
-                        '[FranchiseSelectorScreen] franchiseProvider updated.');
+                        '[FranchiseSelectorScreen] shared.FranchiseProvider updated.');
                     Navigator.of(context)
                         .pushReplacementNamed('/admin/dashboard');
                     print('[Routing] Navigating to /admin/dashboard');
@@ -98,5 +98,7 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
     );
   }
 }
+
+
 
 

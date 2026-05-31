@@ -3,12 +3,12 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:convert';
 import 'package:flutter/material.dart';
 // Don't import dart:io at top-level if you want to build for web.
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:path_provider/path_provider.dart'
     if (dart.library.io) 'package:path_provider/path_provider.dart';
 import 'dart:io' if (dart.library.io) 'dart:io';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'dart:html' as html; // For web file download
 
 class PromoExportDialog extends StatefulWidget {
@@ -24,7 +24,7 @@ class _PromoExportDialogState extends State<PromoExportDialog> {
 
   Future<void> _exportPromos() async {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
     setState(() => isExporting = true);
     final promos = await Provider.of<FirestoreService>(context, listen: false)
         .getPromos(franchiseId)
@@ -79,5 +79,7 @@ class _PromoExportDialogState extends State<PromoExportDialog> {
     );
   }
 }
+
+
 
 

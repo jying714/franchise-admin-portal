@@ -5,7 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show VisibleForTesting;
-import 'package:shared_core/src/core/models/onboarding_validation_issue.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 /// Canonical argument keys used across onboarding routes.
 class OnboardingNavKeys {
@@ -256,5 +256,6 @@ String? _stringifySeverity(OnboardingIssueSeverity? s) {
       return null;
   }
 }
+
 
 

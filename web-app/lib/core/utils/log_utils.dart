@@ -1,9 +1,9 @@
-// web_app/lib/core/utils/log_utils.dart
+﻿// web_app/lib/core/utils/log_utils.dart
 
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path_provider/path_provider.dart';
-import 'package:shared_core/src/core/utils/log_utils_core.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class LogUtils {
   static File? _logFile;
@@ -33,3 +33,4 @@ class LogUtils {
           {String? context}) =>
       LogUtilsCore.logException(error, stack, context: context);
 }
+

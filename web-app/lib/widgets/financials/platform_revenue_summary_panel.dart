@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
@@ -67,7 +67,7 @@ class _PlatformRevenueSummaryPanelState
         _loading = false;
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'PlatformRevenueSummaryPanel',
@@ -197,5 +197,7 @@ class _PlatformRevenueSummaryPanelState
     );
   }
 }
+
+
 
 

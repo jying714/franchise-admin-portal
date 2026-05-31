@@ -4,20 +4,20 @@ import 'package:shared_core/shared_core.dart' as shared;
 /// Flutter-specific design tokens for web app (P2.5 Web-App Cleanup)
 /// Single source of truth bridge:
 /// - Delegates scalars/radii/elevation/fonts to shared_core.DesignTokens
-/// - Dynamic colors (primary/secondary) pulled from FranchiseProvider.current* (white-label)
-/// - Set via DesignTokens.setFranchiseProvider(...) once at bootstrap (main.dart)
+/// - Dynamic colors (primary/secondary) pulled from shared.FranchiseProvider.current* (white-label)
+/// - Set via DesignTokens.setshared.FranchiseProvider(...) once at bootstrap (main.dart)
 class DesignTokens {
   static shared.FranchiseProvider? _fp;
 
   /// Public getter for other delegation layers (AppConfig, etc.).
-  static shared.FranchiseProvider? get franchiseProvider => _fp;
+  static shared.FranchiseProvider? get shared.FranchiseProvider => _fp;
 
   /// Call once early (e.g. main.dart after MultiProvider) so all static getters see live branding.
-  static void setFranchiseProvider(shared.FranchiseProvider? provider) {
+  static void setshared.FranchiseProvider(shared.FranchiseProvider? provider) {
     _fp = provider;
   }
 
-  // === DYNAMIC BRANDING (FranchiseProvider wins) ===
+  // === DYNAMIC BRANDING (shared.FranchiseProvider wins) ===
   static Color get primaryColor {
     final hex = _fp?.currentPrimaryColorHex ?? shared.DesignTokens.primaryColorHex;
     return _hexToColor(hex);
@@ -201,3 +201,4 @@ class DesignTokens {
     return Color(int.parse('FF$cleaned', radix: 16));
   }
 }
+

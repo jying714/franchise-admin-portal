@@ -1,8 +1,8 @@
-// web-app/lib/core/services/admin_auth_audit_service_impl.dart
+﻿// web-app/lib/core/services/admin_auth_audit_service_impl.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'package:shared_core/src/core/services/admin_auth_audit_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AdminAuthAuditServiceImpl implements AdminAuthAuditService {
   final FirebaseFirestore _db;
@@ -44,3 +44,4 @@ class AdminAuthAuditServiceImpl implements AdminAuthAuditService {
         .map((snap) => snap.docs.map((doc) => doc.data()).toList());
   }
 }
+

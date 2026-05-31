@@ -120,7 +120,7 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
         Navigator.of(context).pop();
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to update ingredient (local only): $e',
         stack: stack.toString(),
         source: 'IngredientFormCard',
@@ -282,5 +282,6 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
         ));
   }
 }
+
 
 

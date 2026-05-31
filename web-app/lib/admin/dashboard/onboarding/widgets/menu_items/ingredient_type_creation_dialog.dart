@@ -54,7 +54,7 @@ class _IngredientTypeCreationDialogState
 
       Navigator.of(context).pop(type);
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'ingredient_type_creation_failed',
         source: 'IngredientTypeCreationDialog',
         stack: stack.toString(),
@@ -128,5 +128,6 @@ class _IngredientTypeCreationDialogState
     );
   }
 }
+
 
 

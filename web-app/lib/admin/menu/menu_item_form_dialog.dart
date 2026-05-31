@@ -1,8 +1,8 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/src/core/models/menu_item.dart';
-import 'package:shared_core/src/core/models/category.dart';
-import 'package:shared_core/src/core/models/customization.dart';
-import 'package:shared_core/src/core/models/nutrition_info.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/menu/menu_item_customizations_dialog.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/menu/customization_types.dart';
@@ -459,5 +459,6 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
     );
   }
 }
+
 
 

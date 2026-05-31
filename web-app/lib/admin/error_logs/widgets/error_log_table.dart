@@ -1,15 +1,15 @@
 ﻿import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_core/src/core/models/error_log.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'error_log_detail_drawer.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class ErrorLogTable extends StatefulWidget {
   final List<ErrorLog> logs;
@@ -163,7 +163,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
 
   Future<void> _bulkResolve(bool resolved) async {
     String franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
     final service = context.read<FirestoreService>();
     final ids = _selectedIds.toList();
     for (final id in ids) {
@@ -181,7 +181,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
 
   Future<void> _bulkArchive(bool archived) async {
     String franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
     final service = context.read<FirestoreService>();
     final ids = _selectedIds.toList();
     for (final id in ids) {
@@ -202,7 +202,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
 
   Future<void> _bulkDelete() async {
     String franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
     final service = context.read<FirestoreService>();
     final ids = _selectedIds.toList();
     for (final id in ids) {
@@ -221,7 +221,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
 
   Future<void> _addComment(String logId, String text) async {
     String franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
     if (text.trim().isEmpty) return;
     final comment = {
       'text': text,
@@ -389,7 +389,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     print('ErrorLogTable received logs: ${widget.logs.length}');
     final colorScheme = Theme.of(context).colorScheme;
     if (widget.logs.isEmpty) return _emptyState();
@@ -659,5 +659,7 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
     );
   }
 }
+
+
 
 

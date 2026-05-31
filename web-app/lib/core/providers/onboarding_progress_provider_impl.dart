@@ -1,4 +1,4 @@
-// web_app/lib/core/providers/onboarding_progress_provider_impl.dart
+﻿// web_app/lib/core/providers/onboarding_progress_provider_impl.dart
 
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
@@ -54,7 +54,7 @@ class OnboardingProgressProviderImpl extends ChangeNotifier
           step: data != null && data[step] == true
       };
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load onboarding progress',
         stack: stack.toString(),
         source: 'OnboardingProgressProviderImpl',
@@ -80,7 +80,7 @@ class OnboardingProgressProviderImpl extends ChangeNotifier
       _stepStatus[stepKey] = true;
       notifyListeners();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to mark onboarding step "$stepKey" complete',
         stack: stack.toString(),
         source: 'OnboardingProgressProviderImpl',
@@ -103,7 +103,7 @@ class OnboardingProgressProviderImpl extends ChangeNotifier
       _stepStatus[stepKey] = false;
       notifyListeners();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to mark onboarding step "$stepKey" incomplete',
         stack: stack.toString(),
         source: 'OnboardingProgressProviderImpl',
@@ -113,3 +113,4 @@ class OnboardingProgressProviderImpl extends ChangeNotifier
     }
   }
 }
+

@@ -1,8 +1,8 @@
-// web-app/lib/core/services/payout_service_impl.dart
+﻿// web-app/lib/core/services/payout_service_impl.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_core/src/core/services/payout_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class PayoutServiceImpl implements PayoutService {
   final FirebaseFirestore _db;
@@ -26,7 +26,7 @@ class PayoutServiceImpl implements PayoutService {
       }
       return sum;
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'PayoutServiceImpl',
@@ -36,3 +36,5 @@ class PayoutServiceImpl implements PayoutService {
     }
   }
 }
+
+

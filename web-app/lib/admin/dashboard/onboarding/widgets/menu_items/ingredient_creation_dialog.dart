@@ -86,7 +86,7 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
 
       Navigator.of(context).pop(newIngredient);
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'ingredient_creation_failed',
         stack: stack.toString(),
         source: 'IngredientCreationDialog',
@@ -210,5 +210,6 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
     );
   }
 }
+
 
 

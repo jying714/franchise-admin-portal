@@ -3,11 +3,11 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/models/platform_invoice.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
-import 'package:shared_core/src/core/providers/role_guard.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class PayInvoiceDialog extends StatefulWidget {
   final PlatformInvoice invoice;
@@ -94,7 +94,7 @@ class _PayInvoiceDialogState extends State<PayInvoiceDialog> {
                               widget.invoice.id!, _selectedMethod!);
                       Navigator.of(context).pop(true);
                     } catch (e, stack) {
-                      await ErrorLogger.log(
+                      await shared.ErrorLogger.log(
                         message: e.toString(),
                         stack: stack.toString(),
                         source: 'PayInvoiceDialog',
@@ -121,5 +121,7 @@ class _PayInvoiceDialogState extends State<PayInvoiceDialog> {
     );
   }
 }
+
+
 
 

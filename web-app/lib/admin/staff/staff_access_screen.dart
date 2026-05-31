@@ -2,18 +2,18 @@
 import 'package:provider/provider.dart';
 import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/user_permissions.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/role_guard.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
 import 'package:franchise_admin_portal/widgets/staff/show_add_staff_dialog.dart';
@@ -37,7 +37,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
       );
     }
 
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     final colorScheme = Theme.of(context).colorScheme;
 
     return RoleGuard(
@@ -88,7 +88,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                               onPressed: () async {
                                 final parentLoc = AppLocalizations.of(context);
                                 if (parentLoc == null) {
-                                  await ErrorLogger.log(
+                                  await shared.ErrorLogger.log(
                                     message:
                                         'AppLocalizations.of(context) returned null.',
                                     source: 'staff_access_screen',
@@ -113,7 +113,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                                           final loc =
                                               AppLocalizations.of(innerContext);
                                           if (loc == null) {
-                                            ErrorLogger.log(
+                                            shared.ErrorLogger.log(
                                               message:
                                                   'Localization still null after Localizations.override.',
                                               source: 'staff_access_screen',
@@ -232,14 +232,14 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
             ),
             onPressed: () async {
               final franchiseId =
-                  Provider.of<FranchiseProvider>(context, listen: false)
+                  Provider.of<shared.FranchiseProvider>(context, listen: false)
                       .franchiseId;
               try {
                 await service.removeStaffUser(user.id);
                 if (!context.mounted) return;
                 Navigator.of(context).pop();
               } catch (e, stack) {
-                await ErrorLogger.log(
+                await shared.ErrorLogger.log(
                   message: e.toString(),
                   stack: stack.toString(),
                   source: 'staff_access_screen',
@@ -262,5 +262,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
     );
   }
 }
+
+
 
 

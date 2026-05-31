@@ -1,13 +1,13 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
-import 'package:shared_core/src/core/models/alert_model.dart';
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/financials/payouts_filter_bar.dart';
@@ -15,7 +15,7 @@ import 'package:franchise_admin_portal/widgets/financials/payout_detail_dialog.d
 import 'package:franchise_admin_portal/widgets/financials/payout_note_editor.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/attachment_uploader.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/bulk_ops_bar.dart';
-import 'package:shared_core/src/core/providers/payout_filter_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class PayoutListScreen extends StatefulWidget {
   const PayoutListScreen({Key? key}) : super(key: key);
@@ -52,7 +52,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
         _bulkLoading = false;
       });
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Bulk update status failed: $e',
         stack: stack.toString(),
         source: 'PayoutListScreen',
@@ -69,7 +69,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
   Future<void> _exportSelectedPayouts() async {
     try {
       final franchiseId =
-          Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+          Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
       await Provider.of<FirestoreService>(context, listen: false).exportPayoutsToCsv(
         franchiseId: franchiseId,
       );
@@ -79,7 +79,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
                 AppLocalizations.of(context)!.featureComingSoon('Export'))),
       );
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Export payouts failed: $e',
         stack: stack.toString(),
         source: 'PayoutListScreen',
@@ -99,7 +99,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
         SnackBar(content: Text(AppLocalizations.of(context)!.deleteSuccess)),
       );
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Bulk delete payouts failed: $e',
         stack: stack.toString(),
         source: 'PayoutListScreen',
@@ -172,18 +172,18 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
         );
       }
 
-      final franchiseProvider =
-          Provider.of<FranchiseProvider?>(context, listen: true);
-      if (franchiseProvider == null) {
+      final shared.FranchiseProvider =
+          Provider.of<shared.FranchiseProvider?>(context, listen: true);
+      if (shared.FranchiseProvider == null) {
         return EmptyStateWidget(
-          title: 'FranchiseProvider not found',
-          message: 'FranchiseProvider is missing from the widget tree.',
+          title: 'shared.FranchiseProvider not found',
+          message: 'shared.FranchiseProvider is missing from the widget tree.',
           imageAsset: BrandingConfig.bannerPlaceholder,
           onRetry: _retry,
           buttonText: AppLocalizations.of(context)?.retry ?? 'Retry',
         );
       }
-      final franchiseId = franchiseProvider.franchiseId;
+      final franchiseId = shared.FranchiseProvider.franchiseId;
       if (franchiseId == null || franchiseId.isEmpty) {
         return EmptyStateWidget(
           title: 'Franchise Not Selected',
@@ -200,7 +200,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
       if (!user.roles.any((role) => allowedRoles.contains(role))) {
         Future.microtask(() async {
           try {
-            await ErrorLogger.log(
+            await shared.ErrorLogger.log(
               message: "Unauthorized PayoutListScreen access attempt.",
               source: "PayoutListScreen",
               screen: "PayoutListScreen",
@@ -373,7 +373,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
                         }
                         if (snapshot.hasError) {
                           try {
-                            ErrorLogger.log(
+                            shared.ErrorLogger.log(
                               message:
                                   'PayoutListScreen: failed to load payouts\n${snapshot.error}',
                               stack: snapshot.stackTrace?.toString(),
@@ -606,7 +606,7 @@ class _PayoutListScreenState extends State<PayoutListScreen> {
         ),
       );
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Unexpected error in PayoutListScreen build: $e',
         stack: stack.toString(),
         source: 'PayoutListScreen',
@@ -671,5 +671,7 @@ class _StatusChip extends StatelessWidget {
     );
   }
 }
+
+
 
 

@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/models/platform_payment.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/financials/franchisee_payment_tile.dart';
 
 class FranchiseePaymentList extends StatelessWidget {
@@ -66,5 +66,6 @@ class FranchiseePaymentList extends StatelessWidget {
     );
   }
 }
+
 
 

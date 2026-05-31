@@ -2,11 +2,11 @@
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/developer/impersonation_dialog.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class ImpersonationToolsSection extends StatefulWidget {
   final String? franchiseId;
@@ -53,7 +53,7 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to fetch user list: $e',
         stack: stack.toString(),
         source: 'ImpersonationToolsSection',
@@ -83,7 +83,7 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
       setState(() {});
     } catch (e, stack) {
       // Non-blocking; just log error
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to fetch impersonation records: $e',
         stack: stack.toString(),
         source: 'ImpersonationToolsSection',
@@ -101,7 +101,7 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
     try {
       // TODO: Implement real impersonation logic with backend/service
       await Future.delayed(const Duration(milliseconds: 400));
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Impersonation started: ${user.email}',
         source: 'ImpersonationToolsSection',
         screen: 'ImpersonationToolsSection',
@@ -130,7 +130,7 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
       );
     } catch (e, stack) {
       setState(() => _selectedUser = null);
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Impersonation failed: $e',
         stack: stack.toString(),
         source: 'ImpersonationToolsSection',
@@ -502,5 +502,7 @@ class ImpersonationRecord {
   final DateTime timestamp;
   ImpersonationRecord({required this.userEmail, required this.timestamp});
 }
+
+
 
 

@@ -73,7 +73,7 @@ class _EditableIngredientTypeRowState extends State<EditableIngredientTypeRow> {
   Future<void> _updateField() async {
     final loc = AppLocalizations.of(context)!;
     final provider = context.read<IngredientTypeProvider>();
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
 
     final updated = widget.type.copyWith(
       name: _nameController.text.trim(),
@@ -98,7 +98,7 @@ class _EditableIngredientTypeRowState extends State<EditableIngredientTypeRow> {
         );
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to update ingredient type inline',
         stack: stack.toString(),
         severity: 'error',
@@ -211,5 +211,6 @@ class _EditableIngredientTypeRowState extends State<EditableIngredientTypeRow> {
     );
   }
 }
+
 
 

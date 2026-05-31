@@ -2,12 +2,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/models/franchise_subscription_model.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FranchiseSubscriptionSummaryCard extends StatelessWidget {
   const FranchiseSubscriptionSummaryCard({super.key});
@@ -31,7 +31,7 @@ class FranchiseSubscriptionSummaryCard extends StatelessWidget {
         }
 
         if (snapshot.hasError) {
-          ErrorLogger.log(
+          shared.ErrorLogger.log(
             message: 'franchise_subscription_summary_error',
             source: 'FranchiseSubscriptionSummaryCard',
             screen: 'platform_owner_dashboard',
@@ -110,5 +110,7 @@ class FranchiseSubscriptionSummaryCard extends StatelessWidget {
     );
   }
 }
+
+
 
 

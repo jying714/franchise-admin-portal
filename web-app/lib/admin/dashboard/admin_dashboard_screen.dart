@@ -1,8 +1,8 @@
-﻿import 'package:shared_core/src/core/utils/error_logger.dart';
+﻿import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/services/auth_service.dart';
-import 'package:shared_core/src/core/models/dashboard_section.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/dashboard/section_registry.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/role_badge.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/maintenance_banner.dart';
@@ -14,17 +14,17 @@ import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/src/core/models/user.dart' as app;
 import 'package:franchise_admin_portal/widgets/header/franchise_app_bar.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
-import 'package:shared_core/src/core/providers/franchise_selector.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
-import 'package:shared_core/src/core/providers/ingredient_type_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AdminDashboardScreen extends StatefulWidget {
   final String? initialSectionKey;
@@ -93,7 +93,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       print(
           '[DEBUG][AdminDashboardScreen][build] Section at selected index: ${_sections[_selectedIndex].key}');
     }
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     final adminUserProvider = Provider.of<AdminUserProvider>(context);
     final appUser = adminUserProvider.user;
 
@@ -122,7 +122,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
 
     if (_sections.isEmpty || _selectedIndex >= _sections.length) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: "No dashboard sections registered.",
         source: "AdminDashboardScreen",
         screen: "AdminDashboardScreen",
@@ -259,7 +259,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                           child: section.builder(context),
                                         );
                                       } catch (e, stack) {
-                                        ErrorLogger.log(
+                                        shared.ErrorLogger.log(
                                           message:
                                               'Dashboard section error: $e',
                                           source: 'AdminDashboardScreen',
@@ -414,5 +414,7 @@ class _SidebarSectionTile extends StatelessWidget {
     );
   }
 }
+
+
 
 

@@ -41,7 +41,7 @@ class _InlineAddIngredientTypeRowState
       return;
     }
 
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
     final provider = context.read<IngredientTypeProvider>();
 
     setState(() => _submitting = true);
@@ -64,7 +64,7 @@ class _InlineAddIngredientTypeRowState
         );
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to add new ingredient type inline',
         stack: stack.toString(),
         severity: 'error',
@@ -143,5 +143,6 @@ class _InlineAddIngredientTypeRowState
     );
   }
 }
+
 
 

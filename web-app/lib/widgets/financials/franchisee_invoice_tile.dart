@@ -1,8 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/models/platform_invoice.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:franchise_admin_portal/widgets/financials/pay_invoice_dialog.dart';
@@ -43,7 +43,7 @@ class FranchiseeInvoiceTile extends StatelessWidget {
               builder: (_) => PayInvoiceDialog(invoice: invoice),
             );
           } catch (e, stack) {
-            await ErrorLogger.log(
+            await shared.ErrorLogger.log(
               message: e.toString(),
               stack: stack.toString(),
               source: 'FranchiseeInvoiceTile',
@@ -169,5 +169,7 @@ class FranchiseeInvoiceTile extends StatelessWidget {
     return '${local.month}/${local.day}/${local.year}';
   }
 }
+
+
 
 

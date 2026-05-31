@@ -2,10 +2,10 @@
 import 'package:flutter/services.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/mock_payment_data.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/tight_section_card.dart';
-import 'package:shared_core/src/core/providers/role_guard.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'dart:math' as math;
 
 class MockPaymentForm extends StatefulWidget {
@@ -185,7 +185,7 @@ class _MockPaymentFormState extends State<MockPaymentForm> {
         );
       }
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Mock payment validation failed',
         stack: stack.toString(),
         source: 'MockPaymentForm',
@@ -251,5 +251,7 @@ class _ExpiryDateFormatter extends TextInputFormatter {
     );
   }
 }
+
+
 
 

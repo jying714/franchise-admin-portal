@@ -8,13 +8,13 @@ import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import '../config/design_tokens.dart';
 import '../config/branding_config.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class ProfileGateScreen extends StatefulWidget {
   const ProfileGateScreen({Key? key}) : super(key: key);
@@ -92,7 +92,7 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
   Future<void> _logError(String message,
       {Object? error, StackTrace? stack}) async {
     try {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: message,
         source: 'profile_gate_screen',
         stack: stack?.toString(),
@@ -302,7 +302,7 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
           print(
               '[ProfileGateScreen] Franchise selection required, showing FranchiseSelectorScreen. '
               'franchiseIds=$franchiseIds, '
-              'selectedFranchiseId=${Provider.of<FranchiseProvider>(context, listen: false).franchiseId}');
+              'selectedFranchiseId=${Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId}');
           WidgetsBinding.instance.addPostFrameCallback((_) {
             Navigator.of(context)
                 .pushReplacementNamed('/developer/select-franchise');
@@ -315,8 +315,8 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
         } else if (franchiseIds.length == 1) {
           print(
               '[ProfileGateScreen] Admin/manager role detected, routing to AdminDashboardScreen. '
-              'selectedFranchiseId=${Provider.of<FranchiseProvider>(context, listen: false).franchiseId}');
-          Provider.of<FranchiseProvider>(context, listen: false)
+              'selectedFranchiseId=${Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId}');
+          Provider.of<shared.FranchiseProvider>(context, listen: false)
               .setFranchiseId(franchiseIds.first);
           WidgetsBinding.instance.addPostFrameCallback((_) {
             Navigator.of(context).pushReplacementNamed('/admin/dashboard');
@@ -506,5 +506,7 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
     );
   }
 }
+
+
 
 

@@ -2,10 +2,10 @@
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:shared_core/src/core/models/platform_invoice.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_search_bar.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_empty_state_widget.dart';
@@ -20,7 +20,7 @@ class InvoiceListScreen extends StatefulWidget {
 
 class _InvoiceListScreenState extends State<InvoiceListScreen> {
   late final FirestoreService _firestoreService;
-  late final FranchiseProvider _franchiseProvider;
+  late final shared.FranchiseProvider _shared.FranchiseProvider;
   InvoiceSortOrder _selectedSortOrder = InvoiceSortOrder.dateDesc;
 
   String? _searchTerm;
@@ -29,10 +29,10 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _franchiseProvider = Provider.of<FranchiseProvider>(context);
+    _shared.FranchiseProvider = Provider.of<shared.FranchiseProvider>(context);
     _firestoreService = Provider.of<FirestoreService>(context, listen: false);
     print(
-        '[InvoiceListScreen] didChangeDependencies called, franchiseId=${_franchiseProvider.franchiseId}');
+        '[InvoiceListScreen] didChangeDependencies called, franchiseId=${_shared.FranchiseProvider.franchiseId}');
   }
 
   void _onSearchChanged(String value) {
@@ -88,7 +88,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
       print('[InvoiceListScreen] loc is null!');
       return const SizedBox.shrink();
     }
-    final franchiseId = _franchiseProvider.franchiseId;
+    final franchiseId = _shared.FranchiseProvider.franchiseId;
     print(
         '[InvoiceListScreen] build called with franchiseId=$franchiseId, searchTerm=$_searchTerm, statusFilter=$_statusFilter');
 
@@ -138,7 +138,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                   if (snapshot.hasError) {
                     print(
                         '[InvoiceListScreen] StreamBuilder error: ${snapshot.error}');
-                    ErrorLogger.log(
+                    shared.ErrorLogger.log(
                       message: snapshot.error.toString(),
                       source: 'InvoiceListScreen',
                       screen: 'StreamBuilder',
@@ -209,7 +209,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                       await launchUrl(Uri.parse(url),
                           mode: LaunchMode.externalApplication);
                     } else {
-                      ErrorLogger.log(
+                      shared.ErrorLogger.log(
                         message: 'Could not launch PDF: $url',
                         source: 'InvoiceListScreen',
                         screen: '_buildInvoiceListView',
@@ -278,5 +278,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
     }
   }
 }
+
+
 
 

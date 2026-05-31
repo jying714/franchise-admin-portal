@@ -1,7 +1,7 @@
 ﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class SeedPlatformFeaturesForm extends StatefulWidget {
   const SeedPlatformFeaturesForm({super.key});
@@ -86,7 +86,7 @@ class _SeedPlatformFeaturesFormState extends State<SeedPlatformFeaturesForm> {
         _statusMessage = loc.devtoolsSeedSuccess;
       });
     } catch (e, st) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to seed platform_features',
         stack: st.toString(),
         source: 'SeedPlatformFeaturesForm',
@@ -241,5 +241,7 @@ class _SeedPlatformFeaturesFormState extends State<SeedPlatformFeaturesForm> {
     );
   }
 }
+
+
 
 

@@ -1,17 +1,17 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/models/platform_plan_model.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/tight_section_card.dart';
-import 'package:shared_core/src/core/providers/role_guard.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'mock_payment_form.dart';
 import 'mock_payment_data.dart';
-import 'package:shared_core/src/core/models/franchise_subscription_model.dart';
-import 'package:shared_core/src/core/services/franchise_subscription_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class PlatformPlanTile extends StatefulWidget {
   final PlatformPlan plan;
@@ -287,7 +287,7 @@ class _PlatformPlanTileState extends State<PlatformPlanTile> {
         SnackBar(content: Text(loc.subscriptionUpdated)),
       );
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Plan subscription failed',
         stack: stack.toString(),
         source: 'PlatformPlanTile',
@@ -307,5 +307,7 @@ class _PlatformPlanTileState extends State<PlatformPlanTile> {
     }
   }
 }
+
+
 
 

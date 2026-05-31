@@ -1,10 +1,10 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/services/franchisee_invitation_service.dart';
-import 'package:shared_core/src/core/providers/franchisee_invitation_provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class FranchiseeInvitationDialog extends StatefulWidget {
@@ -191,7 +191,7 @@ class _FranchiseeInvitationDialogState
         if (mounted) Navigator.of(context).pop(true);
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to send franchisee invitation',
         stack: stack.toString(),
         severity: 'error',
@@ -208,3 +208,5 @@ class _FranchiseeInvitationDialogState
     }
   }
 }
+
+

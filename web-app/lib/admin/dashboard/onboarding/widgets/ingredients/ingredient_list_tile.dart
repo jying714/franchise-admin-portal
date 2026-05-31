@@ -180,7 +180,7 @@ class IngredientListTile extends StatelessWidget {
                       );
                       onRefresh();
                     } catch (e, stack) {
-                      ErrorLogger.log(
+                      shared.ErrorLogger.log(
                         message: 'Failed to delete ingredient: $e',
                         stack: stack.toString(),
                         screen: 'IngredientListTile',
@@ -208,5 +208,6 @@ class IngredientListTile extends StatelessWidget {
     }
   }
 }
+
 
 

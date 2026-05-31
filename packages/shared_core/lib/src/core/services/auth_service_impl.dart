@@ -79,17 +79,23 @@ class AuthServiceImpl implements AuthService {
       _auth.sendPasswordResetEmail(email: email);
 
   @override
-  Future<void> updateUserProfile(
-      {String? displayName, String? photoURL}) async {
+  Future<void> updateUserProfile({
+    String? displayName,
+    String? photoURL,
+  }) async {
     await _auth.currentUser?.updateDisplayName(displayName);
     if (photoURL != null) await _auth.currentUser?.updatePhotoURL(photoURL);
   }
 
   @override
-  Future<void> reauthenticateWithCredential(
-      {required String email, required String password}) async {}
+  Future<void> reauthenticateWithCredential({
+    required String email,
+    required String password,
+  }) async {}
+
   @override
   Future<void> deleteUser() async => await _auth.currentUser?.delete();
+
   @override
   Future<String?> getIdToken({bool forceRefresh = false}) async =>
       await _auth.currentUser?.getIdToken(forceRefresh);
@@ -106,7 +112,6 @@ class AuthServiceImpl implements AuthService {
 
   @override
   Future<void> setDemoSession() async {
-    // Demo mode currently uses anonymous auth (can be extended later with demo-specific credentials or Firestore flags)
     await _auth.signInAnonymously();
   }
 
@@ -116,7 +121,6 @@ class AuthServiceImpl implements AuthService {
       final fb_auth.GoogleAuthProvider googleProvider =
           fb_auth.GoogleAuthProvider();
 
-      // Mobile: Uses plugin flow; Web/Desktop: Uses popup
       final fb_auth.UserCredential cred;
       if (Platform.isAndroid || Platform.isIOS) {
         cred = await _auth.signInWithProvider(googleProvider);
@@ -148,25 +152,29 @@ class AuthServiceImpl implements AuthService {
   String? _inviteToken;
   @override
   Future<String?> getInviteToken() async => _inviteToken;
+
   @override
   Future<void> saveInviteToken(String token) async {
     _inviteToken = token;
   }
+
   @override
   Future<void> clearInviteToken() async {
     _inviteToken = null;
   }
 
-  // P2.5 phone stubs (real impl requires reCAPTCHA + verificationId state; stub for now)
+  // P2.5 phone stubs (real impl requires reCAPTCHA + verificationId state)
   String? _pendingPhoneVerificationId;
+
   @override
   Future<void> signInWithPhone(String phoneNumber) async {
-    // TODO: integrate Firebase phone auth flow with verificationId
-    throw UnimplementedError('Phone sign-in requires additional UI state for SMS code (stub in P2.5)');
+    throw UnimplementedError(
+        'Phone sign-in requires additional UI state for SMS code (stub in P2.5)');
   }
 
   @override
-  Future<User?> verifySmsCode(String smsCode) async {
-    throw UnimplementedError('Phone verify requires pending verificationId (stub in P2.5)');
+  Future<app_user.User?> verifySmsCode(String smsCode) async {
+    throw UnimplementedError(
+        'Phone verify requires pending verificationId (stub in P2.5)');
   }
 }

@@ -1,7 +1,7 @@
 ﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class RemovePlatformPlansForm extends StatefulWidget {
   const RemovePlatformPlansForm({super.key});
@@ -32,7 +32,7 @@ class _RemovePlatformPlansFormState extends State<RemovePlatformPlansForm> {
 
       setState(() => _planIds = ids);
     } catch (e, st) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to fetch platform_plans for deletion',
         stack: st.toString(),
         screen: 'RemovePlatformPlansForm',
@@ -61,7 +61,7 @@ class _RemovePlatformPlansFormState extends State<RemovePlatformPlansForm> {
         _statusMessage = loc.devtoolsDeleteSuccess;
       });
     } catch (e, st) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to delete platform_plan',
         stack: st.toString(),
         screen: 'RemovePlatformPlansForm',
@@ -149,5 +149,7 @@ class _RemovePlatformPlansFormState extends State<RemovePlatformPlansForm> {
     );
   }
 }
+
+
 
 

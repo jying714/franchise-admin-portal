@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
-import 'package:shared_core/src/core/services/invoice_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:intl/intl.dart';
 import 'package:flutter/foundation.dart';
 
@@ -28,10 +28,10 @@ class _BillingSummaryCardState extends State<BillingSummaryCard> {
   Future<BillingSummaryData> _fetchSummary(BuildContext context) async {
     try {
       final franchiseId =
-          Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+          Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
       return await InvoiceService.getBillingSummary(franchiseId: franchiseId);
     } catch (error, stackTrace) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'BillingSummaryCard: failed to load summary\n$error',
         stack: stackTrace?.toString(),
       );
@@ -149,7 +149,7 @@ class _BillingSummaryContent extends StatelessWidget {
   void _onDownloadSummary(BuildContext context) async {
     try {
       final franchiseId =
-          Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+          Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
       final result = await InvoiceService.downloadSummary(
           franchiseId: franchiseId, context: context);
       String msg;
@@ -163,7 +163,7 @@ class _BillingSummaryContent extends StatelessWidget {
         SnackBar(content: Text(msg)),
       );
     } catch (e, s) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'BillingSummaryCard: failed to download summary\n$e',
         stack: s.toString(),
       );
@@ -253,5 +253,7 @@ class BillingSummaryData {
     required this.paidLast30Days,
   }) : hasOutstanding = totalOutstanding > 0;
 }
+
+
 
 

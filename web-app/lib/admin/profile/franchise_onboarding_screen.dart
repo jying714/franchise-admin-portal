@@ -1,23 +1,23 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
 import 'package:franchise_admin_portal/widgets/business/business_hours_editor.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
-import 'package:shared_core/src/core/services/auth_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/restaurant_type_provider.dart';
-import 'package:shared_core/src/core/models/restaurant_type.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 String roleToDashboardRoute(List<String> roles) {
   if (roles.contains('platform_owner')) return '/platform-owner/dashboard';
@@ -128,7 +128,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
 
       setState(() => _loading = false);
     } catch (e, st) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Error loading invite: $e',
         stack: st.toString(),
         source: 'FranchiseOnboardingScreen',
@@ -204,11 +204,11 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       );
       print('[FranchiseOnboardingScreen] Custom claims updated for $userId');
 
-      // âœ… Set FranchiseProvider immediately
-      await Provider.of<FranchiseProvider>(context, listen: false)
+      // âœ… Set shared.FranchiseProvider immediately
+      await Provider.of<shared.FranchiseProvider>(context, listen: false)
           .setInitialFranchiseId(franchiseId);
       print(
-          '[FranchiseOnboardingScreen] FranchiseProvider updated to: $franchiseId');
+          '[FranchiseOnboardingScreen] shared.FranchiseProvider updated to: $franchiseId');
 
       final userUpdate = {
         'completeProfile': true,
@@ -273,10 +273,10 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
             updatedUser;
         Provider.of<UserProfileNotifier>(context, listen: false).reload();
 
-        // Optional: double sync FranchiseProvider if defaultFranchise is found
+        // Optional: double sync shared.FranchiseProvider if defaultFranchise is found
         if (updatedUser.defaultFranchise != null &&
             updatedUser.defaultFranchise!.isNotEmpty) {
-          await Provider.of<FranchiseProvider>(context, listen: false)
+          await Provider.of<shared.FranchiseProvider>(context, listen: false)
               .setInitialFranchiseId(updatedUser.defaultFranchise!);
         }
       }
@@ -309,7 +309,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
         );
       }
     } catch (e, st) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to save franchise profile: $e',
         stack: st.toString(),
         source: 'FranchiseOnboardingScreen',
@@ -570,5 +570,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
     );
   }
 }
+
+
 
 

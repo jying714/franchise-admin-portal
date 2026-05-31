@@ -2,9 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/models/platform_plan_model.dart';
-import 'package:shared_core/src/core/services/franchise_subscription_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class ConfirmPlanSubscriptionDialog extends StatelessWidget {
@@ -83,7 +83,7 @@ class ConfirmPlanSubscriptionDialog extends StatelessWidget {
                 SnackBar(content: Text(loc.subscriptionSuccessMessage)),
               );
             } catch (e, st) {
-              await ErrorLogger.log(
+              await shared.ErrorLogger.log(
                 message: 'Subscription failed: $e',
                 stack: st.toString(),
                 source: 'ConfirmPlanSubscriptionDialog',
@@ -104,5 +104,7 @@ class ConfirmPlanSubscriptionDialog extends StatelessWidget {
     );
   }
 }
+
+
 
 

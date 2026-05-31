@@ -3,7 +3,7 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 /// UI-specific branding configuration for the web app (P2.5)
-/// Dynamic values now come from FranchiseProvider via DesignTokens (SSoT).
+/// Dynamic values now come from shared.FranchiseProvider via DesignTokens (SSoT).
 class BrandingConfig {
   // Static asset paths (app-specific, not in shared_core)
   static const String logoMain = 'assets/images/logo.png';
@@ -34,7 +34,7 @@ class BrandingConfig {
     return DesignTokens.primaryColor;
   }
 
-  // Live from FranchiseProvider (via DesignTokens bridge) - P2.5 dynamic
+  // Live from shared.FranchiseProvider (via DesignTokens bridge) - P2.5 dynamic
   static String? get currentLogoUrl => DesignTokens.currentLogoUrl;
   static String get currentAppName => DesignTokens.currentAppName;
 
@@ -47,3 +47,4 @@ class BrandingConfig {
     return Color(int.parse('FF$cleaned', radix: 16));
   }
 }
+

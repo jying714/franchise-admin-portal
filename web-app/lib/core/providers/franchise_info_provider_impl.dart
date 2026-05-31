@@ -1,4 +1,4 @@
-// web_app/lib/core/providers/franchise_info_provider_impl.dart
+﻿// web_app/lib/core/providers/franchise_info_provider_impl.dart
 
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
@@ -6,16 +6,16 @@ import 'package:shared_core/shared_core.dart';
 class FranchiseInfoProviderImpl extends ChangeNotifier
     implements FranchiseInfoProvider {
   final FirestoreService _firestore;
-  final FranchiseProvider _franchiseProvider;
+  final shared.FranchiseProvider _shared.FranchiseProvider;
 
   FranchiseInfo? _franchise;
   bool _loading = false;
 
   FranchiseInfoProviderImpl({
     required FirestoreService firestore,
-    required FranchiseProvider franchiseProvider,
+    required shared.FranchiseProvider shared.FranchiseProvider,
   })  : _firestore = firestore,
-        _franchiseProvider = franchiseProvider;
+        _shared.FranchiseProvider = shared.FranchiseProvider;
 
   @override
   FranchiseInfo? get franchise => _franchise;
@@ -25,7 +25,7 @@ class FranchiseInfoProviderImpl extends ChangeNotifier
 
   @override
   Future<void> loadFranchiseInfo() async {
-    final fid = _franchiseProvider.franchiseId;
+    final fid = _shared.FranchiseProvider.franchiseId;
 
     if (fid == null || fid.isEmpty || fid == 'unknown') {
       if (_franchise != null) {
@@ -44,7 +44,7 @@ class FranchiseInfoProviderImpl extends ChangeNotifier
       final info = await _firestore.getFranchiseInfo(fid);
       _franchise = info;
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'FranchiseInfoProvider failed to load franchise: $e',
         stack: stack.toString(),
         source: 'FranchiseInfoProviderImpl',
@@ -67,3 +67,4 @@ class FranchiseInfoProviderImpl extends ChangeNotifier
     notifyListeners();
   }
 }
+

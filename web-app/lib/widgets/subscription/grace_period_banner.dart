@@ -3,8 +3,8 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-import 'package:shared_core/src/core/providers/franchise_subscription_provider.dart';
-import 'package:shared_core/src/core/providers/role_guard.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 /// A banner widget that alerts HQ owners or developers if their subscription is overdue or in grace period.
 class GracePeriodBanner extends StatelessWidget {
@@ -63,5 +63,6 @@ class GracePeriodBanner extends StatelessWidget {
     );
   }
 }
+
 
 

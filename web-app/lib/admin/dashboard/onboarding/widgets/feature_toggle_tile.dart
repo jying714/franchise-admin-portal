@@ -3,9 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/providers/franchise_feature_provider.dart';
-import 'package:shared_core/src/core/providers/franchise_info_provider.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 
@@ -134,5 +134,6 @@ class FeatureToggleTile extends StatelessWidget {
     );
   }
 }
+
 
 

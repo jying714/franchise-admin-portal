@@ -1,9 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AddStaffDialog extends StatefulWidget {
   final AppLocalizations loc;
@@ -23,7 +23,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message:
             'AppLocalizations.of(context) returned null in AddStaffDialog.',
         source: 'show_add_staff_dialog.dart',
@@ -41,7 +41,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
 
     final service = Provider.of<FirestoreService>(context, listen: false);
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
     final colorScheme = Theme.of(context).colorScheme;
 
     return AlertDialog(
@@ -127,7 +127,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
                 if (!mounted) return;
                 Navigator.of(context).pop();
               } catch (e, stack) {
-                await ErrorLogger.log(
+                await shared.ErrorLogger.log(
                   message: e.toString(),
                   stack: stack.toString(),
                   source: 'staff_access_screen',
@@ -150,5 +150,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
     );
   }
 }
+
+
 
 

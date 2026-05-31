@@ -1,4 +1,4 @@
-// web_app/lib/core/providers/menu_item_provider_impl.dart
+﻿// web_app/lib/core/providers/menu_item_provider_impl.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -110,7 +110,7 @@ class MenuItemProviderImpl extends ChangeNotifier implements MenuItemProvider {
       _working = fetched;
       _original = fetched.map((e) => e.copyWith()).toList();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load menu items',
         stack: stack.toString(),
         source: 'MenuItemProviderImpl',
@@ -156,7 +156,7 @@ class MenuItemProviderImpl extends ChangeNotifier implements MenuItemProvider {
       _original = _working.map((e) => e.copyWith()).toList();
       notifyListeners();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to persist menu item changes',
         stack: stack.toString(),
         source: 'MenuItemProviderImpl',
@@ -180,7 +180,7 @@ class MenuItemProviderImpl extends ChangeNotifier implements MenuItemProvider {
       _working = reordered;
       notifyListeners();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to reorder menu items',
         stack: stack.toString(),
         source: 'MenuItemProviderImpl',
@@ -202,7 +202,7 @@ class MenuItemProviderImpl extends ChangeNotifier implements MenuItemProvider {
           restaurantType: franchise!.restaurantType!);
     } catch (e, stack) {
       _templateRefsError = e.toString();
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load menu template refs',
         stack: stack.toString(),
         source: 'MenuItemProviderImpl',
@@ -228,7 +228,7 @@ class MenuItemProviderImpl extends ChangeNotifier implements MenuItemProvider {
       if (!doc.exists || doc.data() == null) return null;
       return MenuItem.fromFirestore(doc.data()!, doc.id);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to fetch menu item template',
         stack: stack.toString(),
         source: 'MenuItemProviderImpl',
@@ -371,3 +371,4 @@ class MenuItemProviderImpl extends ChangeNotifier implements MenuItemProvider {
     return ids.toList();
   }
 }
+

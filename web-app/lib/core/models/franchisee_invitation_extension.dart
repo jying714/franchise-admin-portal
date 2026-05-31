@@ -1,5 +1,5 @@
-// web_app/lib/core/models/franchisee_invitation_extension.dart
-// Firestore + Flutter extensions — ONLY in web_app
+﻿// web_app/lib/core/models/franchisee_invitation_extension.dart
+// Firestore + Flutter extensions â€” ONLY in web_app
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -42,10 +42,10 @@ extension FranchiseeInvitationFirestore on FranchiseeInvitation {
   Future<void> save(FirestoreService firestore) async {
     try {
       final collection =
-          firestore.invitationCollection; // ← Now defined in impl
+          firestore.invitationCollection; // â† Now defined in impl
       await collection.doc(id).set(toFirestoreMap());
     } catch (e, st) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to save FranchiseeInvitation',
         stack: st.toString(),
         severity: 'error',
@@ -79,3 +79,4 @@ extension FranchiseeInvitationFirestore on FranchiseeInvitation {
     return invitation;
   }
 }
+

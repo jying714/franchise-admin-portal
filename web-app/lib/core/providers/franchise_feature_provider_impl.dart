@@ -1,4 +1,4 @@
-// web_app/lib/core/providers/franchise_feature_provider_impl.dart
+﻿// web_app/lib/core/providers/franchise_feature_provider_impl.dart
 
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
@@ -40,7 +40,7 @@ class FranchiseFeatureProviderImpl extends ChangeNotifier
       _liveSnapshotEnabled = await _service.isLiveSnapshotEnabled(franchiseId);
       notifyListeners();
     } catch (e, st) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load liveSnapshotEnabled flag',
         stack: st.toString(),
         source: 'FranchiseFeatureProviderImpl.loadLiveSnapshotFlag',
@@ -61,7 +61,7 @@ class FranchiseFeatureProviderImpl extends ChangeNotifier
     notifyListeners();
 
     _service.updateLiveSnapshotFlag(_franchiseId, value).catchError((e, st) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to persist liveSnapshotEnabled change',
         stack: st.toString(),
         source: 'FranchiseFeatureProviderImpl.setLiveSnapshotEnabled',
@@ -229,7 +229,7 @@ class FranchiseFeatureProviderImpl extends ChangeNotifier
         ));
       }
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'franchise_feature_validate_failed',
         stack: stack.toString(),
         source: 'FranchiseFeatureProviderImpl.validate',
@@ -239,3 +239,4 @@ class FranchiseFeatureProviderImpl extends ChangeNotifier
     return issues;
   }
 }
+

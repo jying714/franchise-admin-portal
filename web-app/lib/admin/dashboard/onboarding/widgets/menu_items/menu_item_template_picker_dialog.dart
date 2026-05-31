@@ -31,14 +31,14 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
     final franchiseInfo = context.read<FranchiseInfoProvider>().franchise;
     final menuItemProvider = context.read<MenuItemProvider>();
 
     final restaurantType = franchiseInfo?.restaurantType;
 
     if (restaurantType == null || restaurantType.isEmpty) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Missing or invalid restaurant type',
         source: 'MenuItemTemplatePickerDialog',
         screen: 'onboarding_menu_items_screen.dart',
@@ -109,7 +109,7 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
 
                         Navigator.pop(context);
                       } catch (e, stack) {
-                        await ErrorLogger.log(
+                        await shared.ErrorLogger.log(
                           message: 'Failed to load menu item template',
                           source: 'MenuItemTemplatePickerDialog',
                           screen: 'onboarding_menu_items_screen.dart',
@@ -148,5 +148,6 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
     );
   }
 }
+
 
 

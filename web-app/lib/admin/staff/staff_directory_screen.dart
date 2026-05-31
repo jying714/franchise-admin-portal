@@ -2,8 +2,8 @@
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
 
 class StaffDirectoryScreen extends StatefulWidget {
@@ -19,7 +19,7 @@ class _StaffDirectoryScreenState extends State<StaffDirectoryScreen> {
   @override
   void initState() {
     super.initState();
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
     final firestoreService = context.read<FirestoreService>();
     _staffFuture = firestoreService.allUsers(franchiseId: franchiseId).first;
   }
@@ -74,5 +74,7 @@ class _StaffDirectoryScreenState extends State<StaffDirectoryScreen> {
     );
   }
 }
+
+
 
 

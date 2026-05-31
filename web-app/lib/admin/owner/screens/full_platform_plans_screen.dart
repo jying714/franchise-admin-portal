@@ -5,11 +5,11 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
-import 'package:shared_core/src/core/models/platform_plan_model.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
-import 'package:shared_core/src/core/services/franchise_subscription_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FullPlatformPlansScreen extends StatefulWidget {
   const FullPlatformPlansScreen({super.key});
@@ -32,7 +32,7 @@ class _FullPlatformPlansScreenState extends State<FullPlatformPlansScreen> {
     try {
       return await FranchiseSubscriptionService().getPlatformPlans();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'load_platform_plans_failed',
         stack: stack.toString(),
         source: 'FullPlatformPlansScreen',
@@ -164,5 +164,7 @@ class _FullPlatformPlansScreenState extends State<FullPlatformPlansScreen> {
     );
   }
 }
+
+
 
 

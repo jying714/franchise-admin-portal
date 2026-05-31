@@ -1,4 +1,4 @@
-// web_app/lib/core/services/franchise_subscription_service_impl.dart
+﻿// web_app/lib/core/services/franchise_subscription_service_impl.dart
 // CONCRETE FIRESTORE IMPLEMENTATION
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -79,7 +79,7 @@ class FranchiseSubscriptionServiceImpl implements FranchiseSubscriptionService {
       await batch.commit();
       debugPrint('[DEBUG] Subscription + metadata committed');
 
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Franchise subscribed to platform plan',
         source: 'FranchiseSubscriptionServiceImpl',
         severity: 'info',
@@ -89,7 +89,7 @@ class FranchiseSubscriptionServiceImpl implements FranchiseSubscriptionService {
         },
       );
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to subscribe franchise to plan: $e',
         source: 'FranchiseSubscriptionServiceImpl',
         severity: 'error',
@@ -125,7 +125,7 @@ class FranchiseSubscriptionServiceImpl implements FranchiseSubscriptionService {
         );
       }
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to update franchise subscription',
         stack: stack.toString(),
         source: 'FranchiseSubscriptionServiceImpl',
@@ -168,7 +168,7 @@ class FranchiseSubscriptionServiceImpl implements FranchiseSubscriptionService {
 
       await docRef.set(subscription.toFirestore(), SetOptions(merge: true));
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to save franchise subscription',
         stack: stack.toString(),
         source: 'FranchiseSubscriptionServiceImpl',
@@ -183,7 +183,7 @@ class FranchiseSubscriptionServiceImpl implements FranchiseSubscriptionService {
     try {
       await _db.collection('franchise_subscriptions').doc(id).delete();
     } catch (e, st) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to delete franchise_subscription $id',
         stack: st.toString(),
         source: 'FranchiseSubscriptionServiceImpl',
@@ -291,3 +291,4 @@ class FranchiseSubscriptionServiceImpl implements FranchiseSubscriptionService {
         .toList();
   }
 }
+

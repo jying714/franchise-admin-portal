@@ -1,13 +1,13 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/src/core/models/error_log.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/widgets/collapsible_panel.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 String _truncateTooltip(String text, [int max = 150]) {
   if (text.length <= max) return text;
@@ -37,7 +37,7 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
 
   Future<void> _addComment() async {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
     final text = _commentController.text.trim();
     if (text.isEmpty) return;
     setState(() => _isCommenting = true);
@@ -65,7 +65,7 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
 
   Future<void> _toggleResolved() async {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
     setState(() => _isResolving = true);
     try {
       await context
@@ -81,7 +81,7 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
 
   Future<void> _toggleArchived() async {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
     setState(() => _isArchiving = true);
     try {
       await context
@@ -108,7 +108,7 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     final colorScheme = Theme.of(context).colorScheme;
     final loc = AppLocalizations.of(context);
     if (loc == null) {
@@ -516,5 +516,7 @@ extension ErrorLogCopyWith on ErrorLog {
     );
   }
 }
+
+
 
 

@@ -1,4 +1,4 @@
-// web_app/lib/core/providers/ingredient_metadata_provider_impl.dart
+﻿// web_app/lib/core/providers/ingredient_metadata_provider_impl.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -152,7 +152,7 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
         itemGlobalKeys[ing.id] = GlobalKey();
       }
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load ingredient metadata',
         stack: stack.toString(),
         source: 'IngredientMetadataProviderImpl',
@@ -174,7 +174,7 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
       await _firestore.saveIngredientMetadata(_franchiseId, newIngredient);
       updateIngredient(newIngredient);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to create ingredient',
         stack: stack.toString(),
         source: 'IngredientMetadataProviderImpl',
@@ -235,7 +235,7 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
       _original = List.from(_current);
       notifyListeners();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to save ingredient metadata',
         stack: stack.toString(),
         source: 'IngredientMetadataProviderImpl',
@@ -252,7 +252,7 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
       await _firestore.saveIngredientMetadataBatch(franchiseId, _current);
       await load();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to save all ingredient metadata',
         stack: stack.toString(),
         source: 'IngredientMetadataProviderImpl',
@@ -305,7 +305,7 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
       await _firestore.deleteIngredientMetadataBatch(_franchiseId, ids);
       await load();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to bulk delete ingredients',
         stack: stack.toString(),
         source: 'IngredientMetadataProviderImpl',
@@ -323,7 +323,7 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
       await _firestore.replaceIngredientMetadataBatch(franchiseId, newItems);
       await load();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to bulk replace ingredient metadata',
         stack: stack.toString(),
         source: 'IngredientMetadataProviderImpl',
@@ -398,7 +398,7 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
       _stagedIngredients.clear();
       notifyListeners();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to save staged ingredients',
         stack: stack.toString(),
         source: 'IngredientMetadataProviderImpl',
@@ -511,3 +511,4 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
     return issues;
   }
 }
+

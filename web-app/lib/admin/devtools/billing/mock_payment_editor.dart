@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class MockPaymentEditor extends StatefulWidget {
   const MockPaymentEditor({super.key});
@@ -54,7 +54,7 @@ class _MockPaymentEditorState extends State<MockPaymentEditor> {
         _statusMessage = 'Mock payment data copied to clipboard!';
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'MockPaymentEditor error: $e',
         stack: stack.toString(),
         source: 'MockPaymentEditor',
@@ -141,5 +141,7 @@ class _MockPaymentEditorState extends State<MockPaymentEditor> {
     );
   }
 }
+
+
 
 

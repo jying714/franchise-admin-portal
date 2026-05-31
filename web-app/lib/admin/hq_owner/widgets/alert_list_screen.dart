@@ -1,14 +1,14 @@
 ﻿import 'package:franchise_admin_portal/admin/hq_owner/widgets/alert_detail_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
-import 'package:shared_core/src/core/models/alert_model.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/providers/role_guard.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AlertListScreen extends StatelessWidget {
   final String franchiseId;
@@ -79,7 +79,7 @@ class AlertListScreen extends StatelessWidget {
             ),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                ErrorLogger.log(
+                shared.ErrorLogger.log(
                   message: 'Failed to load alert list: ${snapshot.error}',
                   source: 'alert_list_screen',
                   screen: 'AlertListScreen',
@@ -133,7 +133,7 @@ class AlertListScreen extends StatelessWidget {
                           SnackBar(content: Text(loc.alert_dismissed_success)),
                         );
                       } catch (e, stack) {
-                        await ErrorLogger.log(
+                        await shared.ErrorLogger.log(
                           message: 'Failed to dismiss alert: $e',
                           source: 'alert_list_screen',
                           screen: 'AlertListScreen',
@@ -289,5 +289,7 @@ class _AlertListError extends StatelessWidget {
         ),
       );
 }
+
+
 
 

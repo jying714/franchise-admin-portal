@@ -2,11 +2,11 @@
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/developer/developer_error_logs_screen.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class ErrorLogsSection extends StatefulWidget {
   final String? franchiseId;
@@ -66,7 +66,7 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
         _loading = false;
       });
 
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to load error logs: $e',
         stack: stack.toString(),
         source: 'ErrorLogsSection',
@@ -407,5 +407,7 @@ class ErrorLogSummary {
     this.franchiseId,
   });
 }
+
+
 
 

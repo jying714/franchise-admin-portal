@@ -27,41 +27,41 @@ import 'package:franchise_admin_portal/admin/hq_owner/owner_hq_dashboard_screen.
 import 'package:franchise_admin_portal/admin/hq_owner/screens/invoice_list_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/screens/invoice_detail_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/payout_list_screen.dart';
-import 'package:shared_core/src/core/providers/payout_filter_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/owner/platform_owner_dashboard_screen.dart';
-import 'package:shared_core/src/core/providers/franchisee_invitation_provider.dart';
-import 'package:shared_core/src/core/services/franchisee_invitation_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/profile/universal_profile_screen.dart';
 import 'package:franchise_admin_portal/admin/auth/invite_accept_screen.dart';
 import 'package:franchise_admin_portal/admin/profile/franchise_onboarding_screen.dart';
 import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/screens/available_platform_plans_screen.dart';
-import 'package:shared_core/src/core/providers/platform_plan_selection_provider.dart';
-import 'package:shared_core/src/core/providers/franchise_subscription_provider.dart';
-import 'package:shared_core/src/core/services/franchise_subscription_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/owner/screens/full_franchise_subscription_list_screen.dart';
 import 'package:franchise_admin_portal/admin/devtools/billing/billing_subscription_tools_screen.dart';
 import 'package:franchise_admin_portal/admin/devtools/subscriptions/subscription_dev_tools_screen.dart';
-import 'package:shared_core/src/core/providers/franchise_info_provider.dart';
-import 'package:shared_core/src/core/providers/onboarding_progress_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/core/section_registry.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredients_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredient_type_screen.dart';
-import 'package:shared_core/src/core/models/dashboard_section.dart';
-import 'package:shared_core/src/core/providers/ingredient_type_provider.dart';
-import 'package:shared_core/src/core/providers/ingredient_metadata_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_categories_screen.dart';
-import 'package:shared_core/src/core/providers/category_provider.dart';
-import 'package:shared_core/src/core/providers/menu_item_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_items_screen.dart';
-import 'package:shared_core/src/core/providers/franchise_feature_provider.dart';
-import 'package:shared_core/src/core/services/franchise_feature_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_feature_setup_screen.dart';
-import 'package:shared_core/src/core/providers/restaurant_type_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/menu_item_editor_screen.dart';
-import 'package:shared_core/src/core/services/audit_log_service.dart';
-import 'package:shared_core/src/core/providers/onboarding_review_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_review_screen.dart';
 import 'dart:html' as html;
 
@@ -140,7 +140,7 @@ void main() {
       print('[main.dart] FlutterError.onError: ${details.exceptionAsString()}');
       print(details.stack);
       FlutterError.dumpErrorToConsole(details);
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: details.exceptionAsString(),
         stack: details.stack?.toString(),
         source: 'FlutterError',
@@ -164,7 +164,7 @@ void main() {
           ChangeNotifierProvider(
               create: (_) {
                 final fp = shared.FranchiseProvider(storage);
-                DesignTokens.setFranchiseProvider(fp); // P2.5 dynamic theming bridge
+                DesignTokens.setshared.FranchiseProvider(fp); // P2.5 dynamic theming bridge
                 return fp;
               }), // P2.5: ctor fixed + UiConfig/DesignTokens wired
           ChangeNotifierProvider<shared.AuthService>.value(value: authService),
@@ -181,7 +181,7 @@ void main() {
     );
   }, (Object error, StackTrace stack) async {
     print('[main.dart] runZonedGuarded: Uncaught error: $error');
-    await ErrorLogger.log(
+    await shared.ErrorLogger.log(
       message: error.toString(),
       stack: stack.toString(),
       source: 'runZonedGuarded',
@@ -295,7 +295,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
     return Selector<UserProfileNotifier, bool>(
       selector: (_, notifier) => notifier.user != null && !notifier.loading,
       builder: (context, isUserReady, _) {
-        final franchiseProvider =
+        final shared.FranchiseProvider =
             Provider.of<shared.FranchiseProvider>(context, listen: false);
         final userNotifier =
             Provider.of<UserProfileNotifier>(context, listen: false);
@@ -303,7 +303,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
 
         final user = userNotifier.user;
         final requiresFranchise = user?.isFranchiseRequired ?? true;
-        final fid = franchiseProvider.franchiseId;
+        final fid = shared.FranchiseProvider.franchiseId;
         final isFranchiseReady = !requiresFranchise ||
             (fid != null && fid.isNotEmpty && fid != 'unknown');
 
@@ -334,8 +334,8 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 service: FranchiseSubscriptionService(),
                 franchiseId: '',
               ),
-              update: (_, franchiseProvider, notifier) {
-                final fid = franchiseProvider.franchiseId;
+              update: (_, shared.FranchiseProvider, notifier) {
+                final fid = shared.FranchiseProvider.franchiseId;
                 final userNotifier =
                     Provider.of<UserProfileNotifier>(_, listen: false);
                 final userRoles = userNotifier.user?.roles ?? [];
@@ -347,7 +347,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
 
                 notifier.setUserRoles(userRoles);
 
-                if (franchiseProvider.hasValidFranchise &&
+                if (shared.FranchiseProvider.hasValidFranchise &&
                     fid.isNotEmpty &&
                     fid != notifier.franchiseId) {
                   notifier.updateFranchiseId(fid);
@@ -363,14 +363,14 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 FranchiseInfoProvider>(
               create: (_) => FranchiseInfoProvider(
                 firestore: Provider.of<shared.FirestoreService>(_, listen: false),
-                franchiseProvider:
+                shared.FranchiseProvider:
                     Provider.of<shared.FranchiseProvider>(_, listen: false),
               ),
-              update: (_, franchiseProvider, firestoreService, previous) {
+              update: (_, shared.FranchiseProvider, firestoreService, previous) {
                 final provider = previous ??
                     FranchiseInfoProvider(
                       firestore: firestoreService,
-                      franchiseProvider: franchiseProvider,
+                      shared.FranchiseProvider: shared.FranchiseProvider,
                     );
                 provider.loadFranchiseInfo();
                 return provider;
@@ -382,9 +382,9 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 service: FranchiseFeatureService(),
                 franchiseId: '',
               ),
-              update: (_, franchiseProvider, firestoreService, previous) {
-                final fid = franchiseProvider.franchiseId;
-                if (!franchiseProvider.hasValidFranchise) return previous!;
+              update: (_, shared.FranchiseProvider, firestoreService, previous) {
+                final fid = shared.FranchiseProvider.franchiseId;
+                if (!shared.FranchiseProvider.hasValidFranchise) return previous!;
                 final provider = previous ??
                     FranchiseFeatureProvider(
                       service: FranchiseFeatureService(),
@@ -396,14 +396,14 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 return provider;
               },
             ),
-            ChangeNotifierProxyProvider2<FirestoreService, FranchiseProvider,
+            ChangeNotifierProxyProvider2<FirestoreService, shared.FranchiseProvider,
                 OnboardingProgressProvider>(
               create: (_) => OnboardingProgressProvider(
                 firestore: Provider.of<shared.FirestoreService>(_, listen: false),
                 franchiseId: '',
               ),
-              update: (_, firestoreService, franchiseProvider, previous) {
-                final fid = franchiseProvider.franchiseId ?? '';
+              update: (_, firestoreService, shared.FranchiseProvider, previous) {
+                final fid = shared.FranchiseProvider.franchiseId ?? '';
                 final provider = previous ??
                     OnboardingProgressProvider(
                       firestore: firestoreService,
@@ -443,15 +443,15 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 return provider;
               },
             ),
-            ChangeNotifierProxyProvider2<FirestoreService, FranchiseProvider,
+            ChangeNotifierProxyProvider2<FirestoreService, shared.FranchiseProvider,
                 CategoryProvider>(
               create: (_) => CategoryProvider(
                 firestore: Provider.of<shared.FirestoreService>(_, listen: false),
                 franchiseId: '',
               ),
-              update: (_, firestore, franchiseProvider, previous) {
-                final fid = franchiseProvider.franchiseId;
-                if (!franchiseProvider.hasValidFranchise) return previous!;
+              update: (_, firestore, shared.FranchiseProvider, previous) {
+                final fid = shared.FranchiseProvider.franchiseId;
+                if (!shared.FranchiseProvider.hasValidFranchise) return previous!;
                 final provider = previous ??
                     CategoryProvider(
                       firestore: firestore,
@@ -471,10 +471,10 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 franchiseInfoProvider:
                     Provider.of<FranchiseInfoProvider>(_, listen: false),
               ),
-              update: (_, firestoreService, franchiseProvider,
+              update: (_, firestoreService, shared.FranchiseProvider,
                   franchiseInfoProvider, previous) {
-                final fid = franchiseProvider.franchiseId;
-                if (!franchiseProvider.hasValidFranchise) return previous!;
+                final fid = shared.FranchiseProvider.franchiseId;
+                if (!shared.FranchiseProvider.hasValidFranchise) return previous!;
                 final provider = previous ??
                     MenuItemProvider(
                       firestoreService: firestoreService,
@@ -487,12 +487,12 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 return provider;
               },
             ),
-            ChangeNotifierProxyProvider2<FirestoreService, FranchiseProvider,
+            ChangeNotifierProxyProvider2<FirestoreService, shared.FranchiseProvider,
                 IngredientTypeProvider>(
               create: (_) => IngredientTypeProvider(),
-              update: (_, firestoreService, franchiseProvider, previous) {
-                final fid = franchiseProvider.franchiseId;
-                if (!franchiseProvider.hasValidFranchise) return previous!;
+              update: (_, firestoreService, shared.FranchiseProvider, previous) {
+                final fid = shared.FranchiseProvider.franchiseId;
+                if (!shared.FranchiseProvider.hasValidFranchise) return previous!;
                 final provider = previous ?? IngredientTypeProvider();
                 if (fid.isNotEmpty && fid != provider.franchiseId) {
                   provider.loadIngredientTypes(fid);
@@ -550,7 +550,7 @@ class _FranchiseAuthenticatedRootState
           Provider.of<AdminUserProvider>(context, listen: false);
       final firestoreService =
           Provider.of<shared.FirestoreService>(context, listen: false);
-      final franchiseProvider =
+      final shared.FranchiseProvider =
           Provider.of<shared.FranchiseProvider>(context, listen: false);
 
       if (fbUser == null) {
@@ -581,7 +581,7 @@ class _FranchiseAuthenticatedRootState
       adminUserProvider.listenToAdminUser(
         firestoreService,
         fbUser.uid,
-        franchiseProvider,
+        shared.FranchiseProvider,
       );
 
       _initializingUser = false;
@@ -901,9 +901,9 @@ class _FranchiseAuthenticatedRootState
                   return FranchiseGate(
                     child: Builder(
                       builder: (ctx) {
-                        final franchiseProvider =
+                        final shared.FranchiseProvider =
                             Provider.of<shared.FranchiseProvider>(ctx, listen: false);
-                        final franchiseId = franchiseProvider.franchiseId;
+                        final franchiseId = shared.FranchiseProvider.franchiseId;
 
                         print('[ROUTER] ðŸ” franchiseId = "$franchiseId"');
 
@@ -1324,3 +1324,5 @@ final ThemeData _darkTheme = ThemeData(
   dividerColor: DesignTokens.dividerColorDark,
   iconTheme: IconThemeData(color: DesignTokens.textColorDark),
 );
+
+

@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/src/core/models/franchise_info.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FranchiseSelector extends StatelessWidget {
   final List<FranchiseInfo> items;
@@ -44,5 +44,6 @@ class FranchiseSelector extends StatelessWidget {
     );
   }
 }
+
 
 

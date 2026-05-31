@@ -1,14 +1,14 @@
-// web-app/lib/config/app_config.dart
+﻿// web-app/lib/config/app_config.dart
 // P2.5 Config Integration Sprint - Delegation Layer
 // Single source of truth for the web-app: all code should import from here.
-// Delegates to shared_core public barrel. Dynamic values driven by FranchiseProvider.
+// Delegates to shared_core public barrel. Dynamic values driven by shared.FranchiseProvider.
 
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 /// AppConfig delegation layer for the admin portal.
 /// - All collection names, constants, and helpers come from shared_core (SSoT).
-/// - The `current` getter can incorporate FranchiseProvider-driven values (branding, etc.).
+/// - The `current` getter can incorporate shared.FranchiseProvider-driven values (branding, etc.).
 /// - Legacy `env` preserved for minimal breakage during transition.
 class AppConfig {
   // ===== DELEGATED STATIC CONSTANTS (from shared_core) =====
@@ -50,10 +50,10 @@ class AppConfig {
   static const String analyticsExportDir = shared.AppConfig.analyticsExportDir;
   static const String dateFormat = shared.AppConfig.dateFormat;
 
-  // ===== DYNAMIC / INSTANCE (driven by FranchiseProvider where possible) =====
+  // ===== DYNAMIC / INSTANCE (driven by shared.FranchiseProvider where possible) =====
   /// Returns an AppConfig instance that can reflect current franchise branding.
   static shared.AppConfig get current {
-    final fp = DesignTokens.franchiseProvider; // Wired via DesignTokens.setFranchiseProvider in main.dart
+    final fp = DesignTokens.shared.FranchiseProvider; // Wired via DesignTokens.setshared.FranchiseProvider in main.dart
     return shared.AppConfig(
       apiBaseUrl: 'https://api.yourdomain.com',
       brandingColorHex: fp?.currentPrimaryColorHex ?? '#E31837',
@@ -76,3 +76,4 @@ class AppConfig {
   static String formatDate(DateTime? date) =>
       shared.AppConfig.formatDate(date);
 }
+

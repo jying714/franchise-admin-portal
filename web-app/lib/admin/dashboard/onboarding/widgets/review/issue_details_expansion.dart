@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import '../package:shared_core/src/core/models/onboarding_validation_issue.dart';
 import '../package:shared_core/src/core/providers/onboarding_review_provider.dart';
-import 'package:shared_core/src/core/utils/onboarding_navigation_utils.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 /// Displays an expandable issue detail panel for each onboarding section.
 /// - Groups by severity (critical, warning, info)
@@ -408,5 +408,6 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
     );
   }
 }
+
 
 

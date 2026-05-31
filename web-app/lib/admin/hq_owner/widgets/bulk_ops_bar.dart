@@ -2,10 +2,10 @@
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 /// BulkOpsBar: Modular bulk action bar for Payouts/Invoices/Admin Tables.
-/// Uses: Localization, Theme, Config tokens, ErrorLogger, Modular design, Developer access.
+/// Uses: Localization, Theme, Config tokens, shared.ErrorLogger, Modular design, Developer access.
 class BulkOpsBar extends StatelessWidget {
   final int selectedCount;
   final bool developerMode;
@@ -149,7 +149,7 @@ class BulkOpsBar extends StatelessWidget {
                     try {
                       onCustomAction?.call();
                     } catch (e, stack) {
-                      ErrorLogger.log(
+                      shared.ErrorLogger.log(
                         message: 'BulkOpsBar: CustomAction failed: $e',
                         stack: stack.toString(),
                         source: 'BulkOpsBar',
@@ -171,5 +171,7 @@ class BulkOpsBar extends StatelessWidget {
     );
   }
 }
+
+
 
 

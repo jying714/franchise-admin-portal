@@ -1,17 +1,17 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/providers/onboarding_progress_provider.dart';
-import 'package:shared_core/src/core/models/ingredient_type_model.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/ingredient_type_provider.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_type_template_picker_dialog.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/editable_ingredient_type_row.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/inline_add_ingredient_type_row.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_type_json_import_export_dialog.dart';
-import 'package:shared_core/src/core/providers/ingredient_type_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class IngredientTypeManagementScreen extends StatefulWidget {
   const IngredientTypeManagementScreen({super.key});
@@ -36,7 +36,7 @@ class _IngredientTypeManagementScreenState
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    final newFranchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final newFranchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     if (newFranchiseId != franchiseId) {
       franchiseId = newFranchiseId;
     }
@@ -57,7 +57,7 @@ class _IngredientTypeManagementScreenState
 
   void _showFormDialog({IngredientType? initial}) {
     final loc = AppLocalizations.of(context);
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
     final ingredientTypeProvider = context.read<IngredientTypeProvider>();
 
     print(
@@ -120,7 +120,7 @@ class _IngredientTypeManagementScreenState
         }
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to toggle onboarding step "ingredientTypes"',
         stack: stack.toString(),
         source: 'OnboardingIngredientTypeScreen',
@@ -145,7 +145,7 @@ class _IngredientTypeManagementScreenState
         _reorderChanged = false;
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to persist ingredient type reorder',
         source: 'IngredientTypeManagementScreen',
         screen: 'ingredient_type_management_screen',
@@ -233,7 +233,7 @@ class _IngredientTypeManagementScreenState
                 },
               );
 
-              final franchiseId = context.read<FranchiseProvider>().franchiseId;
+              final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
               await ingredientTypeProvider.loadTypes(franchiseId);
 
               if (context.mounted) {
@@ -591,7 +591,7 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
               }
               if (mounted) Navigator.of(context).pop();
             } catch (e, stack) {
-              await ErrorLogger.log(
+              await shared.ErrorLogger.log(
                 message: 'Failed to save ingredient type',
                 source: 'IngredientTypeFormDialog',
                 screen: 'ingredient_type_management_screen',
@@ -610,5 +610,7 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
     );
   }
 }
+
+
 
 

@@ -249,7 +249,7 @@ class SchemaIssueSidebar extends StatelessWidget {
         onRepair(issue, newValue);
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'schema_issue_sidebar_repair_failed',
         stack: stack.toString(),
         source: 'schema_issue_sidebar.dart',
@@ -312,7 +312,7 @@ class _CategoryRepairTile extends StatelessWidget {
           ),
         );
       } catch (e, stack) {
-        await ErrorLogger.log(
+        await shared.ErrorLogger.log(
           message: 'category_stage_failed',
           stack: stack.toString(),
           source: '_CategoryRepairTile',
@@ -427,7 +427,7 @@ class _IngredientRepairTile extends StatelessWidget {
           ),
         );
       } catch (e, stack) {
-        await ErrorLogger.log(
+        await shared.ErrorLogger.log(
           message: 'ingredient_stage_failed',
           stack: stack.toString(),
           source: '_IngredientRepairTile',
@@ -541,7 +541,7 @@ class _IngredientTypeRepairTile extends StatelessWidget {
           ),
         );
       } catch (e, stack) {
-        await ErrorLogger.log(
+        await shared.ErrorLogger.log(
           message: 'ingredient_type_stage_failed',
           stack: stack.toString(),
           source: '_IngredientTypeRepairTile',
@@ -711,5 +711,6 @@ class _ResolvedIssueTile extends StatelessWidget {
     );
   }
 }
+
 
 

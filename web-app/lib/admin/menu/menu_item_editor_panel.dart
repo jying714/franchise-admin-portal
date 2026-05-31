@@ -2,7 +2,7 @@
 import 'package:franchise_admin_portal/admin/menu/dynamic_menu_item_editor_screen.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
 
 class MenuItemEditorPanel extends StatefulWidget {
@@ -123,7 +123,7 @@ class _MenuItemEditorPanelState extends State<MenuItemEditorPanel> {
                     child: DynamicMenuItemEditorScreen(
                       key: ValueKey(_categoryId),
                       franchiseId:
-                          Provider.of<FranchiseProvider>(context, listen: false)
+                          Provider.of<shared.FranchiseProvider>(context, listen: false)
                               .franchiseId,
                       initialCategoryId: _categoryId,
                       onCategorySelected: (selectedCategory) {
@@ -153,5 +153,7 @@ class _MenuItemEditorPanelState extends State<MenuItemEditorPanel> {
     );
   }
 }
+
+
 
 

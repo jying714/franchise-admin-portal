@@ -14,12 +14,12 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' show MenuItem;
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
-import 'package:shared_core/src/core/models/category.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dietary_allergen_chips_row.dart';
 import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/services/audit_log_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/filter_dropdown.dart';
@@ -28,12 +28,12 @@ import 'package:franchise_admin_portal/admin/menu/menu_item_customizations_dialo
 import 'package:franchise_admin_portal/admin/menu/customization_types.dart'
     as ct;
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/role_guard.dart';
-import 'package:shared_core/src/core/utils/user_permissions.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 const menuItemColumns = [
   {"key": "image", "width": 56.0, "header": "Image"},
@@ -147,7 +147,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
       context: context,
       builder: (_) => BulkMenuUploadDialog(
         categories: categories,
-        franchiseId: context.read<FranchiseProvider>().franchiseId,
+        franchiseId: context.read<shared.FranchiseProvider>().franchiseId,
         onComplete: () => Navigator.of(context).pop(true),
       ),
     );
@@ -524,7 +524,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     final firestore = Provider.of<FirestoreService>(context, listen: false);
     final user = Provider.of<AdminUserProvider>(context).user;
     final isLoading = context.watch<AdminUserProvider>().loading;
@@ -1003,5 +1003,7 @@ extension _LocTry on AppLocalizations {
     }
   }
 }
+
+
 
 

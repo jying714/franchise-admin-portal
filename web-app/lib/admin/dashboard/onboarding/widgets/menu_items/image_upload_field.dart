@@ -14,7 +14,7 @@ import '../package:shared_core/src/core/services/firebase_storage_service.dart';
 /// - Clear/reset support
 /// - Firebase upload on selection
 /// - Displays validation error if required but not selected
-/// - Uses FranchiseProvider to scope uploads per franchise
+/// - Uses shared.FranchiseProvider to scope uploads per franchise
 class ImageUploadField extends FormField<String?> {
   ImageUploadField({
     Key? key,
@@ -36,7 +36,7 @@ class ImageUploadField extends FormField<String?> {
           onSaved: onSaved,
           builder: (FormFieldState<String?> state) {
             return Builder(builder: (context) {
-              final franchiseId = context.read<FranchiseProvider>().franchiseId;
+              final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
               final storageService = FirebaseStorageService();
 
               return Column(
@@ -131,5 +131,6 @@ class ImageUploadField extends FormField<String?> {
           },
         );
 }
+
 
 

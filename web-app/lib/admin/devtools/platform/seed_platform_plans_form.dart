@@ -2,7 +2,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class SeedPlatformPlansForm extends StatefulWidget {
   const SeedPlatformPlansForm({super.key});
@@ -43,7 +43,7 @@ class _SeedPlatformPlansFormState extends State<SeedPlatformPlansForm> {
       final featureKeys = snap.docs.map((doc) => doc.id).toList();
       setState(() => _availableFeatures = featureKeys);
     } catch (e, st) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to load platform_features',
         stack: st.toString(),
         source: 'SeedPlatformPlansForm',
@@ -84,7 +84,7 @@ class _SeedPlatformPlansFormState extends State<SeedPlatformPlansForm> {
 
       setState(() => _statusMessage = loc.devtoolsSeedSuccess);
     } catch (e, st) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to seed platform_plan',
         stack: st.toString(),
         source: 'SeedPlatformPlansForm',
@@ -289,5 +289,7 @@ class _SeedPlatformPlansFormState extends State<SeedPlatformPlansForm> {
     super.dispose();
   }
 }
+
+
 
 

@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/models/customization.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/menu/customization_types.dart';
 
 // Dialog for full-featured editing of menu customizations/groups/options.
@@ -663,5 +663,6 @@ class _MenuItemCustomizationsDialogState
     );
   }
 }
+
 
 

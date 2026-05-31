@@ -1,4 +1,4 @@
-// web_app/lib/core/providers/ingredient_type_provider_impl.dart
+﻿// web_app/lib/core/providers/ingredient_type_provider_impl.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -89,7 +89,7 @@ class IngredientTypeProviderImpl extends ChangeNotifier
       _ingredientTypes = fetched;
     } catch (e, stack) {
       _error = e.toString();
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load ingredient types',
         stack: stack.toString(),
         source: 'IngredientTypeProviderImpl',
@@ -127,7 +127,7 @@ class IngredientTypeProviderImpl extends ChangeNotifier
       await _firestoreService.saveIngredientType(franchiseId, type);
       await reload(franchiseId);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to create ingredient type',
         stack: stack.toString(),
         source: 'IngredientTypeProviderImpl',
@@ -151,7 +151,7 @@ class IngredientTypeProviderImpl extends ChangeNotifier
           franchiseId: franchiseId, sortedUpdates: updates);
       await reload(franchiseId);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to reorder ingredient types',
         stack: stack.toString(),
         source: 'IngredientTypeProviderImpl',
@@ -174,7 +174,7 @@ class IngredientTypeProviderImpl extends ChangeNotifier
       await _firestoreService.saveIngredientType(franchiseId, type);
       await reload(franchiseId);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to add ingredient type',
         stack: stack.toString(),
         source: 'IngredientTypeProviderImpl',
@@ -192,7 +192,7 @@ class IngredientTypeProviderImpl extends ChangeNotifier
           franchiseId, typeId, updatedFields);
       await reload(franchiseId);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to update ingredient type',
         stack: stack.toString(),
         source: 'IngredientTypeProviderImpl',
@@ -209,7 +209,7 @@ class IngredientTypeProviderImpl extends ChangeNotifier
       _ingredientTypes.removeWhere((t) => t.id == typeId);
       notifyListeners();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to delete ingredient type',
         stack: stack.toString(),
         source: 'IngredientTypeProviderImpl',
@@ -232,7 +232,7 @@ class IngredientTypeProviderImpl extends ChangeNotifier
           .get();
       return query.docs.isNotEmpty;
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to check ingredient type usage',
         stack: stack.toString(),
         source: 'IngredientTypeProviderImpl',
@@ -249,7 +249,7 @@ class IngredientTypeProviderImpl extends ChangeNotifier
       final exportable = _ingredientTypes.map((t) => t.toMap()).toList();
       return const JsonEncoder.withIndent('  ').convert(exportable);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to export ingredient types as JSON',
         stack: stack.toString(),
         source: 'IngredientTypeProviderImpl',
@@ -268,7 +268,7 @@ class IngredientTypeProviderImpl extends ChangeNotifier
           franchiseId: franchiseId, items: newTypes);
       await reload(franchiseId);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed bulk replace of ingredient types',
         stack: stack.toString(),
         source: 'IngredientTypeProviderImpl',
@@ -286,7 +286,7 @@ class IngredientTypeProviderImpl extends ChangeNotifier
       await _firestoreService.importIngredientMetadataTemplate(
           templateId: templateId, franchiseId: franchiseId);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load template ingredients',
         stack: stack.toString(),
         source: 'IngredientTypeProviderImpl',
@@ -341,7 +341,7 @@ class IngredientTypeProviderImpl extends ChangeNotifier
       _stagedTypes.clear();
       await reload(_franchiseId);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to save staged ingredient types',
         stack: stack.toString(),
         source: 'IngredientTypeProviderImpl',
@@ -395,7 +395,7 @@ class IngredientTypeProviderImpl extends ChangeNotifier
       _stagedForDelete.clear();
       await reload(franchiseId);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to commit staged ingredient type deletions',
         stack: stack.toString(),
         source: 'IngredientTypeProviderImpl',
@@ -476,3 +476,4 @@ class IngredientTypeProviderImpl extends ChangeNotifier
     return issues;
   }
 }
+

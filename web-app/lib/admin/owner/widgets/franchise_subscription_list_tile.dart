@@ -2,9 +2,9 @@
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/models/enriched/enriched_franchise_subscription.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/owner/widgets/franchise_subscription_summary.dart';
 import 'package:franchise_admin_portal/admin/owner/widgets/franchise_subscription_expanded_detail.dart';
 import 'package:franchise_admin_portal/admin/developer/platform/franchise_subscription_editor_dialog.dart';
@@ -45,7 +45,7 @@ class _FranchiseSubscriptionListTileState
         widget.onRefreshRequested!();
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'edit_subscription_failed',
         source: 'FranchiseSubscriptionListTile',
         screen: 'franchise_subscription_list_screen',
@@ -198,5 +198,7 @@ class _FranchiseSubscriptionListTileState
     );
   }
 }
+
+
 
 

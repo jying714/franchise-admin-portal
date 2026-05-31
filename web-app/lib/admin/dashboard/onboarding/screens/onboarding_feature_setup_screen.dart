@@ -5,11 +5,11 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/providers/franchise_feature_provider.dart';
-import 'package:shared_core/src/core/providers/franchise_info_provider.dart';
-import 'package:shared_core/src/core/providers/onboarding_progress_provider.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
-import 'package:shared_core/src/core/models/dashboard_section.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/feature_toggle_tile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -50,7 +50,7 @@ class _OnboardingFeatureSetupScreenState
         debugPrint(
             '[FeatureSetup] Loaded ${_featureMetadata.length} features from Firestore.');
       } catch (e, st) {
-        await ErrorLogger.log(
+        await shared.ErrorLogger.log(
           message: 'Failed to fetch platform_features from Firestore',
           stack: st.toString(),
           source: 'onboarding_feature_setup_screen.dart',
@@ -212,7 +212,7 @@ class _OnboardingFeatureSetupScreenState
         );
       }
     } catch (e, st) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to save onboarding features',
         stack: st.toString(),
         source: 'onboarding_feature_setup_screen.dart',
@@ -259,7 +259,7 @@ class _OnboardingFeatureSetupScreenState
         }
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to toggle onboarding step "onboarding_feature_setup"',
         stack: stack.toString(),
         source: 'OnboardingFeatureSetupScreen',
@@ -275,5 +275,7 @@ class _OnboardingFeatureSetupScreenState
     }
   }
 }
+
+
 
 

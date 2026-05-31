@@ -1,15 +1,15 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_sidebar.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_bottom_nav_bar.dart';
-import 'package:shared_core/src/core/models/dashboard_section.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dialogs/franchise_selector_dialog_content.dart';
-import 'package:shared_core/src/core/providers/franchise_selector.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/developer/overview_section.dart';
 import 'package:franchise_admin_portal/widgets/developer/impersonation_tools_section.dart';
 import 'package:franchise_admin_portal/widgets/developer/error_logs_section.dart';
@@ -19,7 +19,7 @@ import 'package:franchise_admin_portal/widgets/developer/schema_browser_section.
 import 'package:franchise_admin_portal/widgets/developer/audit_trail_section.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/owner_hq_dashboard_screen.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/devtools/billing/billing_subscription_tools_screen.dart';
 import 'package:franchise_admin_portal/admin/devtools/widgets/dev_tools_sidebar_group.dart';
 import 'package:franchise_admin_portal/admin/devtools/subscriptions/subscription_dev_tools_screen.dart';
@@ -69,7 +69,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
       ),
     );
     if (selectedId != null && selectedId.isNotEmpty) {
-      await context.read<FranchiseProvider>().setFranchiseId(selectedId);
+      await context.read<shared.FranchiseProvider>().setFranchiseId(selectedId);
     }
   }
 
@@ -85,7 +85,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
     }
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     final isMobile = MediaQuery.of(context).size.width < 800;
     final loc = AppLocalizations.of(context);
     if (loc == null) {
@@ -185,7 +185,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
                         try {
                           return section.builder(context);
                         } catch (e, stack) {
-                          ErrorLogger.log(
+                          shared.ErrorLogger.log(
                             message: 'Developer dashboard section error: $e',
                             source: 'DeveloperDashboardScreen',
                             screen: section.title,
@@ -227,7 +227,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
 
   List<DashboardSection> _getDeveloperSections() {
     String? getFranchiseOrNull(BuildContext context) {
-      final id = context.watch<FranchiseProvider>().franchiseId;
+      final id = context.watch<shared.FranchiseProvider>().franchiseId;
       return (id == 'unknown' || id.isEmpty) ? null : id;
     }
 
@@ -319,5 +319,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
     ];
   }
 }
+
+
 
 

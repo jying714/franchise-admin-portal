@@ -1,11 +1,11 @@
-// web-app/lib/core/services/analytics_service_impl.dart
+﻿// web-app/lib/core/services/analytics_service_impl.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:logging/logging.dart';
-import 'package:shared_core/src/core/services/analytics_service.dart';
-import 'package:shared_core/src/core/models/analytics_summary.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AnalyticsServiceImpl implements AnalyticsService {
   final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
@@ -204,3 +204,4 @@ class AnalyticsServiceImpl implements AnalyticsService {
     }
   }
 }
+

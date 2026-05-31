@@ -1,9 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/models/franchise_info.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FranchisePickerDropdown extends StatelessWidget {
   final String? selectedFranchiseId;
@@ -14,13 +14,13 @@ class FranchisePickerDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     print('[FranchisePickerDropdown] build called (dropdown in AppBar only)');
 
-    final franchiseProvider = Provider.of<FranchiseProvider>(context);
+    final shared.FranchiseProvider = Provider.of<shared.FranchiseProvider>(context);
     final user = Provider.of<AdminUserProvider>(context).user;
     final loc = AppLocalizations.of(context);
 
-    final franchises = franchiseProvider.viewableFranchises;
+    final franchises = shared.FranchiseProvider.viewableFranchises;
     print('[FranchisePickerDropdown] All franchises: $franchises');
-    final currentId = selectedFranchiseId ?? franchiseProvider.franchiseId;
+    final currentId = selectedFranchiseId ?? shared.FranchiseProvider.franchiseId;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     if (franchises == null || franchises.isEmpty) {
       return Tooltip(
@@ -52,7 +52,7 @@ class FranchisePickerDropdown extends StatelessWidget {
             print(
                 '[FranchisePickerDropdown] Selected franchise name: ${selectedFranchise.name}');
 
-            franchiseProvider.setFranchiseId(newValue);
+            shared.FranchiseProvider.setFranchiseId(newValue);
 
             // ðŸ§  Defer route transition slightly to allow provider update to propagate
             Future.microtask(() {
@@ -92,5 +92,7 @@ class FranchisePickerDropdown extends StatelessWidget {
     );
   }
 }
+
+
 
 

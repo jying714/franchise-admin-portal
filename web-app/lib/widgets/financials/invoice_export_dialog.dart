@@ -3,10 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
-import 'package:shared_core/src/core/models/invoice.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/export_utils.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 /// InvoiceExportDialog
@@ -16,7 +16,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 ///
 /// Integrates with FirestoreService to fetch data,
 /// uses ExportUtils for CSV generation,
-/// and logs errors with ErrorLogger.
+/// and logs errors with shared.ErrorLogger.
 ///
 /// Designed with localization, theming, and modularity in mind.
 
@@ -174,7 +174,7 @@ class _InvoiceExportDialogState extends State<InvoiceExportDialog> {
 
       Navigator.of(context).pop(); // Close dialog on success
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'InvoiceExportDialog',
@@ -203,5 +203,7 @@ class _InvoiceExportDialogState extends State<InvoiceExportDialog> {
     }
   }
 }
+
+
 
 

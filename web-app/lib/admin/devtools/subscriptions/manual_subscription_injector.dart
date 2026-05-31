@@ -1,11 +1,11 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/models/platform_plan_model.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/services/franchise_subscription_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class ManualSubscriptionInjector extends StatefulWidget {
   const ManualSubscriptionInjector({super.key});
@@ -55,7 +55,7 @@ class _ManualSubscriptionInjectorState
         backgroundColor: colorScheme.primary,
       ));
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Manual Subscription Injection Failed',
         stack: stack.toString(),
         source: 'ManualSubscriptionInjector',
@@ -79,11 +79,11 @@ class _ManualSubscriptionInjectorState
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final franchiseProvider = context.watch<FranchiseProvider>();
+    final shared.FranchiseProvider = context.watch<shared.FranchiseProvider>();
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final franchises = franchiseProvider.viewableFranchises ?? [];
+    final franchises = shared.FranchiseProvider.viewableFranchises ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,5 +151,7 @@ class _ManualSubscriptionInjectorState
     );
   }
 }
+
+
 
 

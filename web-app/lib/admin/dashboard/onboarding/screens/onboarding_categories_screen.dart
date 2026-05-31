@@ -105,7 +105,7 @@ class _OnboardingCategoriesScreenState
         }
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'onboarding_mark_complete_toggle_failed',
         source: 'onboarding_categories_screen.dart',
         screen: 'onboarding_categories_screen',
@@ -135,7 +135,7 @@ class _OnboardingCategoriesScreenState
         );
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to save categories',
         source: 'onboarding_categories_screen.dart',
         screen: 'onboarding_categories_screen',
@@ -189,7 +189,7 @@ class _OnboardingCategoriesScreenState
           );
         }
       } catch (e, stack) {
-        await ErrorLogger.log(
+        await shared.ErrorLogger.log(
           message: 'bulk_delete_categories_failed',
           stack: stack.toString(),
           source: 'OnboardingCategoriesScreen',
@@ -397,5 +397,6 @@ class _OnboardingCategoriesScreenState
     );
   }
 }
+
 
 

@@ -1,11 +1,11 @@
 ﻿import 'package:firebase_auth/firebase_auth.dart';
 import 'package:franchise_admin_portal/widgets/menu_item_validator.dart';
 import 'dart:convert';
-import 'package:shared_core/src/core/models/customization.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dynamic_form/smart_dropdown_or_text_field.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_core/src/core/models/menu_item.dart';
-import 'package:shared_core/src/core/models/nutrition_info.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dynamic_form/dynamic_field_input.dart';
 import 'package:franchise_admin_portal/widgets/dynamic_form/dynamic_array_editor.dart';
 import 'package:franchise_admin_portal/widgets/dynamic_form/customization_group_editor.dart';
@@ -257,5 +257,6 @@ class _DynamicMenuItemFormState extends State<DynamicMenuItemForm> {
     );
   }
 }
+
 
 

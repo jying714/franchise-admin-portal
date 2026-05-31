@@ -1,4 +1,4 @@
-// web_app/lib/core/providers/platform_financials_provider_impl.dart
+﻿// web_app/lib/core/providers/platform_financials_provider_impl.dart
 
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
@@ -41,7 +41,7 @@ class PlatformFinancialsProviderImpl extends ChangeNotifier
     } catch (e, stack) {
       debugPrint('Firestore error in loadFinancials: $e');
       _error = e.toString();
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'PlatformFinancialsProviderImpl',
@@ -71,3 +71,4 @@ class PlatformFinancialsProviderImpl extends ChangeNotifier
     super.dispose();
   }
 }
+

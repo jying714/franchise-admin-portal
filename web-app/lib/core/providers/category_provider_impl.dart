@@ -1,4 +1,4 @@
-// web_app/lib/core/providers/category_provider_impl.dart
+﻿// web_app/lib/core/providers/category_provider_impl.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -103,7 +103,7 @@ class CategoryProviderImpl extends ChangeNotifier implements CategoryProvider {
       _hasLoaded = true;
       _loadedFranchiseId = franchiseId;
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load categories',
         stack: stack.toString(),
         source: 'CategoryProviderImpl',
@@ -123,7 +123,7 @@ class CategoryProviderImpl extends ChangeNotifier implements CategoryProvider {
       await _firestore.saveCategory(_franchiseId, newCategory);
       addOrUpdateCategory(newCategory);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to create category',
         stack: stack.toString(),
         source: 'CategoryProviderImpl',
@@ -155,7 +155,7 @@ class CategoryProviderImpl extends ChangeNotifier implements CategoryProvider {
       _original = List.from(_current);
       notifyListeners();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to save categories',
         stack: stack.toString(),
         source: 'CategoryProviderImpl',
@@ -184,7 +184,7 @@ class CategoryProviderImpl extends ChangeNotifier implements CategoryProvider {
           franchiseId: _franchiseId, categoryId: categoryId);
       await reload(_franchiseId, forceReloadFromFirestore: true);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to delete category',
         stack: stack.toString(),
         source: 'CategoryProviderImpl',
@@ -201,7 +201,7 @@ class CategoryProviderImpl extends ChangeNotifier implements CategoryProvider {
       await _firestore.deleteCategoriesBatch(_franchiseId, ids);
       await reload(_franchiseId, forceReloadFromFirestore: true);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to bulk delete categories',
         stack: stack.toString(),
         source: 'CategoryProviderImpl',
@@ -300,7 +300,7 @@ class CategoryProviderImpl extends ChangeNotifier implements CategoryProvider {
       _applySortOrder();
       notifyListeners();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load category template',
         stack: stack.toString(),
         source: 'CategoryProviderImpl',
@@ -352,7 +352,7 @@ class CategoryProviderImpl extends ChangeNotifier implements CategoryProvider {
       _stagedCategories.clear();
       notifyListeners();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to save staged categories',
         stack: stack.toString(),
         source: 'CategoryProviderImpl',
@@ -449,3 +449,4 @@ class CategoryProviderImpl extends ChangeNotifier implements CategoryProvider {
     return issues;
   }
 }
+

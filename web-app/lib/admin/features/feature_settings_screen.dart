@@ -1,16 +1,16 @@
 ﻿import 'package:franchise_admin_portal/widgets/feature_toggle_list.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/src/core/models/user.dart'
     as admin_user;
-import 'package:shared_core/src/core/services/audit_log_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FeatureSettingsScreen extends StatefulWidget {
   const FeatureSettingsScreen({super.key});
@@ -34,7 +34,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
       return;
     }
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
 
     if (!(user.isOwner || user.isAdmin || user.isDeveloper)) {
       await AuditLogService().addLog(
@@ -48,7 +48,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
           'message': 'User with insufficient role tried to toggle feature.',
         },
       );
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Unauthorized feature toggle attempt by ${user.email}',
         source: 'FeatureSettingsScreen',
         screen: 'FeatureSettingsScreen',
@@ -110,7 +110,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId!;
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       print(
@@ -153,7 +153,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
                   'User with insufficient role tried to access feature settings.',
             },
           );
-          await ErrorLogger.log(
+          await shared.ErrorLogger.log(
             message: 'Unauthorized feature settings access by ${user.email}',
             source: 'FeatureSettingsScreen',
             screen: 'FeatureSettingsScreen',
@@ -255,5 +255,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
     );
   }
 }
+
+
 
 

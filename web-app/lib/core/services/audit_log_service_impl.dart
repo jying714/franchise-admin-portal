@@ -1,9 +1,9 @@
-// web-app/lib/core/services/audit_log_service_impl.dart
+﻿// web-app/lib/core/services/audit_log_service_impl.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_core/src/core/services/audit_log_service.dart';
-import 'package:shared_core/src/core/models/audit_log.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AuditLogServiceImpl implements AuditLogService {
   CollectionReference auditLogsRef() =>
@@ -112,7 +112,7 @@ class AuditLogServiceImpl implements AuditLogService {
         details: exportSnapshot,
       );
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to log onboarding publish audit',
         stack: stack.toString(),
         source: 'AuditLogServiceImpl.logOnboardingPublishAudit',
@@ -140,7 +140,7 @@ class AuditLogServiceImpl implements AuditLogService {
               doc.data() as Map<String, dynamic>, doc.id))
           .toList();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to fetch onboarding audit logs',
         stack: stack.toString(),
         source: 'AuditLogServiceImpl.getOnboardingAuditLogs',
@@ -150,3 +150,5 @@ class AuditLogServiceImpl implements AuditLogService {
     }
   }
 }
+
+

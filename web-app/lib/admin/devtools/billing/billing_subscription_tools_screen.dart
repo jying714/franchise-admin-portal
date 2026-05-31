@@ -33,7 +33,7 @@ class BillingSubscriptionToolsScreen extends StatelessWidget {
                 Text(
                   'Simulate Stripe-style webhook events for test invoices. '
                   'Select a franchise and test invoice, then choose a webhook type like `invoice.paid`. '
-                  'Results are logged and can be audited via Firestore or the ErrorLogger.',
+                  'Results are logged and can be audited via Firestore or the shared.ErrorLogger.',
                 ),
                 SizedBox(height: 12),
                 Text('ðŸ”¹ Mock Payment Editor',
@@ -53,7 +53,7 @@ class BillingSubscriptionToolsScreen extends StatelessWidget {
                 Text('ðŸ”¹ Logs & Audit Trails',
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 Text(
-                  'All test tool actions are logged via `ErrorLogger`. '
+                  'All test tool actions are logged via `shared.ErrorLogger`. '
                   'Visit Firestore > platform_logs to view full context, errors, or confirmation of test flows.',
                 ),
               ],
@@ -142,5 +142,6 @@ class BillingSubscriptionToolsScreen extends StatelessWidget {
     );
   }
 }
+
 
 

@@ -1,10 +1,10 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/models/error_log.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class DeveloperErrorLogsScreen extends StatefulWidget {
@@ -78,9 +78,9 @@ class _DeveloperErrorLogsScreenState extends State<DeveloperErrorLogsScreen> {
       appBar: AppBar(title: Text(loc.developerErrorLogsScreenTitle)),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        child: Consumer<FranchiseProvider>(
-          builder: (context, franchiseProvider, _) {
-            final options = franchiseProvider.viewableFranchises;
+        child: Consumer<shared.FranchiseProvider>(
+          builder: (context, shared.FranchiseProvider, _) {
+            final options = shared.FranchiseProvider.viewableFranchises;
             final selectedFranchiseId =
                 (_franchiseId == null || _franchiseId == 'all')
                     ? null
@@ -427,5 +427,7 @@ class _ComingSoonCard extends StatelessWidget {
     );
   }
 }
+
+
 
 

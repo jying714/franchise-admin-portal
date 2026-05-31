@@ -16,7 +16,7 @@ class MenuItemJsonImportExportDialog {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final menuItemProvider = context.read<MenuItemProvider>();
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
 
     final itemsJson = menuItemProvider.menuItems.map((e) {
       final map = e.toMap();
@@ -91,7 +91,7 @@ class MenuItemJsonImportExportDialog {
 
                 Navigator.pop(context);
               } catch (e, stack) {
-                await ErrorLogger.log(
+                await shared.ErrorLogger.log(
                   message: 'Invalid JSON in MenuItemJsonImportExportDialog',
                   source: 'MenuItemJsonImportExportDialog',
                   screen: 'onboarding_menu_items_screen.dart',
@@ -117,5 +117,6 @@ class MenuItemJsonImportExportDialog {
     );
   }
 }
+
 
 

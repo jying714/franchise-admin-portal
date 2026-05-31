@@ -1,9 +1,9 @@
-// web-app/lib/core/services/promo_service_impl.dart
+﻿// web-app/lib/core/services/promo_service_impl.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logging/logging.dart';
-import 'package:shared_core/src/core/services/promo_service.dart';
-import 'package:shared_core/src/core/models/promo.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class PromoServiceImpl implements PromoService {
   final FirebaseFirestore _db;
@@ -112,3 +112,4 @@ class PromoServiceImpl implements PromoService {
             .toList());
   }
 }
+

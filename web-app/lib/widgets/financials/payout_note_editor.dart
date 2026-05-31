@@ -2,8 +2,8 @@
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 /// Widget to add/view notes/comments on a payout.
 class PayoutNoteEditor extends StatefulWidget {
@@ -44,7 +44,7 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
           .getPayoutComments(widget.payoutId);
       setState(() => _notes = notes);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to fetch payout comments: $e',
         stack: stack.toString(),
         source: 'PayoutNoteEditor',
@@ -83,7 +83,7 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
         _submitting = false;
       });
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to add payout note: $e',
         stack: stack.toString(),
         source: 'PayoutNoteEditor',
@@ -114,7 +114,7 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
         _notes.remove(note);
       });
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to remove payout note: $e',
         stack: stack.toString(),
         source: 'PayoutNoteEditor',
@@ -278,5 +278,7 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
     }
   }
 }
+
+
 
 

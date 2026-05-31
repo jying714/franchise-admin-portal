@@ -1,4 +1,4 @@
-// web_app/lib/core/providers/franchisee_invitation_provider_impl.dart
+﻿// web_app/lib/core/providers/franchisee_invitation_provider_impl.dart
 
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
@@ -45,7 +45,7 @@ class FranchiseeInvitationProviderImpl extends ChangeNotifier
       },
       onError: (e, stack) {
         _lastError = e.toString();
-        ErrorLogger.log(
+        shared.ErrorLogger.log(
           message: 'Subscription error in FranchiseeInvitationProvider',
           stack: stack.toString(),
           source: 'FranchiseeInvitationProviderImpl.subscribeInvitations',
@@ -120,7 +120,7 @@ class FranchiseeInvitationProviderImpl extends ChangeNotifier
       return true;
     } catch (e, stack) {
       _lastError = e.toString();
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to invite franchisee',
         stack: stack.toString(),
         source: 'FranchiseeInvitationProviderImpl.inviteFranchisee',
@@ -144,7 +144,7 @@ class FranchiseeInvitationProviderImpl extends ChangeNotifier
       return true;
     } catch (e, stack) {
       _lastError = e.toString();
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to update invitation',
         stack: stack.toString(),
         source: 'FranchiseeInvitationProviderImpl.updateInvitation',
@@ -168,7 +168,7 @@ class FranchiseeInvitationProviderImpl extends ChangeNotifier
       return true;
     } catch (e, stack) {
       _lastError = e.toString();
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to cancel invitation',
         stack: stack.toString(),
         source: 'FranchiseeInvitationProviderImpl.cancelInvitation',
@@ -192,7 +192,7 @@ class FranchiseeInvitationProviderImpl extends ChangeNotifier
       return true;
     } catch (e, stack) {
       _lastError = e.toString();
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to delete invitation',
         stack: stack.toString(),
         source: 'FranchiseeInvitationProviderImpl.deleteInvitation',
@@ -216,7 +216,7 @@ class FranchiseeInvitationProviderImpl extends ChangeNotifier
       return true;
     } catch (e, stack) {
       _lastError = e.toString();
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to expire invitation',
         stack: stack.toString(),
         source: 'FranchiseeInvitationProviderImpl.expireInvitation',
@@ -240,7 +240,7 @@ class FranchiseeInvitationProviderImpl extends ChangeNotifier
       return true;
     } catch (e, stack) {
       _lastError = e.toString();
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to mark invitation as re-sent',
         stack: stack.toString(),
         source: 'FranchiseeInvitationProviderImpl.markInvitationResent',
@@ -258,3 +258,4 @@ class FranchiseeInvitationProviderImpl extends ChangeNotifier
     super.dispose();
   }
 }
+

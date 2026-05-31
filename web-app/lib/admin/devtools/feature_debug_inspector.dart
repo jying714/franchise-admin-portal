@@ -1,8 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/utils/features/enum_platform_features.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/franchise_feature_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FeatureDebugInspector extends StatefulWidget {
   const FeatureDebugInspector({super.key});
@@ -16,7 +16,7 @@ class _FeatureDebugInspectorState extends State<FeatureDebugInspector> {
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     final featureProvider = context.watch<FranchiseFeatureProvider>();
 
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
@@ -112,5 +112,7 @@ class _FeatureDebugInspectorState extends State<FeatureDebugInspector> {
 
   String _yesNo(bool val) => val ? 'âœ…' : 'âŒ';
 }
+
+
 
 

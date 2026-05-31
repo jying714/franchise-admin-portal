@@ -44,7 +44,7 @@ class _CategoriesTemplatePickerDialogState
   Future<void> _loadTemplate(String templateId) async {
     final loc = widget.loc;
     final provider = context.read<CategoryProvider>();
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
 
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       if (widget.parentContext.mounted) {
@@ -69,7 +69,7 @@ class _CategoriesTemplatePickerDialogState
         }
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'category_template_load_failed',
         stack: stack.toString(),
         screen: 'onboarding_categories_screen',
@@ -176,5 +176,6 @@ class _CategoriesTemplatePickerDialogState
     );
   }
 }
+
 
 

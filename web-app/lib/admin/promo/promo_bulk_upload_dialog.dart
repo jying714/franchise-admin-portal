@@ -2,10 +2,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:shared_core/src/core/models/promo.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/confirmation_dialog.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
 
 class PromoBulkUploadDialog extends StatefulWidget {
@@ -46,7 +46,7 @@ class _PromoBulkUploadDialogState extends State<PromoBulkUploadDialog> {
 
   Future<void> _uploadAll() async {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
 
     setState(() => isLoading = true);
     for (final promo in previewPromos) {
@@ -108,5 +108,7 @@ class _PromoBulkUploadDialogState extends State<PromoBulkUploadDialog> {
     );
   }
 }
+
+
 
 

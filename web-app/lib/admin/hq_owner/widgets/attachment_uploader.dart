@@ -4,8 +4,8 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 /// AttachmentUploader
 /// For payout attachments (detail or bulk), reusable for other models.
@@ -69,7 +69,7 @@ class _AttachmentUploaderState extends State<AttachmentUploader> {
         _error = null;
       });
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'AttachmentUploader: Failed to upload - $e',
         stack: stack.toString(),
         source: 'AttachmentUploader',
@@ -89,7 +89,7 @@ class _AttachmentUploaderState extends State<AttachmentUploader> {
           .removeAttachmentFromPayout(widget.payoutId, att);
       widget.onDeleted?.call();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'AttachmentUploader: Failed to delete attachment - $e',
         stack: stack.toString(),
         source: 'AttachmentUploader',
@@ -190,5 +190,7 @@ class _AttachmentUploaderState extends State<AttachmentUploader> {
     );
   }
 }
+
+
 
 

@@ -1,8 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/models/franchise_info.dart'; // <-- use this
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/ // <-- use this
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class FranchiseSelectorDialogContent extends StatelessWidget {
@@ -12,8 +12,8 @@ class FranchiseSelectorDialogContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
-    final franchiseProvider =
-        Provider.of<FranchiseProvider>(context, listen: false);
+    final shared.FranchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       print(
@@ -53,7 +53,7 @@ class FranchiseSelectorDialogContent extends StatelessWidget {
               title: Text(franchise.name ?? franchise.id),
               subtitle: Text('ID: ${franchise.id}'),
               onTap: () {
-                franchiseProvider.setFranchiseId(franchise.id);
+                shared.FranchiseProvider.setFranchiseId(franchise.id);
                 Navigator.of(context).pop(); // Close dialog
               },
             );
@@ -63,5 +63,7 @@ class FranchiseSelectorDialogContent extends StatelessWidget {
     );
   }
 }
+
+
 
 

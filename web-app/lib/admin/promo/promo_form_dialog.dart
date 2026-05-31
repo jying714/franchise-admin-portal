@@ -1,8 +1,8 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/src/core/models/promo.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class PromoFormDialog extends StatefulWidget {
   final Promo? promo;
@@ -48,7 +48,7 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
 
   Future<void> _save() async {
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
 
@@ -195,5 +195,7 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
     );
   }
 }
+
+
 
 

@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import '../package:shared_core/src/core/models/nutrition_info.dart';
-import 'package:shared_core/src/core/utils/features/form_validators.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 /// A dialog that allows editing or creating `NutritionInfo`.
@@ -125,5 +125,6 @@ class _NutritionEditorDialogState extends State<NutritionEditorDialog> {
     );
   }
 }
+
 
 

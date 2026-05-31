@@ -50,7 +50,7 @@ class _IngredientTypeTemplatePickerDialogState
   Future<void> _loadTemplate(String templateId) async {
     final loc = widget.loc;
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
 
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -81,7 +81,7 @@ class _IngredientTypeTemplatePickerDialogState
         );
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'ingredient_type_template_load_failed',
         stack: stack.toString(),
         screen: 'ingredient_type_management_screen',
@@ -189,5 +189,6 @@ class _IngredientTypeTemplatePickerDialogState
     );
   }
 }
+
 
 

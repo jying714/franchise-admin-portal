@@ -1,4 +1,4 @@
-// web_app/lib/core/providers/user_profile_notifier_impl.dart
+﻿// web_app/lib/core/providers/user_profile_notifier_impl.dart
 
 import 'package:flutter/widgets.dart';
 import 'dart:async';
@@ -56,7 +56,7 @@ class UserProfileNotifier extends ChangeNotifier
     _lastError = null;
     _deferNotify();
 
-    _firestoreService ??= FirestoreServiceImpl(); // ← Use impl
+    _firestoreService ??= FirestoreServiceImpl(); // â† Use impl
 
     _sub = delayedUserStream(_firestoreService!, uid).listen(
       (u) {
@@ -69,7 +69,7 @@ class UserProfileNotifier extends ChangeNotifier
         _loading = false;
         _lastError = err;
         _deferNotify();
-        ErrorLogger.log(
+        shared.ErrorLogger.log(
           message: err.toString(),
           source: 'UserProfileNotifier.listenToUser',
           stack: stack?.toString(),
@@ -114,3 +114,4 @@ class UserProfileNotifier extends ChangeNotifier
     });
   }
 }
+

@@ -3,15 +3,15 @@ import 'dart:io'; // Will be ignored on web due to kIsWeb checks
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/models/menu_item.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 // Web-only import:
 import 'dart:html' as html;
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class ExportMenuDialog extends StatefulWidget {
   const ExportMenuDialog({Key? key}) : super(key: key);
@@ -34,7 +34,7 @@ class _ExportMenuDialogState extends State<ExportMenuDialog> {
     setState(() => _loading = true);
     final firestore = Provider.of<FirestoreService>(context, listen: false);
     final franchiseId =
-        Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
     final List<MenuItem> items = await firestore.getMenuItemsOnce(franchiseId);
 
     final header = [
@@ -265,5 +265,7 @@ class _ExportMenuDialogState extends State<ExportMenuDialog> {
     );
   }
 }
+
+
 
 

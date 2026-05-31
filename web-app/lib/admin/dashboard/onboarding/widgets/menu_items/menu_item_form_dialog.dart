@@ -54,7 +54,7 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
 
   Future<void> _save() async {
     final loc = AppLocalizations.of(context)!;
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
 
     if (!_formKey.currentState!.validate()) return;
 
@@ -76,7 +76,7 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
       if (!mounted) return;
       Navigator.of(context).pop(menuItem);
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to create menu item',
         source: 'menu_item_form_dialog',
         screen: 'menu_item_form_dialog',
@@ -153,5 +153,6 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
     );
   }
 }
+
 
 

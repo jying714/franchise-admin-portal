@@ -1,7 +1,7 @@
 ﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class RemovePlatformFeaturesForm extends StatefulWidget {
   const RemovePlatformFeaturesForm({super.key});
@@ -33,7 +33,7 @@ class _RemovePlatformFeaturesFormState
 
       setState(() => _featureKeys = keys);
     } catch (e, st) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to fetch platform_features for deletion',
         stack: st.toString(),
         screen: 'RemovePlatformFeaturesForm',
@@ -65,7 +65,7 @@ class _RemovePlatformFeaturesFormState
         _statusMessage = loc.devtoolsDeleteSuccess;
       });
     } catch (e, st) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to delete platform_feature',
         stack: st.toString(),
         screen: 'RemovePlatformFeaturesForm',
@@ -155,5 +155,7 @@ class _RemovePlatformFeaturesFormState
     );
   }
 }
+
+
 
 

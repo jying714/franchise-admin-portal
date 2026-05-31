@@ -2,20 +2,20 @@
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_metadata_template_picker_dialog.dart';
-import 'package:shared_core/src/core/models/ingredient_metadata.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
-import 'package:shared_core/src/core/providers/onboarding_progress_provider.dart';
-import 'package:shared_core/src/core/providers/franchise_info_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/providers/ingredient_metadata_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_form_card.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_list_tile.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_metadata_json_import_export_dialog.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/ingredient_type_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/missing_type_resolution_dialog.dart';
 
 class OnboardingIngredientsScreen extends StatefulWidget {
@@ -211,7 +211,7 @@ class _OnboardingIngredientsScreenState
         }
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to toggle onboarding step completion',
         stack: stack.toString(),
         source: '_markComplete',
@@ -277,7 +277,7 @@ class _OnboardingIngredientsScreenState
           );
         }
       } catch (e, stack) {
-        await ErrorLogger.log(
+        await shared.ErrorLogger.log(
           message: 'Bulk delete ingredients failed',
           source: 'OnboardingIngredientsScreen',
           screen: 'onboarding_ingredients_screen',
@@ -434,7 +434,7 @@ class _OnboardingIngredientsScreenState
                     print(
                         '[OnboardingIngredientsScreen] Template import button pressed');
                     final franchiseId =
-                        context.read<FranchiseProvider>().franchiseId;
+                        context.read<shared.FranchiseProvider>().franchiseId;
 
                     // 1. Let user select and load the template ingredients (returns list or null)
                     final List<IngredientMetadata>? templateIngredients =
@@ -561,7 +561,7 @@ class _OnboardingIngredientsScreenState
                       ElevatedButton(
                         onPressed: () async {
                           final franchiseId =
-                              context.read<FranchiseProvider>().franchiseId;
+                              context.read<shared.FranchiseProvider>().franchiseId;
                           final metadataProvider =
                               context.read<IngredientMetadataProvider>();
                           final onboardingProvider =
@@ -576,7 +576,7 @@ class _OnboardingIngredientsScreenState
                               SnackBar(content: Text(loc.saveSuccessful)),
                             );
                           } catch (e, stack) {
-                            await ErrorLogger.log(
+                            await shared.ErrorLogger.log(
                               message: 'ingredient_save_error',
                               stack: stack.toString(),
                               source: 'onboarding_ingredients_screen',
@@ -763,5 +763,7 @@ class _OnboardingIngredientsScreenState
     super.dispose();
   }
 }
+
+
 
 

@@ -97,7 +97,7 @@ class CategoryListTile extends StatelessWidget {
                 if (confirmed == true) {
                   final provider = context.read<CategoryProvider>();
                   final franchiseId =
-                      context.read<FranchiseProvider>().franchiseId;
+                      context.read<shared.FranchiseProvider>().franchiseId;
 
                   try {
                     await context.read<FirestoreService>().deleteCategory(
@@ -108,7 +108,7 @@ class CategoryListTile extends StatelessWidget {
                       SnackBar(content: Text(loc.deleteSuccess)),
                     );
                   } catch (e, stack) {
-                    await ErrorLogger.log(
+                    await shared.ErrorLogger.log(
                       message: 'Failed to delete category',
                       source: 'CategoryListTile',
                       screen: 'onboarding_categories_screen',
@@ -133,5 +133,6 @@ class CategoryListTile extends StatelessWidget {
     );
   }
 }
+
 
 

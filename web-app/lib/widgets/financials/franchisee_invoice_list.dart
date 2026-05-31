@@ -1,11 +1,11 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/models/platform_invoice.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/financials/franchisee_invoice_tile.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_empty_state_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FranchiseeInvoiceList extends StatelessWidget {
   final List<PlatformInvoice> invoices;
@@ -21,7 +21,7 @@ class FranchiseeInvoiceList extends StatelessWidget {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Localization context is null',
         source: 'FranchiseeInvoiceList',
         screen: 'franchisee_invoice_list.dart',
@@ -59,7 +59,7 @@ class FranchiseeInvoiceList extends StatelessWidget {
             message: loc.noBillingRecords,
             actionLabel: loc.tryAgain,
             onAction: () {
-              ErrorLogger.log(
+              shared.ErrorLogger.log(
                 message: 'User triggered retry on empty invoice list',
                 source: 'FranchiseeInvoiceList',
                 screen: 'franchisee_invoice_list.dart',
@@ -86,5 +86,7 @@ class FranchiseeInvoiceList extends StatelessWidget {
     );
   }
 }
+
+
 
 

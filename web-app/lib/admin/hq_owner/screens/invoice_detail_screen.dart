@@ -1,9 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
-import 'package:shared_core/src/core/models/invoice.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 /// InvoiceDetailScreen
@@ -58,7 +58,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
         future: _invoiceFuture,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            ErrorLogger.log(
+            shared.ErrorLogger.log(
               message: snapshot.error.toString(),
               source: 'InvoiceDetailScreen',
               screen: 'FutureBuilder',
@@ -307,5 +307,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     }
   }
 }
+
+
 
 

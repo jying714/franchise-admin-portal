@@ -1,11 +1,11 @@
 ﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:shared_core/src/core/models/alert_model.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/models/dashboard_section.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AlertsRepository {
   final FirebaseFirestore _firestore;
@@ -74,7 +74,7 @@ class AlertsRepository {
           await query.orderBy('created_at', descending: true).get();
       return snapshot.docs.map(AlertModel.fromFirestore).toList();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to fetch all alerts: $e',
         source: 'alerts_repository_fetchAllAlerts',
         stack: stack.toString(),
@@ -104,7 +104,7 @@ class AlertsRepository {
         'seen_by': FieldValue.arrayUnion([userId]),
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to dismiss alert: $e',
         source: 'alerts_repository_dismissAlert',
         stack: stack.toString(),
@@ -132,7 +132,7 @@ class AlertsRepository {
         'seen_by': FieldValue.arrayUnion([userId]),
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to mark alert as seen: $e',
         source: 'alerts_repository_markAlertSeen',
         stack: stack.toString(),
@@ -148,5 +148,7 @@ class AlertsRepository {
     }
   }
 }
+
+
 
 

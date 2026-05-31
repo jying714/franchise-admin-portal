@@ -2,11 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/franchise_feature_provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
-import 'package:shared_core/src/core/utils/user_permissions.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/financials/dashboard_stat_card.dart';
 import 'package:franchise_admin_portal/widgets/financials/revenue_stat_card.dart';
 import 'package:franchise_admin_portal/widgets/financials/kpi_card.dart';
@@ -15,7 +15,7 @@ import 'package:franchise_admin_portal/widgets/dashboard/activity_feed_widget.da
 import 'package:franchise_admin_portal/widgets/dashboard/urgent_status_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/notifications_panel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/live_operational_snapshot_widget.dart';
 
@@ -41,7 +41,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
   Widget build(BuildContext context) {
     debugPrint('[DashboardHomeScreen] Building dashboard UI');
 
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     final featureProvider = context.watch<FranchiseFeatureProvider>();
     final isMobile = MediaQuery.of(context).size.width < 800;
     final gridColumns = isMobile ? 1 : 4;
@@ -163,7 +163,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                                                 );
                                               }
                                             } catch (e, st) {
-                                              await ErrorLogger.log(
+                                              await shared.ErrorLogger.log(
                                                 message:
                                                     'Error updating liveSnapshotEnabled',
                                                 stack: st.toString(),
@@ -231,5 +231,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     );
   }
 }
+
+
 
 

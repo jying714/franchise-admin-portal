@@ -4,11 +4,11 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/profile/franchise_onboarding_screen.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'dart:html' as html;
-import 'package:shared_core/src/core/services/auth_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class InviteAcceptScreen extends StatefulWidget {
   final String? inviteToken;
@@ -104,7 +104,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         _emailRegistered = emailRegistered;
       });
     } catch (e, st) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Invite fetch failed: $e',
         stack: st.toString(),
         source: 'InviteAcceptScreen',
@@ -165,7 +165,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         arguments: {'token': _effectiveToken!},
       );
     } catch (e, st) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Invite accept failed: $e',
         stack: st.toString(),
         source: 'InviteAcceptScreen',
@@ -415,5 +415,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
     );
   }
 }
+
+
 
 

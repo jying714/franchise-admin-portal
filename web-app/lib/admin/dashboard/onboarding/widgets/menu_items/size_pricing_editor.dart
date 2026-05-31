@@ -42,7 +42,7 @@ class _SizePricingEditorState extends State<SizePricingEditor> {
     try {
       widget.onChanged(_localSizes);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to update size pricing',
         source: 'SizePricingEditor',
         screen: 'menu_item_editor_sheet',
@@ -206,5 +206,6 @@ class _SizePricingEditorState extends State<SizePricingEditor> {
     );
   }
 }
+
 
 

@@ -1,10 +1,10 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/src/core/models/alert_model.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AlertsCard extends StatelessWidget {
   final String franchiseId;
@@ -96,7 +96,7 @@ class AlertsCard extends StatelessWidget {
                     '[AlertsCard] StreamBuilder connectionState=${snapshot.connectionState}');
                 if (snapshot.hasError) {
                   print('[AlertsCard] ERROR loading alerts: ${snapshot.error}');
-                  ErrorLogger.log(
+                  shared.ErrorLogger.log(
                     message: 'Failed to load active alerts: ${snapshot.error}',
                     source: 'alerts_card',
                     screen: 'AlertsCard',
@@ -297,5 +297,7 @@ class _AlertError extends StatelessWidget {
         ),
       );
 }
+
+
 
 

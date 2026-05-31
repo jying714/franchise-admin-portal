@@ -28,7 +28,7 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
     final notifier = Provider.of<UserProfileNotifier>(context, listen: false);
-    final franchiseProvider =
+    final shared.FranchiseProvider =
         Provider.of<shared.FranchiseProvider>(context, listen: false);
 
     // Attach listener only if not already attached
@@ -46,7 +46,7 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
 
         if (!_navigated && !loading && firebaseUser != null && user != null) {
           _maybeLogProfileError(notifier, firebaseUser, firestoreService);
-          _handleRouting(notifier, firebaseUser, franchiseProvider);
+          _handleRouting(notifier, firebaseUser, shared.FranchiseProvider);
         }
       });
     }
@@ -80,7 +80,7 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
   void _handleRouting(
     UserProfileNotifier notifier,
     fb_auth.User? firebaseUser,
-    shared.FranchiseProvider franchiseProvider,
+    shared.FranchiseProvider shared.FranchiseProvider,
   ) {
     final user = notifier.user;
     if (_navigated || firebaseUser == null || user == null || notifier.loading)
@@ -106,7 +106,7 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
 
     // Developer: go to dev dashboard or franchise selector
     if (user.isDeveloper) {
-      final selected = franchiseProvider.isFranchiseSelected;
+      final selected = shared.FranchiseProvider.isFranchiseSelected;
       _navigated = true;
       print(
           '[DEBUG-NAV] AUTH PROFILE LISTENER Routing to dev dashboard or franchise selector screen');
@@ -131,8 +131,8 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
         Navigator.of(context).pushReplacementNamed('/unauthorized');
         return;
       }
-      if (franchiseProvider.franchiseId != lockedId) {
-        franchiseProvider.setFranchiseId(lockedId);
+      if (shared.FranchiseProvider.franchiseId != lockedId) {
+        shared.FranchiseProvider.setFranchiseId(lockedId);
       }
       _navigated = true;
       print(
@@ -156,7 +156,7 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
       _lastLoggedError = notifier.lastError;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         try {
-          // P2.5: ErrorLogger from shared; log via debug or re-add import if needed
+          // P2.5: shared.ErrorLogger from shared; log via debug or re-add import if needed
           debugPrint('[AuthProfileListener] UserProfileNotifier error: ${notifier.lastError}');
         } catch (e, stack) {
           // Logging error; just print for dev, skip for prod
@@ -165,5 +165,6 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     }
   }
 }
+
 
 

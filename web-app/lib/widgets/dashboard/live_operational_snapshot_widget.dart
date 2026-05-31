@@ -17,8 +17,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class LiveOperationalSnapshotWidget extends StatelessWidget {
   final String franchiseId;
@@ -62,7 +62,7 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
           }
 
           // Log the error
-          ErrorLogger.log(
+          shared.ErrorLogger.log(
             message: 'Live ops snapshot stream error',
             stack: snapshot.error.toString(),
             source: 'LiveOperationalSnapshotWidget',
@@ -177,7 +177,7 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
             ],
           );
         } catch (e, st) {
-          ErrorLogger.log(
+          shared.ErrorLogger.log(
             message: 'Error calculating live ops metrics',
             stack: st.toString(),
             source: 'LiveOperationalSnapshotWidget',
@@ -216,5 +216,7 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
     );
   }
 }
+
+
 
 

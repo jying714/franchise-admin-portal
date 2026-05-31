@@ -1,4 +1,4 @@
-// web_app/lib/core/providers/platform_plan_selection_provider_impl.dart
+﻿// web_app/lib/core/providers/platform_plan_selection_provider_impl.dart
 
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
@@ -57,7 +57,7 @@ class PlatformPlanSelectionProviderImpl extends ChangeNotifier
     notifyListeners();
 
     try {
-      final service = FranchiseSubscriptionServiceImpl(); // ← Use impl
+      final service = FranchiseSubscriptionServiceImpl(); // â† Use impl
       await service.subscribeFranchiseToPlan(
         franchiseId: franchiseId,
         plan: plan,
@@ -66,7 +66,7 @@ class PlatformPlanSelectionProviderImpl extends ChangeNotifier
       _success = true;
     } catch (e, stack) {
       _errorMessage = errorMessage ?? 'Subscription failed';
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Plan subscription failed: $e',
         stack: stack.toString(),
         source: 'PlatformPlanSelectionProviderImpl',
@@ -84,12 +84,12 @@ class PlatformPlanSelectionProviderImpl extends ChangeNotifier
   @override
   Future<void> refreshSubscription(String franchiseId) async {
     try {
-      final firestore = FirestoreServiceImpl(); // ← Use impl
+      final firestore = FirestoreServiceImpl(); // â† Use impl
       final sub = await firestore.getFranchiseSubscription(franchiseId);
       _currentSubscription = sub;
       notifyListeners();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to refresh subscription for franchise: $franchiseId',
         stack: stack.toString(),
         source: 'PlatformPlanSelectionProviderImpl',
@@ -99,3 +99,4 @@ class PlatformPlanSelectionProviderImpl extends ChangeNotifier
     }
   }
 }
+

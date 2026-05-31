@@ -1,7 +1,7 @@
-// web_app/lib/core/utils/formatting.dart
+﻿// web_app/lib/core/utils/formatting.dart
 
 import 'package:flutter/widgets.dart';
-import 'package:shared_core/src/core/utils/formatting_core.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class Formatting {
   Formatting._();
@@ -21,3 +21,4 @@ class Formatting {
     return FormattingCore.formatCurrencySimple(amount, currency);
   }
 }
+

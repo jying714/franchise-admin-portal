@@ -1,4 +1,4 @@
-// web_app/lib/core/providers/franchise_subscription_provider_impl.dart
+﻿// web_app/lib/core/providers/franchise_subscription_provider_impl.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -85,7 +85,7 @@ class FranchiseSubscriptionProviderImpl extends ChangeNotifier
           notifyListeners();
           if (!_planResolved) await resolveActivePlan();
         } catch (e, stack) {
-          ErrorLogger.log(
+          shared.ErrorLogger.log(
             message: 'Fallback getCurrentSubscription failed: $e',
             stack: stack.toString(),
             source: 'FranchiseSubscriptionProviderImpl',
@@ -118,7 +118,7 @@ class FranchiseSubscriptionProviderImpl extends ChangeNotifier
       _planResolved = true;
       notifyListeners();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to fetch active platform plan: $e',
         stack: stack.toString(),
         source: 'FranchiseSubscriptionProviderImpl.resolveActivePlan',
@@ -164,3 +164,4 @@ class FranchiseSubscriptionProviderImpl extends ChangeNotifier
     super.dispose();
   }
 }
+

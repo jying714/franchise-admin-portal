@@ -1,19 +1,19 @@
-﻿import 'package:shared_core/src/core/utils/error_logger.dart';
+﻿import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:shared_core/src/core/models/dashboard_section.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dashboard/role_badge.dart';
 import 'package:franchise_admin_portal/admin/developer/developer_dashboard_screen.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 import 'package:franchise_admin_portal/widgets/financials/franchise_financial_kpi_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
-import 'package:shared_core/src/core/models/franchise_info.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/financials/cash_flow_forecast_card.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/alerts_card.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -27,9 +27,9 @@ import 'package:franchise_admin_portal/widgets/financials/invoices_card.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/billing_summary_card.dart';
 import 'package:franchise_admin_portal/widgets/financials/payout_status_card.dart';
 import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
-import 'package:shared_core/src/core/services/franchise_subscription_service.dart';
-import 'package:shared_core/src/core/models/franchise_subscription_model.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/header/settings_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/help_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.dart';
@@ -51,19 +51,19 @@ class OwnerHQDashboardScreen extends StatelessWidget {
     });
     print('[OwnerHQDashboardScreen] build called');
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final franchiseProvider =
-          Provider.of<FranchiseProvider>(context, listen: false);
+      final shared.FranchiseProvider =
+          Provider.of<shared.FranchiseProvider>(context, listen: false);
       final firestoreService =
           Provider.of<FirestoreService>(context, listen: false);
 
-      if (franchiseProvider.allFranchises.isEmpty) {
+      if (shared.FranchiseProvider.allFranchises.isEmpty) {
         final franchises = await firestoreService.getFranchises();
-        franchiseProvider.setAllFranchises(franchises);
+        shared.FranchiseProvider.setAllFranchises(franchises);
       }
 
       // Set initial franchiseId if none is selected yet
-      if (!franchiseProvider.isFranchiseSelected &&
-          franchiseProvider.allFranchises.isNotEmpty) {
+      if (!shared.FranchiseProvider.isFranchiseSelected &&
+          shared.FranchiseProvider.allFranchises.isNotEmpty) {
         String initialId;
         final user =
             Provider.of<AdminUserProvider>(context, listen: false).user;
@@ -72,9 +72,9 @@ class OwnerHQDashboardScreen extends StatelessWidget {
             user.defaultFranchise!.isNotEmpty) {
           initialId = user.defaultFranchise!;
         } else {
-          initialId = franchiseProvider.allFranchises.first.id;
+          initialId = shared.FranchiseProvider.allFranchises.first.id;
         }
-        await franchiseProvider.setInitialFranchiseId(initialId);
+        await shared.FranchiseProvider.setInitialFranchiseId(initialId);
       }
     });
     final loc = AppLocalizations.of(context);
@@ -87,7 +87,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
     }
     final colorScheme = Theme.of(context).colorScheme;
     final user = Provider.of<AdminUserProvider>(context).user;
-    final franchiseId = Provider.of<FranchiseProvider>(context).franchiseId;
+    final franchiseId = Provider.of<shared.FranchiseProvider>(context).franchiseId;
     final firestoreService =
         Provider.of<FirestoreService>(context, listen: false);
     final userProfileUrl =
@@ -96,7 +96,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
     final allowedRoles = ['hq_owner', 'hq_manager', 'developer'];
     if (user == null || !user.roles.any((r) => allowedRoles.contains(r))) {
       // Log and show unauthorized
-      Future.microtask(() => ErrorLogger.log(
+      Future.microtask(() => shared.ErrorLogger.log(
             message: "Unauthorized HQ Dashboard access attempt.",
             source: "OwnerHQDashboardScreen",
             screen: "OwnerHQDashboardScreen",
@@ -145,14 +145,14 @@ class OwnerHQDashboardScreen extends StatelessWidget {
       );
     }
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final franchiseProvider =
-          Provider.of<FranchiseProvider>(context, listen: false);
-      if (franchiseProvider.allFranchises.isEmpty) {
+      final shared.FranchiseProvider =
+          Provider.of<shared.FranchiseProvider>(context, listen: false);
+      if (shared.FranchiseProvider.allFranchises.isEmpty) {
         try {
           final firestoreService =
               Provider.of<FirestoreService>(context, listen: false);
           final franchises = await firestoreService.getFranchises();
-          franchiseProvider.setAllFranchises(franchises);
+          shared.FranchiseProvider.setAllFranchises(franchises);
         } catch (e) {
           // Optional: Show error/snackbar if needed
         }
@@ -773,5 +773,7 @@ class FutureFeaturePlaceholderPanel extends StatelessWidget {
     );
   }
 }
+
+
 
 

@@ -1,12 +1,12 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/models/category.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 // Optionally for user id:
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class BulkUploadDialog extends StatefulWidget {
   final String franchiseId;
@@ -137,7 +137,7 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
                   } catch (e, stack) {
                     // Remote error logging
                     try {
-                      await ErrorLogger.log(
+                      await shared.ErrorLogger.log(
                         message: e.toString(),
                         source: 'bulk_upload_dialog',
                         screen: 'BulkUploadDialog',
@@ -168,5 +168,7 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
     );
   }
 }
+
+
 
 

@@ -2,10 +2,10 @@
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FeatureTogglesSection extends StatefulWidget {
   final String? franchiseId;
@@ -68,7 +68,7 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to load feature toggles: $e',
         stack: stack.toString(),
         source: 'FeatureTogglesSection',
@@ -91,7 +91,7 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
                 ft.key == toggle.key ? ft.copyWith(enabled: enabled) : ft)
             .toList();
       });
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Feature toggle updated: ${toggle.key} -> $enabled',
         source: 'FeatureTogglesSection',
         screen: 'DeveloperDashboardScreen',
@@ -104,7 +104,7 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
         },
       );
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to update feature toggle: $e',
         stack: stack.toString(),
         source: 'FeatureTogglesSection',
@@ -366,5 +366,7 @@ class FeatureToggle {
     );
   }
 }
+
+
 
 

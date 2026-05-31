@@ -94,7 +94,7 @@ class _IngredientTypeJsonImportExportDialogState
       if (decoded is! List) return null;
       return decoded.map((e) => IngredientType.fromMap(e)).toList();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Error parsing preview JSON in dialog',
         source: 'ingredient_type_json_import_export_dialog.dart',
         severity: 'warning',
@@ -120,7 +120,7 @@ class _IngredientTypeJsonImportExportDialogState
       });
     } catch (e, stack) {
       setState(() => _previewTypes = null);
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'JSON import preview parse error',
         source: 'ingredient_type_json_import_export_dialog.dart',
         severity: 'warning',
@@ -138,7 +138,7 @@ class _IngredientTypeJsonImportExportDialogState
 
   Future<void> _saveImport() async {
     final loc = widget.loc;
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
     final provider = context.read<IngredientTypeProvider>();
 
     if (_previewTypes == null || franchiseId.isEmpty) return;
@@ -147,7 +147,7 @@ class _IngredientTypeJsonImportExportDialogState
       await provider.bulkReplaceIngredientTypes(franchiseId, _previewTypes!);
       if (mounted) Navigator.of(context).pop();
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to save imported ingredient types',
         source: 'ingredient_type_json_import_export_dialog.dart',
         severity: 'error',
@@ -272,5 +272,6 @@ class _IngredientTypeJsonImportExportDialogState
     );
   }
 }
+
 
 

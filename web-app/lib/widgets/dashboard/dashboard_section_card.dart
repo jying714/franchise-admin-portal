@@ -4,10 +4,10 @@ import 'package:provider/provider.dart';
 
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class DashboardSectionCard extends StatelessWidget {
   final String title;
@@ -92,7 +92,7 @@ class DashboardSectionCard extends StatelessWidget {
                         } catch (e, st) {
                           final fs = Provider.of<FirestoreService>(context,
                               listen: false);
-                          ErrorLogger.log(
+                          shared.ErrorLogger.log(
                             message: 'Error building section $title: $e',
                             stack: st.toString(),
                             source: 'DashboardSectionCard',
@@ -160,5 +160,7 @@ class _FeaturePlaceholder extends StatelessWidget {
     );
   }
 }
+
+
 
 

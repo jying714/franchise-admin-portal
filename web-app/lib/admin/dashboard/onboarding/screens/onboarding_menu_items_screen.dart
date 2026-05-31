@@ -2,23 +2,23 @@
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/menu_item_provider.dart';
-import 'package:shared_core/src/core/providers/onboarding_progress_provider.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
-import 'package:shared_core/src/core/utils/features/feature_guard.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/core/utils/features/feature_gate_banner.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_editor_sheet.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_items_list_tile.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_json_import_export_dialog.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_template_picker_dialog.dart';
-import 'package:shared_core/src/core/models/menu_item.dart';
-import 'package:shared_core/src/core/providers/ingredient_type_provider.dart';
-import 'package:shared_core/src/core/providers/category_provider.dart';
-import 'package:shared_core/src/core/providers/ingredient_metadata_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/schema_issue_sidebar.dart';
-import 'package:shared_core/src/core/models/menu_item_schema_issue.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OnboardingMenuItemsScreen extends StatefulWidget {
@@ -41,7 +41,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     super.didChangeDependencies();
     if (_hasInitialized) return;
 
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
     if (franchiseId.isNotEmpty && franchiseId != 'unknown') {
       // Force reload all prerequisites so screen is always in sync
       context
@@ -73,7 +73,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
         );
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'onboarding_mark_menu_item_complete_failed',
         source: 'onboarding_menu_items_screen.dart',
         screen: 'onboarding_menu_items_screen',
@@ -309,7 +309,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                             existing: item,
                             firestore: FirebaseFirestore.instance,
                             franchiseId:
-                                context.read<FranchiseProvider>().franchiseId,
+                                context.read<shared.FranchiseProvider>().franchiseId,
                             onSave: (updatedItem) async {
                               final provider = context.read<MenuItemProvider>();
                               provider.addOrUpdateMenuItem(
@@ -405,7 +405,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                   }
                 }).catchError((err, st) async {
                   print('[DEBUG][FAB] pushNamed threw error (async): $err');
-                  await ErrorLogger.log(
+                  await shared.ErrorLogger.log(
                     message: 'Async error in pushNamed',
                     stack: st.toString(),
                     source: 'onboarding_menu_items_screen.dart',
@@ -416,7 +416,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                 });
               } catch (e, st) {
                 print('[DEBUG][FAB] Exception thrown in navigation: $e\n$st');
-                await ErrorLogger.log(
+                await shared.ErrorLogger.log(
                   message: 'Failed to navigate to MenuItemEditorScreen (sync)',
                   stack: st.toString(),
                   source: 'onboarding_menu_items_screen.dart',
@@ -576,3 +576,5 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     );
   }
 }
+
+

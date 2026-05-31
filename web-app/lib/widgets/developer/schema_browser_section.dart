@@ -2,10 +2,10 @@
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class SchemaBrowserSection extends StatefulWidget {
   final String? franchiseId;
@@ -72,7 +72,7 @@ class _SchemaBrowserSectionState extends State<SchemaBrowserSection> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to load schemas: $e',
         stack: stack.toString(),
         source: 'SchemaBrowserSection',
@@ -408,5 +408,7 @@ class SchemaSummary {
     required this.status,
   });
 }
+
+
 
 

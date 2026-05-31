@@ -86,7 +86,7 @@ class _MissingTypeResolutionDialogState
         _addingType = false;
       });
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to create new ingredient type',
         stack: stack.toString(),
         source: 'MissingTypeResolutionDialog',
@@ -114,7 +114,7 @@ class _MissingTypeResolutionDialogState
   @override
   Widget build(BuildContext context) {
     print(
-        '[MissingTypeResolutionDialog] FranchiseId in context: ${context.read<FranchiseProvider>().franchiseId}');
+        '[MissingTypeResolutionDialog] FranchiseId in context: ${context.read<shared.FranchiseProvider>().franchiseId}');
     print(
         '[MissingTypeResolutionDialog] IngredientTypeProvider franchiseId: ${context.read<IngredientTypeProvider>().franchiseId}');
 
@@ -266,5 +266,6 @@ class _MissingTypeResolutionDialogState
     super.deactivate();
   }
 }
+
 
 

@@ -103,7 +103,7 @@ class MenuItemListTile extends StatelessWidget {
                       SnackBar(content: Text(loc.menuItemDeleted)),
                     );
                   } catch (e, stack) {
-                    await ErrorLogger.log(
+                    await shared.ErrorLogger.log(
                       message: 'menu_item_delete_failed',
                       source: 'MenuItemListTile',
                       screen: 'menu_item_list_tile.dart',
@@ -124,5 +124,6 @@ class MenuItemListTile extends StatelessWidget {
     );
   }
 }
+
 
 

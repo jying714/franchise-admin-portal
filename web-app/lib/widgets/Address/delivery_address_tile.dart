@@ -1,12 +1,12 @@
 ﻿import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_core/src/core/models/address.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/Address/edit_address_dialog.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class DeliveryAddressTile extends StatelessWidget {
   final Address address;
@@ -64,7 +64,7 @@ class DeliveryAddressTile extends StatelessWidget {
                   initialValue: address,
                   onSave: (updatedAddress) async {
                     final franchiseId =
-                        Provider.of<FranchiseProvider>(context, listen: false)
+                        Provider.of<shared.FranchiseProvider>(context, listen: false)
                             .franchiseId;
                     await firestoreService.updateAddressForUser(
                       user.uid,
@@ -99,5 +99,7 @@ class DeliveryAddressTile extends StatelessWidget {
     );
   }
 }
+
+
 
 

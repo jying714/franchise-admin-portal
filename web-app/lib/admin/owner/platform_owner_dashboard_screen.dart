@@ -3,20 +3,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:shared_core/src/core/models/user.dart' as app;
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
-import 'package:shared_core/src/core/providers/franchisee_invitation_provider.dart';
-import 'package:shared_core/src/core/services/franchisee_invitation_service.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dialogs/franchisee_invitation_dialog.dart';
 import 'package:franchise_admin_portal/widgets/financials/platform_revenue_summary_panel.dart';
-import 'package:shared_core/src/core/providers/platform_financials_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/owner/sections/platform_plans_summary_card.dart';
 import 'package:franchise_admin_portal/admin/owner/sections/franchise_subscription_summary_card.dart';
 import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
@@ -65,7 +65,7 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
     // === Platform Owner Access Guard ===
     if (!_isPlatformOwner(user)) {
       // Log unauthorized access attempt
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Unauthorized PlatformOwnerDashboardScreen access',
         source: 'PlatformOwnerDashboardScreen',
         screen: 'PlatformOwnerDashboardScreen',
@@ -859,3 +859,5 @@ class OwnerAnnouncementsPanel extends StatelessWidget {
     );
   }
 }
+
+

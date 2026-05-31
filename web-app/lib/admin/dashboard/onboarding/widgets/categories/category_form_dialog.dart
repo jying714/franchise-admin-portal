@@ -30,14 +30,14 @@ class CategoryFormDialog extends StatefulWidget {
     final loc = AppLocalizations.of(parentContext)!;
     final categoryProvider =
         Provider.of<CategoryProvider>(parentContext, listen: false);
-    final franchiseProvider =
-        Provider.of<FranchiseProvider>(parentContext, listen: false);
+    final shared.FranchiseProvider =
+        Provider.of<shared.FranchiseProvider>(parentContext, listen: false);
 
     return showDialog<Category>(
       context: parentContext,
       builder: (dialogContext) =>
-          ChangeNotifierProvider<FranchiseProvider>.value(
-        value: franchiseProvider,
+          ChangeNotifierProvider<shared.FranchiseProvider>.value(
+        value: shared.FranchiseProvider,
         child: ChangeNotifierProvider<CategoryProvider>.value(
           value: categoryProvider,
           child: CategoryFormDialog(
@@ -81,7 +81,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _loading = true);
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
     final firestore = context.read<FirestoreService>();
     final categoryProvider = context.read<CategoryProvider>();
 
@@ -98,7 +98,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
     try {
       if (context.mounted) Navigator.of(context).pop(category);
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to save category',
         stack: stack.toString(),
         source: 'CategoryFormDialog',
@@ -207,5 +207,6 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
     );
   }
 }
+
 
 

@@ -42,7 +42,7 @@ class _IngredientMetadataTemplatePickerDialogState
 
   Future<void> _loadTemplate(String templateId) async {
     final loc = widget.loc;
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
 
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -72,7 +72,7 @@ class _IngredientMetadataTemplatePickerDialogState
         );
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'ingredient_metadata_template_load_failed',
         stack: stack.toString(),
         screen: 'onboarding_ingredients_screen',
@@ -186,5 +186,6 @@ class _IngredientMetadataTemplatePickerDialogState
     super.dispose();
   }
 }
+
 
 

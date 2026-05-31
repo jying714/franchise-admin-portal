@@ -1,10 +1,10 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/models/error_log.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class ErrorLogStatsBar extends StatelessWidget {
   final String? severity;
@@ -15,7 +15,7 @@ class ErrorLogStatsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     final colorScheme = Theme.of(context).colorScheme;
     final loc = AppLocalizations.of(context);
     if (loc == null) {
@@ -115,5 +115,7 @@ class ErrorLogStatsBar extends StatelessWidget {
     );
   }
 }
+
+
 
 

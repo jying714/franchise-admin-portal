@@ -1,4 +1,4 @@
-// web_app/lib/core/services/franchise_feature_service_impl.dart
+﻿// web_app/lib/core/services/franchise_feature_service_impl.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -36,7 +36,7 @@ class FranchiseFeatureServiceImpl implements FranchiseFeatureService {
 
       return [];
     } catch (e, st) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message:
             'Failed to load granted features for franchise $franchiseId via query',
         stack: st.toString(),
@@ -50,7 +50,7 @@ class FranchiseFeatureServiceImpl implements FranchiseFeatureService {
   @override
   Future<FeatureState?> getFeatureMetadata(String franchiseId) async {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'getFeatureMetadata called with blank/unknown franchiseId',
         stack: '',
         source: 'franchise_feature_service.dart',
@@ -78,7 +78,7 @@ class FranchiseFeatureServiceImpl implements FranchiseFeatureService {
 
       return featureState;
     } catch (e, st) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to get feature_metadata',
         stack: st.toString(),
         source: 'FranchiseFeatureService.getFeatureMetadata',
@@ -101,7 +101,7 @@ class FranchiseFeatureServiceImpl implements FranchiseFeatureService {
       );
 
       if (errors.isNotEmpty) {
-        ErrorLogger.log(
+        shared.ErrorLogger.log(
           message: 'Invalid feature metadata attempted to be saved',
           severity: 'warning',
           source: 'FranchiseFeatureService.saveFeatureMetadata',
@@ -125,7 +125,7 @@ class FranchiseFeatureServiceImpl implements FranchiseFeatureService {
 
       return true;
     } catch (e, st) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Exception while saving feature metadata',
         stack: st.toString(),
         source: 'FranchiseFeatureService.saveFeatureMetadata',
@@ -247,7 +247,7 @@ class FranchiseFeatureServiceImpl implements FranchiseFeatureService {
           '[FranchiseFeatureService] liveSnapshotEnabled for $franchiseId: $enabled');
       return enabled;
     } catch (e, st) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to check liveSnapshotEnabled',
         stack: st.toString(),
         source: 'FranchiseFeatureService.isLiveSnapshotEnabled',
@@ -261,7 +261,7 @@ class FranchiseFeatureServiceImpl implements FranchiseFeatureService {
   @override
   Future<void> updateLiveSnapshotFlag(String franchiseId, bool enabled) async {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'updateLiveSnapshotFlag called with blank/unknown franchiseId',
         stack: '',
         source: 'FranchiseFeatureService.updateLiveSnapshotFlag',
@@ -284,9 +284,9 @@ class FranchiseFeatureServiceImpl implements FranchiseFeatureService {
       );
 
       debugPrint(
-          '[FranchiseFeatureService] liveSnapshotEnabled updated → $enabled for franchiseId=$franchiseId');
+          '[FranchiseFeatureService] liveSnapshotEnabled updated â†’ $enabled for franchiseId=$franchiseId');
 
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'liveSnapshotEnabled flag updated',
         source: 'FranchiseFeatureService.updateLiveSnapshotFlag',
         severity: 'info',
@@ -296,7 +296,7 @@ class FranchiseFeatureServiceImpl implements FranchiseFeatureService {
         },
       );
     } catch (e, st) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to update liveSnapshotEnabled flag',
         stack: st.toString(),
         source: 'FranchiseFeatureService.updateLiveSnapshotFlag',
@@ -310,3 +310,4 @@ class FranchiseFeatureServiceImpl implements FranchiseFeatureService {
     }
   }
 }
+

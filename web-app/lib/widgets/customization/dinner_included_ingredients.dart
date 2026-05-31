@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/src/core/models/menu_item.dart';
-import 'package:shared_core/src/core/models/ingredient_metadata.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
@@ -196,5 +196,6 @@ class DinnerIncludedIngredients extends StatelessWidget {
     );
   }
 }
+
 
 

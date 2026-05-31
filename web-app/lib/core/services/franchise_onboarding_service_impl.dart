@@ -1,8 +1,8 @@
-// web-app/lib/core/services/franchise_onboarding_service_impl.dart
+﻿// web-app/lib/core/services/franchise_onboarding_service_impl.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_core/src/core/services/franchise_onboarding_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FranchiseOnboardingServiceImpl implements FranchiseOnboardingService {
   final FirebaseFirestore _db;
@@ -20,7 +20,7 @@ class FranchiseOnboardingServiceImpl implements FranchiseOnboardingService {
         'onboardingCompletedAt': FieldValue.serverTimestamp(),
       });
 
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Franchise onboarding marked complete',
         source: 'FranchiseOnboardingServiceImpl',
         severity: 'info',
@@ -29,7 +29,7 @@ class FranchiseOnboardingServiceImpl implements FranchiseOnboardingService {
         },
       );
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to mark onboarding complete: $e',
         source: 'FranchiseOnboardingServiceImpl',
         severity: 'error',
@@ -48,7 +48,7 @@ class FranchiseOnboardingServiceImpl implements FranchiseOnboardingService {
       final doc = await _db.collection('franchises').doc(franchiseId).get();
       return doc.data()?['onboardingStatus'] == 'complete';
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Error checking onboarding status: $e',
         source: 'FranchiseOnboardingServiceImpl',
         severity: 'warning',
@@ -61,3 +61,5 @@ class FranchiseOnboardingServiceImpl implements FranchiseOnboardingService {
     }
   }
 }
+
+

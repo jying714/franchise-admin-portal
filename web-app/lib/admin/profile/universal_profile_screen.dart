@@ -3,20 +3,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/profile/account_details_panel.dart';
 import 'package:franchise_admin_portal/widgets/financials/franchisee_invoice_list.dart';
 import 'package:franchise_admin_portal/widgets/financials/franchisee_payment_list.dart';
-import 'package:shared_core/src/core/models/platform_payment.dart';
-import 'package:shared_core/src/core/models/platform_invoice.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/financials/pay_invoice_dialog.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 // FUTURE: Modular import for payment methods and plan management
 // import 'package:franchise_admin_portal/widgets/financials/payment_method_manager.dart';
@@ -85,7 +85,7 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
         setState(() => _billingData = null);
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'UniversalProfileScreen',
@@ -163,7 +163,7 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
             provider.listenToAdminUser(
               Provider.of<FirestoreService>(context, listen: false),
               user.id,
-              Provider.of<FranchiseProvider>(context, listen: false),
+              Provider.of<shared.FranchiseProvider>(context, listen: false),
             );
           },
         ),
@@ -363,5 +363,7 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
     );
   }
 }
+
+
 
 

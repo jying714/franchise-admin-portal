@@ -1,12 +1,12 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/src/core/models/alert_model.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AlertDetailDialog extends StatelessWidget {
   final AlertModel alert;
@@ -142,7 +142,7 @@ class AlertDetailDialog extends StatelessWidget {
                             ),
                           );
                         } catch (e, stack) {
-                          await ErrorLogger.log(
+                          await shared.ErrorLogger.log(
                             message: 'Failed to dismiss alert: $e',
                             stack: stack.toString(),
                             source: 'alert_detail_dialog',
@@ -243,5 +243,7 @@ class _DetailLine extends StatelessWidget {
         ),
       );
 }
+
+
 
 

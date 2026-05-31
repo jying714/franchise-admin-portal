@@ -2,16 +2,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
-import 'package:shared_core/src/core/models/dashboard_section.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:shared_core/src/core/models/franchise_subscription_model.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/developer/platform/franchise_subscription_editor_dialog.dart';
 import 'package:franchise_admin_portal/admin/categories/bulk_action_bar.dart';
-import 'package:shared_core/src/core/services/franchise_subscription_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 final DashboardSection franchiseSubscriptionsSection = DashboardSection(
   key: 'franchiseSubscriptions',
@@ -48,7 +48,7 @@ class _FranchiseSubscriptionsSectionState
       _subs = result;
       return result;
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'load_franchise_subscriptions_failed',
         stack: stack.toString(),
         source: 'FranchiseSubscriptionsSection',
@@ -84,7 +84,7 @@ class _FranchiseSubscriptionsSectionState
         await FranchiseSubscriptionService().deleteFranchiseSubscription(subId);
         setState(() => _subsFuture = _loadSubscriptions());
       } catch (e, st) {
-        await ErrorLogger.log(
+        await shared.ErrorLogger.log(
           message: 'Failed to delete subscription: $e',
           stack: st.toString(),
           source: 'FranchiseSubscriptionsSection',
@@ -299,5 +299,7 @@ class _FranchiseSubscriptionsSectionState
     );
   }
 }
+
+
 
 

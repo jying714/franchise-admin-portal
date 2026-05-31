@@ -1,11 +1,11 @@
-// web-app/lib/core/services/invoice_service_impl.dart
+﻿// web-app/lib/core/services/invoice_service_impl.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:shared_core/src/core/services/invoice_service.dart';
-import 'package:shared_core/src/core/models/invoice.dart';
-import 'package:shared_core/src/core/models/platform_invoice.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class InvoiceServiceImpl implements InvoiceService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -45,7 +45,7 @@ class InvoiceServiceImpl implements InvoiceService {
       final doc = await ref.get();
       return Invoice.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to create invoice for franchise $franchiseId',
         stack: stack.toString(),
         source: 'InvoiceServiceImpl.createInvoice',
@@ -79,7 +79,7 @@ class InvoiceServiceImpl implements InvoiceService {
       final doc = await _franchiseInvoicesRef(franchiseId).doc(invoiceId).get();
       return Invoice.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message:
             'Failed to update invoice $invoiceId for franchise $franchiseId',
         stack: stack.toString(),
@@ -110,7 +110,7 @@ class InvoiceServiceImpl implements InvoiceService {
       final doc = await _franchiseInvoicesRef(franchiseId).doc(invoiceId).get();
       return Invoice.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message:
             'Failed to mark invoice $invoiceId as paid for franchise $franchiseId',
         stack: stack.toString(),
@@ -135,7 +135,7 @@ class InvoiceServiceImpl implements InvoiceService {
         'recipientEmail': recipientEmail,
       });
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to send invoice $invoiceId for franchise $franchiseId',
         stack: stack.toString(),
         source: 'InvoiceServiceImpl.sendInvoice',
@@ -204,7 +204,7 @@ class InvoiceServiceImpl implements InvoiceService {
               Invoice.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
           .toList();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to get invoices for franchise $franchiseId',
         stack: stack.toString(),
         source: 'InvoiceServiceImpl.getInvoices',
@@ -227,7 +227,7 @@ class InvoiceServiceImpl implements InvoiceService {
       });
       return result.data as String; // Base64 PDF
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to generate PDF for invoice $invoiceId',
         stack: stack.toString(),
         source: 'InvoiceServiceImpl.generateInvoicePdf',
@@ -254,7 +254,7 @@ class InvoiceServiceImpl implements InvoiceService {
       });
       return result.data as String; // CSV string
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to export invoices for franchise $franchiseId',
         stack: stack.toString(),
         source: 'InvoiceServiceImpl.exportInvoicesToCsv',
@@ -271,7 +271,7 @@ class InvoiceServiceImpl implements InvoiceService {
       final result = await callable.call({'franchiseId': franchiseId});
       return result.data as Map<String, dynamic>;
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to get overdue summary for franchise $franchiseId',
         stack: stack.toString(),
         source: 'InvoiceServiceImpl.getOverdueSummary',
@@ -306,7 +306,7 @@ class InvoiceServiceImpl implements InvoiceService {
       return PlatformInvoice.fromMap(
           doc.id, doc.data() as Map<String, dynamic>);
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to create platform invoice for platform $platformId',
         stack: stack.toString(),
         source: 'InvoiceServiceImpl.createPlatformInvoice',
@@ -343,3 +343,5 @@ class InvoiceServiceImpl implements InvoiceService {
         .toList());
   }
 }
+
+

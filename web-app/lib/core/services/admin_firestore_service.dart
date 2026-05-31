@@ -1,4 +1,4 @@
-// web-app/lib/core/services/admin_firestore_service.dart
+﻿// web-app/lib/core/services/admin_firestore_service.dart
 //
 // Full admin-heavy Firestore implementation for the web admin portal.
 // Extends the lightweight shared FirestoreServiceImpl and overrides/adds
@@ -19,7 +19,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:shared_core/shared_core.dart' hide FirestoreServiceImpl;
 import 'package:shared_core/src/core/services/firestore_service_impl.dart' show FirestoreServiceImpl;
 import 'package:shared_core/src/core/models/category.dart' as model;
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AdminFirestoreService extends FirestoreServiceImpl {
   AdminFirestoreService({
@@ -44,7 +44,7 @@ class AdminFirestoreService extends FirestoreServiceImpl {
         'at': DateTime.now().toIso8601String(),
       });
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Firestore error in addOrUpdatePayout: $e',
         stack: stack.toString(),
         source: 'AdminFirestoreService',
@@ -434,7 +434,7 @@ class AdminFirestoreService extends FirestoreServiceImpl {
           .doc(category.id)
           .set(category.toFirestore(), firestore.SetOptions(merge: true));
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to add category: $e',
         stack: stack.toString(),
         source: 'AdminFirestoreService.addCategory',
@@ -454,7 +454,7 @@ class AdminFirestoreService extends FirestoreServiceImpl {
           .doc(category.id)
           .update(category.toFirestore());
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to update category: $e',
         stack: stack.toString(),
         source: 'AdminFirestoreService.updateCategory',
@@ -477,7 +477,7 @@ class AdminFirestoreService extends FirestoreServiceImpl {
           .doc(categoryId)
           .delete();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to delete category: $e',
         stack: stack.toString(),
         source: 'AdminFirestoreService.deleteCategory',
@@ -519,7 +519,7 @@ class AdminFirestoreService extends FirestoreServiceImpl {
           .get();
       return defaultDoc.data();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load category schema: $e',
         stack: stack.toString(),
         source: 'AdminFirestoreService.getCategorySchema',
@@ -539,7 +539,7 @@ class AdminFirestoreService extends FirestoreServiceImpl {
           .get();
       return snap.docs.map((d) => d.id).toList();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load category schema IDs: $e',
         stack: stack.toString(),
         source: 'AdminFirestoreService.getAllCategorySchemaIds',
@@ -561,7 +561,7 @@ class AdminFirestoreService extends FirestoreServiceImpl {
           .get();
       return doc.data();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load customization template: $e',
         stack: stack.toString(),
         source: 'AdminFirestoreService.getCustomizationTemplate',
@@ -585,7 +585,7 @@ class AdminFirestoreService extends FirestoreServiceImpl {
       }
       return result;
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load customization templates: $e',
         stack: stack.toString(),
         source: 'AdminFirestoreService.getCustomizationTemplates',
@@ -602,3 +602,5 @@ class AdminFirestoreService extends FirestoreServiceImpl {
 
   // The thin wrapper (see firestore_service_impl.dart in web-app) simply extends this class for full backward compatibility.
 }
+
+

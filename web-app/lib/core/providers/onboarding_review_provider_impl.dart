@@ -1,4 +1,4 @@
-// web_app/lib/core/providers/onboarding_review_provider_impl.dart
+﻿// web_app/lib/core/providers/onboarding_review_provider_impl.dart
 
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
@@ -260,7 +260,7 @@ class OnboardingReviewProviderImpl extends ChangeNotifier
       _lastExportSnapshot = _buildExportSnapshot();
       notifyListeners();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'onboarding_review_validate_failed',
         stack: stack.toString(),
         source: 'OnboardingReviewProviderImpl.validateAll',
@@ -337,7 +337,7 @@ class OnboardingReviewProviderImpl extends ChangeNotifier
       );
       notifyListeners();
     } catch (e, stack) {
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'onboarding_publish_failed',
         stack: stack.toString(),
         source: 'OnboardingReviewProviderImpl.publishOnboarding',
@@ -359,3 +359,4 @@ class OnboardingReviewProviderImpl extends ChangeNotifier
   @override
   List<OnboardingValidationIssue> get validationResults => issues;
 }
+

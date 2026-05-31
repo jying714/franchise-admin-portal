@@ -80,7 +80,7 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
                   ?.restaurantType;
 
               if (restaurantType == null || restaurantType.isEmpty) {
-                await ErrorLogger.log(
+                await shared.ErrorLogger.log(
                   message:
                       'Missing or invalid restaurantType during template prefill',
                   source: 'MenuItemTemplateDropdown',
@@ -110,7 +110,7 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
                 );
               }
             } catch (e, stack) {
-              await ErrorLogger.log(
+              await shared.ErrorLogger.log(
                 message: 'Failed to apply template',
                 stack: stack.toString(),
                 source: 'MenuItemTemplateDropdown',
@@ -139,5 +139,6 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
     );
   }
 }
+
 
 

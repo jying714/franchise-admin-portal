@@ -1,8 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/models/payout.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 
@@ -54,7 +54,7 @@ class _PayoutDetailDialogState extends State<PayoutDetailDialog> {
                       child: CircularProgressIndicator()));
             }
             if (snapshot.hasError) {
-              ErrorLogger.log(
+              shared.ErrorLogger.log(
                 message: 'Failed to load payout details: ${snapshot.error}',
                 stack: snapshot.stackTrace?.toString(),
                 screen: 'PayoutDetailDialog',
@@ -303,5 +303,7 @@ class _AuditTrailSection extends StatelessWidget {
     );
   }
 }
+
+
 
 

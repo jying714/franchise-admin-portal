@@ -1,4 +1,4 @@
-// web_app/lib/core/providers/payout_filter_provider_impl.dart
+﻿// web_app/lib/core/providers/payout_filter_provider_impl.dart
 
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart';
@@ -41,7 +41,7 @@ class PayoutFilterProviderImpl extends ChangeNotifier
   @override
   void setError(Object? error, [StackTrace? stack, String? context]) {
     _lastError = error?.toString();
-    ErrorLogger.log(
+    shared.ErrorLogger.log(
       message: 'PayoutFilterProvider Error: $_lastError',
       stack: stack?.toString(),
       source: 'PayoutFilterProviderImpl',
@@ -57,3 +57,4 @@ class PayoutFilterProviderImpl extends ChangeNotifier
     notifyListeners();
   }
 }
+

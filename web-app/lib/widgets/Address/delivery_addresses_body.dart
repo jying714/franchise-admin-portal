@@ -1,11 +1,11 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/src/core/models/address.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/Address/address_list_view.dart';
 import 'package:franchise_admin_portal/widgets/Address/address_form.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/confirmation_dialog.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -133,5 +133,6 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
     );
   }
 }
+
 
 

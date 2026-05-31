@@ -1,15 +1,15 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
-import 'package:shared_core/src/core/models/alert_model.dart';
-import 'package:shared_core/src/core/models/dashboard_section.dart';
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 /// Dashboard card: At-a-glance payout summary + live payout-related alerts.
 class PayoutStatusCard extends StatelessWidget {
@@ -24,7 +24,7 @@ class PayoutStatusCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final theme = Theme.of(context);
-    final franchiseId = context.watch<FranchiseProvider>().franchiseId;
+    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     final colorScheme = theme.colorScheme;
 
     // ðŸ§‘â€ðŸ’» Developer-only access guard (example: show only for owners/managers/dev)
@@ -96,7 +96,7 @@ class _PayoutCardContentState extends State<_PayoutCardContent> {
               return const Center(child: CircularProgressIndicator());
             }
             if (payoutSnap.hasError) {
-              ErrorLogger.log(
+              shared.ErrorLogger.log(
                 message:
                     'PayoutStatusCard: failed to load payout stats\n${payoutSnap.error}',
                 stack: payoutSnap.stackTrace?.toString(),
@@ -252,5 +252,7 @@ class _ErrorWidget extends StatelessWidget {
     );
   }
 }
+
+
 
 

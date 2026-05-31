@@ -49,7 +49,7 @@ class IngredientTypeJsonPreviewTable extends StatelessWidget {
       }
     } catch (e, stack) {
       errorMessage = loc.jsonParseError;
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to parse ingredient type JSON preview',
         source: 'ingredient_type_json_preview_table.dart',
         screen: 'ingredient_type_management_screen',
@@ -103,5 +103,6 @@ class IngredientTypeJsonPreviewTable extends StatelessWidget {
     );
   }
 }
+
 
 

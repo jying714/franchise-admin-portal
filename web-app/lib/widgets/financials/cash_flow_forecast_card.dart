@@ -1,13 +1,13 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/models/cash_flow_forecast.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 
 class CashFlowForecastCard extends StatefulWidget {
@@ -61,7 +61,7 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
     } catch (e, st) {
       final firestoreService =
           Provider.of<FirestoreService>(context, listen: false);
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'Failed to load cash flow forecast: $e',
         source: 'CashFlowForecastCard',
         screen: 'CashFlowForecastCard',
@@ -302,5 +302,7 @@ class _FeaturePlaceholder extends StatelessWidget {
     );
   }
 }
+
+
 
 

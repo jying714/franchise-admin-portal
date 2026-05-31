@@ -74,7 +74,7 @@ class _CategoryJsonImportExportDialogState
 
   Future<void> _importCategories() async {
     final loc = widget.loc;
-    final franchiseId = context.read<FranchiseProvider>().franchiseId;
+    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
     final firestore = context.read<FirestoreService>();
     final onboardingProgress =
         context.read<OnboardingProgressProvider>().stepStatus;
@@ -112,7 +112,7 @@ class _CategoryJsonImportExportDialogState
         );
       }
     } catch (e, stack) {
-      await ErrorLogger.log(
+      await shared.ErrorLogger.log(
         message: 'category_json_import_error',
         source: 'CategoryJsonImportExportDialog',
         screen: 'onboarding_categories_screen',
@@ -206,5 +206,6 @@ class _CategoryJsonImportExportDialogState
     );
   }
 }
+
 
 

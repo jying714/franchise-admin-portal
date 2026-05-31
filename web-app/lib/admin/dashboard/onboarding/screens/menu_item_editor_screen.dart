@@ -1,13 +1,13 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/src/core/models/menu_item.dart';
-import 'package:shared_core/src/core/models/menu_item_schema_issue.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/franchise_info_provider.dart';
-import 'package:shared_core/src/core/providers/ingredient_metadata_provider.dart';
-import 'package:shared_core/src/core/providers/ingredient_type_provider.dart';
-import 'package:shared_core/src/core/providers/category_provider.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_editor_sheet.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/schema_issue_sidebar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -71,7 +71,7 @@ class _MenuItemEditorScreenState extends State<MenuItemEditorScreen> {
             onSave: (item) => Navigator.of(context).pop(item),
             onSchemaIssuesChanged: _handleSchemaIssueUpdate,
             firestore: FirebaseFirestore.instance,
-            franchiseId: context.read<FranchiseProvider>().franchiseId,
+            franchiseId: context.read<shared.FranchiseProvider>().franchiseId,
           ),
         ),
         const VerticalDivider(width: 1),
@@ -88,5 +88,7 @@ class _MenuItemEditorScreenState extends State<MenuItemEditorScreen> {
     );
   }
 }
+
+
 
 

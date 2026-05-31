@@ -2,10 +2,10 @@
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AdminErrorLogsScreen extends StatefulWidget {
   const AdminErrorLogsScreen({Key? key}) : super(key: key);
@@ -36,7 +36,7 @@ class _AdminErrorLogsScreenState extends State<AdminErrorLogsScreen> {
       // TODO: Replace with real FirestoreService error log query scoped to this franchise.
       await Future.delayed(const Duration(milliseconds: 500));
       final franchiseId =
-          Provider.of<FranchiseProvider>(context, listen: false).franchiseId;
+          Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
       _logs = [
         AdminErrorLog(
           id: '1',
@@ -69,8 +69,8 @@ class _AdminErrorLogsScreenState extends State<AdminErrorLogsScreen> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      final franchiseId = context.watch<FranchiseProvider>().franchiseId;
-      await ErrorLogger.log(
+      final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
+      await shared.ErrorLogger.log(
         message: 'Failed to fetch admin error logs: $e',
         stack: stack.toString(),
         source: 'AdminErrorLogsScreen',
@@ -413,5 +413,7 @@ class AdminErrorLog {
     required this.franchiseId,
   });
 }
+
+
 
 

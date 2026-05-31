@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class ScrollingJsonEditor extends StatefulWidget {
   final String? initialJson;
@@ -56,7 +56,7 @@ class _ScrollingJsonEditorState extends State<ScrollingJsonEditor> {
       widget.onChanged(text);
     } catch (e, stack) {
       setState(() => _error = widget.loc.invalidJsonFormat ?? 'Invalid JSON');
-      ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Invalid JSON in ScrollingJsonEditor',
         source: 'scrolling_json_editor.dart',
         screen: 'ingredient_type_management_screen',
@@ -154,5 +154,7 @@ class _ScrollingJsonEditorState extends State<ScrollingJsonEditor> {
     );
   }
 }
+
+
 
 

@@ -1,6 +1,6 @@
-// web_app/lib/core/utils/app_local_storage.dart
+﻿// web_app/lib/core/utils/app_local_storage.dart
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shared_core/src/core/utils/local_storage.dart';
+import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class AppLocalStorage implements LocalStorage {
   static final AppLocalStorage _instance = AppLocalStorage._();
@@ -24,3 +24,4 @@ class AppLocalStorage implements LocalStorage {
     await prefs.remove(key);
   }
 }
+
