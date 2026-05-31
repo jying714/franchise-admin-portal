@@ -1,0 +1,181 @@
+rules_version = '2';
+
+// Firestore Security Rules - P2.3 Multi-Tenant Hardening
+// Focused on strict scoping: ALL customer data under franchises/{franchiseId}/...
+// Matches full_firestore_schema dump (franchises/{id}/carts, orders, feedback, menu_items, categories, users, etc.)
+// Top-level collections (users for staff profiles, config, error_logs, banners, audit_logs, alerts) have separate rules.
+// Deploy with: firebase deploy --only firestore:rules
+// Test thoroughly with emulator before prod.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===== HELPER FUNCTIONS =====
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Check if user has a role in custom claims (set by functions/userClaims.ts)
+    function hasRole(role) {
+      return isSignedIn() && role in request.auth.token.roles;
+    }
+
+    function hasAnyRole(roles) {
+      return isSignedIn() && request.auth.token.roles.hasAny(roles);
+    }
+
+    // Platform-level admins (from claims or user doc)
+    function isPlatformOwner() {
+      return hasAnyRole(['platform_owner', 'developer', 'hq_owner']);
+    }
+
+    // Franchise staff: check user's franchiseIds array in their top-level profile doc
+    // (users/{uid} doc has franchiseIds: string[] per schema + functions)
+    function isFranchiseStaff(franchiseId) {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        franchiseId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.franchiseIds;
+    }
+
+    function isFranchiseOwnerOrStaff(franchiseId) {
+      return isPlatformOwner() || isFranchiseStaff(franchiseId) ||
+        hasAnyRole(['owner', 'manager', 'staff']);
+    }
+
+    // Customer owns their own data under a franchise (e.g. carts/{uid}, orders)
+    function isCustomerOwnerInFranchise(franchiseId, resourceUserId) {
+      return isSignedIn() && request.auth.uid == resourceUserId;
+    }
+
+    // ===== FRANCHISE-SCOPED CUSTOMER DATA (STRICT NON-NEGOTIABLE) =====
+    // Per Master Plan + P2.3: carts, orders, menu_items, categories, feedback, users (customer profiles),
+    // scheduledOrders, favorites/loyalty (via sub or franchise_profiles), promotions, etc.
+    // All under franchises/{franchiseId}/...
+
+    match /franchises/{franchiseId}/{document=**} {
+      // Default: deny everything not explicitly allowed below.
+      allow read, write: if false;
+    }
+
+    // Publicly readable franchise config (features, business hours) - needed for app bootstrap/white-label
+    match /franchises/{franchiseId}/config/{configDoc} {
+      allow read: if true;  // or isSignedIn() for sensitive
+      allow write: if isFranchiseOwnerOrStaff(franchiseId);
+    }
+
+    // Menu, categories, ingredients, customizations, promos: public read for customer app, staff write
+    match /franchises/{franchiseId}/menu_items/{itemId} {
+      allow read: if true;
+      allow write: if isFranchiseOwnerOrStaff(franchiseId);
+    }
+
+    match /franchises/{franchiseId}/categories/{catId} {
+      allow read: if true;
+      allow write: if isFranchiseOwnerOrStaff(franchiseId);
+    }
+
+    match /franchises/{franchiseId}/ingredient_metadata/{ingId} {
+      allow read: if true;
+      allow write: if isFranchiseOwnerOrStaff(franchiseId);
+    }
+
+    match /franchises/{franchiseId}/promotions/{promoId} {
+      allow read: if true;
+      allow write: if isFranchiseOwnerOrStaff(franchiseId);
+    }
+
+    // Banners: support both global top + per-franchise (P2 white-label)
+    match /franchises/{franchiseId}/banners/{bannerId} {
+      allow read: if true;
+      allow write: if isFranchiseOwnerOrStaff(franchiseId);
+    }
+
+    // Customer carts: only the owner (uid == doc id) or franchise staff
+    match /franchises/{franchiseId}/carts/{userId} {
+      allow read, write: if isCustomerOwnerInFranchise(franchiseId, userId) ||
+                           isFranchiseOwnerOrStaff(franchiseId);
+      // Also support legacy 'cart' singular if data exists
+    }
+    match /franchises/{franchiseId}/cart/{userId} {
+      allow read, write: if isCustomerOwnerInFranchise(franchiseId, userId) ||
+                           isFranchiseOwnerOrStaff(franchiseId);
+    }
+
+    // Orders: customer can read their own, staff manage all for franchise. Create via app (owner only)
+    match /franchises/{franchiseId}/orders/{orderId} {
+      allow read: if isCustomerOwnerInFranchise(franchiseId, resource.data.userId) ||
+                     isFranchiseOwnerOrStaff(franchiseId);
+      allow create: if isCustomerOwnerInFranchise(franchiseId, request.resource.data.userId);
+      allow update, delete: if isFranchiseOwnerOrStaff(franchiseId);
+    }
+
+    // Feedback: owner or staff (customer can submit for their orders)
+    match /franchises/{franchiseId}/feedback/{fbId} {
+      allow read: if isCustomerOwnerInFranchise(franchiseId, resource.data.userId) ||
+                     isFranchiseOwnerOrStaff(franchiseId);
+      allow create: if isSignedIn();  // validated server-side or by order ownership
+      allow update, delete: if isFranchiseOwnerOrStaff(franchiseId);
+    }
+
+    // Per-franchise customer profiles (favorites, loyalty, scheduled, addresses) under franchises/{}/users/{uid}
+    // (Note: current code also uses top-level users/{uid}/franchise_profiles/{fid} - migrate toward this path)
+    match /franchises/{franchiseId}/users/{userId} {
+      allow read, write: if isCustomerOwnerInFranchise(franchiseId, userId) ||
+                           isFranchiseOwnerOrStaff(franchiseId);
+    }
+
+    // Support chats per franchise
+    match /franchises/{franchiseId}/support_chats/{chatId} {
+      allow read, write: if isCustomerOwnerInFranchise(franchiseId, resource.data.userId) ||
+                           isFranchiseOwnerOrStaff(franchiseId);
+    }
+
+    // ===== TOP-LEVEL PLATFORM COLLECTIONS (STAFF / GLOBAL) =====
+    // users/{uid}: staff profiles + cross-franchise (franchiseIds array). Owner + platform admins.
+    match /users/{userId} {
+      allow read, write: if isSignedIn() && (request.auth.uid == userId || isPlatformOwner());
+      // Subcollections (addresses, franchise_profiles) inherit or explicit below
+    }
+
+    match /users/{userId}/addresses/{addrId} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId}/franchise_profiles/{franchiseId} {
+      // Legacy per-franchise customer data location (favorites/loyalty). Align to franchises/{}/users in future.
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Global config (features, language defaults) - read public or signed, write platform only
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if isPlatformOwner();
+    }
+
+    // Error logs, audit: platform or assigned staff. Customers shouldn't write directly (use callable)
+    match /error_logs/{logId} {
+      allow read: if isPlatformOwner() || hasRole('support');
+      allow write: if isPlatformOwner() || hasRole('support');  // or via functions only
+    }
+
+    match /audit_logs/{logId} {
+      allow read, write: if isPlatformOwner();
+    }
+
+    // Top-level banners (legacy global) - public read, platform write
+    match /banners/{bannerId} {
+      allow read: if true;
+      allow write: if isPlatformOwner();
+    }
+
+    // Alerts, other platform ops
+    match /alerts/{alertId} {
+      allow read, write: if isPlatformOwner();
+    }
+
+    // Default deny for anything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

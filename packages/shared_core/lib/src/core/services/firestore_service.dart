@@ -304,7 +304,7 @@ abstract class FirestoreService {
   // === BANNERS ===
   Future<void> addBanner(Banner banner);
   Future<void> updateBanner(Banner banner);
-  Stream<List<Banner>> getBanners();
+  Stream<List<Banner>> getBanners({String? franchiseId});
 
   // === CHAT SUPPORT ===
   Stream<List<Chat>> getSupportChats(String franchiseId);
@@ -606,7 +606,7 @@ abstract class FirestoreService {
   Stream<List<MenuItem>> getMenuItemsByCategory(String categoryId, {String? franchiseId, String? sortBy});
   Future<MenuItem?> getMenuItemById(String itemId, {String? franchiseId});
   Stream<List<Order>> getOrders({String? userId, String? franchiseId});
-  Future<bool> hasOrderFeedback(String orderId);
+  Future<bool> hasOrderFeedback(String orderId, {String? franchiseId});
   Stream<app_user.User?> getUserByIdStream(String userId);
 
   // === COLLECTIONS (pure Dart getters) ===
