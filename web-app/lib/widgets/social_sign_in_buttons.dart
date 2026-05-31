@@ -1,16 +1,13 @@
-﻿﻿// P1 Batch 3: Duplicated widget (exact filename match with mobile_app).
+// P1 Batch 3: Duplicated widget (exact filename match with mobile_app).
 // Mobile canonical in mobile_app/lib/widgets/.
 // Safe for deletion in next batch if admin previews can reuse via shared_ui package or path dependency.
 // Changes in Batch 3 were mobile-only + these markers.
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_core/src/core/services/auth_service.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/models/user.dart'
-    as admin_user;
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl.dart' show UserProfileNotifier;
 
 /// SocialSignInButtons (ADMIN VERSION)
 /// Only allows Google and Phone sign-in (no guest or demo modes).

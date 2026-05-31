@@ -143,4 +143,30 @@ class AuthServiceImpl implements AuthService {
       rethrow;
     }
   }
+
+  // P2.5: Invite token support (in-memory for base impl; web overrides for persistence)
+  String? _inviteToken;
+  @override
+  Future<String?> getInviteToken() async => _inviteToken;
+  @override
+  Future<void> saveInviteToken(String token) async {
+    _inviteToken = token;
+  }
+  @override
+  Future<void> clearInviteToken() async {
+    _inviteToken = null;
+  }
+
+  // P2.5 phone stubs (real impl requires reCAPTCHA + verificationId state; stub for now)
+  String? _pendingPhoneVerificationId;
+  @override
+  Future<void> signInWithPhone(String phoneNumber) async {
+    // TODO: integrate Firebase phone auth flow with verificationId
+    throw UnimplementedError('Phone sign-in requires additional UI state for SMS code (stub in P2.5)');
+  }
+
+  @override
+  Future<User?> verifySmsCode(String smsCode) async {
+    throw UnimplementedError('Phone verify requires pending verificationId (stub in P2.5)');
+  }
 }

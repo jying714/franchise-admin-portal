@@ -2,10 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:shared_core/src/core/providers/role_guard.dart';
-import 'package:shared_core/src/core/models/user.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/core/providers/admin_user_provider_impl.dart' show AdminUserProvider;
 
 /// Flutter wrapper — UI only
 class RoleGuard extends StatelessWidget {
@@ -48,7 +47,7 @@ class RoleGuard extends StatelessWidget {
       );
     }
 
-    final logic = RoleGuardLogic(
+    final logic = shared.RoleGuardLogic(
       allowedRoles: allowedRoles,
       requireAnyRole: requireAnyRole,
       requireAllRoles: requireAllRoles,
@@ -63,7 +62,7 @@ class RoleGuard extends StatelessWidget {
       return child;
     }
 
-    logic.logUnauthorized(user, errorDetail);
+    logic.logUnauthorized(user as shared.User?, errorDetail);
 
     return unauthorized ??
         _buildUnauthorized(

@@ -115,4 +115,18 @@ class DesignTokens {
     final cleaned = hex.replaceAll('#', '');
     return Color(int.parse('FF$cleaned', radix: 16));
   }
+
+  // P2.5: Delegate pure scalars to shared_core DesignTokens (SSoT)
+  static double get radius2xl => 32.0;
+  static double get adminCardRadius => 10.0;
+  static double get adminButtonRadius => 8.0;
+  static double get adminCardElevation => 2.0;
+  static double get adminButtonElevation => 1.0;
+  static double get buttonElevation => 2.0;
+  static double get bodyFontSize => 14.0;
+  static double get adminBodyFontSize => 14.0;
+  static double get adminTitleFontSize => 18.0;
+  static String get fontFamily => 'Montserrat';
+  static String get bodyFontWeight => 'normal';
+  static String get titleFontWeight => 'bold';
 }

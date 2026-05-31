@@ -5,20 +5,17 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/alert_list_screen.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/firebase_options.dart';
-import 'package:shared_core/src/core/services/auth_service.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
-import 'package:shared_core/src/core/services/analytics_service.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/core/theme_provider.dart';
-import 'package:shared_core/src/core/providers/franchise_provider.dart';
-import 'package:shared_core/src/core/providers/admin_user_provider.dart';
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
-import 'package:shared_core/src/core/providers/franchise_gate.dart';
-import 'package:shared_core/src/core/utils/error_logger.dart';
+import 'package:franchise_admin_portal/core/utils/app_local_storage.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl.dart' show UserProfileNotifier;
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/core/services/auth_service_impl.dart' show AuthServiceImpl;
 import 'package:franchise_admin_portal/landing_page.dart';
 import 'package:franchise_admin_portal/admin/sign_in/sign_in_screen.dart';
 import 'package:franchise_admin_portal/widgets/profile_gate_screen.dart';
@@ -156,17 +153,19 @@ void main() {
       );
     };
 
-    final firestoreService = FirestoreService();
+    final storage = AppLocalStorage();
+    final authService = AuthServiceImpl(); // web's impl with all P2.5 methods
+    final firestoreService = shared.FirestoreService(); // or local admin impl if needed
     runApp(
       MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => UserProfileNotifier()),
           ChangeNotifierProvider(
-              create: (_) => FranchiseProvider()), // âœ… REQUIRED
-          ChangeNotifierProvider(create: (_) => AuthService()),
+              create: (_) => shared.FranchiseProvider(storage)), // P2.5: ctor fixed
+          ChangeNotifierProvider<shared.AuthService>.value(value: authService),
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
-          Provider<FirestoreService>.value(value: firestoreService),
-          Provider(create: (_) => AnalyticsService()),
+          Provider<shared.FirestoreService>.value(value: firestoreService),
+          Provider(create: (_) => shared.AnalyticsServiceImpl()),
           StreamProvider<fb_auth.User?>.value(
             value: fb_auth.FirebaseAuth.instance.authStateChanges(),
             initialData: null,
@@ -292,7 +291,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
       selector: (_, notifier) => notifier.user != null && !notifier.loading,
       builder: (context, isUserReady, _) {
         final franchiseProvider =
-            Provider.of<FranchiseProvider>(context, listen: false);
+            Provider.of<shared.FranchiseProvider>(context, listen: false);
         final userNotifier =
             Provider.of<UserProfileNotifier>(context, listen: false);
         final firebaseUser = Provider.of<fb_auth.User?>(context, listen: false);
@@ -358,9 +357,9 @@ class FranchiseAppRootSplit extends StatelessWidget {
             ChangeNotifierProxyProvider2<FranchiseProvider, FirestoreService,
                 FranchiseInfoProvider>(
               create: (_) => FranchiseInfoProvider(
-                firestore: Provider.of<FirestoreService>(_, listen: false),
+                firestore: Provider.of<shared.FirestoreService>(_, listen: false),
                 franchiseProvider:
-                    Provider.of<FranchiseProvider>(_, listen: false),
+                    Provider.of<shared.FranchiseProvider>(_, listen: false),
               ),
               update: (_, franchiseProvider, firestoreService, previous) {
                 final provider = previous ??
@@ -395,7 +394,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
             ChangeNotifierProxyProvider2<FirestoreService, FranchiseProvider,
                 OnboardingProgressProvider>(
               create: (_) => OnboardingProgressProvider(
-                firestore: Provider.of<FirestoreService>(_, listen: false),
+                firestore: Provider.of<shared.FirestoreService>(_, listen: false),
                 franchiseId: '',
               ),
               update: (_, firestoreService, franchiseProvider, previous) {
@@ -418,7 +417,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 FranchiseInfoProvider, IngredientMetadataProvider>(
               create: (_) => IngredientMetadataProvider(
                 firestoreService:
-                    Provider.of<FirestoreService>(_, listen: false),
+                    Provider.of<shared.FirestoreService>(_, listen: false),
                 franchiseId: '',
               ),
               update: (_, firestore, franchiseInfo, previous) {
@@ -442,7 +441,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
             ChangeNotifierProxyProvider2<FirestoreService, FranchiseProvider,
                 CategoryProvider>(
               create: (_) => CategoryProvider(
-                firestore: Provider.of<FirestoreService>(_, listen: false),
+                firestore: Provider.of<shared.FirestoreService>(_, listen: false),
                 franchiseId: '',
               ),
               update: (_, firestore, franchiseProvider, previous) {
@@ -463,7 +462,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 FranchiseInfoProvider, MenuItemProvider>(
               create: (_) => MenuItemProvider(
                 firestoreService:
-                    Provider.of<FirestoreService>(_, listen: false),
+                    Provider.of<shared.FirestoreService>(_, listen: false),
                 franchiseInfoProvider:
                     Provider.of<FranchiseInfoProvider>(_, listen: false),
               ),
@@ -507,7 +506,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
               create: (_) => FranchiseeInvitationProvider(
                 service: FranchiseeInvitationService(
                   firestoreService:
-                      Provider.of<FirestoreService>(_, listen: false),
+                      Provider.of<shared.FirestoreService>(_, listen: false),
                 ),
               ),
             ),
@@ -545,9 +544,9 @@ class _FranchiseAuthenticatedRootState
       final adminUserProvider =
           Provider.of<AdminUserProvider>(context, listen: false);
       final firestoreService =
-          Provider.of<FirestoreService>(context, listen: false);
+          Provider.of<shared.FirestoreService>(context, listen: false);
       final franchiseProvider =
-          Provider.of<FranchiseProvider>(context, listen: false);
+          Provider.of<shared.FranchiseProvider>(context, listen: false);
 
       if (fbUser == null) {
         debugPrint('[FranchiseAuthenticatedRoot] âŒ No Firebase user.');
@@ -898,7 +897,7 @@ class _FranchiseAuthenticatedRootState
                     child: Builder(
                       builder: (ctx) {
                         final franchiseProvider =
-                            Provider.of<FranchiseProvider>(ctx, listen: false);
+                            Provider.of<shared.FranchiseProvider>(ctx, listen: false);
                         final franchiseId = franchiseProvider.franchiseId;
 
                         print('[ROUTER] ðŸ” franchiseId = "$franchiseId"');
@@ -1046,7 +1045,7 @@ class _FranchiseAuthenticatedRootState
                     menuItemProvider:
                         Provider.of<MenuItemProvider>(context, listen: false),
                     firestoreService:
-                        Provider.of<FirestoreService>(context, listen: false),
+                        Provider.of<shared.FirestoreService>(context, listen: false),
                     auditLogService:
                         Provider.of<AuditLogService>(context, listen: false),
                   ),

@@ -1,14 +1,13 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_core/src/core/services/auth_service.dart';
-import 'package:shared_core/src/core/services/firestore_service.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl.dart' show UserProfileNotifier;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/social_sign_in_buttons.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:shared_core/src/core/providers/user_profile_notifier.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -50,12 +49,12 @@ class _SignInScreenState extends State<SignInScreen> {
     });
   }
 
-  void _handleSuccess(User? user) async {
+  void _handleSuccess(shared.User? user) async {
     if (user != null) {
-      await user.getIdToken(true);
+      // getIdToken handled via authService if needed; shared.User has no direct method
       debugPrint('User signed in: ${user.email}');
       final firestoreService =
-          Provider.of<FirestoreService>(context, listen: false);
+          Provider.of<shared.FirestoreService>(context, listen: false);
 
       // --- NEW: Check Firestore user status ---
       final userDoc = await firestoreService.getUser(user.uid);
@@ -79,14 +78,14 @@ class _SignInScreenState extends State<SignInScreen> {
       // Existing logic:
       final userProfileNotifier =
           Provider.of<UserProfileNotifier>(context, listen: false);
-      userProfileNotifier.listenToUser(firestoreService, user.uid);
+      userProfileNotifier.listenToUser(firestoreService, user.id);
 
       final token =
-          Provider.of<AuthService>(context, listen: false).getInviteToken();
+          Provider.of<shared.AuthService>(context, listen: false).getInviteToken();
       if (token != null) {
         debugPrint(
             '[SignInScreen] Navigating to onboarding, token=$token'); // <-- ADD THIS LINE
-        Provider.of<AuthService>(context, listen: false).clearInviteToken();
+        Provider.of<shared.AuthService>(context, listen: false).clearInviteToken();
         Navigator.pushReplacementNamed(context, '/franchise-onboarding',
             arguments: {'token': token});
         return;
@@ -227,17 +226,12 @@ class _SignInScreenState extends State<SignInScreen> {
                               return;
                             }
                             try {
-                              final authService = Provider.of<AuthService>(
+                              final authService = Provider.of<shared.AuthService>(
                                   context,
                                   listen: false);
-                              final user = await authService.signInWithEmail(
-                                  email, password);
-                              if (user != null) {
-                                _handleSuccess(user);
-                              } else {
-                                setState(() => _errorMessage =
-                                    "Sign in failed. Check your credentials.");
-                              }
+                              final user = await authService.signInWithEmailAndPassword(
+                                  email: email, password: password);
+                              _handleSuccess(user);
                             } catch (e) {
                               setState(() => _errorMessage = e.toString());
                             }
@@ -268,10 +262,10 @@ class _SignInScreenState extends State<SignInScreen> {
                               return;
                             }
                             try {
-                              final authService = Provider.of<AuthService>(
+                              final authService = Provider.of<shared.AuthService>(
                                   context,
                                   listen: false);
-                              await authService.resetPassword(email);
+                              await authService.sendPasswordResetEmail(email);
                               setState(() {
                                 _errorMessage = "Password reset email sent!";
                               });
