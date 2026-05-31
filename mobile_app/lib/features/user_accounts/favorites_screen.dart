@@ -119,12 +119,12 @@ class _FavoritesScreenState extends State<FavoritesScreen>
 
     if (_userId == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            localizations.favorites,
-            style: TextStyle(
-              fontSize: shared.DesignTokens.titleFontSize,
-              color: UiConfig.foregroundColor,
+        appBar: FranchiseAppBar(
+          title: localizations.favorites,
+          showLogo: false,
+          backgroundColor: UiConfig.primaryColor,
+          foregroundColor: UiConfig.foregroundColor,
+          centerTitle: true,
               fontWeight: UiConfig.bold,
               fontFamily: shared.DesignTokens.fontFamily,
             ),

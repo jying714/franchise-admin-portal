@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class TrackingScreen extends StatelessWidget {
@@ -11,20 +12,13 @@ class TrackingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          localizations.trackOrder,
-          style: TextStyle(
-            fontSize: shared.DesignTokens.titleFontSize,
-            color: UiConfig.foregroundColor,
-            fontWeight: UiConfig.bold,
-            fontFamily: shared.DesignTokens.fontFamily,
-          ),
-        ),
+      appBar: FranchiseAppBar(
+        title: localizations.trackOrder,
+        showLogo: false,
         backgroundColor: UiConfig.primaryColor,
+        foregroundColor: UiConfig.foregroundColor,
         centerTitle: true,
         elevation: 0,
-        iconTheme: IconThemeData(color: UiConfig.foregroundColor),
       ),
       backgroundColor: UiConfig.backgroundColor,
       body: Center(
