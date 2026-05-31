@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_core/shared_core.dart' as shared;
@@ -68,7 +69,18 @@ class _CategoryScreenState extends State<CategoryScreen> {
     if (user == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(loc.logInToOrder)),
+          SnackBar(
+            content: Text(
+              loc.logInToOrder,
+              style: TextStyle(
+                color: UiConfig.textColor,
+                fontFamily: shared.DesignTokens.fontFamily,
+              ),
+            ),
+            backgroundColor: UiConfig.surfaceColor,
+            duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
       return;
@@ -78,8 +90,15 @@ class _CategoryScreenState extends State<CategoryScreen> {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text("Franchise not selected. Please try again.")),
+          SnackBar(
+            content: Text(
+              "Franchise not selected. Please try again.",
+              style: TextStyle(color: UiConfig.textColor),
+            ),
+            backgroundColor: UiConfig.surfaceColor,
+            duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
       return;
@@ -99,20 +118,35 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(loc.addedToCartMessage)),
+          SnackBar(
+            content: Text(
+              loc.addedToCartMessage,
+              style: TextStyle(
+                color: UiConfig.textColor,
+                fontFamily: shared.DesignTokens.fontFamily,
+              ),
+            ),
+            backgroundColor: UiConfig.surfaceColor,
+            duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to add to cart")),
+          SnackBar(
+            content: Text(
+              "Failed to add to cart",
+              style: TextStyle(color: UiConfig.textColor),
+            ),
+            backgroundColor: UiConfig.surfaceColor,
+            duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     }
-  }
-
-  bool _customizationsMatch(dynamic a, dynamic b) {
-    return a.toString() == b.toString();
   }
 
   @override
@@ -122,6 +156,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
     return Scaffold(
       appBar: FranchiseAppBar(
         title: widget.categoryName,
+        showLogo: true,
+        logoUrl: UiConfig.currentLogoUrl,
+        logoAsset: shared.BrandingConfig.appBarLogoAsset,
         actions: [
           ProfileIconButton(
             onPressed: () {
@@ -142,8 +179,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
           const SizedBox(width: 10),
         ],
       ),
-      backgroundColor: Colors.white,
-      body: Consumer<shared.FranchiseProvider>(
+      backgroundColor: UiConfig.backgroundColor,
+      body: SafeArea(
+        bottom: true,
+        child: Consumer<shared.FranchiseProvider>(
         builder: (context, provider, child) {
           if (!provider.hasValidFranchise) {
             return const Center(child: CircularProgressIndicator());
@@ -212,6 +251,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           menuItem: item,
                           showDescription: true,
                           expanded: true,
+                          // Pass isFavorited from parent stream when available (see diagnostic)
+                          isFavorited: null, // TODO: wire real-time favorites IDs stream here for full reactivity
                           onAddToCart: (
                             menuItem,
                             selectedCustomizations,
@@ -231,6 +272,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           );
         },
       ),
+      ), // SafeArea close
     );
   }
 }

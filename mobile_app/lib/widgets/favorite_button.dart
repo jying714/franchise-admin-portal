@@ -34,12 +34,14 @@ class _FavoriteButtonState extends State<FavoriteButton> {
     required bool isFavorited,
     required shared.FirestoreService firestoreService,
     required AppLocalizations loc,
+    required String franchiseId,
   }) async {
     if (widget.userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(loc.signInToFavoriteTooltip),
-          duration: const Duration(seconds: 2),
+          duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -47,13 +49,14 @@ class _FavoriteButtonState extends State<FavoriteButton> {
 
     setState(() => _isProcessing = true);
     try {
+      final fid = franchiseId != 'unknown' ? franchiseId : null;
       if (isFavorited) {
         await firestoreService.removeFavoriteMenuItemForUser(
-            widget.userId!, widget.itemId);
+            widget.userId!, widget.itemId, franchiseId: fid);
         widget.onChanged?.call(false);
       } else {
         await firestoreService.addFavoriteMenuItemForUser(
-            widget.userId!, widget.itemId);
+            widget.userId!, widget.itemId, franchiseId: fid);
         widget.onChanged?.call(true);
       }
     } finally {
@@ -77,7 +80,8 @@ class _FavoriteButtonState extends State<FavoriteButton> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(loc.signInToFavoriteTooltip),
-              duration: const Duration(seconds: 2),
+              duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+              behavior: SnackBarBehavior.floating,
             ),
           );
         },
@@ -97,9 +101,13 @@ class _FavoriteButtonState extends State<FavoriteButton> {
       );
     }
 
-    // Listen to favorite state via StreamBuilder
+    // Franchise-aware + reactive favorite state via StreamBuilder (real-time from Firestore)
+    final franchiseProvider = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final franchiseId = franchiseProvider.currentFranchiseId;
+    final fidForCall = franchiseId != 'unknown' ? franchiseId : null;
+
     return StreamBuilder<List<shared.MenuItem>>(
-      stream: firestoreService.getFavoriteMenuItemsForUser(widget.userId!),
+      stream: firestoreService.getFavoriteMenuItemsForUser(widget.userId!, franchiseId: fidForCall),
       builder: (context, snapshot) {
         final isFavorited = snapshot.hasData
             ? snapshot.data!.any((mi) => mi.id == widget.itemId)
@@ -121,6 +129,7 @@ class _FavoriteButtonState extends State<FavoriteButton> {
                     isFavorited: isFavorited,
                     firestoreService: firestoreService,
                     loc: loc,
+                    franchiseId: franchiseId,
                   ),
         );
       },

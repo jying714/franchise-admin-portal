@@ -7,6 +7,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// Reusable loyalty points summary widget for Profile and other screens.
 /// Franchise-scoped via FranchiseProvider. Taps through to full LoyaltyScreen.
+/// P2: Colors (primary) now fully dynamic via UiConfig (driven by FranchiseProvider branding).
 /// Uses only public shared_core barrel.
 class LoyaltyPointsWidget extends StatefulWidget {
   const LoyaltyPointsWidget({super.key});
@@ -16,51 +17,8 @@ class LoyaltyPointsWidget extends StatefulWidget {
 }
 
 class _LoyaltyPointsWidgetState extends State<LoyaltyPointsWidget> {
-  Future<shared.Loyalty?>? _loyaltyFuture;
+  // Real-time reactive via franchiseProfileStream (no more one-shot Future)
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_loyaltyFuture == null) {
-      final authService =
-          Provider.of<shared.AuthService>(context, listen: false);
-      final firestoreService =
-          Provider.of<shared.FirestoreService>(context, listen: false);
-      final franchiseProvider =
-          Provider.of<shared.FranchiseProvider>(context, listen: false);
-
-      final uid = authService.currentUser?.id;
-      final franchiseId = franchiseProvider.currentFranchiseId;
-
-      if (uid != null && franchiseProvider.hasValidFranchise) {
-        _loyaltyFuture = _fetchLoyalty(firestoreService, uid, franchiseId);
-      }
-    }
-  }
-
-  Future<shared.Loyalty?> _fetchLoyalty(
-    shared.FirestoreService fs,
-    String uid,
-    String franchiseId,
-  ) async {
-    final map = await fs.getLoyaltyForUser(uid, franchiseId: franchiseId);
-    if (map == null) return shared.Loyalty();
-
-    final redeemedList =
-        (map['redeemedRewards'] as List<dynamic>? ?? []).map((item) {
-      final r = item as Map<String, dynamic>;
-      return shared.LoyaltyReward(
-        name: r['rewardId'] ?? r['name'] ?? 'Reward',
-        points: (r['points'] as num?)?.toInt() ?? 0,
-      );
-    }).toList();
-
-    return shared.Loyalty(
-      points: (map['points'] as num?)?.toInt() ?? 0,
-      redeemedRewards: redeemedList,
-      transactions: map['transactions'] ?? const [],
-    );
-  }
 
   String _getTierTitle(int points, AppLocalizations loc) {
     if (points >= 1000) return loc.loyaltyRankLegend;
@@ -73,14 +31,29 @@ class _LoyaltyPointsWidgetState extends State<LoyaltyPointsWidget> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
 
-    if (_loyaltyFuture == null) {
+    final authService = Provider.of<shared.AuthService>(context, listen: false);
+    final firestoreService = Provider.of<shared.FirestoreService>(context, listen: false);
+    final franchiseProvider = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final uid = authService.currentUser?.id;
+    final fid = franchiseProvider.currentFranchiseId;
+
+    if (uid == null || !franchiseProvider.hasValidFranchise) {
       return const SizedBox.shrink();
     }
 
-    return FutureBuilder<shared.Loyalty?>(
-      future: _loyaltyFuture,
+    // Real-time reactive loyalty summary (franchise-scoped profile stream)
+    return StreamBuilder<Map<String, dynamic>?>(
+      stream: firestoreService.franchiseProfileStream(uid, fid),
       builder: (context, snapshot) {
-        final loyalty = snapshot.data ?? shared.Loyalty();
+        final profile = snapshot.data ?? {};
+        final map = (profile['loyalty'] as Map?)?.cast<String, dynamic>();
+        final loyalty = map == null
+            ? shared.Loyalty()
+            : shared.Loyalty(
+                points: (map['points'] as num?)?.toInt() ?? 0,
+                redeemedRewards: const [],
+                transactions: const [],
+              );
         final pts = loyalty.points;
         final tier = _getTierTitle(pts, loc);
         final progress = (pts % 100) / 100.0;
@@ -89,13 +62,11 @@ class _LoyaltyPointsWidgetState extends State<LoyaltyPointsWidget> {
           color: UiConfig.surfaceColor,
           elevation: shared.DesignTokens.cardElevation,
           shape: RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(shared.DesignTokens.cardRadius),
+            borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
           ),
           margin: const EdgeInsets.symmetric(vertical: 8),
           child: InkWell(
-            borderRadius:
-                BorderRadius.circular(shared.DesignTokens.cardRadius),
+            borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const LoyaltyScreen()),

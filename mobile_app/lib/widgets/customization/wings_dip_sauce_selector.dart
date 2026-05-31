@@ -155,7 +155,7 @@ class WingsDipSauceSelector extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: selected
                           ? UiConfig.primaryColor.withOpacity(0.11)
-                          : Colors.transparent,
+                          : UiConfig.cardColor.withValues(alpha: 0.0),
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
                         color: selected

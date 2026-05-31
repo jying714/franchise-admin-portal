@@ -9,6 +9,7 @@ import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/category/category_screen.dart';
 import 'package:franchise_mobile_app/features/ordering/cart_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
+import 'package:franchise_mobile_app/features/ordering/qr_scan_screen.dart'; // P2 QR foundations
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/widgets/header/profile_icon_button.dart';
 import 'package:franchise_mobile_app/widgets/banner/banner_carousel.dart';
@@ -53,6 +54,15 @@ class MainMenuScreen extends material.StatelessWidget {
               material.MaterialPageRoute(builder: (_) => const ProfileScreen()),
             ),
           ),
+          // P2 QR foundations: scanner entry point in app bar
+          material.IconButton(
+            icon: const material.Icon(material.Icons.qr_code_scanner),
+            tooltip: 'Scan Franchise QR',
+            onPressed: () => material.Navigator.push(
+              context,
+              material.MaterialPageRoute(builder: (_) => const QrScanScreen()),
+            ),
+          ),
           const CartIconBadge(
             tooltip: 'Cart',
             onPressed: null, // Will be overridden in Consumer
@@ -81,6 +91,15 @@ class MainMenuScreen extends material.StatelessWidget {
                       builder: (_) => const ProfileScreen()),
                 ),
               ),
+              // P2 QR button (duplicated for CartIconBadge override context)
+              material.IconButton(
+                icon: const material.Icon(material.Icons.qr_code_scanner),
+                tooltip: 'Scan Franchise QR',
+                onPressed: () => material.Navigator.push(
+                  context,
+                  material.MaterialPageRoute(builder: (_) => const QrScanScreen()),
+                ),
+              ),
               CartIconBadge(
                 tooltip: loc.cart,
                 onPressed: () => material.Navigator.push(
@@ -96,7 +115,7 @@ class MainMenuScreen extends material.StatelessWidget {
               children: [
                 // Banner
                 material.StreamBuilder<List<shared.Banner>>(
-                  stream: firestoreService.getBanners(),
+                  stream: firestoreService.getBanners(franchiseId: provider.currentFranchiseId),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState ==
                         material.ConnectionState.waiting) {

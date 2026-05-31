@@ -1,0 +1,134 @@
+rules_version = '2';
+
+// P2 Final Hardened Rules - Tier 4
+// Reviewed against full_firestore_schema + all customer flows in shared_core FirestoreServiceImpl
+// Covers: loyalty, favorites (franchise_profiles), scheduledOrders, support_chats, promotions, franchise config, per-franchise users
+// Preserves collectionGroup for feedback (hasOrderFeedback) and any remaining cross-tenant admin patterns
+// All customer data strictly prefers franchises/{franchiseId}/...
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // === HELPERS (kept from PM-reviewed version) ===
+    function isSignedIn() { return request.auth != null; }
+
+    function hasAnyRole(roles) {
+      return isSignedIn() &&
+             request.auth.token.roles is list &&
+             request.auth.token.roles.hasAny(roles);
+    }
+
+    function isOwnerOfUser(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isFranchiseStaff(franchiseId) {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             franchiseId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.franchiseIds;
+    }
+
+    function isFranchiseOwnerOrStaff(franchiseId) {
+      return hasAnyRole(['platform_owner', 'developer', 'hq_owner']) ||
+             isFranchiseStaff(franchiseId) ||
+             hasAnyRole(['owner', 'manager', 'staff']);
+    }
+
+    // === PUBLIC READS (menu, categories, banners, ingredients) - required for white-label customer app ===
+    match /{path=**}/menu_items/{doc} { allow read: if true; }
+    match /{path=**}/categories/{doc} { allow read: if true; }
+    match /{path=**}/banners/{doc} { allow read: if true; }
+    match /{path=**}/ingredient_metadata/{doc} { allow read: if true; }
+    match /{path=**}/ingredient_types/{doc} { allow read: if true; }
+
+    // === USERS + PER-FRANCHISE PROFILES (Favorites + Loyalty live here) ===
+    match /users/{userId} {
+      allow read, write: if isOwnerOfUser(userId) || hasAnyRole(['platform_owner', 'developer', 'hq_owner', 'manager']);
+
+      // Favorites / Loyalty / Scheduled per franchise (current architecture)
+      match /franchise_profiles/{franchiseId} {
+        allow read, write: if isOwnerOfUser(userId) || hasAnyRole(['platform_owner', 'developer', 'hq_owner', 'manager']);
+      }
+    }
+
+    // === FRANCHISE-SCOPED CUSTOMER DATA (Master Plan requirement) ===
+    // Carts
+    match /franchises/{franchiseId}/carts/{userId} {
+      allow read, write: if isOwnerOfUser(userId) || isFranchiseOwnerOrStaff(franchiseId);
+    }
+
+    // Per-franchise customer profiles (loyalty, favorites, addresses when stored here)
+    match /franchises/{franchiseId}/users/{userId} {
+      allow read, write: if isOwnerOfUser(userId) || isFranchiseOwnerOrStaff(franchiseId);
+    }
+
+    // Orders
+    match /franchises/{franchiseId}/orders/{orderId} {
+      allow create, read, update: if isOwnerOfUser(request.resource.data.userId) ||
+                                     request.auth.uid == resource.data.userId ||
+                                     isFranchiseOwnerOrStaff(franchiseId);
+      allow delete: if isFranchiseOwnerOrStaff(franchiseId);
+    }
+
+    // Scheduled Orders (critical customer flow)
+    match /franchises/{franchiseId}/scheduledOrders/{orderId} {
+      allow create, read, update, delete: if isOwnerOfUser(request.resource.data.userId) ||
+                                             request.auth.uid == resource.data.userId ||
+                                             isFranchiseOwnerOrStaff(franchiseId);
+    }
+
+    // Feedback - collectionGroup intentionally allowed for hasOrderFeedback() cross-tenant check in lightweight service
+    match /{path=**}/feedback/{feedbackId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if isFranchiseOwnerOrStaff(resource.data.franchiseId);
+    }
+
+    // Promotions (franchise-scoped + legacy top-level support)
+    match /franchises/{franchiseId}/promotions/{promoId} {
+      allow read: if true;
+      allow write: if isFranchiseOwnerOrStaff(franchiseId);
+    }
+    match /promotions/{promoId} {
+      allow read: if true;
+      allow write: if hasAnyRole(['platform_owner', 'developer', 'hq_owner']);
+    }
+
+    // Support / Chat
+    match /franchises/{franchiseId}/support_chats/{chatId} {
+      allow read, write: if isOwnerOfUser(resource.data.userId) || isFranchiseOwnerOrStaff(franchiseId);
+      allow create: if isSignedIn();
+    }
+    match /support_chats/{chatId} {
+      allow read, write: if hasAnyRole(['platform_owner', 'developer', 'hq_owner', 'manager']);
+    }
+
+    // Franchise config (features, business hours, etc.)
+    match /franchises/{franchiseId}/config/{docId} {
+      allow read: if true;                    // needed for white-label bootstrap
+      allow write: if isFranchiseOwnerOrStaff(franchiseId);
+    }
+
+    // === PLATFORM / ADMIN PATHS ===
+    match /onboarding_progress/{franchiseId} {
+      allow read, write: if hasAnyRole(['platform_owner', 'developer', 'hq_owner']);
+    }
+    match /franchise_subscriptions/{subId} {
+      allow read: if hasAnyRole(['platform_owner', 'developer', 'hq_owner', 'manager']);
+    }
+    match /audit_logs/{logId} {
+      allow read, write: if hasAnyRole(['platform_owner', 'developer']);
+    }
+    match /error_logs/{docId} {
+      allow create: if isSignedIn();
+      allow read, write: if hasAnyRole(['platform_owner', 'developer']);
+    }
+
+    // Top-level users (staff profiles) - already covered above
+
+    // Final deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

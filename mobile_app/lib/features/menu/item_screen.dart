@@ -6,7 +6,6 @@ import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/ordering/cart_screen.dart';
 import 'package:franchise_mobile_app/widgets/customization/customization_modal.dart';
 import 'package:franchise_mobile_app/widgets/favorite_button.dart';
-// P1 Batch 1 cross-ref updated: uses updated customization_modal with FranchiseProvider scoping
 import 'package:franchise_mobile_app/widgets/dietary_allergen_chips_row.dart';
 import 'package:franchise_mobile_app/widgets/menu_item_image.dart';
 import 'package:franchise_mobile_app/widgets/included_ingredients_preview.dart';
@@ -61,6 +60,10 @@ class _ItemScreenState extends State<ItemScreen> {
     final user = FirebaseAuth.instance.currentUser;
     _userId = user?.uid;
     _time = DateTime.now().toIso8601String().substring(0, 16);
+
+    // DEBUG: Check name at init
+    print(
+        "=== ITEM SCREEN INIT DEBUG === menuItem.name = '${widget.menuItem.name}' | Length: ${widget.menuItem.name.length}");
   }
 
   bool get _hasCustomizations {
@@ -85,14 +88,33 @@ class _ItemScreenState extends State<ItemScreen> {
 
     if (franchiseId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please select a franchise location to order.')),
+        SnackBar(
+          content: Text(
+            'Please select a franchise location to order.',
+            style: TextStyle(color: UiConfig.textColor),
+          ),
+          backgroundColor: UiConfig.surfaceColor,
+          duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       return;
     }
 
     if (_userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.signInToOrderMessage)),
+        SnackBar(
+          content: Text(
+            loc.signInToOrderMessage,
+            style: TextStyle(
+              color: UiConfig.textColor,
+              fontFamily: shared.DesignTokens.fontFamily,
+            ),
+          ),
+          backgroundColor: UiConfig.surfaceColor,
+          duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       return;
     }
@@ -117,11 +139,33 @@ class _ItemScreenState extends State<ItemScreen> {
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.addedToCartMessage)),
+        SnackBar(
+          content: Text(
+            loc.addedToCartMessage,
+            style: TextStyle(
+              color: UiConfig.textColor,
+              fontFamily: shared.DesignTokens.fontFamily,
+            ),
+          ),
+          backgroundColor: UiConfig.surfaceColor,
+          duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.cartAddError)),
+        SnackBar(
+          content: Text(
+            loc.cartAddError,
+            style: TextStyle(
+              color: UiConfig.textColor,
+              fontFamily: shared.DesignTokens.fontFamily,
+            ),
+          ),
+          backgroundColor: UiConfig.surfaceColor,
+          duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     } finally {
       setState(() => _isProcessing = false);
@@ -135,8 +179,13 @@ class _ItemScreenState extends State<ItemScreen> {
     return Scaffold(
       appBar: FranchiseAppBar(
         title: widget.menuItem.name,
+        titleStyle: UiConfig.titleStyle.copyWith(
+          color: UiConfig.foregroundColorDark,
+          fontSize: 20,
+        ),
         centerTitle: true,
-        showLogo: shared.BrandingConfig.showLogoInAppBar,
+        showLogo: true,
+        logoUrl: UiConfig.currentLogoUrl,
         logoAsset: shared.BrandingConfig.appBarLogoAsset,
         logoHeight: 40,
         actions: [
@@ -184,25 +233,34 @@ class _ItemScreenState extends State<ItemScreen> {
                     height: shared.DesignTokens.menuItemImageHeight,
                   ),
                 ),
+
                 const SizedBox(height: shared.DesignTokens.gridSpacing),
+
+                // DEBUG: Right before name
+                Builder(
+                  builder: (context) {
+                    print("=== ITEM SCREEN NAME SECTION REACHED ===");
+                    return const SizedBox
+                        .shrink(); // Returns an invisible 0x0 widget
+                  },
+                ),
 
                 // ITEM NAME + PRICE
                 Text(
                   widget.menuItem.name,
-                  style: TextStyle(
-                    fontSize: shared.DesignTokens.titleFontSize,
-                    fontWeight: UiConfig.fontWeightBold,
-                    color: UiConfig.textColor,
-                    fontFamily: shared.DesignTokens.fontFamily,
+                  style: UiConfig.titleStyle.copyWith(
+                    color: Colors.black,
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   '\$${widget.menuItem.price.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: shared.DesignTokens.bodyFontSize,
-                    color: UiConfig.textColor,
-                    fontWeight: UiConfig.fontWeightMedium,
-                    fontFamily: shared.DesignTokens.fontFamily,
+                  style: UiConfig.bodyBoldStyle.copyWith(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: shared.DesignTokens.gridSpacing),
@@ -258,7 +316,8 @@ class _ItemScreenState extends State<ItemScreen> {
                                           shared.FirestoreService>(
                                         context,
                                         listen: false,
-                                      ).getMenuItemById(widget.itemId);
+                                      ).getMenuItemById(widget.itemId,
+                                          franchiseId: Provider.of<shared.FranchiseProvider>(context, listen: false).currentFranchiseId);
 
                                       if (latestMenuItem == null) {
                                         ScaffoldMessenger.of(context)
@@ -274,7 +333,7 @@ class _ItemScreenState extends State<ItemScreen> {
                                         builder: (context) =>
                                             CustomizationModal(
                                           menuItem: latestMenuItem,
-                                          ingredientMetadata: const {}, // Pass real data if available
+                                          ingredientMetadata: const {},
                                           initialQuantity: 1,
                                           onConfirm: (customizations, quantity,
                                               totalPrice) {

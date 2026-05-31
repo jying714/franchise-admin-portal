@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 
 // P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
@@ -12,7 +13,8 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
   final TextStyle? titleStyle;
   final bool centerTitle;
   final bool showLogo;
-  final String? logoAsset;
+  final String? logoAsset; // Local fallback asset
+  final String? logoUrl;   // Remote logo URL (from FranchiseProvider / UiConfig)
   final double logoHeight;
   final List<Widget>? actions;
   final Widget? leading;
@@ -30,6 +32,7 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.centerTitle = true,
     this.showLogo = false,
     this.logoAsset,
+    this.logoUrl,
     this.logoHeight = 40,
     this.actions,
     this.leading,
@@ -49,20 +52,38 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
     // FranchiseProvider injected for franchise/{franchiseId}/ scoping (Batch 2)
     Provider.of<shared.FranchiseProvider>(context, listen: false);
 
-    final bool displayLogo =
-        showLogo && logoAsset != null && logoAsset!.isNotEmpty;
+    final bool hasRemoteLogo = showLogo && logoUrl != null && logoUrl!.isNotEmpty;
+    final bool hasLocalLogo = showLogo && logoAsset != null && logoAsset!.isNotEmpty;
+    final bool displayLogo = hasRemoteLogo || hasLocalLogo;
+
     final color = backgroundColor ?? UiConfig.primaryColor;
+
+    Widget logoWidget;
+    if (hasRemoteLogo) {
+      logoWidget = NetworkImageWidget(
+        imageUrl: logoUrl,
+        fallbackAsset: logoAsset ?? shared.BrandingConfig.defaultPizzaIcon,
+        width: logoHeight * 1.6,
+        height: logoHeight,
+        fit: BoxFit.contain,
+      );
+    } else if (hasLocalLogo) {
+      logoWidget = Image.asset(
+        logoAsset!,
+        height: logoHeight,
+        fit: BoxFit.contain,
+        semanticLabel: title,
+      );
+    } else {
+      logoWidget = const SizedBox.shrink();
+    }
+
     final titleWidget = displayLogo
         ? Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset(
-                logoAsset!,
-                height: logoHeight,
-                fit: BoxFit.contain,
-                semanticLabel: title,
-              ),
-              const SizedBox(width: 10),
+              logoWidget,
+              if (hasRemoteLogo || hasLocalLogo) const SizedBox(width: 10),
               Flexible(
                 child: Text(
                   title,

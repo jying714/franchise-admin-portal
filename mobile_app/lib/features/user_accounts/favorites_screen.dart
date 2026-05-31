@@ -4,8 +4,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:shared_core/src/core/models/favorite_order.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
+import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
 import 'dart:convert';
 
 class FavoritesScreen extends StatefulWidget {
@@ -117,30 +119,25 @@ class _FavoritesScreenState extends State<FavoritesScreen>
 
     if (_userId == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            localizations.favorites,
-            style: TextStyle(
-              fontSize: shared.DesignTokens.titleFontSize,
-              color: UiConfig.foregroundColor,
-              fontWeight: UiConfig.bold,
-              fontFamily: shared.DesignTokens.fontFamily,
-            ),
-          ),
+        appBar: FranchiseAppBar(
+          title: localizations.favorites,
+          showLogo: false,
           backgroundColor: UiConfig.primaryColor,
+          foregroundColor: UiConfig.foregroundColor,
           centerTitle: true,
           elevation: 0,
-          iconTheme: IconThemeData(color: UiConfig.foregroundColor),
         ),
         backgroundColor: UiConfig.backgroundColor,
-        body: Center(
-          child: Text(
-            localizations.mustSignInForFavorites,
-            style: TextStyle(
-              fontSize: shared.DesignTokens.bodyFontSize,
-              color: UiConfig.textColor,
-              fontFamily: shared.DesignTokens.fontFamily,
-              fontWeight: UiConfig.normal,
+        body: SafeArea(
+          child: Center(
+            child: Text(
+              localizations.mustSignInForFavorites,
+              style: TextStyle(
+                fontSize: shared.DesignTokens.bodyFontSize,
+                color: UiConfig.textColor,
+                fontFamily: shared.DesignTokens.fontFamily,
+                fontWeight: UiConfig.normal,
+              ),
             ),
           ),
         ),
@@ -148,20 +145,12 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          localizations.favorites,
-          style: TextStyle(
-            fontSize: shared.DesignTokens.titleFontSize,
-            color: UiConfig.foregroundColor,
-            fontWeight: UiConfig.bold,
-            fontFamily: shared.DesignTokens.fontFamily,
-          ),
-        ),
-        backgroundColor: UiConfig.primaryColor,
+      appBar: FranchiseAppBar(
+        title: localizations.favorites,
+        showLogo: true,
+        logoUrl: UiConfig.currentLogoUrl,
+        logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
-        elevation: 0,
-        iconTheme: IconThemeData(color: UiConfig.foregroundColor),
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: UiConfig.foregroundColor,
@@ -178,12 +167,15 @@ class _FavoritesScreenState extends State<FavoritesScreen>
         ),
       ),
       backgroundColor: UiConfig.backgroundColor,
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          FavoriteMenuItemsTab(userId: _userId!),
-          FavoriteOrdersTab(userId: _userId!),
-        ],
+      body: SafeArea(
+        bottom: true,
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            FavoriteMenuItemsTab(userId: _userId!),
+            FavoriteOrdersTab(userId: _userId!),
+          ],
+        ),
       ),
     );
   }
@@ -196,114 +188,123 @@ class FavoriteMenuItemsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
-    final firestoreService =
-        Provider.of<shared.FirestoreService>(context, listen: false);
-    final franchiseProvider =
-        Provider.of<shared.FranchiseProvider>(context, listen: false);
-    final franchiseId = franchiseProvider.currentFranchiseId;
 
-    return StreamBuilder<List<shared.MenuItem>>(
-      stream: firestoreService.getFavoriteMenuItemsForUser(userId,
-          franchiseId: franchiseId != 'unknown' ? franchiseId : null),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final items = snapshot.data ?? [];
-        if (items.isEmpty) {
-          return Center(
-            child: Text(
-              localizations.noFavoriteMenuItems,
-              style: TextStyle(
-                fontSize: shared.DesignTokens.bodyFontSize,
-                color: UiConfig.textColor,
-                fontFamily: shared.DesignTokens.fontFamily,
-                fontWeight: UiConfig.normal,
-              ),
-            ),
-          );
-        }
-        return Padding(
-          padding: UiConfig.cardPadding,
-          child: ListView.builder(
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              final item = items[index];
-              return Card(
-                elevation: shared.DesignTokens.cardElevation,
-                margin: const EdgeInsets.symmetric(
-                  vertical: shared.DesignTokens.gridSpacing / 2,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(shared.DesignTokens.cardRadius),
-                ),
-                color: UiConfig.surfaceColor,
-                child: ListTile(
-                  leading: NetworkImageWidget(
-                    imageUrl: item.image ?? '',
-                    fallbackAsset: shared.BrandingConfig.defaultPizzaIcon,
-                    width: shared.DesignTokens.menuItemImageWidth,
-                    height: shared.DesignTokens.menuItemImageHeight,
-                    fit: BoxFit.cover,
-                    borderRadius:
-                        BorderRadius.circular(shared.DesignTokens.imageRadius),
+    return Consumer<shared.FranchiseProvider>(
+      builder: (context, franchiseProvider, child) {
+        final firestoreService =
+            Provider.of<shared.FirestoreService>(context, listen: false);
+        final franchiseId = franchiseProvider.currentFranchiseId;
+        final fid = franchiseId != 'unknown' ? franchiseId : null;
+
+        return StreamBuilder<List<shared.MenuItem>>(
+          stream: firestoreService.getFavoriteMenuItemsForUser(userId, franchiseId: fid),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  localizations.loyaltyErrorLoading, // reuse generic error
+                  style: TextStyle(
+                    fontSize: shared.DesignTokens.bodyFontSize,
+                    color: UiConfig.errorTextColor,
+                    fontFamily: shared.DesignTokens.fontFamily,
+                    fontWeight: UiConfig.normal,
                   ),
-                  title: Text(
-                    item.name,
-                    style: TextStyle(
-                      fontSize: shared.DesignTokens.bodyFontSize,
-                      color: UiConfig.textColor,
-                      fontWeight: UiConfig.bold,
-                      fontFamily: shared.DesignTokens.fontFamily,
-                    ),
-                  ),
-                  subtitle: Text(
-                    item.description,
-                    style: TextStyle(
-                      fontSize: shared.DesignTokens.captionFontSize,
-                      color: UiConfig.secondaryTextColor,
-                      fontFamily: shared.DesignTokens.fontFamily,
-                      fontWeight: UiConfig.normal,
-                    ),
-                  ),
-                  trailing: IconButton(
-                    icon: Icon(
-                      Icons.favorite,
-                      color: UiConfig.errorColor,
-                    ),
-                    tooltip: localizations.removeFromFavoritesTooltip,
-                    onPressed: () async {
-                      await firestoreService.removeFavoriteMenuItemForUser(
-                          userId, item.id,
-                          franchiseId:
-                              franchiseId != 'unknown' ? franchiseId : null);
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            localizations.removeFromFavoritesTooltip,
-                            style: TextStyle(
-                              color: UiConfig.textColor,
-                              fontFamily: shared.DesignTokens.fontFamily,
-                              fontWeight: UiConfig.normal,
-                            ),
-                          ),
-                          backgroundColor: UiConfig.surfaceColor,
-                          duration: Duration(
-                              seconds:
-                                  shared.DesignTokens.toastDurationSeconds),
-                        ),
-                      );
-                    },
-                  ),
-                  onTap: () {
-                    // Optionally: view details or add to cart
-                  },
                 ),
               );
-            },
-          ),
+            }
+            final items = snapshot.data ?? [];
+            if (items.isEmpty) {
+              return EmptyStateWidget(
+                title: localizations.noFavoriteMenuItems,
+                message: 'Items you favorite will appear here.',
+                iconData: Icons.favorite_border,
+              );
+            }
+            return Padding(
+              padding: UiConfig.cardPadding,
+              child: ListView.builder(
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  return Card(
+                    elevation: shared.DesignTokens.cardElevation,
+                    margin: const EdgeInsets.symmetric(
+                      vertical: shared.DesignTokens.gridSpacing / 2,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(shared.DesignTokens.cardRadius),
+                    ),
+                    color: UiConfig.surfaceColor,
+                    child: ListTile(
+                      leading: NetworkImageWidget(
+                        imageUrl: item.image ?? '',
+                        fallbackAsset: shared.BrandingConfig.defaultPizzaIcon,
+                        width: shared.DesignTokens.menuItemImageWidth,
+                        height: shared.DesignTokens.menuItemImageHeight,
+                        fit: BoxFit.cover,
+                        borderRadius:
+                            BorderRadius.circular(shared.DesignTokens.imageRadius),
+                      ),
+                      title: Text(
+                        item.name,  // Bound from shared MenuItem.name - fixed for display consistency
+                        style: TextStyle(
+                          fontSize: shared.DesignTokens.bodyFontSize,
+                          color: UiConfig.textColor,
+                          fontWeight: UiConfig.bold,
+                          fontFamily: shared.DesignTokens.fontFamily,
+                        ),
+                      ),
+                      subtitle: Text(
+                        item.description,
+                        style: TextStyle(
+                          fontSize: shared.DesignTokens.captionFontSize,
+                          color: UiConfig.secondaryTextColor,
+                          fontFamily: shared.DesignTokens.fontFamily,
+                          fontWeight: UiConfig.normal,
+                        ),
+                      ),
+                      trailing: IconButton(
+                        icon: Icon(
+                          Icons.favorite,
+                          color: UiConfig.errorColor,
+                        ),
+                        tooltip: localizations.removeFromFavoritesTooltip,
+                        onPressed: () async {
+                          await firestoreService.removeFavoriteMenuItemForUser(
+                              userId, item.id, franchiseId: fid);
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                localizations.removeFromFavoritesTooltip,
+                                style: TextStyle(
+                                  color: UiConfig.textColor,
+                                  fontFamily: shared.DesignTokens.fontFamily,
+                                  fontWeight: UiConfig.normal,
+                                ),
+                              ),
+                              backgroundColor: UiConfig.surfaceColor,
+                              duration: Duration(
+                                  seconds:
+                                      shared.DesignTokens.toastDurationSeconds),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
+                      ),
+                      onTap: () {
+                        // Optionally: view details or add to cart
+                      },
+                    ),
+                  );
+                },
+              ),
+            );
+          },
         );
       },
     );
@@ -317,137 +318,145 @@ class FavoriteOrdersTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
-    final firestoreService =
-        Provider.of<shared.FirestoreService>(context, listen: false);
-    final franchiseProvider =
-        Provider.of<shared.FranchiseProvider>(context, listen: false);
-    final franchiseId = franchiseProvider.currentFranchiseId;
     final parentState =
         context.findAncestorStateOfType<_FavoritesScreenState>();
 
-    return StreamBuilder<List<shared.Order>>(
-      stream: firestoreService.getFavoriteOrdersForUser(userId,
-          franchiseId: franchiseId != 'unknown' ? franchiseId : null),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final orders = snapshot.data ?? [];
-        if (orders.isEmpty) {
-          return Center(
-            child: Text(
-              localizations.noFavoriteOrdersSaved,
-              style: TextStyle(
-                fontSize: shared.DesignTokens.bodyFontSize,
-                color: UiConfig.textColor,
-                fontFamily: shared.DesignTokens.fontFamily,
-                fontWeight: UiConfig.normal,
-              ),
-            ),
-          );
-        }
-        return Padding(
-          padding: UiConfig.cardPadding,
-          child: ListView.builder(
-            itemCount: orders.length,
-            itemBuilder: (context, index) {
-              final order = orders[index];
-              return Card(
-                elevation: shared.DesignTokens.cardElevation,
-                margin: const EdgeInsets.symmetric(
-                  vertical: shared.DesignTokens.gridSpacing / 2,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(shared.DesignTokens.cardRadius),
-                ),
-                color: UiConfig.surfaceColor,
-                child: ListTile(
-                  leading:
-                      Icon(Icons.receipt_long, color: UiConfig.secondaryColor),
-                  title: Text(
-                    order.userName ?? 'Order',
-                    style: TextStyle(
-                      fontSize: shared.DesignTokens.bodyFontSize,
-                      color: UiConfig.textColor,
-                      fontWeight: UiConfig.bold,
-                      fontFamily: shared.DesignTokens.fontFamily,
-                    ),
+    return Consumer<shared.FranchiseProvider>(
+      builder: (context, franchiseProvider, child) {
+        final firestoreService =
+            Provider.of<shared.FirestoreService>(context, listen: false);
+        final franchiseId = franchiseProvider.currentFranchiseId;
+        final fid = franchiseId != 'unknown' ? franchiseId : null;
+
+        return StreamBuilder<List<shared.Order>>(
+          stream: firestoreService.getFavoriteOrdersForUser(userId, franchiseId: fid),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  localizations.loyaltyErrorLoading,
+                  style: TextStyle(
+                    fontSize: shared.DesignTokens.bodyFontSize,
+                    color: UiConfig.errorTextColor,
+                    fontFamily: shared.DesignTokens.fontFamily,
+                    fontWeight: UiConfig.normal,
                   ),
-                  subtitle: Text(
-                    localizations.favoriteOrderItems(
-                      order.items.map((e) => e.name).join(', '),
-                    ),
-                    style: TextStyle(
-                      fontSize: shared.DesignTokens.captionFontSize,
-                      color: UiConfig.secondaryTextColor,
-                      fontFamily: shared.DesignTokens.fontFamily,
-                      fontWeight: UiConfig.normal,
-                    ),
-                  ),
-                  trailing: Wrap(
-                    spacing: 8,
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          Icons.replay,
-                          color: UiConfig.primaryColor,
-                        ),
-                        tooltip: localizations.reorder,
-                        onPressed: () {
-                          parentState?._reorderFavorite(FavoriteOrder(
-                            id: order.id,
-                            name: order.userName ?? '',
-                            items: order.items,
-                            timestamp: order.timestamp,
-                          ));
-                        },
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.delete,
-                          color: UiConfig.errorColor,
-                        ),
-                        tooltip: localizations.remove,
-                        onPressed: () async {
-                          await firestoreService.removeFavoriteOrderForUser(
-                              userId, order.id,
-                              franchiseId: franchiseId != 'unknown'
-                                  ? franchiseId
-                                  : null);
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                localizations.removeFavorite,
-                                style: TextStyle(
-                                  color: UiConfig.textColor,
-                                  fontFamily: shared.DesignTokens.fontFamily,
-                                  fontWeight: UiConfig.normal,
-                                ),
-                              ),
-                              backgroundColor: UiConfig.surfaceColor,
-                              duration: Duration(
-                                  seconds:
-                                      shared.DesignTokens.toastDurationSeconds),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                  onTap: () {
-                    parentState?._reorderFavorite(FavoriteOrder(
-                      id: order.id,
-                      name: order.userName ?? '',
-                      items: order.items,
-                      timestamp: order.timestamp,
-                    ));
-                  },
                 ),
               );
-            },
-          ),
+            }
+            final orders = snapshot.data ?? [];
+            if (orders.isEmpty) {
+              return EmptyStateWidget(
+                title: localizations.noFavoriteOrdersSaved,
+                message: 'Favorite orders will appear here for quick reordering.',
+                iconData: Icons.receipt_long,
+              );
+            }
+            return Padding(
+              padding: UiConfig.cardPadding,
+              child: ListView.builder(
+                itemCount: orders.length,
+                itemBuilder: (context, index) {
+                  final order = orders[index];
+                  return Card(
+                    elevation: shared.DesignTokens.cardElevation,
+                    margin: const EdgeInsets.symmetric(
+                      vertical: shared.DesignTokens.gridSpacing / 2,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(shared.DesignTokens.cardRadius),
+                    ),
+                    color: UiConfig.surfaceColor,
+                    child: ListTile(
+                      leading:
+                          Icon(Icons.receipt_long, color: UiConfig.secondaryColor),
+                      title: Text(
+                        order.userName ?? 'Order',
+                        style: TextStyle(
+                          fontSize: shared.DesignTokens.bodyFontSize,
+                          color: UiConfig.textColor,
+                          fontWeight: UiConfig.bold,
+                          fontFamily: shared.DesignTokens.fontFamily,
+                        ),
+                      ),
+                      subtitle: Text(
+                        localizations.favoriteOrderItems(
+                          order.items.map((e) => e.name).join(', '),
+                        ),
+                        style: TextStyle(
+                          fontSize: shared.DesignTokens.captionFontSize,
+                          color: UiConfig.secondaryTextColor,
+                          fontFamily: shared.DesignTokens.fontFamily,
+                          fontWeight: UiConfig.normal,
+                        ),
+                      ),
+                      trailing: Wrap(
+                        spacing: 8,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              Icons.replay,
+                              color: UiConfig.primaryColor,
+                            ),
+                            tooltip: localizations.reorder,
+                            onPressed: () {
+                              parentState?._reorderFavorite(FavoriteOrder(
+                                id: order.id,
+                                name: order.userName ?? '',
+                                items: order.items,
+                                timestamp: order.timestamp,
+                              ));
+                            },
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.delete,
+                              color: UiConfig.errorColor,
+                            ),
+                            tooltip: localizations.remove,
+                            onPressed: () async {
+                              await firestoreService.removeFavoriteOrderForUser(
+                                  userId, order.id, franchiseId: fid);
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    localizations.removeFavorite,
+                                    style: TextStyle(
+                                      color: UiConfig.textColor,
+                                      fontFamily: shared.DesignTokens.fontFamily,
+                                      fontWeight: UiConfig.normal,
+                                    ),
+                                  ),
+                                  backgroundColor: UiConfig.surfaceColor,
+                                  duration: Duration(
+                                      seconds:
+                                          shared.DesignTokens.toastDurationSeconds),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                      onTap: () {
+                        parentState?._reorderFavorite(FavoriteOrder(
+                          id: order.id,
+                          name: order.userName ?? '',
+                          items: order.items,
+                          timestamp: order.timestamp,
+                        ));
+                      },
+                    ),
+                  );
+                },
+              ),
+            );
+          },
         );
       },
     );

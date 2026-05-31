@@ -237,8 +237,8 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              icon: const Icon(Icons.person_outline,
-                  color: Colors.grey, size: 22),
+              icon: Icon(Icons.person_outline,
+                  color: UiConfig.hintTextColor, size: 22),
               label: Text('Continue as Guest', style: UiConfig.bodyBoldStyle),
               onPressed: isBusy
                   ? null

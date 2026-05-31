@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/shared_core.dart' show DesignTokens;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/sign_out_button.dart';
 import 'package:franchise_mobile_app/widgets/profile_nav_tile.dart';
@@ -19,6 +20,9 @@ import 'package:franchise_mobile_app/features/user_accounts/complete_profile_dia
 import 'package:franchise_mobile_app/core/models/user.dart' as user_model;
 import 'package:franchise_mobile_app/features/loyalty/loyalty_screen.dart';
 import 'package:franchise_mobile_app/widgets/loyalty_points_widget.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // P2 theme test reload only
+import 'package:qr_flutter/qr_flutter.dart'; // P2 QR display foundations
+import 'package:franchise_mobile_app/features/ordering/qr_scan_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -92,25 +96,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
 
         return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              l10n.profile,
-              style: TextStyle(
-                fontSize: DesignTokens.titleFontSize,
-                color: UiConfig.foregroundColorDark,
-                fontWeight: UiConfig.fontWeightBold,
-                fontFamily: DesignTokens.fontFamily,
-              ),
-            ),
-            backgroundColor: UiConfig.primaryColor,
+          appBar: FranchiseAppBar(
+            title: l10n.profile,
+            showLogo: true,
+            logoUrl: UiConfig.currentLogoUrl,
+            logoAsset: shared.BrandingConfig.appBarLogoAsset,
             centerTitle: true,
-            elevation: 0,
-            iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
           ),
           backgroundColor: UiConfig.backgroundColorDark,
-          body: Padding(
-            padding: UiConfig.defaultScreenPadding,
-            child: StreamBuilder<shared.User?>(
+          body: SafeArea(
+            bottom: true,
+            child: Padding(
+              padding: UiConfig.defaultScreenPadding,
+              child: StreamBuilder<shared.User?>(
               stream: authService.authStateChanges,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -235,6 +233,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         // Loyalty points display (foundational, franchise-aware)
                         const LoyaltyPointsWidget(),
 
+                        // P2 dev-only: simple live theme switcher for white-label testing.
+                        // Toggles UiConfig + app-wide ThemeData via FranchiseProvider branding.
+                        // In real use this would come from FranchiseSelector + full reload.
+                        _buildThemeTestSection(context, franchiseProvider, firestoreService),
+
+                        // P2: Franchise QR display (shareable deep link) - foundations
+                        _buildFranchiseQRSection(context, franchiseProvider),
+
                         ProfileNavTile(
                           label: l10n.deliveryAddresses,
                           destination: const DeliveryAddressesScreen(),
@@ -289,8 +295,152 @@ class _ProfileScreenState extends State<ProfileScreen> {
               },
             ),
           ),
+          ),
         );
       },
+    );
+  }
+
+  // P2 test helper - simple theme switcher (dev foundations only).
+  // Demonstrates live color/appName propagation without full app restart.
+  Widget _buildThemeTestSection(
+    BuildContext context,
+    shared.FranchiseProvider fp,
+    shared.FirestoreService fs,
+  ) {
+    // l10n available for future localization of test labels
+    return Card(
+      color: UiConfig.surfaceColor,
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      child: Padding(
+        padding: UiConfig.cardPadding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '🧪 Theme Test (P2 Dev)',
+              style: UiConfig.bodyBoldStyle.copyWith(color: UiConfig.primaryColor),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Tap to live-switch branding. Affects this screen + global ThemeData.',
+              style: UiConfig.captionStyle,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE31837), // intentional test value
+                    foregroundColor: UiConfig.onPrimaryColor,
+                  ),
+                  onPressed: () async {
+                    fp.setBrandingFromFranchiseDoc({
+                      'name': 'Doughboys Pizzeria',
+                      'appName': 'Doughboys Pizzeria',
+                      'primaryColorHex': '#E31837',
+                      'secondaryColorHex': '#FFD700',
+                      'logoUrl': null,
+                    });
+                    // Optional: also change the logical franchise id for full flow
+                    await fp.setFranchiseId('doughboys_pizzeria');
+                    if (mounted) setState(() {});
+                  },
+                  child: const Text('Doughboys (Red/Gold)'),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2E7D32), // intentional test value
+                    foregroundColor: UiConfig.onPrimaryColor,
+                  ),
+                  onPressed: () async {
+                    fp.setBrandingFromFranchiseDoc({
+                      'name': 'Test Green Bistro',
+                      'appName': 'Green Bistro',
+                      'primaryColorHex': '#2E7D32',
+                      'secondaryColorHex': '#81C784',
+                    });
+                    await fp.setFranchiseId('test_green');
+                    if (mounted) setState(() {});
+                  },
+                  child: const Text('Test Green'),
+                ),
+                OutlinedButton(
+                  onPressed: () async {
+                    // Re-load real data for current id (if exists in Firestore)
+                    try {
+                      final doc = await FirebaseFirestore.instance
+                          .collection('franchises')
+                          .doc(fp.currentFranchiseId)
+                          .get();
+                      if (doc.exists) {
+                        fp.setBrandingFromFranchiseDoc(doc.data()!);
+                      }
+                    } catch (_) {}
+                    if (mounted) setState(() {});
+                  },
+                  child: const Text('Reload Current'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // P2 foundations: display current franchise as scannable QR (deep link payload)
+  Widget _buildFranchiseQRSection(
+    BuildContext context,
+    shared.FranchiseProvider fp,
+  ) {
+    final fid = fp.currentFranchiseId;
+    if (!fp.hasValidFranchise || fid == 'unknown') {
+      return const SizedBox.shrink();
+    }
+
+    final qrData = shared.generateFranchiseQR(fid, name: fp.currentAppName);
+    final displayName = fp.currentAppName;
+
+    return Card(
+      color: UiConfig.surfaceColor,
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      child: Padding(
+        padding: UiConfig.cardPadding,
+        child: Column(
+          children: [
+            Text(
+              'Share this Franchise',
+              style: UiConfig.bodyBoldStyle.copyWith(color: UiConfig.primaryColor),
+            ),
+            const SizedBox(height: 8),
+            Text(displayName, style: UiConfig.captionStyle),
+            const SizedBox(height: 12),
+            QrImageView(
+              data: qrData,
+              version: QrVersions.auto,
+              size: 160,
+              backgroundColor: UiConfig.cardColor,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Scan to switch to this location',
+              style: UiConfig.captionStyle.copyWith(fontSize: 11),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              icon: const Icon(Icons.qr_code_scanner),
+              label: const Text('Open Scanner'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const QrScanScreen()),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

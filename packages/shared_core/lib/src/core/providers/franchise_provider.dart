@@ -40,7 +40,7 @@ class FranchiseProvider {
     final id = await _storage.getString('selectedFranchiseId');
     _franchiseId = (id != null && id.isNotEmpty) ? id : 'unknown';
     _loading = false;
-    if (onFranchiseChanged != null) onFranchiseChanged!();
+    _bumpConfig();
   }
 
   Future<void> setFranchiseId(String id) async {
@@ -48,7 +48,7 @@ class FranchiseProvider {
 
     _franchiseId = id;
     await _storage.setString('selectedFranchiseId', id);
-    if (onFranchiseChanged != null) onFranchiseChanged!();
+    _bumpConfig();
   }
 
   Future<void> setInitialFranchiseId(String id) async {
@@ -59,7 +59,7 @@ class FranchiseProvider {
     if (existing != id) {
       await _storage.setString('selectedFranchiseId', id);
     }
-    if (onFranchiseChanged != null) onFranchiseChanged!();
+    _bumpConfig();
   }
 
   Future<void> initializeWithUser(admin_user.User user) async {
@@ -85,14 +85,15 @@ class FranchiseProvider {
     }
 
     _loading = false;
-    if (onFranchiseChanged != null) onFranchiseChanged!();
+    _bumpConfig();
   }
 
   Future<void> clear() async {
     _franchiseId = 'unknown';
     _adminUser = null;
+    _brandingData = const {};
     await _storage.remove('selectedFranchiseId');
-    if (onFranchiseChanged != null) onFranchiseChanged!();
+    _bumpConfig();
   }
 
   List<FranchiseInfo> _allFranchises = [];
@@ -100,6 +101,7 @@ class FranchiseProvider {
 
   void setAllFranchises(List<FranchiseInfo> franchises) {
     _allFranchises = franchises;
+    _bumpConfig();
   }
 
   List<FranchiseInfo> get viewableFranchises {
@@ -117,5 +119,78 @@ class FranchiseProvider {
     _franchiseId = 'unknown';
     _allFranchises = [];
     _adminUser = null;
+    _brandingData = const {};
+    _configVersion++;
+    if (onFranchiseChanged != null) onFranchiseChanged!();
+  }
+
+  // === P2: Dynamic Theming & White-Label Foundations ===
+  // FranchiseProvider is now the single source of truth for per-franchise branding.
+  // Mobile UiConfig and ThemeData pull from these (with DesignTokens fallbacks).
+  // Callers (main/HomeWrapper/profile) fetch franchise doc and call setters.
+
+  int _configVersion = 0;
+  int get currentConfigVersion => _configVersion;
+
+  Map<String, dynamic> _brandingData = const {};
+  Map<String, dynamic> get currentBranding => Map.unmodifiable(_brandingData);
+
+  /// Live primary color for current franchise (hex). Falls back to Doughboys red.
+  String get currentPrimaryColorHex {
+    final direct = _brandingData['primaryColorHex'] as String?;
+    if (direct != null && direct.isNotEmpty) return direct;
+    final nested = _brandingData['branding'];
+    if (nested is Map && nested['primaryColorHex'] is String) {
+      return nested['primaryColorHex'] as String;
+    }
+    return '#E31837';
+  }
+
+  /// Live secondary/accent color (hex).
+  String get currentSecondaryColorHex {
+    final direct = _brandingData['secondaryColorHex'] as String?;
+    if (direct != null && direct.isNotEmpty) return direct;
+    final nested = _brandingData['branding'];
+    if (nested is Map && nested['secondaryColorHex'] is String) {
+      return nested['secondaryColorHex'] as String;
+    }
+    return '#FFD700';
+  }
+
+  String get currentAppName {
+    return (_brandingData['appName'] as String?) ??
+        (_brandingData['name'] as String?) ??
+        'Franchise App';
+  }
+
+  String? get currentLogoUrl {
+    return (_brandingData['logoUrl'] as String?) ??
+        (_brandingData['logo'] as String?);
+  }
+
+  /// Update from full franchises/{id} document snapshot data.
+  /// Safe to call any time; bumps version so listeners (theme) can react.
+  void setBrandingFromFranchiseDoc(Map<String, dynamic> docData) {
+    _brandingData = Map<String, dynamic>.from(docData);
+    _configVersion++;
+    if (onFranchiseChanged != null) onFranchiseChanged!();
+  }
+
+  /// Merge basic info (name/logo) from FranchiseInfo + optional extra branding.
+  void applyBrandingFromInfo(FranchiseInfo info, {Map<String, dynamic>? extraBranding}) {
+    _brandingData = {
+      ..._brandingData,
+      'name': info.name,
+      'logoUrl': info.logoUrl,
+      if (extraBranding != null) ...extraBranding,
+    };
+    _configVersion++;
+    if (onFranchiseChanged != null) onFranchiseChanged!();
+  }
+
+  // Bump version + notify on all mutating ops for theme reactivity via version selector.
+  void _bumpConfig() {
+    _configVersion++;
+    if (onFranchiseChanged != null) onFranchiseChanged!();
   }
 }

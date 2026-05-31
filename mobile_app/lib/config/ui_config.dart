@@ -3,8 +3,23 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:intl/intl.dart';
 
 /// UI-specific branding for mobile app
-/// Bridges shared shared.DesignTokens.+ shared.BrandingConfig.into Flutter types
+/// Bridges shared shared.DesignTokens + shared.BrandingConfig into Flutter types.
+/// P2: Fully dynamic when FranchiseProvider.setFranchiseProvider(...) is called early.
+/// Brand accent colors now come from current franchise doc (fallbacks preserved).
 class UiConfig {
+  static shared.FranchiseProvider? _fp;
+
+  /// Wire the live FranchiseProvider (single source for branding) once at bootstrap.
+  /// After this, UiConfig.primaryColor / secondaryColor etc. are per-franchise.
+  static void setFranchiseProvider(shared.FranchiseProvider provider) {
+    _fp = provider;
+  }
+
+  static shared.FranchiseProvider? get franchiseProvider => _fp;
+
+  /// Current franchise app name (for dynamic titles, etc.).
+  static String get dynamicAppName => _fp?.currentAppName ?? 'Franchise App';
+
   // Assets from BrandingConfig
   static const String logoMain = shared.BrandingConfig.logoMain;
   static const String defaultPizzaIcon = shared.BrandingConfig.defaultPizzaIcon;
@@ -35,12 +50,25 @@ class UiConfig {
       _hexToColor(shared.DesignTokens.surfaceColorDarkHex);
   static Color get facebookColor =>
       _hexToColor(shared.DesignTokens.facebookColorHex);
-  static Color get adminPrimaryColor =>
-      _hexToColor(shared.DesignTokens.adminPrimaryColorHex);
-  static Color get primaryColor =>
-      _hexToColor(shared.DesignTokens.primaryColorHex);
-  static Color get secondaryColor =>
-      _hexToColor(shared.DesignTokens.secondaryColorHex);
+  static Color get adminPrimaryColor {
+    // For white-label foundations, adminPrimary aliases the live primary (or static fallback)
+    final hex =
+        _fp?.currentPrimaryColorHex ?? shared.DesignTokens.adminPrimaryColorHex;
+    return _hexToColor(hex);
+  }
+
+  static Color get primaryColor {
+    final hex =
+        _fp?.currentPrimaryColorHex ?? shared.DesignTokens.primaryColorHex;
+    return _hexToColor(hex);
+  }
+
+  static Color get secondaryColor {
+    final hex =
+        _fp?.currentSecondaryColorHex ?? shared.DesignTokens.secondaryColorHex;
+    return _hexToColor(hex);
+  }
+
   static Color get textColor => _hexToColor(shared.DesignTokens.textColorHex);
   static Color get foregroundColor =>
       _hexToColor(shared.DesignTokens.foregroundColorHex);
@@ -64,13 +92,82 @@ class UiConfig {
   static IconData get visibilityIcon => Icons.visibility;
   static IconData get visibilityOffIcon => Icons.visibility_off;
 
-  // Dynamic
+  // Dynamic (P2 white-label aware)
   static Color brandColorFor(String brandId) {
+    if (_fp != null && brandId == _fp!.currentFranchiseId) {
+      return primaryColor;
+    }
     final hex = shared.BrandingConfig.brandColorHexFor(brandId);
     return _hexToColor(hex);
   }
 
-  static const Color dashboardCardColor = Colors.white;
+  // === P2.2 Dynamic Theming Enhancements ===
+  // All new properties are designed to be franchise-aware when FranchiseProvider is wired.
+
+  /// Primary card/surface color for content areas.
+  static Color get cardColor => surfaceColor;
+
+  /// Color for text and icons that appear on top of primaryColor (e.g. in AppBars, primary buttons).
+  static Color get onPrimaryColor => foregroundColorDark;
+
+  /// Standard divider / border color.
+  static Color get dividerColor =>
+      _hexToColor(shared.DesignTokens.cardBorderColorHex); // reuse existing token
+
+  /// Background color for input fields and form controls.
+  static Color get inputFillColor => surfaceColor;
+
+  /// Color used for disabled states.
+  static Color get disabledColor => disabledTextColor;
+
+  /// Base color for shadows (apply .withValues(alpha: x) at usage site).
+  static Color get shadowColor => Colors.black;
+
+  /// Primary action button style (franchise-aware).
+  static ButtonStyle get primaryButtonStyle => ElevatedButton.styleFrom(
+        backgroundColor: primaryColor,
+        foregroundColor: onPrimaryColor,
+        padding: defaultPadding,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(shared.DesignTokens.buttonRadius),
+        ),
+        elevation: shared.DesignTokens.buttonElevation,
+      );
+
+  /// Secondary / outline action button style.
+  static ButtonStyle get secondaryButtonStyle => ElevatedButton.styleFrom(
+        backgroundColor: secondaryColor,
+        foregroundColor: onPrimaryColor,
+        padding: defaultPadding,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(shared.DesignTokens.buttonRadius),
+        ),
+        elevation: shared.DesignTokens.buttonElevation,
+      );
+
+  /// Standard icon color.
+  static Color get iconColor => textColor;
+
+  /// Icon color when placed on primary-colored backgrounds.
+  static Color get iconColorOnPrimary => onPrimaryColor;
+
+  /// Text color specifically for AppBars (respects dynamic branding).
+  static Color get appBarTextColor => foregroundColorDark;
+
+  /// Remote logo URL from current franchise branding (for NetworkImageWidget).
+  static String? get currentLogoUrl {
+    final direct = _fp?.currentLogoUrl;
+    if (direct != null && direct.isNotEmpty) return direct;
+    final nested = _fp?.currentBranding;
+    if (nested is Map<String, dynamic>) {
+      return (nested['logoUrl'] as String?) ?? (nested['logo'] as String?);
+    }
+    return null;
+  }
+
+  /// Legacy dashboard card color - now routes through cardColor for consistency.
+  /// Kept for backward compatibility during migration.
+  static Color get dashboardCardColor => cardColor;
 
   static Color get warningColor =>
       _hexToColor(shared.DesignTokens.warningColorHex);

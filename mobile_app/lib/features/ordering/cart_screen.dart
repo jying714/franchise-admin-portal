@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/features/ordering/checkout_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -239,20 +240,12 @@ class _CartScreenState extends State<CartScreen> {
     final loc = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          loc.cart,
-          style: TextStyle(
-            fontSize: shared.DesignTokens.titleFontSize,
-            color: UiConfig.foregroundColorDark,
-            fontWeight: UiConfig.fontWeightBold,
-            fontFamily: shared.DesignTokens.fontFamily,
-          ),
-        ),
-        backgroundColor: UiConfig.primaryColor,
+      appBar: FranchiseAppBar(
+        title: loc.cart,
+        showLogo: true,
+        logoUrl: UiConfig.currentLogoUrl,
+        logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
       ),
       backgroundColor: UiConfig.backgroundColor,
       body: Consumer<shared.FranchiseProvider>(
@@ -603,7 +596,9 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
         Padding(
-          padding: UiConfig.defaultPadding,
+          padding: UiConfig.defaultPadding.copyWith(
+            bottom: UiConfig.defaultPadding.bottom + 32, // extra padding for S25 system navigation bar
+          ),
           child: Column(
             children: [
               Text(

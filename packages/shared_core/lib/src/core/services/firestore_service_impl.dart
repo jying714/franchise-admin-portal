@@ -565,31 +565,20 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Stream<Order?> getCart(String userId, {String? franchiseId}) {
     if (franchiseId == null || franchiseId.isEmpty) {
-      print(
-          '❌ [FirestoreServiceImpl][getCart] Missing franchiseId - this should not happen with clean FranchiseProvider');
+      // Silent per Master Plan: FranchiseProvider guarantees valid id for customer flows
       return Stream.value(null);
     }
-
-    print(
-        '🔍 [FirestoreServiceImpl][getCart] Listening to: franchises/$franchiseId/carts/$userId');
 
     return _franchiseCollection(franchiseId, _carts)
         .doc(userId)
         .snapshots()
         .map((doc) {
-      print(
-          '🔍 [FirestoreServiceImpl][getCart] Snapshot received - exists: ${doc.exists} | path: franchises/$franchiseId/carts/$userId');
-
       if (!doc.exists || doc.data() == null) {
-        print(
-            '⚠️ [FirestoreServiceImpl][getCart] Cart is empty or does not exist yet');
         return null;
       }
 
       final data = {...doc.data()!, 'status': 'cart'};
       final order = Order.fromFirestore(data, doc.id);
-      print(
-          '✅ [FirestoreServiceImpl][getCart] Loaded cart with ${order.items.length} items | total: ${order.total}');
       return order;
     });
   }
@@ -743,12 +732,13 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Stream<List<Order>> getOrdersForUser(String userId,
       {String? franchiseId, int limit = 20}) {
-    firestore.Query q =
-        _db.collectionGroup(_orders).where('userId', isEqualTo: userId);
-    if (franchiseId != null) {
-      q = _franchiseCollection(franchiseId, _orders)
-          .where('userId', isEqualTo: userId);
+    // P2.3 hardening: customer flows must use franchise-scoped paths. No collectionGroup.
+    if (franchiseId == null || franchiseId.isEmpty || franchiseId == 'unknown') {
+      // Strict: return empty for missing scope (prevents cross-tenant leakage)
+      return Stream.value(<Order>[]);
     }
+    final q = _franchiseCollection(franchiseId, _orders)
+        .where('userId', isEqualTo: userId);
     return q.limit(limit).snapshots().map((s) => s.docs
         .map((d) => Order.fromFirestore(d.data() as Map<String, dynamic>, d.id))
         .toList());
@@ -758,24 +748,31 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Stream<List<Order>> getOrders({String? userId, String? franchiseId}) {
     if (userId == null) {
-      // Fallback: if no userId, return empty (or could throw, but lightweight should be forgiving)
       return Stream.value([]);
     }
-    firestore.Query q;
-    if (franchiseId != null) {
-      q = _franchiseCollection(franchiseId, _orders)
-          .where('userId', isEqualTo: userId);
-    } else {
-      q = _db.collectionGroup(_orders).where('userId', isEqualTo: userId);
+    // P2.3: Enforce franchise scoping for all customer order queries. No collectionGroup.
+    if (franchiseId == null || franchiseId.isEmpty || franchiseId == 'unknown') {
+      return Stream.value(<Order>[]);
     }
+    final q = _franchiseCollection(franchiseId, _orders)
+        .where('userId', isEqualTo: userId);
     return q.snapshots().map((s) => s.docs
         .map((d) => Order.fromFirestore(d.data() as Map<String, dynamic>, d.id))
         .toList());
   }
 
   @override
-  Future<bool> hasOrderFeedback(String orderId) async {
-    // Lightweight check: look for feedback entries referencing this order
+  Future<bool> hasOrderFeedback(String orderId, {String? franchiseId}) async {
+    // P2.3 hardening: feedback is under franchises/{franchiseId}/feedback per schema.
+    // No collectionGroup for customer flows.
+    if (franchiseId != null && franchiseId.isNotEmpty && franchiseId != 'unknown') {
+      final snap = await _franchiseCollection(franchiseId, _feedback)
+          .where('orderId', isEqualTo: orderId)
+          .limit(1)
+          .get();
+      return snap.docs.isNotEmpty;
+    }
+    // Fallback only if no franchise (legacy cross-tenant check); prefer scoped always.
     final snap = await _db
         .collectionGroup(_feedback)
         .where('orderId', isEqualTo: orderId)
@@ -1272,7 +1269,19 @@ class FirestoreServiceImpl implements FirestoreService {
       throw UnimplementedError(_adminOnlyMsg('updateBanner'));
 
   @override
-  Stream<List<Banner>> getBanners() {
+  Stream<List<Banner>> getBanners({String? franchiseId}) {
+    // P2.3: Support franchise-scoped banners (franchises/{id}/banners) for white-label.
+    // Falls back to global top-level banners collection if no franchiseId (legacy global banners).
+    // Aligns with schema dump having top-level banners + per-franchise potential.
+    if (franchiseId != null && franchiseId.isNotEmpty && franchiseId != 'unknown') {
+      return _franchiseCollection(franchiseId, _banners)
+          .where('active', isEqualTo: true)
+          .snapshots()
+          .map((s) => s.docs
+              .map((d) =>
+                  Banner.fromFirestore(d.data() as Map<String, dynamic>, d.id))
+              .toList());
+    }
     return _db
         .collection(_banners)
         .where('active', isEqualTo: true)
@@ -1442,42 +1451,26 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Stream<List<MenuItem>> getMenuItemsByCategory(String categoryId,
       {String? franchiseId, String? sortBy}) {
-    print(
-        '🔍 [getMenuItemsByCategory] Called - categoryId: "$categoryId", franchiseId: "$franchiseId", sortBy: "$sortBy"');
-
-    // No fallback — franchiseId is now guaranteed valid by shared FranchiseProvider
     if (franchiseId == null || franchiseId.isEmpty) {
-      print(
-          '❌ [getMenuItemsByCategory] CRITICAL: franchiseId is empty or null');
       return Stream.value([]);
     }
-
-    print('🔍 [getMenuItemsByCategory] Using franchiseId: $franchiseId');
 
     firestore.Query q = _franchiseCollection(franchiseId, _menuItems)
         .where('categoryId', isEqualTo: categoryId);
 
     if (sortBy != null && sortBy.isNotEmpty) {
       q = q.orderBy(sortBy);
-      print('🔍 [getMenuItemsByCategory] Applied orderBy: $sortBy');
     } else {
       q = q.orderBy('sortOrder'); // default sort
     }
 
     return q.snapshots().map((s) {
-      print(
-          '📦 [getMenuItemsByCategory] Snapshot received: ${s.docs.length} documents for category $categoryId');
       final list = s.docs
           .map((d) {
             try {
-              final item = MenuItem.fromFirestore(
+              return MenuItem.fromFirestore(
                   d.data() as Map<String, dynamic>, d.id);
-              print(
-                  '   ✅ Parsed menu item: ${item.name} (id: ${item.id}, categoryId: ${item.categoryId})');
-              return item;
             } catch (e, stack) {
-              print('   ❌ Failed to parse menu item ${d.id}: $e');
-              print('   Stack: $stack');
               return null;
             }
           })
@@ -1493,23 +1486,15 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Future<MenuItem?> getMenuItemById(String itemId,
       {String? franchiseId}) async {
-    if (franchiseId != null) {
-      final doc =
-          await _franchiseCollection(franchiseId, _menuItems).doc(itemId).get();
-      if (doc.exists && doc.data() != null) {
-        return MenuItem.fromFirestore(
-            doc.data() as Map<String, dynamic>, doc.id);
-      }
+    // P2.3: Strict franchise scoping. menu_items lives under franchises/{id}/menu_items
+    if (franchiseId == null || franchiseId.isEmpty || franchiseId == 'unknown') {
+      return null;
     }
-    // Fallback collectionGroup search (slower but works during transition)
-    final snap = await _db
-        .collectionGroup(_menuItems)
-        .where(firestore.FieldPath.documentId, isEqualTo: itemId)
-        .limit(1)
-        .get();
-    if (snap.docs.isNotEmpty) {
-      final d = snap.docs.first;
-      return MenuItem.fromFirestore(d.data() as Map<String, dynamic>, d.id);
+    final doc =
+        await _franchiseCollection(franchiseId, _menuItems).doc(itemId).get();
+    if (doc.exists && doc.data() != null) {
+      return MenuItem.fromFirestore(
+          doc.data() as Map<String, dynamic>, doc.id);
     }
     return null;
   }
@@ -1995,13 +1980,12 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Stream<List<Order>> getScheduledOrdersForUser(String userId,
       {String? franchiseId}) {
-    // For now treat as orders with status 'scheduled' or use dedicated subcollection
-    firestore.Query q = _db
-        .collectionGroup(_scheduledOrders)
+    // P2.3 hardening: scheduledOrders under franchises/{franchiseId}/scheduledOrders. No collectionGroup for customer flows.
+    if (franchiseId == null || franchiseId.isEmpty || franchiseId == 'unknown') {
+      return Stream.value(<Order>[]);
+    }
+    final q = _franchiseCollection(franchiseId, _scheduledOrders)
         .where('userId', isEqualTo: userId);
-    if (franchiseId != null)
-      q = _franchiseCollection(franchiseId, _scheduledOrders)
-          .where('userId', isEqualTo: userId);
     return q.snapshots().map((s) => s.docs
         .map((d) => Order.fromFirestore(d.data() as Map<String, dynamic>, d.id))
         .toList());
@@ -2043,15 +2027,15 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Future<void> addFavoriteMenuItemForUser(String userId, String menuItemId,
       {String? franchiseId}) async {
-    if (franchiseId == null) return;
-    await addFavoriteMenuItem(userId, franchiseId, menuItemId);
+    // Guard removed per regression fix — callers must now always supply franchiseId (aligned with real schema under users/{uid}/franchise_profiles/{fid})
+    await addFavoriteMenuItem(userId, franchiseId!, menuItemId);
   }
 
   @override
   Future<void> removeFavoriteMenuItemForUser(String userId, String menuItemId,
       {String? franchiseId}) async {
-    if (franchiseId == null) return;
-    await removeFavoriteMenuItem(userId, franchiseId, menuItemId);
+    // Guard removed per regression fix — callers must now always supply franchiseId (aligned with real schema under users/{uid}/franchise_profiles/{fid})
+    await removeFavoriteMenuItem(userId, franchiseId!, menuItemId);
   }
 
   @override

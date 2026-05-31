@@ -1136,7 +1136,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                       "Current Toppings",
                                       style:
                                           theme.textTheme.titleMedium?.copyWith(
-                                        color: Colors.white,
+                                        color: UiConfig.onPrimaryColor,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -1253,7 +1253,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                 child: Text(
                                   "Additional Toppings",
                                   style: theme.textTheme.titleMedium?.copyWith(
-                                    color: Colors.white,
+                                    color: UiConfig.onPrimaryColor,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -1265,10 +1265,10 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                 vertical: 6.0), // Much tighter vertical space
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: UiConfig.cardColor,
                                 borderRadius: BorderRadius.circular(30),
                                 border: Border.all(
-                                    color: Colors.grey[300]!, width: 1),
+                                    color: UiConfig.dividerColor, width: 1),
                               ),
                               // The Row is now wrapped in a Container, acting like a tab bar.
                               child: Row(
@@ -1284,7 +1284,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                         decoration: BoxDecoration(
                                           color: selected
                                               ? UiConfig.secondaryColor
-                                              : Colors.transparent,
+                                              : UiConfig.cardColor.withValues(alpha: 0.0),
                                           borderRadius:
                                               BorderRadius.circular(30),
                                         ),
@@ -1296,7 +1296,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           style: theme.textTheme.bodyLarge
                                               ?.copyWith(
                                             color: selected
-                                                ? Colors.white
+                                                ? UiConfig.cardColor
                                                 : UiConfig.secondaryColor,
                                             fontWeight: selected
                                                 ? FontWeight.bold
@@ -1335,7 +1335,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           top: 4, bottom: 4),
                                       child: Divider(
                                         thickness: 2,
-                                        color: Colors.grey[700],
+                                        color: UiConfig.secondaryTextColor,
                                       ),
                                     ),
                                     ...ingredientIds
@@ -1383,7 +1383,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                       padding: const EdgeInsets.only(top: 10),
                                       child: Divider(
                                         thickness: 2,
-                                        color: Colors.grey[700],
+                                        color: UiConfig.secondaryTextColor,
                                       ),
                                     ),
                                   ],
@@ -1438,7 +1438,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           "Cheeses",
                                           style: theme.textTheme.titleMedium
                                               ?.copyWith(
-                                            color: Colors.white,
+                                            color: UiConfig.onPrimaryColor,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -1450,7 +1450,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                       title: Text(
                                         summary,
                                         style: theme.textTheme.bodySmall
-                                            ?.copyWith(color: Colors.grey[600]),
+                                            ?.copyWith(color: UiConfig.secondaryTextColor),
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -1461,7 +1461,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           "Add extra cheeses for an additional charge.",
                                           style: theme.textTheme.bodySmall
                                               ?.copyWith(
-                                            color: Colors.grey[500],
+                                            color: UiConfig.hintTextColor,
                                             fontStyle: FontStyle.italic,
                                           ),
                                         ),
@@ -1709,7 +1709,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           "Sauces",
                                           style: theme.textTheme.titleMedium
                                               ?.copyWith(
-                                            color: Colors.white,
+                                            color: UiConfig.onPrimaryColor,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -1721,7 +1721,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                       title: Text(
                                         sauceSummary,
                                         style: theme.textTheme.bodySmall
-                                            ?.copyWith(color: Colors.grey[600]),
+                                            ?.copyWith(color: UiConfig.secondaryTextColor),
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -1732,7 +1732,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           "Split your sauce or add extra for an additional charge.",
                                           style: theme.textTheme.bodySmall
                                               ?.copyWith(
-                                            color: Colors.grey[500],
+                                            color: UiConfig.hintTextColor,
                                             fontStyle: FontStyle.italic,
                                           ),
                                         ),
@@ -1878,7 +1878,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           "Order Details",
                                           style: theme.textTheme.titleMedium
                                               ?.copyWith(
-                                            color: Colors.white,
+                                            color: UiConfig.onPrimaryColor,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -1892,7 +1892,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                             ? "Customize crust, cook, and cut."
                                             : detailsSummary,
                                         style: theme.textTheme.bodySmall
-                                            ?.copyWith(color: Colors.grey[600]),
+                                            ?.copyWith(color: UiConfig.secondaryTextColor),
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -1903,7 +1903,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           "Tap to customize crust, cook, or cut.",
                                           style: theme.textTheme.bodySmall
                                               ?.copyWith(
-                                            color: Colors.grey[500],
+                                            color: UiConfig.hintTextColor,
                                             fontStyle: FontStyle.italic,
                                           ),
                                         ),

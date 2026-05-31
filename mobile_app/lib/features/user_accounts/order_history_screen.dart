@@ -4,6 +4,7 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/shared_core.dart' show DesignTokens;
 import 'package:shared_core/shared_core.dart' show BrandingConfig;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:franchise_mobile_app/widgets/feedback/feedback_submission_dialog.dart';
@@ -31,23 +32,17 @@ class OrderHistoryScreen extends StatelessWidget {
         final authUser = authService.currentUser;
 
         return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              localizations.orderHistory,
-              style: TextStyle(
-                fontSize: DesignTokens.titleFontSize,
-                color: UiConfig.foregroundColorDark,
-                fontWeight: UiConfig.fontWeightBold,
-                fontFamily: DesignTokens.fontFamily,
-              ),
-            ),
-            backgroundColor: UiConfig.primaryColor,
+          appBar: FranchiseAppBar(
+            title: localizations.orderHistory,
+            showLogo: true,
+            logoUrl: UiConfig.currentLogoUrl,
+            logoAsset: shared.BrandingConfig.appBarLogoAsset,
             centerTitle: true,
-            elevation: 0,
-            iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
           ),
           backgroundColor: UiConfig.backgroundColorDark,
-          body: authUser == null
+          body: SafeArea(
+            bottom: true,
+            child: authUser == null
               ? Center(
                   child: Text(
                     localizations.notSignedIn,
@@ -67,6 +62,19 @@ class OrderHistoryScreen extends StatelessWidget {
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          localizations.loyaltyErrorLoading,
+                          style: TextStyle(
+                            fontSize: DesignTokens.bodyFontSize,
+                            color: UiConfig.errorTextColor,
+                            fontFamily: DesignTokens.fontFamily,
+                            fontWeight: UiConfig.fontWeightNormal,
+                          ),
+                        ),
+                      );
                     }
                     if (!snapshot.hasData || snapshot.data!.isEmpty) {
                       return Center(
@@ -204,7 +212,7 @@ class OrderHistoryScreen extends StatelessWidget {
                                         height: DesignTokens.gridSpacing),
                                     FutureBuilder<bool>(
                                       future: firestoreService
-                                          .hasOrderFeedback(order.id),
+                                          .hasOrderFeedback(order.id, franchiseId: franchiseProvider.currentFranchiseId),
                                       builder: (context, snapshot) {
                                         final feedbackExists =
                                             snapshot.data == true;
@@ -244,9 +252,10 @@ class OrderHistoryScreen extends StatelessWidget {
                                                         .reorderNotImplemented),
                                                     backgroundColor:
                                                         UiConfig.surfaceColor,
-                                                    duration: const Duration(
+                                                    duration: Duration(
                                                         seconds: DesignTokens
                                                             .toastDurationSeconds),
+                                                    behavior: SnackBarBehavior.floating,
                                                   ),
                                                 );
                                               },
@@ -278,6 +287,7 @@ class OrderHistoryScreen extends StatelessWidget {
                                                       .buttonElevation,
                                                 ),
                                                 onPressed: () async {
+                                                  final fid = franchiseProvider.currentFranchiseId;
                                                   await showDialog(
                                                     context: context,
                                                     builder: (_) =>
@@ -286,6 +296,7 @@ class OrderHistoryScreen extends StatelessWidget {
                                                       userId: authUser.id,
                                                       feedbackMode: FeedbackMode
                                                           .orderExperience,
+                                                      franchiseId: fid != 'unknown' ? fid : null,
                                                       onSubmitted: () {
                                                         ScaffoldMessenger.of(
                                                                 context)
@@ -297,10 +308,11 @@ class OrderHistoryScreen extends StatelessWidget {
                                                             backgroundColor:
                                                                 UiConfig
                                                                     .surfaceColor,
-                                                            duration: const Duration(
+                                                            duration: Duration(
                                                                 seconds:
                                                                     DesignTokens
                                                                         .toastDurationSeconds),
+                                                            behavior: SnackBarBehavior.floating,
                                                           ),
                                                         );
                                                       },
@@ -367,6 +379,7 @@ class OrderHistoryScreen extends StatelessWidget {
                     );
                   },
                 ),
+          ),
         );
       },
     );

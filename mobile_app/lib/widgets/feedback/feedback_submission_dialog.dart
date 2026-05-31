@@ -12,6 +12,7 @@ class FeedbackSubmissionDialog extends StatefulWidget {
   final String userId;
   final FeedbackMode feedbackMode;
   final VoidCallback? onSubmitted;
+  final String? franchiseId; // P2.1: franchise-scoped feedback write
 
   const FeedbackSubmissionDialog({
     super.key,
@@ -19,6 +20,7 @@ class FeedbackSubmissionDialog extends StatefulWidget {
     required this.userId,
     this.feedbackMode = FeedbackMode.orderExperience,
     this.onSubmitted,
+    this.franchiseId,
   });
 
   @override
@@ -99,6 +101,7 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
         orderId: widget.orderId,
         feedback: entry
             .toFirestore(), // ← FIXED: convert model to Map<String, dynamic>
+        franchiseId: widget.franchiseId,
       );
 
       if (!mounted) return;

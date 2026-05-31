@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -236,20 +237,13 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  AppBar _buildAppBar(AppLocalizations localize) => AppBar(
-        title: Text(
-          localize.chatSupportTitle,
-          style: TextStyle(
-            fontSize: shared.DesignTokens.titleFontSize,
-            color: UiConfig.foregroundColorDark,
-            fontWeight: UiConfig.fontWeightBold,
-            fontFamily: shared.DesignTokens.fontFamily,
-          ),
-        ),
+  PreferredSizeWidget _buildAppBar(AppLocalizations localize) => FranchiseAppBar(
+        title: localize.chatSupportTitle,
+        showLogo: false,
         backgroundColor: UiConfig.facebookColor,
+        foregroundColor: UiConfig.foregroundColorDark,
         centerTitle: true,
         elevation: 0,
-        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
       );
 }
 

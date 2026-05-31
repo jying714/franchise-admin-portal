@@ -186,7 +186,7 @@ class DinnerIncludedIngredients extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 6.0),
                     child: Divider(
                       thickness: 1.0,
-                      color: Colors.grey[300],
+                      color: UiConfig.dividerColor,
                       height: 1,
                     ),
                   ),

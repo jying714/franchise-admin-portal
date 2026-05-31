@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 
 class ScheduledOrdersScreen extends StatefulWidget {
@@ -199,15 +200,12 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
 
     if (_userId == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            localizations.scheduledOrders,
-            style: UiConfig.titleStyle,
-          ),
-          backgroundColor: UiConfig.primaryColor,
+        appBar: FranchiseAppBar(
+          title: localizations.scheduledOrders,
+          showLogo: true,
+          logoUrl: UiConfig.currentLogoUrl,
+          logoAsset: shared.BrandingConfig.appBarLogoAsset,
           centerTitle: true,
-          elevation: 0,
-          iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
         ),
         backgroundColor: UiConfig.backgroundColorDark,
         body: Center(
@@ -223,22 +221,19 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
         Provider.of<shared.FirestoreService>(context, listen: false);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          localizations.scheduledOrders,
-          style: UiConfig.titleStyle,
-        ),
-        backgroundColor: UiConfig.primaryColor,
+      appBar: FranchiseAppBar(
+        title: localizations.scheduledOrders,
+        showLogo: true,
+        logoUrl: UiConfig.currentLogoUrl,
+        logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
-        elevation: 0,
-        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
       ),
       backgroundColor: UiConfig.backgroundColorDark,
       floatingActionButton: FloatingActionButton(
         backgroundColor: UiConfig.primaryColor,
         onPressed: () =>
             _showOrderEditorDialog(firestoreService: firestoreService),
-        child: const Icon(Icons.add, color: Colors.white),
+        child: Icon(Icons.add, color: UiConfig.onPrimaryColor),
         tooltip: localizations.addScheduledOrder,
       ),
       body: StreamBuilder<List<shared.Order>>(

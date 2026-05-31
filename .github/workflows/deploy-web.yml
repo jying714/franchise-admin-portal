@@ -10,7 +10,7 @@ on:
       - '.github/workflows/deploy-web.yml'
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # ← Fixes Node 20 deprecation
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # ← Fixes Node 20 deprecation (now using Node 22 where possible)
 
 jobs:
   build-and-deploy:
@@ -27,6 +27,12 @@ jobs:
       - run: flutter pub get
       - run: flutter gen-l10n
       - run: flutter build web --release
+
+      # Pinned Node 22 to address GitHub Actions Node 20 deprecation warnings
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'

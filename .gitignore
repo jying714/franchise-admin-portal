@@ -5,6 +5,7 @@ build_log.txt
 project_schema*.txt
 repo_schema.txt
 build_final.txt
+firestore_rules.txt
 
 # IDE
 .idea/

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/config/ui_config.dart';
+import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/features/ordering/confirmation_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -26,6 +27,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _promoApplied = false;
   String? _promoError;
   bool _isPaying = false;
+
+  // P2.3: Wired MockPaymentService (foundations for real gateway later)
+  late final shared.PaymentService _paymentService = shared.createPaymentService();
 
   static const String validPromoCode = "PIZZA10";
   static const double promoDiscount = 10.0;
@@ -87,9 +91,29 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Future<bool> _processPayment() async {
     setState(() => _isPaying = true);
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _isPaying = false);
-    return true;
+
+    try {
+      final result = await _paymentService.processPayment(
+        amount: _orderTotal,
+        currency: 'USD',
+        paymentMethod: _selectedPayment?.name ?? 'posMock',
+        metadata: {
+          'franchiseId': Provider.of<shared.FranchiseProvider>(context, listen: false).currentFranchiseId,
+          'userId': FirebaseAuth.instance.currentUser?.uid,
+        },
+      );
+
+      setState(() => _isPaying = false);
+      return result.success;
+    } catch (e) {
+      setState(() => _isPaying = false);
+      shared.ErrorLogger.log(
+        message: 'Payment processing error: $e',
+        source: 'CheckoutScreen',
+        severity: 'error',
+      );
+      return false;
+    }
   }
 
   String _generateOrderId() {
@@ -139,8 +163,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(localizations.pleaseSelectTime),
-          backgroundColor: UiConfig.errorColor,
+          content: Text(
+            localizations.pleaseSelectTime,
+            style: TextStyle(color: UiConfig.textColor),
+          ),
+          backgroundColor: UiConfig.surfaceColor,
+          duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -150,8 +179,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(localizations.signInToOrder),
-          backgroundColor: UiConfig.errorColor,
+          content: Text(
+            localizations.signInToOrder,
+            style: TextStyle(color: UiConfig.textColor),
+          ),
+          backgroundColor: UiConfig.surfaceColor,
+          duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -170,8 +204,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(localizations.cartEmpty),
-          backgroundColor: UiConfig.errorColor,
+          content: Text(
+            localizations.cartEmpty,
+            style: TextStyle(color: UiConfig.textColor),
+          ),
+          backgroundColor: UiConfig.surfaceColor,
+          duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -318,24 +357,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
                 return Scaffold(
                   backgroundColor: UiConfig.backgroundColor,
-                  appBar: AppBar(
-                    title: Text(
-                      localizations.checkout,
-                      style: TextStyle(
-                        color: UiConfig.foregroundColorDark,
-                        fontSize: shared.DesignTokens.titleFontSize,
-                        fontWeight: UiConfig.fontWeightBold,
-                        fontFamily: shared.DesignTokens.fontFamily,
-                      ),
-                    ),
-                    backgroundColor: UiConfig.primaryColor,
-                    elevation: 0,
-                    iconTheme: const IconThemeData(color: Colors.white),
+                  appBar: FranchiseAppBar(
+                    title: localizations.checkout,
+                    showLogo: true,
+                    logoUrl: UiConfig.currentLogoUrl,
+                    logoAsset: shared.BrandingConfig.appBarLogoAsset,
                     centerTitle: true,
                   ),
-                  body: SingleChildScrollView(
-                    padding: UiConfig.cardPadding,
-                    child: Column(
+                  body: SafeArea(
+                    bottom: true,
+                    child: SingleChildScrollView(
+                      padding: UiConfig.cardPadding,
+                      child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         if (showAllergenWarning)
@@ -513,8 +546,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
+                        Padding(
+                          padding: EdgeInsets.only(
+                            bottom: MediaQuery.of(context).padding.bottom + 16,
+                          ),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
                             backgroundColor: UiConfig.primaryColor,
                             foregroundColor: UiConfig.foregroundColorDark,
                             padding: UiConfig.defaultPadding,
@@ -537,10 +574,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   ),
                                 )
                               : Text(localizations.placeOrder),
+                          ),
                         ),
                       ],
                     ),
                   ),
+                  ), // SafeArea close
                 );
               },
             );
@@ -553,19 +592,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Widget _emptyCheckout(AppLocalizations localizations) {
     return Scaffold(
       backgroundColor: UiConfig.backgroundColor,
-      appBar: AppBar(
-        title: Text(
-          localizations.checkout,
-          style: TextStyle(
-            color: UiConfig.foregroundColorDark,
-            fontSize: shared.DesignTokens.titleFontSize,
-            fontWeight: UiConfig.fontWeightBold,
-            fontFamily: shared.DesignTokens.fontFamily,
-          ),
-        ),
-        backgroundColor: UiConfig.primaryColor,
-        elevation: 0,
-        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
+      appBar: FranchiseAppBar(
+        title: localizations.checkout,
+        showLogo: true,
+        logoUrl: UiConfig.currentLogoUrl,
+        logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
       ),
       body: Center(

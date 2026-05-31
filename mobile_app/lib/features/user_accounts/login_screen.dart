@@ -291,11 +291,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     onPressed: loading ? null : () => _handleEmailAuth(auth),
                     child: loading
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
+                                strokeWidth: 2, color: UiConfig.onPrimaryColor),
                           )
                         : Text(
                             isLoginMode ? 'Sign In' : 'Register',

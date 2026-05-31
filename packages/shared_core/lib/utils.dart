@@ -7,6 +7,7 @@ export 'src/core/utils/formatting_core.dart';
 export 'src/core/utils/log_utils_core.dart';
 export 'src/core/utils/schema_templates.dart';
 export 'src/core/utils/user_permissions.dart';
+export 'src/core/utils/qr_utils.dart'; // P2 QR + deep link foundations (pure Dart payload)
 
 // Feature utils (pure Dart)
 export 'src/core/utils/features/enum_platform_features.dart';

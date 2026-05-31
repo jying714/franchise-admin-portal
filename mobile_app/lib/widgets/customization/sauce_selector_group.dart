@@ -189,7 +189,7 @@ class SauceSelectorGroup extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(vertical: 4.0),
                 elevation: 0,
                 color:
-                    sauce.selected ? UiConfig.surfaceColor : Colors.transparent,
+                    sauce.selected ? UiConfig.surfaceColor : UiConfig.cardColor.withValues(alpha: 0.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
