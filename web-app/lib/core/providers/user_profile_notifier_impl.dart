@@ -1,18 +1,13 @@
-﻿// web_app/lib/core/providers/user_profile_notifier_impl.dart
-
-import 'package:flutter/widgets.dart';
+﻿import 'package:flutter/widgets.dart';
 import 'dart:async';
-import 'package:flutter/foundation.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'package:firebase_core/firebase_core.dart';
-import 'package:provider/provider.dart';
 
 class UserProfileNotifier extends ChangeNotifier
-    implements UserProfileProvider {
-  admin_user.User? _user;
+    implements shared.UserProfileProvider {
+  shared.User? _user;
   @override
-  admin_user.User? get user => _user;
+  shared.User? get user => _user;
 
   bool _loading = false;
   @override
@@ -28,11 +23,6 @@ class UserProfileNotifier extends ChangeNotifier
 
   @override
   Future<void> loadUser() async {
-    if (Firebase.apps.isEmpty) {
-      debugPrint('[UserProfileNotifier] Firebase not initialized');
-      return;
-    }
-
     final firebaseUser = fb_auth.FirebaseAuth.instance.currentUser;
     if (firebaseUser != null) {
       listenToUser(firebaseUser.uid);
@@ -56,9 +46,9 @@ class UserProfileNotifier extends ChangeNotifier
     _lastError = null;
     _deferNotify();
 
-    _firestoreService ??= FirestoreServiceImpl(); // â† Use impl
+    _firestoreService ??= shared.FirestoreServiceImpl();
 
-    _sub = delayedUserStream(_firestoreService!, uid).listen(
+    _sub = _delayedUserStream(_firestoreService!, uid).listen(
       (u) {
         _user = u;
         _loading = false;
@@ -77,6 +67,14 @@ class UserProfileNotifier extends ChangeNotifier
         );
       },
     );
+  }
+
+  Stream<shared.User?> _delayedUserStream(
+      shared.FirestoreService firestore, String uid) {
+    return firestore.userStream(uid).asyncMap((u) async {
+      await Future.delayed(const Duration(milliseconds: 100));
+      return u;
+    });
   }
 
   @override
@@ -104,15 +102,4 @@ class UserProfileNotifier extends ChangeNotifier
   void _deferNotify() {
     WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
   }
-
-  // === HELPER: delayedUserStream ===
-  Stream<admin_user.User?> delayedUserStream(
-      shared.FirestoreService firestore, String uid) {
-    return firestore.userStream(uid).asyncMap((u) async {
-      await Future.delayed(const Duration(milliseconds: 100)); // debounce
-      return u;
-    });
-  }
 }
-
-

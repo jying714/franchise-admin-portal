@@ -1,31 +1,29 @@
-﻿// web_app/lib/core/providers/franchise_info_provider_impl.dart
-
-import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
 class FranchiseInfoProviderImpl extends ChangeNotifier
-    implements FranchiseInfoProvider {
+    implements shared.FranchiseInfoProvider {
   final shared.FirestoreService _firestore;
-  final shared.FranchiseProvider _shared.FranchiseProvider;
+  final shared.FranchiseProvider _franchiseProvider;
 
-  FranchiseInfo? _franchise;
+  shared.FranchiseInfo? _franchise;
   bool _loading = false;
 
   FranchiseInfoProviderImpl({
     required shared.FirestoreService firestore,
-    required shared.FranchiseProvider shared.FranchiseProvider,
+    required shared.FranchiseProvider franchiseProvider,
   })  : _firestore = firestore,
-        _shared.FranchiseProvider = shared.FranchiseProvider;
+        _franchiseProvider = franchiseProvider;
 
   @override
-  FranchiseInfo? get franchise => _franchise;
+  shared.FranchiseInfo? get franchise => _franchise;
 
   @override
   bool get loading => _loading;
 
   @override
   Future<void> loadFranchiseInfo() async {
-    final fid = _shared.FranchiseProvider.franchiseId;
+    final fid = _franchiseProvider.franchiseId;
 
     if (fid == null || fid.isEmpty || fid == 'unknown') {
       if (_franchise != null) {
@@ -67,5 +65,3 @@ class FranchiseInfoProviderImpl extends ChangeNotifier
     notifyListeners();
   }
 }
-
-

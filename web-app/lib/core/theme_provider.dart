@@ -11,7 +11,6 @@ class ThemeProvider extends ChangeNotifier {
     _loadThemeMode();
   }
 
-  /// Call this to update the theme mode and persist selection
   void setThemeMode(ThemeMode mode) async {
     _themeMode = mode;
     notifyListeners();
@@ -19,7 +18,6 @@ class ThemeProvider extends ChangeNotifier {
     await prefs.setInt(_prefKey, _themeMode.index);
   }
 
-  /// Loads saved theme mode from storage (called on construction)
   Future<void> _loadThemeMode() async {
     final prefs = await SharedPreferences.getInstance();
     final index = prefs.getInt(_prefKey);
@@ -29,7 +27,6 @@ class ThemeProvider extends ChangeNotifier {
     }
   }
 
-  /// Optional: Toggle between light/dark only (for old usage)
   void toggleTheme([bool? dark]) {
     if (dark == null) {
       _themeMode =
@@ -40,5 +37,3 @@ class ThemeProvider extends ChangeNotifier {
     setThemeMode(_themeMode);
   }
 }
-
-
