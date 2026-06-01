@@ -66,7 +66,8 @@ Map<String, dynamic> getInitialUnauthRoute() {
   final currentUser = fb_auth.FirebaseAuth.instance.currentUser;
   if (currentUser != null) {
     shared.ErrorLogger.log(
-      message: '[getInitialUnauthRoute] User is signed in. Skipping invite-accept route.',
+      message:
+          '[getInitialUnauthRoute] User is signed in. Skipping invite-accept route.',
       source: 'main.dart',
       severity: 'info',
     );
@@ -90,7 +91,8 @@ Map<String, dynamic> getInitialUnauthRoute() {
         token = params['token'] ?? '';
       } catch (e, stack) {
         shared.ErrorLogger.log(
-          message: '[main.dart][getInitialUnauthRoute] Error parsing query string: $e',
+          message:
+              '[main.dart][getInitialUnauthRoute] Error parsing query string: $e',
           stack: stack.toString(),
           source: 'main.dart',
           severity: 'error',
@@ -118,7 +120,8 @@ void main() {
       severity: 'fatal',
       contextData: {
         'library': details.library,
-        'context': details.context?.toDescription() ?? details.context.toString(),
+        'context':
+            details.context?.toDescription() ?? details.context.toString(),
       },
     );
   };
@@ -129,7 +132,8 @@ void main() {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    await fb_auth.FirebaseAuth.instance.setPersistence(fb_auth.Persistence.LOCAL);
+    await fb_auth.FirebaseAuth.instance
+        .setPersistence(fb_auth.Persistence.LOCAL);
 
     final storage = AppLocalStorage();
     final authService = AuthServiceImpl();
@@ -145,7 +149,8 @@ void main() {
           Provider<shared.AuthService>.value(value: authService),
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           Provider<shared.FirestoreService>.value(value: firestoreService),
-          Provider<shared.AnalyticsService>.value(value: shared.AnalyticsServiceImpl()),
+          Provider<shared.AnalyticsService>.value(
+              value: shared.AnalyticsServiceImpl()),
           StreamProvider<fb_auth.User?>.value(
             value: fb_auth.FirebaseAuth.instance.authStateChanges(),
             initialData: null,
@@ -167,7 +172,8 @@ void main() {
 /// Safe themeMode with defensive fallback (no print).
 ThemeMode safeThemeMode(BuildContext context) {
   try {
-    return Provider.of<ThemeProvider>(context, listen: true).themeMode ?? ThemeMode.system;
+    return Provider.of<ThemeProvider>(context, listen: true).themeMode ??
+        ThemeMode.system;
   } catch (e, stack) {
     shared.ErrorLogger.log(
       message: 'ThemeProvider not found in context',
@@ -188,19 +194,23 @@ class FranchiseAuthenticatedRoot extends StatefulWidget {
       _FranchiseAuthenticatedRootState();
 }
 
-class _FranchiseAuthenticatedRootState extends State<FranchiseAuthenticatedRoot> {
+class _FranchiseAuthenticatedRootState
+    extends State<FranchiseAuthenticatedRoot> {
   @override
   Widget build(BuildContext context) {
     return Consumer<shared.FranchiseProvider>(
       builder: (context, franchiseProvider, _) {
-        final userNotifier = Provider.of<UserProfileNotifier>(context, listen: false);
+        final userNotifier =
+            Provider.of<UserProfileNotifier>(context, listen: false);
         final user = userNotifier.user;
 
         if (user?.roles?.contains('platform_owner') ?? false) {
-          return const MaterialApp(home: PlatformOwnerDashboardScreen(currentScreen: 'platform-owner/dashboard'));
+          return const MaterialApp(home: PlatformOwnerDashboardScreen());
         }
         if (user?.roles?.contains('hq_owner') ?? false) {
-          return const MaterialApp(home: OwnerHqDashboardScreen());
+          return const MaterialApp(
+            home: OwnerHqDashboardScreen(currentScreen: 'hq-owner/dashboard'),
+          );
         }
         return FranchiseGate(
           child: const AdminDashboardScreen(),
@@ -218,8 +228,11 @@ class FranchiseAppRootSplit extends StatelessWidget {
   Widget build(BuildContext context) {
     final firebaseUser = Provider.of<fb_auth.User?>(context);
 
-    final userNotifier = Provider.of<UserProfileNotifier>(context, listen: false);
-    if (firebaseUser != null && userNotifier.user == null && !userNotifier.loading) {
+    final userNotifier =
+        Provider.of<UserProfileNotifier>(context, listen: false);
+    if (firebaseUser != null &&
+        userNotifier.user == null &&
+        !userNotifier.loading) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         userNotifier.loadUser();
       });
@@ -239,7 +252,9 @@ class FranchiseAppRootSplit extends StatelessWidget {
             title: 'Franchise Admin Portal',
             theme: _lightTheme,
             darkTheme: _darkTheme,
-            themeMode: Provider.of<ThemeProvider>(context, listen: true).themeMode ?? ThemeMode.system,
+            themeMode:
+                Provider.of<ThemeProvider>(context, listen: true).themeMode ??
+                    ThemeMode.system,
             localizationsDelegates: const [
               AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
@@ -285,8 +300,10 @@ class FranchiseAppRootSplit extends StatelessWidget {
     return Selector<UserProfileNotifier, bool>(
       selector: (_, notifier) => notifier.user != null && !notifier.loading,
       builder: (context, isUserReady, _) {
-        final franchiseProvider = Provider.of<shared.FranchiseProvider>(context, listen: false);
-        final userNotifier = Provider.of<UserProfileNotifier>(context, listen: false);
+        final franchiseProvider =
+            Provider.of<shared.FranchiseProvider>(context, listen: false);
+        final userNotifier =
+            Provider.of<UserProfileNotifier>(context, listen: false);
         final firebaseUser = Provider.of<fb_auth.User?>(context, listen: false);
 
         final user = userNotifier.user;
@@ -305,15 +322,16 @@ class FranchiseAppRootSplit extends StatelessWidget {
         return MultiProvider(
           providers: [
             ChangeNotifierProvider(create: (_) => shared.AdminUserProvider()),
-
-            ChangeNotifierProxyProvider<shared.FranchiseProvider, FranchiseSubscriptionProviderImpl>(
+            ChangeNotifierProxyProvider<shared.FranchiseProvider,
+                FranchiseSubscriptionProviderImpl>(
               create: (_) => FranchiseSubscriptionProviderImpl(
                 service: FranchiseSubscriptionServiceImpl(),
                 franchiseId: '',
               ),
               update: (_, franchiseProvider, notifier) {
                 final fid = franchiseProvider.franchiseId;
-                final userNotifierLocal = Provider.of<UserProfileNotifier>(_, listen: false);
+                final userNotifierLocal =
+                    Provider.of<UserProfileNotifier>(_, listen: false);
                 final userRoles = userNotifierLocal.user?.roles ?? [];
 
                 notifier ??= FranchiseSubscriptionProviderImpl(
@@ -332,13 +350,15 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 return notifier;
               },
             ),
-
-            ChangeNotifierProvider(create: (_) => PlatformPlanSelectionProviderImpl()),
-
-            ChangeNotifierProxyProvider2<shared.FranchiseProvider, shared.FirestoreService, FranchiseInfoProviderImpl>(
+            ChangeNotifierProvider(
+                create: (_) => PlatformPlanSelectionProviderImpl()),
+            ChangeNotifierProxyProvider2<shared.FranchiseProvider,
+                shared.FirestoreService, FranchiseInfoProviderImpl>(
               create: (_) => FranchiseInfoProviderImpl(
-                firestore: Provider.of<shared.FirestoreService>(_, listen: false),
-                franchiseProvider: Provider.of<shared.FranchiseProvider>(_, listen: false),
+                firestore:
+                    Provider.of<shared.FirestoreService>(_, listen: false),
+                franchiseProvider:
+                    Provider.of<shared.FranchiseProvider>(_, listen: false),
               ),
               update: (_, franchiseProvider, firestoreService, previous) {
                 final provider = previous ??
@@ -350,8 +370,8 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 return provider;
               },
             ),
-
-            ChangeNotifierProxyProvider2<shared.FranchiseProvider, shared.FirestoreService, FranchiseFeatureProviderImpl>(
+            ChangeNotifierProxyProvider2<shared.FranchiseProvider,
+                shared.FirestoreService, FranchiseFeatureProviderImpl>(
               create: (_) => FranchiseFeatureProviderImpl(
                 service: FranchiseFeatureServiceImpl(),
                 franchiseId: '',
@@ -370,10 +390,11 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 return provider;
               },
             ),
-
-            ChangeNotifierProxyProvider2<shared.FirestoreService, shared.FranchiseProvider, OnboardingProgressProviderImpl>(
+            ChangeNotifierProxyProvider2<shared.FirestoreService,
+                shared.FranchiseProvider, OnboardingProgressProviderImpl>(
               create: (_) => OnboardingProgressProviderImpl(
-                firestore: Provider.of<shared.FirestoreService>(_, listen: false),
+                firestore:
+                    Provider.of<shared.FirestoreService>(_, listen: false),
                 franchiseId: '',
               ),
               update: (_, firestoreService, franchiseProvider, previous) {
@@ -392,34 +413,37 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 return provider;
               },
             ),
-
-            ChangeNotifierProxyProvider2<shared.FirestoreService, FranchiseInfoProvider, IngredientMetadataProviderImpl>(
+            ChangeNotifierProxyProvider2<shared.FirestoreService,
+                shared.FranchiseProvider, IngredientMetadataProviderImpl>(
               create: (_) => IngredientMetadataProviderImpl(
-                shared.firestoreService: Provider.of<shared.FirestoreService>(_, listen: false),
+                firestore:
+                    Provider.of<shared.FirestoreService>(_, listen: false),
                 franchiseId: '',
               ),
-              update: (_, firestore, franchiseInfo, previous) {
-                final franchiseId = franchiseInfo.franchise?.id ?? '';
+              update: (_, firestore, franchiseProvider, previous) {
+                final fid = franchiseProvider.franchiseId;
+                if (!franchiseProvider.hasValidFranchise) return previous!;
                 final provider = previous ??
                     IngredientMetadataProviderImpl(
-                      shared.firestoreService: firestore,
-                      franchiseId: franchiseId,
+                      firestore: firestore,
+                      franchiseId: fid,
                     );
-                if (franchiseId.isNotEmpty &&
-                    franchiseId != provider.franchiseId &&
-                    franchiseId != 'unknown') {
+                if (fid.isNotEmpty &&
+                    fid != provider.franchiseId &&
+                    fid != 'unknown') {
                   return IngredientMetadataProviderImpl(
-                    shared.firestoreService: firestore,
-                    franchiseId: franchiseId,
+                    firestore: firestore,
+                    franchiseId: fid,
                   )..load();
                 }
                 return provider;
               },
             ),
-
-            ChangeNotifierProxyProvider2<shared.FirestoreService, shared.FranchiseProvider, shared.CategoryProvider>(
+            ChangeNotifierProxyProvider2<shared.FirestoreService,
+                shared.FranchiseProvider, shared.CategoryProvider>(
               create: (_) => shared.CategoryProvider(
-                firestore: Provider.of<shared.FirestoreService>(_, listen: false),
+                firestore:
+                    Provider.of<shared.FirestoreService>(_, listen: false),
                 franchiseId: '',
               ),
               update: (_, firestore, franchiseProvider, previous) {
@@ -436,18 +460,24 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 return provider;
               },
             ),
-
-            ChangeNotifierProxyProvider3<shared.FirestoreService, shared.FranchiseProvider, FranchiseInfoProvider, MenuItemProviderImpl>(
+            ChangeNotifierProxyProvider3<
+                shared.FirestoreService,
+                shared.FranchiseProvider,
+                FranchiseInfoProvider,
+                MenuItemProviderImpl>(
               create: (_) => MenuItemProviderImpl(
-                shared.firestoreService: Provider.of<shared.FirestoreService>(_, listen: false),
-                franchiseInfoProvider: Provider.of<FranchiseInfoProvider>(_, listen: false),
+                firestoreService:
+                    Provider.of<shared.FirestoreService>(_, listen: false),
+                franchiseInfoProvider:
+                    Provider.of<FranchiseInfoProvider>(_, listen: false),
               ),
-              update: (_, sharedFirestoreService, franchiseProvider, franchiseInfoProvider, previous) {
+              update: (_, firestoreService, franchiseProvider,
+                  franchiseInfoProvider, previous) {
                 final fid = franchiseProvider.franchiseId;
                 if (!franchiseProvider.hasValidFranchise) return previous!;
                 final provider = previous ??
                     MenuItemProviderImpl(
-                      shared.firestoreService: sharedFirestoreService,
+                      firestoreService: firestoreService,
                       franchiseInfoProvider: franchiseInfoProvider,
                     );
                 provider.franchiseInfoProvider = franchiseInfoProvider;
@@ -457,17 +487,19 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 return provider;
               },
             ),
-
-            ChangeNotifierProxyProvider2<shared.FirestoreService, shared.FranchiseProvider, IngredientTypeProviderImpl>(
+            ChangeNotifierProxyProvider2<shared.FirestoreService,
+                shared.FranchiseProvider, IngredientTypeProviderImpl>(
               create: (_) => IngredientTypeProviderImpl(
-                shared.firestoreService: Provider.of<shared.FirestoreService>(_, listen: false),
+                firestoreService:
+                    Provider.of<shared.FirestoreService>(_, listen: false),
               ),
-              update: (_, sharedFirestoreService, franchiseProvider, previous) {
+              update: (_, firestoreService, franchiseProvider, previous) {
                 final fid = franchiseProvider.franchiseId;
                 if (!franchiseProvider.hasValidFranchise) return previous!;
-                final provider = previous ?? IngredientTypeProviderImpl(
-                  shared.firestoreService: sharedFirestoreService,
-                );
+                final provider = previous ??
+                    IngredientTypeProviderImpl(
+                      firestoreService: firestoreService,
+                    );
                 if (fid.isNotEmpty && fid != provider.franchiseId) {
                   provider.franchiseId = fid;
                   provider.load(franchiseIdOverride: fid);
@@ -475,18 +507,18 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 return provider;
               },
             ),
-
             Provider<AuditLogService>.value(value: AuditLogServiceImpl()),
             ChangeNotifierProvider(
-              create: (_) => FranchiseeInvitationProvider(
+              create: (_) => FranchiseeInvitationProviderImpl(
                 service: FranchiseeInvitationService(
-                  shared.firestoreService: Provider.of<shared.FirestoreService>(_, listen: false),
+                  firestoreService:
+                      Provider.of<shared.FirestoreService>(_, listen: false),
                 ),
               ),
             ),
             ChangeNotifierProvider(create: (_) => RestaurantTypeProvider()),
-
-            Provider<shared.AnalyticsService>.value(value: shared.AnalyticsServiceImpl()),
+            Provider<shared.AnalyticsService>.value(
+                value: shared.AnalyticsServiceImpl()),
             StreamProvider<fb_auth.User?>.value(
               value: fb_auth.FirebaseAuth.instance.authStateChanges(),
               initialData: null,
@@ -501,7 +533,6 @@ class FranchiseAppRootSplit extends StatelessWidget {
     );
   }
 }
-
 
 // ===== THEME DEFINITIONS (shared.DesignTokens only - per barrel rules) =====
 
@@ -565,7 +596,8 @@ final ThemeData _lightTheme = ThemeData(
       backgroundColor: shared.DesignTokens.primaryColor,
       foregroundColor: shared.DesignTokens.foregroundColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(shared.DesignTokens.adminButtonRadius),
+        borderRadius:
+            BorderRadius.circular(shared.DesignTokens.adminButtonRadius),
       ),
       elevation: shared.DesignTokens.adminButtonElevation,
       textStyle: TextStyle(
@@ -579,7 +611,8 @@ final ThemeData _lightTheme = ThemeData(
   dialogTheme: DialogTheme(
     backgroundColor: shared.DesignTokens.surfaceColor,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(shared.DesignTokens.dialogBorderRadius),
+      borderRadius:
+          BorderRadius.circular(shared.DesignTokens.dialogBorderRadius),
     ),
     elevation: shared.DesignTokens.adminDialogElevation,
     titleTextStyle: TextStyle(
@@ -622,7 +655,8 @@ final ThemeData _darkTheme = ThemeData(
   appBarTheme: AppBarTheme(
     backgroundColor: shared.DesignTokens.appBarBackgroundColorDark,
     foregroundColor: shared.DesignTokens.appBarForegroundColorDark,
-    iconTheme: IconThemeData(color: shared.DesignTokens.appBarForegroundColorDark),
+    iconTheme:
+        IconThemeData(color: shared.DesignTokens.appBarForegroundColorDark),
     elevation: shared.DesignTokens.appBarElevation,
     titleTextStyle: TextStyle(
       fontFamily: shared.DesignTokens.appBarFontFamily,
@@ -666,7 +700,8 @@ final ThemeData _darkTheme = ThemeData(
       backgroundColor: shared.DesignTokens.primaryColor,
       foregroundColor: shared.DesignTokens.foregroundColorDark,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(shared.DesignTokens.adminButtonRadius),
+        borderRadius:
+            BorderRadius.circular(shared.DesignTokens.adminButtonRadius),
       ),
       elevation: shared.DesignTokens.adminButtonElevation,
       textStyle: TextStyle(
@@ -680,7 +715,8 @@ final ThemeData _darkTheme = ThemeData(
   dialogTheme: DialogTheme(
     backgroundColor: shared.DesignTokens.surfaceColorDark,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(shared.DesignTokens.dialogBorderRadius),
+      borderRadius:
+          BorderRadius.circular(shared.DesignTokens.dialogBorderRadius),
     ),
     elevation: shared.DesignTokens.adminDialogElevation,
     titleTextStyle: TextStyle(

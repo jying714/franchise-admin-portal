@@ -1,11 +1,10 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/active_plan_banner.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
@@ -15,6 +14,7 @@ import 'category_search_bar.dart';
 import 'bulk_action_bar.dart';
 import 'unauthorized_widget.dart';
 import 'undo_snackbar.dart';
+import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart'; // provides shared.RoleGuard
 
 const categoryColumns = [
   {"key": "select", "width": 40.0, "header": ""},
@@ -29,7 +29,7 @@ class CategoryManagementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return shared.RoleGuard(
+    return RoleGuard(
       requireAnyRole: [
         'platform_owner',
         'hq_owner',
@@ -38,7 +38,7 @@ class CategoryManagementScreen extends StatelessWidget {
         'admin',
       ],
       featureName: 'category_management_screen',
-      source: 'CategoryManagementScreen' /* was screen, Phase 4 fix */,
+      source: 'CategoryManagementScreen',
       child: const CategoryManagementScreenContent(),
     );
   }
@@ -54,9 +54,9 @@ class CategoryManagementScreenContent extends StatefulWidget {
 
 class _CategoryManagementScreenContentState
     extends State<CategoryManagementScreenContent> {
-  late shared.FirestoreService shared.firestoreService;
-  List<Category> _allCategories = [];
-  List<Category> _filteredCategories = [];
+  late shared.FirestoreService firestoreService;
+  List<shared.Category> _allCategories = [];
+  List<shared.Category> _filteredCategories = [];
   Set<String> _selectedIds = {};
   String _searchQuery = '';
   String _sortKey = 'name';
@@ -67,12 +67,14 @@ class _CategoryManagementScreenContentState
   @override
   void initState() {
     super.initState();
-    shared.firestoreService = Provider.of<shared.FirestoreService>(context, listen: false);
+    firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
   }
 
   bool get _canManage {
-    final user = Provider.of<UserProfileNotifier>(context, listen: false).user;
-    return UserPermissions.canManageCategories(user);
+    final user =
+        Provider.of<shared.UserProfileNotifier>(context, listen: false).user;
+    return shared.UserPermissions.canManageCategories(user);
   }
 
   void _onCategorySelect(String id, bool selected) {
@@ -84,28 +86,28 @@ class _CategoryManagementScreenContentState
   void _onSelectAll(bool? checked) {
     setState(() {
       _selectedIds =
-          checked == true ? _filteredCategories.map((c) => c.id).toSet() : {};
+          checked == true ? _filteredCategories.map((c) => c.id!).toSet() : {};
     });
   }
 
-  Future<void> _openCategoryDialog({Category? category}) async {
+  Future<void> _openCategoryDialog({shared.Category? category}) async {
     final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
     if (!_canManage || _isLoading || _bulkLoading) return;
 
-    await showDialog<Category>(
+    await showDialog<shared.Category>(
       context: context,
       builder: (_) => CategoryFormDialog(
-        franchiseId: franchiseId, // âœ… REQUIRED FIX
+        franchiseId: franchiseId,
         category: category,
-        onSaved: (Category saved) async {
+        onSaved: (shared.Category saved) async {
           setState(() => _isLoading = true);
           final userId =
-              Provider.of<UserProfileNotifier?>(context, listen: false)
+              Provider.of<shared.UserProfileNotifier?>(context, listen: false)
                   ?.user
                   ?.id;
           try {
             if (category == null) {
-              await shared.firestoreService.addCategory(
+              await firestoreService.addCategory(
                 franchiseId: franchiseId,
                 category: saved,
               );
@@ -114,7 +116,7 @@ class _CategoryManagementScreenContentState
                     content: Text(AppLocalizations.of(context)!.categoryAdded)),
               );
             } else {
-              await shared.firestoreService.updateCategory(franchiseId, saved);
+              await firestoreService.updateCategory(franchiseId, saved);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content:
@@ -125,8 +127,7 @@ class _CategoryManagementScreenContentState
             await shared.ErrorLogger.log(
               message: e.toString(),
               stack: stack.toString(),
-              source: 'category_management_screen',
-              source: 'CategoryManagementScreen' /* was screen, Phase 4 fix */,
+              source: 'CategoryManagementScreen',
               contextData: {
                 'franchiseId': franchiseId,
                 'userId': userId,
@@ -150,13 +151,15 @@ class _CategoryManagementScreenContentState
     );
   }
 
-  Future<void> _deleteCategory(Category category,
+  Future<void> _deleteCategory(shared.Category category,
       {bool showUndo = true}) async {
     final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     if (!_canManage || _isLoading || _bulkLoading) return;
     final loc = AppLocalizations.of(context)!;
     final userId =
-        Provider.of<UserProfileNotifier?>(context, listen: false)?.user?.id;
+        Provider.of<shared.UserProfileNotifier?>(context, listen: false)
+            ?.user
+            ?.id;
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -182,16 +185,15 @@ class _CategoryManagementScreenContentState
     if (confirm == true) {
       setState(() => _isLoading = true);
       try {
-        await shared.firestoreService.deleteCategory(
+        await firestoreService.deleteCategory(
           franchiseId: franchiseId,
-          categoryId: category.id,
+          categoryId: category.id!,
         );
       } catch (e, stack) {
         await shared.ErrorLogger.log(
           message: e.toString(),
           stack: stack.toString(),
-          source: 'category_management_screen',
-          source: 'CategoryManagementScreen' /* was screen, Phase 4 fix */,
+          source: 'CategoryManagementScreen',
           contextData: {
             'franchiseId': franchiseId,
             'userId': userId,
@@ -200,7 +202,6 @@ class _CategoryManagementScreenContentState
             'operation': 'delete',
           },
         );
-
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(loc.failedToDeleteCategory)));
       }
@@ -212,16 +213,13 @@ class _CategoryManagementScreenContentState
           onUndo: () async {
             setState(() => _isLoading = true);
             try {
-              await shared.firestoreService.addCategory(
-                franchiseId: franchiseId,
-                category: category,
-              );
+              await firestoreService.addCategory(
+                  franchiseId: franchiseId, category: category);
             } catch (e, stack) {
               await shared.ErrorLogger.log(
                 message: e.toString(),
                 stack: stack.toString(),
-                source: 'category_management_screen',
-                source: 'CategoryManagementScreen' /* was screen, Phase 4 fix */,
+                source: 'CategoryManagementScreen',
                 contextData: {
                   'franchiseId': franchiseId,
                   'userId': userId,
@@ -359,8 +357,8 @@ class _CategoryManagementScreenContentState
                           ),
                         const SizedBox(height: 12),
                         Expanded(
-                          child: StreamBuilder<List<Category>>(
-                            stream: shared.firestoreService.getCategories(franchiseId),
+                          child: StreamBuilder<List<shared.Category>>(
+                            stream: firestoreService.getCategories(franchiseId),
                             builder: (context, snapshot) {
                               if (snapshot.hasError) {
                                 return EmptyStateWidget(
@@ -405,8 +403,7 @@ class _CategoryManagementScreenContentState
                                               ? CircleAvatar(
                                                   backgroundImage: NetworkImage(
                                                       category.image!),
-                                                  radius: 24,
-                                                )
+                                                  radius: 24)
                                               : CircleAvatar(
                                                   backgroundImage: AssetImage(
                                                       BrandingConfig
@@ -507,9 +504,8 @@ class _CategoryManagementScreenContentState
             return SizedBox(
               width: col["width"] as double,
               child: Center(
-                child: Text(col["header"] as String? ?? "",
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-              ),
+                  child: Text(col["header"] as String? ?? "",
+                      style: const TextStyle(fontWeight: FontWeight.bold))),
             );
           } else {
             return Expanded(
@@ -524,7 +520,7 @@ class _CategoryManagementScreenContentState
   }
 
   Widget buildCategoryDataRow(
-      BuildContext context, Category category, bool isDesktop) {
+      BuildContext context, shared.Category category, bool isDesktop) {
     final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: categoryColumns.map((col) {
@@ -536,7 +532,7 @@ class _CategoryManagementScreenContentState
               child: Checkbox(
                 value: _selectedIds.contains(category.id),
                 onChanged: (checked) =>
-                    _onCategorySelect(category.id, checked ?? false),
+                    _onCategorySelect(category.id!, checked ?? false),
               ),
             );
           case "image":
@@ -601,10 +597,3 @@ class _CategoryManagementScreenContentState
     );
   }
 }
-
-
-
-
-
-
-

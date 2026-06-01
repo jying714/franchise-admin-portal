@@ -1,4 +1,6 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+
 // Import ALL your admin sections (ensure these files exist!)
 import 'package:franchise_admin_portal/admin/dashboard/dashboard_home_screen.dart';
 import 'package:franchise_admin_portal/admin/menu/menu_editor_screen.dart';
@@ -9,26 +11,21 @@ import 'package:franchise_admin_portal/admin/orders/order_management_screen.dart
 import 'package:franchise_admin_portal/admin/feedback/feedback_management_screen.dart';
 import 'package:franchise_admin_portal/admin/promo/promo_management_screen.dart';
 import 'package:franchise_admin_portal/admin/staff/staff_access_screen.dart';
-import 'package:franchise_admin_portal/admin/features/feature_settings_screen.dart';
 import 'package:franchise_admin_portal/admin/chat/chat_management_screen.dart';
-import 'package:franchise_admin_portal/admin/error_logs/error_logs_screen.dart';
-import 'package:franchise_admin_portal/admin/developer/platform/platform_plans_section.dart';
-import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_categories_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredients_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_items_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_review_screen.dart';
-import 'package:shared_core/shared_core.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredient_type_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_feature_setup_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/menu_item_editor_screen.dart';
 // Any new (plugin/module) screens can be imported and registered here
 
 // ==== UNIFIED SECTION REGISTRY (ALL MAIN + ONBOARDING) ====
-final List<DashboardSection> sectionRegistry = [
+final List<shared.DashboardSection> sectionRegistry = [
   // ---- Core dashboard sections ----
-  DashboardSection(
+  shared.DashboardSection(
     key: 'dashboardHome',
     title: 'Dashboard',
     icon: Icons.dashboard,
@@ -36,7 +33,7 @@ final List<DashboardSection> sectionRegistry = [
     sidebarOrder: 0,
     showInSidebar: true,
   ),
-  DashboardSection(
+  shared.DashboardSection(
     key: 'menuEditor',
     title: 'Menu',
     icon: Icons.local_pizza,
@@ -44,7 +41,7 @@ final List<DashboardSection> sectionRegistry = [
     sidebarOrder: 1,
     showInSidebar: true,
   ),
-  DashboardSection(
+  shared.DashboardSection(
     key: 'categoryManagement',
     title: 'Categories',
     icon: Icons.category_outlined,
@@ -52,7 +49,7 @@ final List<DashboardSection> sectionRegistry = [
     sidebarOrder: 2,
     showInSidebar: true,
   ),
-  DashboardSection(
+  shared.DashboardSection(
     key: 'inventoryManagement',
     title: 'Inventory',
     icon: Icons.inventory,
@@ -60,7 +57,7 @@ final List<DashboardSection> sectionRegistry = [
     sidebarOrder: 3,
     showInSidebar: true,
   ),
-  DashboardSection(
+  shared.DashboardSection(
     key: 'orderAnalytics',
     title: 'Order Analytics',
     icon: Icons.analytics_outlined,
@@ -68,7 +65,7 @@ final List<DashboardSection> sectionRegistry = [
     sidebarOrder: 4,
     showInSidebar: true,
   ),
-  DashboardSection(
+  shared.DashboardSection(
     key: 'orderManagement',
     title: 'Orders',
     icon: Icons.receipt_long_outlined,
@@ -76,7 +73,7 @@ final List<DashboardSection> sectionRegistry = [
     sidebarOrder: 5,
     showInSidebar: true,
   ),
-  DashboardSection(
+  shared.DashboardSection(
     key: 'feedbackManagement',
     title: 'Feedback',
     icon: Icons.feedback_outlined,
@@ -84,7 +81,7 @@ final List<DashboardSection> sectionRegistry = [
     sidebarOrder: 6,
     showInSidebar: true,
   ),
-  DashboardSection(
+  shared.DashboardSection(
     key: 'promoManagement',
     title: 'Promotions',
     icon: Icons.card_giftcard_outlined,
@@ -92,7 +89,7 @@ final List<DashboardSection> sectionRegistry = [
     sidebarOrder: 7,
     showInSidebar: true,
   ),
-  DashboardSection(
+  shared.DashboardSection(
     key: 'staffAccess',
     title: 'Staff',
     icon: Icons.people_outline,
@@ -100,7 +97,7 @@ final List<DashboardSection> sectionRegistry = [
     sidebarOrder: 8,
     showInSidebar: true,
   ),
-  DashboardSection(
+  shared.DashboardSection(
     key: 'chatManagement',
     title: 'Support Chat',
     icon: Icons.chat_bubble_outline,
@@ -109,7 +106,7 @@ final List<DashboardSection> sectionRegistry = [
     showInSidebar: true,
   ),
   // Hidden editor screen (utility, not in sidebar)
-  DashboardSection(
+  shared.DashboardSection(
     key: 'menuItemEditor',
     title: 'Menu Item Editor',
     icon: Icons.edit_note_rounded,
@@ -119,7 +116,7 @@ final List<DashboardSection> sectionRegistry = [
   ),
 
   // ---- Onboarding Steps (now unified, sidebarOrder >= 100 for grouping) ----
-  DashboardSection(
+  shared.DashboardSection(
     key: 'onboardingMenu',
     title: 'Overview',
     icon: Icons.list_alt_outlined,
@@ -127,15 +124,15 @@ final List<DashboardSection> sectionRegistry = [
     sidebarOrder: 100,
     showInSidebar: true,
   ),
-  DashboardSection(
+  shared.DashboardSection(
     key: 'onboarding_feature_setup',
     title: 'Step 1: Feature Setup',
     icon: Icons.tune,
-    builder: (_) => OnboardingFeatureSetupScreen(),
+    builder: (_) => const OnboardingFeatureSetupScreen(),
     sidebarOrder: 101,
     showInSidebar: true,
   ),
-  DashboardSection(
+  shared.DashboardSection(
     key: 'onboardingIngredientTypes',
     title: 'Step 2: Ingredient Types',
     icon: Icons.category_outlined,
@@ -143,7 +140,7 @@ final List<DashboardSection> sectionRegistry = [
     sidebarOrder: 102,
     showInSidebar: true,
   ),
-  DashboardSection(
+  shared.DashboardSection(
     key: 'onboardingIngredients',
     title: 'Step 3: Ingredients',
     icon: Icons.kitchen_outlined,
@@ -151,7 +148,7 @@ final List<DashboardSection> sectionRegistry = [
     sidebarOrder: 103,
     showInSidebar: true,
   ),
-  DashboardSection(
+  shared.DashboardSection(
     key: 'onboardingCategories',
     title: 'Step 4: Categories',
     icon: Icons.category_outlined,
@@ -159,7 +156,7 @@ final List<DashboardSection> sectionRegistry = [
     sidebarOrder: 104,
     showInSidebar: true,
   ),
-  DashboardSection(
+  shared.DashboardSection(
     key: 'onboardingMenuItems',
     title: 'Step 5: Menu Items',
     icon: Icons.local_pizza_outlined,
@@ -167,7 +164,7 @@ final List<DashboardSection> sectionRegistry = [
     sidebarOrder: 105,
     showInSidebar: true,
   ),
-  DashboardSection(
+  shared.DashboardSection(
     key: 'onboardingReview',
     title: 'Review & Publish',
     icon: Icons.check_circle_outline,
@@ -181,10 +178,11 @@ final List<DashboardSection> sectionRegistry = [
 // ---- Sidebar and Section List Utilities ----
 
 /// Only sections with showInSidebar==true, sorted by sidebarOrder.
-List<DashboardSection> getSidebarSections() =>
+List<shared.DashboardSection> getSidebarSections() =>
     sectionRegistry.where((s) => s.showInSidebar).toList()
       ..sort((a, b) => a.sidebarOrder.compareTo(b.sidebarOrder));
 
 /// All sections (for routing, content stack, and selection), sorted by sidebarOrder.
-List<DashboardSection> getAllDashboardSections() => sectionRegistry.toList()
-  ..sort((a, b) => a.sidebarOrder.compareTo(b.sidebarOrder));
+List<shared.DashboardSection> getAllDashboardSections() =>
+    sectionRegistry.toList()
+      ..sort((a, b) => a.sidebarOrder.compareTo(b.sidebarOrder));
