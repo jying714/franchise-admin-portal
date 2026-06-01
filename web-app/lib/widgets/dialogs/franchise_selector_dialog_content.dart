@@ -8,23 +8,24 @@ class FranchiseSelectorDialogContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shared.firestoreService =
-        Provider.of<shared.FirestoreService>(context, listen: false);
-    final shared.franchiseProvider =
-        Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final firestoreService = Provider.of<shared.FirestoreService>(
+      context,
+      listen: false,
+    );
+    final franchiseProvider = Provider.of<shared.FranchiseProvider>(
+      context,
+      listen: false,
+    );
+
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      // Fallback UI for missing localization:
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
+      return const Scaffold(
+        body: Center(child: Text('Localization missing')),
       );
     }
 
     return FutureBuilder<List<shared.FranchiseInfo>>(
-      future:
-          shared.firestoreService.getFranchises(), // must return List<FranchiseInfo>
+      future: firestoreService.getFranchises(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Padding(
@@ -51,7 +52,7 @@ class FranchiseSelectorDialogContent extends StatelessWidget {
               title: Text(franchise.name ?? franchise.id),
               subtitle: Text('ID: ${franchise.id}'),
               onTap: () {
-                shared.franchiseProvider.setFranchiseId(franchise.id);
+                franchiseProvider.setFranchiseId(franchise.id);
                 Navigator.of(context).pop(); // Close dialog
               },
             );
@@ -61,8 +62,3 @@ class FranchiseSelectorDialogContent extends StatelessWidget {
     );
   }
 }
-
-
-
-
-

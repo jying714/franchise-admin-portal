@@ -1,11 +1,9 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:provider/provider.dart' as provider;
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
-    as formatting;
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 
 class FranchiseFinancialKpiCard extends StatefulWidget {
@@ -13,10 +11,10 @@ class FranchiseFinancialKpiCard extends StatefulWidget {
   final String? brandId;
 
   const FranchiseFinancialKpiCard({
-    Key? key,
+    super.key,
     required this.franchiseId,
     this.brandId,
-  }) : super(key: key);
+  });
 
   @override
   State<FranchiseFinancialKpiCard> createState() =>
@@ -25,7 +23,6 @@ class FranchiseFinancialKpiCard extends StatefulWidget {
 
 class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
   late Future<Map<String, dynamic>> _kpiFuture;
-  late ColorScheme _colors;
   bool _isDeveloper = false;
 
   @override
@@ -36,7 +33,12 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
   }
 
   void _checkRole() {
-    final user = context.read<AdminUserProvider>().user;
+    // Use aliased Provider.of to bypass FeatureContextExtension.read collision
+    final user = provider.Provider.of<shared.AdminUserProvider>(
+      context,
+      listen: false,
+    ).user;
+
     final roles = user?.roles ?? [];
     setState(() {
       _isDeveloper = roles.contains('developer') ||
@@ -47,15 +49,17 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
 
   Future<Map<String, dynamic>> _loadKpis() async {
     try {
-      final shared.firestoreService =
-          Provider.of<shared.FirestoreService>(context, listen: false);
+      final firestoreService = provider.Provider.of<shared.FirestoreService>(
+        context,
+        listen: false,
+      );
 
-      final analytics = await shared.firestoreService
+      final analytics = await firestoreService
           .getFranchiseAnalyticsSummary(widget.franchiseId);
       final outstanding =
-          await shared.firestoreService.getOutstandingInvoices(widget.franchiseId);
+          await firestoreService.getOutstandingInvoices(widget.franchiseId);
       final lastPayout =
-          await shared.firestoreService.getLastPayout(widget.franchiseId);
+          await firestoreService.getLastPayout(widget.franchiseId);
 
       return {
         'analytics': analytics,
@@ -63,17 +67,12 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
         'lastPayout': lastPayout,
       };
     } catch (e, st) {
-      final shared.firestoreService =
-          Provider.of<shared.FirestoreService>(context, listen: false);
       shared.ErrorLogger.log(
         message: 'Failed to load KPIs: $e',
         source: 'FranchiseFinancialKpiCard',
-        source: 'FranchiseFinancialKpiCard' /* was screen, Phase 5 */,
         stack: st.toString(),
         severity: 'error',
-        contextData: {
-          'franchiseId': widget.franchiseId,
-        },
+        contextData: {'franchiseId': widget.franchiseId},
       );
       rethrow;
     }
@@ -81,14 +80,13 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
 
   @override
   Widget build(BuildContext context) {
-    print('[FranchiseFinancialKpiCard] build called');
-    _colors = Theme.of(context).colorScheme;
-    final localizations = AppLocalizations.of(context);
+    final loc = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
 
     if (!_isDeveloper) return const SizedBox.shrink();
 
     return DashboardSectionCard(
-      title: localizations?.kpiFinancials ?? 'Financial KPIs',
+      title: loc?.kpiFinancials ?? 'Financial KPIs',
       icon: Icons.analytics_outlined,
       franchiseId: widget.franchiseId,
       brandId: widget.brandId,
@@ -102,94 +100,49 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
               return const LoadingShimmerWidget();
             }
 
-            Widget cardContent;
-
             if (snapshot.hasError) {
-              cardContent = Card(
-                color: Theme.of(context).colorScheme.errorContainer,
+              return Card(
+                color: colorScheme.errorContainer,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                  borderRadius:
+                      BorderRadius.circular(DesignTokens.radiusLg), // Fixed
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(DesignTokens.paddingMd),
+                  padding: EdgeInsets.all(DesignTokens.paddingMd),
                   child: Row(
                     children: [
                       const Icon(Icons.error_outline, color: Colors.redAccent),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          localizations?.errorLoadingKpi ??
-                              'Failed to load KPIs.',
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: DesignTokens.textColor,
-                                  ),
+                          loc?.errorLoadingKpi ?? 'Failed to load KPIs.',
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ),
                       TextButton.icon(
-                        onPressed: () => setState(() {
-                          _kpiFuture = _loadKpis();
-                        }),
+                        onPressed: () =>
+                            setState(() => _kpiFuture = _loadKpis()),
                         icon: const Icon(Icons.refresh),
-                        label: Text(localizations?.retry ?? 'Retry'),
+                        label: Text(loc?.retry ?? 'Retry'),
                       ),
                     ],
                   ),
                 ),
               );
-            } else {
-              final analytics =
-                  snapshot.data?['analytics'] as Map<String, dynamic>? ?? {};
-              final outstanding = snapshot.data?['outstanding'] ?? 0.0;
-              final lastPayout =
-                  snapshot.data?['lastPayout'] as Map<String, dynamic>? ?? {};
-
-              cardContent = Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _KpiRow(
-                    localizations: localizations,
-                    analytics: analytics,
-                    outstanding: outstanding,
-                    lastPayout: lastPayout,
-                  ),
-                  const SizedBox(height: 8),
-                  if (_isDeveloper &&
-                      Theme.of(context).brightness == Brightness.dark)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        'Debug: FranchiseId=${widget.franchiseId}, BrandId=${widget.brandId}',
-                        style: Theme.of(context)
-                            .textTheme
-                            .labelSmall
-                            ?.copyWith(color: _colors.outline),
-                      ),
-                    ),
-                ],
-              );
             }
 
-            // --------- THIS IS THE KEY FIX ---------
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                // If the card is being rendered in a small fixed height (GridView/SizedBox), force scroll
-                if (constraints.maxHeight < 320) {
-                  // 320 is a reasonable height for all content to fit; adjust as needed
-                  return SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints:
-                          BoxConstraints(minHeight: constraints.maxHeight),
-                      child: cardContent,
-                    ),
-                  );
-                } else {
-                  // Allow content to expand naturally if there is space
-                  return cardContent;
-                }
-              },
+            final analytics =
+                snapshot.data?['analytics'] as Map<String, dynamic>? ?? {};
+            final outstanding = snapshot.data?['outstanding'] as double? ?? 0.0;
+            final lastPayout =
+                snapshot.data?['lastPayout'] as Map<String, dynamic>? ?? {};
+
+            return _KpiRow(
+              localizations: loc,
+              analytics: analytics,
+              outstanding: outstanding,
+              lastPayout: lastPayout,
             );
-            // ---------------------------------------
           },
         );
       },
@@ -208,40 +161,42 @@ class _KpiRow extends StatelessWidget {
     required this.analytics,
     required this.outstanding,
     required this.lastPayout,
+    super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    final _colors = Theme.of(context).colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     final currency = analytics['currency'] ?? 'USD';
 
-    Widget _kpiTile(
+    Widget kpiTile(
       IconData icon,
       String label,
       dynamic value, {
       Color? color,
       String? tooltip,
     }) {
+      final displayValue =
+          value is num ? value.toStringAsFixed(0) : (value?.toString() ?? '--');
+
       return Tooltip(
         message: tooltip ?? label,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 32, color: color ?? _colors.primary),
+            Icon(icon, size: 32, color: color ?? colorScheme.primary),
             const SizedBox(height: 6),
             Text(
               label,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: _colors.onSurface.withOpacity(0.6),
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
             ),
             const SizedBox(height: 2),
             Text(
-              value is num
-                  ? formatting.formatCurrency(value, currency)
-                  : (value?.toString() ?? '--'),
+              displayValue,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: color ?? _colors.primary,
+                    color: color ?? colorScheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
             ),
@@ -253,108 +208,25 @@ class _KpiRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _kpiTile(
-          Icons.attach_money,
-          localizations?.kpiRevenue ?? 'Revenue',
-          analytics['totalRevenue'] ?? 0,
-          color: _colors.primary,
-        ),
-        _kpiTile(
-          Icons.receipt_long_outlined,
-          localizations?.kpiOutstanding ?? 'Outstanding',
-          outstanding,
-          color: Colors.redAccent,
-        ),
-        _kpiTile(
-          Icons.payments_outlined,
-          localizations?.kpiLastPayout ?? 'Last Payout',
-          lastPayout['amount'] ?? '--',
-          color: Colors.green,
-          tooltip: lastPayout['date'] != null
-              ? '${localizations?.kpiPayoutDate ?? 'Date'}: ${lastPayout['date']}'
-              : null,
-        ),
-        _kpiTile(
-          Icons.trending_up_outlined,
-          localizations?.kpiAvgOrder ?? 'Avg. Order',
-          analytics['averageOrderValue'] ?? '--',
-        ),
+        kpiTile(Icons.attach_money, localizations?.kpiRevenue ?? 'Revenue',
+            analytics['totalRevenue'] ?? 0,
+            color: colorScheme.primary),
+        kpiTile(Icons.receipt_long_outlined,
+            localizations?.kpiOutstanding ?? 'Outstanding', outstanding,
+            color: Colors.redAccent),
+        kpiTile(
+            Icons.payments_outlined,
+            localizations?.kpiLastPayout ?? 'Last Payout',
+            lastPayout['amount'] ?? '--',
+            color: Colors.green,
+            tooltip: lastPayout['date'] != null
+                ? 'Date: ${lastPayout['date']}'
+                : null),
+        kpiTile(
+            Icons.trending_up_outlined,
+            localizations?.kpiAvgOrder ?? 'Avg. Order',
+            analytics['averageOrderValue'] ?? '--'),
       ],
     );
   }
 }
-
-class _ErrorCard extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-
-  const _ErrorCard({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: Theme.of(context).colorScheme.errorContainer,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.redAccent),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                message,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onErrorContainer,
-                    ),
-              ),
-            ),
-            TextButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: Text(AppLocalizations.of(context)?.retry ?? 'Retry'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FeaturePlaceholder extends StatelessWidget {
-  final String label;
-  const _FeaturePlaceholder({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-        ),
-        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.lightbulb_outline, size: 20, color: Colors.amber),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
-                  ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
-
-
-
-

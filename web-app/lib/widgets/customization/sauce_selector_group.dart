@@ -13,7 +13,7 @@ class SauceSelectorGroup extends StatelessWidget {
   final AppLocalizations loc;
   final bool Function() isPizza;
   final List<PizzaSauceSelection> pizzaSauceSelections;
-  final Map<String, IngredientMetadata> ingredientMetadata;
+  final Map<String, shared.IngredientMetadata> ingredientMetadata;
   final bool sauceSplitValidationError;
   final VoidCallback resetPizzaSauceSelections;
   final void Function(VoidCallback fn) setState;
@@ -393,6 +393,3 @@ class SauceSelectorGroup extends StatelessWidget {
     );
   }
 }
-
-
-

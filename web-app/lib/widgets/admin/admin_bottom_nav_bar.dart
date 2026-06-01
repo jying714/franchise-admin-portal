@@ -1,26 +1,28 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 
 class AdminBottomNavBar extends StatelessWidget {
-  final List<DashboardSection> sections;
+  final List<shared.DashboardSection> sections;
   final int selectedIndex;
   final void Function(int index) onTap;
 
   const AdminBottomNavBar({
-    Key? key,
+    super.key,
     required this.sections,
     required this.selectedIndex,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
       currentIndex: selectedIndex,
       onTap: onTap,
-      selectedItemColor: Theme.of(context).colorScheme.primary,
-      unselectedItemColor: Theme.of(context).iconTheme.color?.withOpacity(0.6),
+      selectedItemColor: colorScheme.primary,
+      unselectedItemColor: colorScheme.onSurface.withValues(alpha: 0.6),
       showUnselectedLabels: true,
       items: sections.map((section) {
         return BottomNavigationBarItem(
@@ -31,6 +33,3 @@ class AdminBottomNavBar extends StatelessWidget {
     );
   }
 }
-
-
-

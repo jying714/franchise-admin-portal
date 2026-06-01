@@ -61,14 +61,13 @@ class _OverviewSectionState extends State<OverviewSection> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      final shared.firestoreService =
+      final shared.FirestoreService firestoreService =
           Provider.of<shared.FirestoreService>(context, listen: false);
       shared.ErrorLogger.log(
         message: 'Failed to fetch dashboard stats: $e',
         stack: stack.toString(),
         source: 'OverviewSection',
         severity: 'warning',
-        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         contextData: {
           'franchiseId': widget.franchiseId,
           // Add other context fields as needed
@@ -90,7 +89,7 @@ class _OverviewSectionState extends State<OverviewSection> {
     }
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final adminUser = Provider.of<AdminUserProvider>(context).user;
+    final adminUser = Provider.of<shared.AdminUserProvider>(context).user;
     final isDeveloper = adminUser?.roles.contains('developer') ?? false;
     final isAllFranchises = widget.franchiseId == 'all';
 
@@ -504,9 +503,3 @@ class _ComingSoonCard extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-

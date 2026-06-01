@@ -5,7 +5,7 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 
 class CustomizationHeader extends StatelessWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final ThemeData theme;
   final AppLocalizations loc;
 
@@ -67,6 +67,3 @@ class CustomizationHeader extends StatelessWidget {
     );
   }
 }
-
-
-

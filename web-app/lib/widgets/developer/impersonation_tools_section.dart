@@ -50,11 +50,10 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to fetch user list: $e',
         stack: stack.toString(),
         source: 'ImpersonationToolsSection',
-        source: 'ImpersonationToolsSection' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -80,11 +79,10 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
       setState(() {});
     } catch (e, stack) {
       // Non-blocking; just log error
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to fetch impersonation records: $e',
         stack: stack.toString(),
         source: 'ImpersonationToolsSection',
-        source: 'ImpersonationToolsSection' /* was screen, Phase 5 */,
         severity: 'info',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -98,10 +96,9 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
     try {
       // TODO: Implement real impersonation logic with backend/service
       await Future.delayed(const Duration(milliseconds: 400));
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Impersonation started: ${user.email}',
         source: 'ImpersonationToolsSection',
-        source: 'ImpersonationToolsSection' /* was screen, Phase 5 */,
         severity: 'info',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -127,11 +124,10 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
       );
     } catch (e, stack) {
       setState(() => _selectedUser = null);
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Impersonation failed: $e',
         stack: stack.toString(),
         source: 'ImpersonationToolsSection',
-        source: 'ImpersonationToolsSection' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -172,7 +168,7 @@ class _ImpersonationToolsSectionState extends State<ImpersonationToolsSection> {
     }
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final adminUser = Provider.of<AdminUserProvider>(context).user;
+    final adminUser = Provider.of<shared.AdminUserProvider>(context).user;
 
     // Developer-only guard (multi-role array)
     final isDeveloper = adminUser?.roles.contains('developer') ?? false;
@@ -499,9 +495,3 @@ class ImpersonationRecord {
   final DateTime timestamp;
   ImpersonationRecord({required this.userEmail, required this.timestamp});
 }
-
-
-
-
-
-

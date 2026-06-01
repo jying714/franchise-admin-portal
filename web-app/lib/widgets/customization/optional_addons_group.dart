@@ -7,16 +7,16 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 typedef DoubleAddOnCallback = void Function(String ingId, bool value);
 
 class OptionalAddOnsGroup extends StatelessWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final ThemeData theme;
   final AppLocalizations loc;
-  final Map<String, IngredientMetadata> ingredientMetadata;
+  final Map<String, shared.IngredientMetadata> ingredientMetadata;
   final Set<String> selectedAddOns;
   final Map<String, bool> doubleAddOns;
   final Map<String, int> selectedSauceCounts;
   final bool usesDynamicToppingPricing;
   final double Function() getToppingUpcharge;
-  final double Function(IngredientMetadata? meta) getIngredientUpcharge;
+  final double Function(shared.IngredientMetadata? meta) getIngredientUpcharge;
   final void Function(String ingId, bool? value) onToggleAddOn;
   final void Function(String ingId, int delta) onChangeSauceCount;
   final Widget Function(String ingId, bool isDouble, VoidCallback onTap)
@@ -123,7 +123,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
               final checked = selectedAddOns.contains(ingId);
               final isDouble = doubleAddOns[ingId] == true;
               final priceDisplay = upcharge > 0
-                  ? '+${currencyFormat(context, upcharge * (isDouble ? 2 : 1))}'
+                  ? '+${(upcharge * (isDouble ? 2 : 1)).toStringAsFixed(2)}'
                   : '';
               return Row(
                 children: [
@@ -177,7 +177,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 6.0),
               child: Text(
-                "$maxFreeSauces free sauces, +${currencyFormat(context, extraSauceUpcharge)} each extra.",
+                "$maxFreeSauces free sauces, +\$${extraSauceUpcharge.toStringAsFixed(2)} each extra.",
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: DesignTokens.secondaryTextColor,
                   fontStyle: FontStyle.italic,
@@ -190,6 +190,3 @@ class OptionalAddOnsGroup extends StatelessWidget {
     );
   }
 }
-
-
-

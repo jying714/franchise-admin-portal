@@ -15,8 +15,8 @@ typedef GetPortion = Portion Function(String);
 
 class CurrentIngredients extends StatelessWidget {
   final List<String> currentIngredients;
-  final MenuItem menuItem;
-  final Map<String, IngredientMetadata> ingredientMetadata;
+  final shared.MenuItem menuItem;
+  final Map<String, shared.IngredientMetadata> ingredientMetadata;
   final Map<String, int> selectedSauceCounts;
   final Map<String, int> selectedDressingCounts;
   final Map<String, String> radioSelections;
@@ -248,7 +248,7 @@ class CurrentIngredients extends StatelessWidget {
                         padding: const EdgeInsets.only(right: 8.0),
                         child: Text(
                           "Amount",
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             color: DesignTokens.secondaryColor,
                             fontFamily: DesignTokens.fontFamily,
@@ -333,6 +333,3 @@ class CurrentIngredients extends StatelessWidget {
     );
   }
 }
-
-
-

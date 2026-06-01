@@ -69,11 +69,10 @@ class _SchemaBrowserSectionState extends State<SchemaBrowserSection> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load schemas: $e',
         stack: stack.toString(),
         source: 'SchemaBrowserSection',
-        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -95,7 +94,7 @@ class _SchemaBrowserSectionState extends State<SchemaBrowserSection> {
     }
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final adminUser = Provider.of<AdminUserProvider>(context).user;
+    final adminUser = Provider.of<shared.AdminUserProvider>(context).user;
     final isDeveloper = adminUser?.roles.contains('developer') ?? false;
 
     if (!isDeveloper) {
@@ -405,9 +404,3 @@ class SchemaSummary {
     required this.status,
   });
 }
-
-
-
-
-
-

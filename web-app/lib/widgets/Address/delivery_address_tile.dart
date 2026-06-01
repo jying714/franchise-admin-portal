@@ -1,13 +1,13 @@
-﻿import 'package:provider/provider.dart';
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:provider/provider.dart' as provider;
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/widgets/Address/edit_address_dialog.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'edit_address_dialog.dart';
 
 class DeliveryAddressTile extends StatelessWidget {
-  final Address address;
+  final shared.Address address;
   final VoidCallback onDelete;
 
   const DeliveryAddressTile({
@@ -18,69 +18,74 @@ class DeliveryAddressTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+
     return Card(
-      elevation: DesignTokens.cardElevation,
-      margin: const EdgeInsets.symmetric(
-        vertical: DesignTokens.gridSpacing / 2,
-      ),
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+        borderRadius: BorderRadius.circular(12),
       ),
-      color: DesignTokens.surfaceColor,
+      color: Colors.white,
       child: ListTile(
         title: Text(
           address.label,
           style: const TextStyle(
-            fontSize: DesignTokens.bodyFontSize,
-            color: DesignTokens.textColor,
-            fontWeight: DesignTokens.titleFontWeight,
-            fontFamily: DesignTokens.fontFamily,
+            fontSize: 16,
+            color: Colors.black87,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Roboto',
           ),
         ),
         subtitle: Text(
           '${address.street}, ${address.city}, ${address.state} ${address.zip}',
           style: const TextStyle(
-            fontSize: DesignTokens.captionFontSize,
-            color: DesignTokens.secondaryTextColor,
-            fontFamily: DesignTokens.fontFamily,
-            fontWeight: DesignTokens.bodyFontWeight,
+            fontSize: 14,
+            color: Colors.grey,
+            fontFamily: 'Roboto',
+            fontWeight: FontWeight.w400,
           ),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.edit, color: DesignTokens.primaryColor),
+              icon: const Icon(Icons.edit, color: Colors.blue),
               onPressed: () async {
-                final shared.firestoreService =
-                    shared.FirestoreService(); // Or use Provider if that's your pattern
                 final user = FirebaseAuth.instance.currentUser;
-                final localizations = AppLocalizations.of(context)!;
                 if (user == null) return;
+
                 await EditAddressDialog.show(
                   context,
                   initialValue: address,
                   onSave: (updatedAddress) async {
-                    final franchiseId =
-                        Provider.of<shared.FranchiseProvider>(context, listen: false)
-                            .franchiseId;
-                    await shared.firestoreService.updateAddressForUser(
+                    if (updatedAddress is! shared.Address) return;
+
+                    final firestoreService =
+                        provider.Provider.of<shared.FirestoreService>(
+                      context,
+                      listen: false,
+                    );
+
+                    await firestoreService.updateAddressForUser(
                       user.uid,
                       updatedAddress,
                     );
+
                     if (!context.mounted) return;
+
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          localizations.addressUpdated ?? 'Address updated',
+                          loc.addressUpdated ?? 'Address updated',
                           style: const TextStyle(
-                            color: DesignTokens.textColor,
-                            fontFamily: DesignTokens.fontFamily,
-                            fontWeight: DesignTokens.bodyFontWeight,
+                            color: Colors.black87,
+                            fontFamily: 'Roboto',
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
-                        backgroundColor: DesignTokens.surfaceColor,
-                        duration: DesignTokens.toastDuration,
+                        backgroundColor: Colors.white,
+                        duration: const Duration(seconds: 2),
                       ),
                     );
                   },
@@ -88,7 +93,7 @@ class DeliveryAddressTile extends StatelessWidget {
               },
             ),
             IconButton(
-              icon: const Icon(Icons.delete, color: DesignTokens.errorColor),
+              icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: onDelete,
             ),
           ],
@@ -97,8 +102,3 @@ class DeliveryAddressTile extends StatelessWidget {
     );
   }
 }
-
-
-
-
-

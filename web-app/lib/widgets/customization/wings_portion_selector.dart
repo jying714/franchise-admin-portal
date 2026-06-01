@@ -4,7 +4,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class WingsPortionSelector extends StatelessWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final ThemeData theme;
   final AppLocalizations loc;
   final String? selectedSize;
@@ -85,6 +85,3 @@ class WingsPortionSelector extends StatelessWidget {
     );
   }
 }
-
-
-

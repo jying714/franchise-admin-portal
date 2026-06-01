@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class FranchisePickerDropdown extends StatelessWidget {
@@ -10,17 +10,16 @@ class FranchisePickerDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('[FranchisePickerDropdown] build called (dropdown in AppBar only)');
-
-    final shared.FranchiseProvider = Provider.of<shared.FranchiseProvider>(context);
-    final user = Provider.of<AdminUserProvider>(context).user;
     final loc = AppLocalizations.of(context);
 
-    final franchises = shared.FranchiseProvider.viewableFranchises;
-    print('[FranchisePickerDropdown] All franchises: $franchises');
-    final currentId = selectedFranchiseId ?? shared.FranchiseProvider.franchiseId;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    if (franchises == null || franchises.isEmpty) {
+    // Proper shared. access — no shadowing
+    final franchiseProvider = Provider.of<shared.FranchiseProvider>(context);
+    final adminUser = Provider.of<shared.AdminUserProvider>(context).user;
+
+    final franchises = franchiseProvider.viewableFranchises;
+    final currentId = selectedFranchiseId ?? franchiseProvider.franchiseId;
+
+    if (franchises.isEmpty) {
       return Tooltip(
         message: loc?.noFranchisesAvailable ?? 'No franchises found',
         child: Icon(Icons.store_mall_directory, color: Colors.grey.shade400),
@@ -32,6 +31,8 @@ class FranchisePickerDropdown extends StatelessWidget {
       orElse: () => franchises.first,
     );
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return DropdownButtonHideUnderline(
       child: DropdownButton<String>(
         value: currentFranchise.id,
@@ -41,21 +42,10 @@ class FranchisePickerDropdown extends StatelessWidget {
         dropdownColor: Theme.of(context).colorScheme.surface,
         onChanged: (String? newValue) {
           if (newValue != null && newValue != currentFranchise.id) {
-            print(
-                '[FranchisePickerDropdown] Selected new franchise ID: $newValue');
-            final selectedFranchise = franchises.firstWhere(
-              (f) => f.id == newValue,
-              orElse: () => FranchiseInfo(id: newValue, name: 'Unknown'),
-            );
-            print(
-                '[FranchisePickerDropdown] Selected franchise name: ${selectedFranchise.name}');
+            franchiseProvider.setFranchiseId(newValue);
 
-            shared.FranchiseProvider.setFranchiseId(newValue);
-
-            // ðŸ§  Defer route transition slightly to allow provider update to propagate
+            // Defer navigation to allow provider update
             Future.microtask(() {
-              print(
-                  '[FranchisePickerDropdown] Navigating to Admin Dashboard after franchise selection...');
               Navigator.pushNamed(
                 context,
                 '/admin/dashboard?section=onboardingMenu',
@@ -90,7 +80,3 @@ class FranchisePickerDropdown extends StatelessWidget {
     );
   }
 }
-
-
-
-

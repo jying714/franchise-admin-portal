@@ -1,8 +1,8 @@
 ﻿// File: lib/admin/hq_owner/invoice_export_dialog.dart
-
+import 'package:franchise_admin_portal/core/utils/export_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-
+import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
@@ -39,7 +39,8 @@ class _InvoiceExportDialogState extends State<InvoiceExportDialog> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _firestoreService = Provider.of<shared.FirestoreService>(context, listen: false);
+    _firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
   }
 
   @override
@@ -61,11 +62,11 @@ class _InvoiceExportDialogState extends State<InvoiceExportDialog> {
                 onSelected: (d) {
               setState(() => _startDate = d);
             }, selectedDate: _startDate),
-            const SizedBox(height: DesignTokens.paddingMd),
+            SizedBox(height: DesignTokens.paddingMd),
             _buildDatePicker(context, loc, label: loc.endDate, onSelected: (d) {
               setState(() => _endDate = d);
             }, selectedDate: _endDate),
-            const SizedBox(height: DesignTokens.paddingMd),
+            SizedBox(height: DesignTokens.paddingMd),
             _buildFormatSelector(loc),
           ],
         ),
@@ -171,11 +172,10 @@ class _InvoiceExportDialogState extends State<InvoiceExportDialog> {
 
       Navigator.of(context).pop(); // Close dialog on success
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'InvoiceExportDialog',
-        source: '_exportInvoices' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -200,9 +200,3 @@ class _InvoiceExportDialogState extends State<InvoiceExportDialog> {
     }
   }
 }
-
-
-
-
-
-

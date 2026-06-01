@@ -169,15 +169,17 @@ class _FranchiseeInvitationDialogState
         'franchiseName=$_franchiseName, role=$_role, notes=$_notes');
     try {
       final invitationProvider =
-          Provider.of<FranchiseeInvitationProvider>(context, listen: false);
+          Provider.of<shared.FranchiseeInvitationProvider>(context,
+              listen: false);
 
-      await invitationProvider.sendInvitation(
+      await invitationProvider.inviteFranchisee(
         email: _email!,
-        franchiseName: _franchiseName ?? '',
         role: _role!,
-        notes: _notes ?? '',
+        inviterUserId: '', // TODO: Pass current user ID here
+        franchiseName: _franchiseName ?? '',
+        // notes can go into extraData if needed
+        extraData: _notes != null ? {'notes': _notes} : null,
       );
-
       setState(() {
         _success = AppLocalizations.of(context)!.invitationSent;
         _isLoading = false;
@@ -188,12 +190,11 @@ class _FranchiseeInvitationDialogState
         if (mounted) Navigator.of(context).pop(true);
       });
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to send franchisee invitation',
         stack: stack.toString(),
         severity: 'error',
         source: 'FranchiseeInvitationDialog',
-        source: 'PlatformOwnerDashboardScreen' /* was screen, Phase 5 */,
         contextData: {
           'exception': e.toString(),
         },
@@ -205,6 +206,3 @@ class _FranchiseeInvitationDialogState
     }
   }
 }
-
-
-

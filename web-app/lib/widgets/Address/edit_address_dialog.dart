@@ -1,12 +1,12 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/widgets/Address/address_form.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class EditAddressDialog extends StatefulWidget {
-  final Address initialValue;
-  final Future<void> Function(Address updatedAddress) onSave;
+  final shared.Address initialValue;
+  final Future<void> Function(shared.Address updatedAddress) onSave;
 
   const EditAddressDialog({
     super.key,
@@ -16,8 +16,8 @@ class EditAddressDialog extends StatefulWidget {
 
   static Future<void> show(
     BuildContext context, {
-    required Address initialValue,
-    required Future<void> Function(Address updatedAddress) onSave,
+    required shared.Address initialValue,
+    required Future<void> Function(shared.Address updatedAddress) onSave,
   }) {
     return showDialog(
       context: context,
@@ -37,7 +37,7 @@ class EditAddressDialog extends StatefulWidget {
 
 class _EditAddressDialogState extends State<EditAddressDialog> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  late Address _editedAddress;
+  late shared.Address _editedAddress;
 
   @override
   void initState() {
@@ -49,12 +49,11 @@ class _EditAddressDialogState extends State<EditAddressDialog> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
+      return const Scaffold(
+        body: Center(child: Text('Localization missing')),
       );
     }
+
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: SingleChildScrollView(
@@ -64,7 +63,7 @@ class _EditAddressDialogState extends State<EditAddressDialog> {
             Text(
               loc.editAddress,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: DesignTokens.primaryColor,
+                    color: Colors.blue,
                     fontWeight: FontWeight.bold,
                   ),
             ),
@@ -74,7 +73,7 @@ class _EditAddressDialogState extends State<EditAddressDialog> {
               initialValue: _editedAddress,
               submitLabel: loc.save,
               onSubmit: (updated) async {
-                Navigator.of(context).pop(); // Close dialog
+                Navigator.of(context).pop();
                 await widget.onSave(updated);
               },
             ),
@@ -84,6 +83,3 @@ class _EditAddressDialogState extends State<EditAddressDialog> {
     );
   }
 }
-
-
-

@@ -1,6 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 typedef ConfirmCallback = void Function(
@@ -10,7 +9,7 @@ typedef ConfirmCallback = void Function(
 );
 
 class CustomizationBottomBar extends StatelessWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final ThemeData theme;
   final AppLocalizations loc;
   final double totalPrice;
@@ -25,7 +24,7 @@ class CustomizationBottomBar extends StatelessWidget {
   final int drinkMaxPerFlavor;
 
   const CustomizationBottomBar({
-    Key? key,
+    super.key,
     required this.menuItem,
     required this.theme,
     required this.loc,
@@ -39,7 +38,7 @@ class CustomizationBottomBar extends StatelessWidget {
     required this.sizes,
     required this.menuItemPrice,
     required this.drinkMaxPerFlavor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -49,9 +48,11 @@ class CustomizationBottomBar extends StatelessWidget {
     final drinkPrice = (sizePrices != null && sizes?.isNotEmpty == true)
         ? (sizePrices![sizes!.first] as num).toDouble()
         : (menuItemPrice as num?)?.toDouble() ?? 0.0;
+
     final drinkTotalCount = isDrinks
         ? (drinkFlavorCounts.values.fold(0, (sum, v) => sum + (v ?? 0)))
         : 0;
+
     final total = isDrinks ? (drinkTotalCount * drinkPrice) : totalPrice;
 
     return Column(
@@ -63,16 +64,13 @@ class CustomizationBottomBar extends StatelessWidget {
               loc.total,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
-                fontFamily: DesignTokens.fontFamily,
               ),
             ),
             Text(
-              // You must import your currencyFormat function!
-              currencyFormat(context, total),
+              '\$${total.toStringAsFixed(2)}',
               style: theme.textTheme.titleLarge?.copyWith(
-                color: DesignTokens.primaryColor,
+                color: Colors.blue,
                 fontWeight: FontWeight.bold,
-                fontFamily: DesignTokens.fontFamily,
               ),
             ),
           ],
@@ -83,8 +81,7 @@ class CustomizationBottomBar extends StatelessWidget {
             child: Text(
               error!,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: DesignTokens.errorTextColor,
-                fontFamily: DesignTokens.fontFamily,
+                color: Colors.red,
               ),
             ),
           ),
@@ -93,35 +90,23 @@ class CustomizationBottomBar extends StatelessWidget {
           children: [
             TextButton(
               style: TextButton.styleFrom(
-                foregroundColor: DesignTokens.secondaryColor,
+                foregroundColor: Colors.grey,
               ),
               onPressed: onCancel,
-              child: Text(
-                loc.cancel,
-                style: TextStyle(
-                  fontFamily: DesignTokens.fontFamily,
-                ),
-              ),
+              child: Text(loc.cancel),
             ),
-            SizedBox(width: DesignTokens.gridSpacing),
+            const SizedBox(width: 16),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: DesignTokens.primaryColor,
+                backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(DesignTokens.buttonRadius),
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
               onPressed: isDrinks
                   ? () {
-                      // Only proceed if at least one drink selected
-                      if (drinkTotalCount == 0) {
-                        // This assumes parent will handle error state!
-                        // (You could also pass a setError callback)
-                        return;
-                      }
-                      // For each flavor with count > 0, call onConfirm once per drink
+                      if (drinkTotalCount == 0) return;
                       drinkFlavorCounts.forEach((ingId, count) {
                         for (var i = 0; i < count; i++) {
                           onConfirm({
@@ -133,12 +118,7 @@ class CustomizationBottomBar extends StatelessWidget {
                       onCancel(); // close dialog
                     }
                   : onSubmit,
-              child: Text(
-                loc.addToCart,
-                style: TextStyle(
-                  fontFamily: DesignTokens.fontFamily,
-                ),
-              ),
+              child: Text(loc.addToCart),
             ),
           ],
         ),
@@ -146,6 +126,3 @@ class CustomizationBottomBar extends StatelessWidget {
     );
   }
 }
-
-
-

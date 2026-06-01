@@ -78,11 +78,10 @@ class _AuditTrailSectionState extends State<AuditTrailSection> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load audit trail: $e',
         stack: stack.toString(),
         source: 'AuditTrailSection',
-        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -115,7 +114,7 @@ class _AuditTrailSectionState extends State<AuditTrailSection> {
     }
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final adminUser = Provider.of<AdminUserProvider>(context).user;
+    final adminUser = Provider.of<shared.AdminUserProvider>(context).user;
     final isDeveloper = adminUser?.roles.contains('developer') ?? false;
 
     final isAllFranchises = widget.franchiseId == 'all';
@@ -385,9 +384,3 @@ class AuditEntry {
     this.franchiseId,
   });
 }
-
-
-
-
-
-

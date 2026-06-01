@@ -1,31 +1,27 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
-typedef CategoryTapCallback = void Function(Category category);
+typedef CategoryTapCallback = void Function(shared.Category category);
 
 class CategoryCard extends StatelessWidget {
-  final Category category;
+  final shared.Category category;
   final CategoryTapCallback? onTap;
 
   const CategoryCard({
-    Key? key,
+    super.key,
     required this.category,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
-      );
+      return const SizedBox.shrink();
     }
+
     final String imagePath =
         (category.image != null && category.image!.isNotEmpty)
             ? category.image!
@@ -36,18 +32,18 @@ class CategoryCard extends StatelessWidget {
       button: true,
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
-        elevation: DesignTokens.cardElevation,
+        borderRadius: BorderRadius.circular(16),
+        elevation: 4,
         child: InkWell(
-          borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+          borderRadius: BorderRadius.circular(16),
           onTap: () => onTap?.call(category),
           child: Ink(
             decoration: BoxDecoration(
               border: Border.all(
-                color: DesignTokens.primaryColor,
-                width: DesignTokens.categoryCardBorderWidth,
+                color: Colors.blue,
+                width: 2,
               ),
-              borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+              borderRadius: BorderRadius.circular(16),
               color: Colors.transparent,
               boxShadow: const [
                 BoxShadow(
@@ -59,20 +55,18 @@ class CategoryCard extends StatelessWidget {
             ),
             child: Stack(
               children: [
-                // Background image fills the card.
+                // Background image
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
+                  borderRadius: BorderRadius.circular(16),
                   child: imagePath.startsWith('http')
                       ? Image.network(
                           imagePath,
                           width: double.infinity,
                           height: double.infinity,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Positioned.fill(
-                            child: Image.asset(
-                              BrandingConfig.defaultCategoryIcon,
-                              fit: BoxFit.cover,
-                            ),
+                          errorBuilder: (_, __, ___) => Image.asset(
+                            BrandingConfig.defaultCategoryIcon,
+                            fit: BoxFit.cover,
                           ),
                         )
                       : Image.asset(
@@ -82,25 +76,24 @@ class CategoryCard extends StatelessWidget {
                           fit: BoxFit.cover,
                         ),
                 ),
-                // Overlay gradient for text readability.
+                // Overlay gradient
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
-                      borderRadius:
-                          BorderRadius.circular(DesignTokens.cardRadius),
-                      gradient: LinearGradient(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: const LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity(0.55),
+                          Colors.black54,
                         ],
-                        stops: const [0.5, 1.0],
+                        stops: [0.5, 1.0],
                       ),
                     ),
                   ),
                 ),
-                // Text (name & optional description) at the bottom.
+                // Text content
                 Positioned(
                   left: 0,
                   right: 0,
@@ -114,10 +107,9 @@ class CategoryCard extends StatelessWidget {
                         Text(
                           category.name,
                           style: const TextStyle(
-                            fontSize: DesignTokens.titleFontSize,
-                            fontWeight: DesignTokens.titleFontWeight,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                             color: Colors.white,
-                            fontFamily: DesignTokens.fontFamily,
                             shadows: [
                               Shadow(color: Colors.black54, blurRadius: 4),
                             ],
@@ -132,10 +124,9 @@ class CategoryCard extends StatelessWidget {
                             child: Text(
                               category.description!,
                               style: const TextStyle(
-                                fontSize: DesignTokens.captionFontSize,
+                                fontSize: 14,
                                 color: Colors.white70,
-                                fontFamily: DesignTokens.fontFamily,
-                                fontWeight: DesignTokens.bodyFontWeight,
+                                fontWeight: FontWeight.w400,
                                 shadows: [
                                   Shadow(color: Colors.black26, blurRadius: 2),
                                 ],
@@ -156,6 +147,3 @@ class CategoryCard extends StatelessWidget {
     );
   }
 }
-
-
-

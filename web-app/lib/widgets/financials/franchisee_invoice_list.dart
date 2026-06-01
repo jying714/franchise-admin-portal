@@ -1,13 +1,13 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/financials/franchisee_invoice_tile.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_empty_state_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 
 class FranchiseeInvoiceList extends StatelessWidget {
-  final List<PlatformInvoice> invoices;
+  final List<shared.PlatformInvoice> invoices;
   final String? brandId;
 
   const FranchiseeInvoiceList({
@@ -23,23 +23,14 @@ class FranchiseeInvoiceList extends StatelessWidget {
       shared.ErrorLogger.log(
         message: 'Localization context is null',
         source: 'FranchiseeInvoiceList',
-        source: 'franchisee_invoice_list.dart' /* was screen, Phase 5 */,
         severity: 'warning',
       );
       return const SizedBox.shrink();
     }
 
-    final colorScheme = Theme.of(context).colorScheme;
     final brandColor = brandId != null
         ? BrandingConfig.brandColorFor(brandId!)
         : BrandingConfig.brandRed;
-
-    debugPrint('[FranchiseeInvoiceList] Received ${invoices.length} invoices');
-    for (var inv in invoices) {
-      debugPrint(
-        '[FranchiseeInvoiceList] Invoice: id=${inv.id}, amount=${inv.amount ?? inv.amount}, status=${inv.status}, dueDate=${inv.dueDate}',
-      );
-    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,7 +42,7 @@ class FranchiseeInvoiceList extends StatelessWidget {
                 color: brandColor,
               ),
         ),
-        const SizedBox(height: DesignTokens.paddingMd),
+        SizedBox(height: DesignTokens.paddingMd),
         if (invoices.isEmpty)
           AdminEmptyStateWidget(
             title: loc.platformInvoices,
@@ -61,7 +52,6 @@ class FranchiseeInvoiceList extends StatelessWidget {
               shared.ErrorLogger.log(
                 message: 'User triggered retry on empty invoice list',
                 source: 'FranchiseeInvoiceList',
-                source: 'franchisee_invoice_list.dart' /* was screen, Phase 5 */,
                 severity: 'info',
               );
             },
@@ -72,12 +62,9 @@ class FranchiseeInvoiceList extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             separatorBuilder: (_, __) =>
-                const SizedBox(height: DesignTokens.adminCardSpacing),
+                SizedBox(height: DesignTokens.adminCardSpacing),
             itemBuilder: (context, index) {
               final invoice = invoices[index];
-              debugPrint(
-                '[FranchiseeInvoiceList] Rendering tile for invoice ${invoice.id} - ${invoice.status}',
-              );
               return FranchiseeInvoiceTile(invoice: invoice);
             },
           ),
@@ -85,8 +72,3 @@ class FranchiseeInvoiceList extends StatelessWidget {
     );
   }
 }
-
-
-
-
-

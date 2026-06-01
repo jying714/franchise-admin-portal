@@ -44,21 +44,23 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
 
     // Await both futures first
     final results = await Future.wait([
-      fs.fetchCustomizationTemplatesAsMaps(franchiseId),
-      fs.fetchIngredientMetadataAsMaps(franchiseId),
+      fs.getCustomizationTemplates(franchiseId),
+      fs.getIngredientMetadataMap(franchiseId), // Correct existing method
     ]);
 
     // Now you can safely print using results[0]
-    print('[DEBUG] Customization templates loaded: ${results[0].length}');
-    for (final tpl in results[0]) {
+    final templates = results[0] as List<dynamic>? ?? <dynamic>[];
+    print('[DEBUG] Customization templates loaded: ${templates.length}');
+    for (final tpl in templates) {
       print(
           '[DEBUG] Template: ${tpl['label']} | ingredientIds: ${tpl['ingredientIds']}');
     }
 
     if (!mounted) return;
     setState(() {
-      _templates = List<Map<String, dynamic>>.from(results[0]);
-      _ingredientMetadataList = List<Map<String, dynamic>>.from(results[1]);
+      _templates = List<Map<String, dynamic>>.from(templates);
+      final ingredients = results[1] as List<dynamic>? ?? <dynamic>[];
+      _ingredientMetadataList = List<Map<String, dynamic>>.from(ingredients);
       _loadingTemplates = false;
       _loadingIngredients = false;
     });
@@ -339,7 +341,3 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
     );
   }
 }
-
-
-
-

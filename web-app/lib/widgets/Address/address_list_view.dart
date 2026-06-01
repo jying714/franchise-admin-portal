@@ -3,8 +3,8 @@ import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/Address/delivery_address_tile.dart';
 
 class AddressListView extends StatelessWidget {
-  final List<Address> addresses;
-  final Future<void> Function(Address address) onDelete;
+  final List<shared.Address> addresses;
+  final Future<void> Function(shared.Address address) onDelete;
 
   const AddressListView({
     super.key,
@@ -28,6 +28,3 @@ class AddressListView extends StatelessWidget {
     );
   }
 }
-
-
-

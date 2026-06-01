@@ -23,13 +23,43 @@ class _BillingSummaryCardState extends State<BillingSummaryCard> {
     _summaryFuture = _fetchSummary(context);
   }
 
-  Future<BillingSummaryData> _fetchSummary(BuildContext context) async {
+  Future<shared.BillingSummaryData> _fetchSummary(BuildContext context) async {
     try {
-      final franchiseId =
-          Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
-      return await InvoiceService.getBillingSummary(franchiseId: franchiseId);
+      final franchiseId = Provider.of<shared.FranchiseProvider>(
+        context,
+        listen: false,
+      ).franchiseId;
+
+      final invoiceService = Provider.of<shared.InvoiceService>(
+        context,
+        listen: false,
+      );
+
+      final invoices = await invoiceService.getInvoices(
+        franchiseId: franchiseId,
+        statuses: ['unpaid', 'partial'],
+      );
+
+      double totalOutstanding = 0.0;
+      int overdueCount = 0;
+      double paidLast30Days = 0.0;
+
+      for (final invoice in invoices) {
+        if (invoice.status.toLowerCase() != 'paid') {
+          totalOutstanding += invoice.amount;
+          if (invoice.isOverdue) overdueCount++;
+        } else {
+          paidLast30Days += invoice.amount;
+        }
+      }
+
+      return shared.BillingSummaryData(
+        totalOutstanding: totalOutstanding,
+        overdueCount: overdueCount,
+        paidLast30Days: paidLast30Days,
+      );
     } catch (error, stackTrace) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'BillingSummaryCard: failed to load summary\n$error',
         stack: stackTrace?.toString(),
       );
@@ -147,7 +177,8 @@ class _BillingSummaryContent extends StatelessWidget {
   void _onDownloadSummary(BuildContext context) async {
     try {
       final franchiseId =
-          Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
+          Provider.of<shared.FranchiseProvider>(context, listen: false)
+              .franchiseId;
       final result = await InvoiceService.downloadSummary(
           franchiseId: franchiseId, context: context);
       String msg;
@@ -251,7 +282,3 @@ class BillingSummaryData {
     required this.paidLast30Days,
   }) : hasOutstanding = totalOutstanding > 0;
 }
-
-
-
-

@@ -13,11 +13,13 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 /// Logs errors using error_logger.
 /// Modular for integration in HQ/Owner dashboard sections.
 
-typedef InvoiceSelectionChanged = void Function(List<Invoice> selectedInvoices);
-typedef InvoiceActionCallback = Future<void> Function(List<Invoice> invoices);
+typedef InvoiceSelectionChanged = void Function(
+    List<shared.Invoice> selectedInvoices);
+typedef InvoiceActionCallback = Future<void> Function(
+    List<shared.Invoice> invoices);
 
 class InvoiceDataTable extends StatefulWidget {
-  final List<Invoice> invoices;
+  final List<shared.Invoice> invoices;
   final InvoiceSelectionChanged? onSelectionChanged;
   final InvoiceActionCallback? onBulkMarkPaid;
   final InvoiceActionCallback? onBulkSendReminder;
@@ -35,8 +37,8 @@ class InvoiceDataTable extends StatefulWidget {
 }
 
 class _InvoiceDataTableState extends State<InvoiceDataTable> {
-  final Set<Invoice> _selectedInvoices = {};
-  late List<Invoice> _sortedInvoices;
+  final Set<shared.Invoice> _selectedInvoices = {};
+  late List<shared.Invoice> _sortedInvoices;
   int _sortColumnIndex = 3; // default sort by Total
   bool _sortAscending = false;
   static const int _rowsPerPage = 10;
@@ -101,7 +103,7 @@ class _InvoiceDataTableState extends State<InvoiceDataTable> {
     });
   }
 
-  void _onSelectRow(bool? selected, Invoice invoice) {
+  void _onSelectRow(bool? selected, shared.Invoice invoice) {
     setState(() {
       if (selected == true) {
         _selectedInvoices.add(invoice);
@@ -113,7 +115,7 @@ class _InvoiceDataTableState extends State<InvoiceDataTable> {
   }
 
   Future<void> _handleBulkAction(
-      Future<void> Function(List<Invoice>)? action) async {
+      Future<void> Function(List<shared.Invoice>)? action) async {
     if (action == null) return;
     try {
       await action(_selectedInvoices.toList());
@@ -125,11 +127,10 @@ class _InvoiceDataTableState extends State<InvoiceDataTable> {
         SnackBar(content: Text(AppLocalizations.of(context)!.actionCompleted)),
       );
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'InvoiceDataTable',
-        source: '_handleBulkAction' /* was screen, Phase 5 */,
         severity: 'error',
       );
       if (mounted) {
@@ -183,8 +184,7 @@ class _InvoiceDataTableState extends State<InvoiceDataTable> {
       children: [
         if (_selectedInvoices.isNotEmpty)
           Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: DesignTokens.paddingMd),
+            padding: EdgeInsets.symmetric(vertical: DesignTokens.paddingMd),
             child: Row(
               children: [
                 ElevatedButton.icon(
@@ -192,7 +192,7 @@ class _InvoiceDataTableState extends State<InvoiceDataTable> {
                   label: Text(loc.markSelectedPaid),
                   onPressed: () => _handleBulkAction(widget.onBulkMarkPaid),
                 ),
-                const SizedBox(width: DesignTokens.paddingMd),
+                SizedBox(width: DesignTokens.paddingMd),
                 ElevatedButton.icon(
                   icon: const Icon(Icons.email),
                   label: Text(loc.sendPaymentReminder),
@@ -224,9 +224,9 @@ class _InvoiceDataTableState extends State<InvoiceDataTable> {
 }
 
 class _InvoiceDataSource extends DataTableSource {
-  final List<Invoice> invoices;
-  final Set<Invoice> selectedInvoices;
-  final Function(bool?, Invoice) onSelectRow;
+  final List<shared.Invoice> invoices;
+  final Set<shared.Invoice> selectedInvoices;
+  final Function(bool?, shared.Invoice) onSelectRow;
   final BuildContext context;
 
   _InvoiceDataSource({
@@ -276,8 +276,3 @@ class _InvoiceDataSource extends DataTableSource {
   @override
   int get selectedRowCount => selectedInvoices.length;
 }
-
-
-
-
-

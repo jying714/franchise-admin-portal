@@ -4,10 +4,10 @@ import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class WingsDipSauceSelector extends StatelessWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final ThemeData theme;
   final AppLocalizations loc;
-  final Map<String, IngredientMetadata> ingredientMetadata;
+  final Map<String, shared.IngredientMetadata> ingredientMetadata;
   final Map<String, int> sideDipCounts;
   final int wingsDipSauceTabIndex;
   final void Function(void Function()) setState;
@@ -135,7 +135,7 @@ class WingsDipSauceSelector extends StatelessWidget {
             ),
           ),
           Text(
-            "$freeDipCups free included. Additional dips +${currencyFormat(context, upcharge)} each.",
+            "$freeDipCups free included. Additional dips +\$${upcharge.toStringAsFixed(2)} each.",
             style: theme.textTheme.bodySmall?.copyWith(
               color: DesignTokens.secondaryTextColor,
               fontStyle: FontStyle.italic,
@@ -217,6 +217,3 @@ class WingsDipSauceSelector extends StatelessWidget {
     );
   }
 }
-
-
-

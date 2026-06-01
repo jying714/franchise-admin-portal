@@ -1,7 +1,6 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/widgets/admin/admin_menu_item_actions_row.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-    as admin_user;
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/network_image_widget.dart';
 import 'package:franchise_admin_portal/widgets/dietary_allergen_chips_row.dart';
@@ -9,10 +8,10 @@ import 'package:franchise_admin_portal/widgets/status_chip.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class AdminMenuItemRow extends StatelessWidget {
-  final MenuItem item;
+  final shared.MenuItem item;
   final bool isSelected;
-  final List<Category> categories;
-  final admin_user.User user;
+  final List<shared.Category> categories;
+  final shared.User user;
   final bool canEdit;
   final bool canDeleteOrExport;
   final VoidCallback onSelect;
@@ -22,7 +21,7 @@ class AdminMenuItemRow extends StatelessWidget {
   final List<String> visibleColumns;
 
   const AdminMenuItemRow({
-    Key? key,
+    super.key,
     required this.item,
     required this.isSelected,
     required this.categories,
@@ -34,9 +33,10 @@ class AdminMenuItemRow extends StatelessWidget {
     required this.onCustomize,
     required this.onDelete,
     required this.visibleColumns,
-  }) : super(key: key);
+  });
 
-  Widget _buildCellMobile(String key, MenuItem item, String categoryName) {
+  Widget _buildCellMobile(
+      String key, shared.MenuItem item, String categoryName) {
     switch (key) {
       case 'image':
         return Padding(
@@ -128,7 +128,7 @@ class AdminMenuItemRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 600;
-    final categoryName = item.category;
+    final categoryName = item.category ?? '';
 
     if (isMobile) {
       return Card(
@@ -146,10 +146,10 @@ class AdminMenuItemRow extends StatelessWidget {
                   icon: const Icon(Icons.more_vert),
                   itemBuilder: (context) => [
                     if (canEdit)
-                      PopupMenuItem(
+                      const PopupMenuItem(
                         value: 'edit',
                         child: Row(
-                          children: const [
+                          children: [
                             Icon(Icons.edit, size: 18),
                             SizedBox(width: 8),
                             Text('Edit'),
@@ -157,10 +157,10 @@ class AdminMenuItemRow extends StatelessWidget {
                         ),
                       ),
                     if (canEdit)
-                      PopupMenuItem(
+                      const PopupMenuItem(
                         value: 'customize',
                         child: Row(
-                          children: const [
+                          children: [
                             Icon(Icons.tune, size: 18),
                             SizedBox(width: 8),
                             Text('Customize'),
@@ -168,10 +168,10 @@ class AdminMenuItemRow extends StatelessWidget {
                         ),
                       ),
                     if (canDeleteOrExport)
-                      PopupMenuItem(
+                      const PopupMenuItem(
                         value: 'delete',
                         child: Row(
-                          children: const [
+                          children: [
                             Icon(Icons.delete,
                                 size: 18, color: Colors.redAccent),
                             SizedBox(width: 8),
@@ -289,10 +289,10 @@ class AdminMenuItemRow extends StatelessWidget {
                     icon: const Icon(Icons.more_vert),
                     itemBuilder: (context) => [
                       if (canEdit)
-                        PopupMenuItem(
+                        const PopupMenuItem(
                           value: 'edit',
                           child: Row(
-                            children: const [
+                            children: [
                               Icon(Icons.edit, size: 18),
                               SizedBox(width: 8),
                               Text('Edit'),
@@ -300,10 +300,10 @@ class AdminMenuItemRow extends StatelessWidget {
                           ),
                         ),
                       if (canEdit)
-                        PopupMenuItem(
+                        const PopupMenuItem(
                           value: 'customize',
                           child: Row(
-                            children: const [
+                            children: [
                               Icon(Icons.tune, size: 18),
                               SizedBox(width: 8),
                               Text('Customize'),
@@ -311,10 +311,10 @@ class AdminMenuItemRow extends StatelessWidget {
                           ),
                         ),
                       if (canDeleteOrExport)
-                        PopupMenuItem(
+                        const PopupMenuItem(
                           value: 'delete',
                           child: Row(
-                            children: const [
+                            children: [
                               Icon(Icons.delete,
                                   size: 18, color: Colors.redAccent),
                               SizedBox(width: 8),
@@ -347,6 +347,3 @@ class AdminMenuItemRow extends StatelessWidget {
     }
   }
 }
-
-
-

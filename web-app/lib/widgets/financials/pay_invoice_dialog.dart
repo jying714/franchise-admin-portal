@@ -1,17 +1,17 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:provider/provider.dart' as provider;
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:provider/provider.dart';
-
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 
 class PayInvoiceDialog extends StatefulWidget {
-  final PlatformInvoice invoice;
+  final shared.PlatformInvoice invoice;
 
-  PayInvoiceDialog({Key? key, required this.invoice}) : super(key: key) {
-    debugPrint(
-        '[PayInvoiceDialog] Constructor: invoice=${invoice.invoiceNumber}, id=${invoice.id}');
-  }
+  const PayInvoiceDialog({
+    super.key,
+    required this.invoice,
+  });
 
   @override
   State<PayInvoiceDialog> createState() => _PayInvoiceDialogState();
@@ -25,15 +25,12 @@ class _PayInvoiceDialogState extends State<PayInvoiceDialog> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint(
-        '[PayInvoiceDialog] build called for invoice=${widget.invoice.invoiceNumber}');
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
 
     return RoleGuard(
       allowedRoles: ['developer', 'hq_owner'],
       featureName: 'PayPlatformInvoice',
-      source: 'PayInvoiceDialog' /* was screen, Phase 5 */,
       child: AlertDialog(
         title: Text(loc.payInvoice),
         content: Column(
@@ -68,7 +65,7 @@ class _PayInvoiceDialogState extends State<PayInvoiceDialog> {
             Text(
               loc.noteDevOnlyPlaceholder,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.5),
+                    color: colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
             ),
           ],
@@ -85,16 +82,19 @@ class _PayInvoiceDialogState extends State<PayInvoiceDialog> {
                     setState(() => _loading = true);
                     try {
                       // TODO: Replace with actual payment integration logic
-                      await Provider.of<shared.FirestoreService>(context, listen: false)
-                          .markPlatformInvoicePaid(
-                              widget.invoice.id!, _selectedMethod!);
+                      await provider.Provider.of<shared.FirestoreService>(
+                        context,
+                        listen: false,
+                      ).markPlatformInvoicePaid(
+                        widget.invoice.id,
+                        _selectedMethod!,
+                      );
                       Navigator.of(context).pop(true);
                     } catch (e, stack) {
-                      await shared.ErrorLogger.log(
+                      shared.ErrorLogger.log(
                         message: e.toString(),
                         stack: stack.toString(),
                         source: 'PayInvoiceDialog',
-                        source: 'PayInvoiceDialog' /* was screen, Phase 5 */,
                         severity: 'error',
                         contextData: {
                           'invoiceId': widget.invoice.id,
@@ -117,9 +117,3 @@ class _PayInvoiceDialogState extends State<PayInvoiceDialog> {
     );
   }
 }
-
-
-
-
-
-

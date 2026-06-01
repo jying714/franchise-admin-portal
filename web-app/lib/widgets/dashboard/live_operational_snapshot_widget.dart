@@ -66,7 +66,6 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
             stack: snapshot.error.toString(),
             source: 'LiveOperationalSnapshotWidget',
             severity: 'error',
-            source: 'dashboard_home_screen.dart' /* was screen, Phase 5 */,
             contextData: {'franchiseId': franchiseId},
           );
           return const Text('Error loading live metrics.');
@@ -181,7 +180,6 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
             stack: st.toString(),
             source: 'LiveOperationalSnapshotWidget',
             severity: 'error',
-            source: 'dashboard_home_screen.dart' /* was screen, Phase 5 */,
             contextData: {'franchiseId': franchiseId, 'docCount': docs.length},
           );
           return const Text('Error calculating metrics.');
@@ -215,8 +213,3 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
     );
   }
 }
-
-
-
-
-

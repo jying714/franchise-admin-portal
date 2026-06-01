@@ -4,7 +4,7 @@ import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class SizeDropdown extends StatelessWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final String? selectedSize;
   final void Function(String?) onChanged;
   final Widget? toppingCostLabel;
@@ -67,11 +67,7 @@ class SizeDropdown extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(left: 12.0),
                   child: Text(
-                    currencyFormat(
-                        context,
-                        (menuItem.sizePrices![normalizeSizeKey(selectedSize)]
-                                as num)
-                            .toDouble()),
+                    '\$${(menuItem.sizePrices![normalizeSizeKey(selectedSize)] as num).toDouble().toStringAsFixed(2)}',
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: DesignTokens.primaryColor,
                       fontWeight: FontWeight.bold,
@@ -91,6 +87,3 @@ class SizeDropdown extends StatelessWidget {
     );
   }
 }
-
-
-

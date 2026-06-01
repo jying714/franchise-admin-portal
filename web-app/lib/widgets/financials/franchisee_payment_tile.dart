@@ -5,7 +5,7 @@ import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:intl/intl.dart';
 
 class FranchiseePaymentTile extends StatelessWidget {
-  final PlatformPayment payment;
+  final shared.PlatformPayment payment;
 
   const FranchiseePaymentTile({
     Key? key,
@@ -32,7 +32,7 @@ class FranchiseePaymentTile extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 1,
       child: Padding(
-        padding: const EdgeInsets.all(DesignTokens.paddingMd),
+        padding: EdgeInsets.all(DesignTokens.paddingMd),
         child: Row(
           children: [
             CircleAvatar(
@@ -146,6 +146,3 @@ class FranchiseePaymentTile extends StatelessWidget {
     );
   }
 }
-
-
-

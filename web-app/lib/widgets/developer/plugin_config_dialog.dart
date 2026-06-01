@@ -58,11 +58,10 @@ class _PluginConfigDialogState extends State<PluginConfigDialog> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to save plugin config: $e',
         stack: stack.toString(),
         source: 'PluginConfigDialog',
-        source: 'PluginConfigDialog' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -85,7 +84,7 @@ class _PluginConfigDialogState extends State<PluginConfigDialog> {
     }
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final adminUser = Provider.of<AdminUserProvider>(context).user;
+    final adminUser = Provider.of<shared.AdminUserProvider>(context).user;
     final isDeveloper = adminUser?.roles.contains('developer') ?? false;
 
     if (!isDeveloper) {
@@ -302,8 +301,3 @@ class _ComingSoonCard extends StatelessWidget {
     );
   }
 }
-
-
-
-
-

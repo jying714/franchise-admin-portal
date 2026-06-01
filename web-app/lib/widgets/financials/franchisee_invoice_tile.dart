@@ -1,37 +1,28 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:franchise_admin_portal/widgets/financials/pay_invoice_dialog.dart';
+import 'pay_invoice_dialog.dart';
 
 class FranchiseeInvoiceTile extends StatelessWidget {
-  final PlatformInvoice invoice;
-  final AppConfig config;
+  final shared.PlatformInvoice invoice;
 
-  FranchiseeInvoiceTile({
-    Key? key,
+  const FranchiseeInvoiceTile({
+    super.key,
     required this.invoice,
-    AppConfig? config,
-  })  : config = config ?? AppConfig.instance,
-        super(key: key);
-
-  InvoiceStatus parseInvoiceStatus(String value) {
-    return InvoiceStatus.values.firstWhere(
-      (s) => s.name == value,
-      orElse: () => InvoiceStatus.unpaid,
-    );
-  }
+  });
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final color = Theme.of(context).colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12), // Literal value
+      ),
       child: InkWell(
         onTap: () async {
           try {
@@ -40,11 +31,10 @@ class FranchiseeInvoiceTile extends StatelessWidget {
               builder: (_) => PayInvoiceDialog(invoice: invoice),
             );
           } catch (e, stack) {
-            await shared.ErrorLogger.log(
+            shared.ErrorLogger.log(
               message: e.toString(),
               stack: stack.toString(),
               source: 'FranchiseeInvoiceTile',
-              source: 'InvoiceTile' /* was screen, Phase 5 */,
               severity: 'error',
               contextData: {'invoiceId': invoice.id},
             );
@@ -52,12 +42,12 @@ class FranchiseeInvoiceTile extends StatelessWidget {
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(DesignTokens.paddingMd),
+          padding: EdgeInsets.all(DesignTokens.paddingMd),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildInvoiceInfo(loc, color),
-              _buildAmountSection(loc, color),
+              _buildInvoiceInfo(loc, colorScheme),
+              _buildAmountSection(loc, colorScheme),
             ],
           ),
         ),
@@ -65,7 +55,7 @@ class FranchiseeInvoiceTile extends StatelessWidget {
     );
   }
 
-  Widget _buildInvoiceInfo(AppLocalizations loc, ColorScheme color) {
+  Widget _buildInvoiceInfo(AppLocalizations loc, ColorScheme colorScheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -76,15 +66,15 @@ class FranchiseeInvoiceTile extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           '${loc.dueDate}: ${_formatDate(invoice.dueDate)}',
-          style: TextStyle(color: color.onSurfaceVariant, fontSize: 13),
+          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
         ),
         const SizedBox(height: 4),
-        _buildStatusChip(parseInvoiceStatus(invoice.status), loc),
+        _buildStatusChip(_parseInvoiceStatus(invoice.status), loc),
       ],
     );
   }
 
-  Widget _buildAmountSection(AppLocalizations loc, ColorScheme color) {
+  Widget _buildAmountSection(AppLocalizations loc, ColorScheme colorScheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -93,19 +83,26 @@ class FranchiseeInvoiceTile extends StatelessWidget {
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 16,
-            color: color.primary,
+            color: colorScheme.primary,
           ),
         ),
-        if (parseInvoiceStatus(invoice.status) != InvoiceStatus.paid)
+        if (_parseInvoiceStatus(invoice.status) != shared.InvoiceStatus.paid)
           TextButton(
-            onPressed: null, // Actual logic handled onTap of the card
+            onPressed: null,
             child: Text(loc.payNow),
           ),
       ],
     );
   }
 
-  Widget _buildStatusChip(InvoiceStatus status, AppLocalizations loc) {
+  shared.InvoiceStatus _parseInvoiceStatus(String value) {
+    return shared.InvoiceStatus.values.firstWhere(
+      (s) => s.name == value,
+      orElse: () => shared.InvoiceStatus.unpaid,
+    );
+  }
+
+  Widget _buildStatusChip(shared.InvoiceStatus status, AppLocalizations loc) {
     final label = _localizedStatus(status, loc);
     final color = _statusColor(status);
 
@@ -115,48 +112,58 @@ class FranchiseeInvoiceTile extends StatelessWidget {
     );
   }
 
-  String _localizedStatus(InvoiceStatus status, AppLocalizations loc) {
+  String _localizedStatus(shared.InvoiceStatus status, AppLocalizations loc) {
     switch (status) {
-      case InvoiceStatus.paid:
+      case shared.InvoiceStatus.paid:
         return loc.statusPaid;
-      case InvoiceStatus.overdue:
+      case shared.InvoiceStatus.overdue:
         return loc.statusOverdue;
-      case InvoiceStatus.sent:
+      case shared.InvoiceStatus.sent:
         return loc.statusSent;
-      case InvoiceStatus.draft:
+      case shared.InvoiceStatus.draft:
         return loc.statusDraft;
-      case InvoiceStatus.refunded:
+      case shared.InvoiceStatus.refunded:
         return loc.statusRefunded;
-      case InvoiceStatus.voided:
+      case shared.InvoiceStatus.voided:
         return loc.statusVoided;
-      case InvoiceStatus.failed:
+      case shared.InvoiceStatus.failed:
         return loc.statusFailed;
-      case InvoiceStatus.unpaid:
+      case shared.InvoiceStatus.unpaid:
         return loc.statusUnpaid;
-      case InvoiceStatus.partial:
+      case shared.InvoiceStatus.partial:
         return loc.statusPartial;
+      case shared.InvoiceStatus.open: // Added for exhaustiveness
+      case shared.InvoiceStatus.viewed:
+        return 'Viewed';
+      default:
+        return status.name;
     }
   }
 
-  Color _statusColor(InvoiceStatus status) {
+  Color _statusColor(shared.InvoiceStatus status) {
     switch (status) {
-      case InvoiceStatus.paid:
+      case shared.InvoiceStatus.paid:
         return Colors.green;
-      case InvoiceStatus.overdue:
+      case shared.InvoiceStatus.overdue:
         return Colors.red;
-      case InvoiceStatus.sent:
+      case shared.InvoiceStatus.sent:
         return Colors.blue;
-      case InvoiceStatus.draft:
+      case shared.InvoiceStatus.draft:
         return Colors.grey;
-      case InvoiceStatus.refunded:
+      case shared.InvoiceStatus.refunded:
         return Colors.orange;
-      case InvoiceStatus.failed:
-      case InvoiceStatus.voided:
+      case shared.InvoiceStatus.failed:
+      case shared.InvoiceStatus.voided:
         return Colors.black45;
-      case InvoiceStatus.unpaid:
+      case shared.InvoiceStatus.unpaid:
         return Colors.orangeAccent;
-      case InvoiceStatus.partial:
+      case shared.InvoiceStatus.partial:
         return Colors.amber;
+      case shared.InvoiceStatus.open:
+      case shared.InvoiceStatus.viewed:
+        return Colors.purple;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -166,8 +173,3 @@ class FranchiseeInvoiceTile extends StatelessWidget {
     return '${local.month}/${local.day}/${local.year}';
   }
 }
-
-
-
-
-

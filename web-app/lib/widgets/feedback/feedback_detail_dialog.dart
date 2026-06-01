@@ -1,12 +1,12 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 5 final cleanup
-    as model;
+import 'package:shared_core/shared_core.dart'
+    as shared; // Phase 5 final cleanup
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class FeedbackDetailDialog extends StatelessWidget {
-  final model.FeedbackEntry feedback;
+  final shared.FeedbackEntry feedback;
 
   const FeedbackDetailDialog({super.key, required this.feedback});
 
@@ -128,5 +128,3 @@ class FeedbackDetailDialog extends StatelessWidget {
     );
   }
 }
-
-

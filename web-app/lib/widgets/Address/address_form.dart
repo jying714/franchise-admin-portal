@@ -1,14 +1,14 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 typedef FieldValidator = String? Function(String?);
 
 class AddressForm extends StatefulWidget {
   final GlobalKey<FormState> formKey;
-  final void Function(Address address) onSubmit;
-  final Address? initialValue;
+  final void Function(shared.Address address) onSubmit;
+  final shared.Address? initialValue;
   final String? submitLabel;
   final Map<String, FieldValidator>? fieldValidators;
 
@@ -46,10 +46,8 @@ class _AddressFormState extends State<AddressForm> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
+      return const Scaffold(
+        body: Center(child: Text('Localization missing')),
       );
     }
 
@@ -77,123 +75,103 @@ class _AddressFormState extends State<AddressForm> {
             decoration: InputDecoration(
               labelText: loc.labelExample,
               border: OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(DesignTokens.formFieldRadius),
+                borderRadius: BorderRadius.circular(12),
               ),
-              hintStyle: const TextStyle(
-                color: DesignTokens.hintTextColor,
-              ),
+              hintStyle: const TextStyle(color: Colors.grey),
             ),
             validator:
                 widget.fieldValidators?['label'] ?? defaultLabelValidator,
             onSaved: (value) => _label = value,
             style: const TextStyle(
-              color: DesignTokens.textColor,
-              fontFamily: DesignTokens.fontFamily,
-              fontWeight: DesignTokens.bodyFontWeight,
+              color: Colors.black87,
+              fontWeight: FontWeight.w400,
             ),
           ),
-          const SizedBox(height: DesignTokens.gridSpacing),
+          SizedBox(height: DesignTokens.gridSpacing),
           TextFormField(
             initialValue: _street,
             decoration: InputDecoration(
               labelText: loc.street,
               border: OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(DesignTokens.formFieldRadius),
+                borderRadius: BorderRadius.circular(12),
               ),
-              hintStyle: const TextStyle(
-                color: DesignTokens.hintTextColor,
-              ),
+              hintStyle: const TextStyle(color: Colors.grey),
             ),
             validator:
                 widget.fieldValidators?['street'] ?? defaultStreetValidator,
             onSaved: (value) => _street = value,
             style: const TextStyle(
-              color: DesignTokens.textColor,
-              fontFamily: DesignTokens.fontFamily,
-              fontWeight: DesignTokens.bodyFontWeight,
+              color: Colors.black87,
+              fontWeight: FontWeight.w400,
             ),
           ),
-          const SizedBox(height: DesignTokens.gridSpacing),
+          SizedBox(height: DesignTokens.gridSpacing),
           TextFormField(
             initialValue: _city,
             decoration: InputDecoration(
               labelText: loc.city,
               border: OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(DesignTokens.formFieldRadius),
+                borderRadius: BorderRadius.circular(12),
               ),
-              hintStyle: const TextStyle(
-                color: DesignTokens.hintTextColor,
-              ),
+              hintStyle: const TextStyle(color: Colors.grey),
             ),
             validator: widget.fieldValidators?['city'] ?? defaultCityValidator,
             onSaved: (value) => _city = value,
             style: const TextStyle(
-              color: DesignTokens.textColor,
-              fontFamily: DesignTokens.fontFamily,
-              fontWeight: DesignTokens.bodyFontWeight,
+              color: Colors.black87,
+              fontWeight: FontWeight.w400,
             ),
           ),
-          const SizedBox(height: DesignTokens.gridSpacing),
+          SizedBox(height: DesignTokens.gridSpacing),
           TextFormField(
             initialValue: _state,
             decoration: InputDecoration(
               labelText: loc.state,
               border: OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(DesignTokens.formFieldRadius),
+                borderRadius: BorderRadius.circular(12),
               ),
-              hintStyle: const TextStyle(
-                color: DesignTokens.hintTextColor,
-              ),
+              hintStyle: const TextStyle(color: Colors.grey),
             ),
             validator:
                 widget.fieldValidators?['state'] ?? defaultStateValidator,
             onSaved: (value) => _state = value,
             style: const TextStyle(
-              color: DesignTokens.textColor,
-              fontFamily: DesignTokens.fontFamily,
-              fontWeight: DesignTokens.bodyFontWeight,
+              color: Colors.black87,
+              fontWeight: FontWeight.w400,
             ),
           ),
-          const SizedBox(height: DesignTokens.gridSpacing),
+          SizedBox(height: DesignTokens.gridSpacing),
           TextFormField(
             initialValue: _zip,
             decoration: InputDecoration(
               labelText: loc.zipCode,
               border: OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(DesignTokens.formFieldRadius),
+                borderRadius: BorderRadius.circular(12),
               ),
-              hintStyle: const TextStyle(
-                color: DesignTokens.hintTextColor,
-              ),
+              hintStyle: const TextStyle(color: Colors.grey),
             ),
             validator: widget.fieldValidators?['zip'] ?? defaultZipValidator,
             onSaved: (value) => _zip = value,
             style: const TextStyle(
-              color: DesignTokens.textColor,
-              fontFamily: DesignTokens.fontFamily,
-              fontWeight: DesignTokens.bodyFontWeight,
+              color: Colors.black87,
+              fontWeight: FontWeight.w400,
             ),
           ),
-          const SizedBox(height: DesignTokens.gridSpacing * 2),
+          SizedBox(height: DesignTokens.gridSpacing * 2),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: DesignTokens.primaryColor,
               foregroundColor: DesignTokens.foregroundColor,
               padding: DesignTokens.buttonPadding,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(DesignTokens.buttonRadius),
+                borderRadius: BorderRadius.circular(12),
               ),
               elevation: DesignTokens.buttonElevation,
             ),
             onPressed: () {
               if (widget.formKey.currentState!.validate()) {
                 widget.formKey.currentState!.save();
-                final address = Address(
+                final address = shared.Address(
                   id: UniqueKey().toString(),
                   label: _label!,
                   street: _street!,
@@ -214,6 +192,3 @@ class _AddressFormState extends State<AddressForm> {
     );
   }
 }
-
-
-

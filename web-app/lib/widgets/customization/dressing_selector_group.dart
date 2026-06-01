@@ -11,7 +11,7 @@ class DressingSelectorGroup extends StatelessWidget {
   final void Function(String ingId, int newCount) onCountChanged;
   final int Function() getFreeDressingCount;
   final double Function() getExtraDressingUpcharge;
-  final Map<String, IngredientMetadata> ingredientMetadata;
+  final Map<String, shared.IngredientMetadata> ingredientMetadata;
 
   const DressingSelectorGroup({
     Key? key,
@@ -108,6 +108,3 @@ class DressingSelectorGroup extends StatelessWidget {
     );
   }
 }
-
-
-

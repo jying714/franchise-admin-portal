@@ -1,10 +1,11 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 5 final cleanup
+import 'package:shared_core/shared_core.dart'
+    as shared; // Phase 5 final cleanup
 
 class DashboardSwitcherDropdown extends StatelessWidget {
   final String currentScreen;
-  final app.User user;
+  final shared.User user; // ← Fixed: shared.User
 
   const DashboardSwitcherDropdown({
     super.key,
@@ -16,16 +17,12 @@ class DashboardSwitcherDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[DashboardSwitcherDropdown] loc is null! Localization not available.');
       return const Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
+        body: Center(child: Text('Localization missing')),
       );
     }
 
-    final roles = user.roles;
-    print(
-        '[DashboardSwitcherDropdown] build called with roles=$roles, currentScreen="$currentScreen"');
+    final roles = user.roles ?? [];
 
     // Only allow access if one of the supported roles is present
     if (!roles.any((r) => [
@@ -85,8 +82,6 @@ class DashboardSwitcherDropdown extends StatelessWidget {
         if (selected == null) return;
         if (selected.route == ModalRoute.of(context)?.settings.name) return;
 
-        print(
-            '[DEBUG-NAV] FROM DASHBOARD SWITCHER DROPDOWN â†’ Navigating to ${selected.route}');
         Navigator.of(context).pushReplacementNamed(selected.route);
       },
       items: options.map((opt) {
@@ -110,5 +105,3 @@ class _DashboardTarget {
     required this.route,
   });
 }
-
-

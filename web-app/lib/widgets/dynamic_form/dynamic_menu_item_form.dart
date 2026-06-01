@@ -11,8 +11,8 @@ import 'package:franchise_admin_portal/widgets/dynamic_form/image_upload_field.d
 
 class DynamicMenuItemForm extends StatefulWidget {
   final Map<String, dynamic> schema;
-  final MenuItem? initialItem;
-  final void Function(MenuItem menuItem) onSave;
+  final shared.MenuItem? initialItem;
+  final void Function(shared.MenuItem menuItem) onSave;
   final VoidCallback? onCancel;
   final String franchiseId;
 
@@ -122,7 +122,7 @@ class _DynamicMenuItemFormState extends State<DynamicMenuItemForm> {
       }
     }
 
-    final item = MenuItem.fromMap({
+    final item = shared.MenuItem.fromMap({
       ..._fieldValues,
       'includedIngredients': _includedIngredients,
       'optionalAddOns': _optionalAddOns,
@@ -255,6 +255,3 @@ class _DynamicMenuItemFormState extends State<DynamicMenuItemForm> {
     );
   }
 }
-
-
-

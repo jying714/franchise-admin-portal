@@ -2,11 +2,13 @@
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/admin/developer/developer_error_logs_screen.dart';
 
 class FeatureTogglesSection extends StatefulWidget {
   final String? franchiseId;
-  const FeatureTogglesSection({Key? key, this.franchiseId}) : super(key: key);
+
+  const FeatureTogglesSection({super.key, this.franchiseId});
 
   @override
   State<FeatureTogglesSection> createState() => _FeatureTogglesSectionState();
@@ -36,6 +38,7 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
       _loading = true;
       _errorMsg = null;
     });
+
     try {
       // TODO: Replace with real shared.FirestoreService feature toggle fetch
       await Future.delayed(const Duration(milliseconds: 500));
@@ -65,15 +68,13 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      await shared.ErrorLogger.log(
+
+      shared.ErrorLogger.log(
         message: 'Failed to load feature toggles: $e',
         stack: stack.toString(),
         source: 'FeatureTogglesSection',
-        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'warning',
-        contextData: {
-          'franchiseId': widget.franchiseId,
-        },
+        contextData: {'franchiseId': widget.franchiseId},
       );
     }
   }
@@ -88,10 +89,10 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
                 ft.key == toggle.key ? ft.copyWith(enabled: enabled) : ft)
             .toList();
       });
-      await shared.ErrorLogger.log(
+
+      shared.ErrorLogger.log(
         message: 'Feature toggle updated: ${toggle.key} -> $enabled',
         source: 'FeatureTogglesSection',
-        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'info',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -101,11 +102,10 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
         },
       );
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to update feature toggle: $e',
         stack: stack.toString(),
         source: 'FeatureTogglesSection',
-        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -113,6 +113,7 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
           'enabled': enabled,
         },
       );
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to update toggle: $e'),
@@ -126,15 +127,15 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
+      return const Scaffold(
+        body: Center(child: Text('Localization missing')),
       );
     }
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final adminUser = Provider.of<AdminUserProvider>(context).user;
+
+    final adminUser = Provider.of<shared.AdminUserProvider>(context).user;
     final isDeveloper = adminUser?.roles.contains('developer') ?? false;
 
     if (!isDeveloper) {
@@ -158,8 +159,8 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
         children: [
           Text(
             isAllFranchises
-                ? '${loc.featureTogglesSectionTitle} â€” ${loc.allFranchisesLabel ?? "All Franchises"}'
-                : '${loc.featureTogglesSectionTitle} â€” ${widget.franchiseId}',
+                ? '${loc.featureTogglesSectionTitle} — ${loc.allFranchisesLabel ?? "All Franchises"}'
+                : '${loc.featureTogglesSectionTitle} — ${widget.franchiseId}',
             style: theme.textTheme.titleLarge?.copyWith(
               color: colorScheme.primary,
               fontWeight: FontWeight.bold,
@@ -299,7 +300,7 @@ class _ComingSoonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: colorScheme.surfaceVariant.withOpacity(0.87),
+      color: colorScheme.surfaceVariant.withValues(alpha: 0.87),
       elevation: DesignTokens.adminCardElevation,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
@@ -363,9 +364,3 @@ class FeatureToggle {
     );
   }
 }
-
-
-
-
-
-

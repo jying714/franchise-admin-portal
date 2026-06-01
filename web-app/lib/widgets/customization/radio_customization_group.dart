@@ -7,9 +7,9 @@ class RadioCustomizationGroup extends StatelessWidget {
   final Map<String, dynamic> group;
   final ThemeData theme;
   final AppLocalizations loc;
-  final Map<String, IngredientMetadata> ingredientMetadata;
+  final Map<String, shared.IngredientMetadata> ingredientMetadata;
   final Map<String, String?> radioSelections;
-  final double Function(IngredientMetadata? meta) getIngredientUpcharge;
+  final double Function(shared.IngredientMetadata? meta) getIngredientUpcharge;
   final void Function(String groupLabel, String? ingId) handleRadioSelect;
 
   const RadioCustomizationGroup({
@@ -62,7 +62,7 @@ class RadioCustomizationGroup extends StatelessWidget {
               ),
               secondary: upcharge > 0
                   ? Text(
-                      '+${currencyFormat(context, upcharge)}',
+                      '+${upcharge.toStringAsFixed(2)}',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: DesignTokens.secondaryColor,
                         fontWeight: FontWeight.bold,
@@ -77,6 +77,3 @@ class RadioCustomizationGroup extends StatelessWidget {
     );
   }
 }
-
-
-

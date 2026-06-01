@@ -72,11 +72,10 @@ class _ImpersonationDialogState extends State<ImpersonationDialog> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to fetch users for impersonation: $e',
         stack: stack.toString(),
         source: 'ImpersonationDialog',
-        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -129,7 +128,7 @@ class _ImpersonationDialogState extends State<ImpersonationDialog> {
     }
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final adminUser = Provider.of<AdminUserProvider>(context).user;
+    final adminUser = Provider.of<shared.AdminUserProvider>(context).user;
     final isDeveloper = adminUser?.roles.contains('developer') ?? false;
 
     if (!isDeveloper) {
@@ -397,9 +396,3 @@ class ImpersonationUser {
     required this.role,
   });
 }
-
-
-
-
-
-

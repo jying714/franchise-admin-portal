@@ -2,12 +2,13 @@
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/admin/developer/developer_error_logs_screen.dart';
 
 class ErrorLogsSection extends StatefulWidget {
   final String? franchiseId;
-  const ErrorLogsSection({Key? key, this.franchiseId}) : super(key: key);
+
+  const ErrorLogsSection({super.key, this.franchiseId});
 
   @override
   State<ErrorLogsSection> createState() => _ErrorLogsSectionState();
@@ -16,7 +17,7 @@ class ErrorLogsSection extends StatefulWidget {
 class _ErrorLogsSectionState extends State<ErrorLogsSection> {
   bool _loading = true;
   String? _errorMsg;
-  List<ErrorLogSummary> _logs = [];
+  List<shared.ErrorLogSummary> _logs = [];
   String? _filterSeverity;
 
   @override
@@ -40,19 +41,15 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
     });
 
     try {
-      final allLogs = await Provider.of<shared.FirestoreService>(context, listen: false)
-          .getErrorLogSummaries();
-
-      print('âœ… Retrieved ${allLogs.length} logs from Firestore');
-      for (final log in allLogs) {
-        print(
-            '[DEBUG] Log => ${log.timestamp} | ${log.severity} | ${log.message}');
-      }
+      final allLogs = await Provider.of<shared.FirestoreService>(
+        context,
+        listen: false,
+      ).getErrorLogSummaries();
 
       final filteredLogs = _filterSeverity == null
           ? allLogs
           : allLogs.where((log) => log.severity == _filterSeverity).toList();
-      print('ðŸ‘€ Setting logs: ${filteredLogs.length} logs');
+
       setState(() {
         _logs = filteredLogs;
         _loading = false;
@@ -63,11 +60,10 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
         _loading = false;
       });
 
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load error logs: $e',
         stack: stack.toString(),
         source: 'ErrorLogsSection',
-        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {'franchiseId': widget.franchiseId},
       );
@@ -78,26 +74,24 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
     setState(() {
       _filterSeverity = newValue;
     });
-    _fetchLogs(); // Refetch based on new severity filter
+    _fetchLogs();
   }
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('Loaded error_logs_section');
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
+      return const Scaffold(
+        body: Center(child: Text('Localization missing')),
       );
     }
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final adminUser = Provider.of<AdminUserProvider>(context).user;
+
+    final adminUser = Provider.of<shared.AdminUserProvider>(context).user;
     final isDeveloper = adminUser?.roles.contains('developer') ?? false;
 
-    // Developer-only access guard
     if (!isDeveloper) {
       return Center(
         child: Text(
@@ -123,7 +117,7 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${loc.errorLogsSectionTitle} â€” $titleFranchiseLabel',
+              '${loc.errorLogsSectionTitle} — $titleFranchiseLabel',
               style: theme.textTheme.titleLarge?.copyWith(
                 color: colorScheme.primary,
                 fontWeight: FontWeight.bold,
@@ -166,13 +160,15 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
                 ),
               )
             else ...[
-              if (_logs.isEmpty) Center(child: Text(loc.errorLogsSectionEmpty)),
-              _ErrorLogList(
-                logs: _logs,
-                filterSeverity: _filterSeverity,
-                colorScheme: colorScheme,
-                loc: loc,
-              ),
+              if (_logs.isEmpty)
+                Center(child: Text(loc.errorLogsSectionEmpty))
+              else
+                _ErrorLogList(
+                  logs: _logs,
+                  filterSeverity: _filterSeverity,
+                  colorScheme: colorScheme,
+                  loc: loc,
+                ),
               const SizedBox(height: 16),
               Align(
                 alignment: Alignment.centerRight,
@@ -244,6 +240,68 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
   }
 }
 
+class _ErrorLogList extends StatelessWidget {
+  final List<shared.ErrorLogSummary> logs;
+  final String? filterSeverity;
+  final ColorScheme colorScheme;
+  final AppLocalizations loc;
+
+  const _ErrorLogList({
+    required this.logs,
+    required this.filterSeverity,
+    required this.colorScheme,
+    required this.loc,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = filterSeverity == null
+        ? logs
+        : logs.where((log) => log.severity == filterSeverity).toList();
+
+    if (filtered.isEmpty) {
+      return Center(child: Text(loc.errorLogsSectionEmpty));
+    }
+
+    return Card(
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: filtered.length,
+        separatorBuilder: (_, __) => const Divider(height: 1),
+        itemBuilder: (context, idx) {
+          final log = filtered[idx];
+          return ListTile(
+            leading: Icon(
+              _iconForSeverity(log.severity),
+              color: _colorForSeverity(log.severity),
+            ),
+            title: Text(log.source), // Use 'source' from shared model
+            subtitle: Text(
+              '${loc.errorLogsSectionAt} ${log.screen} — ${_formatDateTime(log.timestamp)}'
+              '${log.userId != null ? " — User: ${log.userId}" : ""}',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
+            ),
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(loc.comingSoon)),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  String _formatDateTime(DateTime dt) {
+    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+}
+
 IconData _iconForSeverity(String severity) {
   switch (severity) {
     case 'error':
@@ -270,67 +328,6 @@ Color _colorForSeverity(String severity) {
   }
 }
 
-class _ErrorLogList extends StatelessWidget {
-  final List<ErrorLogSummary> logs;
-  final String? filterSeverity;
-  final ColorScheme colorScheme;
-  final AppLocalizations loc;
-
-  const _ErrorLogList({
-    required this.logs,
-    required this.filterSeverity,
-    required this.colorScheme,
-    required this.loc,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final filtered = filterSeverity == null
-        ? logs
-        : logs.where((log) => log.severity == filterSeverity).toList();
-    if (filtered.isEmpty) {
-      return Center(child: Text(loc.errorLogsSectionEmpty));
-    }
-    return Card(
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: filtered.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
-        itemBuilder: (context, idx) {
-          final log = filtered[idx];
-          return ListTile(
-            leading: Icon(
-              _iconForSeverity(log.severity),
-              color: _colorForSeverity(log.severity),
-            ),
-            title: Text(log.message),
-            subtitle: Text(
-              '${loc.errorLogsSectionAt} ${log.screen} â€” ${_formatDateTime(log.timestamp)}'
-              '${log.franchiseId != null ? " â€” Franchise: ${log.franchiseId}" : ""}',
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
-            ),
-            onTap: () {
-              // TODO: Show detailed error log modal
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(loc.comingSoon)),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  String _formatDateTime(DateTime dt) {
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
-        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-  }
-}
-
 class _ComingSoonCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -349,7 +346,7 @@ class _ComingSoonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: colorScheme.surfaceVariant.withOpacity(0.87),
+      color: colorScheme.surfaceVariant.withValues(alpha: 0.87),
       elevation: DesignTokens.adminCardElevation,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
@@ -385,28 +382,3 @@ class _ComingSoonCard extends StatelessWidget {
     );
   }
 }
-
-// Simple DTO for demonstration; replace with your error log model
-class ErrorLogSummary {
-  final String id;
-  final DateTime timestamp;
-  final String message;
-  final String severity;
-  final String screen;
-  final String? franchiseId;
-
-  ErrorLogSummary({
-    required this.id,
-    required this.timestamp,
-    required this.message,
-    required this.severity,
-    required this.screen,
-    this.franchiseId,
-  });
-}
-
-
-
-
-
-

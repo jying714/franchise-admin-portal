@@ -1,20 +1,19 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
 class AdminSidebar extends StatelessWidget {
-  final List<DashboardSection> sections;
+  final List<shared.DashboardSection> sections;
   final int selectedIndex;
   final void Function(int index) onSelect;
   final List<Widget>? extraWidgets;
 
   const AdminSidebar({
-    Key? key,
+    super.key,
     required this.sections,
     required this.selectedIndex,
     required this.onSelect,
     this.extraWidgets,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +23,7 @@ class AdminSidebar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         border: Border(
-          right: BorderSide(color: theme.dividerColor.withOpacity(0.1)),
+          right: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1)),
         ),
         color: colorScheme.surface,
       ),
@@ -37,7 +36,7 @@ class AdminSidebar extends StatelessWidget {
 
             return Material(
               color: isSelected
-                  ? colorScheme.primary.withOpacity(0.08)
+                  ? colorScheme.primary.withValues(alpha: 0.08)
                   : Colors.transparent,
               child: ListTile(
                 leading: Icon(
@@ -56,7 +55,7 @@ class AdminSidebar extends StatelessWidget {
                 ),
                 onTap: () => onSelect(index),
                 selected: isSelected,
-                selectedTileColor: colorScheme.primary.withOpacity(0.1),
+                selectedTileColor: colorScheme.primary.withValues(alpha: 0.1),
               ),
             );
           }),
@@ -69,6 +68,3 @@ class AdminSidebar extends StatelessWidget {
     );
   }
 }
-
-
-

@@ -1,13 +1,12 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/widgets/categories/category_card.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
-typedef CategoryTapCallback = void Function(Category category);
+typedef CategoryTapCallback = void Function(shared.Category category);
 
 class CategoryGrid extends StatelessWidget {
-  final List<Category> categories;
+  final List<shared.Category> categories;
   final CategoryTapCallback? onCategoryTap;
   final int? crossAxisCount;
   final double? childAspectRatio;
@@ -16,7 +15,7 @@ class CategoryGrid extends StatelessWidget {
   final Widget? loadingWidget;
 
   const CategoryGrid({
-    Key? key,
+    super.key,
     required this.categories,
     this.onCategoryTap,
     this.crossAxisCount,
@@ -24,30 +23,24 @@ class CategoryGrid extends StatelessWidget {
     this.padding,
     this.emptyWidget,
     this.loadingWidget,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
-      );
+      return const SizedBox.shrink();
     }
 
     if (categories.isEmpty) {
-      // Show provided emptyWidget, or a default empty state
       return emptyWidget ??
           Center(
             child: Text(
               loc.noCategoriesAvailable,
               style: const TextStyle(
-                color: DesignTokens.secondaryTextColor,
-                fontSize: DesignTokens.bodyFontSize,
-                fontWeight: DesignTokens.bodyFontWeight,
-                fontFamily: DesignTokens.fontFamily,
+                color: Colors.grey,
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
               ),
               textAlign: TextAlign.center,
               semanticsLabel: loc.noCategoriesAvailable,
@@ -55,18 +48,17 @@ class CategoryGrid extends StatelessWidget {
           );
     }
 
-    // Responsive grid columns: default 2 (mobile), 3 (tablet+)
     final int gridCount =
         crossAxisCount ?? (MediaQuery.of(context).size.width > 600 ? 3 : 2);
 
     return GridView.builder(
-      padding: padding ?? DesignTokens.gridPadding,
+      padding: padding ?? const EdgeInsets.all(16),
       itemCount: categories.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: gridCount,
-        childAspectRatio: childAspectRatio ?? DesignTokens.gridCardAspectRatio,
-        crossAxisSpacing: DesignTokens.gridSpacing,
-        mainAxisSpacing: DesignTokens.gridSpacing,
+        childAspectRatio: childAspectRatio ?? 1.0,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
       ),
       itemBuilder: (context, index) {
         final category = categories[index];
@@ -78,6 +70,3 @@ class CategoryGrid extends StatelessWidget {
     );
   }
 }
-
-
-

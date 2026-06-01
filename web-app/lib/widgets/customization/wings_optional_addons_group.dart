@@ -4,10 +4,10 @@ import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class WingsOptionalAddOnsGroup extends StatelessWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final ThemeData theme;
   final AppLocalizations loc;
-  final Map<String, IngredientMetadata> ingredientMetadata;
+  final Map<String, shared.IngredientMetadata> ingredientMetadata;
   final Set<String> selectedAddOns;
   final Map<String, bool> doubleAddOns;
   final void Function(void Function()) setState;
@@ -104,6 +104,3 @@ class WingsOptionalAddOnsGroup extends StatelessWidget {
     );
   }
 }
-
-
-

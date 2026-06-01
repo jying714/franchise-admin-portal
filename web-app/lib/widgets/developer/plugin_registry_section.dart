@@ -72,11 +72,10 @@ class _PluginRegistrySectionState extends State<PluginRegistrySection> {
         _errorMsg = e.toString();
         _loading = false;
       });
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load plugins: $e',
         stack: stack.toString(),
         source: 'PluginRegistrySection',
-        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -94,10 +93,9 @@ class _PluginRegistrySectionState extends State<PluginRegistrySection> {
             .map((p) => p.key == plugin.key ? p.copyWith(enabled: enabled) : p)
             .toList();
       });
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Plugin toggled: ${plugin.key} -> $enabled',
         source: 'PluginRegistrySection',
-        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'info',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -106,11 +104,10 @@ class _PluginRegistrySectionState extends State<PluginRegistrySection> {
         },
       );
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to toggle plugin: $e',
         stack: stack.toString(),
         source: 'PluginRegistrySection',
-        source: 'DeveloperDashboardScreen' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {
           'franchiseId': widget.franchiseId,
@@ -141,7 +138,7 @@ class _PluginRegistrySectionState extends State<PluginRegistrySection> {
     }
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final adminUser = Provider.of<AdminUserProvider>(context).user;
+    final adminUser = Provider.of<shared.AdminUserProvider>(context).user;
     final isDeveloper = adminUser?.roles.contains('developer') ?? false;
 
     if (!isDeveloper) {
@@ -334,9 +331,10 @@ class _PluginList extends StatelessWidget {
                   tooltip:
                       loc.pluginRegistrySectionConfigureButton, // Add to ARB!
                   onPressed: () {
-                    final franchiseId =
-                        Provider.of<shared.FranchiseProvider>(context, listen: false)
-                            .franchiseId;
+                    final franchiseId = Provider.of<shared.FranchiseProvider>(
+                            context,
+                            listen: false)
+                        .franchiseId;
                     showDialog(
                       context: context,
                       builder: (_) => PluginConfigDialog(
@@ -455,9 +453,3 @@ class PluginIntegration {
     );
   }
 }
-
-
-
-
-
-

@@ -4,7 +4,7 @@ import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/financials/franchisee_payment_tile.dart';
 
 class FranchiseePaymentList extends StatelessWidget {
-  final List<PlatformPayment> payments;
+  final List<shared.PlatformPayment> payments;
 
   const FranchiseePaymentList({
     super.key,
@@ -66,6 +66,3 @@ class FranchiseePaymentList extends StatelessWidget {
     );
   }
 }
-
-
-

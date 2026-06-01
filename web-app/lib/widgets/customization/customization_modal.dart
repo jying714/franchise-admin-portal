@@ -70,7 +70,7 @@ class PizzaSauceSelection {
 }
 
 class CustomizationModal extends StatefulWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final int initialQuantity;
   final Map<String, dynamic>? initialCustomizations;
   final void Function(
@@ -78,7 +78,7 @@ class CustomizationModal extends StatefulWidget {
     int quantity,
     double totalPrice,
   ) onConfirm;
-  final Map<String, IngredientMetadata>? ingredientMetadata;
+  final Map<String, shared.IngredientMetadata>? ingredientMetadata;
 
   const CustomizationModal({
     super.key,
@@ -99,9 +99,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
   late Map<String, Set<String>> _groupSelections;
   late Set<String> _selectedAddOns;
   late Map<String, String?> _radioSelections;
-  SizeData? _selectedSize;
+  late shared.SizeData? _selectedSize;
   String? _error;
-  late Map<String, IngredientMetadata> _ingredientMetadata;
+  late Map<String, shared.IngredientMetadata> _ingredientMetadata;
 
   late List<Map<String, dynamic>> _checkboxGroups;
   late List<Map<String, dynamic>> _radioGroups;
@@ -315,7 +315,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
     _quantity = widget.initialQuantity;
     _ingredientMetadata = widget.ingredientMetadata ??
-        Provider.of<Map<String, IngredientMetadata>>(context, listen: false);
+        Provider.of<Map<String, shared.IngredientMetadata>>(context,
+            listen: false);
     final sizes = widget.menuItem.sizes;
     _selectedSize = (sizes != null && sizes.isNotEmpty) ? sizes.first : null;
     _drinkFlavorCounts = {};
@@ -624,7 +625,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
     return 0.0;
   }
 
-  double _getIngredientUpcharge(IngredientMetadata? meta) {
+  double _getIngredientUpcharge(shared.IngredientMetadata? meta) {
     if (meta == null) return 0.0;
     if (meta.upcharge != null && meta.upcharge!.isNotEmpty) {
       return meta.upcharge!.values.first;
@@ -1049,7 +1050,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                   theme: theme,
                                   loc: loc,
                                   getToppingUpcharge: _getToppingUpcharge,
-                                  currencyFormat: currencyFormat,
+                                  currencyFormat: (context, amount) =>
+                                      '\$${amount.toStringAsFixed(2)}',
                                 )
                               : null,
                           normalizeSizeKey: _normalizeSizeKey,
@@ -1910,6 +1912,3 @@ class _CustomizationModalState extends State<CustomizationModal> {
     );
   }
 }
-
-
-

@@ -4,10 +4,10 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class DinnerIncludedIngredients extends StatelessWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final ThemeData theme;
   final AppLocalizations loc;
-  final Map<String, IngredientMetadata> ingredientMetadata;
+  final Map<String, shared.IngredientMetadata> ingredientMetadata;
   final Set<String> currentIngredients;
   final Map<String, String> ingredientAmounts;
   final void Function(VoidCallback fn) setState;
@@ -195,6 +195,3 @@ class DinnerIncludedIngredients extends StatelessWidget {
     );
   }
 }
-
-
-
