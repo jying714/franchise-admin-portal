@@ -1,22 +1,22 @@
-﻿// web_app/lib/core/providers/franchise_subscription_provider_impl.dart
+﻿// web-app/lib/core/providers/franchise_subscription_provider_impl.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'dart:async';
 
 class FranchiseSubscriptionProviderImpl extends ChangeNotifier
-    implements FranchiseSubscriptionProvider {
-  final FranchiseSubscriptionService _service;
+    implements shared.FranchiseSubscriptionProvider {
+  final shared.FranchiseSubscriptionService _service;
   String _franchiseId;
 
-  FranchiseSubscription? _currentSubscription;
+  shared.FranchiseSubscription? _currentSubscription;
   @override
-  FranchiseSubscription? get currentSubscription => _currentSubscription;
+  shared.FranchiseSubscription? get currentSubscription => _currentSubscription;
 
-  PlatformPlan? _activePlatformPlan;
+  shared.PlatformPlan? _activePlatformPlan;
   @override
-  PlatformPlan? get activePlatformPlan => _activePlatformPlan;
+  shared.PlatformPlan? get activePlatformPlan => _activePlatformPlan;
 
   bool _hasLoaded = false;
   @override
@@ -25,7 +25,7 @@ class FranchiseSubscriptionProviderImpl extends ChangeNotifier
   @override
   String get franchiseId => _franchiseId;
 
-  StreamSubscription<FranchiseSubscription?>? _subscriptionStream;
+  StreamSubscription<shared.FranchiseSubscription?>? _subscriptionStream;
 
   bool _planResolved = false;
   bool _resolvingPlan = false;
@@ -33,7 +33,7 @@ class FranchiseSubscriptionProviderImpl extends ChangeNotifier
   List<String> _userRoles = [];
 
   FranchiseSubscriptionProviderImpl({
-    required FranchiseSubscriptionService service,
+    required shared.FranchiseSubscriptionService service,
     required String franchiseId,
   })  : _service = service,
         _franchiseId = franchiseId {
@@ -164,4 +164,3 @@ class FranchiseSubscriptionProviderImpl extends ChangeNotifier
     super.dispose();
   }
 }
-

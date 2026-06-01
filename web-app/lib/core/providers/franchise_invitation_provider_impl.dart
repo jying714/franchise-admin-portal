@@ -1,28 +1,28 @@
-﻿// web_app/lib/core/providers/franchisee_invitation_provider_impl.dart
+﻿// web-app/lib/core/providers/franchisee_invitation_provider_impl.dart
 
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:cloud_functions/cloud_functions.dart';
 import 'dart:async';
 
 class FranchiseeInvitationProviderImpl extends ChangeNotifier
-    implements FranchiseeInvitationProvider {
-  final FranchiseeInvitationService _service;
+    implements shared.FranchiseeInvitationProvider {
+  final shared.FranchiseeInvitationService _service;
 
-  List<FranchiseeInvitation> _invitations = [];
+  List<shared.FranchiseeInvitation> _invitations = [];
   bool _loading = false;
   String? _lastError;
   bool _sending = false;
 
-  StreamSubscription<List<FranchiseeInvitation>>? _subscription;
+  StreamSubscription<List<shared.FranchiseeInvitation>>? _subscription;
   VoidCallback? _cancelSubscription;
 
-  FranchiseeInvitationProviderImpl(
-      {required FranchiseeInvitationService service})
-      : _service = service;
+  FranchiseeInvitationProviderImpl({
+    required shared.FranchiseeInvitationService service,
+  }) : _service = service;
 
   @override
-  List<FranchiseeInvitation> get invitations => _invitations;
+  List<shared.FranchiseeInvitation> get invitations => _invitations;
 
   @override
   bool get loading => _loading;
@@ -65,8 +65,11 @@ class FranchiseeInvitationProviderImpl extends ChangeNotifier
   }
 
   @override
-  Future<void> fetchInvitations(
-      {String? status, String? inviterUserId, String? email}) async {
+  Future<void> fetchInvitations({
+    String? status,
+    String? inviterUserId,
+    String? email,
+  }) async {
     _loading = true;
     _lastError = null;
     notifyListeners();
@@ -84,7 +87,7 @@ class FranchiseeInvitationProviderImpl extends ChangeNotifier
   }
 
   @override
-  Future<FranchiseeInvitation?> fetchInvitationById(String id) async {
+  Future<shared.FranchiseeInvitation?> fetchInvitationById(String id) async {
     try {
       return await _service.fetchInvitationById(id);
     } catch (e) {
@@ -258,4 +261,3 @@ class FranchiseeInvitationProviderImpl extends ChangeNotifier
     super.dispose();
   }
 }
-

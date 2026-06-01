@@ -65,7 +65,14 @@ abstract class FirestoreService {
       String franchiseId, List<String>? ingredientIds);
   Future<List<String>> getAllergensForCustomizations(
       String franchiseId, List<Customization> customizations);
-
+  Future<void> saveIngredientMetadata(
+      String franchiseId, IngredientMetadata ingredient);
+  Future<void> saveIngredientMetadataBatch(
+      String franchiseId, List<IngredientMetadata> ingredients);
+  Future<void> deleteIngredientMetadataBatch(
+      String franchiseId, List<String> ids);
+  Future<void> replaceIngredientMetadataBatch(
+      String franchiseId, List<IngredientMetadata> newItems);
   Future<Map<String, dynamic>?> getFranchiseeInvitationByToken(String token);
   Future<String> createFranchiseProfile(
       {required Map<String, dynamic> franchiseData,
@@ -113,10 +120,10 @@ abstract class FirestoreService {
       String userId, String franchiseId, String menuItemId);
   Future<void> removeFavoriteMenuItem(
       String userId, String franchiseId, String menuItemId);
-  Future<Map<String, dynamic>?> getLoyaltyForUser(
-      String userId, {String? franchiseId});
-  Future<void> setLoyaltyForUser(
-      String userId, Map<String, dynamic> loyalty, {String? franchiseId});
+  Future<Map<String, dynamic>?> getLoyaltyForUser(String userId,
+      {String? franchiseId});
+  Future<void> setLoyaltyForUser(String userId, Map<String, dynamic> loyalty,
+      {String? franchiseId});
 
   Future<void> updateOrderStatus(
       String franchiseId, String orderId, String newStatus);
@@ -512,6 +519,10 @@ abstract class FirestoreService {
       {required String templateId, required String franchiseId});
   Future<List<IngredientMetadata>> fetchIngredientMetadata(String franchiseId);
   Future<List<String>> fetchIngredientTypeIds(String franchiseId);
+  Future<void> saveIngredientType(String franchiseId, IngredientType type);
+  Future<void> updateIngredientType(
+      String franchiseId, String typeId, Map<String, dynamic> updatedFields);
+  Future<void> deleteIngredientType(String franchiseId, String typeId);
   Future<List<model.Category>> fetchCategories(String franchiseId);
   Future<void> saveCategory(String franchiseId, model.Category category);
   Future<void> replaceAllCategories(
@@ -539,26 +550,35 @@ abstract class FirestoreService {
     required double price,
     String? specialInstructions,
   });
-  Future<void> removeFromCart(String userId, String cartItemKey, {String? franchiseId});
+  Future<void> removeFromCart(String userId, String cartItemKey,
+      {String? franchiseId});
   Stream<int> getCartItemCountStream(String userId, {String? franchiseId});
   Future<void> clearCart(String userId, {String? franchiseId});
 
   // Customer order placement & history
   Future<void> addOrder(Order order);
-  Stream<List<Order>> getOrdersForUser(String userId, {String? franchiseId, int limit = 20});
+  Stream<List<Order>> getOrdersForUser(String userId,
+      {String? franchiseId, int limit = 20});
 
   // Scheduled / recurring orders (customer)
-  Stream<List<Order>> getScheduledOrdersForUser(String userId, {String? franchiseId});
+  Stream<List<Order>> getScheduledOrdersForUser(String userId,
+      {String? franchiseId});
   Future<void> addScheduledOrder(Order scheduled);
   Future<void> updateScheduledOrder(Order scheduled);
-  Future<void> deleteScheduledOrder(String orderId, {String? userId, String? franchiseId});
+  Future<void> deleteScheduledOrder(String orderId,
+      {String? userId, String? franchiseId});
 
   // Favorites (customer-friendly overloads; existing 3-param methods remain for admin/shared)
-  Stream<List<MenuItem>> getFavoriteMenuItemsForUser(String userId, {String? franchiseId});
-  Future<void> addFavoriteMenuItemForUser(String userId, String menuItemId, {String? franchiseId});
-  Future<void> removeFavoriteMenuItemForUser(String userId, String menuItemId, {String? franchiseId});
-  Stream<List<Order>> getFavoriteOrdersForUser(String userId, {String? franchiseId});
-  Future<void> removeFavoriteOrderForUser(String userId, String orderId, {String? franchiseId});
+  Stream<List<MenuItem>> getFavoriteMenuItemsForUser(String userId,
+      {String? franchiseId});
+  Future<void> addFavoriteMenuItemForUser(String userId, String menuItemId,
+      {String? franchiseId});
+  Future<void> removeFavoriteMenuItemForUser(String userId, String menuItemId,
+      {String? franchiseId});
+  Stream<List<Order>> getFavoriteOrdersForUser(String userId,
+      {String? franchiseId});
+  Future<void> removeFavoriteOrderForUser(String userId, String orderId,
+      {String? franchiseId});
 
   // Feedback & loyalty (customer)
   Future<void> submitOrderFeedback({
@@ -567,7 +587,8 @@ abstract class FirestoreService {
     required Map<String, dynamic> feedback,
     String? franchiseId,
   });
-  Future<void> claimReward(String userId, String rewardId, {String? franchiseId, int? points});
+  Future<void> claimReward(String userId, String rewardId,
+      {String? franchiseId, int? points});
 
   // Customer chat/support
   Future<String?> createOrGetUserChat(String userId, {String? franchiseId});
@@ -603,7 +624,8 @@ abstract class FirestoreService {
   firestore.CollectionReference<Map<String, dynamic>> get invitationCollection;
 
   // === MOBILE COMPATIBILITY HELPERS (lightweight, for gradual migration) ===
-  Stream<List<MenuItem>> getMenuItemsByCategory(String categoryId, {String? franchiseId, String? sortBy});
+  Stream<List<MenuItem>> getMenuItemsByCategory(String categoryId,
+      {String? franchiseId, String? sortBy});
   Future<MenuItem?> getMenuItemById(String itemId, {String? franchiseId});
   Stream<List<Order>> getOrders({String? userId, String? franchiseId});
   Future<bool> hasOrderFeedback(String orderId, {String? franchiseId});

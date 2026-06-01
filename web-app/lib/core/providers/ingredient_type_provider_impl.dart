@@ -1,13 +1,12 @@
-﻿// web_app/lib/core/providers/ingredient_type_provider_impl.dart
+﻿// web-app/lib/core/providers/ingredient_type_provider_impl.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:collection/collection.dart';
 import 'dart:convert';
 
 class IngredientTypeProviderImpl extends ChangeNotifier
-    implements IngredientTypeProvider {
+    implements shared.IngredientTypeProvider {
   final shared.FirestoreService _firestoreService;
   String _franchiseId = '';
   String? _loadedFranchiseId;
@@ -15,21 +14,23 @@ class IngredientTypeProviderImpl extends ChangeNotifier
   String? _error;
   bool _hasLoaded = false;
 
-  List<IngredientType> _ingredientTypes = [];
-  final List<IngredientType> _stagedTypes = [];
+  List<shared.IngredientType> _ingredientTypes = [];
+  final List<shared.IngredientType> _stagedTypes = [];
   final Set<String> _stagedForDelete = {};
 
-  IngredientTypeProviderImpl({required shared.FirestoreService shared.firestoreService})
-      : _firestoreService = shared.firestoreService;
+  IngredientTypeProviderImpl({
+    required shared.FirestoreService firestoreService,
+  }) : _firestoreService = firestoreService;
 
-  @override
   String get franchiseId => _franchiseId;
+
   set franchiseId(String value) {
     _franchiseId = value;
+    notifyListeners();
   }
 
   @override
-  List<IngredientType> get ingredientTypes => _ingredientTypes;
+  List<shared.IngredientType> get ingredientTypes => _ingredientTypes;
 
   @override
   bool get loading => _loading;
@@ -41,7 +42,8 @@ class IngredientTypeProviderImpl extends ChangeNotifier
   bool get isLoaded => _hasLoaded;
 
   @override
-  List<IngredientType> get stagedTypes => List.unmodifiable(_stagedTypes);
+  List<shared.IngredientType> get stagedTypes =>
+      List.unmodifiable(_stagedTypes);
 
   @override
   Set<String> get stagedForDelete => Set.unmodifiable(_stagedForDelete);
@@ -53,14 +55,16 @@ class IngredientTypeProviderImpl extends ChangeNotifier
   bool get hasStagedDeletes => _stagedForDelete.isNotEmpty;
 
   @override
-  Future<void> load(
-      {bool forceReloadFromFirestore = false,
-      String? franchiseIdOverride}) async {
+  Future<void> load({
+    bool forceReloadFromFirestore = false,
+    String? franchiseIdOverride,
+  }) async {
     final id = franchiseIdOverride ?? _franchiseId;
     if (id.isEmpty || id == 'unknown') return;
 
-    if (_hasLoaded && !forceReloadFromFirestore && _loadedFranchiseId == id)
+    if (_hasLoaded && !forceReloadFromFirestore && _loadedFranchiseId == id) {
       return;
+    }
 
     await _loadIngredientTypes(id,
         forceReloadFromFirestore: forceReloadFromFirestore);
@@ -80,13 +84,13 @@ class IngredientTypeProviderImpl extends ChangeNotifier
   Future<void> _loadIngredientTypes(String franchiseId,
       {bool forceReloadFromFirestore = false}) async {
     _loading = true;
+    _error = null;
     notifyListeners();
 
     try {
-      final fetched =
-          await _firestoreService.fetchIngredientTypeIds(franchiseId);
-      // Assuming fetchIngredientTypeIds returns List<IngredientType>
-      _ingredientTypes = fetched;
+      await _firestoreService.fetchIngredientTypeIds(franchiseId);
+      _ingredientTypes =
+          []; // Placeholder until full model fetch is wired // Placeholder until full model fetch is wired
     } catch (e, stack) {
       _error = e.toString();
       shared.ErrorLogger.log(
@@ -108,7 +112,7 @@ class IngredientTypeProviderImpl extends ChangeNotifier
   }
 
   @override
-  void addOrUpdateTypes(List<IngredientType> newTypes) {
+  void addOrUpdateTypes(List<shared.IngredientType> newTypes) {
     for (final t in newTypes) {
       final idx = _ingredientTypes.indexWhere((e) => e.id == t.id);
       if (idx != -1) {
@@ -121,7 +125,8 @@ class IngredientTypeProviderImpl extends ChangeNotifier
   }
 
   @override
-  Future<void> createType(String franchiseId, IngredientType type) async {
+  Future<void> createType(
+      String franchiseId, shared.IngredientType type) async {
     if (franchiseId.isEmpty || franchiseId == 'unknown') return;
     try {
       await _firestoreService.saveIngredientType(franchiseId, type);
@@ -139,7 +144,7 @@ class IngredientTypeProviderImpl extends ChangeNotifier
 
   @override
   Future<void> reorderIngredientTypes(
-      String franchiseId, List<IngredientType> newOrder) async {
+      String franchiseId, List<shared.IngredientType> newOrder) async {
     if (franchiseId.isEmpty || franchiseId == 'unknown') return;
     try {
       final updates = newOrder
@@ -161,14 +166,14 @@ class IngredientTypeProviderImpl extends ChangeNotifier
   }
 
   @override
-  IngredientType? getById(String id) {
+  shared.IngredientType? getById(String id) {
     return _stagedTypes.firstWhereOrNull((t) => t.id == id) ??
         _ingredientTypes.firstWhereOrNull((t) => t.id == id);
   }
 
   @override
   Future<void> addIngredientType(
-      String franchiseId, IngredientType type) async {
+      String franchiseId, shared.IngredientType type) async {
     if (franchiseId.isEmpty || franchiseId == 'unknown') return;
     try {
       await _firestoreService.saveIngredientType(franchiseId, type);
@@ -219,18 +224,16 @@ class IngredientTypeProviderImpl extends ChangeNotifier
   }
 
   @override
-  Future<bool> isIngredientTypeInUse(
-      {required String franchiseId, required String typeId}) async {
+  Future<bool> isIngredientTypeInUse({
+    required String franchiseId,
+    required String typeId,
+  }) async {
     if (franchiseId.isEmpty || franchiseId == 'unknown') return true;
     try {
-      final query = await _firestoreService.db
-          .collection('franchises')
-          .doc(franchiseId)
-          .collection('ingredient_metadata')
-          .where('typeId', isEqualTo: typeId)
-          .limit(1)
-          .get();
-      return query.docs.isNotEmpty;
+      // Use existing public method to avoid direct db getter access issue
+      final ingredients =
+          await _firestoreService.getAllIngredientMetadata(franchiseId);
+      return ingredients.any((meta) => meta.typeId == typeId);
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message: 'Failed to check ingredient type usage',
@@ -261,7 +264,7 @@ class IngredientTypeProviderImpl extends ChangeNotifier
 
   @override
   Future<void> bulkReplaceIngredientTypes(
-      String franchiseId, List<IngredientType> newTypes) async {
+      String franchiseId, List<shared.IngredientType> newTypes) async {
     if (franchiseId.isEmpty || franchiseId == 'unknown') return;
     try {
       await _firestoreService.replaceIngredientTypesFromJson(
@@ -298,7 +301,7 @@ class IngredientTypeProviderImpl extends ChangeNotifier
 
   @override
   Map<String, String> get typeIdToName => Map.fromEntries(_ingredientTypes
-      .where((t) => t.id != null)
+      .where((t) => t.id != null && t.id!.isNotEmpty)
       .map((t) => MapEntry(t.id!, t.name)));
 
   @override
@@ -311,21 +314,23 @@ class IngredientTypeProviderImpl extends ChangeNotifier
   List<String> get allTypeNames => _ingredientTypes.map((t) => t.name).toList();
 
   @override
-  IngredientType? getByName(String name) {
+  shared.IngredientType? getByName(String name) {
     return _ingredientTypes.firstWhereOrNull(
         (t) => t.name.trim().toLowerCase() == name.trim().toLowerCase());
   }
 
   @override
-  IngredientType? getBySystemTag(String tag) {
+  shared.IngredientType? getBySystemTag(String tag) {
     return _ingredientTypes.firstWhereOrNull((t) =>
         t.systemTag != null && t.systemTag!.toLowerCase() == tag.toLowerCase());
   }
 
   @override
-  void stageIngredientType(IngredientType type) {
+  void stageIngredientType(shared.IngredientType type) {
     if (_stagedTypes.any((t) => t.id == type.id) ||
-        _ingredientTypes.any((t) => t.id == type.id)) return;
+        _ingredientTypes.any((t) => t.id == type.id)) {
+      return;
+    }
     _stagedTypes.add(type);
     _ingredientTypes.add(type);
     notifyListeners();
@@ -360,8 +365,11 @@ class IngredientTypeProviderImpl extends ChangeNotifier
   @override
   bool stageIfNew({required String id, required String name}) {
     if (_ingredientTypes.any((t) => t.id == id) ||
-        _stagedTypes.any((t) => t.id == id)) return false;
-    final staged = IngredientType(id: id, name: name, visibleInApp: true);
+        _stagedTypes.any((t) => t.id == id)) {
+      return false;
+    }
+    final staged =
+        shared.IngredientType(id: id, name: name, visibleInApp: true);
     _stagedTypes.add(staged);
     notifyListeners();
     return true;
@@ -406,18 +414,19 @@ class IngredientTypeProviderImpl extends ChangeNotifier
   }
 
   @override
-  Future<List<OnboardingValidationIssue>> validate(
-      {List<String>? referencedTypeIds}) async {
-    final issues = <OnboardingValidationIssue>[];
+  Future<List<shared.OnboardingValidationIssue>> validate({
+    List<String>? referencedTypeIds,
+  }) async {
+    final issues = <shared.OnboardingValidationIssue>[];
     final typeNames = <String>{};
 
     for (final type in _ingredientTypes) {
       if (!typeNames.add(type.name.trim().toLowerCase())) {
-        issues.add(OnboardingValidationIssue(
+        issues.add(shared.OnboardingValidationIssue(
           section: 'Ingredient Types',
           itemId: type.id ?? '',
           itemDisplayName: type.name,
-          severity: OnboardingIssueSeverity.critical,
+          severity: shared.OnboardingIssueSeverity.critical,
           code: 'DUPLICATE_TYPE_NAME',
           message: "Duplicate ingredient type name: '${type.name}'.",
           affectedFields: ['name'],
@@ -433,11 +442,11 @@ class IngredientTypeProviderImpl extends ChangeNotifier
     }
 
     if (_ingredientTypes.isEmpty) {
-      issues.add(OnboardingValidationIssue(
+      issues.add(shared.OnboardingValidationIssue(
         section: 'Ingredient Types',
         itemId: '',
         itemDisplayName: '',
-        severity: OnboardingIssueSeverity.critical,
+        severity: shared.OnboardingIssueSeverity.critical,
         code: 'NO_INGREDIENT_TYPES',
         message: "At least one ingredient type must be defined.",
         affectedFields: ['ingredient_types'],
@@ -453,11 +462,11 @@ class IngredientTypeProviderImpl extends ChangeNotifier
     if (referencedTypeIds != null) {
       for (final type in _ingredientTypes) {
         if (!referencedTypeIds.contains(type.id)) {
-          issues.add(OnboardingValidationIssue(
+          issues.add(shared.OnboardingValidationIssue(
             section: 'Ingredient Types',
             itemId: type.id ?? '',
             itemDisplayName: type.name,
-            severity: OnboardingIssueSeverity.warning,
+            severity: shared.OnboardingIssueSeverity.warning,
             code: 'UNUSED_TYPE',
             message: "Type '${type.name}' is not used by any ingredient.",
             affectedFields: [],
@@ -476,5 +485,3 @@ class IngredientTypeProviderImpl extends ChangeNotifier
     return issues;
   }
 }
-
-

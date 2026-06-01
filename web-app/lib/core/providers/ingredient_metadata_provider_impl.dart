@@ -1,19 +1,19 @@
-﻿// web_app/lib/core/providers/ingredient_metadata_provider_impl.dart
+﻿// web-app/lib/core/providers/ingredient_metadata_provider_impl.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:collection/collection.dart';
 
 class IngredientMetadataProviderImpl extends ChangeNotifier
-    implements IngredientMetadataProvider {
+    implements shared.IngredientMetadataProvider {
   final shared.FirestoreService _firestore;
   final String _franchiseId;
 
-  List<IngredientMetadata> _original = [];
-  List<IngredientMetadata> _current = [];
-  final List<IngredientMetadata> _stagedIngredients = [];
-  final List<IngredientMetadata> _ingredients = [];
+  List<shared.IngredientMetadata> _original = [];
+  List<shared.IngredientMetadata> _current = [];
+  final List<shared.IngredientMetadata> _stagedIngredients = [];
+  final List<shared.IngredientMetadata> _ingredients = [];
   bool _hasLoaded = false;
   String? _loadedFranchiseId;
   final Set<String> _selectedIngredientIds = {};
@@ -26,13 +26,13 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
   final Map<String, GlobalKey> fieldGlobalKeys = {};
 
   IngredientMetadataProviderImpl({
-    required shared.FirestoreService shared.firestoreService,
+    required shared.FirestoreService firestore,
     required String franchiseId,
-  })  : _firestore = shared.firestoreService,
+  })  : _firestore = firestore,
         _franchiseId = franchiseId;
 
   @override
-  List<IngredientMetadata> get ingredients => _current;
+  List<shared.IngredientMetadata> get ingredients => _current;
 
   @override
   bool get isInitialized => _hasLoaded;
@@ -47,11 +47,11 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
   int get stagedIngredientCount => _stagedIngredients.length;
 
   @override
-  List<IngredientMetadata> get stagedIngredients =>
+  List<shared.IngredientMetadata> get stagedIngredients =>
       List.unmodifiable(_stagedIngredients);
 
   @override
-  List<IngredientMetadata> get allIngredients =>
+  List<shared.IngredientMetadata> get allIngredients =>
       List.unmodifiable([..._current, ..._stagedIngredients]);
 
   @override
@@ -92,8 +92,8 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
   }
 
   @override
-  List<IngredientMetadata> get sortedIngredients {
-    final sorted = List<IngredientMetadata>.from(_current);
+  List<shared.IngredientMetadata> get sortedIngredients {
+    final sorted = List<shared.IngredientMetadata>.from(_current);
     sorted.sort((a, b) {
       final aVal = _getSortValue(a, _sortKey);
       final bVal = _getSortValue(b, _sortKey);
@@ -102,7 +102,7 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
     return sorted;
   }
 
-  String _getSortValue(IngredientMetadata item, String key) {
+  String _getSortValue(shared.IngredientMetadata item, String key) {
     switch (key) {
       case 'name':
         return item.name.toLowerCase();
@@ -116,10 +116,10 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
   }
 
   @override
-  Map<String, List<IngredientMetadata>> get groupedIngredients {
+  Map<String, List<shared.IngredientMetadata>> get groupedIngredients {
     if (_groupByKey == null) return {'All': sortedIngredients};
 
-    final groups = <String, List<IngredientMetadata>>{};
+    final groups = <String, List<shared.IngredientMetadata>>{};
     for (final item in sortedIngredients) {
       final groupKey = _groupByKey == 'type'
           ? (item.type?.isNotEmpty == true ? item.type! : 'Unknown')
@@ -165,10 +165,10 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
   }
 
   @override
-  Future<void> reload() async => load();
+  Future<void> reload() async => load(forceReloadFromFirestore: true);
 
   @override
-  Future<void> createIngredient(IngredientMetadata newIngredient) async {
+  Future<void> createIngredient(shared.IngredientMetadata newIngredient) async {
     if (_franchiseId.isEmpty || _franchiseId == 'unknown') return;
     try {
       await _firestore.saveIngredientMetadata(_franchiseId, newIngredient);
@@ -185,7 +185,7 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
   }
 
   @override
-  void addIngredients(List<IngredientMetadata> newItems) {
+  void addIngredients(List<shared.IngredientMetadata> newItems) {
     for (final item in newItems) {
       updateIngredient(item);
     }
@@ -193,7 +193,7 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
   }
 
   @override
-  void addImportedIngredients(List<IngredientMetadata> imported) {
+  void addImportedIngredients(List<shared.IngredientMetadata> imported) {
     for (final item in imported) {
       if (item.typeId?.isNotEmpty != true || item.type?.isNotEmpty != true)
         continue;
@@ -209,7 +209,7 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
   }
 
   @override
-  void updateIngredient(IngredientMetadata newData) {
+  void updateIngredient(shared.IngredientMetadata newData) {
     if (newData.typeId?.isNotEmpty != true || newData.type?.isNotEmpty != true)
       return;
     final index = _current.indexWhere((e) => e.id == newData.id);
@@ -317,7 +317,7 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
 
   @override
   Future<void> bulkReplaceIngredientMetadata(
-      String franchiseId, List<IngredientMetadata> newItems) async {
+      String franchiseId, List<shared.IngredientMetadata> newItems) async {
     if (franchiseId.isEmpty || franchiseId == 'unknown') return;
     try {
       await _firestore.replaceIngredientMetadataBatch(franchiseId, newItems);
@@ -352,13 +352,13 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
       ingredients.map((i) => i.name).toList();
 
   @override
-  IngredientMetadata? getByName(String name) {
+  shared.IngredientMetadata? getByName(String name) {
     return ingredients.firstWhereOrNull(
         (i) => i.name.trim().toLowerCase() == name.trim().toLowerCase());
   }
 
   @override
-  IngredientMetadata? getByIdCaseInsensitive(String id) {
+  shared.IngredientMetadata? getByIdCaseInsensitive(String id) {
     return ingredients
         .firstWhereOrNull((i) => i.id.toLowerCase() == id.toLowerCase());
   }
@@ -373,7 +373,7 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
   }
 
   @override
-  void stageIngredient(IngredientMetadata ingredient) {
+  void stageIngredient(shared.IngredientMetadata ingredient) {
     if (ingredient.typeId?.isNotEmpty != true ||
         ingredient.type?.isNotEmpty != true) return;
     if (_stagedIngredients.any((e) => e.id == ingredient.id) ||
@@ -415,7 +415,7 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
   }
 
   @override
-  IngredientMetadata? getById(String id) {
+  shared.IngredientMetadata? getById(String id) {
     return _stagedIngredients.firstWhereOrNull((e) => e.id == id) ??
         _ingredients.firstWhereOrNull((e) => e.id == id);
   }
@@ -424,7 +424,7 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
   bool stageIfNew({required String id, required String name}) {
     if (_ingredients.any((e) => e.id == id) ||
         _stagedIngredients.any((e) => e.id == id)) return false;
-    final newIngredient = IngredientMetadata(
+    final newIngredient = shared.IngredientMetadata(
       id: id,
       name: name,
       type: '',
@@ -441,21 +441,21 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
   }
 
   @override
-  Future<List<OnboardingValidationIssue>> validate({
+  Future<List<shared.OnboardingValidationIssue>> validate({
     List<String>? validTypeIds,
     List<String>? referencedIngredientIds,
   }) async {
-    final issues = <OnboardingValidationIssue>[];
+    final issues = <shared.OnboardingValidationIssue>[];
     final names = <String>{};
 
     for (final ing in _current) {
       final normalized = ing.name.trim().toLowerCase();
       if (!names.add(normalized)) {
-        issues.add(OnboardingValidationIssue(
+        issues.add(shared.OnboardingValidationIssue(
           section: 'Ingredients',
           itemId: ing.id,
           itemDisplayName: ing.name,
-          severity: OnboardingIssueSeverity.critical,
+          severity: shared.OnboardingIssueSeverity.critical,
           code: 'DUPLICATE_INGREDIENT_NAME',
           message: "Duplicate ingredient name: '${ing.name}'.",
           affectedFields: ['name'],
@@ -471,11 +471,11 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
 
       if ((ing.typeId?.isEmpty ?? true) ||
           (validTypeIds != null && !validTypeIds.contains(ing.typeId))) {
-        issues.add(OnboardingValidationIssue(
+        issues.add(shared.OnboardingValidationIssue(
           section: 'Ingredients',
           itemId: ing.id,
           itemDisplayName: ing.name,
-          severity: OnboardingIssueSeverity.critical,
+          severity: shared.OnboardingIssueSeverity.critical,
           code: 'MISSING_INGREDIENT_TYPE',
           message: "Ingredient '${ing.name}' has no valid type.",
           affectedFields: ['typeId'],
@@ -491,11 +491,11 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
     }
 
     if (_current.isEmpty) {
-      issues.add(OnboardingValidationIssue(
+      issues.add(shared.OnboardingValidationIssue(
         section: 'Ingredients',
         itemId: '',
         itemDisplayName: '',
-        severity: OnboardingIssueSeverity.critical,
+        severity: shared.OnboardingIssueSeverity.critical,
         code: 'NO_INGREDIENTS_DEFINED',
         message: "At least one ingredient must be defined.",
         affectedFields: ['ingredients'],
@@ -511,5 +511,3 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
     return issues;
   }
 }
-
-

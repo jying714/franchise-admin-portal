@@ -1,23 +1,24 @@
-﻿// web_app/lib/core/providers/franchise_feature_provider_impl.dart
+﻿// web-app/lib/core/providers/franchise_feature_provider_impl.dart
 
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
 class FranchiseFeatureProviderImpl extends ChangeNotifier
-    implements FranchiseFeatureProvider {
-  final FranchiseFeatureService _service;
+    implements shared.FranchiseFeatureProvider {
+  final shared.FranchiseFeatureService _service;
   String _franchiseId;
+
   @override
   String get currentFranchiseId => _franchiseId;
 
   final Set<String> _availableFeatures = {};
-  FeatureState _featureMetadata =
-      FeatureState(modules: {}, liveSnapshotEnabled: false);
+  shared.FeatureState _featureMetadata =
+      shared.FeatureState(modules: {}, liveSnapshotEnabled: false);
   bool _liveSnapshotEnabled = false;
   bool _isInitialized = false;
 
   FranchiseFeatureProviderImpl({
-    required FranchiseFeatureService service,
+    required shared.FranchiseFeatureService service,
     required String franchiseId,
   })  : _service = service,
         _franchiseId = franchiseId;
@@ -26,7 +27,7 @@ class FranchiseFeatureProviderImpl extends ChangeNotifier
   Set<String> get allGrantedFeatures => _availableFeatures;
 
   @override
-  FeatureState get featureMetadata => _featureMetadata;
+  shared.FeatureState get featureMetadata => _featureMetadata;
 
   @override
   bool get liveSnapshotEnabled => _liveSnapshotEnabled;
@@ -53,7 +54,7 @@ class FranchiseFeatureProviderImpl extends ChangeNotifier
   void setLiveSnapshotEnabled(bool value) {
     if (_featureMetadata.liveSnapshotEnabled == value) return;
 
-    _featureMetadata = FeatureState(
+    _featureMetadata = shared.FeatureState(
       modules: _featureMetadata.modules,
       liveSnapshotEnabled: value,
     );
@@ -83,17 +84,17 @@ class FranchiseFeatureProviderImpl extends ChangeNotifier
       ..clear()
       ..addAll(granted);
 
-    final updated = <String, FeatureModule>{};
+    final updated = <String, shared.FeatureModule>{};
     for (final entry in (metadata?.modules ?? {}).entries) {
       updated[entry.key] = entry.value;
     }
 
     for (final granted in _availableFeatures) {
       updated.putIfAbsent(
-          granted, () => FeatureModule(enabled: false, features: {}));
+          granted, () => shared.FeatureModule(enabled: false, features: {}));
     }
 
-    _featureMetadata = FeatureState(
+    _featureMetadata = shared.FeatureState(
       modules: updated,
       liveSnapshotEnabled:
           metadata?.liveSnapshotEnabled ?? _featureMetadata.liveSnapshotEnabled,
@@ -119,7 +120,7 @@ class FranchiseFeatureProviderImpl extends ChangeNotifier
   }
 
   @override
-  FeatureModule? getModule(String moduleKey) =>
+  shared.FeatureModule? getModule(String moduleKey) =>
       _featureMetadata.modules[moduleKey];
 
   @override
@@ -135,7 +136,7 @@ class FranchiseFeatureProviderImpl extends ChangeNotifier
   void setModuleEnabled(String moduleKey, bool enabled) {
     final existing = _featureMetadata.modules[moduleKey];
     _featureMetadata.modules[moduleKey] =
-        (existing ?? FeatureModule(enabled: false, features: {}))
+        (existing ?? shared.FeatureModule(enabled: false, features: {}))
             .copyWith(enabled: enabled);
     notifyListeners();
   }
@@ -152,14 +153,14 @@ class FranchiseFeatureProviderImpl extends ChangeNotifier
       existing.features[featureKey] = enabled;
     } else {
       _featureMetadata.modules[moduleKey] =
-          FeatureModule(enabled: true, features: {featureKey: enabled});
+          shared.FeatureModule(enabled: true, features: {featureKey: enabled});
     }
     notifyListeners();
   }
 
   @override
-  void setFeatureMetadata(FeatureState metadata) {
-    _featureMetadata = FeatureState(
+  void setFeatureMetadata(shared.FeatureState metadata) {
+    _featureMetadata = shared.FeatureState(
       modules: metadata.modules,
       liveSnapshotEnabled:
           metadata.liveSnapshotEnabled ?? _featureMetadata.liveSnapshotEnabled,
@@ -170,7 +171,8 @@ class FranchiseFeatureProviderImpl extends ChangeNotifier
 
   @override
   void clearAll() {
-    _featureMetadata = FeatureState(modules: {}, liveSnapshotEnabled: false);
+    _featureMetadata =
+        shared.FeatureState(modules: {}, liveSnapshotEnabled: false);
     _liveSnapshotEnabled = false;
     _availableFeatures.clear();
     _isInitialized = false;
@@ -206,15 +208,15 @@ class FranchiseFeatureProviderImpl extends ChangeNotifier
       .toList();
 
   @override
-  Future<List<OnboardingValidationIssue>> validate() async {
-    final issues = <OnboardingValidationIssue>[];
+  Future<List<shared.OnboardingValidationIssue>> validate() async {
+    final issues = <shared.OnboardingValidationIssue>[];
     try {
       if (!enabledModuleKeys.contains('menu_management')) {
-        issues.add(OnboardingValidationIssue(
+        issues.add(shared.OnboardingValidationIssue(
           section: 'Features',
           itemId: '',
           itemDisplayName: '',
-          severity: OnboardingIssueSeverity.critical,
+          severity: shared.OnboardingIssueSeverity.critical,
           code: 'MISSING_MENU_MANAGEMENT_FEATURE',
           message:
               "Menu Management feature must be enabled to continue onboarding.",
@@ -239,4 +241,3 @@ class FranchiseFeatureProviderImpl extends ChangeNotifier
     return issues;
   }
 }
-

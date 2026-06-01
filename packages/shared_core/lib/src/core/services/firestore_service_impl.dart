@@ -173,6 +173,57 @@ class FirestoreServiceImpl implements FirestoreService {
   }
 
   @override
+  Future<void> saveIngredientMetadata(
+      String franchiseId, IngredientMetadata ingredient) async {
+    await _franchiseCollection(franchiseId, _ingredientMetadata)
+        .doc(ingredient.id)
+        .set(ingredient.toMap(), firestore.SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> saveIngredientMetadataBatch(
+      String franchiseId, List<IngredientMetadata> ingredients) async {
+    final batch = _db.batch();
+    for (final ing in ingredients) {
+      final ref =
+          _franchiseCollection(franchiseId, _ingredientMetadata).doc(ing.id);
+      batch.set(ref, ing.toMap(), firestore.SetOptions(merge: true));
+    }
+    await batch.commit();
+  }
+
+  @override
+  Future<void> deleteIngredientMetadataBatch(
+      String franchiseId, List<String> ids) async {
+    final batch = _db.batch();
+    for (final id in ids) {
+      final ref =
+          _franchiseCollection(franchiseId, _ingredientMetadata).doc(id);
+      batch.delete(ref);
+    }
+    await batch.commit();
+  }
+
+  @override
+  Future<void> replaceIngredientMetadataBatch(
+      String franchiseId, List<IngredientMetadata> newItems) async {
+    // Delete all existing first
+    final existingSnap =
+        await _franchiseCollection(franchiseId, _ingredientMetadata).get();
+    final batch = _db.batch();
+    for (final doc in existingSnap.docs) {
+      batch.delete(doc.reference);
+    }
+    // Add new ones
+    for (final ing in newItems) {
+      final ref =
+          _franchiseCollection(franchiseId, _ingredientMetadata).doc(ing.id);
+      batch.set(ref, ing.toMap());
+    }
+    await batch.commit();
+  }
+
+  @override
   Future<List<String>> getAllergensForIngredientIds(
       String franchiseId, List<String>? ingredientIds) async {
     if (ingredientIds == null || ingredientIds.isEmpty) return [];
@@ -733,7 +784,9 @@ class FirestoreServiceImpl implements FirestoreService {
   Stream<List<Order>> getOrdersForUser(String userId,
       {String? franchiseId, int limit = 20}) {
     // P2.3 hardening: customer flows must use franchise-scoped paths. No collectionGroup.
-    if (franchiseId == null || franchiseId.isEmpty || franchiseId == 'unknown') {
+    if (franchiseId == null ||
+        franchiseId.isEmpty ||
+        franchiseId == 'unknown') {
       // Strict: return empty for missing scope (prevents cross-tenant leakage)
       return Stream.value(<Order>[]);
     }
@@ -751,7 +804,9 @@ class FirestoreServiceImpl implements FirestoreService {
       return Stream.value([]);
     }
     // P2.3: Enforce franchise scoping for all customer order queries. No collectionGroup.
-    if (franchiseId == null || franchiseId.isEmpty || franchiseId == 'unknown') {
+    if (franchiseId == null ||
+        franchiseId.isEmpty ||
+        franchiseId == 'unknown') {
       return Stream.value(<Order>[]);
     }
     final q = _franchiseCollection(franchiseId, _orders)
@@ -765,7 +820,9 @@ class FirestoreServiceImpl implements FirestoreService {
   Future<bool> hasOrderFeedback(String orderId, {String? franchiseId}) async {
     // P2.3 hardening: feedback is under franchises/{franchiseId}/feedback per schema.
     // No collectionGroup for customer flows.
-    if (franchiseId != null && franchiseId.isNotEmpty && franchiseId != 'unknown') {
+    if (franchiseId != null &&
+        franchiseId.isNotEmpty &&
+        franchiseId != 'unknown') {
       final snap = await _franchiseCollection(franchiseId, _feedback)
           .where('orderId', isEqualTo: orderId)
           .limit(1)
@@ -1273,7 +1330,9 @@ class FirestoreServiceImpl implements FirestoreService {
     // P2.3: Support franchise-scoped banners (franchises/{id}/banners) for white-label.
     // Falls back to global top-level banners collection if no franchiseId (legacy global banners).
     // Aligns with schema dump having top-level banners + per-franchise potential.
-    if (franchiseId != null && franchiseId.isNotEmpty && franchiseId != 'unknown') {
+    if (franchiseId != null &&
+        franchiseId.isNotEmpty &&
+        franchiseId != 'unknown') {
       return _franchiseCollection(franchiseId, _banners)
           .where('active', isEqualTo: true)
           .snapshots()
@@ -1487,14 +1546,15 @@ class FirestoreServiceImpl implements FirestoreService {
   Future<MenuItem?> getMenuItemById(String itemId,
       {String? franchiseId}) async {
     // P2.3: Strict franchise scoping. menu_items lives under franchises/{id}/menu_items
-    if (franchiseId == null || franchiseId.isEmpty || franchiseId == 'unknown') {
+    if (franchiseId == null ||
+        franchiseId.isEmpty ||
+        franchiseId == 'unknown') {
       return null;
     }
     final doc =
         await _franchiseCollection(franchiseId, _menuItems).doc(itemId).get();
     if (doc.exists && doc.data() != null) {
-      return MenuItem.fromFirestore(
-          doc.data() as Map<String, dynamic>, doc.id);
+      return MenuItem.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
     }
     return null;
   }
@@ -1889,6 +1949,33 @@ class FirestoreServiceImpl implements FirestoreService {
           String templateId) async =>
       throw UnimplementedError(_adminOnlyMsg('getIngredientMetadataTemplate'));
   @override
+  Future<void> saveIngredientType(
+      String franchiseId, IngredientType type) async {
+    await _franchiseCollection(franchiseId,
+            _ingredientMetadata) // or dedicated collection if exists
+        .doc(type.id)
+        .set(type.toMap(), firestore.SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> updateIngredientType(String franchiseId, String typeId,
+      Map<String, dynamic> updatedFields) async {
+    await _franchiseCollection(franchiseId, _ingredientMetadata)
+        .doc(typeId)
+        .update({
+      ...updatedFields,
+      'updatedAt': firestore.FieldValue.serverTimestamp()
+    });
+  }
+
+  @override
+  Future<void> deleteIngredientType(String franchiseId, String typeId) async {
+    await _franchiseCollection(franchiseId, _ingredientMetadata)
+        .doc(typeId)
+        .delete();
+  }
+
+  @override
   Future<void> importIngredientMetadataTemplate(
           {required String templateId, required String franchiseId}) async =>
       throw UnimplementedError(
@@ -1981,7 +2068,9 @@ class FirestoreServiceImpl implements FirestoreService {
   Stream<List<Order>> getScheduledOrdersForUser(String userId,
       {String? franchiseId}) {
     // P2.3 hardening: scheduledOrders under franchises/{franchiseId}/scheduledOrders. No collectionGroup for customer flows.
-    if (franchiseId == null || franchiseId.isEmpty || franchiseId == 'unknown') {
+    if (franchiseId == null ||
+        franchiseId.isEmpty ||
+        franchiseId == 'unknown') {
       return Stream.value(<Order>[]);
     }
     final q = _franchiseCollection(franchiseId, _scheduledOrders)

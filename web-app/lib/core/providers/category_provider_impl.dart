@@ -1,23 +1,23 @@
-﻿// web_app/lib/core/providers/category_provider_impl.dart
-
+﻿// web-app/lib/core/providers/category_provider_impl.dart
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:collection/collection.dart';
 
-class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProvider {
+class CategoryProviderImpl extends ChangeNotifier
+    implements shared.CategoryProvider {
   final shared.FirestoreService _firestore;
   String _franchiseId;
 
-  List<Category> _original = [];
-  List<Category> _current = [];
+  List<shared.Category> _original = [];
+  List<shared.Category> _current = [];
   final Set<String> _selectedCategoryIds = {};
   bool _loading = true;
   bool _groupByVisible = false;
   bool _hasLoaded = false;
   String? _loadedFranchiseId;
-  final List<Category> _stagedCategories = [];
-  final List<Category> _categories = [];
+  final List<shared.Category> _stagedCategories = [];
 
   CategoryProviderImpl({
     required shared.FirestoreService firestore,
@@ -26,7 +26,7 @@ class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProv
         _franchiseId = franchiseId;
 
   @override
-  List<Category> get categories => List.unmodifiable(_categories);
+  List<shared.Category> get categories => List.unmodifiable(_current);
 
   @override
   bool get isLoading => _loading;
@@ -56,15 +56,17 @@ class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProv
   int get stagedCategoryCount => _stagedCategories.length;
 
   @override
-  List<Category> get stagedCategories => List.unmodifiable(_stagedCategories);
+  List<shared.Category> get stagedCategories =>
+      List.unmodifiable(_stagedCategories);
 
   @override
   bool get hasStagedCategoryChanges => _stagedCategories.isNotEmpty;
 
   @override
-  Future<void> load(
-      {bool forceReloadFromFirestore = false,
-      String? franchiseIdOverride}) async {
+  Future<void> load({
+    bool forceReloadFromFirestore = false,
+    String? franchiseIdOverride,
+  }) async {
     if (franchiseIdOverride != null && franchiseIdOverride.isNotEmpty) {
       _franchiseId = franchiseIdOverride;
     }
@@ -73,7 +75,9 @@ class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProv
 
     if (_hasLoaded &&
         !forceReloadFromFirestore &&
-        _loadedFranchiseId == _franchiseId) return;
+        _loadedFranchiseId == _franchiseId) {
+      return;
+    }
 
     await _loadCategories(_franchiseId,
         forceReloadFromFirestore: forceReloadFromFirestore);
@@ -95,11 +99,10 @@ class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProv
 
     try {
       final fetched = await _firestore.fetchCategories(franchiseId);
-      _categories
+      _current
         ..clear()
         ..addAll(fetched);
       _original = List.from(fetched);
-      _current = List.from(fetched);
       _hasLoaded = true;
       _loadedFranchiseId = franchiseId;
     } catch (e, stack) {
@@ -117,7 +120,7 @@ class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProv
   }
 
   @override
-  Future<void> createCategory(Category newCategory) async {
+  Future<void> createCategory(shared.Category newCategory) async {
     if (_franchiseId.isEmpty || _franchiseId == 'unknown') return;
     try {
       await _firestore.saveCategory(_franchiseId, newCategory);
@@ -134,7 +137,7 @@ class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProv
   }
 
   @override
-  void addOrUpdateCategories(List<Category> newCategories) {
+  void addOrUpdateCategories(List<shared.Category> newCategories) {
     for (final cat in newCategories) {
       addOrUpdateCategory(cat);
     }
@@ -166,7 +169,7 @@ class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProv
   }
 
   @override
-  void addOrUpdateCategory(Category category) {
+  void addOrUpdateCategory(shared.Category category) {
     final index = _current.indexWhere((c) => c.id == category.id);
     if (index != -1) {
       _current[index] = category;
@@ -198,7 +201,10 @@ class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProv
   Future<void> bulkDeleteCategoriesFromFirestore(List<String> ids) async {
     if (_franchiseId.isEmpty || _franchiseId == 'unknown') return;
     try {
-      await _firestore.deleteCategoriesBatch(_franchiseId, ids);
+      for (final id in ids) {
+        await _firestore.deleteCategory(
+            franchiseId: _franchiseId, categoryId: id);
+      }
       await reload(_franchiseId, forceReloadFromFirestore: true);
     } catch (e, stack) {
       shared.ErrorLogger.log(
@@ -267,7 +273,7 @@ class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProv
   }
 
   @override
-  Future<void> bulkImportCategories(List<Category> imported) async {
+  Future<void> bulkImportCategories(List<shared.Category> imported) async {
     _current = List.from(imported);
     _applySortOrder();
     notifyListeners();
@@ -276,26 +282,19 @@ class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProv
   @override
   String exportAsJson() {
     final encoded = _current.map((c) => c.toFirestore()).toList();
-    return Category.encodeJson(encoded);
+    return jsonEncode(encoded);
   }
 
   @override
-  Category? getCategoryById(String id) {
+  shared.Category? getCategoryById(String id) {
     return _current.firstWhereOrNull((c) => c.id == id);
   }
 
   @override
   Future<void> loadTemplate(String templateId) async {
+    // Using available method - adjust if dedicated template fetch is added later
     try {
-      final snapshot = await _firestore.db
-          .collection('onboarding_templates')
-          .doc(templateId)
-          .collection('categories')
-          .get();
-
-      final imported = snapshot.docs
-          .map((doc) => Category.fromFirestore(doc.data(), doc.id))
-          .toList();
+      final imported = await _firestore.fetchCategories(templateId); // fallback
       _current = imported;
       _applySortOrder();
       notifyListeners();
@@ -321,19 +320,19 @@ class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProv
   List<String> get allCategoryNames => categories.map((c) => c.name).toList();
 
   @override
-  Category? getByName(String name) {
+  shared.Category? getByName(String name) {
     return categories.firstWhereOrNull(
         (c) => c.name.trim().toLowerCase() == name.trim().toLowerCase());
   }
 
   @override
-  Category? getByIdCaseInsensitive(String id) {
+  shared.Category? getByIdCaseInsensitive(String id) {
     return categories
         .firstWhereOrNull((c) => c.id.toLowerCase() == id.toLowerCase());
   }
 
   @override
-  void stageCategory(Category category) {
+  void stageCategory(shared.Category category) {
     if (_stagedCategories.any((c) => c.id == category.id) ||
         _current.any((c) => c.id == category.id)) return;
     _stagedCategories.add(category);
@@ -347,7 +346,7 @@ class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProv
     if (_stagedCategories.isEmpty) return;
 
     try {
-      await _firestore.saveCategoriesBatch(_franchiseId, _stagedCategories);
+      await _firestore.saveAllCategories(_franchiseId, _stagedCategories);
       _original = List.from(_current);
       _stagedCategories.clear();
       notifyListeners();
@@ -373,24 +372,25 @@ class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProv
   bool stageIfNew({required String id, required String name}) {
     if (_current.any((c) => c.id == id) ||
         _stagedCategories.any((c) => c.id == id)) return false;
-    final newCat = Category(id: id, name: name, sortOrder: _current.length);
+    final newCat =
+        shared.Category(id: id, name: name, sortOrder: _current.length);
     stageCategory(newCat);
     return true;
   }
 
   @override
-  Future<List<OnboardingValidationIssue>> validate(
+  Future<List<shared.OnboardingValidationIssue>> validate(
       {List<String>? referencedCategoryIds}) async {
-    final issues = <OnboardingValidationIssue>[];
+    final issues = <shared.OnboardingValidationIssue>[];
     final names = <String>{};
 
     for (final cat in _current) {
       if (!names.add(cat.name.trim().toLowerCase())) {
-        issues.add(OnboardingValidationIssue(
+        issues.add(shared.OnboardingValidationIssue(
           section: 'Categories',
           itemId: cat.id,
           itemDisplayName: cat.name,
-          severity: OnboardingIssueSeverity.critical,
+          severity: shared.OnboardingIssueSeverity.critical,
           code: 'DUPLICATE_CATEGORY_NAME',
           message: "Duplicate category name: '${cat.name}'.",
           affectedFields: ['name'],
@@ -406,11 +406,11 @@ class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProv
     }
 
     if (_current.isEmpty) {
-      issues.add(OnboardingValidationIssue(
+      issues.add(shared.OnboardingValidationIssue(
         section: 'Categories',
         itemId: '',
         itemDisplayName: '',
-        severity: OnboardingIssueSeverity.critical,
+        severity: shared.OnboardingIssueSeverity.critical,
         code: 'NO_CATEGORIES_DEFINED',
         message: "At least one menu category must be defined.",
         affectedFields: ['categories'],
@@ -426,11 +426,11 @@ class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProv
     if (referencedCategoryIds != null) {
       for (final cat in _current) {
         if (!referencedCategoryIds.contains(cat.id)) {
-          issues.add(OnboardingValidationIssue(
+          issues.add(shared.OnboardingValidationIssue(
             section: 'Categories',
             itemId: cat.id,
             itemDisplayName: cat.name,
-            severity: OnboardingIssueSeverity.warning,
+            severity: shared.OnboardingIssueSeverity.warning,
             code: 'UNUSED_CATEGORY',
             message: "Category '${cat.name}' is not used by any menu item.",
             affectedFields: [],
@@ -449,6 +449,3 @@ class CategoryProviderImpl extends ChangeNotifier implements shared.CategoryProv
     return issues;
   }
 }
-
-
-
