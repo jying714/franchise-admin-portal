@@ -1,11 +1,11 @@
-﻿// lib/core/utils/onboarding_navigation_utils.dart
+﻿// web_app/lib/core/utils/onboarding_navigation_utils.dart
 //
 // Navigation utilities for the Onboarding flow.
 // Keeps routing keys, arguments, and normalization consistent.
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show VisibleForTesting;
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+// Removed unused VisibleForTesting import
+import 'package:shared_core/shared_core.dart' as shared;
 
 /// Canonical argument keys used across onboarding routes.
 class OnboardingNavKeys {
@@ -139,7 +139,7 @@ class OnboardingNavigationUtils {
   /// Build navigation arguments from section and issue.
   static Map<String, dynamic> buildOnboardingNavArgs({
     required String section,
-    required OnboardingValidationIssue issue,
+    required shared.OnboardingValidationIssue issue,
   }) {
     final normalizedSection = _normalizeSection(section);
     final sectionKey = _sectionKeyMap[normalizedSection] ?? normalizedSection;
@@ -169,14 +169,15 @@ class OnboardingNavigationUtils {
     }
 
     debugPrint(
-      '[OnboardingNavigationUtils] buildOnboardingNavArgs â†’ section="$section" normalized="$normalizedSection" args=$args',
+      '[OnboardingNavigationUtils] buildOnboardingNavArgs → section="$section" normalized="$normalizedSection" args=$args',
     );
 
     return Map<String, dynamic>.unmodifiable(args);
   }
 
   /// Resolve a dashboard route from a raw section name or key.
-  static String resolveRoute(String section, OnboardingValidationIssue? issue) {
+  static String resolveRoute(
+      String section, shared.OnboardingValidationIssue? issue) {
     final normalizedSection = _normalizeSection(section);
     debugPrint(
         '[OnboardingNavigationUtils] resolveRoute: input="$section" normalized="$normalizedSection"');
@@ -204,9 +205,6 @@ class OnboardingNavigationUtils {
   }
 
   /// Public wrapper to normalize a section string for routing.
-  /// Converts human-friendly names (e.g., "Ingredients") to
-  /// dashboard routing keys (e.g., "onboardingIngredients").
-  /// Safe to call from any UI or provider code before calling resolveRoute().
   static String normalizeForRouting(String section) {
     return _normalizeSection(section);
   }
@@ -218,13 +216,13 @@ String _normalizeSection(String section) {
   return _sectionKeyMap[trimmedLower] ?? section.trim();
 }
 
-String? _pickFocusItemId(OnboardingValidationIssue issue) =>
+String? _pickFocusItemId(shared.OnboardingValidationIssue issue) =>
     _emptyToNull(issue.itemId);
 
-String? _pickLocator(OnboardingValidationIssue issue) =>
+String? _pickLocator(shared.OnboardingValidationIssue issue) =>
     _emptyToNull(issue.itemLocator);
 
-bool _deriveCreateMode(OnboardingValidationIssue issue) {
+bool _deriveCreateMode(shared.OnboardingValidationIssue issue) {
   if (_isNonEmpty(issue.itemId)) return false;
   final label = _emptyToNull(issue.actionLabel)?.toLowerCase() ?? '';
   return label.contains('add') ||
@@ -244,18 +242,15 @@ bool _isNonEmpty(Object? v) {
   return true;
 }
 
-String? _stringifySeverity(OnboardingIssueSeverity? s) {
+String? _stringifySeverity(shared.OnboardingIssueSeverity? s) {
   switch (s) {
-    case OnboardingIssueSeverity.critical:
+    case shared.OnboardingIssueSeverity.critical:
       return 'critical';
-    case OnboardingIssueSeverity.warning:
+    case shared.OnboardingIssueSeverity.warning:
       return 'warning';
-    case OnboardingIssueSeverity.info:
+    case shared.OnboardingIssueSeverity.info:
       return 'info';
     default:
       return null;
   }
 }
-
-
-

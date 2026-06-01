@@ -1,67 +1,39 @@
-﻿import 'package:flutter/material.dart';
+﻿// web-app/lib/core/utils/features/feature_guard_wrapper.dart
+
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-
-/// Defines how `FeatureGuardWrapper` handles feature-gated content.
-enum FeatureFallbackStyle {
-  /// Completely removes the widget from the tree (same as FeatureGuard).
-  hidden,
-
-  /// Displays the widget with reduced opacity and disables interaction.
-  /// Useful for education or upsell nudging.
-  dimmed,
-}
+import 'package:shared_core/shared_core.dart' as shared;
+import 'feature_gate_banner.dart'; // Local import for FeatureGateBanner
 
 ///
-/// ðŸ§± FeatureGuardWrapper
+/// FeatureGuardWrapper
 ///
 /// A flexible wrapper that conditionally hides or disables its child based on
-/// a platform feature toggle (and optionally a nested subfeature).
-///
-/// Use this when:
-/// - âœ… You want to **educate** the user about a locked feature.
-/// - âœ… You want to **upsell** with a disabled UI (dimmed).
-/// - âœ… You want to gracefully **gate** non-critical widgets.
-///
-/// Avoid this when:
-/// - âŒ The gated content would break layout or flow when visible but disabled.
-/// - âŒ You want to fully eliminate logic branches (use FeatureGuard instead).
-///
-/// Example:
-/// ```dart
-/// FeatureGuardWrapper(
-///   module: 'nutrition',
-///   fallbackStyle: FeatureFallbackStyle.dimmed,
-///   tooltipMessage: 'Upgrade your plan to access nutrition tracking.',
-///   child: NutritionEditor(),
-/// )
-/// ```
+/// a platform feature toggle.
 ///
 class FeatureGuardWrapper extends StatelessWidget {
   final String module;
   final String? feature;
   final bool requireEnabled;
-
-  /// Choose between `.hidden` or `.dimmed` fallback behavior.
-  final FeatureFallbackStyle fallbackStyle;
-
-  /// Optional tooltip or hover text shown over dimmed content.
+  final shared.FeatureFallbackStyle fallbackStyle;
   final String? tooltipMessage;
-
-  /// Widget to render if the feature is available/enabled.
+  final String? lockedMessage;
+  final VoidCallback? onTapUpgrade;
   final Widget child;
 
   const FeatureGuardWrapper({
-    Key? key,
+    super.key,
     required this.module,
     this.feature,
     this.requireEnabled = true,
-    this.fallbackStyle = FeatureFallbackStyle.hidden,
+    this.fallbackStyle = shared.FeatureFallbackStyle.hidden,
     this.tooltipMessage,
+    this.lockedMessage,
+    this.onTapUpgrade,
     required this.child,
-  }) : super(key: key);
+  });
 
-  bool _isPermitted(FranchiseFeatureProvider featureProvider) {
+  bool _isPermitted(shared.FranchiseFeatureProvider featureProvider) {
     if (!featureProvider.hasFeature(module)) return false;
     if (!requireEnabled) return true;
     if (feature != null) {
@@ -72,7 +44,7 @@ class FeatureGuardWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final featureProvider = context.watch<FranchiseFeatureProvider>();
+    final featureProvider = context.watch<shared.FranchiseFeatureProvider>();
 
     if (!featureProvider.isInitialized) {
       return const SizedBox.shrink();
@@ -80,15 +52,14 @@ class FeatureGuardWrapper extends StatelessWidget {
 
     final isAllowed = _isPermitted(featureProvider);
 
-    // âœ… Feature is active â†’ show as-is
     if (isAllowed) return child;
 
-    // âŒ Feature blocked â†’ determine fallback behavior
+    // Feature blocked → determine fallback behavior
     switch (fallbackStyle) {
-      case FeatureFallbackStyle.hidden:
+      case shared.FeatureFallbackStyle.hidden:
         return const SizedBox.shrink();
 
-      case FeatureFallbackStyle.dimmed:
+      case shared.FeatureFallbackStyle.dimmed:
         return Tooltip(
           message:
               tooltipMessage ?? 'This feature is unavailable for your plan.',
@@ -100,9 +71,18 @@ class FeatureGuardWrapper extends StatelessWidget {
             ),
           ),
         );
+
+      case shared.FeatureFallbackStyle.lockedBanner:
+        return FeatureGateBanner(
+          module: module,
+          feature: feature,
+          lockedMessage: lockedMessage ?? tooltipMessage,
+          onTapUpgrade: onTapUpgrade,
+          child: child,
+        );
+
+      default:
+        return const SizedBox.shrink();
     }
   }
 }
-
-
-

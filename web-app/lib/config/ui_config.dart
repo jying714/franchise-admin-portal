@@ -14,16 +14,23 @@ class UiConfig {
   // === P2.5 DYNAMIC (UiConfig is dominant) ===
   static Color get primaryColor => DesignTokens.primaryColor;
   static Color get secondaryColor => DesignTokens.secondaryColor;
-  static String get currentAppName => DesignTokens._fp?.currentAppName ?? 'Franchise Admin';
-  static String? get currentLogoUrl => DesignTokens._fp?.currentLogoUrl;
+  static String get currentAppName =>
+      DesignTokens.franchiseProvider?.currentAppName ?? 'Franchise Admin';
+  static String? get currentLogoUrl =>
+      DesignTokens.franchiseProvider?.currentLogoUrl;
 
   static Color statusColor(String status, ThemeData theme) {
     switch (status) {
-      case 'active': return theme.colorScheme.primaryContainer;
-      case 'paused': return theme.colorScheme.secondaryContainer;
-      case 'trialing': return theme.colorScheme.tertiaryContainer;
-      case 'canceled': return theme.colorScheme.errorContainer;
-      default: return theme.colorScheme.outlineVariant;
+      case 'active':
+        return theme.colorScheme.primaryContainer;
+      case 'paused':
+        return theme.colorScheme.secondaryContainer;
+      case 'trialing':
+        return theme.colorScheme.tertiaryContainer;
+      case 'canceled':
+        return theme.colorScheme.errorContainer;
+      default:
+        return theme.colorScheme.outlineVariant;
     }
   }
 
@@ -44,7 +51,8 @@ class UiConfig {
         fontFamily: DesignTokens.fontFamily,
         fontSize: DesignTokens.adminBodyFontSize,
       );
-  static TextStyle get bodyBoldStyle => bodyStyle.copyWith(fontWeight: FontWeight.w600);
+  static TextStyle get bodyBoldStyle =>
+      bodyStyle.copyWith(fontWeight: FontWeight.w600);
 
   static EdgeInsets get defaultPadding => DesignTokens.adminCardPadding;
 }

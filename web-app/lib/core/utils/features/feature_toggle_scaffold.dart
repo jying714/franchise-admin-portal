@@ -1,23 +1,22 @@
-﻿// ðŸ”§ Feature Toggle Registration Scaffold
-// Used in onboarding_feature_setup_screen.dart or devtools
+﻿// web-app/lib/core/utils/features/feature_toggle_scaffold.dart
 
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 
 class FeatureToggleScaffold extends StatelessWidget {
   final Map<String, bool> currentState;
   final void Function(String module, bool value) onToggle;
 
   const FeatureToggleScaffold({
-    Key? key,
+    super.key,
     required this.currentState,
     required this.onToggle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return ListView(
-      children: PlatformFeature.values.map((feature) {
+      children: shared.PlatformFeature.values.map((feature) {
         final key = feature.key;
         final displayName = key.replaceAll('_', ' ').toUpperCase();
 
@@ -31,6 +30,3 @@ class FeatureToggleScaffold extends StatelessWidget {
     );
   }
 }
-
-
-

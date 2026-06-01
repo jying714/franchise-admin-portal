@@ -2,24 +2,27 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 
-class InvoiceServiceImpl implements InvoiceService {
+class InvoiceServiceImpl implements shared.InvoiceService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseFunctions _functions = FirebaseFunctions.instance;
 
-  CollectionReference _franchiseInvoicesRef(String franchiseId) => _firestore
-      .collection('platforms')
-      .doc('default') // Assuming single platform
-      .collection('franchises')
-      .doc(franchiseId)
-      .collection('invoices');
+  CollectionReference<Map<String, dynamic>> _franchiseInvoicesRef(
+          String franchiseId) =>
+      _firestore
+          .collection('platforms')
+          .doc('default')
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('invoices');
 
-  CollectionReference _platformInvoicesRef(String platformId) =>
+  CollectionReference<Map<String, dynamic>> _platformInvoicesRef(
+          String platformId) =>
       _firestore.collection('platforms').doc(platformId).collection('invoices');
 
   @override
-  Future<Invoice> createInvoice({
+  Future<shared.Invoice> createInvoice({
     required String franchiseId,
     required double amount,
     required String currency,
@@ -40,7 +43,8 @@ class InvoiceServiceImpl implements InvoiceService {
 
       final ref = await _franchiseInvoicesRef(franchiseId).add(data);
       final doc = await ref.get();
-      return Invoice.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
+      return shared.Invoice.fromFirestore(
+          doc.data() as Map<String, dynamic>, doc.id);
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message: 'Failed to create invoice for franchise $franchiseId',
@@ -53,7 +57,7 @@ class InvoiceServiceImpl implements InvoiceService {
   }
 
   @override
-  Future<Invoice> updateInvoice({
+  Future<shared.Invoice> updateInvoice({
     required String invoiceId,
     required String franchiseId,
     double? amount,
@@ -74,7 +78,8 @@ class InvoiceServiceImpl implements InvoiceService {
 
       await _franchiseInvoicesRef(franchiseId).doc(invoiceId).update(updates);
       final doc = await _franchiseInvoicesRef(franchiseId).doc(invoiceId).get();
-      return Invoice.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
+      return shared.Invoice.fromFirestore(
+          doc.data() as Map<String, dynamic>, doc.id);
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message:
@@ -88,7 +93,7 @@ class InvoiceServiceImpl implements InvoiceService {
   }
 
   @override
-  Future<Invoice> markAsPaid({
+  Future<shared.Invoice> markAsPaid({
     required String invoiceId,
     required String franchiseId,
     required String paymentMethod,
@@ -105,7 +110,8 @@ class InvoiceServiceImpl implements InvoiceService {
 
       await _franchiseInvoicesRef(franchiseId).doc(invoiceId).update(updates);
       final doc = await _franchiseInvoicesRef(franchiseId).doc(invoiceId).get();
-      return Invoice.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
+      return shared.Invoice.fromFirestore(
+          doc.data() as Map<String, dynamic>, doc.id);
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message:
@@ -147,15 +153,15 @@ class InvoiceServiceImpl implements InvoiceService {
   }
 
   @override
-  Stream<List<Invoice>> streamInvoices({
+  Stream<List<shared.Invoice>> streamInvoices({
     required String franchiseId,
     List<String>? statuses,
     DateTime? fromDate,
     DateTime? toDate,
   }) {
-    Query query = _franchiseInvoicesRef(franchiseId)
+    Query<Map<String, dynamic>> query = _franchiseInvoicesRef(franchiseId)
         .orderBy('createdAt', descending: true)
-        .limit(100); // Reasonable limit
+        .limit(100);
 
     if (statuses != null && statuses.isNotEmpty) {
       query = query.where('status', whereIn: statuses);
@@ -168,20 +174,19 @@ class InvoiceServiceImpl implements InvoiceService {
     }
 
     return query.snapshots().map((snap) => snap.docs
-        .map((doc) =>
-            Invoice.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+        .map((doc) => shared.Invoice.fromFirestore(doc.data(), doc.id))
         .toList());
   }
 
   @override
-  Future<List<Invoice>> getInvoices({
+  Future<List<shared.Invoice>> getInvoices({
     required String franchiseId,
     List<String>? statuses,
     DateTime? fromDate,
     DateTime? toDate,
   }) async {
     try {
-      Query query = _franchiseInvoicesRef(franchiseId)
+      Query<Map<String, dynamic>> query = _franchiseInvoicesRef(franchiseId)
           .orderBy('createdAt', descending: true)
           .limit(100);
 
@@ -197,8 +202,7 @@ class InvoiceServiceImpl implements InvoiceService {
 
       final snap = await query.get();
       return snap.docs
-          .map((doc) =>
-              Invoice.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .map((doc) => shared.Invoice.fromFirestore(doc.data(), doc.id))
           .toList();
     } catch (e, stack) {
       shared.ErrorLogger.log(
@@ -222,7 +226,7 @@ class InvoiceServiceImpl implements InvoiceService {
         'invoiceId': invoiceId,
         'franchiseId': franchiseId,
       });
-      return result.data as String; // Base64 PDF
+      return result.data as String;
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message: 'Failed to generate PDF for invoice $invoiceId',
@@ -249,7 +253,7 @@ class InvoiceServiceImpl implements InvoiceService {
         if (fromDate != null) 'fromDate': fromDate.toIso8601String(),
         if (toDate != null) 'toDate': toDate.toIso8601String(),
       });
-      return result.data as String; // CSV string
+      return result.data as String;
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message: 'Failed to export invoices for franchise $franchiseId',
@@ -279,7 +283,7 @@ class InvoiceServiceImpl implements InvoiceService {
   }
 
   @override
-  Future<PlatformInvoice> createPlatformInvoice({
+  Future<shared.PlatformInvoice> createPlatformInvoice({
     required String platformId,
     required double amount,
     required String currency,
@@ -300,7 +304,7 @@ class InvoiceServiceImpl implements InvoiceService {
 
       final ref = await _platformInvoicesRef(platformId).add(data);
       final doc = await ref.get();
-      return PlatformInvoice.fromMap(
+      return shared.PlatformInvoice.fromMap(
           doc.id, doc.data() as Map<String, dynamic>);
     } catch (e, stack) {
       shared.ErrorLogger.log(
@@ -314,13 +318,13 @@ class InvoiceServiceImpl implements InvoiceService {
   }
 
   @override
-  Stream<List<PlatformInvoice>> streamPlatformInvoices({
+  Stream<List<shared.PlatformInvoice>> streamPlatformInvoices({
     required String platformId,
     List<String>? statuses,
     DateTime? fromDate,
     DateTime? toDate,
   }) {
-    Query query = _platformInvoicesRef(platformId)
+    Query<Map<String, dynamic>> query = _platformInvoicesRef(platformId)
         .orderBy('createdAt', descending: true)
         .limit(100);
 
@@ -335,10 +339,7 @@ class InvoiceServiceImpl implements InvoiceService {
     }
 
     return query.snapshots().map((snap) => snap.docs
-        .map((doc) =>
-            PlatformInvoice.fromMap(doc.id, doc.data() as Map<String, dynamic>))
+        .map((doc) => shared.PlatformInvoice.fromMap(doc.id, doc.data()))
         .toList());
   }
 }
-
-

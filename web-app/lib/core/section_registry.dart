@@ -188,5 +188,3 @@ List<DashboardSection> getSidebarSections() =>
 /// All sections (for routing, content stack, and selection), sorted by sidebarOrder.
 List<DashboardSection> getAllDashboardSections() => sectionRegistry.toList()
   ..sort((a, b) => a.sidebarOrder.compareTo(b.sidebarOrder));
-
-

@@ -1,34 +1,15 @@
-﻿import 'package:flutter/material.dart';
+﻿// web_app/lib/core/utils/features/feature_gate_banner.dart
+
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 
 ///
-/// ðŸ”’ FeatureGateBanner
+/// FeatureGateBanner
 ///
 /// A premium gating wrapper that overlays a semi-transparent lock banner
 /// over its child when the required feature or subfeature is not available.
 ///
-/// Use this when:
-/// - âœ… You want to **educate** or **upsell** locked features.
-/// - âœ… You want to **visually indicate** restricted sections during onboarding.
-/// - âœ… You want the layout to remain consistent, but clearly restricted.
-///
-/// Avoid this when:
-/// - âŒ The gated content could break layout if visible but unusable.
-/// - âŒ You require total exclusion (use `FeatureGate` with `hidden` style instead).
-///
-/// ---
-///
-/// Example:
-/// ```dart
-/// FeatureGateBanner(
-///   module: 'inventory',
-///   feature: 'liveTracking',
-///   lockedMessage: 'Upgrade to enable inventory tracking',
-///   onTapUpgrade: () => context.pushNamed('/platform/plans'),
-///   child: InventorySectionCard(),
-/// )
-/// ```
 class FeatureGateBanner extends StatelessWidget {
   final String module;
   final String? feature;
@@ -50,7 +31,7 @@ class FeatureGateBanner extends StatelessWidget {
   final Widget child;
 
   const FeatureGateBanner({
-    Key? key,
+    super.key, // Fixed: use super parameter
     required this.module,
     this.feature,
     this.requireEnabled = true,
@@ -59,9 +40,9 @@ class FeatureGateBanner extends StatelessWidget {
     this.bannerColor = const Color(0xAA000000),
     this.lockIcon = Icons.lock_outline,
     required this.child,
-  }) : super(key: key);
+  });
 
-  bool _isPermitted(FranchiseFeatureProvider provider) {
+  bool _isPermitted(shared.FranchiseFeatureProvider provider) {
     if (!provider.hasFeature(module)) return false;
     if (!requireEnabled) return true;
     if (feature != null) {
@@ -72,7 +53,7 @@ class FeatureGateBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final featureProvider = context.watch<FranchiseFeatureProvider>();
+    final featureProvider = context.watch<shared.FranchiseFeatureProvider>();
 
     if (!featureProvider.isInitialized) {
       return const SizedBox.shrink();
@@ -114,6 +95,3 @@ class FeatureGateBanner extends StatelessWidget {
     );
   }
 }
-
-
-

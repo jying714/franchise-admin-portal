@@ -3,9 +3,9 @@
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 
-class FirebaseStorageServiceImpl implements FirebaseStorageService {
+class FirebaseStorageServiceImpl implements shared.FirebaseStorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final Uuid _uuid = const Uuid();
 
@@ -38,4 +38,3 @@ class FirebaseStorageServiceImpl implements FirebaseStorageService {
     }
   }
 }
-

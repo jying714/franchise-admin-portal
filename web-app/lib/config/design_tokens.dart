@@ -19,16 +19,19 @@ class DesignTokens {
 
   // === DYNAMIC BRANDING (shared.FranchiseProvider wins) ===
   static Color get primaryColor {
-    final hex = _fp?.currentPrimaryColorHex ?? shared.DesignTokens.primaryColorHex;
+    final hex =
+        _fp?.currentPrimaryColorHex ?? shared.DesignTokens.primaryColorHex;
     return _hexToColor(hex);
   }
 
   static Color get secondaryColor {
-    final hex = _fp?.currentSecondaryColorHex ?? shared.DesignTokens.secondaryColorHex;
+    final hex =
+        _fp?.currentSecondaryColorHex ?? shared.DesignTokens.secondaryColorHex;
     return _hexToColor(hex);
   }
 
-  static Color get accentColor => _hexToColor(shared.DesignTokens.accentColorHex);
+  static Color get accentColor =>
+      _hexToColor(shared.DesignTokens.accentColorHex);
   static Color get errorColor => _hexToColor('#E53935');
   static Color get dangerColor => errorColor;
   static Color get successColor => Colors.green;
@@ -72,16 +75,22 @@ class DesignTokens {
   static String get fontFamily => shared.DesignTokens.fontFamily;
   static double get bodyFontSize => shared.DesignTokens.bodyFontSize;
   static double get titleFontSize => shared.DesignTokens.titleFontSize;
-  static double get adminTitleFontSize => shared.DesignTokens.adminTitleFontSize;
+  static double get adminTitleFontSize =>
+      shared.DesignTokens.adminTitleFontSize;
   static double get adminBodyFontSize => shared.DesignTokens.adminBodyFontSize;
-  static double get adminCaptionFontSize => shared.DesignTokens.adminCaptionFontSize;
-  static double get adminButtonFontSize => shared.DesignTokens.adminButtonFontSize;
-  static double get adminTableFontSize => shared.DesignTokens.adminTableFontSize;
-  static double get appBarTitleFontSize => shared.DesignTokens.appBarTitleFontSize;
+  static double get adminCaptionFontSize =>
+      shared.DesignTokens.adminCaptionFontSize;
+  static double get adminButtonFontSize =>
+      shared.DesignTokens.adminButtonFontSize;
+  static double get adminTableFontSize =>
+      shared.DesignTokens.adminTableFontSize;
+  static double get appBarTitleFontSize =>
+      shared.DesignTokens.appBarTitleFontSize;
 
   static String get bodyFontWeight => shared.DesignTokens.bodyFontWeight;
   static String get titleFontWeight => shared.DesignTokens.titleFontWeight;
-  static String get appBarTitleFontWeight => shared.DesignTokens.appBarTitleFontWeight;
+  static String get appBarTitleFontWeight =>
+      shared.DesignTokens.appBarTitleFontWeight;
 
   // Radii (all of them)
   static double get cardRadius => shared.DesignTokens.cardRadius;
@@ -91,14 +100,18 @@ class DesignTokens {
   static double get imageRadius => shared.DesignTokens.imageRadius;
   static double get formFieldRadius => shared.DesignTokens.formFieldRadius;
   static double get badgeRadius => shared.DesignTokens.badgeRadius;
-  static double get cardBorderRadiusLarge => shared.DesignTokens.cardBorderRadiusLarge;
-  static double get cardBorderRadiusSmall => shared.DesignTokens.cardBorderRadiusSmall;
+  static double get cardBorderRadiusLarge =>
+      shared.DesignTokens.cardBorderRadiusLarge;
+  static double get cardBorderRadiusSmall =>
+      shared.DesignTokens.cardBorderRadiusSmall;
   static double get adminCardRadius => shared.DesignTokens.adminCardRadius;
   static double get adminButtonRadius => shared.DesignTokens.adminButtonRadius;
   static double get adminDialogRadius => shared.DesignTokens.adminDialogRadius;
-  static double get dialogBorderRadius => shared.DesignTokens.dialogBorderRadius;
+  static double get dialogBorderRadius =>
+      shared.DesignTokens.dialogBorderRadius;
   static double get inputBorderRadius => shared.DesignTokens.inputBorderRadius;
-  static double get buttonBorderRadius => shared.DesignTokens.buttonBorderRadius;
+  static double get buttonBorderRadius =>
+      shared.DesignTokens.buttonBorderRadius;
   static double get radiusSm => shared.DesignTokens.radiusSm;
   static double get radiusMd => shared.DesignTokens.radiusMd;
   static double get radiusLg => shared.DesignTokens.radiusLg;
@@ -110,11 +123,15 @@ class DesignTokens {
   static double get iconSizeXLarge => shared.DesignTokens.iconSizeXLarge;
   static double get badgeMinSize => shared.DesignTokens.badgeMinSize;
   static double get cartBadgePadding => shared.DesignTokens.cartBadgePadding;
-  static double get gridCardAspectRatio => shared.DesignTokens.gridCardAspectRatio;
+  static double get gridCardAspectRatio =>
+      shared.DesignTokens.gridCardAspectRatio;
   static double get bannerHeight => shared.DesignTokens.bannerHeight;
-  static double get bannerBorderRadius => shared.DesignTokens.bannerBorderRadius;
-  static double get menuItemImageWidth => shared.DesignTokens.menuItemImageWidth;
-  static double get menuItemImageHeight => shared.DesignTokens.menuItemImageHeight;
+  static double get bannerBorderRadius =>
+      shared.DesignTokens.bannerBorderRadius;
+  static double get menuItemImageWidth =>
+      shared.DesignTokens.menuItemImageWidth;
+  static double get menuItemImageHeight =>
+      shared.DesignTokens.menuItemImageHeight;
   static double get logoHeightSmall => shared.DesignTokens.logoHeightSmall;
   static double get logoHeightMedium => shared.DesignTokens.logoHeightMedium;
   static double get logoHeightLarge => shared.DesignTokens.logoHeightLarge;
@@ -131,19 +148,26 @@ class DesignTokens {
   static double get buttonPaddingVal => shared.DesignTokens.buttonPadding;
   static double get gridPaddingVal => shared.DesignTokens.gridPadding;
   static double get cardBorderWidth => shared.DesignTokens.cardBorderWidth;
-  static double get categoryCardBorderWidth => shared.DesignTokens.categoryCardBorderWidth;
+  static double get categoryCardBorderWidth =>
+      shared.DesignTokens.categoryCardBorderWidth;
 
   static double get cardElevation => shared.DesignTokens.cardElevation;
   static double get buttonElevation => shared.DesignTokens.buttonElevation;
-  static double get adminCardElevation => shared.DesignTokens.adminCardElevation;
-  static double get adminButtonElevation => shared.DesignTokens.adminButtonElevation;
-  static double get adminDialogElevation => shared.DesignTokens.adminDialogElevation;
+  static double get adminCardElevation =>
+      shared.DesignTokens.adminCardElevation;
+  static double get adminButtonElevation =>
+      shared.DesignTokens.adminButtonElevation;
+  static double get adminDialogElevation =>
+      shared.DesignTokens.adminDialogElevation;
   static double get appBarElevation => shared.DesignTokens.appBarElevation;
 
   // Durations
-  static Duration get toastDuration => Duration(seconds: shared.DesignTokens.toastDurationSeconds);
-  static Duration get animationDuration => Duration(milliseconds: shared.DesignTokens.animationDurationMs);
-  static Duration get bannerAutoPlayInterval => Duration(seconds: shared.DesignTokens.bannerAutoPlayIntervalSeconds);
+  static Duration get toastDuration =>
+      Duration(seconds: shared.DesignTokens.toastDurationSeconds);
+  static Duration get animationDuration =>
+      Duration(milliseconds: shared.DesignTokens.animationDurationMs);
+  static Duration get bannerAutoPlayInterval =>
+      Duration(seconds: shared.DesignTokens.bannerAutoPlayIntervalSeconds);
 
   // Admin UI (dynamic primary wins)
   static Color get adminPrimaryColor => primaryColor;
@@ -169,37 +193,62 @@ class DesignTokens {
 
   // BoxShadow
   static const List<BoxShadow> softShadow = [
-    BoxShadow(color: Color(0x11000000), blurRadius: 16, spreadRadius: 2, offset: Offset(0, 4)),
+    BoxShadow(
+        color: Color(0x11000000),
+        blurRadius: 16,
+        spreadRadius: 2,
+        offset: Offset(0, 4)),
   ];
 
   // Icons (string → IconData map for shared consistency)
   static IconData iconFromString(String name) {
     switch (name) {
-      case 'favorite': return Icons.favorite;
-      case 'favorite_border': return Icons.favorite_border;
-      case 'shopping_cart': return Icons.shopping_cart;
-      case 'add': return Icons.add;
-      case 'remove': return Icons.remove;
-      case 'email': return Icons.email;
-      case 'lock': return Icons.lock;
-      default: return Icons.help_outline;
+      case 'favorite':
+        return Icons.favorite;
+      case 'favorite_border':
+        return Icons.favorite_border;
+      case 'shopping_cart':
+        return Icons.shopping_cart;
+      case 'add':
+        return Icons.add;
+      case 'remove':
+        return Icons.remove;
+      case 'email':
+        return Icons.email;
+      case 'lock':
+        return Icons.lock;
+      default:
+        return Icons.help_outline;
     }
   }
 
-  static IconData get favoriteIcon => iconFromString(shared.DesignTokens.favoriteIcon);
-  static IconData get favoriteBorderIcon => iconFromString(shared.DesignTokens.favoriteBorderIcon);
+  static IconData get favoriteIcon =>
+      iconFromString(shared.DesignTokens.favoriteIcon);
+  static IconData get favoriteBorderIcon =>
+      iconFromString(shared.DesignTokens.favoriteBorderIcon);
 
   // Padding helpers
-  static EdgeInsets get gridPadding => EdgeInsets.all(shared.DesignTokens.gridSpacing);
-  static EdgeInsets get cardPadding => EdgeInsets.all(shared.DesignTokens.cardPadding);
-  static EdgeInsets get buttonPadding => EdgeInsets.symmetric(horizontal: 20, vertical: 12);
-  static EdgeInsets get adminCardPadding => EdgeInsets.all(shared.DesignTokens.adminCardSpacing);
+  static EdgeInsets get gridPadding =>
+      EdgeInsets.all(shared.DesignTokens.gridSpacing);
+  static EdgeInsets get cardPadding =>
+      EdgeInsets.all(shared.DesignTokens.cardPadding);
+  static EdgeInsets get buttonPadding =>
+      EdgeInsets.symmetric(horizontal: 20, vertical: 12);
+  static EdgeInsets get adminCardPadding =>
+      EdgeInsets.all(shared.DesignTokens.adminCardSpacing);
 
   // Helper
   static Color _hexToColor(String hex) {
     final cleaned = hex.replaceAll('#', '');
     return Color(int.parse('FF$cleaned', radix: 16));
   }
+
+  // Dynamic branding from FranchiseProvider (used by BrandingConfig)
+  static String? get currentLogoUrl {
+    return _fp?.currentLogoUrl;
+  }
+
+  static String get currentAppName {
+    return _fp?.currentAppName ?? 'Doughboys Pizzeria';
+  }
 }
-
-

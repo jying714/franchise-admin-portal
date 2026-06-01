@@ -13,33 +13,44 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 class AppConfig {
   // ===== DELEGATED STATIC CONSTANTS (from shared_core) =====
   static const String usersCollection = shared.AppConfig.usersCollection;
-  static const String menuItemsCollection = shared.AppConfig.menuItemsCollection;
+  static const String menuItemsCollection =
+      shared.AppConfig.menuItemsCollection;
   static const String ordersCollection = shared.AppConfig.ordersCollection;
-  static const String categoriesCollection = shared.AppConfig.categoriesCollection;
+  static const String categoriesCollection =
+      shared.AppConfig.categoriesCollection;
   static const String cartCollection = shared.AppConfig.cartCollection;
   static const String bannersCollection = shared.AppConfig.bannersCollection;
   static const String feedbackCollection = shared.AppConfig.feedbackCollection;
-  static const String inventoryCollection = shared.AppConfig.inventoryCollection;
-  static const String supportChatsCollection = shared.AppConfig.supportChatsCollection;
-  static const String promotionsCollection = shared.AppConfig.promotionsCollection;
+  static const String inventoryCollection =
+      shared.AppConfig.inventoryCollection;
+  static const String supportChatsCollection =
+      shared.AppConfig.supportChatsCollection;
+  static const String promotionsCollection =
+      shared.AppConfig.promotionsCollection;
   static const String configCollection = shared.AppConfig.configCollection;
   static const String auditLogCollection = shared.AppConfig.auditLogCollection;
 
-  static const String addressesSubcollection = shared.AppConfig.addressesSubcollection;
-  static const String favoriteOrdersSubcollection = shared.AppConfig.favoriteOrdersSubcollection;
+  static const String addressesSubcollection =
+      shared.AppConfig.addressesSubcollection;
+  static const String favoriteOrdersSubcollection =
+      shared.AppConfig.favoriteOrdersSubcollection;
 
-  static const int maxFavoriteMenuItemsLookup = shared.AppConfig.maxFavoriteMenuItemsLookup;
+  static const int maxFavoriteMenuItemsLookup =
+      shared.AppConfig.maxFavoriteMenuItemsLookup;
 
   static const Duration toastDuration = shared.AppConfig.toastDuration;
 
-  static const String scheduledOrdersCollection = shared.AppConfig.scheduledOrdersCollection;
+  static const String scheduledOrdersCollection =
+      shared.AppConfig.scheduledOrdersCollection;
 
   static const String poweredBy = shared.AppConfig.poweredBy;
 
-  static const int menuItemMaxImageSizeMB = shared.AppConfig.menuItemMaxImageSizeMB;
+  static const int menuItemMaxImageSizeMB =
+      shared.AppConfig.menuItemMaxImageSizeMB;
   static const int menuItemImageDim = shared.AppConfig.menuItemImageDim;
   static const int bulkUploadMaxRows = shared.AppConfig.bulkUploadMaxRows;
-  static const List<String> allowedImageFormats = shared.AppConfig.allowedImageFormats;
+  static const List<String> allowedImageFormats =
+      shared.AppConfig.allowedImageFormats;
   static const bool enableAuditLogs = shared.AppConfig.enableAuditLogs;
   static const bool enableCSVExport = shared.AppConfig.enableCSVExport;
 
@@ -53,7 +64,8 @@ class AppConfig {
   // ===== DYNAMIC / INSTANCE (driven by shared.FranchiseProvider where possible) =====
   /// Returns an AppConfig instance that can reflect current franchise branding.
   static shared.AppConfig get current {
-    final fp = DesignTokens.shared.FranchiseProvider; // Wired via DesignTokens.setshared.FranchiseProvider in main.dart
+    final fp =
+        DesignTokens.franchiseProvider; // Correct access via DesignTokens
     return shared.AppConfig(
       apiBaseUrl: 'https://api.yourdomain.com',
       brandingColorHex: fp?.currentPrimaryColorHex ?? '#E31837',
@@ -73,7 +85,5 @@ class AppConfig {
   static String featureDisplayName(String featureKey) =>
       shared.AppConfig.featureDisplayName(featureKey);
 
-  static String formatDate(DateTime? date) =>
-      shared.AppConfig.formatDate(date);
+  static String formatDate(DateTime? date) => shared.AppConfig.formatDate(date);
 }
-

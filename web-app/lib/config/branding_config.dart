@@ -11,13 +11,18 @@ class BrandingConfig {
   static const String logoLarge = 'assets/logo/logo_large.png';
   static const String logoLargeLegacy = 'assets/images/logo_large.png';
   static const String defaultPizzaIcon = 'assets/icons/pizza.png';
-  static const String defaultPizzaIconLegacy = 'assets/images/default_pizza_icon.png';
-  static const String defaultCategoryIcon = 'assets/images/default_category_icon.png';
-  static const String bannerPlaceholder = 'assets/images/banner_placeholder.png';
+  static const String defaultPizzaIconLegacy =
+      'assets/images/default_pizza_icon.png';
+  static const String defaultCategoryIcon =
+      'assets/images/default_category_icon.png';
+  static const String bannerPlaceholder =
+      'assets/images/banner_placeholder.png';
   static const String fallbackAppIcon = 'assets/images/pizza_icon.png';
   static const String adminEmptyStateImage = 'assets/images/admin_empty.png';
-  static const String menuItemPlaceholderImage = 'assets/images/menu_item_placeholder.png';
-  static const String ingredientPlaceholder = 'assets/images/ingredient_placeholder.png';
+  static const String menuItemPlaceholderImage =
+      'assets/images/menu_item_placeholder.png';
+  static const String ingredientPlaceholder =
+      'assets/images/ingredient_placeholder.png';
   static const String bulkUploadCSVIcon = 'assets/icons/csv_upload.png';
   static const String exportCSVIcon = 'assets/icons/export_csv.png';
   static const String defaultProfileIcon = 'assets/images/default_profile.png';
@@ -36,15 +41,11 @@ class BrandingConfig {
 
   // Live from shared.FranchiseProvider (via DesignTokens bridge) - P2.5 dynamic
   static String? get currentLogoUrl => DesignTokens.currentLogoUrl;
-  static String get currentAppName => DesignTokens.currentAppName;
+  static String get currentAppName =>
+      DesignTokens.currentAppName ?? 'Doughboys Pizzeria';
 
-  // Back-compat getters used by many screens (delegate to dynamic when available)
+  // Back-compat getters used by many screens
   static String? get logoUrl => DesignTokens.currentLogoUrl;
-  static String get logoMain => 'assets/images/logo.png'; // keep asset default, dynamic via currentLogoUrl in widgets
 
-  static Color _hexToColor(String hex) {
-    final cleaned = hex.replaceAll('#', '');
-    return Color(int.parse('FF$cleaned', radix: 16));
-  }
+  // Removed duplicate logoMain and unused _hexToColor method
 }
-

@@ -1,18 +1,21 @@
-﻿// web_app/lib/core/providers/platform_plan_selection_provider_impl.dart
+﻿// web-app/lib/core/providers/platform_plan_selection_provider_impl.dart
 
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+
+// Direct import for the web-app concrete implementation
+import '../services/franchise_subscription_service_impl.dart';
 
 class PlatformPlanSelectionProviderImpl extends ChangeNotifier
-    implements PlatformPlanSelectionProvider {
-  PlatformPlan? _selectedPlan;
+    implements shared.PlatformPlanSelectionProvider {
+  shared.PlatformPlan? _selectedPlan;
   bool _isLoading = false;
   String? _errorMessage;
   bool _success = false;
-  FranchiseSubscription? _currentSubscription;
+  shared.FranchiseSubscription? _currentSubscription;
 
   @override
-  PlatformPlan? get selectedPlan => _selectedPlan;
+  shared.PlatformPlan? get selectedPlan => _selectedPlan;
 
   @override
   bool get isLoading => _isLoading;
@@ -24,10 +27,10 @@ class PlatformPlanSelectionProviderImpl extends ChangeNotifier
   bool get success => _success;
 
   @override
-  FranchiseSubscription? get currentSubscription => _currentSubscription;
+  shared.FranchiseSubscription? get currentSubscription => _currentSubscription;
 
   @override
-  void selectPlan(PlatformPlan plan) {
+  void selectPlan(shared.PlatformPlan plan) {
     _selectedPlan = plan;
     _errorMessage = null;
     _success = false;
@@ -47,7 +50,7 @@ class PlatformPlanSelectionProviderImpl extends ChangeNotifier
   @override
   Future<void> subscribeToPlan({
     required String franchiseId,
-    required PlatformPlan plan,
+    required shared.PlatformPlan plan,
     String? successMessage,
     String? errorMessage,
   }) async {
@@ -57,7 +60,7 @@ class PlatformPlanSelectionProviderImpl extends ChangeNotifier
     notifyListeners();
 
     try {
-      final service = FranchiseSubscriptionServiceImpl(); // â† Use impl
+      final service = FranchiseSubscriptionServiceImpl();
       await service.subscribeFranchiseToPlan(
         franchiseId: franchiseId,
         plan: plan,
@@ -69,7 +72,7 @@ class PlatformPlanSelectionProviderImpl extends ChangeNotifier
       shared.ErrorLogger.log(
         message: 'Plan subscription failed: $e',
         stack: stack.toString(),
-        source: 'PlatformPlanSelectionProviderImpl',
+        source: 'PlatformPlanSelectionProviderImpl.subscribeToPlan',
         contextData: {
           'franchiseId': franchiseId,
           'planId': plan.id,
@@ -84,7 +87,7 @@ class PlatformPlanSelectionProviderImpl extends ChangeNotifier
   @override
   Future<void> refreshSubscription(String franchiseId) async {
     try {
-      final firestore = FirestoreServiceImpl(); // â† Use impl
+      final firestore = shared.FirestoreServiceImpl();
       final sub = await firestore.getFranchiseSubscription(franchiseId);
       _currentSubscription = sub;
       notifyListeners();
@@ -92,11 +95,10 @@ class PlatformPlanSelectionProviderImpl extends ChangeNotifier
       shared.ErrorLogger.log(
         message: 'Failed to refresh subscription for franchise: $franchiseId',
         stack: stack.toString(),
-        source: 'PlatformPlanSelectionProviderImpl',
+        source: 'PlatformPlanSelectionProviderImpl.refreshSubscription',
         severity: 'warning',
         contextData: {'franchiseId': franchiseId},
       );
     }
   }
 }
-

@@ -1,15 +1,15 @@
-﻿// web_app/lib/core/providers/payout_filter_provider_impl.dart
+﻿// web-app/lib/core/providers/payout_filter_provider_impl.dart
 
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
 class PayoutFilterProviderImpl extends ChangeNotifier
-    implements PayoutFilterProvider {
-  PayoutFilter _filter = const PayoutFilter();
+    implements shared.PayoutFilterProvider {
+  shared.PayoutFilter _filter = const shared.PayoutFilter();
   String? _lastError;
 
   @override
-  PayoutFilter get filter => _filter;
+  shared.PayoutFilter get filter => _filter;
 
   @override
   String get status => _filter.status;
@@ -21,7 +21,7 @@ class PayoutFilterProviderImpl extends ChangeNotifier
   String? get lastError => _lastError;
 
   @override
-  void setFilter(PayoutFilter filter) {
+  void setFilter(shared.PayoutFilter filter) {
     _filter = filter;
     notifyListeners();
   }
@@ -53,8 +53,7 @@ class PayoutFilterProviderImpl extends ChangeNotifier
 
   @override
   void clearFilters() {
-    _filter = const PayoutFilter();
+    _filter = const shared.PayoutFilter();
     notifyListeners();
   }
 }
-

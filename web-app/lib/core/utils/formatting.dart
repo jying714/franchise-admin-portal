@@ -9,7 +9,7 @@ class Formatting {
   /// Uses current app locale from BuildContext
   static String currencyFormat(BuildContext context, num value) {
     final locale = Localizations.localeOf(context).toString();
-    return FormattingCore.formatCurrency(
+    return shared.FormattingCore.formatCurrency(
       value,
       locale: locale,
       currency: 'USD', // or get from franchise settings
@@ -18,7 +18,6 @@ class Formatting {
 
   /// Simple static version
   static String formatCurrency(num amount, [String currency = 'USD']) {
-    return FormattingCore.formatCurrencySimple(amount, currency);
+    return shared.FormattingCore.formatCurrencySimple(amount, currency);
   }
 }
-

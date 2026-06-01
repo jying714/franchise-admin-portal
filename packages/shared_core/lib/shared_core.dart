@@ -25,6 +25,7 @@ export 'src/core/providers/category_provider.dart';
 export 'src/core/providers/menu_item_provider.dart';
 export 'src/core/providers/role_guard.dart';
 export 'src/core/providers/user_profile_provider.dart';
+export 'src/core/providers/platform_financials_provider.dart';
 
 // Core services (all used by main.dart)
 export 'src/core/services/auth_service.dart';
@@ -34,10 +35,17 @@ export 'src/core/services/firestore_service_impl.dart';
 export 'src/core/services/franchise_subscription_service.dart';
 export 'src/core/services/franchise_feature_service.dart';
 export 'src/core/services/franchisee_invitation_service.dart';
+export 'src/core/services/franchise_onboarding_service.dart';
 export 'src/core/services/audit_log_service.dart';
 export 'src/core/services/analytics_service.dart';
 export 'src/core/services/analytics_service_impl.dart';
 export 'src/core/services/mock_payment_service.dart';
+export 'src/core/services/admin_auth_audit_service.dart';
+export 'src/core/services/firebase_storage_service.dart';
+export 'src/core/services/invoice_service.dart';
+export 'src/core/services/notification_service.dart';
+export 'src/core/services/payout_service.dart';
+export 'src/core/services/promo_service.dart';
 
 // Enrichment
 export 'src/core/services/enrichment/franchise_subscription_enricher.dart';

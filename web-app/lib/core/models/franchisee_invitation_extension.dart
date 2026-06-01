@@ -1,11 +1,11 @@
 ﻿// web_app/lib/core/models/franchisee_invitation_extension.dart
-// Firestore + Flutter extensions â€” ONLY in web_app
+// Firestore + Flutter extensions — ONLY in web-app
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
-extension FranchiseeInvitationFirestore on FranchiseeInvitation {
+extension FranchiseeInvitationFirestore on shared.FranchiseeInvitation {
   /// Firestore: to map for saving
   Map<String, dynamic> toFirestoreMap() {
     return {
@@ -41,8 +41,7 @@ extension FranchiseeInvitationFirestore on FranchiseeInvitation {
   /// Save to Firestore
   Future<void> save(shared.FirestoreService firestore) async {
     try {
-      final collection =
-          firestore.invitationCollection; // â† Now defined in impl
+      final collection = firestore.invitationCollection;
       await collection.doc(id).set(toFirestoreMap());
     } catch (e, st) {
       shared.ErrorLogger.log(
@@ -57,7 +56,7 @@ extension FranchiseeInvitationFirestore on FranchiseeInvitation {
   }
 
   /// Static: create and save
-  static Future<FranchiseeInvitation> createAndSave({
+  static Future<shared.FranchiseeInvitation> createAndSave({
     required String email,
     required String inviterUserId,
     String? franchiseName,
@@ -66,7 +65,7 @@ extension FranchiseeInvitationFirestore on FranchiseeInvitation {
   }) async {
     final collection = firestore.invitationCollection;
     final docRef = collection.doc();
-    final invitation = FranchiseeInvitation(
+    final invitation = shared.FranchiseeInvitation(
       id: docRef.id,
       email: email,
       inviterUserId: inviterUserId,
@@ -79,5 +78,3 @@ extension FranchiseeInvitationFirestore on FranchiseeInvitation {
     return invitation;
   }
 }
-
-

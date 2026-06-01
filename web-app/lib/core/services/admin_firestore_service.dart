@@ -17,9 +17,10 @@ import 'package:cloud_functions/cloud_functions.dart';
 // Explicitly pull the *shared lightweight* FirestoreServiceImpl (customer + common).
 // We hide the name from the main shared_core barrel to avoid clashing with the local thin wrapper in this package.
 import 'package:shared_core/shared_core.dart' hide FirestoreServiceImpl;
-import 'package:shared_core/shared_core.dart' as shared; // Phase 5 final cleanup
+import 'package:shared_core/shared_core.dart'
+    as shared; // Phase 5 final cleanup
 
-class AdminFirestoreService extends FirestoreServiceImpl {
+class AdminFirestoreService extends shared.FirestoreServiceImpl {
   AdminFirestoreService({
     firestore.FirebaseFirestore? db,
     fb_auth.FirebaseAuth? auth,
@@ -35,7 +36,10 @@ class AdminFirestoreService extends FirestoreServiceImpl {
   @override
   Future<void> addOrUpdatePayout(Payout payout) async {
     try {
-      await db.collection('payouts').doc(payout.id).set(payout.toFirestore(), firestore.SetOptions(merge: true));
+      await db
+          .collection('payouts')
+          .doc(payout.id)
+          .set(payout.toFirestore(), firestore.SetOptions(merge: true));
       await addPayoutAuditEvent(payout.id, {
         'action': 'upsert',
         'by': currentUserId,
@@ -68,16 +72,25 @@ class AdminFirestoreService extends FirestoreServiceImpl {
     firestore.Query q = db.collection('payouts');
     if (franchiseId != null) q = q.where('franchiseId', isEqualTo: franchiseId);
     if (status != null) q = q.where('status', isEqualTo: status);
-    return q.orderBy('createdAt', descending: true).snapshots().map(
-        (s) => s.docs.map((d) => Payout.fromFirestore(d.data() as Map<String, dynamic>, d.id)).toList());
+    return q.orderBy('createdAt', descending: true).snapshots().map((s) => s
+        .docs
+        .map(
+            (d) => Payout.fromFirestore(d.data() as Map<String, dynamic>, d.id))
+        .toList());
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getPayoutsForFranchise({required String franchiseId, String? status, String? searchQuery}) async {
-    firestore.Query q = db.collection('payouts').where('franchiseId', isEqualTo: franchiseId);
+  Future<List<Map<String, dynamic>>> getPayoutsForFranchise(
+      {required String franchiseId,
+      String? status,
+      String? searchQuery}) async {
+    firestore.Query q =
+        db.collection('payouts').where('franchiseId', isEqualTo: franchiseId);
     if (status != null) q = q.where('status', isEqualTo: status);
     final snap = await q.get();
-    return snap.docs.map((d) => Map<String, dynamic>.from(d.data() as Map)..['id'] = d.id).toList();
+    return snap.docs
+        .map((d) => Map<String, dynamic>.from(d.data() as Map)..['id'] = d.id)
+        .toList();
   }
 
   @override
@@ -96,17 +109,22 @@ class AdminFirestoreService extends FirestoreServiceImpl {
     firestore.Query q = db.collection('payouts');
     if (franchiseId != null) q = q.where('franchiseId', isEqualTo: franchiseId);
     if (status != null) q = q.where('status', isEqualTo: status);
-    if (startDate != null) q = q.where('createdAt', isGreaterThanOrEqualTo: startDate);
+    if (startDate != null)
+      q = q.where('createdAt', isGreaterThanOrEqualTo: startDate);
     if (endDate != null) q = q.where('createdAt', isLessThanOrEqualTo: endDate);
     if (sortBy != null) q = q.orderBy(sortBy, descending: descending);
     if (limit != null) q = q.limit(limit);
     if (startAfter != null) q = q.startAfter([startAfter]);
     final snap = await q.get();
-    return snap.docs.map((d) => Payout.fromFirestore(d.data() as Map<String, dynamic>, d.id)).toList();
+    return snap.docs
+        .map(
+            (d) => Payout.fromFirestore(d.data() as Map<String, dynamic>, d.id))
+        .toList();
   }
 
   @override
-  Future<Map<String, dynamic>?> getPayoutDetailsWithAudit(String payoutId) async {
+  Future<Map<String, dynamic>?> getPayoutDetailsWithAudit(
+      String payoutId) async {
     final payout = await getPayoutById(payoutId);
     if (payout == null) return null;
     final audit = await getAuditLogsForPayout(payoutId);
@@ -117,7 +135,8 @@ class AdminFirestoreService extends FirestoreServiceImpl {
   }
 
   @override
-  Future<void> addPayoutAuditEvent(String payoutId, Map<String, dynamic> event) async {
+  Future<void> addPayoutAuditEvent(
+      String payoutId, Map<String, dynamic> event) async {
     await db.collection('payouts').doc(payoutId).collection('audit').add({
       ...event,
       'timestamp': firestore.FieldValue.serverTimestamp(),
@@ -125,22 +144,26 @@ class AdminFirestoreService extends FirestoreServiceImpl {
   }
 
   @override
-  Future<void> addAttachmentToPayout(String payoutId, Map<String, dynamic> attachment) async {
+  Future<void> addAttachmentToPayout(
+      String payoutId, Map<String, dynamic> attachment) async {
     await db.collection('payouts').doc(payoutId).update({
       'attachments': firestore.FieldValue.arrayUnion([attachment]),
     });
-    await addPayoutAuditEvent(payoutId, {'action': 'attachment_added', 'attachment': attachment});
+    await addPayoutAuditEvent(
+        payoutId, {'action': 'attachment_added', 'attachment': attachment});
   }
 
   @override
-  Future<void> removeAttachmentFromPayout(String payoutId, Map<String, dynamic> attachment) async {
+  Future<void> removeAttachmentFromPayout(
+      String payoutId, Map<String, dynamic> attachment) async {
     await db.collection('payouts').doc(payoutId).update({
       'attachments': firestore.FieldValue.arrayRemove([attachment]),
     });
   }
 
   @override
-  Future<void> bulkUpdatePayoutStatus(List<String> payoutIds, String status) async {
+  Future<void> bulkUpdatePayoutStatus(
+      List<String> payoutIds, String status) async {
     final batch = db.batch();
     for (final id in payoutIds) {
       batch.update(db.collection('payouts').doc(id), {'status': status});
@@ -149,7 +172,8 @@ class AdminFirestoreService extends FirestoreServiceImpl {
   }
 
   @override
-  Future<void> addPayoutComment(String payoutId, Map<String, dynamic> comment) async {
+  Future<void> addPayoutComment(
+      String payoutId, Map<String, dynamic> comment) async {
     await db.collection('payouts').doc(payoutId).collection('comments').add({
       ...comment,
       'createdAt': firestore.FieldValue.serverTimestamp(),
@@ -158,14 +182,25 @@ class AdminFirestoreService extends FirestoreServiceImpl {
 
   @override
   Future<List<Map<String, dynamic>>> getPayoutComments(String payoutId) async {
-    final snap = await db.collection('payouts').doc(payoutId).collection('comments').orderBy('createdAt').get();
+    final snap = await db
+        .collection('payouts')
+        .doc(payoutId)
+        .collection('comments')
+        .orderBy('createdAt')
+        .get();
     return snap.docs.map((d) => {...d.data(), 'id': d.id}).toList();
   }
 
   @override
-  Future<void> removePayoutComment(String payoutId, Map<String, dynamic> comment) async {
+  Future<void> removePayoutComment(
+      String payoutId, Map<String, dynamic> comment) async {
     // In production use comment id
-    await db.collection('payouts').doc(payoutId).collection('comments').doc(comment['id']).delete();
+    await db
+        .collection('payouts')
+        .doc(payoutId)
+        .collection('comments')
+        .doc(comment['id'])
+        .delete();
   }
 
   @override
@@ -183,7 +218,8 @@ class AdminFirestoreService extends FirestoreServiceImpl {
   }
 
   @override
-  Future<void> markPayoutFailed(String payoutId, {String? errorMsg, String? errorCode}) async {
+  Future<void> markPayoutFailed(String payoutId,
+      {String? errorMsg, String? errorCode}) async {
     await db.collection('payouts').doc(payoutId).update({
       'status': 'failed',
       'errorMessage': errorMsg,
@@ -198,12 +234,29 @@ class AdminFirestoreService extends FirestoreServiceImpl {
 
   @override
   Future<List<AuditLog>> getAuditLogsForPayout(String payoutId) async {
-    final snap = await db.collection('payouts').doc(payoutId).collection('audit').orderBy('timestamp', descending: true).get();
-    return snap.docs.map((d) => AuditLog.fromFirestore(d.data() as Map<String, dynamic>, d.id)).toList();
+    final snap = await db
+        .collection('payouts')
+        .doc(payoutId)
+        .collection('audit')
+        .orderBy('timestamp', descending: true)
+        .get();
+    return snap.docs
+        .map((d) =>
+            AuditLog.fromFirestore(d.data() as Map<String, dynamic>, d.id))
+        .toList();
   }
 
   @override
-  Future<String> exportPayoutsToCsv({String? franchiseId, String? status, String? locationId, DateTime? startDate, DateTime? endDate, String? search, String? sortBy, bool descending = true, int? limit}) async {
+  Future<String> exportPayoutsToCsv(
+      {String? franchiseId,
+      String? status,
+      String? locationId,
+      DateTime? startDate,
+      DateTime? endDate,
+      String? search,
+      String? sortBy,
+      bool descending = true,
+      int? limit}) async {
     // TODO: implement real CSV generation (use export_utils.dart)
     return 'payout_id,franchise,amount,status\n'; // placeholder
   }
@@ -231,64 +284,118 @@ class AdminFirestoreService extends FirestoreServiceImpl {
   }
 
   @override
-  Stream<List<PlatformInvoice>> platformInvoicesStream({required String franchiseeId, String? status}) {
-    firestore.Query q = db.collection('platform_invoices').where('franchiseeId', isEqualTo: franchiseeId);
+  Stream<List<PlatformInvoice>> platformInvoicesStream(
+      {required String franchiseeId, String? status}) {
+    firestore.Query q = db
+        .collection('platform_invoices')
+        .where('franchiseeId', isEqualTo: franchiseeId);
     if (status != null) q = q.where('status', isEqualTo: status);
-    return q.snapshots().map((s) => s.docs.map((d) => PlatformInvoice.fromMap(d.id, d.data() as Map<String, dynamic>)).toList());
+    return q.snapshots().map((s) => s.docs
+        .map((d) =>
+            PlatformInvoice.fromMap(d.id, d.data() as Map<String, dynamic>))
+        .toList());
   }
 
   @override
-  Future<List<PlatformInvoice>> getPlatformInvoicesForUser(String userId) async {
-    final snap = await db.collection('platform_invoices').where('userId', isEqualTo: userId).get();
-    return snap.docs.map((d) => PlatformInvoice.fromMap(d.id, d.data() as Map<String, dynamic>)).toList();
+  Future<List<PlatformInvoice>> getPlatformInvoicesForUser(
+      String userId) async {
+    final snap = await db
+        .collection('platform_invoices')
+        .where('userId', isEqualTo: userId)
+        .get();
+    return snap.docs
+        .map((d) =>
+            PlatformInvoice.fromMap(d.id, d.data() as Map<String, dynamic>))
+        .toList();
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getPlatformPaymentsForUser(String userId) async {
-    final snap = await db.collection('platform_payments').where('userId', isEqualTo: userId).get();
-    return snap.docs.map((d) => Map<String, dynamic>.from(d.data() as Map)..['id'] = d.id).toList();
+  Future<List<Map<String, dynamic>>> getPlatformPaymentsForUser(
+      String userId) async {
+    final snap = await db
+        .collection('platform_payments')
+        .where('userId', isEqualTo: userId)
+        .get();
+    return snap.docs
+        .map((d) => Map<String, dynamic>.from(d.data() as Map)..['id'] = d.id)
+        .toList();
   }
 
   @override
-  Future<void> savePlatformInvoiceFromWebhook(Map<String, dynamic> eventData, String invoiceId) async {
-    await db.collection('platform_invoices').doc(invoiceId).set(eventData, firestore.SetOptions(merge: true));
+  Future<void> savePlatformInvoiceFromWebhook(
+      Map<String, dynamic> eventData, String invoiceId) async {
+    await db
+        .collection('platform_invoices')
+        .doc(invoiceId)
+        .set(eventData, firestore.SetOptions(merge: true));
   }
 
   @override
-  Future<List<PlatformInvoice>> getPlatformInvoicesForFranchisee(String franchiseeId) async {
-    final snap = await db.collection('platform_invoices').where('franchiseeId', isEqualTo: franchiseeId).get();
-    return snap.docs.map((d) => PlatformInvoice.fromMap(d.id, d.data() as Map<String, dynamic>)).toList();
+  Future<List<PlatformInvoice>> getPlatformInvoicesForFranchisee(
+      String franchiseeId) async {
+    final snap = await db
+        .collection('platform_invoices')
+        .where('franchiseeId', isEqualTo: franchiseeId)
+        .get();
+    return snap.docs
+        .map((d) =>
+            PlatformInvoice.fromMap(d.id, d.data() as Map<String, dynamic>))
+        .toList();
   }
 
   @override
   Future<void> createPlatformInvoice(PlatformInvoice invoice) async {
-    await db.collection('platform_invoices').doc(invoice.id).set(invoice.toMap());
+    await db
+        .collection('platform_invoices')
+        .doc(invoice.id)
+        .set(invoice.toMap());
   }
 
   @override
-  Future<void> updatePlatformInvoiceStatus(String invoiceId, String newStatus) async {
-    await db.collection('platform_invoices').doc(invoiceId).update({'status': newStatus});
+  Future<void> updatePlatformInvoiceStatus(
+      String invoiceId, String newStatus) async {
+    await db
+        .collection('platform_invoices')
+        .doc(invoiceId)
+        .update({'status': newStatus});
   }
 
   @override
-  Future<List<PlatformPayment>> getPlatformPaymentsForFranchisee(String franchiseeId) async {
-    final snap = await db.collection('platform_payments').where('franchiseeId', isEqualTo: franchiseeId).get();
-    return snap.docs.map((d) => PlatformPayment.fromMap(d.id, d.data() as Map<String, dynamic>)).toList();
+  Future<List<PlatformPayment>> getPlatformPaymentsForFranchisee(
+      String franchiseeId) async {
+    final snap = await db
+        .collection('platform_payments')
+        .where('franchiseeId', isEqualTo: franchiseeId)
+        .get();
+    return snap.docs
+        .map((d) =>
+            PlatformPayment.fromMap(d.id, d.data() as Map<String, dynamic>))
+        .toList();
   }
 
   @override
   Future<void> createPlatformPayment(PlatformPayment payment) async {
-    await db.collection('platform_payments').doc(payment.id).set(payment.toMap());
+    await db
+        .collection('platform_payments')
+        .doc(payment.id)
+        .set(payment.toMap());
   }
 
   @override
   Future<void> markPlatformPaymentCompleted(String paymentId) async {
-    await db.collection('platform_payments').doc(paymentId).update({'status': 'completed'});
+    await db
+        .collection('platform_payments')
+        .doc(paymentId)
+        .update({'status': 'completed'});
   }
 
   @override
-  Future<void> updatePlatformPaymentStatus(String paymentId, String newStatus) async {
-    await db.collection('platform_payments').doc(paymentId).update({'status': newStatus});
+  Future<void> updatePlatformPaymentStatus(
+      String paymentId, String newStatus) async {
+    await db
+        .collection('platform_payments')
+        .doc(paymentId)
+        .update({'status': newStatus});
   }
 
   @override
@@ -311,7 +418,8 @@ class AdminFirestoreService extends FirestoreServiceImpl {
   }
 
   @override
-  Future<void> updateTaxReport(String reportId, Map<String, dynamic> updates) async {
+  Future<void> updateTaxReport(
+      String reportId, Map<String, dynamic> updates) async {
     await db.collection('tax_reports').doc(reportId).update(updates);
   }
 
@@ -323,13 +431,21 @@ class AdminFirestoreService extends FirestoreServiceImpl {
 
   @override
   Stream<List<Map<String, dynamic>>> taxReportsStream({
-    String? franchiseId, String? brandId, String? reportType, String? status,
-    String? taxAuthority, DateTime? filedAfter, DateTime? filedBefore, int limit = 100,
+    String? franchiseId,
+    String? brandId,
+    String? reportType,
+    String? status,
+    String? taxAuthority,
+    DateTime? filedAfter,
+    DateTime? filedBefore,
+    int limit = 100,
   }) {
     firestore.Query q = db.collection('tax_reports');
     if (franchiseId != null) q = q.where('franchiseId', isEqualTo: franchiseId);
     if (status != null) q = q.where('status', isEqualTo: status);
-    return q.limit(limit).snapshots().map((s) => s.docs.map((d) => Map<String, dynamic>.from(d.data() as Map)..['id'] = d.id).toList());
+    return q.limit(limit).snapshots().map((s) => s.docs
+        .map((d) => Map<String, dynamic>.from(d.data() as Map)..['id'] = d.id)
+        .toList());
   }
 
   @override
@@ -338,14 +454,16 @@ class AdminFirestoreService extends FirestoreServiceImpl {
   }
 
   @override
-  Future<void> addTaxReportReminder(String reportId, Map<String, dynamic> reminder) async {
+  Future<void> addTaxReportReminder(
+      String reportId, Map<String, dynamic> reminder) async {
     await db.collection('tax_reports').doc(reportId).update({
       'reminders': firestore.FieldValue.arrayUnion([reminder]),
     });
   }
 
   @override
-  Future<void> addTaxReportAttachment(String reportId, Map<String, dynamic> attachment) async {
+  Future<void> addTaxReportAttachment(
+      String reportId, Map<String, dynamic> attachment) async {
     await db.collection('tax_reports').doc(reportId).update({
       'attachments': firestore.FieldValue.arrayUnion([attachment]),
     });
@@ -359,7 +477,8 @@ class AdminFirestoreService extends FirestoreServiceImpl {
   }
 
   @override
-  Future<void> addSupportNote(String requestId, Map<String, dynamic> note) async {
+  Future<void> addSupportNote(
+      String requestId, Map<String, dynamic> note) async {
     await db.collection('support_requests').doc(requestId).update({
       'notes': firestore.FieldValue.arrayUnion([note]),
     });
@@ -422,7 +541,7 @@ class AdminFirestoreService extends FirestoreServiceImpl {
   @override
   Future<void> addCategory({
     required String franchiseId,
-    required model.Category category,
+    required shared.Category category,
   }) async {
     try {
       await db
@@ -443,7 +562,8 @@ class AdminFirestoreService extends FirestoreServiceImpl {
   }
 
   @override
-  Future<void> updateCategory(String franchiseId, model.Category category) async {
+  Future<void> updateCategory(
+      String franchiseId, shared.Category category) async {
     try {
       await db
           .collection('franchises')
@@ -486,14 +606,14 @@ class AdminFirestoreService extends FirestoreServiceImpl {
   }
 
   @override
-  Stream<List<model.Category>> getCategories(String franchiseId) {
+  Stream<List<shared.Category>> getCategories(String franchiseId) {
     return db
         .collection('franchises')
         .doc(franchiseId)
         .collection('categories')
         .snapshots()
         .map((snap) => snap.docs
-            .map((d) => model.Category.fromMap({...d.data(), 'id': d.id}))
+            .map((d) => shared.Category.fromMap({...d.data(), 'id': d.id}))
             .toList());
   }
 
@@ -570,7 +690,8 @@ class AdminFirestoreService extends FirestoreServiceImpl {
   }
 
   @override
-  Future<Map<String, dynamic>> getCustomizationTemplates(String franchiseId) async {
+  Future<Map<String, dynamic>> getCustomizationTemplates(
+      String franchiseId) async {
     try {
       final snap = await db
           .collection('franchises')
@@ -595,10 +716,8 @@ class AdminFirestoreService extends FirestoreServiceImpl {
 
   // === INVITATIONS (direct collection getter for legacy/compat code) ===
   @override
-  firestore.CollectionReference<Map<String, dynamic>> get invitationCollection =>
-      db.collection('franchisee_invitations');
+  firestore.CollectionReference<Map<String, dynamic>>
+      get invitationCollection => db.collection('franchisee_invitations');
 
   // The thin wrapper (see firestore_service_impl.dart in web-app) simply extends this class for full backward compatibility.
 }
-
-

@@ -1,26 +1,22 @@
-﻿// web_app/lib/core/providers/platform_financials_provider_impl.dart
+﻿// web-app/lib/core/providers/platform_financials_provider_impl.dart
 
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
 class PlatformFinancialsProviderImpl extends ChangeNotifier
-    implements PlatformFinancialsProvider {
-  PlatformRevenueOverview? _overview;
-  PlatformFinancialKpis? _kpis;
+    implements shared.PlatformFinancialsProvider {
+  shared.PlatformRevenueOverview? _overview;
+  shared.PlatformFinancialKpis? _kpis;
   bool _loading = false;
   String? _error;
   bool _disposed = false;
 
-  @override
-  PlatformRevenueOverview? get overview => _overview;
+  shared.PlatformRevenueOverview? get overview => _overview;
 
-  @override
-  PlatformFinancialKpis? get kpis => _kpis;
+  shared.PlatformFinancialKpis? get kpis => _kpis;
 
-  @override
   bool get loading => _loading;
 
-  @override
   String? get error => _error;
 
   @override
@@ -30,21 +26,23 @@ class PlatformFinancialsProviderImpl extends ChangeNotifier
     if (!_disposed) notifyListeners();
 
     try {
-      final firestore = FirestoreServiceImpl(); // Use concrete impl
+      // TODO: Properly inject FirestoreService in constructor (recommended for future)
+      final firestoreService = shared.FirestoreServiceImpl();
+
       final results = await Future.wait([
-        firestore.fetchPlatformRevenueOverview(),
-        firestore.fetchPlatformFinancialKpis(),
+        firestoreService.fetchPlatformRevenueOverview(),
+        firestoreService.fetchPlatformFinancialKpis(),
       ]);
 
-      _overview = results[0] as PlatformRevenueOverview;
-      _kpis = results[1] as PlatformFinancialKpis;
+      _overview = results[0] as shared.PlatformRevenueOverview?;
+      _kpis = results[1] as shared.PlatformFinancialKpis?;
     } catch (e, stack) {
       debugPrint('Firestore error in loadFinancials: $e');
       _error = e.toString();
       shared.ErrorLogger.log(
-        message: e.toString(),
+        message: 'Failed to load platform financials',
         stack: stack.toString(),
-        source: 'PlatformFinancialsProviderImpl',
+        source: 'PlatformFinancialsProviderImpl.loadFinancials',
         severity: 'error',
       );
     } finally {
@@ -71,4 +69,3 @@ class PlatformFinancialsProviderImpl extends ChangeNotifier
     super.dispose();
   }
 }
-

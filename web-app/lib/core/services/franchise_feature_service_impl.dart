@@ -1,10 +1,10 @@
-﻿// web_app/lib/core/services/franchise_feature_service_impl.dart
+﻿// web-app/lib/core/services/franchise_feature_service_impl.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
-class FranchiseFeatureServiceImpl implements FranchiseFeatureService {
+class FranchiseFeatureServiceImpl implements shared.FranchiseFeatureService {
   final FirebaseFirestore _firestore;
 
   FranchiseFeatureServiceImpl({FirebaseFirestore? firestore})
@@ -48,7 +48,7 @@ class FranchiseFeatureServiceImpl implements FranchiseFeatureService {
   }
 
   @override
-  Future<FeatureState?> getFeatureMetadata(String franchiseId) async {
+  Future<shared.FeatureState?> getFeatureMetadata(String franchiseId) async {
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       shared.ErrorLogger.log(
         message: 'getFeatureMetadata called with blank/unknown franchiseId',
@@ -70,7 +70,7 @@ class FranchiseFeatureServiceImpl implements FranchiseFeatureService {
       if (!snapshot.exists || snapshot.data() == null) return null;
 
       final rawData = snapshot.data()!;
-      final featureState = FeatureState.fromMap(rawData);
+      final featureState = shared.FeatureState.fromMap(rawData);
 
       debugPrint(
           '[FranchiseFeatureService] Loaded feature metadata for $franchiseId, '
@@ -91,7 +91,7 @@ class FranchiseFeatureServiceImpl implements FranchiseFeatureService {
   @override
   Future<bool> saveFeatureMetadata({
     required String franchiseId,
-    required FeatureState metadata,
+    required shared.FeatureState metadata,
   }) async {
     try {
       final granted = await getGrantedFeaturesFromSubscription(franchiseId);
@@ -218,7 +218,7 @@ class FranchiseFeatureServiceImpl implements FranchiseFeatureService {
   @override
   List<String> validateFeatureMetadata({
     required List<String> grantedFeatures,
-    required FeatureState metadata,
+    required shared.FeatureState metadata,
   }) {
     final errors = <String>[];
 
@@ -284,7 +284,7 @@ class FranchiseFeatureServiceImpl implements FranchiseFeatureService {
       );
 
       debugPrint(
-          '[FranchiseFeatureService] liveSnapshotEnabled updated â†’ $enabled for franchiseId=$franchiseId');
+          '[FranchiseFeatureService] liveSnapshotEnabled updated → $enabled for franchiseId=$franchiseId');
 
       shared.ErrorLogger.log(
         message: 'liveSnapshotEnabled flag updated',
@@ -310,4 +310,3 @@ class FranchiseFeatureServiceImpl implements FranchiseFeatureService {
     }
   }
 }
-

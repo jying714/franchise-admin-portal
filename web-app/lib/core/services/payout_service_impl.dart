@@ -1,9 +1,9 @@
 ﻿// web-app/lib/core/services/payout_service_impl.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 
-class PayoutServiceImpl implements PayoutService {
+class PayoutServiceImpl implements shared.PayoutService {
   final FirebaseFirestore _db;
 
   PayoutServiceImpl({FirebaseFirestore? firestore})
@@ -35,5 +35,3 @@ class PayoutServiceImpl implements PayoutService {
     }
   }
 }
-
-

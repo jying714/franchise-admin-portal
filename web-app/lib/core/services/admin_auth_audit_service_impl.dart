@@ -2,9 +2,9 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 
-class AdminAuthAuditServiceImpl implements AdminAuthAuditService {
+class AdminAuthAuditServiceImpl implements shared.AdminAuthAuditService {
   final FirebaseFirestore _db;
   final fb_auth.FirebaseAuth _auth;
 
@@ -44,4 +44,3 @@ class AdminAuthAuditServiceImpl implements AdminAuthAuditService {
         .map((snap) => snap.docs.map((doc) => doc.data()).toList());
   }
 }
-

@@ -1,7 +1,7 @@
 ﻿// web_app/lib/core/providers/onboarding_progress_provider_impl.dart
 
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
 class OnboardingProgressProviderImpl extends ChangeNotifier
     implements shared.OnboardingProgressProvider {
@@ -113,6 +113,3 @@ class OnboardingProgressProviderImpl extends ChangeNotifier
     }
   }
 }
-
-
-

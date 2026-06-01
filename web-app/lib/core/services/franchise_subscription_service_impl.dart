@@ -1,17 +1,17 @@
-﻿// web_app/lib/core/services/franchise_subscription_service_impl.dart
-// CONCRETE FIRESTORE IMPLEMENTATION
+﻿// web-app/lib/core/services/franchise_subscription_service_impl.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
-class FranchiseSubscriptionServiceImpl implements FranchiseSubscriptionService {
+class FranchiseSubscriptionServiceImpl
+    implements shared.FranchiseSubscriptionService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   @override
   Future<void> subscribeFranchiseToPlan({
     required String franchiseId,
-    required PlatformPlan plan,
+    required shared.PlatformPlan plan,
   }) async {
     final batch = _db.batch();
     final subscriptionsRef = _db.collection('franchise_subscriptions');
@@ -68,7 +68,6 @@ class FranchiseSubscriptionServiceImpl implements FranchiseSubscriptionService {
         'receiptUrl': null,
       };
 
-      debugPrint('[DEBUG] Writing subscription for franchiseId=$franchiseId');
       batch.set(newRef, newSubscriptionData);
 
       await updateFeatureMetadataForPlanChange(
@@ -77,7 +76,6 @@ class FranchiseSubscriptionServiceImpl implements FranchiseSubscriptionService {
       );
 
       await batch.commit();
-      debugPrint('[DEBUG] Subscription + metadata committed');
 
       shared.ErrorLogger.log(
         message: 'Franchise subscribed to platform plan',
@@ -112,12 +110,12 @@ class FranchiseSubscriptionServiceImpl implements FranchiseSubscriptionService {
       final docRef = _db.collection('franchise_subscriptions').doc(documentId);
       await docRef.set(data, SetOptions(merge: true));
 
-      final franchiseId = data['franchiseId'];
-      final planSnapshot = data['planSnapshot'];
-      final updatedFeatures = planSnapshot?['features'];
+      final franchiseId = data['franchiseId'] as String?;
+      final planSnapshot = data['planSnapshot'] as Map<String, dynamic>?;
+      final updatedFeatures = planSnapshot?['features'] as List<dynamic>?;
 
       if (franchiseId != null &&
-          updatedFeatures is List &&
+          updatedFeatures != null &&
           updatedFeatures.isNotEmpty) {
         await updateFeatureMetadataForPlanChange(
           franchiseId: franchiseId,
@@ -155,12 +153,12 @@ class FranchiseSubscriptionServiceImpl implements FranchiseSubscriptionService {
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
-    await docRef.set(newMetadata);
+    await docRef.set(newMetadata, SetOptions(merge: true));
   }
 
   @override
   Future<void> saveFranchiseSubscription(
-      FranchiseSubscription subscription) async {
+      shared.FranchiseSubscription subscription) async {
     try {
       final docRef = subscription.id.isNotEmpty
           ? _db.collection('franchise_subscriptions').doc(subscription.id)
@@ -182,10 +180,10 @@ class FranchiseSubscriptionServiceImpl implements FranchiseSubscriptionService {
   Future<void> deleteFranchiseSubscription(String id) async {
     try {
       await _db.collection('franchise_subscriptions').doc(id).delete();
-    } catch (e, st) {
+    } catch (e, stack) {
       shared.ErrorLogger.log(
         message: 'Failed to delete franchise_subscription $id',
-        stack: st.toString(),
+        stack: stack.toString(),
         source: 'FranchiseSubscriptionServiceImpl',
         severity: 'error',
       );
@@ -203,26 +201,28 @@ class FranchiseSubscriptionServiceImpl implements FranchiseSubscriptionService {
   }
 
   @override
-  Future<List<FranchiseSubscription>> getAllFranchiseSubscriptions() async {
+  Future<List<shared.FranchiseSubscription>>
+      getAllFranchiseSubscriptions() async {
     final snap = await _db.collection('franchise_subscriptions').get();
     return snap.docs
-        .map((doc) => FranchiseSubscription.fromMap(doc.id, doc.data()))
+        .map((doc) => shared.FranchiseSubscription.fromMap(doc.id, doc.data()))
         .toList();
   }
 
   @override
-  Stream<List<FranchiseSubscription>> watchAllFranchiseSubscriptions() {
+  Stream<List<shared.FranchiseSubscription>> watchAllFranchiseSubscriptions() {
     return _db
         .collection('franchise_subscriptions')
         .orderBy('subscribedAt', descending: true)
         .snapshots()
         .map((snap) => snap.docs
-            .map((doc) => FranchiseSubscription.fromMap(doc.id, doc.data()))
+            .map((doc) =>
+                shared.FranchiseSubscription.fromMap(doc.id, doc.data()))
             .toList());
   }
 
   @override
-  Future<FranchiseSubscription?> getCurrentSubscription(
+  Future<shared.FranchiseSubscription?> getCurrentSubscription(
       String franchiseId) async {
     final querySnapshot = await _db
         .collection('franchise_subscriptions')
@@ -234,11 +234,11 @@ class FranchiseSubscriptionServiceImpl implements FranchiseSubscriptionService {
 
     if (querySnapshot.docs.isEmpty) return null;
     final doc = querySnapshot.docs.first;
-    return FranchiseSubscription.fromMap(doc.id, doc.data());
+    return shared.FranchiseSubscription.fromMap(doc.id, doc.data());
   }
 
   @override
-  Future<FranchiseSubscription?> getActiveSubscriptionForFranchise(
+  Future<shared.FranchiseSubscription?> getActiveSubscriptionForFranchise(
       String franchiseId) async {
     final snap = await _db
         .collection('franchise_subscriptions')
@@ -248,12 +248,13 @@ class FranchiseSubscriptionServiceImpl implements FranchiseSubscriptionService {
         .get();
 
     if (snap.docs.isEmpty) return null;
-    return FranchiseSubscription.fromMap(
+    return shared.FranchiseSubscription.fromMap(
         snap.docs.first.id, snap.docs.first.data());
   }
 
   @override
-  Stream<FranchiseSubscription?> watchCurrentSubscription(String franchiseId) {
+  Stream<shared.FranchiseSubscription?> watchCurrentSubscription(
+      String franchiseId) {
     return _db
         .collection('franchise_subscriptions')
         .where('franchiseId', isEqualTo: franchiseId)
@@ -264,31 +265,30 @@ class FranchiseSubscriptionServiceImpl implements FranchiseSubscriptionService {
         .map((snapshot) {
       if (snapshot.docs.isEmpty) return null;
       final doc = snapshot.docs.first;
-      return FranchiseSubscription.fromMap(doc.id, doc.data());
+      return shared.FranchiseSubscription.fromMap(doc.id, doc.data());
     });
   }
 
   @override
-  Future<PlatformPlan?> getPlatformPlanById(String planId) async {
+  Future<shared.PlatformPlan?> getPlatformPlanById(String planId) async {
     final doc = await _db.collection('platform_plans').doc(planId).get();
     if (!doc.exists) return null;
-    return PlatformPlan.fromFirestore(doc);
+    return shared.PlatformPlan.fromFirestore(doc);
   }
 
   @override
-  Future<List<PlatformPlan>> getAllPlatformPlans() async {
+  Future<List<shared.PlatformPlan>> getAllPlatformPlans() async {
     final snap = await _db.collection('platform_plans').get();
     return snap.docs
-        .map((doc) => PlatformPlan.fromMap(doc.id, doc.data()))
+        .map((doc) => shared.PlatformPlan.fromMap(doc.id, doc.data()))
         .toList();
   }
 
   @override
-  Future<List<PlatformPlan>> getPlatformPlans() async {
+  Future<List<shared.PlatformPlan>> getPlatformPlans() async {
     final snap = await _db.collection('platform_plans').get();
     return snap.docs
-        .map((doc) => PlatformPlan.fromMap(doc.id, doc.data()))
+        .map((doc) => shared.PlatformPlan.fromMap(doc.id, doc.data()))
         .toList();
   }
 }
-

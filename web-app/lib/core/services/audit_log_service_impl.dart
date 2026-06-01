@@ -1,10 +1,10 @@
 ﻿// web-app/lib/core/services/audit_log_service_impl.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 
-class AuditLogServiceImpl implements AuditLogService {
-  CollectionReference auditLogsRef() =>
+class AuditLogServiceImpl implements shared.AuditLogService {
+  CollectionReference<Map<String, dynamic>> auditLogsRef() =>
       FirebaseFirestore.instance.collection('audit_logs');
 
   @override
@@ -17,7 +17,7 @@ class AuditLogServiceImpl implements AuditLogService {
     String? targetId,
     dynamic details,
   }) async {
-    final log = AuditLog(
+    final log = shared.AuditLog(
       id: '',
       userId: userId,
       userEmail: userEmail ?? '',
@@ -50,12 +50,12 @@ class AuditLogServiceImpl implements AuditLogService {
   }
 
   @override
-  Stream<List<AuditLog>> getLogs({
+  Stream<List<shared.AuditLog>> getLogs({
     required String franchiseId,
     String? targetType,
     String? userId,
   }) {
-    Query query = auditLogsRef()
+    Query<Map<String, dynamic>> query = auditLogsRef()
         .where('franchiseId', isEqualTo: franchiseId)
         .orderBy('timestamp', descending: true);
     if (targetType != null && targetType.isNotEmpty) {
@@ -65,18 +65,17 @@ class AuditLogServiceImpl implements AuditLogService {
       query = query.where('userId', isEqualTo: userId);
     }
     return query.snapshots().map((snap) => snap.docs
-        .map((doc) =>
-            AuditLog.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+        .map((doc) => shared.AuditLog.fromFirestore(doc.data(), doc.id))
         .toList());
   }
 
   @override
-  Future<List<AuditLog>> getLogsOnce({
+  Future<List<shared.AuditLog>> getLogsOnce({
     required String franchiseId,
     String? targetType,
     String? userId,
   }) async {
-    Query query = auditLogsRef()
+    Query<Map<String, dynamic>> query = auditLogsRef()
         .where('franchiseId', isEqualTo: franchiseId)
         .orderBy('timestamp', descending: true);
     if (targetType != null && targetType.isNotEmpty) {
@@ -87,8 +86,7 @@ class AuditLogServiceImpl implements AuditLogService {
     }
     final snap = await query.get();
     return snap.docs
-        .map((doc) =>
-            AuditLog.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+        .map((doc) => shared.AuditLog.fromFirestore(doc.data(), doc.id))
         .toList();
   }
 
@@ -125,7 +123,8 @@ class AuditLogServiceImpl implements AuditLogService {
   }
 
   @override
-  Future<List<AuditLog>> getOnboardingAuditLogs(String franchiseId) async {
+  Future<List<shared.AuditLog>> getOnboardingAuditLogs(
+      String franchiseId) async {
     try {
       final query = auditLogsRef()
           .where('franchiseId', isEqualTo: franchiseId)
@@ -134,8 +133,7 @@ class AuditLogServiceImpl implements AuditLogService {
 
       final snapshot = await query.get();
       return snapshot.docs
-          .map((doc) => AuditLog.fromFirestore(
-              doc.data() as Map<String, dynamic>, doc.id))
+          .map((doc) => shared.AuditLog.fromFirestore(doc.data(), doc.id))
           .toList();
     } catch (e, stack) {
       shared.ErrorLogger.log(
@@ -148,5 +146,3 @@ class AuditLogServiceImpl implements AuditLogService {
     }
   }
 }
-
-

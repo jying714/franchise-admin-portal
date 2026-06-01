@@ -4,27 +4,28 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:logging/logging.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 
-class AnalyticsServiceImpl implements AnalyticsService {
+class AnalyticsServiceImpl implements shared.AnalyticsService {
   final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
   final Logger _logger = Logger('AnalyticsServiceImpl');
 
   // === Dashboard Metrics ===
   @override
-  Stream<List<AnalyticsSummary>> getSummaryMetrics(String franchiseId) {
+  Stream<List<shared.AnalyticsSummary>> getSummaryMetrics(String franchiseId) {
     return FirebaseFirestore.instance
         .collection('franchises')
         .doc(franchiseId)
         .collection('analytics_summaries')
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => AnalyticsSummary.fromFirestore(doc.data(), doc.id))
+            .map((doc) =>
+                shared.AnalyticsSummary.fromFirestore(doc.data(), doc.id))
             .toList());
   }
 
   @override
-  Future<List<AnalyticsSummary>> getAnalyticsSummaries(
+  Future<List<shared.AnalyticsSummary>> getAnalyticsSummaries(
       String franchiseId) async {
     final snapshot = await FirebaseFirestore.instance
         .collection('franchises')
@@ -32,7 +33,7 @@ class AnalyticsServiceImpl implements AnalyticsService {
         .collection('analytics_summaries')
         .get();
     return snapshot.docs
-        .map((doc) => AnalyticsSummary.fromFirestore(doc.data(), doc.id))
+        .map((doc) => shared.AnalyticsSummary.fromFirestore(doc.data(), doc.id))
         .toList();
   }
 
@@ -44,7 +45,7 @@ class AnalyticsServiceImpl implements AnalyticsService {
         'period,totalRevenue,totalOrders,retention,mostPopularItem,averageOrderValue');
     for (final summary in summaries) {
       buffer.writeln(
-          '${summary.period},${summary.totalRevenue},${summary.totalOrders},${summary.retention},${summary.mostPopularItem ?? ""},${summary.averageOrderValue}');
+          '${summary.period},${summary.totalRevenue},${summary.totalOrders},${summary.retention},${summary.mostPopularItem},${summary.averageOrderValue}');
     }
     return buffer.toString();
   }
@@ -202,5 +203,34 @@ class AnalyticsServiceImpl implements AnalyticsService {
       rethrow;
     }
   }
-}
 
+  @override
+  Future<void> logCategoryTap({
+    required String categoryId,
+    required String categoryName,
+    required String franchiseId,
+  }) async {
+    await logEvent('category_tap', {
+      'category_id': categoryId,
+      'category_name': categoryName,
+      'franchise_id': franchiseId,
+    });
+  }
+
+  @override
+  Future<void> logCategoryViewed(String categoryId) async {
+    await logEvent('category_viewed', {
+      'category_id': categoryId,
+    });
+  }
+
+  @override
+  Future<void> logMenuItemAddedToCart(
+      String menuItemId, String menuItemName, int quantity) async {
+    await logEvent('menu_item_added_to_cart', {
+      'menu_item_id': menuItemId,
+      'menu_item_name': menuItemName,
+      'quantity': quantity,
+    });
+  }
+}

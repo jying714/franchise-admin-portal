@@ -1,52 +1,51 @@
-﻿// web_app/lib/core/providers/onboarding_review_provider_impl.dart
-
-import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+﻿// web-app/lib/core/providers/onboarding_review_provider_impl.dart
 import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:collection/collection.dart';
 
 class OnboardingReviewProviderImpl extends ChangeNotifier
     implements shared.OnboardingReviewProvider {
-  final FranchiseFeatureProvider _franchiseFeatureProvider;
-  final IngredientTypeProvider _ingredientTypeProvider;
-  final IngredientMetadataProvider _ingredientMetadataProvider;
+  final shared.FranchiseFeatureProvider _franchiseFeatureProvider;
+  final shared.IngredientTypeProvider _ingredientTypeProvider;
+  final shared.IngredientMetadataProvider _ingredientMetadataProvider;
   final shared.CategoryProvider _categoryProvider;
   final shared.MenuItemProvider _menuItemProvider;
   final shared.FirestoreService _firestoreService;
-  final AuditLogService _auditLogService;
+  final shared.AuditLogService _auditLogService;
 
-  Map<String, List<OnboardingValidationIssue>> _issuesBySection = {};
+  Map<String, List<shared.OnboardingValidationIssue>> _issuesBySection = {};
   DateTime? _lastValidatedAt;
   Map<String, dynamic> _lastExportSnapshot = {};
 
   OnboardingReviewProviderImpl({
-    required FranchiseFeatureProvider franchiseFeatureProvider,
-    required IngredientTypeProvider ingredientTypeProvider,
-    required IngredientMetadataProvider ingredientMetadataProvider,
-    required shared.CategoryProvider shared.categoryProvider,
-    required shared.MenuItemProvider shared.menuItemProvider,
-    required shared.FirestoreService shared.firestoreService,
-    required AuditLogService auditLogService,
+    required shared.FranchiseFeatureProvider franchiseFeatureProvider,
+    required shared.IngredientTypeProvider ingredientTypeProvider,
+    required shared.IngredientMetadataProvider ingredientMetadataProvider,
+    required shared.CategoryProvider categoryProvider,
+    required shared.MenuItemProvider menuItemProvider,
+    required shared.FirestoreService firestoreService,
+    required shared.AuditLogService auditLogService,
   })  : _franchiseFeatureProvider = franchiseFeatureProvider,
         _ingredientTypeProvider = ingredientTypeProvider,
         _ingredientMetadataProvider = ingredientMetadataProvider,
-        _categoryProvider = shared.categoryProvider,
-        _menuItemProvider = shared.menuItemProvider,
-        _firestoreService = shared.firestoreService,
+        _categoryProvider = categoryProvider,
+        _menuItemProvider = menuItemProvider,
+        _firestoreService = firestoreService,
         _auditLogService = auditLogService;
 
   @override
-  Map<String, List<OnboardingValidationIssue>> get allIssuesBySection =>
+  Map<String, List<shared.OnboardingValidationIssue>> get allIssuesBySection =>
       _issuesBySection;
 
   @override
-  List<OnboardingValidationIssue> get allIssuesFlat =>
+  List<shared.OnboardingValidationIssue> get allIssuesFlat =>
       _issuesBySection.values.expand((x) => x).toList();
 
   @override
   bool get isPublishable => allIssuesFlat
-      .where(
-          (i) => i.isBlocking && i.severity == OnboardingIssueSeverity.critical)
+      .where((i) =>
+          i.isBlocking && i.severity == shared.OnboardingIssueSeverity.critical)
       .isEmpty;
 
   @override
@@ -119,7 +118,7 @@ class OnboardingReviewProviderImpl extends ChangeNotifier
       );
       _issuesBySection['Menu Items'] = menuItemIssues;
 
-      // 6. Cross-checks
+      // 6. Cross-checks (Menu Items ↔ Ingredients)
       for (final menuItem in _menuItemProvider.menuItems) {
         for (final included in menuItem.includedIngredients ?? []) {
           final ingredientId = included['ingredientId'] ?? included['id'];
@@ -127,11 +126,12 @@ class OnboardingReviewProviderImpl extends ChangeNotifier
               .firstWhereOrNull((e) => e.id == ingredientId);
 
           if (ingredient == null) {
-            _issuesBySection['Menu Items']!.add(OnboardingValidationIssue(
+            _issuesBySection['Menu Items']!
+                .add(shared.OnboardingValidationIssue(
               section: 'Menu Items',
               itemId: menuItem.id,
               itemDisplayName: menuItem.name,
-              severity: OnboardingIssueSeverity.critical,
+              severity: shared.OnboardingIssueSeverity.critical,
               code: 'REFERENCES_MISSING_INGREDIENT',
               message:
                   "Menu item '${menuItem.name}' includes missing ingredient (ID: '$ingredientId').",
@@ -147,14 +147,15 @@ class OnboardingReviewProviderImpl extends ChangeNotifier
               contextData: {'missingIngredientId': ingredientId},
             ));
           } else if (ingredient.typeId == null ||
-              !ingredient.typeId!.isNotEmpty ||
+              ingredient.typeId!.isEmpty ||
               !_ingredientTypeProvider.ingredientTypes
                   .any((t) => t.id == ingredient.typeId)) {
-            _issuesBySection['Menu Items']!.add(OnboardingValidationIssue(
+            _issuesBySection['Menu Items']!
+                .add(shared.OnboardingValidationIssue(
               section: 'Menu Items',
               itemId: menuItem.id,
               itemDisplayName: menuItem.name,
-              severity: OnboardingIssueSeverity.critical,
+              severity: shared.OnboardingIssueSeverity.critical,
               code: 'INGREDIENT_MISSING_TYPE',
               message:
                   "Included ingredient '${ingredient.name}' in '${menuItem.name}' has no valid type.",
@@ -175,14 +176,15 @@ class OnboardingReviewProviderImpl extends ChangeNotifier
           }
         }
 
+        // Category check
         if (menuItem.categoryId.isEmpty ||
             !_categoryProvider.categories
                 .any((c) => c.id == menuItem.categoryId)) {
-          _issuesBySection['Menu Items']!.add(OnboardingValidationIssue(
+          _issuesBySection['Menu Items']!.add(shared.OnboardingValidationIssue(
             section: 'Menu Items',
             itemId: menuItem.id,
             itemDisplayName: menuItem.name,
-            severity: OnboardingIssueSeverity.critical,
+            severity: shared.OnboardingIssueSeverity.critical,
             code: 'MISSING_CATEGORY_FOR_MENU_ITEM',
             message:
                 "Menu item '${menuItem.name}' references a missing category.",
@@ -197,12 +199,13 @@ class OnboardingReviewProviderImpl extends ChangeNotifier
           ));
         }
 
+        // Name check
         if (menuItem.name.trim().isEmpty) {
-          _issuesBySection['Menu Items']!.add(OnboardingValidationIssue(
+          _issuesBySection['Menu Items']!.add(shared.OnboardingValidationIssue(
             section: 'Menu Items',
             itemId: menuItem.id,
             itemDisplayName: menuItem.name,
-            severity: OnboardingIssueSeverity.critical,
+            severity: shared.OnboardingIssueSeverity.critical,
             code: 'MISSING_MENU_ITEM_NAME',
             message: "Menu item is missing a name.",
             affectedFields: ['name'],
@@ -216,13 +219,14 @@ class OnboardingReviewProviderImpl extends ChangeNotifier
           ));
         }
 
+        // Price check
         if ((menuItem.price == 0.0 || menuItem.price == null) &&
             (menuItem.sizePrices == null || menuItem.sizePrices!.isEmpty)) {
-          _issuesBySection['Menu Items']!.add(OnboardingValidationIssue(
+          _issuesBySection['Menu Items']!.add(shared.OnboardingValidationIssue(
             section: 'Menu Items',
             itemId: menuItem.id,
             itemDisplayName: menuItem.name,
-            severity: OnboardingIssueSeverity.critical,
+            severity: shared.OnboardingIssueSeverity.critical,
             code: 'MISSING_MENU_ITEM_PRICE',
             message: "Menu item '${menuItem.name}' has no price set.",
             affectedFields: ['price', 'sizePrices'],
@@ -236,12 +240,13 @@ class OnboardingReviewProviderImpl extends ChangeNotifier
           ));
         }
 
+        // Image warning
         if (menuItem.imageUrl.isEmpty) {
-          _issuesBySection['Menu Items']!.add(OnboardingValidationIssue(
+          _issuesBySection['Menu Items']!.add(shared.OnboardingValidationIssue(
             section: 'Menu Items',
             itemId: menuItem.id,
             itemDisplayName: menuItem.name,
-            severity: OnboardingIssueSeverity.warning,
+            severity: shared.OnboardingIssueSeverity.warning,
             code: 'MISSING_MENU_ITEM_IMAGE',
             message: "Menu item '${menuItem.name}' does not have an image.",
             affectedFields: ['imageUrl'],
@@ -283,7 +288,7 @@ class OnboardingReviewProviderImpl extends ChangeNotifier
   Map<String, dynamic> _buildExportSnapshot() {
     return {
       'timestamp': DateTime.now().toIso8601String(),
-      'featureState': _franchiseFeatureProvider.featureMetadata?.toMap(),
+      'featureState': _franchiseFeatureProvider.featureMetadata.toMap(),
       'ingredientTypes': _ingredientTypeProvider.ingredientTypes
           .map((t) => t.toMap())
           .toList(),
@@ -319,22 +324,24 @@ class OnboardingReviewProviderImpl extends ChangeNotifier
   String exportDataAsJson() => jsonEncode(_lastExportSnapshot);
 
   @override
-  Future<void> publishOnboarding(
-      {required String franchiseId, required String userId}) async {
+  Future<void> publishOnboarding({
+    required String franchiseId,
+    required String userId,
+  }) async {
     await validateAll();
     if (!isPublishable) {
       throw Exception("Cannot publish onboarding: critical issues remain.");
     }
+
     try {
       await _firestoreService.setOnboardingComplete(franchiseId: franchiseId);
-      await _auditLogService.addLog(
+
+      await _auditLogService.logOnboardingPublishAudit(
         franchiseId: franchiseId,
         userId: userId,
-        action: 'onboarding_publish',
-        targetType: 'onboarding',
-        targetId: franchiseId,
-        details: _lastExportSnapshot,
+        exportSnapshot: _lastExportSnapshot,
       );
+
       notifyListeners();
     } catch (e, stack) {
       shared.ErrorLogger.log(
@@ -352,13 +359,8 @@ class OnboardingReviewProviderImpl extends ChangeNotifier
   Future<void> refresh() => validateAll();
 
   @override
-  List<OnboardingValidationIssue> get issues {
-    return _issuesBySection.values.expand((list) => list).toList();
-  }
+  List<shared.OnboardingValidationIssue> get issues => allIssuesFlat;
 
   @override
-  List<OnboardingValidationIssue> get validationResults => issues;
+  List<shared.OnboardingValidationIssue> get validationResults => issues;
 }
-
-
-

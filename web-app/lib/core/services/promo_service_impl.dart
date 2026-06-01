@@ -2,9 +2,9 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logging/logging.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 
-class PromoServiceImpl implements PromoService {
+class PromoServiceImpl implements shared.PromoService {
   final FirebaseFirestore _db;
   final Logger _logger = Logger('PromoServiceImpl');
 
@@ -31,8 +31,8 @@ class PromoServiceImpl implements PromoService {
         return false;
       }
 
-      Promo promo =
-          Promo.fromFirestore(promoDoc.data() as Map<String, dynamic>, promoId);
+      shared.Promo promo = shared.Promo.fromFirestore(
+          promoDoc.data() as Map<String, dynamic>, promoId);
 
       if (!promo.active || promo.endDate.isBefore(DateTime.now())) {
         _logger.warning('Promo $promoId is inactive or expired');
@@ -98,7 +98,7 @@ class PromoServiceImpl implements PromoService {
   }
 
   @override
-  Stream<List<Promo>> getAvailablePromos(String franchiseId) {
+  Stream<List<shared.Promo>> getAvailablePromos(String franchiseId) {
     return _db
         .collection('franchises')
         .doc(franchiseId)
@@ -107,8 +107,7 @@ class PromoServiceImpl implements PromoService {
         .where('endDate', isGreaterThan: Timestamp.now())
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => Promo.fromFirestore(doc.data(), doc.id))
+            .map((doc) => shared.Promo.fromFirestore(doc.data(), doc.id))
             .toList());
   }
 }
-

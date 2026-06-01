@@ -1,9 +1,10 @@
 ﻿// web-app/lib/core/services/franchise_onboarding_service_impl.dart
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 
-class FranchiseOnboardingServiceImpl implements FranchiseOnboardingService {
+class FranchiseOnboardingServiceImpl
+    implements shared.FranchiseOnboardingService {
   final FirebaseFirestore _db;
 
   FranchiseOnboardingServiceImpl({FirebaseFirestore? firestore})
@@ -60,5 +61,3 @@ class FranchiseOnboardingServiceImpl implements FranchiseOnboardingService {
     }
   }
 }
-
-
