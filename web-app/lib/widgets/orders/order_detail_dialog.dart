@@ -1,10 +1,10 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 5 final cleanup
-    as order_model;
+import 'package:shared_core/shared_core.dart'
+    as shared; // Phase 5 final cleanup
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class OrderDetailDialog extends StatelessWidget {
-  final order_model.Order order;
+  final shared.Order order;
 
   const OrderDetailDialog({super.key, required this.order});
 
@@ -92,5 +92,3 @@ class OrderDetailDialog extends StatelessWidget {
     );
   }
 }
-
-

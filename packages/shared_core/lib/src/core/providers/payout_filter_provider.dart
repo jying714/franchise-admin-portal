@@ -1,9 +1,10 @@
 // packages/shared_core/lib/src/core/providers/payout_filter_provider.dart
 // PURE DART INTERFACE ONLY
 
+import 'package:flutter/foundation.dart';
 import '../models/payout_filter.dart';
 
-abstract class PayoutFilterProvider {
+abstract class PayoutFilterProvider extends ChangeNotifier {
   PayoutFilter get filter;
   String get status;
   String get searchQuery;

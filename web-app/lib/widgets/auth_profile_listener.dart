@@ -1,8 +1,9 @@
-﻿import 'package:flutter/widgets.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl.dart' show UserProfileNotifier;
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl.dart'
+    show UserProfileNotifier;
 
 class AuthProfileListener extends StatefulWidget {
   final Widget child;
@@ -24,148 +25,120 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final firebaseUser = Provider.of<fb_auth.User?>(context);
-    final shared.firestoreService =
-        Provider.of<shared.FirestoreService>(context, listen: false);
-    final notifier = Provider.of<UserProfileNotifier>(context, listen: false);
-    final shared.FranchiseProvider =
-        Provider.of<shared.FranchiseProvider>(context, listen: false);
 
-    // Attach listener only if not already attached
+    final firebaseUser = Provider.of<fb_auth.User?>(context);
+    final firestoreService = Provider.of<shared.FirestoreService>(
+      context,
+      listen: false,
+    );
+    final notifier = Provider.of<UserProfileNotifier>(context, listen: false);
+    final franchiseProvider = Provider.of<shared.FranchiseProvider>(
+      context,
+      listen: false,
+    );
+
     if (!_subscribed) {
       _subscribed = true;
 
-      // âœ… Listen for user changes and rerun routing when ready
       notifier.addListener(() {
         final user = notifier.user;
         final loading = notifier.loading;
-        if (user != null) {
-          // P2.5: AdminUserProvider injection (provider definition debt; stubbed for login stability)
-          // Provider.of<AdminUserProvider>(context, listen: false).user = user;
-        }
 
         if (!_navigated && !loading && firebaseUser != null && user != null) {
-          _maybeLogProfileError(notifier, firebaseUser, shared.firestoreService);
-          _handleRouting(notifier, firebaseUser, shared.FranchiseProvider);
+          _maybeLogProfileError(notifier, firebaseUser, firestoreService);
+          _handleRouting(notifier, firebaseUser, franchiseProvider);
         }
       });
     }
 
-    // Franchise-agnostic: only pass uid!
-    notifier.listenToUser(shared.firestoreService, firebaseUser?.uid);
+    notifier.listenToUser(firebaseUser?.uid);
   }
 
   @override
   void didUpdateWidget(AuthProfileListener oldWidget) {
     super.didUpdateWidget(oldWidget);
     final firebaseUser = Provider.of<fb_auth.User?>(context, listen: false);
-    final shared.firestoreService =
-        Provider.of<shared.FirestoreService>(context, listen: false);
+    final firestoreService = Provider.of<shared.FirestoreService>(
+      context,
+      listen: false,
+    );
     final notifier = Provider.of<UserProfileNotifier>(context, listen: false);
 
-    _maybeLogProfileError(notifier, firebaseUser, shared.firestoreService);
+    _maybeLogProfileError(notifier, firebaseUser, firestoreService);
   }
 
   @override
   Widget build(BuildContext context) {
     final firebaseUser = Provider.of<fb_auth.User?>(context);
-    final shared.firestoreService =
-        Provider.of<shared.FirestoreService>(context, listen: false);
+    final firestoreService = Provider.of<shared.FirestoreService>(
+      context,
+      listen: false,
+    );
     final notifier = Provider.of<UserProfileNotifier>(context, listen: false);
 
-    _maybeLogProfileError(notifier, firebaseUser, shared.firestoreService);
+    _maybeLogProfileError(notifier, firebaseUser, firestoreService);
     return widget.child;
   }
 
   void _handleRouting(
     UserProfileNotifier notifier,
     fb_auth.User? firebaseUser,
-    shared.FranchiseProvider shared.FranchiseProvider,
+    shared.FranchiseProvider franchiseProvider,
   ) {
     final user = notifier.user;
-    if (_navigated || firebaseUser == null || user == null || notifier.loading)
+    if (_navigated ||
+        firebaseUser == null ||
+        user == null ||
+        notifier.loading) {
       return;
+    }
 
-    // If user account is not active
     if (user.status.toLowerCase() != 'active') {
       _navigated = true;
-      print(
-          '[DEBUG-NAV] Attempting to navigate to /developer/select-franchise from <filename>:<linenumber>');
       Navigator.of(context).pushReplacementNamed('/unauthorized');
       return;
     }
 
-    // HQ Owner/Manager: go to HQ dashboard
     if (user.isHqOwner || user.isHqManager) {
       _navigated = true;
-      print(
-          '[DEBUG-NAV] Attempting to navigate to /developer/select-franchise from <filename>:<linenumber>');
       Navigator.of(context).pushReplacementNamed('/hq-owner/dashboard');
       return;
     }
 
-    // Developer: go to dev dashboard or franchise selector
     if (user.isDeveloper) {
-      final selected = shared.FranchiseProvider.isFranchiseSelected;
+      final selected = franchiseProvider.isFranchiseSelected;
       _navigated = true;
-      print(
-          '[DEBUG-NAV] AUTH PROFILE LISTENER Routing to dev dashboard or franchise selector screen');
-      print(
-          '[DEBUG-NAV] Attempting to navigate to /developer/select-franchise from <filename>:<linenumber>');
-
       Navigator.of(context).pushReplacementNamed(
         selected ? '/developer/dashboard' : '/developer/select-franchise',
       );
       return;
     }
 
-    // Owner/Manager: only set franchise and route if defaultFranchise is available
     if (user.isOwner || user.isManager) {
       final lockedId = user.defaultFranchise;
       if (lockedId == null || lockedId.isEmpty) {
-        // Optionally, route to an error page or franchise selector if needed
         _navigated = true;
-        print(
-            '[DEBUG-NAV] Attempting to navigate to /developer/select-franchise from <filename>:<linenumber>');
-
         Navigator.of(context).pushReplacementNamed('/unauthorized');
         return;
       }
-      if (shared.FranchiseProvider.franchiseId != lockedId) {
-        shared.FranchiseProvider.setFranchiseId(lockedId);
+      if (franchiseProvider.franchiseId != lockedId) {
+        franchiseProvider.setFranchiseId(lockedId);
       }
       _navigated = true;
-      print(
-          '[DEBUG-NAV] Attempting to navigate to /developer/select-franchise from <filename>:<linenumber>');
-
       Navigator.of(context).pushReplacementNamed('/admin/dashboard');
       return;
     }
-
-    // All other users: implement routing as needed
-    // e.g. if customer, show a customer homepage, etc.
-    // For now, do nothing; you may want to add additional cases
   }
 
   void _maybeLogProfileError(
     UserProfileNotifier notifier,
     fb_auth.User? user,
-    shared.FirestoreService shared.firestoreService,
+    shared.FirestoreService firestoreService,
   ) {
     if (notifier.lastError != null && notifier.lastError != _lastLoggedError) {
       _lastLoggedError = notifier.lastError;
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        try {
-          // P2.5: shared.ErrorLogger from shared; log via debug or re-add import if needed
-          debugPrint('[AuthProfileListener] UserProfileNotifier error: ${notifier.lastError}');
-        } catch (e, stack) {
-          // Logging error; just print for dev, skip for prod
-        }
-      });
+      debugPrint(
+          '[AuthProfileListener] UserProfileNotifier error: ${notifier.lastError}');
     }
   }
 }
-
-
-
-

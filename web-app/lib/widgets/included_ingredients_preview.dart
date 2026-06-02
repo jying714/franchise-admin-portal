@@ -32,7 +32,7 @@ class IncludedIngredientsPreview extends StatelessWidget {
       );
     }
     return Padding(
-      padding: const EdgeInsets.only(bottom: DesignTokens.gridSpacing),
+      padding: EdgeInsets.only(bottom: DesignTokens.gridSpacing),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -65,5 +65,3 @@ class IncludedIngredientsPreview extends StatelessWidget {
     );
   }
 }
-
-

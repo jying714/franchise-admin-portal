@@ -3,16 +3,15 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-    as admin_user;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class FeatureToggleList extends StatelessWidget {
   final String franchiseId;
-  final admin_user.User user;
+  final shared.User user;
   final Future<void> Function(
     String,
     bool,
-    admin_user.User,
+    shared.User,
     Map<String, dynamic>,
   ) onUpdateFeature;
 
@@ -138,7 +137,7 @@ class FeatureToggleTile extends StatefulWidget {
   final String? description;
   final bool value;
   final Map<String, dynamic> meta;
-  final admin_user.User user;
+  final shared.User user;
   final Future<void> Function(bool) onUpdate;
 
   const FeatureToggleTile({
@@ -230,7 +229,3 @@ class _FeatureToggleTileState extends State<FeatureToggleTile> {
     );
   }
 }
-
-
-
-

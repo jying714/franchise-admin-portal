@@ -1,10 +1,10 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 
-/// Widget to add/view notes/comments on a payout.
 class PayoutNoteEditor extends StatefulWidget {
   final String payoutId;
   final String? userId;
@@ -39,15 +39,19 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
 
   Future<void> _fetchNotes() async {
     try {
-      final notes = await Provider.of<shared.FirestoreService>(context, listen: false)
-          .getPayoutComments(widget.payoutId);
-      setState(() => _notes = notes);
+      final firestoreService = Provider.of<shared.FirestoreService>(
+        context,
+        listen: false,
+      );
+      final notes = await firestoreService.getPayoutComments(widget.payoutId);
+      if (mounted) {
+        setState(() => _notes = notes);
+      }
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message: 'Failed to fetch payout comments: $e',
         stack: stack.toString(),
         source: 'PayoutNoteEditor',
-        source: 'payout_note_editor.dart' /* was screen, Phase 5 */,
         severity: 'error',
       );
     }
@@ -55,74 +59,88 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
 
   Future<void> _addNote() async {
     final loc = AppLocalizations.of(context);
-    if (loc == null) {
-      print(
-          '[PayoutNoteEditor] loc is null! Localization not available for this context.');
-      return;
-    }
+    if (loc == null) return;
+
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+
     setState(() {
       _submitting = true;
       _error = null;
     });
+
     try {
       final note = {
         'message': text,
         'createdAt': DateTime.now().toUtc().toIso8601String(),
         'userId': widget.userId,
-        // You could add username, avatar, etc.
       };
-      await Provider.of<shared.FirestoreService>(context, listen: false)
-          .addPayoutComment(widget.payoutId, note);
+
+      final firestoreService = Provider.of<shared.FirestoreService>(
+        context,
+        listen: false,
+      );
+      await firestoreService.addPayoutComment(widget.payoutId, note);
+
       _controller.clear();
       _focusNode.unfocus();
-      setState(() {
-        _notes.insert(0, note);
-        _submitting = false;
-      });
+
+      if (mounted) {
+        setState(() {
+          _notes.insert(0, note);
+          _submitting = false;
+        });
+      }
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message: 'Failed to add payout note: $e',
         stack: stack.toString(),
         source: 'PayoutNoteEditor',
-        source: 'payout_note_editor.dart' /* was screen, Phase 5 */,
         severity: 'error',
       );
-      setState(() {
-        _submitting = false;
-        _error = e.toString();
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.failedToSave ?? 'Failed to save note.')),
-      );
+
+      if (mounted) {
+        setState(() {
+          _submitting = false;
+          _error = e.toString();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(loc.failedToSave ?? 'Failed to save note.')),
+        );
+      }
     }
   }
 
   Future<void> _removeNote(Map<String, dynamic> note) async {
     final loc = AppLocalizations.of(context);
-    if (loc == null) {
-      print(
-          '[PayoutNoteEditor] loc is null! Localization not available for this context.');
-      return;
-    }
+    if (loc == null) return;
+
     try {
-      await Provider.of<shared.FirestoreService>(context, listen: false)
-          .removePayoutComment(widget.payoutId, note);
-      setState(() {
-        _notes.remove(note);
-      });
+      final firestoreService = Provider.of<shared.FirestoreService>(
+        context,
+        listen: false,
+      );
+      await firestoreService.removePayoutComment(widget.payoutId, note);
+
+      if (mounted) {
+        setState(() {
+          _notes.remove(note);
+        });
+      }
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message: 'Failed to remove payout note: $e',
         stack: stack.toString(),
         source: 'PayoutNoteEditor',
-        source: 'payout_note_editor.dart' /* was screen, Phase 5 */,
         severity: 'error',
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.failedToDelete ?? 'Failed to delete note.')),
-      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(loc.failedToDelete ?? 'Failed to delete note.')),
+        );
+      }
     }
   }
 
@@ -130,19 +148,18 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[PayoutNoteEditor] loc is null! Localization not available for this context.');
       return const SizedBox.shrink();
     }
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     final canAdd = !widget.developerOnly ||
-        (widget.developerOnly &&
-            Theme.of(context).brightness == Brightness.dark);
+        (widget.developerOnly && theme.brightness == Brightness.dark);
 
     return Card(
-      color: colorScheme.surfaceVariant,
+      color: colorScheme
+          .surfaceContainerHighest, // Fixed deprecated surfaceVariant
       margin: const EdgeInsets.symmetric(vertical: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
@@ -221,7 +238,6 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
                                   onPressed: () => _removeNote(note),
                                 )
                               : null,
-                          // Optionally, support long-press to remove:
                           onLongPress: canAdd
                               ? () async {
                                   final shouldDelete = await showDialog<bool>(
@@ -277,9 +293,3 @@ class _PayoutNoteEditorState extends State<PayoutNoteEditor> {
     }
   }
 }
-
-
-
-
-
-

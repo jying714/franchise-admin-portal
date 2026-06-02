@@ -1,28 +1,21 @@
-﻿// lib/widgets/menu_item_card.dart
-
-﻿// P1 Batch 3: Duplicated widget (exact filename match with mobile_app).
-// Mobile canonical in mobile_app/lib/widgets/.
-// Safe for deletion in next batch if admin previews can reuse via shared_ui package or path dependency.
-// Changes in Batch 3 were mobile-only + these markers.
-
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/widgets/customization/customization_modal.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 typedef AddToCartCallback = void Function(
-  MenuItem menuItem,
+  shared.MenuItem menuItem,
   Map<String, dynamic> customizations,
   int quantity,
   double totalPrice,
 );
 
 class MenuItemCard extends StatefulWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
   final AddToCartCallback? onAddToCart;
   final bool showDescription;
   final bool expanded;
@@ -55,8 +48,6 @@ class _MenuItemCardState extends State<MenuItemCard> {
   }
 
   Widget _favoriteHeart(bool isFavorited, bool enabled, AppLocalizations loc) {
-    final shared.firestoreService =
-        Provider.of<shared.FirestoreService>(context, listen: false);
     return IconButton(
       icon: Icon(
         isFavorited ? Icons.favorite : Icons.favorite_border,
@@ -70,14 +61,18 @@ class _MenuItemCardState extends State<MenuItemCard> {
           : loc.signInToFavoriteTooltip,
       onPressed: enabled
           ? () async {
+              final firestoreService = Provider.of<shared.FirestoreService>(
+                context,
+                listen: false,
+              );
               if (isFavorited) {
-                await shared.firestoreService.removeFavoriteMenuItem(
+                await firestoreService.removeFavoriteMenuItem(
                   _userId!,
                   widget.franchiseId,
                   widget.menuItem.id,
                 );
               } else {
-                await shared.firestoreService.addFavoriteMenuItem(
+                await firestoreService.addFavoriteMenuItem(
                   _userId!,
                   widget.franchiseId,
                   widget.menuItem.id,
@@ -90,9 +85,11 @@ class _MenuItemCardState extends State<MenuItemCard> {
   }
 
   Future<void> _handleCustomizeAndAdd(AppLocalizations loc) async {
-    // Get ingredientMetadata from Provider (required for CustomizationModal)
     final ingredientMetadata =
-        Provider.of<Map<String, IngredientMetadata>>(context, listen: false);
+        Provider.of<Map<String, shared.IngredientMetadata>>(
+      context,
+      listen: false,
+    );
 
     await showDialog(
       context: context,
@@ -101,8 +98,12 @@ class _MenuItemCardState extends State<MenuItemCard> {
         ingredientMetadata: ingredientMetadata,
         initialQuantity: _quantity,
         onConfirm: (customizations, quantity, totalPrice) {
-          widget.onAddToCart
-              ?.call(widget.menuItem, customizations, quantity, totalPrice);
+          widget.onAddToCart?.call(
+            widget.menuItem,
+            customizations,
+            quantity,
+            totalPrice,
+          );
           setState(() => _quantity = 1);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(loc.addedToCartMessage)),
@@ -114,7 +115,11 @@ class _MenuItemCardState extends State<MenuItemCard> {
 
   void _handleAddToCart(AppLocalizations loc) {
     widget.onAddToCart?.call(
-        widget.menuItem, {}, _quantity, widget.menuItem.price * _quantity);
+      widget.menuItem,
+      {},
+      _quantity,
+      widget.menuItem.price * _quantity,
+    );
     setState(() => _quantity = 1);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(loc.addedToCartMessage)),
@@ -130,19 +135,13 @@ class _MenuItemCardState extends State<MenuItemCard> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
-      );
+      return const SizedBox.shrink();
     }
-    final shared.firestoreService =
-        Provider.of<shared.FirestoreService>(context, listen: false);
+
     final isWide = MediaQuery.of(context).size.width > 600;
 
-    // *** PULL INGREDIENT METADATA HERE ***
     final ingredientMetadata =
-        Provider.of<Map<String, IngredientMetadata>>(context);
+        Provider.of<Map<String, shared.IngredientMetadata>>(context);
 
     return Card(
       margin: widget.margin ??
@@ -150,7 +149,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
-        side: const BorderSide(color: DesignTokens.cardBorderColor, width: 1),
+        side: BorderSide(color: DesignTokens.cardBorderColor, width: 1),
       ),
       child: Padding(
         padding: isWide
@@ -159,7 +158,6 @@ class _MenuItemCardState extends State<MenuItemCard> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- ITEM IMAGE + QUANTITY ---
             Column(
               children: [
                 ClipRRect(
@@ -186,7 +184,6 @@ class _MenuItemCardState extends State<MenuItemCard> {
                         ),
                 ),
                 const SizedBox(height: 8),
-                // Quantity Selector under Image
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -199,7 +196,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                     ),
                     Text(
                       '$_quantity',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: DesignTokens.bodyFontSize,
                       ),
@@ -214,15 +211,13 @@ class _MenuItemCardState extends State<MenuItemCard> {
               ],
             ),
             const SizedBox(width: 14),
-            // --- DETAILS + ACTIONS ---
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // NAME
                   Text(
                     widget.menuItem.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: DesignTokens.titleFontSize,
                       fontWeight: FontWeight.bold,
                       color: DesignTokens.textColor,
@@ -230,23 +225,21 @@ class _MenuItemCardState extends State<MenuItemCard> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  // PRICE
                   Text(
                     '\$${widget.menuItem.price.toStringAsFixed(2)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: DesignTokens.bodyFontSize,
                       fontWeight: FontWeight.w600,
                       color: DesignTokens.textColor,
                     ),
                   ),
-                  // DESCRIPTION
                   if (widget.showDescription &&
                       widget.menuItem.description.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 4.0),
                       child: Text(
                         widget.menuItem.description,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: DesignTokens.captionFontSize,
                           color: DesignTokens.secondaryTextColor,
                         ),
@@ -255,11 +248,9 @@ class _MenuItemCardState extends State<MenuItemCard> {
                       ),
                     ),
                   const SizedBox(height: 10),
-                  // --- BUTTONS & HEART ROW ---
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Customize button
                       if (_hasCustomizations)
                         Expanded(
                           child: SizedBox(
@@ -294,7 +285,6 @@ class _MenuItemCardState extends State<MenuItemCard> {
                           ),
                         ),
                       if (_hasCustomizations) const SizedBox(width: 8),
-                      // Plain add to cart if NO customizations
                       if (!_hasCustomizations)
                         Expanded(
                           child: SizedBox(
@@ -329,6 +319,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                           ),
                         ),
                       if (_hasCustomizations) ...[
+                        const SizedBox(width: 8),
                         Expanded(
                           child: SizedBox(
                             height: 36,
@@ -363,59 +354,30 @@ class _MenuItemCardState extends State<MenuItemCard> {
                         ),
                       ],
                       const SizedBox(width: 8),
-                      // Heart/favorite
                       _userId == null
                           ? _favoriteHeart(false, false, loc)
                           : StreamBuilder<List<String>>(
-                              stream:
-                                  shared.firestoreService.favoritesMenuItemIdsStream(
-                                      _userId!, widget.franchiseId),
+                              stream: Provider.of<shared.FirestoreService>(
+                                context,
+                                listen: false,
+                              ).favoritesMenuItemIdsStream(
+                                _userId!,
+                                widget.franchiseId,
+                              ),
                               builder: (context, idSnapshot) {
-                                if (!idSnapshot.hasData)
+                                if (!idSnapshot.hasData) {
                                   return _favoriteHeart(false, false, loc);
+                                }
                                 final ids = idSnapshot.data!;
-                                return StreamBuilder<List<MenuItem>>(
-                                  stream: shared.firestoreService.getMenuItemsByIds(
-                                      widget.franchiseId, ids),
-                                  builder: (context, itemSnapshot) {
-                                    if (itemSnapshot.connectionState ==
-                                        ConnectionState.waiting) {
-                                      return _favoriteHeart(false, false, loc);
-                                    }
-                                    if (itemSnapshot.hasError) {
-                                      return _favoriteHeart(false, true, loc);
-                                    }
-                                    final isFavorited = itemSnapshot.data?.any(
-                                          (mi) => mi.id == widget.menuItem.id,
-                                        ) ??
-                                        false;
-                                    return _favoriteHeart(
-                                        isFavorited, true, loc);
-                                  },
+                                return _favoriteHeart(
+                                  ids.contains(widget.menuItem.id),
+                                  true,
+                                  loc,
                                 );
                               },
-                            )
+                            ),
                     ],
                   ),
-                  // -- EXAMPLE: Show allergen tags from metadata (optional) --
-                  if (_hasCustomizations &&
-                      widget.menuItem.includedIngredients != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Wrap(
-                        spacing: 6,
-                        children: widget.menuItem.includedIngredients!
-                            .map((ingredientId) {
-                          final meta = ingredientMetadata[ingredientId];
-                          if (meta == null || meta.allergens.isEmpty)
-                            return const SizedBox();
-                          return Chip(
-                            label: Text(meta.allergens.join(', ')),
-                            backgroundColor: Colors.orange.shade100,
-                          );
-                        }).toList(),
-                      ),
-                    ),
                 ],
               ),
             ),
@@ -425,7 +387,3 @@ class _MenuItemCardState extends State<MenuItemCard> {
     );
   }
 }
-
-
-
-

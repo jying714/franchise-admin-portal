@@ -1,29 +1,33 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
 
-/// Dashboard card: At-a-glance payout summary + live payout-related alerts.
 class PayoutStatusCard extends StatelessWidget {
-  const PayoutStatusCard({Key? key}) : super(key: key);
+  const PayoutStatusCard({super.key});
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[PayoutStatusCard] loc is null! Localization not available for this context.');
       return const SizedBox.shrink();
     }
+
     final theme = Theme.of(context);
-    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
+    final franchiseProvider = context.watch<shared.FranchiseProvider>();
+    final franchiseId = franchiseProvider.franchiseId;
     final colorScheme = theme.colorScheme;
 
-    // ðŸ§‘â€ðŸ’» Developer-only access guard (example: show only for owners/managers/dev)
-    final user = Provider.of<UserProfileNotifier>(context, listen: false).user;
+    // Role guard using shared provider
+    final userProfile = Provider.of<shared.UserProfileProvider>(
+      context,
+      listen: false,
+    );
+    final user = userProfile.user;
+
     if (user == null ||
         !user.roles.any(
             (role) => ['hq_owner', 'hq_manager', 'developer'].contains(role))) {
@@ -48,6 +52,7 @@ class _PayoutCardContent extends StatefulWidget {
   final ThemeData theme;
 
   const _PayoutCardContent({
+    super.key,
     required this.franchiseId,
     required this.loc,
     required this.theme,
@@ -63,26 +68,39 @@ class _PayoutCardContentState extends State<_PayoutCardContent> {
   @override
   void initState() {
     super.initState();
-    _future = Provider.of<shared.FirestoreService>(context, listen: false)
-        .getPayoutStatsForFranchise(widget.franchiseId);
+    _future = _loadPayoutStats();
+  }
+
+  Future<Map<String, int>> _loadPayoutStats() async {
+    final firestoreService = Provider.of<shared.FirestoreService>(
+      context,
+      listen: false,
+    );
+    return firestoreService.getPayoutStatsForFranchise(widget.franchiseId);
   }
 
   void _retry() {
     setState(() {
-      _future = Provider.of<shared.FirestoreService>(context, listen: false)
-          .getPayoutStatsForFranchise(widget.franchiseId);
+      _future = _loadPayoutStats();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final alertsRepo = AlertsRepository();
-    return StreamBuilder<List<AlertModel>>(
+    final alertsRepo = AlertsRepository(
+      firestoreService: Provider.of<shared.FirestoreService>(
+        context,
+        listen: false,
+      ),
+    );
+
+    return StreamBuilder<List<shared.AlertModel>>(
       stream: alertsRepo.watchActiveAlerts(franchiseId: widget.franchiseId).map(
-          (alerts) => alerts
-              .where((a) =>
-                  a.type == 'payout_failed' || a.type == 'payout_pending')
-              .toList()),
+            (alerts) => alerts
+                .where((a) =>
+                    a.type == 'payout_failed' || a.type == 'payout_pending')
+                .toList(),
+          ),
       builder: (context, alertSnap) {
         return FutureBuilder<Map<String, int>>(
           future: _future,
@@ -95,12 +113,15 @@ class _PayoutCardContentState extends State<_PayoutCardContent> {
                 message:
                     'PayoutStatusCard: failed to load payout stats\n${payoutSnap.error}',
                 stack: payoutSnap.stackTrace?.toString(),
+                source: 'PayoutStatusCard',
+                severity: 'error',
               );
               return _ErrorWidget(
                 message: widget.loc.failedToLoadSummary,
                 onRetry: _retry,
               );
             }
+
             final payoutStats = payoutSnap.data ?? {};
             final pending = payoutStats['pending'] ?? 0;
             final sent = payoutStats['sent'] ?? 0;
@@ -115,9 +136,12 @@ class _PayoutCardContentState extends State<_PayoutCardContent> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (hasAlert) ...[
+                  if (hasAlert && topAlert != null) ...[
                     _AlertBanner(
-                        alert: topAlert!, theme: widget.theme, loc: widget.loc),
+                      alert: topAlert,
+                      theme: widget.theme,
+                      loc: widget.loc,
+                    ),
                     const SizedBox(height: 12),
                   ],
                   Row(
@@ -161,7 +185,8 @@ class _PayoutCardContentState extends State<_PayoutCardContent> {
 
 class _StatusDot extends StatelessWidget {
   final Color color;
-  const _StatusDot({required this.color, Key? key}) : super(key: key);
+
+  const _StatusDot({super.key, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -170,11 +195,16 @@ class _StatusDot extends StatelessWidget {
 }
 
 class _AlertBanner extends StatelessWidget {
-  final AlertModel alert;
+  final shared.AlertModel alert;
   final ThemeData theme;
   final AppLocalizations loc;
-  const _AlertBanner(
-      {required this.alert, required this.theme, required this.loc});
+
+  const _AlertBanner({
+    super.key,
+    required this.alert,
+    required this.theme,
+    required this.loc,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -185,40 +215,48 @@ class _AlertBanner extends StatelessWidget {
             : theme.colorScheme.primary);
 
     return Card(
-        color: levelColor.withOpacity(0.12),
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
-        child: ListTile(
-          leading: Icon(Icons.warning_rounded, color: levelColor),
-          title: Text(
-            alert.title.isNotEmpty
-                ? alert.title
-                : (alert.body.isNotEmpty
-                    ? alert.body
-                    : loc.payoutAlert ?? "Payout alert"),
-          ),
-          subtitle: alert.body.isNotEmpty
-              ? Text(alert.body)
-              : (alert.createdAt != null
-                  ? Text(MaterialLocalizations.of(context)
-                      .formatFullDate(alert.createdAt))
-                  : null),
-          trailing: IconButton(
-            icon: Icon(Icons.close, color: theme.disabledColor),
-            onPressed: () {
-              // Placeholder for dismiss
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(loc.featureComingSoon('Payout History'))));
-            },
-          ),
-        ));
+      color: levelColor.withValues(alpha: 0.12), // Fixed deprecated withOpacity
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
+      child: ListTile(
+        leading: Icon(Icons.warning_rounded, color: levelColor),
+        title: Text(
+          alert.title.isNotEmpty
+              ? alert.title
+              : (alert.body.isNotEmpty
+                  ? alert.body
+                  : loc.payoutAlert ?? "Payout alert"),
+        ),
+        subtitle: alert.body.isNotEmpty
+            ? Text(alert.body)
+            : (alert.createdAt != null
+                ? Text(MaterialLocalizations.of(context)
+                    .formatFullDate(alert.createdAt!))
+                : null),
+        trailing: IconButton(
+          icon: Icon(Icons.close, color: theme.disabledColor),
+          onPressed: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(loc.featureComingSoon('Payout History')),
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 }
 
 class _ErrorWidget extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
-  const _ErrorWidget({required this.message, required this.onRetry});
+
+  const _ErrorWidget({
+    super.key,
+    required this.message,
+    required this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -247,8 +285,3 @@ class _ErrorWidget extends StatelessWidget {
     );
   }
 }
-
-
-
-
-

@@ -80,7 +80,7 @@ class EmptyStateWidget extends StatelessWidget {
                 title,
                 style: TextStyle(
                   fontSize: DesignTokens.titleFontSize,
-                  fontWeight: DesignTokens.titleFontWeight,
+                  fontWeight: FontWeight.w500,
                   color: colorScheme.primary,
                 ),
                 textAlign: TextAlign.center,
@@ -121,5 +121,3 @@ class EmptyStateWidget extends StatelessWidget {
     );
   }
 }
-
-

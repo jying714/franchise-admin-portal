@@ -13,7 +13,8 @@ class UserAvatarMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<AdminUserProvider>(context, listen: false);
+    final userProvider =
+        Provider.of<shared.AdminUserProvider>(context, listen: false);
     final user = userProvider.user;
     final loc = AppLocalizations.of(context);
     if (loc == null) {
@@ -41,7 +42,7 @@ class UserAvatarMenu extends StatelessWidget {
           Navigator.of(context).pushNamed('/profile');
         } else if (action == _AvatarMenuAction.signout) {
           await fb_auth.FirebaseAuth.instance.signOut();
-          Provider.of<AdminUserProvider>(context, listen: false).clear();
+          Provider.of<shared.AdminUserProvider>(context, listen: false).clear();
           Navigator.of(context)
               .pushNamedAndRemoveUntil('/sign-in', (_) => false);
         }
@@ -75,6 +76,3 @@ class UserAvatarMenu extends StatelessWidget {
 }
 
 enum _AvatarMenuAction { profile, signout }
-
-
-

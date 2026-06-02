@@ -30,6 +30,9 @@ class DesignTokens {
     return _hexToColor(hex);
   }
 
+  static Color get warningColor =>
+      _hexToColor(shared.DesignTokens.warningColorHex);
+
   static Color get accentColor =>
       _hexToColor(shared.DesignTokens.accentColorHex);
   static Color get errorColor => _hexToColor('#E53935');
@@ -190,6 +193,16 @@ class DesignTokens {
   static const Color infoChipTextColor = Color(0xFF1976D2);
   static const Color neutralChipColor = Color(0xFFF4F4F4);
   static const Color neutralChipTextColor = Color(0xFF606060);
+
+  // === Additional tokens needed for cart_icon_badge.dart and header widgets ===
+
+  static double get iconSizeMd => shared.DesignTokens.iconSizeMd;
+  static double get captionFontSize => shared.DesignTokens.captionFontSize;
+
+  static String get mediumFontWeight => shared.DesignTokens.mediumFontWeight;
+
+  static double get iconSizeSm => shared.DesignTokens.iconSizeSm;
+  static double get iconSizeLg => shared.DesignTokens.iconSizeLg;
 
   // BoxShadow
   static const List<BoxShadow> softShadow = [

@@ -3,32 +3,31 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:intl/intl.dart';
-import 'package:flutter/foundation.dart';
 
 class BillingSummaryCard extends StatefulWidget {
-  const BillingSummaryCard({Key? key}) : super(key: key);
+  const BillingSummaryCard({super.key});
 
   @override
   State<BillingSummaryCard> createState() => _BillingSummaryCardState();
 }
 
 class _BillingSummaryCardState extends State<BillingSummaryCard> {
-  late Future<BillingSummaryData> _summaryFuture;
+  late Future<shared.BillingSummaryData> _summaryFuture;
 
   @override
   void initState() {
     super.initState();
-    _summaryFuture = _fetchSummary(context);
+    _summaryFuture = _fetchSummary();
   }
 
-  Future<shared.BillingSummaryData> _fetchSummary(BuildContext context) async {
+  Future<shared.BillingSummaryData> _fetchSummary() async {
     try {
-      final franchiseId = Provider.of<shared.FranchiseProvider>(
+      final franchiseProvider = Provider.of<shared.FranchiseProvider>(
         context,
         listen: false,
-      ).franchiseId;
+      );
 
       final invoiceService = Provider.of<shared.InvoiceService>(
         context,
@@ -36,20 +35,24 @@ class _BillingSummaryCardState extends State<BillingSummaryCard> {
       );
 
       final invoices = await invoiceService.getInvoices(
-        franchiseId: franchiseId,
-        statuses: ['unpaid', 'partial'],
+        franchiseId: franchiseProvider.franchiseId,
+        statuses: ['unpaid', 'partial', 'open'],
       );
 
       double totalOutstanding = 0.0;
       int overdueCount = 0;
       double paidLast30Days = 0.0;
 
+      final now = DateTime.now();
+      final thirtyDaysAgo = now.subtract(const Duration(days: 30));
+
       for (final invoice in invoices) {
-        if (invoice.status.toLowerCase() != 'paid') {
-          totalOutstanding += invoice.amount;
+        if (!invoice.isPaid) {
+          totalOutstanding += invoice.total;
           if (invoice.isOverdue) overdueCount++;
-        } else {
-          paidLast30Days += invoice.amount;
+        } else if (invoice.paidAt != null &&
+            invoice.paidAt!.isAfter(thirtyDaysAgo)) {
+          paidLast30Days += invoice.total;
         }
       }
 
@@ -61,7 +64,9 @@ class _BillingSummaryCardState extends State<BillingSummaryCard> {
     } catch (error, stackTrace) {
       shared.ErrorLogger.log(
         message: 'BillingSummaryCard: failed to load summary\n$error',
-        stack: stackTrace?.toString(),
+        stack: stackTrace.toString(),
+        source: 'BillingSummaryCard',
+        severity: 'error',
       );
       rethrow;
     }
@@ -76,25 +81,28 @@ class _BillingSummaryCardState extends State<BillingSummaryCard> {
       title: localize.billingSummary,
       icon: Icons.receipt_long,
       builder: (context) {
-        return FutureBuilder<BillingSummaryData>(
+        return FutureBuilder<shared.BillingSummaryData>(
           future: _summaryFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 40),
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
                 child: Center(child: CircularProgressIndicator()),
               );
             }
             if (snapshot.hasError) {
               return _ErrorWidget(
                 errorMessage: localize.failedToLoadSummary,
-                onRetry: () =>
-                    setState(() => _summaryFuture = _fetchSummary(context)),
+                onRetry: () => setState(() => _summaryFuture = _fetchSummary()),
               );
             }
+
             final data = snapshot.data!;
             return _BillingSummaryContent(
-                data: data, localize: localize, theme: theme);
+              data: data,
+              localize: localize,
+              theme: theme,
+            );
           },
         );
       },
@@ -103,7 +111,7 @@ class _BillingSummaryCardState extends State<BillingSummaryCard> {
 }
 
 class _BillingSummaryContent extends StatelessWidget {
-  final BillingSummaryData data;
+  final shared.BillingSummaryData data;
   final AppLocalizations localize;
   final ThemeData theme;
 
@@ -116,7 +124,9 @@ class _BillingSummaryContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final currencyFormat = NumberFormat.simpleCurrency(
-        locale: Localizations.localeOf(context).toString());
+      locale: Localizations.localeOf(context).toString(),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -154,11 +164,6 @@ class _BillingSummaryContent extends StatelessWidget {
               ),
               onPressed: data.hasOutstanding ? () => _onPayNow(context) : null,
             ),
-            // OutlinedButton.icon(
-            //   icon: const Icon(Icons.download_rounded),
-            //   label: Text(localize.downloadSummary),
-            //   onPressed: () => _onDownloadSummary(context),
-            // ),
             TextButton(
               child: Text(localize.viewAllInvoices),
               onPressed: () => Navigator.of(context).pushNamed('/hq/invoices'),
@@ -170,36 +175,10 @@ class _BillingSummaryContent extends StatelessWidget {
   }
 
   void _onPayNow(BuildContext context) {
-    Navigator.of(context)
-        .pushNamed('/hq/invoices', arguments: {'payNow': true});
-  }
-
-  void _onDownloadSummary(BuildContext context) async {
-    try {
-      final franchiseId =
-          Provider.of<shared.FranchiseProvider>(context, listen: false)
-              .franchiseId;
-      final result = await InvoiceService.downloadSummary(
-          franchiseId: franchiseId, context: context);
-      String msg;
-      if (kIsWeb) {
-        // Use a web download handler here if you want (e.g. anchor element).
-        msg = AppLocalizations.of(context)!.downloadStarted;
-      } else {
-        msg = 'Saved to: $result';
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
-    } catch (e, s) {
-      await shared.ErrorLogger.log(
-        message: 'BillingSummaryCard: failed to download summary\n$e',
-        stack: s.toString(),
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.downloadFailed)),
-      );
-    }
+    Navigator.of(context).pushNamed(
+      '/hq/invoices',
+      arguments: {'payNow': true},
+    );
   }
 }
 
@@ -207,6 +186,7 @@ class _SummaryRow extends StatelessWidget {
   final String label;
   final String value;
   final Color? valueColor;
+
   const _SummaryRow({
     required this.label,
     required this.value,
@@ -235,6 +215,7 @@ class _SummaryRow extends StatelessWidget {
 class _ErrorWidget extends StatelessWidget {
   final String errorMessage;
   final VoidCallback onRetry;
+
   const _ErrorWidget({
     required this.errorMessage,
     required this.onRetry,
@@ -266,19 +247,4 @@ class _ErrorWidget extends StatelessWidget {
       ),
     );
   }
-}
-
-// --- DATA MODEL ---
-
-class BillingSummaryData {
-  final double totalOutstanding;
-  final int overdueCount;
-  final double paidLast30Days;
-  final bool hasOutstanding;
-
-  BillingSummaryData({
-    required this.totalOutstanding,
-    required this.overdueCount,
-    required this.paidLast30Days,
-  }) : hasOutstanding = totalOutstanding > 0;
 }

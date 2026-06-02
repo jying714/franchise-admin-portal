@@ -1,17 +1,19 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
-
-// Add the two new widgets here:
 import 'package:franchise_admin_portal/widgets/financials/payout_note_editor.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/attachment_uploader.dart';
 
 class PayoutDetailDialog extends StatefulWidget {
   final String payoutId;
-  const PayoutDetailDialog({Key? key, required this.payoutId})
-      : super(key: key);
+
+  const PayoutDetailDialog({
+    super.key,
+    required this.payoutId,
+  });
 
   @override
   State<PayoutDetailDialog> createState() => _PayoutDetailDialogState();
@@ -23,18 +25,35 @@ class _PayoutDetailDialogState extends State<PayoutDetailDialog> {
   @override
   void initState() {
     super.initState();
-    _futurePayoutDetails =
-        shared.FirestoreService().getPayoutDetailsWithAudit(widget.payoutId);
+    _futurePayoutDetails = _loadPayoutDetails();
+  }
+
+  Future<Map<String, dynamic>?> _loadPayoutDetails() async {
+    try {
+      final firestoreService = Provider.of<shared.FirestoreService>(
+        context,
+        listen: false,
+      );
+      return await firestoreService.getPayoutDetailsWithAudit(widget.payoutId);
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to load payout details: $e',
+        stack: stack.toString(),
+        source: 'PayoutDetailDialog',
+        severity: 'error',
+        contextData: {'payoutId': widget.payoutId},
+      );
+      rethrow;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[PayoutDetailDialog] loc is null! Localization not available for this context.');
       return const SizedBox.shrink();
     }
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -47,51 +66,43 @@ class _PayoutDetailDialogState extends State<PayoutDetailDialog> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
-                  child: Padding(
-                      padding: EdgeInsets.all(40),
-                      child: CircularProgressIndicator()));
-            }
-            if (snapshot.hasError) {
-              shared.ErrorLogger.log(
-                message: 'Failed to load payout details: ${snapshot.error}',
-                stack: snapshot.stackTrace?.toString(),
-                source: 'PayoutDetailDialog' /* was screen, Phase 5 */,
-                source: 'PayoutDetailDialog',
-                severity: 'error',
-                contextData: {'payoutId': widget.payoutId},
+                child: Padding(
+                  padding: EdgeInsets.all(40),
+                  child: CircularProgressIndicator(),
+                ),
               );
+            }
+
+            if (snapshot.hasError) {
               return EmptyStateWidget(
                 title: loc.failedToLoadSummary,
                 message: loc.tryAgainLater,
                 imageAsset: BrandingConfig.bannerPlaceholder,
-                onRetry: () => setState(() {
-                  _futurePayoutDetails = shared.FirestoreService()
-                      .getPayoutDetailsWithAudit(widget.payoutId);
-                }),
+                onRetry: () =>
+                    setState(() => _futurePayoutDetails = _loadPayoutDetails()),
                 buttonText: loc.retry,
               );
             }
+
             final data = snapshot.data;
             if (data == null) {
               return EmptyStateWidget(
                 title: loc.noDataFound ?? 'No Data',
                 message: loc.payoutNotFound ?? 'Payout not found.',
                 imageAsset: BrandingConfig.bannerPlaceholder,
-                onRetry: () => setState(() {
-                  _futurePayoutDetails = shared.FirestoreService()
-                      .getPayoutDetailsWithAudit(widget.payoutId);
-                }),
+                onRetry: () =>
+                    setState(() => _futurePayoutDetails = _loadPayoutDetails()),
                 buttonText: loc.retry,
               );
             }
 
-            final payout = Payout.fromFirestore(data, data['id']);
+            final payout = shared.Payout.fromFirestore(
+                data, data['id'] ?? widget.payoutId);
             final List<Map<String, dynamic>> auditTrail =
                 (data['audit_trail'] as List<dynamic>? ?? [])
                     .map((e) => Map<String, dynamic>.from(e))
                     .toList();
 
-            // Wire in all new features, modular and replace old logic!
             return Scaffold(
               backgroundColor: colorScheme.background,
               appBar: AppBar(
@@ -101,10 +112,8 @@ class _PayoutDetailDialogState extends State<PayoutDetailDialog> {
                   IconButton(
                     icon: const Icon(Icons.refresh),
                     tooltip: loc.retry,
-                    onPressed: () => setState(() {
-                      _futurePayoutDetails = shared.FirestoreService()
-                          .getPayoutDetailsWithAudit(widget.payoutId);
-                    }),
+                    onPressed: () => setState(
+                        () => _futurePayoutDetails = _loadPayoutDetails()),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
@@ -119,42 +128,41 @@ class _PayoutDetailDialogState extends State<PayoutDetailDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _PayoutSummarySection(
-                        payout: payout, loc: loc, theme: theme),
+                      payout: payout,
+                      loc: loc,
+                      theme: theme,
+                    ),
                     const SizedBox(height: 28),
                     _AuditTrailSection(
-                        auditTrail: auditTrail, loc: loc, theme: theme),
-                    const SizedBox(height: 24),
-                    // 1. AttachmentUploader
-                    AttachmentUploader(
-                      payoutId: payout.id,
-                      // Pass other needed args (user id, role, etc) as required by your widget
-                      existingAttachments:
-                          payout.customFields['attachments'] ?? [],
-                      onUploaded: () => setState(() {
-                        // Re-fetch details to get new attachments
-                        _futurePayoutDetails = shared.FirestoreService()
-                            .getPayoutDetailsWithAudit(widget.payoutId);
-                      }),
-                      onDeleted: () => setState(() {
-                        _futurePayoutDetails = shared.FirestoreService()
-                            .getPayoutDetailsWithAudit(widget.payoutId);
-                      }),
+                      auditTrail: auditTrail,
+                      loc: loc,
+                      theme: theme,
                     ),
                     const SizedBox(height: 24),
-                    // 2. PayoutNoteEditor
+
+                    // Attachment Uploader
+                    AttachmentUploader(
+                      payoutId: payout.id,
+                      existingAttachments: payout.attachments,
+                      onUploaded: () => setState(
+                          () => _futurePayoutDetails = _loadPayoutDetails()),
+                      onDeleted: () => setState(
+                          () => _futurePayoutDetails = _loadPayoutDetails()),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Payout Note Editor
                     PayoutNoteEditor(
                       payoutId: payout.id,
-                      // Ideally wire in the correct user id from app state/provider:
                       userId:
-                          null, // <-- Replace with correct userId if available
-                      developerOnly: false, // Or guard by role
+                          null, // TODO: Wire from Auth/AdminUserProvider when available
+                      developerOnly: false,
                       initialNotes: payout.customFields['comments'] != null
                           ? List<Map<String, dynamic>>.from(
                               payout.customFields['comments'])
                           : null,
                     ),
-                    const SizedBox(height: 20),
-                    // Any future features (disputes, adjustments, etc) go below
                   ],
                 ),
               ),
@@ -166,9 +174,8 @@ class _PayoutDetailDialogState extends State<PayoutDetailDialog> {
   }
 }
 
-// These three stateless widgets remain unchanged except for the removal of any legacy notes/attachments display. All support note and attachment UI/logic is now in the new widgets above.
 class _PayoutSummarySection extends StatelessWidget {
-  final Payout payout;
+  final shared.Payout payout;
   final AppLocalizations loc;
   final ThemeData theme;
 
@@ -184,9 +191,11 @@ class _PayoutSummarySection extends StatelessWidget {
         dt != null ? MaterialLocalizations.of(context).formatFullDate(dt) : '-';
 
     Widget value(String v) => Text(v, style: theme.textTheme.bodyMedium);
-    Widget valueBold(String v) => Text(v,
-        style:
-            theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold));
+    Widget valueBold(String v) => Text(
+          v,
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.bold),
+        );
 
     return Card(
       margin: EdgeInsets.zero,
@@ -209,11 +218,11 @@ class _PayoutSummarySection extends StatelessWidget {
             TableRow(children: [
               Text('${loc.payoutMethod ?? "Method"}:',
                   style: theme.textTheme.bodyMedium),
-              value(payout.customFields['method'] ?? '-'),
+              value(payout.method),
               Text('${loc.bankAccount ?? "Account"}:',
                   style: theme.textTheme.bodyMedium),
-              value(payout.customFields['bank_account_last4'] != null
-                  ? '****${payout.customFields['bank_account_last4']}'
+              value(payout.bankAccountLast4 != null
+                  ? '****${payout.bankAccountLast4}'
                   : '-'),
             ]),
             TableRow(children: [
@@ -227,7 +236,7 @@ class _PayoutSummarySection extends StatelessWidget {
               Text('${loc.notes}:', style: theme.textTheme.bodyMedium),
               TableCell(
                 verticalAlignment: TableCellVerticalAlignment.middle,
-                child: value(payout.customFields['notes'] ?? '-'),
+                child: value(payout.notes ?? '-'),
               ),
               Text('${loc.failureReason}:', style: theme.textTheme.bodyMedium),
               value(payout.failureReason ?? '-'),
@@ -257,11 +266,14 @@ class _AuditTrailSection extends StatelessWidget {
         color: theme.colorScheme.surfaceVariant,
         child: Padding(
           padding: const EdgeInsets.all(18),
-          child: Text(loc.noAuditTrailFound ?? "No audit trail found.",
-              style: theme.textTheme.bodySmall),
+          child: Text(
+            loc.noAuditTrailFound ?? "No audit trail found.",
+            style: theme.textTheme.bodySmall,
+          ),
         ),
       );
     }
+
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -284,7 +296,7 @@ class _AuditTrailSection extends StatelessWidget {
                       Text(
                         MaterialLocalizations.of(context).formatShortDate(
                           (event['timestamp'] is DateTime)
-                              ? event['timestamp']
+                              ? event['timestamp'] as DateTime
                               : DateTime.tryParse(
                                       event['timestamp']?.toString() ?? '') ??
                                   DateTime.now(),
@@ -301,9 +313,3 @@ class _AuditTrailSection extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-

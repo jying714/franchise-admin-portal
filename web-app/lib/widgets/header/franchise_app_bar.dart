@@ -79,7 +79,7 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
                   style: titleStyle ??
                       TextStyle(
                         fontSize: DesignTokens.titleFontSize,
-                        fontWeight: DesignTokens.titleFontWeight,
+                        fontWeight: FontWeight.bold,
                         fontFamily: DesignTokens.fontFamily,
                         color: appBarFg,
                       ),
@@ -94,7 +94,7 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
             style: titleStyle ??
                 TextStyle(
                   fontSize: DesignTokens.titleFontSize,
-                  fontWeight: DesignTokens.titleFontWeight,
+                  fontWeight: FontWeight.bold,
                   fontFamily: DesignTokens.fontFamily,
                   color: appBarFg,
                 ),
@@ -127,5 +127,3 @@ class FranchiseAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 }
-
-

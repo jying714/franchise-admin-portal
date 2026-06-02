@@ -1,26 +1,34 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 
 class SubscriptionAccessGuard extends StatelessWidget {
   final Widget child;
 
-  const SubscriptionAccessGuard({super.key, required this.child});
+  const SubscriptionAccessGuard({
+    super.key,
+    required this.child,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final user = context.read<AdminUserProvider>().user;
+    // Use Provider.of to avoid ambiguous read extension
+    final user = Provider.of<shared.AdminUserProvider>(
+      context,
+      listen: false,
+    ).user;
 
     // Bypass check for privileged roles
     final roles = user?.roles ?? [];
     final isBypass =
         roles.contains('platform_owner') || roles.contains('developer');
-    debugPrint('[SubscriptionAccessGuard] User roles: ${user?.roles}');
-    debugPrint('[SubscriptionAccessGuard] isBypass: $isBypass');
+
     if (isBypass) return child;
 
-    final sub =
-        context.watch<FranchiseSubscriptionNotifier>().currentSubscription;
+    final sub = Provider.of<shared.FranchiseSubscriptionProvider>(
+      context,
+      listen: true,
+    ).currentSubscription;
 
     if (sub == null || sub.status != 'active') {
       return const Center(child: Text('No active subscription.'));
@@ -58,6 +66,3 @@ class SubscriptionAccessGuard extends StatelessWidget {
     return child;
   }
 }
-
-
-

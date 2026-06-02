@@ -36,10 +36,10 @@ class ProfileNavTile extends StatelessWidget {
               ? DesignTokens.adminPrimaryColor
               : DesignTokens.textColor,
           fontFamily: DesignTokens.fontFamily,
-          fontWeight: DesignTokens.bodyFontWeight,
+          fontWeight: FontWeight.w500,
         ),
       ),
-      trailing: const Icon(
+      trailing: Icon(
         Icons.arrow_forward,
         color: DesignTokens.primaryColor,
       ),
@@ -50,5 +50,3 @@ class ProfileNavTile extends StatelessWidget {
     );
   }
 }
-
-

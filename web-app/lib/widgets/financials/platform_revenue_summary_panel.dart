@@ -65,16 +65,16 @@ class _PlatformRevenueSummaryPanelState
         _loading = false;
       });
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'PlatformRevenueSummaryPanel',
-        source: '_loadPlatformFinancials' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {
-          'userEmail': Provider.of<AdminUserProvider>(context, listen: false)
-              .user
-              ?.email,
+          'userEmail':
+              Provider.of<shared.AdminUserProvider>(context, listen: false)
+                  .user
+                  ?.email,
         },
       );
       setState(() {
@@ -195,9 +195,3 @@ class _PlatformRevenueSummaryPanelState
     );
   }
 }
-
-
-
-
-
-

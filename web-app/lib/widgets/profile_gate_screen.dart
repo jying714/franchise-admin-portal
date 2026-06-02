@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 5 final cleanup
-    as admin_user;
+import 'package:shared_core/shared_core.dart'
+    as shared; // Phase 5 final cleanup
 import '../config/design_tokens.dart';
 import '../config/branding_config.dart';
 
@@ -44,7 +44,8 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _profileNotifier =
           Provider.of<UserProfileNotifier>(context, listen: false);
-      _firestoreService = Provider.of<shared.FirestoreService>(context, listen: false);
+      _firestoreService =
+          Provider.of<shared.FirestoreService>(context, listen: false);
       final fbUser = fb_auth.FirebaseAuth.instance.currentUser;
 
       print('[ProfileGateScreen] initState START');
@@ -501,9 +502,3 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
     );
   }
 }
-
-
-
-
-
-

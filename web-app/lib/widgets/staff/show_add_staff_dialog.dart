@@ -25,7 +25,6 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
         message:
             'AppLocalizations.of(context) returned null in AddStaffDialog.',
         source: 'show_add_staff_dialog.dart',
-        source: 'AddStaffDialog' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {
           'widget': 'AddStaffDialog',
@@ -37,9 +36,11 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
       );
     }
 
-    final service = Provider.of<shared.FirestoreService>(context, listen: false);
+    final service =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
     final colorScheme = Theme.of(context).colorScheme;
 
     return AlertDialog(
@@ -125,11 +126,10 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
                 if (!mounted) return;
                 Navigator.of(context).pop();
               } catch (e, stack) {
-                await shared.ErrorLogger.log(
+                shared.ErrorLogger.log(
                   message: e.toString(),
                   stack: stack.toString(),
                   source: 'staff_access_screen',
-                  source: 'AddStaffDialog' /* was screen, Phase 5 */,
                   severity: 'error',
                   contextData: {
                     'franchiseId': franchiseId,
@@ -148,9 +148,3 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
     );
   }
 }
-
-
-
-
-
-

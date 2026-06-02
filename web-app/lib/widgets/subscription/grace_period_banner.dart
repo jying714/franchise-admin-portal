@@ -1,25 +1,27 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:intl/intl.dart';
+import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-
-/// A banner widget that alerts HQ owners or developers if their subscription is overdue or in grace period.
 class GracePeriodBanner extends StatelessWidget {
   final bool forceElevated;
 
-  const GracePeriodBanner({Key? key, this.forceElevated = false})
-      : super(key: key);
+  const GracePeriodBanner({
+    super.key,
+    this.forceElevated = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final subscription =
-        context.watch<FranchiseSubscriptionNotifier>().currentSubscription;
 
-    // Don't show anything if subscription is missing or valid
+    final subscription = context
+        .watch<shared.FranchiseSubscriptionProvider>()
+        .currentSubscription;
+
     if (subscription == null || !subscription.hasOverdueInvoice) {
       return const SizedBox.shrink();
     }
@@ -27,10 +29,7 @@ class GracePeriodBanner extends StatelessWidget {
     final graceEndsAt = subscription.gracePeriodEndsAt;
     final isInGracePeriod =
         graceEndsAt != null && DateTime.now().isBefore(graceEndsAt);
-    final hasExpired =
-        graceEndsAt != null && DateTime.now().isAfter(graceEndsAt);
 
-    // Customize banner content
     final bannerMessage = isInGracePeriod
         ? loc.gracePeriodWarning(DateFormat.yMMMMd().format(graceEndsAt))
         : loc.gracePeriodExpired;
@@ -40,7 +39,8 @@ class GracePeriodBanner extends StatelessWidget {
     return RoleGuard(
       allowedRoles: const ['hq_owner', 'developer', 'platform_owner'],
       child: MaterialBanner(
-        backgroundColor: theme.colorScheme.error.withOpacity(0.1),
+        backgroundColor: theme.colorScheme.error
+            .withValues(alpha: 0.1), // Fixed deprecated withOpacity
         contentTextStyle: theme.textTheme.bodyMedium?.copyWith(
           color: theme.colorScheme.onErrorContainer,
         ),
@@ -62,6 +62,3 @@ class GracePeriodBanner extends StatelessWidget {
     );
   }
 }
-
-
-

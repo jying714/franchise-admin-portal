@@ -4,9 +4,10 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:franchise_admin_portal/core/utils/export_utils.dart';
 
 class ExportAnalyticsDialogSingleSummary extends StatelessWidget {
-  final AnalyticsSummary summary;
+  final shared.AnalyticsSummary summary;
 
   const ExportAnalyticsDialogSingleSummary({super.key, required this.summary});
 
@@ -122,6 +123,3 @@ class ExportAnalyticsDialogSingleSummary extends StatelessWidget {
     );
   }
 }
-
-
-

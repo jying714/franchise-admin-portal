@@ -6,7 +6,7 @@ import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class AccountDetailsPanel extends StatefulWidget {
-  final User user;
+  final shared.User user;
   final VoidCallback? onProfileUpdated;
 
   const AccountDetailsPanel({
@@ -49,7 +49,8 @@ class _AccountDetailsPanelState extends State<AccountDetailsPanel> {
       _error = null;
     });
     try {
-      await Provider.of<shared.FirestoreService>(context, listen: false).updateUserProfile(widget.user.id, {
+      await Provider.of<shared.FirestoreService>(context, listen: false)
+          .updateUserProfile(widget.user.id, {
         'name': _nameController.text.trim(),
         'phoneNumber': _phoneController.text.trim(),
         'language': _language,
@@ -58,11 +59,10 @@ class _AccountDetailsPanelState extends State<AccountDetailsPanel> {
       widget.onProfileUpdated?.call();
     } catch (e, st) {
       setState(() => _error = e.toString());
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to update profile: $e',
         stack: st.toString(),
         source: 'AccountDetailsPanel',
-        source: 'account_details_panel' /* was screen, Phase 4 fix */,
         severity: 'error',
       );
     } finally {
@@ -216,9 +216,3 @@ class _AccountDetailsPanelState extends State<AccountDetailsPanel> {
     );
   }
 }
-
-
-
-
-
-

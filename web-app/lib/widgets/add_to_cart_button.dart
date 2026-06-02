@@ -26,9 +26,9 @@ class AddToCartButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(DesignTokens.buttonRadius),
         ),
         elevation: DesignTokens.buttonElevation,
-        textStyle: const TextStyle(
+        textStyle: TextStyle(
           fontSize: DesignTokens.bodyFontSize,
-          fontWeight: DesignTokens.titleFontWeight,
+          fontWeight: FontWeight.w500,
           fontFamily: DesignTokens.fontFamily,
         ),
       ),
@@ -43,5 +43,3 @@ class AddToCartButton extends StatelessWidget {
     );
   }
 }
-
-

@@ -25,20 +25,20 @@ class InfoTile extends StatelessWidget {
           : null,
       title: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: DesignTokens.bodyFontSize,
           color: DesignTokens.textColor,
-          fontWeight: DesignTokens.titleFontWeight,
+          fontWeight: FontWeight.w500,
           fontFamily: DesignTokens.fontFamily,
         ),
       ),
       subtitle: Text(
         (value == null || value!.trim().isEmpty) ? 'â€”' : value!,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: DesignTokens.captionFontSize,
           color: DesignTokens.secondaryTextColor,
           fontFamily: DesignTokens.fontFamily,
-          fontWeight: DesignTokens.bodyFontWeight,
+          fontWeight: FontWeight.w500,
         ),
       ),
       trailing: trailing,
@@ -46,5 +46,3 @@ class InfoTile extends StatelessWidget {
     );
   }
 }
-
-

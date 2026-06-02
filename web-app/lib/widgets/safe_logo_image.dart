@@ -8,8 +8,13 @@ class SafeLogoImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final logoUrl = BrandingConfig.logoUrl;
+    if (logoUrl == null || logoUrl.isEmpty) {
+      return Image.asset(BrandingConfig.logoMain, height: height, fit: fit);
+    }
+
     return Image.network(
-      BrandingConfig.logoUrl,
+      logoUrl,
       height: height,
       fit: fit,
       errorBuilder: (context, error, stackTrace) =>
@@ -17,5 +22,3 @@ class SafeLogoImage extends StatelessWidget {
     );
   }
 }
-
-

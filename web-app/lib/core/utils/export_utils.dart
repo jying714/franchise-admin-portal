@@ -1,14 +1,15 @@
 // web_app/lib/core/utils/export_utils.dart
 
 import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class ExportUtils {
   ExportUtils._();
 
-  static String menuItemsToCsv(BuildContext context, List<MenuItem> items) {
+  static String menuItemsToCsv(
+      BuildContext context, List<shared.MenuItem> items) {
     final loc = AppLocalizations.of(context)!;
     final headers = [
       loc.menuItemId,
@@ -28,13 +29,14 @@ class ExportUtils {
       loc.customizations,
       loc.customizationGroups,
     ];
-    final rawCsv = ExportUtilsCore.menuItemsToCsv(items);
+    final rawCsv = shared.ExportUtilsCore.menuItemsToCsv(items);
     final headerLine =
         headers.map((h) => '"${(h ?? '').replaceAll('"', '""')}"').join(',');
     return '$headerLine\n${rawCsv.split('\n').skip(1).join('\n')}';
   }
 
-  static String invoicesToCsv(BuildContext context, List<Invoice> invoices) {
+  static String invoicesToCsv(
+      BuildContext context, List<shared.Invoice> invoices) {
     final loc = AppLocalizations.of(context)!;
     final ml = MaterialLocalizations.of(context);
     final csv = StringBuffer();
@@ -63,5 +65,10 @@ class ExportUtils {
           .join(','));
     }
     return csv.toString();
+  }
+
+  static String analyticsSummaryToCsv(
+      BuildContext context, shared.AnalyticsSummary summary) {
+    return shared.ExportUtilsCore.analyticsSummaryToCsv(summary);
   }
 }

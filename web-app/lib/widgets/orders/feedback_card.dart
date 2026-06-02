@@ -3,7 +3,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FeedbackCard extends StatelessWidget {
-  final AnalyticsSummary summary;
+  final shared.AnalyticsSummary summary;
 
   const FeedbackCard({super.key, required this.summary});
 
@@ -231,6 +231,3 @@ class FeedbackCard extends StatelessWidget {
     );
   }
 }
-
-
-

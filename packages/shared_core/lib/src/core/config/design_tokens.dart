@@ -44,6 +44,7 @@ class DesignTokens {
   static const double iconSize = 24.0;
   static const double iconSizeLarge = 40.0;
   static const double iconSizeXLarge = 80.0;
+  static const double iconSizeMd = 28.0;
   static const double badgeMinSize = 16.0;
   static const double cartBadgePadding = 2.0;
   static const double gridCardAspectRatio = 1.0;
@@ -182,6 +183,10 @@ class DesignTokens {
   // Additional tokens needed for remaining errors
   static const double defaultPadding = 16.0;
   static const double buttonHeight = 56.0;
+
+  static const String mediumFontWeight = '500';
+  static const double iconSizeSm = 20.0;
+  static const double iconSizeLg = 32.0;
 
   // ======================
   // === FUTURE TOKENS ====

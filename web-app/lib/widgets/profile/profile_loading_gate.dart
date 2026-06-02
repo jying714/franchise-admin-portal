@@ -8,7 +8,7 @@ class ProfileLoadingGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final profileUser = Provider.of<AuthService>(context).profileUser;
+    final profileUser = Provider.of<shared.AuthService>(context).currentUser;
     if (profileUser == null) {
       return const Scaffold(
         body: Center(
@@ -19,6 +19,3 @@ class ProfileLoadingGate extends StatelessWidget {
     return builder(context, profileUser);
   }
 }
-
-
-

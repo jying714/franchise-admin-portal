@@ -51,14 +51,12 @@ class SignOutButton extends StatelessWidget {
       },
       child: Text(
         signOutLabel,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: DesignTokens.bodyFontSize,
           fontFamily: DesignTokens.fontFamily,
-          fontWeight: DesignTokens.bodyFontWeight,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
   }
 }
-
-

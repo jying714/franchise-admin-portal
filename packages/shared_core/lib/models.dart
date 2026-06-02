@@ -51,6 +51,7 @@ export 'src/core/models/error_log_summary.dart';
 export 'src/core/models/scheduled_order.dart';
 export 'src/core/models/favorite_order.dart';
 export 'src/core/models/loyalty.dart';
+export 'src/core/models/billing_summary_data.dart';
 
 // enriched subfolder
 export 'src/core/models/enriched/enriched_franchise_subscription.dart';
