@@ -36,7 +36,8 @@ class _PublishOnboardingButtonState extends State<PublishOnboardingButton> {
       builder: (ctx) => PublishConfirmationDialog(
         blockingIssues: provider.allIssuesFlat
             .where((e) =>
-                e.isBlocking && e.severity == OnboardingIssueSeverity.critical)
+                e.isBlocking &&
+                e.severity == shared.OnboardingIssueSeverity.critical)
             .toList(),
       ),
     );
@@ -76,7 +77,8 @@ class _PublishOnboardingButtonState extends State<PublishOnboardingButton> {
 
   @override
   Widget build(BuildContext context) {
-    final reviewProvider = Provider.of<shared.OnboardingReviewProvider>(context);
+    final reviewProvider =
+        Provider.of<shared.OnboardingReviewProvider>(context);
     final colorScheme = Theme.of(context).colorScheme;
     final canPublish = reviewProvider.isPublishable && !_publishing;
 
@@ -137,6 +139,3 @@ class _PublishOnboardingButtonState extends State<PublishOnboardingButton> {
     );
   }
 }
-
-
-

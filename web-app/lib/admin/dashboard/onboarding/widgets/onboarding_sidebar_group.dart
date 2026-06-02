@@ -3,7 +3,7 @@ import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class OnboardingSidebarGroup extends StatefulWidget {
-  final List<DashboardSection> steps;
+  final List<shared.DashboardSection> steps;
   final int selectedIndex;
   final ValueChanged<int> onSelect;
   final String label;
@@ -121,6 +121,3 @@ class _OnboardingSidebarGroupState extends State<OnboardingSidebarGroup> {
     );
   }
 }
-
-
-

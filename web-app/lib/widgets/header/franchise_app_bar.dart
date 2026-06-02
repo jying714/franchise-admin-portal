@@ -1,5 +1,4 @@
-﻿﻿// P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
-// Mobile canonical in mobile_app/lib/widgets/header/.
+﻿﻿// Mobile canonical in mobile_app/lib/widgets/header/.
 // Web version kept for admin portal only. Safe for deletion in next batch
 // if admin can reuse customer header widgets via shared_ui package or path dep.
 // Current: uses local DesignTokens (appropriate for admin theming).

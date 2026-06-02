@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 
@@ -66,15 +66,17 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
         'allIssuesKeys=${issuesBySection.keys.toList()}');
 
     for (final sec in widget.sectionOrder) {
-      final list = issuesBySection[sec] ?? const <OnboardingValidationIssue>[];
+      final list =
+          issuesBySection[sec] ?? const <shared.OnboardingValidationIssue>[];
       final crit = list
-          .where((e) => e.severity == OnboardingIssueSeverity.critical)
+          .where((e) => e.severity == shared.OnboardingIssueSeverity.critical)
           .length;
       final warn = list
-          .where((e) => e.severity == OnboardingIssueSeverity.warning)
+          .where((e) => e.severity == shared.OnboardingIssueSeverity.warning)
           .length;
-      final info =
-          list.where((e) => e.severity == OnboardingIssueSeverity.info).length;
+      final info = list
+          .where((e) => e.severity == shared.OnboardingIssueSeverity.info)
+          .length;
       debugPrint('[IssueDetailsExpansion] $at section="$sec" '
           'total=${list.length} critical=$crit warning=$warn info=$info');
     }
@@ -82,7 +84,8 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
 
   @override
   Widget build(BuildContext context) {
-    final reviewProvider = Provider.of<shared.OnboardingReviewProvider>(context);
+    final reviewProvider =
+        Provider.of<shared.OnboardingReviewProvider>(context);
     final issuesBySection = reviewProvider.allIssuesBySection;
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -109,7 +112,7 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
               context,
               widget.sectionOrder[i],
               issuesBySection[widget.sectionOrder[i]] ??
-                  const <OnboardingValidationIssue>[],
+                  const <shared.OnboardingValidationIssue>[],
               i,
               colorScheme,
             ),
@@ -121,20 +124,22 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
   ExpansionPanel _buildSectionPanel(
     BuildContext context,
     String section,
-    List<OnboardingValidationIssue> issues,
+    List<shared.OnboardingValidationIssue> issues,
     int idx,
     ColorScheme colorScheme,
   ) {
     final criticals = issues
         .where((e) =>
-            e.isBlocking && e.severity == OnboardingIssueSeverity.critical)
+            e.isBlocking &&
+            e.severity == shared.OnboardingIssueSeverity.critical)
         .toList();
     final warnings = issues
         .where((e) =>
-            !e.isBlocking && e.severity == OnboardingIssueSeverity.warning)
+            !e.isBlocking &&
+            e.severity == shared.OnboardingIssueSeverity.warning)
         .toList();
     final infos = issues
-        .where((e) => e.severity == OnboardingIssueSeverity.info)
+        .where((e) => e.severity == shared.OnboardingIssueSeverity.info)
         .toList();
 
     return ExpansionPanel(
@@ -236,21 +241,21 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
   Widget _buildIssueRow(
     BuildContext context,
     String section,
-    OnboardingValidationIssue issue,
+    shared.OnboardingValidationIssue issue,
     ColorScheme colorScheme,
   ) {
     Color severityColor;
     IconData icon;
     switch (issue.severity) {
-      case OnboardingIssueSeverity.critical:
+      case shared.OnboardingIssueSeverity.critical:
         severityColor = colorScheme.error;
         icon = Icons.cancel_rounded;
         break;
-      case OnboardingIssueSeverity.warning:
+      case shared.OnboardingIssueSeverity.warning:
         severityColor = colorScheme.tertiary;
         icon = Icons.warning_amber_rounded;
         break;
-      case OnboardingIssueSeverity.info:
+      case shared.OnboardingIssueSeverity.info:
       default:
         severityColor = colorScheme.secondary;
         icon = Icons.info_outline;
@@ -264,7 +269,9 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
         borderRadius: BorderRadius.circular(13),
         side: BorderSide(
           color: severityColor.withOpacity(
-              issue.severity == OnboardingIssueSeverity.critical ? 0.22 : 0.10),
+              issue.severity == shared.OnboardingIssueSeverity.critical
+                  ? 0.22
+                  : 0.10),
           width: 1.2,
         ),
       ),
@@ -406,7 +413,3 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
     );
   }
 }
-
-
-
-

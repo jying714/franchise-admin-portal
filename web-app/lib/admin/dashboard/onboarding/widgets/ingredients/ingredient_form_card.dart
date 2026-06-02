@@ -1,12 +1,14 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
-import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider_impl.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_impl.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_tag_selector.dart';
 
 class IngredientFormCard extends StatefulWidget {
-  final IngredientMetadata? initialData;
+  final shared.IngredientMetadata? initialData;
   final VoidCallback? onSaved;
   final AppLocalizations loc;
   final BuildContext parentContext;
@@ -40,30 +42,16 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
 
   late final String _id;
 
-  final GlobalKey _formRootKey = GlobalKey();
-
   @override
   void initState() {
     super.initState();
 
     final data = widget.initialData;
-    final provider = context.read<IngredientMetadataProvider>();
-
-    // Stable ID for highlight mapping
     _id = data?.id ?? '_new_${DateTime.now().millisecondsSinceEpoch}';
-
-    // ðŸ”¹ Register card-level key for section-level focus
-    provider.itemGlobalKeys[_id] ??= GlobalKey();
-
-    // Register highlight keys (only once)
-    provider.fieldGlobalKeys['$_id::name'] ??= GlobalKey();
-    provider.fieldGlobalKeys['$_id::typeId'] ??= GlobalKey();
-    provider.fieldGlobalKeys['$_id::notes'] ??= GlobalKey();
-    provider.fieldGlobalKeys['$_id::allergens'] ??= GlobalKey();
 
     if (data != null) {
       _nameController.text = data.name;
-      _typeController.text = data.type;
+      _typeController.text = data.type ?? '';
       _selectedTypeId = data.typeId;
       _notesController.text = data.notes ?? '';
       _allergens = List.from(data.allergens);
@@ -85,7 +73,7 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
   Future<void> _saveIngredient() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final ingredient = IngredientMetadata(
+    final ingredient = shared.IngredientMetadata(
       id: widget.initialData?.id ??
           _nameController.text.trim().toLowerCase().replaceAll(' ', '_'),
       name: _nameController.text.trim(),
@@ -98,29 +86,29 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
       supportsExtra: _supportsExtra,
       sidesAllowed: _sidesAllowed,
       outOfStock: _outOfStock,
+      typeId: _selectedTypeId,
       upcharge: null,
       imageUrl: null,
       amountSelectable: false,
       amountOptions: null,
-      typeId: _selectedTypeId,
     );
 
     try {
       setState(() => _isSaving = true);
 
-      context.read<IngredientMetadataProvider>().updateIngredient(ingredient);
+      Provider.of<IngredientMetadataProviderImpl>(context, listen: false)
+          .updateIngredient(ingredient);
 
       if (widget.onSaved != null) {
         widget.onSaved!();
-      } else if (context.mounted) {
+      } else if (mounted) {
         Navigator.of(context).pop();
       }
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to update ingredient (local only): $e',
-        stack: stack.toString(),
         source: 'IngredientFormCard',
-        source: 'OnboardingIngredientsScreen' /* was screen, Phase 4 fix */,
+        stack: stack.toString(),
         severity: 'error',
         contextData: {'ingredientName': ingredient.name},
       );
@@ -140,9 +128,9 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
     final theme = Theme.of(context);
     final loc = widget.loc;
     final colorScheme = theme.colorScheme;
+
     final ingredientTypes =
-        context.watch<IngredientTypeProvider>().ingredientTypes;
-    final provider = context.read<IngredientMetadataProvider>();
+        context.watch<IngredientTypeProviderImpl>().ingredientTypes;
 
     if (_selectedTypeId == null && ingredientTypes.isNotEmpty) {
       _selectedTypeId = ingredientTypes.first.id;
@@ -150,135 +138,122 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
     }
 
     return KeyedSubtree(
-        key: _formRootKey,
-        child: Dialog(
-          insetPadding:
-              const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 500,
-              maxHeight: 725,
-            ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextFormField(
-                      key: provider.fieldGlobalKeys['$_id::name'],
-                      controller: _nameController,
-                      decoration: InputDecoration(
-                        labelText: loc.ingredientName,
-                        border: const OutlineInputBorder(),
-                      ),
-                      validator: (value) => (value == null || value.isEmpty)
-                          ? loc.requiredField
-                          : null,
+      key: ValueKey(_id),
+      child: Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500, maxHeight: 725),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: loc.ingredientName,
+                      border: const OutlineInputBorder(),
                     ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      key: provider.fieldGlobalKeys['$_id::typeId'],
-                      value: _selectedTypeId,
-                      isExpanded: true,
-                      decoration: InputDecoration(
-                        labelText: loc.ingredientType,
-                        border: const OutlineInputBorder(),
-                      ),
-                      items: ingredientTypes.map((type) {
-                        return DropdownMenuItem(
-                          value: type.id,
-                          child: Text(type.name),
+                    validator: (value) => (value == null || value.isEmpty)
+                        ? loc.requiredField
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: _selectedTypeId,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: loc.ingredientType,
+                      border: const OutlineInputBorder(),
+                    ),
+                    items: ingredientTypes.map((type) {
+                      return DropdownMenuItem(
+                        value: type.id,
+                        child: Text(type.name),
+                      );
+                    }).toList(),
+                    validator: (val) => val == null ? loc.requiredField : null,
+                    onChanged: (val) {
+                      setState(() {
+                        _selectedTypeId = val;
+                        final type = ingredientTypes.firstWhere(
+                          (t) => t.id == val,
+                          orElse: () => shared.IngredientType(id: '', name: ''),
                         );
-                      }).toList(),
-                      validator: (val) =>
-                          val == null ? loc.requiredField : null,
-                      onChanged: (val) {
-                        setState(() {
-                          _selectedTypeId = val;
-                          final type = ingredientTypes.firstWhere(
-                            (t) => t.id == val,
-                            orElse: () => IngredientType(id: '', name: ''),
-                          );
-                          _typeController.text = type.name;
-                        });
-                      },
+                        _typeController.text = type.name;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  IngredientTagSelector(
+                    selectedTags: _allergens,
+                    onChanged: (tags) => setState(() => _allergens = tags),
+                    loc: loc,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _notesController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: loc.ingredientDescription,
+                      border: const OutlineInputBorder(),
                     ),
-                    const SizedBox(height: 12),
-                    IngredientTagSelector(
-                      key: provider.fieldGlobalKeys['$_id::allergens'],
-                      selectedTags: _allergens,
-                      onChanged: (tags) => setState(() => _allergens = tags),
-                      loc: loc,
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      key: provider.fieldGlobalKeys['$_id::notes'],
-                      controller: _notesController,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        labelText: loc.ingredientDescription,
-                        border: const OutlineInputBorder(),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      CheckboxListTile(
+                        value: _removable,
+                        onChanged: (v) =>
+                            setState(() => _removable = v ?? true),
+                        title: Text(loc.removable),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 8,
-                      children: [
-                        CheckboxListTile(
-                          value: _removable,
-                          onChanged: (v) =>
-                              setState(() => _removable = v ?? true),
-                          title: Text(loc.removable),
-                        ),
-                        CheckboxListTile(
-                          value: _supportsExtra,
-                          onChanged: (v) =>
-                              setState(() => _supportsExtra = v ?? false),
-                          title: Text(loc.supportsExtra),
-                        ),
-                        CheckboxListTile(
-                          value: _sidesAllowed,
-                          onChanged: (v) =>
-                              setState(() => _sidesAllowed = v ?? false),
-                          title: Text(loc.sidesAllowed),
-                        ),
-                        CheckboxListTile(
-                          value: _outOfStock,
-                          onChanged: (v) =>
-                              setState(() => _outOfStock = v ?? false),
-                          title: Text(loc.outOfStock),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isSaving ? null : _saveIngredient,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: DesignTokens.primaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: _isSaving
-                            ? const CircularProgressIndicator(strokeWidth: 2)
-                            : Text(loc.saveIngredient),
+                      CheckboxListTile(
+                        value: _supportsExtra,
+                        onChanged: (v) =>
+                            setState(() => _supportsExtra = v ?? false),
+                        title: Text(loc.supportsExtra),
                       ),
+                      CheckboxListTile(
+                        value: _sidesAllowed,
+                        onChanged: (v) =>
+                            setState(() => _sidesAllowed = v ?? false),
+                        title: Text(loc.sidesAllowed),
+                      ),
+                      CheckboxListTile(
+                        value: _outOfStock,
+                        onChanged: (v) =>
+                            setState(() => _outOfStock = v ?? false),
+                        title: Text(loc.outOfStock),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isSaving ? null : _saveIngredient,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: DesignTokens.primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: _isSaving
+                          ? const CircularProgressIndicator(strokeWidth: 2)
+                          : Text(loc.saveIngredient),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
-        ));
+        ),
+      ),
+    );
   }
 }
-
-
-
-

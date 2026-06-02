@@ -2,6 +2,9 @@
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_impl.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider_impl.dart';
 
 class ReviewSummaryTable extends StatelessWidget {
   static const List<String> _sectionOrder = [
@@ -17,7 +20,8 @@ class ReviewSummaryTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final reviewProvider = Provider.of<shared.OnboardingReviewProvider>(context);
+    final reviewProvider =
+        Provider.of<shared.OnboardingReviewProvider>(context);
     final issuesBySection = reviewProvider.allIssuesBySection;
 
     return Material(
@@ -103,17 +107,19 @@ class ReviewSummaryTable extends StatelessWidget {
   TableRow _buildSectionRow(
     BuildContext context,
     String section,
-    List<OnboardingValidationIssue> issues,
+    List<shared.OnboardingValidationIssue> issues,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
 
     final criticalCount = issues
         .where((e) =>
-            e.isBlocking && e.severity == OnboardingIssueSeverity.critical)
+            e.isBlocking &&
+            e.severity == shared.OnboardingIssueSeverity.critical)
         .length;
     final warningCount = issues
         .where((e) =>
-            !e.isBlocking && e.severity == OnboardingIssueSeverity.warning)
+            !e.isBlocking &&
+            e.severity == shared.OnboardingIssueSeverity.warning)
         .length;
 
     final statusWidget =
@@ -225,121 +231,64 @@ class ReviewSummaryTable extends StatelessWidget {
   Widget _buildActionWidget(
     BuildContext context,
     String section,
-    List<OnboardingValidationIssue> issues,
+    List<shared.OnboardingValidationIssue> issues,
     int criticalCount,
     int warningCount,
     ColorScheme colorScheme,
   ) {
-    void _navigateToFix(OnboardingValidationIssue issue) async {
-      debugPrint('â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€');
-      debugPrint('[ReviewSummaryTable] ðŸ›  Attempting navigation');
-      debugPrint('  â€¢ Section (raw): "$section"');
-      debugPrint('  â€¢ Issue.itemId: "${issue.itemId}"');
-      debugPrint('  â€¢ Issue.itemLocator: "${issue.itemLocator}"');
-      debugPrint('  â€¢ Issue.actionLabel: "${issue.actionLabel}"');
-      debugPrint('  â€¢ Issue.affectedFields: ${issue.affectedFields}');
-      debugPrint('â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€');
+    void _navigateToFix(shared.OnboardingValidationIssue issue) async {
+      debugPrint(
+          '────────────────────────────────────────────────────────────');
+      debugPrint('[ReviewSummaryTable] Attempting navigation');
+      debugPrint('  • Section (raw): "$section"');
+      debugPrint('  • Issue.itemId: "${issue.itemId}"');
 
-      // 1) Normalize & resolve route
       final normalizedSection =
           OnboardingNavigationUtils.normalizeForRouting(section);
-      debugPrint(
-          '[ReviewSummaryTable] Normalized section â†’ "$normalizedSection"');
-
       final route =
           OnboardingNavigationUtils.resolveRoute(normalizedSection, issue);
-      debugPrint('[ReviewSummaryTable] Resolved route â†’ "$route"');
 
       if (route.isEmpty) {
-        debugPrint(
-            '[ReviewSummaryTable][WARN] âŒ Route is empty â€” navigation aborted.');
+        debugPrint('[ReviewSummaryTable][WARN] Route is empty — aborted.');
         return;
       }
 
-      // 2) Build args for downstream focus/highlight
       final args = OnboardingNavigationUtils.buildOnboardingNavArgs(
         section: normalizedSection,
         issue: issue,
       );
-      debugPrint('[ReviewSummaryTable] Built nav args â†’ $args');
 
-      // 3) Pre-load prerequisites for sections that need them
+      // 3) Pre-load prerequisites
       try {
-        if (normalizedSection == 'onboardingIngredients') {
-          debugPrint(
-              '[ReviewSummaryTable] ðŸ“¦ Checking prerequisites for Ingredientsâ€¦');
+        if (normalizedSection == 'onboardingIngredients' ||
+            normalizedSection == 'onboardingIngredientTypes') {
+          final typeProvider =
+              Provider.of<IngredientTypeProviderImpl>(context, listen: false);
 
-          final typeProvider = context.read<IngredientTypeProvider>();
-          final metaProvider = context.read<IngredientMetadataProvider>();
-
-          // Prefer an already-bound franchiseId on either provider
           String fid = typeProvider.franchiseId;
           if (fid.isEmpty || fid == 'unknown') {
-            fid = metaProvider.franchiseId;
-          }
-          debugPrint('    franchiseId detected: "$fid"');
-
-          // Ingredient Types (must exist for Ingredients screen)
-          final typesCount = typeProvider.ingredientTypes.length;
-          debugPrint('    IngredientTypes count: $typesCount');
-          if (typesCount == 0) {
-            debugPrint('    âž¤ Loading Ingredient Typesâ€¦');
-            await typeProvider.loadIngredientTypes(fid);
-            debugPrint(
-                '    âœ” Ingredient Types loaded. New count: ${typeProvider.ingredientTypes.length}');
+            fid = ''; // No direct franchiseId in StatelessWidget
           }
 
-          // Ingredient Metadata (screen uses provider.isInitialized + list)
-          debugPrint(
-              '    IngredientMetadata isInitialized: ${metaProvider.isInitialized}');
-          debugPrint(
-              '    IngredientMetadata count: ${metaProvider.ingredients.length}');
-          if (!metaProvider.isInitialized || metaProvider.ingredients.isEmpty) {
-            debugPrint('    âž¤ Loading Ingredient Metadataâ€¦');
-            await metaProvider.load();
-            debugPrint(
-                '    âœ” Ingredient Metadata loaded. New count: ${metaProvider.ingredients.length}');
-          }
-        } else if (normalizedSection == 'onboardingIngredientTypes') {
-          debugPrint(
-              '[ReviewSummaryTable] ðŸ“¦ Checking prerequisites for Ingredient Typesâ€¦');
-
-          final typeProvider = context.read<IngredientTypeProvider>();
-          String fid = typeProvider.franchiseId;
-          if (fid.isEmpty || fid == 'unknown') {
-            // Fallback: try from IngredientMetadataProvider (has final franchiseId)
-            final metaProvider = context.read<IngredientMetadataProvider>();
-            fid = metaProvider.franchiseId;
-          }
-          debugPrint('    franchiseId detected: "$fid"');
-
-          final typesCount = typeProvider.ingredientTypes.length;
-          debugPrint('    IngredientTypes count: $typesCount');
-          if (typesCount == 0) {
-            debugPrint('    âž¤ Loading Ingredient Typesâ€¦');
-            await typeProvider.loadIngredientTypes(fid);
-            debugPrint(
-                '    âœ” Ingredient Types loaded. New count: ${typeProvider.ingredientTypes.length}');
+          if (typeProvider.ingredientTypes.isEmpty) {
+            await typeProvider.load(franchiseIdOverride: fid);
           }
         }
       } catch (e, st) {
-        debugPrint(
-            '[ReviewSummaryTable][ERROR] âš  Failed while preloading prerequisites.');
-        debugPrint('    Exception: $e');
-        debugPrint('    Stacktrace: $st');
-        // Continue to navigate; downstream screen may still guard itself.
+        debugPrint('[ReviewSummaryTable][ERROR] Preload failed: $e');
       }
 
-      // 4) Navigate after this frame to avoid setState during build
+      // 4) Navigate safely
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        debugPrint('[ReviewSummaryTable] ðŸš€ Navigating to â†’ "$route"');
         Navigator.of(context).pushNamed(route, arguments: args);
       });
     }
 
     if (criticalCount > 0) {
       final issue = issues.firstWhere(
-        (e) => e.isBlocking && e.severity == OnboardingIssueSeverity.critical,
+        (e) =>
+            e.isBlocking &&
+            e.severity == shared.OnboardingIssueSeverity.critical,
         orElse: () => issues.first,
       );
       return _actionButton(
@@ -352,7 +301,9 @@ class ReviewSummaryTable extends StatelessWidget {
       );
     } else if (warningCount > 0) {
       final issue = issues.firstWhere(
-        (e) => !e.isBlocking && e.severity == OnboardingIssueSeverity.warning,
+        (e) =>
+            !e.isBlocking &&
+            e.severity == shared.OnboardingIssueSeverity.warning,
         orElse: () => issues.first,
       );
       return _actionButton(
@@ -386,7 +337,3 @@ class ReviewSummaryTable extends StatelessWidget {
     );
   }
 }
-
-
-
-

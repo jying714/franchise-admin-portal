@@ -3,6 +3,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_impl.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
@@ -17,7 +18,7 @@ class IngredientTypeJsonImportExportDialog extends StatefulWidget {
   const IngredientTypeJsonImportExportDialog({super.key, required this.loc});
 
   static Future<void> show(
-      BuildContext context, IngredientTypeProvider provider) async {
+      BuildContext context, shared.IngredientTypeProvider provider) async {
     final loc = AppLocalizations.of(context);
     print(
         '[IngredientTypeJsonImportExportDialog] show() called with loc: $loc');
@@ -36,7 +37,7 @@ class IngredientTypeJsonImportExportDialog extends StatefulWidget {
       pageBuilder: (_, __, ___) {
         return Localizations.override(
           context: context,
-          child: ChangeNotifierProvider<IngredientTypeProvider>.value(
+          child: ChangeNotifierProvider<IngredientTypeProviderImpl>.value(
             value: provider,
             child: Builder(
               builder: (innerContext) {
@@ -67,9 +68,9 @@ class _IngredientTypeJsonImportExportDialogState
     extends State<IngredientTypeJsonImportExportDialog> {
   late TextEditingController _jsonController;
   String? _errorMessage;
-  List<IngredientType>? _previewTypes;
+  List<shared.IngredientType>? _previewTypes;
   late String _jsonInput;
-  List<IngredientType>? _parsedPreview;
+  List<shared.IngredientType>? _parsedPreview;
 
   @override
   void initState() {
@@ -77,24 +78,23 @@ class _IngredientTypeJsonImportExportDialogState
 
     // Load the hardcoded template from schema_templates.dart as JSON string
     final formattedJson = const JsonEncoder.withIndent('  ')
-        .convert(pizzaShopIngredientTypesTemplate);
+        .convert(shared.pizzaShopIngredientTypesTemplate);
 
     _jsonInput = formattedJson;
     _jsonController = TextEditingController(text: _jsonInput);
     _parsePreview();
   }
 
-  List<IngredientType>? _tryParseJson(String val) {
+  List<shared.IngredientType>? _tryParseJson(String val) {
     try {
       final decoded = json.decode(val);
       if (decoded is! List) return null;
-      return decoded.map((e) => IngredientType.fromMap(e)).toList();
+      return decoded.map((e) => shared.IngredientType.fromMap(e)).toList();
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message: 'Error parsing preview JSON in dialog',
         source: 'ingredient_type_json_import_export_dialog.dart',
         severity: 'warning',
-        source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
         stack: stack.toString(),
         contextData: {'input': val},
       );
@@ -112,7 +112,8 @@ class _IngredientTypeJsonImportExportDialogState
           _previewTypes = null;
           return;
         }
-        _previewTypes = decoded.map((e) => IngredientType.fromMap(e)).toList();
+        _previewTypes =
+            decoded.map((e) => shared.IngredientType.fromMap(e)).toList();
       });
     } catch (e, stack) {
       setState(() => _previewTypes = null);
@@ -120,7 +121,6 @@ class _IngredientTypeJsonImportExportDialogState
         message: 'JSON import preview parse error',
         source: 'ingredient_type_json_import_export_dialog.dart',
         severity: 'warning',
-        source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
         stack: stack.toString(),
         contextData: {
           'input': _jsonController.text,
@@ -134,8 +134,11 @@ class _IngredientTypeJsonImportExportDialogState
 
   Future<void> _saveImport() async {
     final loc = widget.loc;
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
-    final provider = context.read<IngredientTypeProvider>();
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
+    final provider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
 
     if (_previewTypes == null || franchiseId.isEmpty) return;
 
@@ -143,11 +146,10 @@ class _IngredientTypeJsonImportExportDialogState
       await provider.bulkReplaceIngredientTypes(franchiseId, _previewTypes!);
       if (mounted) Navigator.of(context).pop();
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to save imported ingredient types',
         source: 'ingredient_type_json_import_export_dialog.dart',
         severity: 'error',
-        source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
         stack: stack.toString(),
         contextData: {
           'franchiseId': franchiseId,
@@ -268,7 +270,3 @@ class _IngredientTypeJsonImportExportDialogState
     );
   }
 }
-
-
-
-

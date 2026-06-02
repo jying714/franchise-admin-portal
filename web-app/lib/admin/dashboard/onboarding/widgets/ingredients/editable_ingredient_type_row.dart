@@ -1,17 +1,17 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
-
-import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_impl.dart';
 
 class EditableIngredientTypeRow extends StatefulWidget {
-  final IngredientType type;
+  final shared.IngredientType type;
   final bool isEditing;
   final VoidCallback onEditTapped;
   final VoidCallback onDeleteTapped;
   final VoidCallback onSaveTapped;
-  final Widget? trailing; // <-- Added trailing param
+  final Widget? trailing;
 
   const EditableIngredientTypeRow({
     super.key,
@@ -20,7 +20,7 @@ class EditableIngredientTypeRow extends StatefulWidget {
     required this.onEditTapped,
     required this.onDeleteTapped,
     required this.onSaveTapped,
-    this.trailing, // <-- Added trailing param
+    this.trailing,
   });
 
   @override
@@ -44,17 +44,11 @@ class _EditableIngredientTypeRowState extends State<EditableIngredientTypeRow> {
   @override
   void didUpdateWidget(covariant EditableIngredientTypeRow oldWidget) {
     super.didUpdateWidget(oldWidget);
-
     final updated = widget.type;
 
     if (oldWidget.type.name != updated.name ||
         oldWidget.type.sortOrder != updated.sortOrder ||
         oldWidget.type.id != updated.id) {
-      _nameController.text = updated.name;
-      _sortOrderController.text = updated.sortOrder.toString();
-    }
-
-    if (oldWidget.isEditing != widget.isEditing && widget.isEditing) {
       _nameController.text = updated.name;
       _sortOrderController.text = updated.sortOrder.toString();
     }
@@ -69,8 +63,13 @@ class _EditableIngredientTypeRowState extends State<EditableIngredientTypeRow> {
 
   Future<void> _updateField() async {
     final loc = AppLocalizations.of(context)!;
-    final provider = context.read<IngredientTypeProvider>();
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
+    final provider = Provider.of<IngredientTypeProviderImpl>(
+      context,
+      listen: false,
+    );
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
 
     final updated = widget.type.copyWith(
       name: _nameController.text.trim(),
@@ -86,8 +85,13 @@ class _EditableIngredientTypeRowState extends State<EditableIngredientTypeRow> {
     setState(() => _updating = true);
 
     try {
-      await provider.updateType(franchiseId, updated);
+      await provider.updateIngredientType(
+        franchiseId,
+        updated.id ?? '',
+        {'name': updated.name, 'sortOrder': updated.sortOrder},
+      );
       widget.onSaveTapped();
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -95,12 +99,11 @@ class _EditableIngredientTypeRowState extends State<EditableIngredientTypeRow> {
         );
       }
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to update ingredient type inline',
+        source: 'EditableIngredientTypeRow',
         stack: stack.toString(),
         severity: 'error',
-        source: 'EditableIngredientTypeRow',
-        source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
         contextData: {
           'franchiseId': franchiseId,
           'typeId': widget.type.id,
@@ -108,6 +111,7 @@ class _EditableIngredientTypeRowState extends State<EditableIngredientTypeRow> {
           'attemptedSortOrder': updated.sortOrder,
         },
       );
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(loc.errorGeneric)),
@@ -208,7 +212,3 @@ class _EditableIngredientTypeRowState extends State<EditableIngredientTypeRow> {
     );
   }
 }
-
-
-
-

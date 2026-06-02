@@ -10,7 +10,7 @@ import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 
 class IngredientTypeJsonPreviewTable extends StatelessWidget {
   final String rawJson;
-  final List<IngredientType>? previewTypes;
+  final List<shared.IngredientType>? previewTypes;
 
   const IngredientTypeJsonPreviewTable({
     Key? key,
@@ -24,14 +24,14 @@ class IngredientTypeJsonPreviewTable extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    List<IngredientType> parsedTypes = [];
+    List<shared.IngredientType> parsedTypes = [];
     String? errorMessage;
 
     try {
       final parsed = json.decode(rawJson);
       if (parsed is List) {
         parsedTypes = parsed.map((item) {
-          return IngredientType(
+          return shared.IngredientType(
             id: null,
             name: item['name'] ?? '',
             description: item['description'],
@@ -50,7 +50,6 @@ class IngredientTypeJsonPreviewTable extends StatelessWidget {
       shared.ErrorLogger.log(
         message: 'Failed to parse ingredient type JSON preview',
         source: 'ingredient_type_json_preview_table.dart',
-        source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
         severity: 'warning',
         stack: stack.toString(),
         contextData: {'rawInput': rawJson},
@@ -101,7 +100,3 @@ class IngredientTypeJsonPreviewTable extends StatelessWidget {
     );
   }
 }
-
-
-
-

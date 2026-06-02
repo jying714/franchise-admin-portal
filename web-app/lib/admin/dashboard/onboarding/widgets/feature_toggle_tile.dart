@@ -30,7 +30,8 @@ class FeatureToggleTile extends StatelessWidget {
     final localizations = AppLocalizations.of(context)!;
 
     // For animated highlight, this can later be changed to an AnimatedContainer if desired.
-    return Consumer2<FranchiseFeatureProvider, FranchiseInfoProvider>(
+    return Consumer2<shared.FranchiseFeatureProvider,
+        shared.FranchiseInfoProvider>(
       builder: (context, featureProvider, franchiseInfo, _) {
         final isEnabled = (featureKey == null || featureKey == 'enabled')
             ? featureProvider.isModuleEnabled(moduleKey)
@@ -132,6 +133,3 @@ class FeatureToggleTile extends StatelessWidget {
     );
   }
 }
-
-
-

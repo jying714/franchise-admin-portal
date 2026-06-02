@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-// === SHARED_CORE BARREL (single source of truth) ===
+// === SHARED_CORE BARREL ===
 import 'package:shared_core/shared_core.dart' as shared;
 
 // === LOCAL WEB-APP CONCRETE IMPLs ===
@@ -18,6 +18,7 @@ import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_i
 import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl.dart';
 import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider_impl.dart';
 import 'package:franchise_admin_portal/core/providers/menu_item_provider_impl.dart';
+import 'package:franchise_admin_portal/core/providers/category_provider_impl.dart';
 
 import 'package:franchise_admin_portal/core/services/franchise_subscription_service_impl.dart';
 import 'package:franchise_admin_portal/core/services/franchise_feature_service_impl.dart';
@@ -39,29 +40,12 @@ import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.da
 import 'package:franchise_admin_portal/admin/developer/developer_dashboard_screen.dart';
 import 'package:franchise_admin_portal/admin/franchise/franchise_selector_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/owner_hq_dashboard_screen.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/screens/invoice_list_screen.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/screens/invoice_detail_screen.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/payout_list_screen.dart';
 import 'package:franchise_admin_portal/admin/owner/platform_owner_dashboard_screen.dart';
-import 'package:franchise_admin_portal/admin/profile/universal_profile_screen.dart';
-import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/screens/available_platform_plans_screen.dart';
-import 'package:franchise_admin_portal/admin/owner/screens/full_franchise_subscription_list_screen.dart';
-import 'package:franchise_admin_portal/admin/devtools/billing/billing_subscription_tools_screen.dart';
-import 'package:franchise_admin_portal/admin/devtools/subscriptions/subscription_dev_tools_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredients_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredient_type_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_categories_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_items_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_feature_setup_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_review_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/menu_item_editor_screen.dart';
 import 'package:franchise_admin_portal/widgets/profile_gate_screen.dart';
+import 'package:franchise_admin_portal/config/design_tokens.dart'; // Web-specific DesignTokens (returns Color)
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-/// Returns initial unauth route and optional invite token.
 Map<String, dynamic> getInitialUnauthRoute() {
   final currentUser = fb_auth.FirebaseAuth.instance.currentUser;
   if (currentUser != null) {
@@ -75,12 +59,6 @@ Map<String, dynamic> getInitialUnauthRoute() {
   }
 
   final hash = Uri.base.fragment;
-  shared.ErrorLogger.log(
-    message: '[main.dart][getInitialUnauthRoute] Current hash: $hash',
-    source: 'main.dart',
-    severity: 'info',
-  );
-
   if (hash.startsWith('/invite-accept')) {
     final queryIndex = hash.indexOf('?');
     String token = '';
@@ -102,11 +80,6 @@ Map<String, dynamic> getInitialUnauthRoute() {
     return {'route': '/invite-accept', 'token': token};
   }
 
-  shared.ErrorLogger.log(
-    message: '[main.dart][getInitialUnauthRoute] Defaulting to landing.',
-    source: 'main.dart',
-    severity: 'info',
-  );
   return {'route': '/', 'token': ''};
 }
 
@@ -118,11 +91,7 @@ void main() {
       stack: details.stack?.toString(),
       source: 'FlutterError',
       severity: 'fatal',
-      contextData: {
-        'library': details.library,
-        'context':
-            details.context?.toDescription() ?? details.context.toString(),
-      },
+      contextData: {'library': details.library},
     );
   };
 
@@ -130,8 +99,7 @@ void main() {
     WidgetsFlutterBinding.ensureInitialized();
 
     await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+        options: DefaultFirebaseOptions.currentPlatform);
     await fb_auth.FirebaseAuth.instance
         .setPersistence(fb_auth.Persistence.LOCAL);
 
@@ -144,8 +112,7 @@ void main() {
         providers: [
           ChangeNotifierProvider(create: (_) => UserProfileNotifier()),
           Provider<shared.FranchiseProvider>(
-            create: (_) => shared.FranchiseProvider(storage),
-          ),
+              create: (_) => shared.FranchiseProvider(storage)),
           Provider<shared.AuthService>.value(value: authService),
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           Provider<shared.FirestoreService>.value(value: firestoreService),
@@ -161,31 +128,13 @@ void main() {
     );
   }, (Object error, StackTrace stack) {
     shared.ErrorLogger.log(
-      message: error.toString(),
-      stack: stack.toString(),
-      source: 'runZonedGuarded',
-      severity: 'fatal',
-    );
+        message: error.toString(),
+        stack: stack.toString(),
+        source: 'runZonedGuarded',
+        severity: 'fatal');
   });
 }
 
-/// Safe themeMode with defensive fallback (no print).
-ThemeMode safeThemeMode(BuildContext context) {
-  try {
-    return Provider.of<ThemeProvider>(context, listen: true).themeMode ??
-        ThemeMode.system;
-  } catch (e, stack) {
-    shared.ErrorLogger.log(
-      message: 'ThemeProvider not found in context',
-      stack: stack.toString(),
-      source: 'safeThemeMode',
-      severity: 'warning',
-    );
-    return ThemeMode.system;
-  }
-}
-
-/// Authenticated app root and routing logic
 class FranchiseAuthenticatedRoot extends StatefulWidget {
   const FranchiseAuthenticatedRoot({super.key});
 
@@ -204,109 +153,83 @@ class _FranchiseAuthenticatedRootState
             Provider.of<UserProfileNotifier>(context, listen: false);
         final user = userNotifier.user;
 
-        if (user?.roles?.contains('platform_owner') ?? false) {
-          return const MaterialApp(home: PlatformOwnerDashboardScreen());
-        }
-        if (user?.roles?.contains('hq_owner') ?? false) {
+        if (user?.roles?.contains(shared.User.rolePlatformOwner) ?? false) {
           return const MaterialApp(
-            home: OwnerHqDashboardScreen(currentScreen: 'hq-owner/dashboard'),
+            home: PlatformOwnerDashboardScreen(
+                currentScreen: 'platform-owner/dashboard'),
           );
         }
-        return FranchiseGate(
-          child: const AdminDashboardScreen(),
-        );
+        if (user?.roles?.contains(shared.User.roleHqOwner) ?? false) {
+          return const MaterialApp(home: OwnerHQDashboardScreen());
+        }
+        return FranchiseGate(child: const AdminDashboardScreen());
       },
     );
   }
 }
 
-/// Root widget that cleanly splits unauthenticated vs authenticated
 class FranchiseAppRootSplit extends StatelessWidget {
   const FranchiseAppRootSplit({super.key});
 
   @override
   Widget build(BuildContext context) {
     final firebaseUser = Provider.of<fb_auth.User?>(context);
-
     final userNotifier =
         Provider.of<UserProfileNotifier>(context, listen: false);
+
     if (firebaseUser != null &&
         userNotifier.user == null &&
         !userNotifier.loading) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        userNotifier.loadUser();
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => userNotifier.loadUser());
+    }
+
+    // UNAUTHENTICATED
+    if (firebaseUser == null) {
+      return Builder(builder: (ctx) {
+        final initial = getInitialUnauthRoute();
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          debugShowCheckedModeBanner: false,
+          title: 'Franchise Admin Portal',
+          theme: _lightTheme,
+          darkTheme: _darkTheme,
+          themeMode:
+              Provider.of<ThemeProvider>(context, listen: true).themeMode ??
+                  ThemeMode.system,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          initialRoute: initial['route'] as String,
+          onGenerateRoute: (settings) {
+            final path = Uri.parse(settings.name ?? '/').path;
+            if (path == '/' || path == '/landing')
+              return MaterialPageRoute(builder: (_) => const LandingPage());
+            if (path == '/sign-in')
+              return MaterialPageRoute(builder: (_) => const SignInScreen());
+            if (path == '/invite-accept') {
+              String? token = (settings.arguments as Map?)?['token'] as String?;
+              return MaterialPageRoute(
+                  builder: (_) => InviteAcceptScreen(inviteToken: token));
+            }
+            return MaterialPageRoute(builder: (_) => const LandingPage());
+          },
+        );
       });
     }
 
-    // ==== UNAUTHENTICATED APP ====
-    if (firebaseUser == null) {
-      return Builder(
-        builder: (ctx) {
-          final initial = getInitialUnauthRoute();
-          final String initialRoute = initial['route'] as String;
-          final String inviteToken = initial['token'] as String;
-
-          return MaterialApp(
-            navigatorKey: navigatorKey,
-            debugShowCheckedModeBanner: false,
-            title: 'Franchise Admin Portal',
-            theme: _lightTheme,
-            darkTheme: _darkTheme,
-            themeMode:
-                Provider.of<ThemeProvider>(context, listen: true).themeMode ??
-                    ThemeMode.system,
-            localizationsDelegates: const [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: AppLocalizations.supportedLocales,
-            initialRoute: initialRoute,
-            onGenerateRoute: (RouteSettings settings) {
-              Uri uri = Uri.parse(settings.name ?? '/');
-              final String path = uri.path;
-
-              if (path == '/' || path == '/landing') {
-                return MaterialPageRoute(builder: (_) => const LandingPage());
-              }
-              if (path == '/sign-in') {
-                return MaterialPageRoute(builder: (_) => const SignInScreen());
-              }
-              if (path == '/invite-accept') {
-                String? token;
-                if (uri.queryParameters.containsKey('token')) {
-                  token = uri.queryParameters['token'];
-                } else if (settings.arguments is Map &&
-                    (settings.arguments as Map).containsKey('token')) {
-                  token = (settings.arguments as Map)['token'] as String?;
-                } else if (inviteToken.isNotEmpty) {
-                  token = inviteToken;
-                }
-
-                return MaterialPageRoute(
-                  builder: (_) => InviteAcceptScreen(inviteToken: token),
-                );
-              }
-
-              return MaterialPageRoute(builder: (_) => const LandingPage());
-            },
-          );
-        },
-      );
-    }
-
-    // ==== AUTHENTICATED APP ====
+    // AUTHENTICATED
     return Selector<UserProfileNotifier, bool>(
       selector: (_, notifier) => notifier.user != null && !notifier.loading,
       builder: (context, isUserReady, _) {
         final franchiseProvider =
             Provider.of<shared.FranchiseProvider>(context, listen: false);
-        final userNotifier =
-            Provider.of<UserProfileNotifier>(context, listen: false);
-        final firebaseUser = Provider.of<fb_auth.User?>(context, listen: false);
-
-        final user = userNotifier.user;
+        final user =
+            Provider.of<UserProfileNotifier>(context, listen: false).user;
         final requiresFranchise = user?.isFranchiseRequired ?? true;
         final fid = franchiseProvider.franchiseId;
         final isFranchiseReady = !requiresFranchise ||
@@ -314,39 +237,24 @@ class FranchiseAppRootSplit extends StatelessWidget {
 
         if (!isUserReady || !isFranchiseReady) {
           return const MaterialApp(
-            home: Scaffold(body: Center(child: CircularProgressIndicator())),
-          );
+              home: Scaffold(body: Center(child: CircularProgressIndicator())));
         }
 
-        // ========= FULL BUSINESS PROVIDER TREE (concrete *_Impl only) =========
         return MultiProvider(
           providers: [
             ChangeNotifierProvider(create: (_) => shared.AdminUserProvider()),
             ChangeNotifierProxyProvider<shared.FranchiseProvider,
                 FranchiseSubscriptionProviderImpl>(
               create: (_) => FranchiseSubscriptionProviderImpl(
-                service: FranchiseSubscriptionServiceImpl(),
-                franchiseId: '',
-              ),
-              update: (_, franchiseProvider, notifier) {
-                final fid = franchiseProvider.franchiseId;
-                final userNotifierLocal =
-                    Provider.of<UserProfileNotifier>(_, listen: false);
-                final userRoles = userNotifierLocal.user?.roles ?? [];
-
-                notifier ??= FranchiseSubscriptionProviderImpl(
-                  service: FranchiseSubscriptionServiceImpl(),
-                  franchiseId: fid,
-                );
-
-                notifier.setUserRoles(userRoles);
-
-                if (franchiseProvider.hasValidFranchise &&
-                    fid.isNotEmpty &&
-                    fid != notifier.franchiseId) {
-                  notifier.updateFranchiseId(fid);
-                }
-
+                  service: FranchiseSubscriptionServiceImpl(), franchiseId: ''),
+              update: (_, fp, prev) {
+                final notifier = prev ??
+                    FranchiseSubscriptionProviderImpl(
+                        service: FranchiseSubscriptionServiceImpl(),
+                        franchiseId: fp.franchiseId ?? '');
+                if (fp.franchiseId != null &&
+                    fp.franchiseId != notifier.franchiseId)
+                  notifier.updateFranchiseId(fp.franchiseId!);
                 return notifier;
               },
             ),
@@ -355,388 +263,128 @@ class FranchiseAppRootSplit extends StatelessWidget {
             ChangeNotifierProxyProvider2<shared.FranchiseProvider,
                 shared.FirestoreService, FranchiseInfoProviderImpl>(
               create: (_) => FranchiseInfoProviderImpl(
-                firestore:
-                    Provider.of<shared.FirestoreService>(_, listen: false),
-                franchiseProvider:
-                    Provider.of<shared.FranchiseProvider>(_, listen: false),
-              ),
-              update: (_, franchiseProvider, firestoreService, previous) {
-                final provider = previous ??
-                    FranchiseInfoProviderImpl(
-                      firestore: firestoreService,
-                      franchiseProvider: franchiseProvider,
-                    );
-                provider.loadFranchiseInfo();
-                return provider;
-              },
+                  firestore: shared.FirestoreServiceImpl(),
+                  franchiseProvider:
+                      shared.FranchiseProvider(AppLocalStorage())),
+              update: (_, fp, fs, prev) => prev ??
+                  FranchiseInfoProviderImpl(
+                      firestore: fs, franchiseProvider: fp)
+                ..loadFranchiseInfo(),
             ),
             ChangeNotifierProxyProvider2<shared.FranchiseProvider,
                 shared.FirestoreService, FranchiseFeatureProviderImpl>(
               create: (_) => FranchiseFeatureProviderImpl(
-                service: FranchiseFeatureServiceImpl(),
-                franchiseId: '',
-              ),
-              update: (_, franchiseProvider, firestoreService, previous) {
-                final fid = franchiseProvider.franchiseId;
-                if (!franchiseProvider.hasValidFranchise) return previous!;
-                final provider = previous ??
+                  service: FranchiseFeatureServiceImpl(), franchiseId: ''),
+              update: (_, fp, fs, prev) {
+                final p = prev ??
                     FranchiseFeatureProviderImpl(
-                      service: FranchiseFeatureServiceImpl(),
-                      franchiseId: fid,
-                    );
-                if (fid.isNotEmpty && fid != provider.currentFranchiseId) {
-                  provider.setFranchiseId(fid);
-                }
-                return provider;
+                        service: FranchiseFeatureServiceImpl(),
+                        franchiseId: fp.franchiseId ?? '');
+                if (fp.franchiseId != null) p.setFranchiseId(fp.franchiseId!);
+                return p;
               },
             ),
             ChangeNotifierProxyProvider2<shared.FirestoreService,
                 shared.FranchiseProvider, OnboardingProgressProviderImpl>(
               create: (_) => OnboardingProgressProviderImpl(
-                firestore:
-                    Provider.of<shared.FirestoreService>(_, listen: false),
-                franchiseId: '',
-              ),
-              update: (_, firestoreService, franchiseProvider, previous) {
-                final fid = franchiseProvider.franchiseId ?? '';
-                final provider = previous ??
-                    OnboardingProgressProviderImpl(
-                      firestore: firestoreService,
-                      franchiseId: fid,
-                    );
-                if (fid.isNotEmpty && fid != provider.franchiseId) {
-                  return OnboardingProgressProviderImpl(
-                    firestore: firestoreService,
-                    franchiseId: fid,
-                  );
-                }
-                return provider;
-              },
+                  firestore: shared.FirestoreServiceImpl(), franchiseId: ''),
+              update: (_, fs, fp, prev) =>
+                  prev ??
+                  OnboardingProgressProviderImpl(
+                      firestore: fs, franchiseId: fp.franchiseId ?? ''),
             ),
             ChangeNotifierProxyProvider2<shared.FirestoreService,
                 shared.FranchiseProvider, IngredientMetadataProviderImpl>(
               create: (_) => IngredientMetadataProviderImpl(
-                firestore:
-                    Provider.of<shared.FirestoreService>(_, listen: false),
-                franchiseId: '',
-              ),
-              update: (_, firestore, franchiseProvider, previous) {
-                final fid = franchiseProvider.franchiseId;
-                if (!franchiseProvider.hasValidFranchise) return previous!;
-                final provider = previous ??
-                    IngredientMetadataProviderImpl(
-                      firestore: firestore,
-                      franchiseId: fid,
-                    );
-                if (fid.isNotEmpty &&
-                    fid != provider.franchiseId &&
-                    fid != 'unknown') {
-                  return IngredientMetadataProviderImpl(
-                    firestore: firestore,
-                    franchiseId: fid,
-                  )..load();
-                }
-                return provider;
-              },
+                  firestore: shared.FirestoreServiceImpl(), franchiseId: ''),
+              update: (_, fs, fp, prev) =>
+                  prev ??
+                  IngredientMetadataProviderImpl(
+                      firestore: fs, franchiseId: fp.franchiseId ?? ''),
             ),
             ChangeNotifierProxyProvider2<shared.FirestoreService,
-                shared.FranchiseProvider, shared.CategoryProvider>(
-              create: (_) => shared.CategoryProvider(
-                firestore:
-                    Provider.of<shared.FirestoreService>(_, listen: false),
-                franchiseId: '',
-              ),
-              update: (_, firestore, franchiseProvider, previous) {
-                final fid = franchiseProvider.franchiseId;
-                if (!franchiseProvider.hasValidFranchise) return previous!;
-                final provider = previous ??
-                    shared.CategoryProvider(
-                      firestore: firestore,
-                      franchiseId: fid,
-                    );
-                if (fid.isNotEmpty && fid != provider.franchiseId) {
-                  provider.updateFranchiseId(fid);
-                }
-                return provider;
-              },
+                shared.FranchiseProvider, CategoryProviderImpl>(
+              create: (_) => CategoryProviderImpl(
+                  firestore: shared.FirestoreServiceImpl(), franchiseId: ''),
+              update: (_, fs, fp, prev) =>
+                  prev ??
+                  CategoryProviderImpl(
+                      firestore: fs, franchiseId: fp.franchiseId ?? ''),
             ),
             ChangeNotifierProxyProvider3<
                 shared.FirestoreService,
                 shared.FranchiseProvider,
-                FranchiseInfoProvider,
+                FranchiseInfoProviderImpl,
                 MenuItemProviderImpl>(
               create: (_) => MenuItemProviderImpl(
-                firestoreService:
-                    Provider.of<shared.FirestoreService>(_, listen: false),
-                franchiseInfoProvider:
-                    Provider.of<FranchiseInfoProvider>(_, listen: false),
-              ),
-              update: (_, firestoreService, franchiseProvider,
-                  franchiseInfoProvider, previous) {
-                final fid = franchiseProvider.franchiseId;
-                if (!franchiseProvider.hasValidFranchise) return previous!;
-                final provider = previous ??
-                    MenuItemProviderImpl(
-                      firestoreService: firestoreService,
-                      franchiseInfoProvider: franchiseInfoProvider,
-                    );
-                provider.franchiseInfoProvider = franchiseInfoProvider;
-                if (fid.isNotEmpty && fid != 'unknown') {
-                  provider.loadMenuItems(fid);
-                }
-                return provider;
-              },
+                  firestoreService: shared.FirestoreServiceImpl(),
+                  franchiseInfoProvider: FranchiseInfoProviderImpl(
+                      firestore: shared.FirestoreServiceImpl(),
+                      franchiseProvider:
+                          shared.FranchiseProvider(AppLocalStorage()))),
+              update: (_, fs, fp, fip, prev) =>
+                  prev ??
+                  MenuItemProviderImpl(
+                      firestoreService: fs, franchiseInfoProvider: fip),
             ),
             ChangeNotifierProxyProvider2<shared.FirestoreService,
                 shared.FranchiseProvider, IngredientTypeProviderImpl>(
               create: (_) => IngredientTypeProviderImpl(
-                firestoreService:
-                    Provider.of<shared.FirestoreService>(_, listen: false),
-              ),
-              update: (_, firestoreService, franchiseProvider, previous) {
-                final fid = franchiseProvider.franchiseId;
-                if (!franchiseProvider.hasValidFranchise) return previous!;
-                final provider = previous ??
-                    IngredientTypeProviderImpl(
-                      firestoreService: firestoreService,
-                    );
-                if (fid.isNotEmpty && fid != provider.franchiseId) {
-                  provider.franchiseId = fid;
-                  provider.load(franchiseIdOverride: fid);
-                }
-                return provider;
-              },
+                  firestoreService: shared.FirestoreServiceImpl()),
+              update: (_, fs, fp, prev) =>
+                  prev ?? IngredientTypeProviderImpl(firestoreService: fs)
+                    ..franchiseId = fp.franchiseId ?? '',
             ),
-            Provider<AuditLogService>.value(value: AuditLogServiceImpl()),
-            ChangeNotifierProvider(
-              create: (_) => FranchiseeInvitationProviderImpl(
-                service: FranchiseeInvitationService(
-                  firestoreService:
-                      Provider.of<shared.FirestoreService>(_, listen: false),
-                ),
-              ),
-            ),
-            ChangeNotifierProvider(create: (_) => RestaurantTypeProvider()),
+            Provider<shared.AuditLogService>.value(
+                value: AuditLogServiceImpl()),
             Provider<shared.AnalyticsService>.value(
                 value: shared.AnalyticsServiceImpl()),
             StreamProvider<fb_auth.User?>.value(
-              value: fb_auth.FirebaseAuth.instance.authStateChanges(),
-              initialData: null,
-            ),
-            ChangeNotifierProvider(create: (_) => UserProfileNotifier()),
+                value: fb_auth.FirebaseAuth.instance.authStateChanges(),
+                initialData: null),
           ],
-          child: FranchiseAuthenticatedRoot(
-            key: ValueKey(firebaseUser?.uid),
-          ),
+          child: FranchiseAuthenticatedRoot(key: ValueKey(firebaseUser?.uid)),
         );
       },
     );
   }
 }
 
-// ===== THEME DEFINITIONS (shared.DesignTokens only - per barrel rules) =====
-
+// THEME (Fixed with DesignTokens)
 final ThemeData _lightTheme = ThemeData(
   fontFamily: shared.DesignTokens.fontFamily,
-  primaryColor: shared.DesignTokens.primaryColor,
-  scaffoldBackgroundColor: shared.DesignTokens.backgroundColor,
-  colorScheme: ColorScheme(
-    brightness: Brightness.light,
-    primary: shared.DesignTokens.primaryColor,
-    onPrimary: shared.DesignTokens.foregroundColor,
-    secondary: shared.DesignTokens.secondaryColor,
-    onSecondary: shared.DesignTokens.foregroundColor,
-    error: shared.DesignTokens.errorColor,
-    onError: shared.DesignTokens.errorTextColor,
-    background: shared.DesignTokens.backgroundColor,
-    onBackground: shared.DesignTokens.textColor,
-    surface: shared.DesignTokens.surfaceColor,
-    onSurface: shared.DesignTokens.textColor,
+  primaryColor: DesignTokens.primaryColor, // Use web DesignTokens (Color)
+  scaffoldBackgroundColor: DesignTokens.backgroundColor,
+  colorScheme: ColorScheme.light(
+    primary: DesignTokens.primaryColor,
+    onPrimary: Colors.white,
+    secondary: DesignTokens.secondaryColor,
+    onSecondary: Colors.white,
+    error: DesignTokens.errorColor,
+    onError: Colors.white,
+    background: DesignTokens.backgroundColor,
+    onBackground: DesignTokens.textColor,
+    surface: DesignTokens.surfaceColor,
+    onSurface: DesignTokens.textColor,
   ),
-  appBarTheme: AppBarTheme(
-    backgroundColor: shared.DesignTokens.appBarBackgroundColor,
-    foregroundColor: shared.DesignTokens.appBarForegroundColor,
-    iconTheme: IconThemeData(color: shared.DesignTokens.appBarIconColor),
-    elevation: shared.DesignTokens.appBarElevation,
-    titleTextStyle: TextStyle(
-      fontFamily: shared.DesignTokens.appBarFontFamily,
-      fontSize: shared.DesignTokens.appBarTitleFontSize,
-      fontWeight: shared.DesignTokens.appBarTitleFontWeight,
-      color: shared.DesignTokens.appBarForegroundColor,
-    ),
-  ),
-  textTheme: TextTheme(
-    bodyMedium: TextStyle(
-      fontFamily: shared.DesignTokens.fontFamily,
-      fontSize: shared.DesignTokens.adminBodyFontSize,
-      color: shared.DesignTokens.textColor,
-    ),
-    titleLarge: TextStyle(
-      fontFamily: shared.DesignTokens.fontFamily,
-      fontSize: shared.DesignTokens.adminTitleFontSize,
-      fontWeight: shared.DesignTokens.titleFontWeight,
-      color: shared.DesignTokens.textColor,
-    ),
-    titleMedium: TextStyle(
-      fontFamily: shared.DesignTokens.fontFamily,
-      fontSize: shared.DesignTokens.adminCaptionFontSize,
-      color: shared.DesignTokens.secondaryTextColor,
-    ),
-  ),
-  cardTheme: CardTheme(
-    color: shared.DesignTokens.surfaceColor,
-    elevation: shared.DesignTokens.adminCardElevation,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(shared.DesignTokens.adminCardRadius),
-    ),
-    margin: EdgeInsets.all(shared.DesignTokens.adminCardSpacing),
-  ),
-  elevatedButtonTheme: ElevatedButtonThemeData(
-    style: ElevatedButton.styleFrom(
-      backgroundColor: shared.DesignTokens.primaryColor,
-      foregroundColor: shared.DesignTokens.foregroundColor,
-      shape: RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.circular(shared.DesignTokens.adminButtonRadius),
-      ),
-      elevation: shared.DesignTokens.adminButtonElevation,
-      textStyle: TextStyle(
-        fontSize: shared.DesignTokens.adminButtonFontSize,
-        fontFamily: shared.DesignTokens.fontFamily,
-        fontWeight: shared.DesignTokens.titleFontWeight,
-      ),
-      padding: shared.DesignTokens.buttonPadding,
-    ),
-  ),
-  dialogTheme: DialogTheme(
-    backgroundColor: shared.DesignTokens.surfaceColor,
-    shape: RoundedRectangleBorder(
-      borderRadius:
-          BorderRadius.circular(shared.DesignTokens.dialogBorderRadius),
-    ),
-    elevation: shared.DesignTokens.adminDialogElevation,
-    titleTextStyle: TextStyle(
-      fontFamily: shared.DesignTokens.fontFamily,
-      fontSize: shared.DesignTokens.adminTitleFontSize,
-      fontWeight: FontWeight.bold,
-      color: shared.DesignTokens.textColor,
-    ),
-    contentTextStyle: TextStyle(
-      fontFamily: shared.DesignTokens.fontFamily,
-      fontSize: shared.DesignTokens.adminBodyFontSize,
-      color: shared.DesignTokens.textColor,
-    ),
-  ),
-  inputDecorationTheme: InputDecorationTheme(
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(shared.DesignTokens.formFieldRadius),
-    ),
-  ),
+  appBarTheme: const AppBarTheme(elevation: 2),
 );
 
 final ThemeData _darkTheme = ThemeData(
   brightness: Brightness.dark,
   fontFamily: shared.DesignTokens.fontFamily,
-  primaryColor: shared.DesignTokens.primaryColor,
-  scaffoldBackgroundColor: shared.DesignTokens.backgroundColorDark,
-  colorScheme: ColorScheme(
-    brightness: Brightness.dark,
-    primary: shared.DesignTokens.primaryColor,
-    onPrimary: shared.DesignTokens.foregroundColorDark,
-    secondary: shared.DesignTokens.secondaryColor,
-    onSecondary: shared.DesignTokens.foregroundColorDark,
-    error: shared.DesignTokens.errorColor,
-    onError: shared.DesignTokens.errorTextColor,
-    background: shared.DesignTokens.backgroundColorDark,
-    onBackground: shared.DesignTokens.textColorDark,
-    surface: shared.DesignTokens.surfaceColorDark,
-    onSurface: shared.DesignTokens.textColorDark,
+  primaryColor: DesignTokens.primaryColor,
+  scaffoldBackgroundColor: DesignTokens.backgroundColorDark,
+  colorScheme: ColorScheme.dark(
+    primary: DesignTokens.primaryColor,
+    onPrimary: Colors.white,
+    secondary: DesignTokens.secondaryColor,
+    onSecondary: Colors.white,
+    error: DesignTokens.errorColor,
+    onError: Colors.white,
+    background: DesignTokens.backgroundColorDark,
+    onBackground: DesignTokens.textColorDark,
+    surface: DesignTokens.surfaceColorDark,
+    onSurface: DesignTokens.textColorDark,
   ),
-  appBarTheme: AppBarTheme(
-    backgroundColor: shared.DesignTokens.appBarBackgroundColorDark,
-    foregroundColor: shared.DesignTokens.appBarForegroundColorDark,
-    iconTheme:
-        IconThemeData(color: shared.DesignTokens.appBarForegroundColorDark),
-    elevation: shared.DesignTokens.appBarElevation,
-    titleTextStyle: TextStyle(
-      fontFamily: shared.DesignTokens.appBarFontFamily,
-      fontSize: shared.DesignTokens.appBarTitleFontSize,
-      fontWeight: shared.DesignTokens.appBarTitleFontWeight,
-      color: shared.DesignTokens.appBarForegroundColorDark,
-    ),
-  ),
-  drawerTheme: DrawerThemeData(
-    backgroundColor: shared.DesignTokens.backgroundColorDark,
-    scrimColor: Colors.black.withOpacity(0.5),
-  ),
-  textTheme: TextTheme(
-    bodyMedium: TextStyle(
-      fontFamily: shared.DesignTokens.fontFamily,
-      fontSize: shared.DesignTokens.adminBodyFontSize,
-      color: shared.DesignTokens.textColorDark,
-    ),
-    titleLarge: TextStyle(
-      fontFamily: shared.DesignTokens.fontFamily,
-      fontSize: shared.DesignTokens.adminTitleFontSize,
-      fontWeight: shared.DesignTokens.titleFontWeight,
-      color: shared.DesignTokens.textColorDark,
-    ),
-    titleMedium: TextStyle(
-      fontFamily: shared.DesignTokens.fontFamily,
-      fontSize: shared.DesignTokens.adminCaptionFontSize,
-      color: shared.DesignTokens.secondaryTextColor,
-    ),
-  ),
-  cardTheme: CardTheme(
-    color: shared.DesignTokens.surfaceColorDark,
-    elevation: shared.DesignTokens.adminCardElevation,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(shared.DesignTokens.adminCardRadius),
-    ),
-    margin: EdgeInsets.all(shared.DesignTokens.adminCardSpacing),
-  ),
-  elevatedButtonTheme: ElevatedButtonThemeData(
-    style: ElevatedButton.styleFrom(
-      backgroundColor: shared.DesignTokens.primaryColor,
-      foregroundColor: shared.DesignTokens.foregroundColorDark,
-      shape: RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.circular(shared.DesignTokens.adminButtonRadius),
-      ),
-      elevation: shared.DesignTokens.adminButtonElevation,
-      textStyle: TextStyle(
-        fontSize: shared.DesignTokens.adminButtonFontSize,
-        fontFamily: shared.DesignTokens.fontFamily,
-        fontWeight: shared.DesignTokens.titleFontWeight,
-      ),
-      padding: shared.DesignTokens.buttonPadding,
-    ),
-  ),
-  dialogTheme: DialogTheme(
-    backgroundColor: shared.DesignTokens.surfaceColorDark,
-    shape: RoundedRectangleBorder(
-      borderRadius:
-          BorderRadius.circular(shared.DesignTokens.dialogBorderRadius),
-    ),
-    elevation: shared.DesignTokens.adminDialogElevation,
-    titleTextStyle: TextStyle(
-      fontFamily: shared.DesignTokens.fontFamily,
-      fontSize: shared.DesignTokens.adminTitleFontSize,
-      fontWeight: FontWeight.bold,
-      color: shared.DesignTokens.textColorDark,
-    ),
-    contentTextStyle: TextStyle(
-      fontFamily: shared.DesignTokens.fontFamily,
-      fontSize: shared.DesignTokens.adminBodyFontSize,
-      color: shared.DesignTokens.textColorDark,
-    ),
-  ),
-  inputDecorationTheme: InputDecorationTheme(
-    hintStyle: TextStyle(color: shared.DesignTokens.hintTextColorDark),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(shared.DesignTokens.formFieldRadius),
-    ),
-  ),
-  dividerColor: shared.DesignTokens.dividerColorDark,
-  iconTheme: IconThemeData(color: shared.DesignTokens.textColorDark),
 );

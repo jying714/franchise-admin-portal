@@ -20,7 +20,7 @@ class OnboardingAuditTrail extends StatefulWidget {
 }
 
 class _OnboardingAuditTrailState extends State<OnboardingAuditTrail> {
-  List<AuditLog> _logs = [];
+  List<shared.AuditLog> _logs = [];
   bool _loading = true;
   String? _error;
 
@@ -37,7 +37,7 @@ class _OnboardingAuditTrailState extends State<OnboardingAuditTrail> {
     });
     try {
       final auditLogService =
-          Provider.of<AuditLogService>(context, listen: false);
+          Provider.of<shared.AuditLogService>(context, listen: false);
       final logs =
           await auditLogService.getOnboardingAuditLogs(widget.franchiseId);
 
@@ -121,17 +121,17 @@ class _OnboardingAuditTrailState extends State<OnboardingAuditTrail> {
         Color iconColor;
         String label;
         switch (log.eventType) {
-          case AuditLogEventType.publishOnboarding:
+          case shared.AuditLogEventType.publishOnboarding:
             icon = Icons.rocket_launch_rounded;
             iconColor = colorScheme.primary;
             label = "Published";
             break;
-          case AuditLogEventType.cancelOnboarding:
+          case shared.AuditLogEventType.cancelOnboarding:
             icon = Icons.cancel_rounded;
             iconColor = colorScheme.error;
             label = "Cancelled";
             break;
-          case AuditLogEventType.editOnboarding:
+          case shared.AuditLogEventType.editOnboarding:
             icon = Icons.edit_rounded;
             iconColor = colorScheme.tertiary;
             label = "Edited";
@@ -229,5 +229,3 @@ class _OnboardingAuditTrailState extends State<OnboardingAuditTrail> {
     }
   }
 }
-
-

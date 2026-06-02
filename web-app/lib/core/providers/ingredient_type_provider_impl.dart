@@ -89,8 +89,16 @@ class IngredientTypeProviderImpl extends ChangeNotifier
 
     try {
       await _firestoreService.fetchIngredientTypeIds(franchiseId);
-      _ingredientTypes =
-          []; // Placeholder until full model fetch is wired // Placeholder until full model fetch is wired
+      final fetched =
+          await _firestoreService.fetchIngredientTypeIds(franchiseId);
+      _ingredientTypes = fetched
+          .map((id) => shared.IngredientType(
+                id: id,
+                name:
+                    id, // placeholder - replace with real name lookup if needed
+                visibleInApp: true,
+              ))
+          .toList();
     } catch (e, stack) {
       _error = e.toString();
       shared.ErrorLogger.log(
@@ -103,6 +111,15 @@ class IngredientTypeProviderImpl extends ChangeNotifier
       _loading = false;
       notifyListeners();
     }
+  }
+
+  @override
+  Future<void> loadIngredientTypes(String franchiseId,
+      {bool forceReloadFromFirestore = false}) async {
+    if (franchiseId.isEmpty || franchiseId == 'unknown') return;
+    if (forceReloadFromFirestore) _hasLoaded = false;
+    await _loadIngredientTypes(franchiseId,
+        forceReloadFromFirestore: forceReloadFromFirestore);
   }
 
   @override

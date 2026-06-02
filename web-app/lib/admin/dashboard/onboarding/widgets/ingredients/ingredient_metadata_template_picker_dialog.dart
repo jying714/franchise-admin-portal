@@ -10,7 +10,7 @@ class IngredientMetadataTemplatePickerDialog extends StatefulWidget {
 
   const IngredientMetadataTemplatePickerDialog({super.key, required this.loc});
 
-  static Future<List<IngredientMetadata>?> show(BuildContext context) {
+  static Future<List<shared.IngredientMetadata>?> show(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       debugPrint(
@@ -18,7 +18,7 @@ class IngredientMetadataTemplatePickerDialog extends StatefulWidget {
       return Future.value();
     }
 
-    return showDialog<List<IngredientMetadata>>(
+    return showDialog<List<shared.IngredientMetadata>>(
       context: context,
       builder: (dialogContext) {
         return IngredientMetadataTemplatePickerDialog(loc: loc);
@@ -37,7 +37,9 @@ class _IngredientMetadataTemplatePickerDialogState
 
   Future<void> _loadTemplate(String templateId) async {
     final loc = widget.loc;
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
 
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -57,7 +59,7 @@ class _IngredientMetadataTemplatePickerDialogState
           .get();
 
       final newItems = snapshot.docs
-          .map((doc) => IngredientMetadata.fromMap(doc.data()))
+          .map((doc) => shared.IngredientMetadata.fromMap(doc.data()))
           .toList();
 
       if (context.mounted) {
@@ -67,10 +69,9 @@ class _IngredientMetadataTemplatePickerDialogState
         );
       }
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'ingredient_metadata_template_load_failed',
         stack: stack.toString(),
-        source: 'onboarding_ingredients_screen' /* was screen, Phase 4 fix */,
         source: 'IngredientMetadataTemplatePickerDialog',
         severity: 'error',
         contextData: {
@@ -91,7 +92,8 @@ class _IngredientMetadataTemplatePickerDialogState
   @override
   Widget build(BuildContext context) {
     try {
-      final p = Provider.of<IngredientMetadataProvider>(context, listen: false);
+      final p = Provider.of<shared.IngredientMetadataProvider>(context,
+          listen: false);
       print(
           '[IngredientMetadataTemplatePickerDialog] build() provider hashCode=${p.hashCode}');
     } catch (e) {
@@ -181,7 +183,3 @@ class _IngredientMetadataTemplatePickerDialogState
     super.dispose();
   }
 }
-
-
-
-

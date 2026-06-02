@@ -1,8 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-// Optionally for user id:
 
 class BulkUploadDialog extends StatefulWidget {
   final String franchiseId;
@@ -24,13 +24,12 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
   Future<void> _showErrorDialog(BuildContext context, String message) async {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[YourWidget] loc is null! Localization not available for this context.');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Localization missing! [debug]')),
+        const SnackBar(content: Text('Localization missing!')),
       );
       return;
     }
+
     await showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -48,21 +47,22 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId = widget.franchiseId;
-
-    final shared.firestoreService =
-        Provider.of<shared.FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
+      return const Scaffold(
+        body: Center(child: Text('Localization missing!')),
       );
     }
-    // Optionally get userId for logging:
-    final userId =
-        Provider.of<UserProfileNotifier?>(context, listen: false)?.user?.id;
+
+    final firestoreService = Provider.of<shared.FirestoreService>(
+      context,
+      listen: false,
+    );
+
+    final userId = Provider.of<UserProfileNotifier>(
+      context,
+      listen: false,
+    ).user?.id;
 
     return AlertDialog(
       title: Text(loc.bulkUploadCategories),
@@ -108,47 +108,49 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
                   setState(() => _isUploading = true);
                   try {
                     final lines = _controller.text.split('\n');
-                    final List<Category> cats = [];
+                    final List<shared.Category> cats = [];
+
                     for (var line in lines.skip(1)) {
                       if (line.trim().isEmpty) continue;
                       final cols = line.split(',');
                       if (cols.isEmpty || cols[0].trim().isEmpty) continue;
-                      cats.add(Category(
+
+                      cats.add(shared.Category(
                         id: UniqueKey().toString(),
                         name: cols[0].trim(),
                         image: cols.length > 1 ? cols[1].trim() : null,
                         description: cols.length > 2 ? cols[2].trim() : null,
                       ));
                     }
+
                     for (final cat in cats) {
-                      await shared.firestoreService.addCategory(
-                        franchiseId: franchiseId,
+                      await firestoreService.addCategory(
+                        franchiseId: widget.franchiseId,
                         category: cat,
                       );
                     }
+
                     setState(() {
                       _uploadResult =
                           '${cats.length} ${loc.bulkUploadSuccess.toLowerCase()}';
                     });
                   } catch (e, stack) {
-                    // Remote error logging
-                    try {
-                      await shared.ErrorLogger.log(
-                        message: e.toString(),
-                        source: 'bulk_upload_dialog',
-                        source: 'BulkUploadDialog' /* was screen, Phase 4 fix */,
-                        stack: stack.toString(),
-                        severity: 'error',
-                        contextData: {
-                          'franchiseId': franchiseId,
-                          'userId': userId,
-                          'errorType': e.runtimeType.toString(),
-                          'csvText': _controller.text,
-                        },
-                      );
-                    } catch (_) {}
+                    shared.ErrorLogger.log(
+                      message: e.toString(),
+                      source: 'BulkUploadDialog',
+                      stack: stack.toString(),
+                      severity: 'error',
+                      contextData: {
+                        'franchiseId': widget.franchiseId,
+                        'userId': userId,
+                        'errorType': e.runtimeType.toString(),
+                      },
+                    );
+
                     setState(() => _uploadResult = loc.bulkUploadError);
-                    await _showErrorDialog(context, loc.bulkUploadError);
+                    if (mounted) {
+                      await _showErrorDialog(context, loc.bulkUploadError);
+                    }
                   } finally {
                     setState(() => _isUploading = false);
                   }
@@ -157,16 +159,11 @@ class _BulkUploadDialogState extends State<BulkUploadDialog> {
               ? const SizedBox(
                   height: 18,
                   width: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2))
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
               : Text(loc.upload),
         ),
       ],
     );
   }
 }
-
-
-
-
-
-

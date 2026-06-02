@@ -3,12 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl.dart';
 // Optionally: If your user profile notifier/provider is named differently, update this import.
 
 class CategoryFormDialog extends StatefulWidget {
   final String franchiseId;
-  final Category? category;
-  final Future<void> Function(Category category) onSaved;
+  final shared.Category? category;
+  final Future<void> Function(shared.Category category) onSaved;
 
   const CategoryFormDialog({
     super.key,
@@ -156,7 +157,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                   if (_formKey.currentState?.validate() ?? false) {
                     _formKey.currentState?.save();
                     setState(() => _saving = true);
-                    final category = Category(
+                    final category = shared.Category(
                       id: widget.category?.id ?? UniqueKey().toString(),
                       name: _name,
                       image: _image,
@@ -172,10 +173,9 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                                 listen: false)
                             .user
                             ?.id;
-                        await shared.ErrorLogger.log(
+                        shared.ErrorLogger.log(
                           message: e.toString(),
                           source: 'category_form_dialog',
-                          source: 'CategoryFormDialog' /* was screen, Phase 4 fix */,
                           stack: stack.toString(),
                           severity: 'error',
                           contextData: {
@@ -214,8 +214,3 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
     );
   }
 }
-
-
-
-
-

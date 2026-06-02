@@ -4,6 +4,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 /// Displays a shopping cart icon with a dynamic badge count.
 /// Pass in a [cartItemCountStream] that emits the item count as an integer.
 /// The [onPressed] callback is called when the icon is tapped.
+
 class CartIconBadge extends StatelessWidget {
   final Stream<int> cartItemCountStream;
   final VoidCallback? onPressed;

@@ -45,7 +45,8 @@ class _IngredientTypeTemplatePickerDialogState
   Future<void> _loadTemplate(String templateId) async {
     final loc = widget.loc;
     final franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
 
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -79,7 +80,8 @@ class _IngredientTypeTemplatePickerDialogState
       await shared.ErrorLogger.log(
         message: 'ingredient_type_template_load_failed',
         stack: stack.toString(),
-        source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
+        source:
+            'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
         source: 'IngredientTypeTemplatePickerDialog',
         severity: 'error',
         contextData: {
@@ -184,8 +186,3 @@ class _IngredientTypeTemplatePickerDialogState
     );
   }
 }
-
-
-
-
-

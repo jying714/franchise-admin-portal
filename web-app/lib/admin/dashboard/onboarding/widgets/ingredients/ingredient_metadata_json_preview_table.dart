@@ -5,7 +5,7 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class IngredientMetadataJsonPreviewTable extends StatelessWidget {
   final String rawJson;
-  final List<IngredientMetadata>? previewIngredients;
+  final List<shared.IngredientMetadata>? previewIngredients;
   final AppLocalizations loc;
   final ScrollController? scrollController;
 
@@ -134,5 +134,3 @@ class IngredientMetadataJsonPreviewTable extends StatelessWidget {
     );
   }
 }
-
-

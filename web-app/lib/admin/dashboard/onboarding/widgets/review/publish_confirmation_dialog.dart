@@ -10,7 +10,7 @@ import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 /// - Strongly worded, a11y-friendly, and visually consistent
 class PublishConfirmationDialog extends StatefulWidget {
   /// Pass any remaining blocking issues. If nonempty, disables publish.
-  final List<OnboardingValidationIssue> blockingIssues;
+  final List<shared.OnboardingValidationIssue> blockingIssues;
 
   const PublishConfirmationDialog({
     Key? key,
@@ -230,5 +230,3 @@ class _PublishConfirmationDialogState extends State<PublishConfirmationDialog> {
     );
   }
 }
-
-
