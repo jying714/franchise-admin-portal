@@ -17,13 +17,13 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_i
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_utility.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-    as app_models;
 
 class MenuItemEditorSheet extends StatefulWidget {
-  final MenuItem? existing;
-  final void Function(MenuItem item) onSave;
+  final shared.MenuItem? existing;
+  final void Function(shared.MenuItem item) onSave;
   final VoidCallback onCancel;
-  final void Function(List<MenuItemSchemaIssue> issues)? onSchemaIssuesChanged;
+  final void Function(List<shared.MenuItemSchemaIssue> issues)?
+      onSchemaIssuesChanged;
   final FirebaseFirestore firestore;
   final String franchiseId;
 
@@ -45,7 +45,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
   late TextEditingController _nameController;
   late TextEditingController _descriptionController;
   late TextEditingController _priceController;
-  List<CustomizationGroup> customizationGroups = [];
+  List<shared.CustomizationGroup> customizationGroups = [];
   final _formKey = GlobalKey<FormState>();
   late String name;
   late String description;
@@ -54,18 +54,18 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
   bool outOfStock = false;
   String imageUrl = '';
   List<String> selectedTemplateRefs = [];
-  NutritionInfo? nutrition;
-  List<IngredientReference> includedIngredients = [];
-  List<IngredientReference> optionalAddOns = [];
-  List<Customization> customizations = [];
-  List<SizeData> sizeData = [];
+  shared.NutritionInfo? nutrition;
+  List<shared.IngredientReference> includedIngredients = [];
+  List<shared.IngredientReference> optionalAddOns = [];
+  List<shared.Customization> customizations = [];
+  List<shared.SizeData> sizeData = [];
   String? get selectedTemplate =>
       selectedTemplateRefs.isNotEmpty ? selectedTemplateRefs.first : null;
 
   bool isDirty = false;
-  List<MenuItem> availableTemplates = [];
+  List<shared.MenuItem> availableTemplates = [];
   bool loadingTemplates = true;
-  List<MenuItemSchemaIssue> _schemaIssues = [];
+  List<shared.MenuItemSchemaIssue> _schemaIssues = [];
   bool _showSchemaSidebar = false;
 
   // --- ADVANCED FIELDS ---
@@ -133,33 +133,36 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     sizeData = List.from(item?.sizes ?? []);
     customizationGroups = (item?.customizationGroups != null)
         ? (item!.customizationGroups as List)
-            .map(
-                (g) => CustomizationGroup.fromMap(Map<String, dynamic>.from(g)))
+            .map((g) =>
+                shared.CustomizationGroup.fromMap(Map<String, dynamic>.from(g)))
             .toList()
         : [];
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final franchise = context.read<FranchiseInfoProvider>().franchise;
+      final franchise =
+          Provider.of<shared.FranchiseInfoProvider>(context, listen: false)
+              .franchise;
       if (franchise?.restaurantType != null) {
-        await context
-            .read<shared.MenuItemProvider>()
-            .loadSizeTemplates(franchise!.restaurantType!);
+        await Provider.of<shared.MenuItemProvider>(context, listen: false)
+            .loadTemplateRefs();
       }
-      await context
-          .read<IngredientTypeProvider>()
-          .loadIngredientTypes(widget.franchiseId);
+      await Provider.of<shared.IngredientTypeProvider>(context, listen: false)
+          .load(franchiseIdOverride: widget.franchiseId);
     });
   }
 
-  List<MenuItemSchemaIssue> validateMenuItem({
+  List<shared.MenuItemSchemaIssue> validateMenuItem({
     required BuildContext context,
     required String menuItemId,
   }) {
-    final categories = context.read<shared.CategoryProvider>().categories;
+    final categories =
+        Provider.of<shared.CategoryProvider>(context, listen: false).categories;
     final ingredients =
-        context.read<IngredientMetadataProvider>().allIngredients;
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
+            .allIngredients;
     final ingredientTypes =
-        context.read<IngredientTypeProvider>().ingredientTypes;
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false)
+            .ingredientTypes;
 
     final menuItem = constructMenuItemFromEditorFields(
       id: menuItemId,
@@ -215,7 +218,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       rawCustomizations: rawCustomizations,
     );
 
-    return MenuItemSchemaIssue.detectAllIssues(
+    return shared.MenuItemSchemaIssue.detectAllIssues(
       menuItem: menuItem,
       categories: categories,
       ingredients: ingredients,
@@ -223,13 +226,16 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     );
   }
 
-  void repairSchemaIssue(MenuItemSchemaIssue issue, String newValue) {
+  void repairSchemaIssue(shared.MenuItemSchemaIssue issue, String newValue) {
     print(
         '[MenuItemEditorSheet] repairSchemaIssue: ${issue.displayMessage}, newValue=$newValue');
 
-    final ingredientProvider = context.read<IngredientMetadataProvider>();
-    final typeProvider = context.read<IngredientTypeProvider>();
-    final shared.categoryProvider = context.read<shared.CategoryProvider>();
+    final ingredientProvider =
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
+    final typeProvider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
+    final categoryProvider =
+        Provider.of<shared.CategoryProvider>(context, listen: false);
 
     setState(() {
       print('[repairSchemaIssue] Resolving issue: '
@@ -242,16 +248,16 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
           categoryId = newValue;
           print('[repairSchemaIssue] Assigned new categoryId: $categoryId');
 
-          final alreadyExists = shared.categoryProvider.categories
+          final alreadyExists = categoryProvider.categories
                   .any((c) => c.id == newValue) ||
-              shared.categoryProvider.stagedCategories.any((c) => c.id == newValue);
+              categoryProvider.stagedCategories.any((c) => c.id == newValue);
 
           print('[repairSchemaIssue] Category exists=$alreadyExists');
 
           if (!alreadyExists) {
             try {
-              shared.categoryProvider.stageCategory(
-                app_models.Category(
+              categoryProvider.stageCategory(
+                shared.Category(
                   id: newValue,
                   name: issue.label ?? 'Unnamed Category',
                   sortOrder: 999,
@@ -349,7 +355,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
         nutrition: nutrition,
         selectedTemplateRefs: selectedTemplateRefs,
         sizeData: sizeData,
-        categories: shared.categoryProvider.categories,
+        categories: categoryProvider.categories,
         notes: notes,
         sku: sku,
         dietaryTags: dietaryTags,
@@ -388,14 +394,14 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
         rawCustomizations: rawCustomizations,
       );
 
-      final freshIssues = MenuItemSchemaIssue.detectAllIssues(
+      final freshIssues = shared.MenuItemSchemaIssue.detectAllIssues(
         menuItem: freshItem,
-        categories: shared.categoryProvider.categories,
+        categories: categoryProvider.categories,
         ingredients: ingredientProvider.allIngredients,
         ingredientTypes: typeProvider.ingredientTypes,
       );
 
-      final updatedIssues = <MenuItemSchemaIssue>[];
+      final updatedIssues = <shared.MenuItemSchemaIssue>[];
       print(
           '[repairSchemaIssue] Found ${freshIssues.length} new issues after rebuild');
 
@@ -439,9 +445,12 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     });
   }
 
-  void _repairIngredientOrType(MenuItemSchemaIssue issue, String newValue) {
-    final ingredientProvider = context.read<IngredientMetadataProvider>();
-    final typeProvider = context.read<IngredientTypeProvider>();
+  void _repairIngredientOrType(
+      shared.MenuItemSchemaIssue issue, String newValue) {
+    final ingredientProvider =
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
+    final typeProvider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
 
     final ingredientExists = ingredientProvider.getById(newValue) != null;
     final typeExists = typeProvider.getById(newValue) != null;
@@ -450,7 +459,8 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
         'typeExists=$typeExists, issueType=${issue.type}');
 
     // Attempt to stage ingredient if missing
-    if (issue.type == MenuItemSchemaIssueType.ingredient && !ingredientExists) {
+    if (issue.type == shared.MenuItemSchemaIssueType.ingredient &&
+        !ingredientExists) {
       final stagedName = issue.label ?? newValue;
       print(
           '[DEBUG] Attempting to stage new ingredient: id=$newValue, name=$stagedName');
@@ -468,7 +478,8 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     }
 
     // Attempt to stage ingredient type if missing
-    if (issue.type == MenuItemSchemaIssueType.ingredientType && !typeExists) {
+    if (issue.type == shared.MenuItemSchemaIssueType.ingredientType &&
+        !typeExists) {
       final stagedName = issue.label ?? newValue;
       print(
           '[DEBUG] Attempting to stage new ingredient type: id=$newValue, name=$stagedName');
@@ -485,13 +496,13 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       }
     }
 
-    IngredientReference updateEntry(IngredientReference entry) {
+    shared.IngredientReference updateEntry(shared.IngredientReference entry) {
       final matchesId =
           entry.id.toLowerCase() == issue.missingReference.toLowerCase();
       final matchesName = issue.label != null &&
           entry.name.trim().toLowerCase() == issue.label!.trim().toLowerCase();
 
-      if (issue.type == MenuItemSchemaIssueType.ingredient &&
+      if (issue.type == shared.MenuItemSchemaIssueType.ingredient &&
           (matchesId || matchesName)) {
         print('[repairIngredientOrType] Matching entry: '
             'id=${entry.id}, name=${entry.name}, typeId=${entry.typeId}, '
@@ -501,7 +512,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
         return entry.copyWith(id: newValue);
       }
 
-      if (issue.type == MenuItemSchemaIssueType.ingredientType &&
+      if (issue.type == shared.MenuItemSchemaIssueType.ingredientType &&
           (matchesName || entry.typeId.isEmpty)) {
         print('[repairIngredientOrType] Matching entry: '
             'id=${entry.id}, name=${entry.name}, typeId=${entry.typeId}, '
@@ -536,11 +547,14 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
   }
 
   void _checkForSchemaIssues() {
-    final categories = context.read<shared.CategoryProvider>().categories;
+    final categories =
+        Provider.of<shared.CategoryProvider>(context, listen: false).categories;
     final ingredients =
-        context.read<IngredientMetadataProvider>().allIngredients;
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
+            .allIngredients;
     final ingredientTypes =
-        context.read<IngredientTypeProvider>().ingredientTypes;
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false)
+            .ingredientTypes;
 
     final tempItem = buildMenuItemForSchemaCheck(
       existing: widget.existing,
@@ -596,15 +610,20 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       rawCustomizations: rawCustomizations,
     );
 
-    final freshIssues = MenuItemSchemaIssue.detectAllIssues(
+    final freshIssues = shared.MenuItemSchemaIssue.detectAllIssues(
       menuItem: tempItem,
-      categories: context.read<shared.CategoryProvider>().categories,
-      ingredients: context.read<IngredientMetadataProvider>().allIngredients,
-      ingredientTypes: context.read<IngredientTypeProvider>().ingredientTypes,
+      categories: Provider.of<shared.CategoryProvider>(context, listen: false)
+          .categories,
+      ingredients:
+          Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
+              .allIngredients,
+      ingredientTypes:
+          Provider.of<shared.IngredientTypeProvider>(context, listen: false)
+              .ingredientTypes,
     );
 
     // Preserve resolved state
-    final updatedIssues = <MenuItemSchemaIssue>[];
+    final updatedIssues = <shared.MenuItemSchemaIssue>[];
 
     for (final newIssue in freshIssues) {
       final existing = _schemaIssues.firstWhere(
@@ -645,14 +664,15 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     widget.onSchemaIssuesChanged?.call(_schemaIssues);
   }
 
-  void _applyTemplate(MenuItem item) {
+  void _applyTemplate(shared.MenuItem item) {
     print('[MenuItemEditorSheet] _applyTemplate called with item: '
         'id=${item.id}, name=${item.name}, categoryId=${item.categoryId}, '
         'customizationGroups=${item.customizationGroups?.length ?? 0}');
     print('[MenuItemEditorSheet] Template data dump: ${item.toJson()}');
     try {
       final allIngredients =
-          context.read<IngredientMetadataProvider>().allIngredients;
+          Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
+              .allIngredients;
       final fieldMap = extractTemplateFieldsForEditor(item, allIngredients);
 
       // DEFER ALL STATE UPDATES TO NEXT FRAME!
@@ -671,14 +691,14 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
           categoryId = fieldMap['categoryId'] ?? '';
           imageUrl = fieldMap['imageUrl'] ?? '';
           nutrition = fieldMap['nutrition'];
-          includedIngredients = List<IngredientReference>.from(
+          includedIngredients = List<shared.IngredientReference>.from(
               fieldMap['includedIngredients'] ?? []);
-          optionalAddOns =
-              List<IngredientReference>.from(fieldMap['optionalAddOns'] ?? []);
+          optionalAddOns = List<shared.IngredientReference>.from(
+              fieldMap['optionalAddOns'] ?? []);
           customizations =
-              List<Customization>.from(fieldMap['customizations'] ?? []);
-          sizeData = List<SizeData>.from(fieldMap['sizeData'] ?? []);
-          customizationGroups = List<CustomizationGroup>.from(
+              List<shared.Customization>.from(fieldMap['customizations'] ?? []);
+          sizeData = List<shared.SizeData>.from(fieldMap['sizeData'] ?? []);
+          customizationGroups = List<shared.CustomizationGroup>.from(
               fieldMap['customizationGroups'] ?? []);
           selectedTemplateRefs =
               List<String>.from(fieldMap['selectedTemplateRefs'] ?? []);
@@ -731,7 +751,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       shared.ErrorLogger.log(
         message: 'Failed to apply template into editor state',
         source: 'menu_item_editor_sheet.dart',
-        source: 'menu_item_editor_sheet.dart' /* was screen, Phase 4 fix */,
         severity: 'warning',
         stack: st.toString(),
         contextData: {
@@ -779,7 +798,8 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
         'optionalAddOns=${optionalAddOns.length}, customizations=${customizations.length}, '
         'customizationGroups=${customizationGroups.length}, sizeData=${sizeData.length}, '
         'selectedTemplateRefs=$selectedTemplateRefs, nutrition=$nutrition, outOfStock=$outOfStock');
-    final categories = context.read<shared.CategoryProvider>().categories;
+    final categories =
+        Provider.of<shared.CategoryProvider>(context, listen: false).categories;
     if (!_formKey.currentState!.validate()) return;
 
     if (categoryId == null || categoryId!.isEmpty) {
@@ -859,7 +879,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
   }
 
   void _editNutrition() async {
-    final result = await showDialog<NutritionInfo?>(
+    final result = await showDialog<shared.NutritionInfo?>(
       context: context,
       builder: (_) => NutritionEditorDialog(initialValue: nutrition),
     );
@@ -875,11 +895,16 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
   @override
   Widget build(BuildContext context) {
     final categories = context.watch<shared.CategoryProvider>().categories;
-    final templates = context.read<shared.MenuItemProvider>().templateRefs;
-    final availableTemplates = context.watch<shared.MenuItemProvider>().sizeTemplates;
+    final templates =
+        Provider.of<shared.MenuItemProvider>(context, listen: false)
+            .templateRefs;
+    final availableTemplates =
+        context.watch<shared.MenuItemProvider>().sizeTemplates;
     final hasCategories = categories.isNotEmpty;
     final hasIngredients =
-        context.read<IngredientMetadataProvider>().allIngredients.isNotEmpty;
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
+            .allIngredients
+            .isNotEmpty;
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -1061,7 +1086,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                 });
                               },
                               trailingTemplateDropdown:
-                                  DropdownButton<SizeTemplate>(
+                                  DropdownButton<shared.SizeTemplate>(
                                 isExpanded: true,
                                 value: availableTemplates.firstWhereOrNull(
                                   (t) => const DeepCollectionEquality()
@@ -1119,8 +1144,9 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                             const Divider(height: 40),
 
                             // Section 6: Nutrition (FeatureGuard)
-                            FeatureGuard(
-                              module: PlatformFeature.nutritionalInfo.key,
+                            shared.FeatureGuard(
+                              module:
+                                  shared.PlatformFeature.nutritionalInfo.key,
                               fallback: const SizedBox.shrink(),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1150,7 +1176,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                             ImageUploadField(
                               initialValue: imageUrl,
                               onSaved: (val) => imageUrl = val ?? '',
-                              validator: (val) => null,
                             ),
 
                             const Divider(height: 40),
@@ -1218,8 +1243,3 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     super.dispose();
   }
 }
-
-
-
-
-

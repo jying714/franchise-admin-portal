@@ -12,7 +12,6 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
 
   static Future<void> show(BuildContext context) async {
     final loc = AppLocalizations.of(context);
-
     if (loc == null) {
       debugPrint('[MenuItemTemplatePickerDialog] ERROR: loc is null!');
       return;
@@ -27,9 +26,16 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
-    final franchiseInfo = context.read<FranchiseInfoProvider>().franchise;
-    final shared.menuItemProvider = context.read<shared.MenuItemProvider>();
+    final colorScheme = theme.colorScheme;
+
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
+    final franchiseInfo =
+        Provider.of<shared.FranchiseInfoProvider>(context, listen: false)
+            .franchise;
+    final menuItemProvider =
+        Provider.of<shared.MenuItemProvider>(context, listen: false);
 
     final restaurantType = franchiseInfo?.restaurantType;
 
@@ -37,7 +43,6 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
       shared.ErrorLogger.log(
         message: 'Missing or invalid restaurant type',
         source: 'MenuItemTemplatePickerDialog',
-        source: 'onboarding_menu_items_screen.dart' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {
           'franchiseId': franchiseId,
@@ -88,27 +93,27 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
                 final doc = docs[index];
                 final data = doc.data() as Map<String, dynamic>;
                 final name = data['name'] ?? doc.id;
+
                 return ListTile(
                   title: Text(name),
                   trailing: ElevatedButton(
                     onPressed: () async {
                       try {
                         final items = (data['items'] as List<dynamic>)
-                            .map((e) => MenuItem.fromMap(
+                            .map((e) => shared.MenuItem.fromMap(
                                   Map<String, dynamic>.from(e),
                                 ))
                             .toList();
 
                         for (final item in items) {
-                          shared.menuItemProvider.addOrUpdateMenuItem(item);
+                          menuItemProvider.addOrUpdateMenuItem(item);
                         }
 
                         Navigator.pop(context);
                       } catch (e, stack) {
-                        await shared.ErrorLogger.log(
+                        shared.ErrorLogger.log(
                           message: 'Failed to load menu item template',
                           source: 'MenuItemTemplatePickerDialog',
-                          source: 'onboarding_menu_items_screen.dart' /* was screen, Phase 4 fix */,
                           severity: 'error',
                           stack: stack.toString(),
                           contextData: {
@@ -144,8 +149,3 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
     );
   }
 }
-
-
-
-
-

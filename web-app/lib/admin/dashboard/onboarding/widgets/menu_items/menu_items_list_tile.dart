@@ -6,7 +6,7 @@ import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class MenuItemListTile extends StatelessWidget {
-  final MenuItem item;
+  final shared.MenuItem item;
   final bool isSelected;
   final ValueChanged<bool?>? onSelect;
   final VoidCallback onEdit;
@@ -93,17 +93,15 @@ class MenuItemListTile extends StatelessWidget {
 
                 if (confirmed == true) {
                   try {
-                    await context
-                        .read<shared.MenuItemProvider>()
-                        .deleteFromFirestore(item.id);
+                    Provider.of<shared.MenuItemProvider>(context, listen: false)
+                        .deleteMenuItem(item.id);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(loc.menuItemDeleted)),
                     );
                   } catch (e, stack) {
-                    await shared.ErrorLogger.log(
+                    shared.ErrorLogger.log(
                       message: 'menu_item_delete_failed',
                       source: 'MenuItemListTile',
-                      source: 'menu_item_list_tile.dart' /* was screen, Phase 4 fix */,
                       severity: 'error',
                       stack: stack.toString(),
                       contextData: {'itemId': item.id},
@@ -121,8 +119,3 @@ class MenuItemListTile extends StatelessWidget {
     );
   }
 }
-
-
-
-
-

@@ -10,8 +10,8 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 /// This is NOT a live schema editor. It's used to select from pre-created ingredients
 /// and assemble logical groups for a menu item's customization flow.
 class CustomizationGroupEditor extends StatefulWidget {
-  final List<CustomizationGroup> value;
-  final void Function(List<CustomizationGroup>) onChanged;
+  final List<shared.CustomizationGroup> value;
+  final void Function(List<shared.CustomizationGroup>) onChanged;
 
   const CustomizationGroupEditor({
     Key? key,
@@ -25,15 +25,15 @@ class CustomizationGroupEditor extends StatefulWidget {
 }
 
 class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
-  late List<CustomizationGroup> _groups;
+  late List<shared.CustomizationGroup> _groups;
 
   @override
   void initState() {
     super.initState();
-    _groups = List<CustomizationGroup>.from(widget.value);
+    _groups = List<shared.CustomizationGroup>.from(widget.value);
   }
 
-  void _updateGroup(int index, CustomizationGroup updated) {
+  void _updateGroup(int index, shared.CustomizationGroup updated) {
     setState(() {
       _groups[index] = updated;
     });
@@ -50,7 +50,7 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
   void _addGroup() {
     setState(() {
       _groups.add(
-        CustomizationGroup(
+        shared.CustomizationGroup(
           id: UniqueKey().toString(),
           label: '',
           selectionLimit: 1,
@@ -64,7 +64,8 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final ingredientProvider = context.read<IngredientMetadataProvider>();
+    final ingredientProvider =
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,5 +203,3 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
     );
   }
 }
-
-

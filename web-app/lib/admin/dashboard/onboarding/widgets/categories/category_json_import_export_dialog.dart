@@ -4,38 +4,33 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 
 class CategoryJsonImportExportDialog extends StatefulWidget {
   final AppLocalizations loc;
-  final BuildContext parentContext; // <-- add this line
 
   const CategoryJsonImportExportDialog({
     super.key,
     required this.loc,
-    required this.parentContext, // <-- add this line
   });
 
-  static Future<void> show(BuildContext parentContext) {
-    final loc = AppLocalizations.of(parentContext)!;
-    final shared.categoryProvider =
-        Provider.of<shared.CategoryProvider>(parentContext, listen: false);
+  static Future<void> show(BuildContext context) async {
+    final loc = AppLocalizations.of(context)!;
+    final categoryProvider =
+        Provider.of<shared.CategoryProvider>(context, listen: false);
     final onboardingProvider =
-        Provider.of<shared.OnboardingProgressProvider>(parentContext, listen: false);
+        Provider.of<shared.OnboardingProgressProvider>(context, listen: false);
 
     return showDialog(
-      context: parentContext,
-      builder: (dialogContext) =>
+      context: context,
+      builder: (dialogContext) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider<shared.CategoryProvider>.value(
+              value: categoryProvider),
           ChangeNotifierProvider<shared.OnboardingProgressProvider>.value(
-        value: onboardingProvider,
-        child: ChangeNotifierProvider<shared.CategoryProvider>.value(
-          value: shared.categoryProvider,
-          child: CategoryJsonImportExportDialog(
-            loc: loc,
-            parentContext: parentContext,
-          ),
-        ),
+              value: onboardingProvider),
+        ],
+        child: CategoryJsonImportExportDialog(loc: loc),
       ),
     );
   }
@@ -54,7 +49,8 @@ class _CategoryJsonImportExportDialogState
   @override
   void initState() {
     super.initState();
-    final template = pizzaShopCategoriesTemplate;
+    final template = shared
+        .pizzaShopCategoriesTemplate; // assuming this exists in shared_core
     final jsonStr = const JsonEncoder.withIndent('  ').convert(template);
     _controller = TextEditingController(text: jsonStr);
   }
@@ -66,12 +62,6 @@ class _CategoryJsonImportExportDialogState
   }
 
   Future<void> _importCategories() async {
-    final loc = widget.loc;
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
-    final firestore = context.read<shared.FirestoreService>();
-    final onboardingProgress =
-        context.read<shared.OnboardingProgressProvider>().stepStatus;
-
     setState(() {
       _isImporting = true;
       _message = null;
@@ -79,7 +69,12 @@ class _CategoryJsonImportExportDialogState
 
     try {
       final List<dynamic> decoded = json.decode(_controller.text);
-      final categories = decoded.map((e) => Category.fromMap(e)).toList();
+      final categories = decoded
+          .map((e) => shared.Category.fromMap(Map<String, dynamic>.from(e)))
+          .toList();
+
+      final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
+      final firestore = context.read<shared.FirestoreService>();
 
       for (final cat in categories) {
         await firestore.addCategory(
@@ -88,40 +83,34 @@ class _CategoryJsonImportExportDialogState
         );
       }
 
-      if (onboardingProgress['categories'] != true) {
-        await context
-            .read<shared.OnboardingProgressProvider>()
-            .markStepComplete('categories');
-      }
+      await context
+          .read<shared.OnboardingProgressProvider>()
+          .markStepComplete('categories');
 
       setState(() {
-        _message = loc.importSuccess;
+        _message = widget.loc.importSuccess;
       });
 
-      // --- Success SnackBar (optional) ---
-      if (widget.parentContext.mounted) {
-        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
-          SnackBar(content: Text(loc.importSuccess)),
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(widget.loc.importSuccess)),
         );
       }
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'category_json_import_error',
         source: 'CategoryJsonImportExportDialog',
-        source: 'onboarding_categories_screen' /* was screen, Phase 4 fix */,
         severity: 'error',
         stack: stack.toString(),
-        contextData: {'franchiseId': franchiseId, 'raw': _controller.text},
       );
 
       setState(() {
-        _message = loc.importError;
+        _message = widget.loc.importError;
       });
 
-      // --- Error SnackBar ---
-      if (widget.parentContext.mounted) {
-        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
-          SnackBar(content: Text(loc.importError)),
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(widget.loc.importError)),
         );
       }
     } finally {
@@ -199,9 +188,3 @@ class _CategoryJsonImportExportDialogState
     );
   }
 }
-
-
-
-
-
-

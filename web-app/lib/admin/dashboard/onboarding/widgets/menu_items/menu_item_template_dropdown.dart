@@ -4,7 +4,7 @@ import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class MenuItemTemplateDropdown extends StatefulWidget {
-  final void Function(MenuItem template) onTemplateApplied;
+  final void Function(shared.MenuItem template) onTemplateApplied;
   final String? selectedTemplateId;
 
   const MenuItemTemplateDropdown({
@@ -29,7 +29,8 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
 
     // Preload templateRefs if needed
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final provider = context.read<shared.MenuItemProvider>();
+      final provider =
+          Provider.of<shared.MenuItemProvider>(context, listen: false);
       if (provider.templateRefs.isEmpty && !provider.templateRefsLoading) {
         await provider.loadTemplateRefs();
       }
@@ -40,7 +41,8 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final templateRefs = context.watch<shared.MenuItemProvider>().templateRefs;
-    final loading = context.watch<shared.MenuItemProvider>().templateRefsLoading;
+    final loading =
+        context.watch<shared.MenuItemProvider>().templateRefsLoading;
 
     print('[DEBUG] selectedTemplateId: $_selectedTemplateId');
     // print(
@@ -71,17 +73,17 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
             });
 
             try {
-              final restaurantType = context
-                  .read<FranchiseInfoProvider>()
+              final restaurantType = Provider.of<shared.FranchiseInfoProvider>(
+                      context,
+                      listen: false)
                   .franchise
                   ?.restaurantType;
 
               if (restaurantType == null || restaurantType.isEmpty) {
-                await shared.ErrorLogger.log(
+                shared.ErrorLogger.log(
                   message:
                       'Missing or invalid restaurantType during template prefill',
                   source: 'MenuItemTemplateDropdown',
-                  source: 'menu_item_editor_sheet.dart' /* was screen, Phase 4 fix */,
                   severity: 'error',
                 );
                 if (mounted) {
@@ -92,7 +94,7 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
                 return;
               }
 
-              final template = await context
+              final template = await ReadContext(context)
                   .read<shared.MenuItemProvider>()
                   .fetchMenuItemTemplateById(
                     restaurantType: restaurantType,
@@ -107,11 +109,10 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
                 );
               }
             } catch (e, stack) {
-              await shared.ErrorLogger.log(
+              shared.ErrorLogger.log(
                 message: 'Failed to apply template',
                 stack: stack.toString(),
                 source: 'MenuItemTemplateDropdown',
-                source: 'menu_item_editor_sheet.dart' /* was screen, Phase 4 fix */,
                 severity: 'error',
                 contextData: {'templateId': templateId},
               );
@@ -136,8 +137,3 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
     );
   }
 }
-
-
-
-
-

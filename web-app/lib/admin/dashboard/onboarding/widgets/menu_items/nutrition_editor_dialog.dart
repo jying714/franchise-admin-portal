@@ -6,7 +6,7 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 ///
 /// Used inside [MenuItemEditorSheet] when nutritional_info feature is enabled.
 class NutritionEditorDialog extends StatefulWidget {
-  final NutritionInfo? initialValue;
+  final shared.NutritionInfo? initialValue;
 
   const NutritionEditorDialog({Key? key, this.initialValue}) : super(key: key);
 
@@ -48,7 +48,7 @@ class _NutritionEditorDialogState extends State<NutritionEditorDialog> {
   void _submit() {
     if (_formKey.currentState?.validate() != true) return;
 
-    final result = NutritionInfo(
+    final result = shared.NutritionInfo(
       calories: double.tryParse(_caloriesController.text.trim())?.round() ?? 0,
       fat: double.tryParse(_fatController.text.trim()) ?? 0.0,
       carbs: double.tryParse(_carbsController.text.trim()) ?? 0.0,
@@ -119,11 +119,13 @@ class _NutritionEditorDialogState extends State<NutritionEditorDialog> {
           suffixText: suffix,
         ),
         keyboardType: TextInputType.numberWithOptions(decimal: true),
-        validator: FormValidators.nonNegativeNumber,
+        validator: (value) {
+          if (value == null || value.isEmpty) return null;
+          final num = double.tryParse(value);
+          if (num == null || num < 0) return 'Must be a non-negative number';
+          return null;
+        },
       ),
     );
   }
 }
-
-
-

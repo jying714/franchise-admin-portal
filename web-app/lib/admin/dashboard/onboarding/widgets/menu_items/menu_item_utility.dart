@@ -1,27 +1,27 @@
 ﻿// lib/admin/dashboard/onboarding/widgets/menu_items/menu_item_utility.dart
 
-import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:collection/collection.dart';
 import 'package:uuid/uuid.dart';
 
 /// --- SCHEMA & VALIDATION LOGIC ---
 
-MenuItem buildMenuItemForSchemaCheck({
-  required MenuItem? existing,
+shared.MenuItem buildMenuItemForSchemaCheck({
+  required shared.MenuItem? existing,
   required String? name,
   required String? description,
   required double price,
   required String? categoryId,
   required bool outOfStock,
   required String? imageUrl,
-  required List<CustomizationGroup> customizationGroups,
-  required List<IngredientReference> includedIngredients,
-  required List<IngredientReference> optionalAddOns,
-  required List<Customization> customizations,
-  required NutritionInfo? nutrition,
+  required List<shared.CustomizationGroup> customizationGroups,
+  required List<shared.IngredientReference> includedIngredients,
+  required List<shared.IngredientReference> optionalAddOns,
+  required List<shared.Customization> customizations,
+  required shared.NutritionInfo? nutrition,
   required List<String> selectedTemplateRefs,
-  required List<SizeData> sizeData,
-  required List<Category> categories,
+  required List<shared.SizeData> sizeData,
+  required List<shared.Category> categories,
   // All advanced fields:
   String? notes,
   String? sku,
@@ -62,7 +62,7 @@ MenuItem buildMenuItemForSchemaCheck({
 }) {
   final categoryName =
       categories.firstWhereOrNull((cat) => cat.id == categoryId)?.name ?? '';
-  return MenuItem(
+  return shared.MenuItem(
     id: existing?.id ?? '',
     available: !outOfStock,
     availability: !outOfStock,
@@ -118,13 +118,13 @@ MenuItem buildMenuItemForSchemaCheck({
   );
 }
 
-List<MenuItemSchemaIssue> getMenuItemSchemaIssues({
-  required MenuItem tempItem,
-  required List<Category> categories,
-  required List<IngredientMetadata> ingredients,
-  required List<IngredientType> ingredientTypes,
+List<shared.MenuItemSchemaIssue> getMenuItemSchemaIssues({
+  required shared.MenuItem tempItem,
+  required List<shared.Category> categories,
+  required List<shared.IngredientMetadata> ingredients,
+  required List<shared.IngredientType> ingredientTypes,
 }) {
-  return MenuItemSchemaIssue.detectAllIssues(
+  return shared.MenuItemSchemaIssue.detectAllIssues(
     menuItem: tempItem,
     categories: categories,
     ingredients: ingredients,
@@ -135,21 +135,18 @@ List<MenuItemSchemaIssue> getMenuItemSchemaIssues({
 /// --- TEMPLATE APPLICATION LOGIC ---
 
 Map<String, dynamic> extractTemplateFieldsForEditor(
-  MenuItem item,
-  List<IngredientMetadata> allIngredients,
+  shared.MenuItem item,
+  List<shared.IngredientMetadata> allIngredients,
 ) {
-  // Deep copy and correct all required fields as in _applyTemplate.
-  // For each field, apply the exact transformation/mapping logic as in the widget.
-  final Map<String, IngredientMetadata> ingredientMap = {
+  final Map<String, shared.IngredientMetadata> ingredientMap = {
     for (var ing in allIngredients) ing.id: ing
   };
 
-  // --- Customization groups normalization ---
-  List<CustomizationGroup> customizationGroups =
+  // Customization groups normalization
+  List<shared.CustomizationGroup> customizationGroups =
       (item.customizationGroups ?? []).map((g) {
     final groupMap = Map<String, dynamic>.from(g);
 
-    // 1. If group has 'ingredientIds' (legacy), generate 'ingredients'
     if (groupMap['ingredientIds'] is List &&
         groupMap['ingredientIds'].isNotEmpty) {
       groupMap['ingredients'] = (groupMap['ingredientIds'] as List).map((id) {
@@ -159,15 +156,12 @@ Map<String, dynamic> extractTemplateFieldsForEditor(
       }).toList();
     }
 
-    // 2. If 'ingredients' exists, ensure every entry is a Map
     if (groupMap['ingredients'] is List) {
       groupMap['ingredients'] = (groupMap['ingredients'] as List).map((e) {
-        if (e is String) {
+        if (e is String)
           return {'id': e, 'name': e, 'typeId': '', 'isRemovable': true};
-        }
         if (e is Map) return e;
-        if (e is IngredientReference) return e.toMap();
-        // Fallback for legacy/unknown
+        if (e is shared.IngredientReference) return e.toMap();
         return {
           'id': e.toString(),
           'name': e.toString(),
@@ -176,48 +170,42 @@ Map<String, dynamic> extractTemplateFieldsForEditor(
         };
       }).toList();
     } else {
-      // 3. Defensive: If 'ingredients' is missing or not a List, create empty list
       groupMap['ingredients'] = <Map<String, dynamic>>[];
     }
 
-    // 4. Always remove 'ingredientIds' to prevent model confusion
     groupMap.remove('ingredientIds');
-
-    // Now safe to call:
-    return CustomizationGroup.fromMap(groupMap);
+    return shared.CustomizationGroup.fromMap(groupMap);
   }).toList();
 
-  // --- Included Ingredients
+  // Included / Optional AddOns
   final includedIngredients = (item.includedIngredients ?? [])
-      .map((e) => e is IngredientReference
+      .map((e) => e is shared.IngredientReference
           ? e
-          : IngredientReference.fromMap(Map<String, dynamic>.from(e)))
+          : shared.IngredientReference.fromMap(Map<String, dynamic>.from(e)))
       .toList()
-      .cast<IngredientReference>();
+      .cast<shared.IngredientReference>();
 
-  // --- Optional AddOns
   final optionalAddOns = (item.optionalAddOns ?? [])
-      .map((e) => e is IngredientReference
+      .map((e) => e is shared.IngredientReference
           ? e
-          : IngredientReference.fromMap(Map<String, dynamic>.from(e)))
+          : shared.IngredientReference.fromMap(Map<String, dynamic>.from(e)))
       .toList()
-      .cast<IngredientReference>();
+      .cast<shared.IngredientReference>();
 
-  // --- Sizes / Pricing normalization ---
-  List<SizeData> sizeData = [];
+  // Sizes / Pricing
+  List<shared.SizeData> sizeData = [];
   final sizesValue = item.sizes;
   if (sizesValue != null &&
-      sizesValue is List<SizeData> &&
+      sizesValue is List<shared.SizeData> &&
       sizesValue.isNotEmpty) {
-    sizeData = List<SizeData>.from(sizesValue);
+    sizeData = List<shared.SizeData>.from(sizesValue);
   } else if (sizesValue != null &&
       sizesValue is List &&
-      sizesValue.isNotEmpty &&
-      (item.sizePrices != null || item.additionalToppingPrices != null)) {
+      sizesValue.isNotEmpty) {
     final basePriceMap = item.sizePrices ?? {};
     final toppingPriceMap = item.additionalToppingPrices ?? {};
     sizeData = sizesValue
-        .map((s) => SizeData(
+        .map((s) => shared.SizeData(
               label: s.toString(),
               basePrice:
                   (basePriceMap[s.toString()] as num?)?.toDouble() ?? 0.0,
@@ -225,11 +213,8 @@ Map<String, dynamic> extractTemplateFieldsForEditor(
                   (toppingPriceMap[s.toString()] as num?)?.toDouble() ?? 0.0,
             ))
         .toList();
-  } else {
-    sizeData = [];
   }
 
-  // --- Full field extraction for editor state ---
   return {
     'name': item.name ?? '',
     'description': item.description ?? '',
@@ -239,11 +224,11 @@ Map<String, dynamic> extractTemplateFieldsForEditor(
     'nutrition': item.nutrition,
     'includedIngredients': includedIngredients,
     'optionalAddOns': optionalAddOns,
-    'customizations': List<Customization>.from(item.customizations ?? []),
+    'customizations':
+        List<shared.Customization>.from(item.customizations ?? []),
     'sizeData': sizeData,
     'customizationGroups': customizationGroups,
     'selectedTemplateRefs': List<String>.from(item.templateRefs ?? []),
-    // Advanced:
     'notes': item.notes,
     'sku': item.sku,
     'dietaryTags': List<String>.from(item.dietaryTags ?? []),
@@ -285,7 +270,7 @@ Map<String, dynamic> extractTemplateFieldsForEditor(
 
 /// --- MENU ITEM CONSTRUCTION LOGIC ---
 
-MenuItem constructMenuItemFromEditorFields({
+shared.MenuItem constructMenuItemFromEditorFields({
   required String? id,
   required bool outOfStock,
   required String categoryName,
@@ -301,14 +286,14 @@ MenuItem constructMenuItemFromEditorFields({
   required int? sortOrder,
   required String taxCategory,
   required String? exportId,
-  required List<CustomizationGroup> customizationGroups,
-  required List<IngredientReference> includedIngredients,
-  required List<IngredientReference> optionalAddOns,
-  required List<Customization> customizations,
+  required List<shared.CustomizationGroup> customizationGroups,
+  required List<shared.IngredientReference> includedIngredients,
+  required List<shared.IngredientReference> optionalAddOns,
+  required List<shared.Customization> customizations,
   required String imageUrl,
-  required NutritionInfo? nutrition,
+  required shared.NutritionInfo? nutrition,
   required List<String> selectedTemplateRefs,
-  required List<SizeData> sizeData,
+  required List<shared.SizeData> sizeData,
   // --- Advanced ---
   List<String>? crustTypes,
   List<String>? cookTypes,
@@ -339,8 +324,8 @@ MenuItem constructMenuItemFromEditorFields({
   Map<String, dynamic>? extraCharges,
   List<Map<String, dynamic>>? rawCustomizations,
 }) {
-  return MenuItem(
-    id: id ?? '',
+  return shared.MenuItem(
+    id: id ?? const Uuid().v4(),
     available: !outOfStock,
     availability: !outOfStock,
     category: categoryName,
@@ -364,8 +349,7 @@ MenuItem constructMenuItemFromEditorFields({
     nutrition: nutrition,
     templateRefs: selectedTemplateRefs,
     sizes: sizeData,
-    // --- Advanced ---
-    crustTypes: crustTypes is List<String> ? crustTypes : [],
+    crustTypes: crustTypes ?? [],
     cookTypes: cookTypes,
     cutStyles: cutStyles,
     sauceOptions: sauceOptions,
@@ -398,138 +382,20 @@ MenuItem constructMenuItemFromEditorFields({
 
 /// --- SCHEMA ISSUE REPAIR LOGIC ---
 
-void repairSchemaIssueForCategory({
-  required String newValue,
-  required void Function(String) updateCategoryId,
-}) {
-  updateCategoryId(newValue);
-}
-
-void repairSchemaIssueForIngredient({
-  required String missingReference,
-  required String newValue,
-  required List<IngredientReference> includedIngredients,
-  required List<IngredientReference> optionalAddOns,
-  required List<CustomizationGroup> customizationGroups,
-}) {
-  for (var i = 0; i < includedIngredients.length; i++) {
-    if (includedIngredients[i].id == missingReference) {
-      includedIngredients[i] = includedIngredients[i].copyWith(id: newValue);
-    }
-  }
-  for (var i = 0; i < optionalAddOns.length; i++) {
-    if (optionalAddOns[i].id == missingReference) {
-      optionalAddOns[i] = optionalAddOns[i].copyWith(id: newValue);
-    }
-  }
-  for (var groupIdx = 0; groupIdx < customizationGroups.length; groupIdx++) {
-    final group = customizationGroups[groupIdx];
-    for (var ingIdx = 0; ingIdx < group.ingredients.length; ingIdx++) {
-      if (group.ingredients[ingIdx].id == missingReference) {
-        group.ingredients[ingIdx] =
-            group.ingredients[ingIdx].copyWith(id: newValue);
-      }
-    }
-  }
-}
-
-void repairSchemaIssueForIngredientType({
-  required String label,
-  required String missingReference,
-  required String newValue,
-  required List<IngredientReference> includedIngredients,
-  required List<IngredientReference> optionalAddOns,
-  required List<CustomizationGroup> customizationGroups,
-}) {
-  for (var i = 0; i < includedIngredients.length; i++) {
-    if (includedIngredients[i].name == label ||
-        includedIngredients[i].id == missingReference) {
-      includedIngredients[i] =
-          includedIngredients[i].copyWith(typeId: newValue);
-    }
-  }
-  for (var i = 0; i < optionalAddOns.length; i++) {
-    if (optionalAddOns[i].name == label ||
-        optionalAddOns[i].id == missingReference) {
-      optionalAddOns[i] = optionalAddOns[i].copyWith(typeId: newValue);
-    }
-  }
-  for (var group in customizationGroups) {
-    for (var j = 0; j < group.ingredients.length; j++) {
-      if (group.ingredients[j].name == label ||
-          group.ingredients[j].id == missingReference) {
-        group.ingredients[j] = group.ingredients[j].copyWith(typeId: newValue);
-      }
-    }
-  }
-}
-
-/// --- DATA CONVERSION / MAPPING HELPERS ---
-
-List<IngredientReference> mapToIngredientReferenceList(List<dynamic>? list) {
-  if (list == null) return [];
-  return list
-      .map((e) => e is IngredientReference
-          ? e
-          : IngredientReference.fromMap(Map<String, dynamic>.from(e)))
-      .toList()
-      .cast<IngredientReference>();
-}
-
-List<CustomizationGroup> mapToCustomizationGroupList(
-    List<dynamic>? list, List<IngredientMetadata> allIngredients) {
-  if (list == null) return [];
-  final ingredientMap = {for (var ing in allIngredients) ing.id: ing};
-  return list.map((g) {
-    final groupMap = Map<String, dynamic>.from(g);
-
-    if (groupMap['ingredientIds'] is List &&
-        groupMap['ingredientIds'].isNotEmpty) {
-      groupMap['ingredients'] = (groupMap['ingredientIds'] as List).map((id) {
-        final meta = ingredientMap[id];
-        if (meta != null) return meta.toMap();
-        return {'id': id, 'name': id, 'typeId': '', 'isRemovable': true};
-      }).toList();
-    }
-    if (groupMap['ingredients'] is List) {
-      groupMap['ingredients'] = (groupMap['ingredients'] as List).map((e) {
-        if (e is String) {
-          return {'id': e, 'name': e, 'typeId': '', 'isRemovable': true};
-        }
-        if (e is Map) return e;
-        if (e is IngredientReference) return e.toMap();
-        return {
-          'id': e.toString(),
-          'name': e.toString(),
-          'typeId': '',
-          'isRemovable': true
-        };
-      }).toList();
-    } else {
-      groupMap['ingredients'] = <Map<String, dynamic>>[];
-    }
-    groupMap.remove('ingredientIds');
-    return CustomizationGroup.fromMap(groupMap);
-  }).toList();
-}
-
-/// Handles all schema issue repairs for the MenuItemEditorSheet.
-/// Mutates the passed-in fields directly.
-/// Returns true if any changes were made, false if not.
 bool repairMenuItemSchemaIssue({
-  required MenuItemSchemaIssue issue,
+  required shared.MenuItemSchemaIssue issue,
   required String newValue,
   required void Function(String) updateCategoryId,
-  required List<IngredientReference> includedIngredients,
-  required List<IngredientReference> optionalAddOns,
-  required List<CustomizationGroup> customizationGroups,
+  required List<shared.IngredientReference> includedIngredients,
+  required List<shared.IngredientReference> optionalAddOns,
+  required List<shared.CustomizationGroup> customizationGroups,
 }) {
   bool changed = false;
-  if (issue.type == MenuItemSchemaIssueType.category) {
+
+  if (issue.type == shared.MenuItemSchemaIssueType.category) {
     updateCategoryId(newValue);
     changed = true;
-  } else if (issue.type == MenuItemSchemaIssueType.ingredient) {
-    // Update all relevant ingredient IDs
+  } else if (issue.type == shared.MenuItemSchemaIssueType.ingredient) {
     for (var i = 0; i < includedIngredients.length; i++) {
       if (includedIngredients[i].id == issue.missingReference) {
         includedIngredients[i] = includedIngredients[i].copyWith(id: newValue);
@@ -542,18 +408,15 @@ bool repairMenuItemSchemaIssue({
         changed = true;
       }
     }
-    for (var groupIdx = 0; groupIdx < customizationGroups.length; groupIdx++) {
-      final group = customizationGroups[groupIdx];
-      for (var ingIdx = 0; ingIdx < group.ingredients.length; ingIdx++) {
-        if (group.ingredients[ingIdx].id == issue.missingReference) {
-          group.ingredients[ingIdx] =
-              group.ingredients[ingIdx].copyWith(id: newValue);
+    for (var group in customizationGroups) {
+      for (var j = 0; j < group.ingredients.length; j++) {
+        if (group.ingredients[j].id == issue.missingReference) {
+          group.ingredients[j] = group.ingredients[j].copyWith(id: newValue);
           changed = true;
         }
       }
     }
-  } else if (issue.type == MenuItemSchemaIssueType.ingredientType) {
-    // Update typeId/type for all relevant ingredient references
+  } else if (issue.type == shared.MenuItemSchemaIssueType.ingredientType) {
     for (var i = 0; i < includedIngredients.length; i++) {
       if (includedIngredients[i].name == issue.label ||
           includedIngredients[i].id == issue.missingReference) {
@@ -583,7 +446,7 @@ bool repairMenuItemSchemaIssue({
   return changed;
 }
 
-MenuItem buildPreviewMenuItem({
+shared.MenuItem buildPreviewMenuItem({
   required String? existingId,
   required bool outOfStock,
   required String? categoryId,
@@ -591,71 +454,28 @@ MenuItem buildPreviewMenuItem({
   required double price,
   required String description,
   required String imageUrl,
-  required NutritionInfo? nutrition,
-  required List<IngredientReference> includedIngredients,
-  required List<IngredientReference> optionalAddOns,
-  required List<Customization> customizations,
+  required shared.NutritionInfo? nutrition,
+  required List<shared.IngredientReference> includedIngredients,
+  required List<shared.IngredientReference> optionalAddOns,
+  required List<shared.Customization> customizations,
   required List<String> selectedTemplateRefs,
 }) {
-  return MenuItem(
+  return shared.MenuItem(
     id: existingId ?? const Uuid().v4(),
     available: !outOfStock,
+    availability: !outOfStock,
     category: categoryId ?? '',
     categoryId: categoryId ?? '',
     name: name,
     price: price,
     description: description,
-    notes: null,
-    customizationGroups: [],
     image: imageUrl,
-    taxCategory: 'standard',
-    availability: !outOfStock,
-    sku: null,
-    dietaryTags: [],
-    allergens: [],
-    prepTime: null,
     nutrition: nutrition,
-    sortOrder: null,
-    lastModified: null,
-    lastModifiedBy: null,
-    archived: false,
-    exportId: null,
-    sizes: null,
-    sizePrices: null,
-    additionalToppingPrices: null,
+    templateRefs: selectedTemplateRefs,
+    customizations: customizations,
     includedIngredients: includedIngredients.map((e) => e.toMap()).toList(),
     optionalAddOns: optionalAddOns.map((e) => e.toMap()).toList(),
-    customizations: customizations,
-    crustTypes: null,
-    cookTypes: null,
-    cutStyles: null,
-    sauceOptions: null,
-    dressingOptions: null,
-    maxFreeToppings: null,
-    maxFreeSauces: null,
-    maxFreeDressings: null,
-    maxToppings: null,
-    customizationsUpdatedAt: null,
-    createdAt: null,
-    comboId: null,
-    bundleItems: null,
-    bundleDiscount: null,
-    highlightTags: null,
-    allowSpecialInstructions: null,
-    hideInMenu: null,
-    freeSauceCount: null,
-    extraSauceUpcharge: null,
-    freeDressingCount: null,
-    extraDressingUpcharge: null,
-    dippingSauceOptions: null,
-    dippingSplits: null,
-    sideDipSauceOptions: null,
-    freeDipCupCount: null,
-    sideDipUpcharge: null,
-    extraCharges: null,
-    rawCustomizations: null,
-    templateRefs: selectedTemplateRefs,
+    taxCategory: 'standard',
+    customizationGroups: [],
   );
 }
-
-

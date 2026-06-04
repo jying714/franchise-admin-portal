@@ -1,4 +1,6 @@
-﻿import 'dart:io';
+﻿// lib/admin/dashboard/onboarding/widgets/menu_items/image_upload_field.dart
+
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,36 +9,27 @@ import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 
 /// A form field widget to allow image selection from device gallery or camera,
 /// then upload it to Firebase Storage and store the public URL.
-///
-/// âœ… Features:
-/// - Thumbnail preview
-/// - Clear/reset support
-/// - Firebase upload on selection
-/// - Displays validation error if required but not selected
-/// - Uses shared.FranchiseProvider to scope uploads per franchise
 class ImageUploadField extends FormField<String?> {
   ImageUploadField({
-    Key? key,
-    String? initialValue,
+    super.key,
+    super.initialValue,
     String? label,
     bool required = false,
-    FormFieldSetter<String?>? onSaved,
-    FormFieldValidator<String?>? validator,
+    super.onSaved,
     String uploadFolder = 'menu_items',
   }) : super(
-          key: key,
-          initialValue: initialValue,
-          validator: validator ??
-              (required
-                  ? (value) => (value == null || value.isEmpty)
-                      ? 'Image is required.'
-                      : null
-                  : null),
-          onSaved: onSaved,
+          validator: required
+              ? (value) =>
+                  (value == null || value.isEmpty) ? 'Image is required.' : null
+              : null,
           builder: (FormFieldState<String?> state) {
             return Builder(builder: (context) {
-              final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
-              final storageService = FirebaseStorageService();
+              final franchiseId =
+                  Provider.of<shared.FranchiseProvider>(context, listen: false)
+                      .franchiseId;
+              final storageService = Provider.of<shared.FirebaseStorageService>(
+                  context,
+                  listen: false);
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,23 +84,23 @@ class ImageUploadField extends FormField<String?> {
                               source: ImageSource.gallery);
 
                           if (picked != null) {
-                            final file = File(picked.path);
-
                             try {
                               final uploadedUrl =
                                   await storageService.uploadFranchiseImage(
-                                file: file,
+                                filePath: picked.path,
                                 franchiseId: franchiseId,
                                 folder: uploadFolder,
                               );
                               state.didChange(uploadedUrl);
                             } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                      'Failed to upload image. Try again.'),
-                                ),
-                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        'Failed to upload image. Try again.'),
+                                  ),
+                                );
+                              }
                             }
                           }
                         },
@@ -130,6 +123,3 @@ class ImageUploadField extends FormField<String?> {
           },
         );
 }
-
-
-

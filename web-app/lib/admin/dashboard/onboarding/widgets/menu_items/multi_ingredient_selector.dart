@@ -16,8 +16,8 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 /// ```
 class MultiIngredientSelector extends StatelessWidget {
   final String title;
-  final List<IngredientReference> selected;
-  final ValueChanged<List<IngredientReference>> onChanged;
+  final List<shared.IngredientReference> selected;
+  final ValueChanged<List<shared.IngredientReference>> onChanged;
   final bool allowEmpty;
   final bool isRequired;
   final String? warningMessage;
@@ -35,7 +35,8 @@ class MultiIngredientSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final ingredientProvider = context.watch<IngredientMetadataProvider>();
+    final ingredientProvider =
+        context.watch<shared.IngredientMetadataProvider>();
     final metadataList = ingredientProvider.allIngredients;
 
     if (!ingredientProvider.isInitialized) {
@@ -49,7 +50,7 @@ class MultiIngredientSelector extends StatelessWidget {
       return _EmptyIngredientsWarning(message: warningMessage);
     }
 
-    final Map<String, List<IngredientMetadata>> groupedByType = {};
+    final Map<String, List<shared.IngredientMetadata>> groupedByType = {};
     for (final ingredient in metadataList) {
       groupedByType
           .putIfAbsent(
@@ -93,9 +94,9 @@ class MultiIngredientSelector extends StatelessWidget {
 
 class _IngredientTypeGroup extends StatelessWidget {
   final String typeName;
-  final List<IngredientMetadata> ingredients;
-  final List<IngredientReference> selected;
-  final ValueChanged<List<IngredientReference>> onChanged;
+  final List<shared.IngredientMetadata> ingredients;
+  final List<shared.IngredientReference> selected;
+  final ValueChanged<List<shared.IngredientReference>> onChanged;
 
   const _IngredientTypeGroup({
     required this.typeName,
@@ -124,7 +125,7 @@ class _IngredientTypeGroup extends StatelessWidget {
             spacing: 6,
             runSpacing: 4,
             children: ingredients.map((ingredient) {
-              final ref = IngredientReference(
+              final ref = shared.IngredientReference(
                 id: ingredient.id,
                 name: ingredient.name,
                 typeId: ingredient.typeId ?? 'unknown',
@@ -179,5 +180,3 @@ class _EmptyIngredientsWarning extends StatelessWidget {
     );
   }
 }
-
-

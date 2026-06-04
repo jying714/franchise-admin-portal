@@ -7,12 +7,15 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_i
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/ingredient_type_creation_dialog.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/category_creation_dialog.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_impl.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider_impl.dart';
 
 /// Sidebar for displaying and resolving schema issues for a MenuItem during onboarding.
 /// All repairs are applied via the passed-in callback.
 class SchemaIssueSidebar extends StatelessWidget {
-  final List<MenuItemSchemaIssue> issues;
-  final void Function(MenuItemSchemaIssue issue, String newValue) onRepair;
+  final List<shared.MenuItemSchemaIssue> issues;
+  final void Function(shared.MenuItemSchemaIssue issue, String newValue)
+      onRepair;
   final VoidCallback? onClose;
 
   const SchemaIssueSidebar({
@@ -24,14 +27,14 @@ class SchemaIssueSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasIssues = issues.isNotEmpty;
-    final shared.categoryProvider = context.watch<shared.CategoryProvider>();
-    final ingredientProvider = context.watch<IngredientMetadataProvider>();
-    final ingredientTypeProvider = context.watch<IngredientTypeProvider>();
-    final resolvedCount = issues.where((issue) => issue.resolved).length;
     final hasUnresolved = issues.any((issue) => !issue.resolved);
-    print(
-        '[SchemaIssueSidebar] Rendering... hasUnresolved=$hasUnresolved, resolvedCount=$resolvedCount/${issues.length}');
+    final resolvedCount = issues.where((issue) => issue.resolved).length;
+
+    final categoryProvider = context.watch<shared.CategoryProvider>();
+    final ingredientProvider =
+        context.watch<shared.IngredientMetadataProvider>();
+    final ingredientTypeProvider =
+        context.watch<shared.IngredientTypeProvider>();
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -47,14 +50,10 @@ class SchemaIssueSidebar extends StatelessWidget {
               color: Colors.black12, blurRadius: 12, offset: Offset(-3, 0)),
         ],
         border: Border(
-          left: BorderSide(
-            color: Colors.grey.shade200,
-            width: 1,
-          ),
+          left: BorderSide(color: Colors.grey.shade200, width: 1),
         ),
       ),
       child: hasUnresolved
-          // ========== FULL SIDEBAR ========== //
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -70,13 +69,12 @@ class SchemaIssueSidebar extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          hasUnresolved
-                              ? 'Schema Issues Detected'
-                              : 'All Issues Resolved',
+                          'Schema Issues Detected',
                           style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              fontSize: 18),
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 18,
+                          ),
                         ),
                       ),
                       if (onClose != null)
@@ -88,7 +86,7 @@ class SchemaIssueSidebar extends StatelessWidget {
                     ],
                   ),
                 ),
-                // List of issues (scrollable)
+                // List of issues
                 Expanded(
                   child: ListView.separated(
                     itemCount: issues.length,
@@ -99,16 +97,16 @@ class SchemaIssueSidebar extends StatelessWidget {
                         return _ResolvedIssueTile(issue: issue);
                       }
                       switch (issue.type) {
-                        case MenuItemSchemaIssueType.category:
+                        case shared.MenuItemSchemaIssueType.category:
                           final loc = AppLocalizations.of(context)!;
                           return _CategoryRepairTile(
                             issue: issue,
-                            provider: shared.categoryProvider,
+                            provider: categoryProvider,
                             onRepair: (newValue) =>
                                 _handleRepair(context, issue, newValue),
                             loc: loc,
                           );
-                        case MenuItemSchemaIssueType.ingredient:
+                        case shared.MenuItemSchemaIssueType.ingredient:
                           final loc = AppLocalizations.of(context)!;
                           return _IngredientRepairTile(
                             issue: issue,
@@ -117,7 +115,7 @@ class SchemaIssueSidebar extends StatelessWidget {
                                 _handleRepair(context, issue, newValue),
                             loc: loc,
                           );
-                        case MenuItemSchemaIssueType.ingredientType:
+                        case shared.MenuItemSchemaIssueType.ingredientType:
                           final loc = AppLocalizations.of(context)!;
                           return _IngredientTypeRepairTile(
                             issue: issue,
@@ -126,84 +124,49 @@ class SchemaIssueSidebar extends StatelessWidget {
                                 _handleRepair(context, issue, newValue),
                             loc: loc,
                           );
-                        case MenuItemSchemaIssueType.missingField:
+                        case shared.MenuItemSchemaIssueType.missingField:
                           return _MissingFieldRepairTile(
                             issue: issue,
                             onRepair: (newValue) =>
                                 _handleRepair(context, issue, newValue),
                           );
-                        default:
-                          return ListTile(
-                            contentPadding:
-                                const EdgeInsets.symmetric(horizontal: 12),
-                            leading: Container(
-                              width: 24,
-                              alignment: Alignment.center,
-                              child: const Icon(Icons.error_outline,
-                                  color: Colors.red),
-                            ),
-                            title: Text(
-                              issue.displayMessage.isNotEmpty
-                                  ? issue.displayMessage
-                                  : 'Unrecognized schema issue',
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          );
                       }
                     },
                   ),
                 ),
-                // Status and actions
+                // Status footer
                 Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (hasUnresolved)
-                        Row(
-                          children: [
-                            Icon(Icons.error,
-                                color: Colors.red.shade700, size: 20),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                '$resolvedCount / ${issues.length} issues resolved',
-                                style: TextStyle(
-                                    color: Colors.red.shade700,
-                                    fontWeight: FontWeight.w600),
+                      Row(
+                        children: [
+                          Icon(Icons.error,
+                              color: Colors.red.shade700, size: 20),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              '$resolvedCount / ${issues.length} issues resolved',
+                              style: TextStyle(
+                                color: Colors.red.shade700,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ],
-                        )
-                      else
-                        Row(
-                          children: [
-                            Icon(Icons.check_circle,
-                                color: Colors.green.shade700, size: 20),
-                            const SizedBox(width: 6),
-                            const Expanded(
-                              child: Text(
-                                'All issues resolved!',
-                                style: TextStyle(
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ],
-                        ),
-                      if (hasUnresolved) const SizedBox(height: 12),
-                      if (hasUnresolved)
-                        Text(
-                          'Please resolve all schema issues before saving this menu item.',
-                          style: TextStyle(
-                              color: Colors.red.shade600, fontSize: 13),
-                        ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Please resolve all schema issues before saving this menu item.',
+                        style:
+                            TextStyle(color: Colors.red.shade600, fontSize: 13),
+                      ),
                     ],
                   ),
                 ),
               ],
             )
-          // ========== COLLAPSED SIDEBAR (NO ISSUES) ========== //
           : Center(
               child: Tooltip(
                 message: "No schema issues detected",
@@ -232,36 +195,34 @@ class SchemaIssueSidebar extends StatelessWidget {
     );
   }
 
-  void _handleRepair(
-      BuildContext context, MenuItemSchemaIssue issue, String newValue) async {
+  void _handleRepair(BuildContext context, shared.MenuItemSchemaIssue issue,
+      String newValue) async {
     try {
-      print(
-          '[SchemaIssueSidebar] _handleRepair triggered for issue: ${issue.displayMessage}, value: $newValue');
-
       WidgetsBinding.instance.addPostFrameCallback((_) {
         onRepair(issue, newValue);
       });
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'schema_issue_sidebar_repair_failed',
         stack: stack.toString(),
         source: 'schema_issue_sidebar.dart',
-        source: 'schema_issue_sidebar' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {
-          'issueType': issue.typeKey,
+          'issueType': issue.type.toString(),
           'missingReference': issue.missingReference,
           'menuItemId': issue.menuItemId,
           'field': issue.field,
           'selectedValue': newValue,
         },
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to update reference. See error logs.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to update reference. See error logs.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }
@@ -269,7 +230,7 @@ class SchemaIssueSidebar extends StatelessWidget {
 // ---------- Per-Issue-Type Repair Tiles ----------
 
 class _CategoryRepairTile extends StatelessWidget {
-  final MenuItemSchemaIssue issue;
+  final shared.MenuItemSchemaIssue issue;
   final shared.CategoryProvider provider;
   final ValueChanged<String> onRepair;
   final AppLocalizations loc;
@@ -283,7 +244,7 @@ class _CategoryRepairTile extends StatelessWidget {
   }) : super(key: key);
 
   Future<void> _handleCreateCategory(BuildContext context) async {
-    final newCategory = await showDialog<Category>(
+    final newCategory = await showDialog<shared.Category>(
       context: context,
       builder: (ctx) => CategoryCreationDialog(
         loc: loc,
@@ -295,21 +256,17 @@ class _CategoryRepairTile extends StatelessWidget {
       try {
         provider.stageCategory(newCategory);
         onRepair(newCategory.id);
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              loc.categoryStagedSuccessfully(newCategory.name),
-            ),
+            content: Text(loc.categoryStagedSuccessfully(newCategory.name)),
             duration: const Duration(seconds: 2),
           ),
         );
       } catch (e, stack) {
-        await shared.ErrorLogger.log(
+        shared.ErrorLogger.log(
           message: 'category_stage_failed',
           stack: stack.toString(),
           source: '_CategoryRepairTile',
-          source: 'schema_issue_sidebar.dart' /* was screen, Phase 4 fix */,
           severity: 'error',
           contextData: {
             'categoryName': newCategory.name,
@@ -317,12 +274,14 @@ class _CategoryRepairTile extends StatelessWidget {
                 issue.context ?? issue.label ?? issue.missingReference,
           },
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(loc.genericErrorMessage),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(loc.genericErrorMessage),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
       }
     }
   }
@@ -374,8 +333,8 @@ class _CategoryRepairTile extends StatelessWidget {
 }
 
 class _IngredientRepairTile extends StatelessWidget {
-  final MenuItemSchemaIssue issue;
-  final IngredientMetadataProvider provider;
+  final shared.MenuItemSchemaIssue issue;
+  final shared.IngredientMetadataProvider provider;
   final ValueChanged<String> onRepair;
   final AppLocalizations loc;
 
@@ -388,16 +347,16 @@ class _IngredientRepairTile extends StatelessWidget {
   }) : super(key: key);
 
   Future<void> _handleCreateIngredient(BuildContext context) async {
-    final newIngredient = await showDialog<IngredientMetadata>(
+    final newIngredient = await showDialog<shared.IngredientMetadata>(
       context: context,
       builder: (ctx) => MultiProvider(
         providers: [
           ChangeNotifierProvider.value(
-            value: context.read<IngredientTypeProvider>(),
-          ),
+              value: Provider.of<IngredientTypeProviderImpl>(context,
+                  listen: false)),
           ChangeNotifierProvider.value(
-            value: context.read<IngredientMetadataProvider>(),
-          ),
+              value: Provider.of<IngredientMetadataProviderImpl>(context,
+                  listen: false)),
         ],
         child: IngredientCreationDialog(
           loc: loc,
@@ -408,23 +367,20 @@ class _IngredientRepairTile extends StatelessWidget {
 
     if (newIngredient != null) {
       try {
-        provider.stageIngredient(newIngredient); // ðŸ”„ stage it, donâ€™t save
+        provider.stageIngredient(newIngredient);
         onRepair(newIngredient.id);
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              loc.ingredientStagedSuccessfully(newIngredient.name),
-            ),
+            content: Text(loc.ingredientStagedSuccessfully(newIngredient.name)),
             duration: const Duration(seconds: 2),
           ),
         );
       } catch (e, stack) {
-        await shared.ErrorLogger.log(
+        shared.ErrorLogger.log(
           message: 'ingredient_stage_failed',
           stack: stack.toString(),
           source: '_IngredientRepairTile',
-          source: 'schema_issue_sidebar.dart' /* was screen, Phase 4 fix */,
           severity: 'error',
           contextData: {
             'ingredientName': newIngredient.name,
@@ -432,12 +388,14 @@ class _IngredientRepairTile extends StatelessWidget {
                 issue.context ?? issue.label ?? issue.missingReference,
           },
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(loc.genericErrorMessage),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(loc.genericErrorMessage),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
       }
     }
   }
@@ -495,8 +453,8 @@ class _IngredientRepairTile extends StatelessWidget {
 }
 
 class _IngredientTypeRepairTile extends StatelessWidget {
-  final MenuItemSchemaIssue issue;
-  final IngredientTypeProvider provider;
+  final shared.MenuItemSchemaIssue issue;
+  final shared.IngredientTypeProvider provider;
   final ValueChanged<String> onRepair;
   final AppLocalizations loc;
 
@@ -509,10 +467,11 @@ class _IngredientTypeRepairTile extends StatelessWidget {
   }) : super(key: key);
 
   Future<void> _handleCreateIngredientType(BuildContext context) async {
-    final newType = await showDialog<IngredientType>(
+    final newType = await showDialog<shared.IngredientType>(
       context: context,
-      builder: (ctx) => ChangeNotifierProvider.value(
-        value: provider,
+      builder: (ctx) =>
+          ChangeNotifierProvider<IngredientTypeProviderImpl>.value(
+        value: provider as IngredientTypeProviderImpl,
         child: IngredientTypeCreationDialog(
           loc: loc,
           suggestedName: issue.context ?? issue.label ?? issue.missingReference,
@@ -522,23 +481,20 @@ class _IngredientTypeRepairTile extends StatelessWidget {
 
     if (newType != null) {
       try {
-        provider.stageIngredientType(newType); // âœ… stage for persistence
+        provider.stageIngredientType(newType);
         onRepair(newType.id!);
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              loc.ingredientTypeStagedSuccessfully(newType.name),
-            ),
+            content: Text(loc.ingredientTypeStagedSuccessfully(newType.name)),
             duration: const Duration(seconds: 2),
           ),
         );
       } catch (e, stack) {
-        await shared.ErrorLogger.log(
+        shared.ErrorLogger.log(
           message: 'ingredient_type_stage_failed',
           stack: stack.toString(),
           source: '_IngredientTypeRepairTile',
-          source: 'schema_issue_sidebar.dart' /* was screen, Phase 4 fix */,
           severity: 'error',
           contextData: {
             'typeName': newType.name,
@@ -546,12 +502,14 @@ class _IngredientTypeRepairTile extends StatelessWidget {
                 issue.context ?? issue.label ?? issue.missingReference,
           },
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(loc.genericErrorMessage),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(loc.genericErrorMessage),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
       }
     }
   }
@@ -610,7 +568,7 @@ class _IngredientTypeRepairTile extends StatelessWidget {
 }
 
 class _MissingFieldRepairTile extends StatelessWidget {
-  final MenuItemSchemaIssue issue;
+  final shared.MenuItemSchemaIssue issue;
   final ValueChanged<String> onRepair;
 
   const _MissingFieldRepairTile({
@@ -658,10 +616,8 @@ class _MissingFieldRepairTile extends StatelessWidget {
   }
 }
 
-// ------------- Resolved Issue Tile (read-only) -------------
-
 class _ResolvedIssueTile extends StatelessWidget {
-  final MenuItemSchemaIssue issue;
+  final shared.MenuItemSchemaIssue issue;
   const _ResolvedIssueTile({Key? key, required this.issue}) : super(key: key);
 
   @override
@@ -704,8 +660,3 @@ class _ResolvedIssueTile extends StatelessWidget {
     );
   }
 }
-
-
-
-
-

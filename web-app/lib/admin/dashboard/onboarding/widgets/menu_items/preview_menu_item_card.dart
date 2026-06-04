@@ -10,7 +10,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 /// - Customization presence
 /// - Image and out-of-stock behavior
 class PreviewMenuItemCard extends StatelessWidget {
-  final MenuItem menuItem;
+  final shared.MenuItem menuItem;
 
   const PreviewMenuItemCard({Key? key, required this.menuItem})
       : super(key: key);
@@ -150,5 +150,3 @@ class PreviewMenuItemCard extends StatelessWidget {
     );
   }
 }
-
-

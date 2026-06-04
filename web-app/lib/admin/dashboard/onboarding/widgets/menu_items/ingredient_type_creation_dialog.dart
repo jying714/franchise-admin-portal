@@ -42,7 +42,7 @@ class _IngredientTypeCreationDialogState
     try {
       final id = _nameController.text.trim().toLowerCase().replaceAll(' ', '_');
 
-      final type = IngredientType(
+      final type = shared.IngredientType(
         id: id,
         name: _nameController.text.trim(),
         systemTag: _tagController.text.trim().isNotEmpty
@@ -53,11 +53,10 @@ class _IngredientTypeCreationDialogState
 
       Navigator.of(context).pop(type);
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'ingredient_type_creation_failed',
         source: 'IngredientTypeCreationDialog',
         stack: stack.toString(),
-        source: 'ingredient_type_creation_dialog.dart' /* was screen, Phase 4 fix */,
         severity: 'error',
       );
       ScaffoldMessenger.of(context).showSnackBar(
@@ -127,7 +126,3 @@ class _IngredientTypeCreationDialogState
     );
   }
 }
-
-
-
-

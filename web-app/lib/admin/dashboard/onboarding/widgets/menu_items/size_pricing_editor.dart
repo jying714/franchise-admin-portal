@@ -4,8 +4,8 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 
 class SizePricingEditor extends StatefulWidget {
-  final List<SizeData> sizes;
-  final void Function(List<SizeData>) onChanged;
+  final List<shared.SizeData> sizes;
+  final void Function(List<shared.SizeData>) onChanged;
   final Widget? trailingTemplateDropdown;
 
   const SizePricingEditor({
@@ -20,20 +20,21 @@ class SizePricingEditor extends StatefulWidget {
 }
 
 class _SizePricingEditorState extends State<SizePricingEditor> {
-  late List<SizeData> _localSizes;
+  late List<shared.SizeData> _localSizes;
   int? _hoveredIndex;
 
   @override
   void initState() {
     super.initState();
-    _localSizes = List<SizeData>.from(widget.sizes.map((s) => s.copy()));
+    _localSizes = List<shared.SizeData>.from(widget.sizes.map((s) => s.copy()));
   }
 
   @override
   void didUpdateWidget(covariant SizePricingEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.sizes != oldWidget.sizes) {
-      _localSizes = List<SizeData>.from(widget.sizes.map((s) => s.copy()));
+      _localSizes =
+          List<shared.SizeData>.from(widget.sizes.map((s) => s.copy()));
     }
   }
 
@@ -44,7 +45,6 @@ class _SizePricingEditorState extends State<SizePricingEditor> {
       shared.ErrorLogger.log(
         message: 'Failed to update size pricing',
         source: 'SizePricingEditor',
-        source: 'menu_item_editor_sheet' /* was screen, Phase 4 fix */,
         severity: 'error',
         stack: stack.toString(),
         contextData: {'sizes': _localSizes.map((s) => s.toMap()).toList()},
@@ -54,7 +54,8 @@ class _SizePricingEditorState extends State<SizePricingEditor> {
 
   void _addSize() {
     setState(() {
-      _localSizes.add(SizeData(label: '', basePrice: 0.0, toppingPrice: 0.0));
+      _localSizes
+          .add(shared.SizeData(label: '', basePrice: 0.0, toppingPrice: 0.0));
     });
     _updateSizes();
   }
@@ -205,7 +206,3 @@ class _SizePricingEditorState extends State<SizePricingEditor> {
     );
   }
 }
-
-
-
-

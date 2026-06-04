@@ -48,7 +48,8 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
 
   Future<void> _handleSubmit() async {
     final l10n = widget.loc;
-    final typeProvider = context.read<IngredientTypeProvider>();
+    final typeProvider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
     final colorScheme = Theme.of(context).colorScheme;
 
     if (!_formKey.currentState!.validate()) return;
@@ -65,7 +66,7 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
 
       final typeName = typeProvider.typeIdToName[typeId] ?? 'Uncategorized';
 
-      final newIngredient = IngredientMetadata(
+      final newIngredient = shared.IngredientMetadata(
         id: id,
         name: name,
         typeId: typeId,
@@ -84,11 +85,10 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
 
       Navigator.of(context).pop(newIngredient);
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'ingredient_creation_failed',
         stack: stack.toString(),
         source: 'IngredientCreationDialog',
-        source: 'ingredient_creation_dialog.dart' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {
           'name': _nameController.text,
@@ -109,7 +109,8 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = widget.loc;
-    final typeProvider = context.watch<IngredientTypeProvider>();
+    final typeProvider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
     final colorScheme = Theme.of(context).colorScheme;
 
     return AlertDialog(
@@ -208,7 +209,3 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
     );
   }
 }
-
-
-
-

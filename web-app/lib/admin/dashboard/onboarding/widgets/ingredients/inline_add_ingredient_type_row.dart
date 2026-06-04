@@ -38,19 +38,22 @@ class _InlineAddIngredientTypeRowState
       return;
     }
 
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
-    final provider = context.read<IngredientTypeProvider>();
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
+    final provider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
 
     setState(() => _submitting = true);
 
     try {
-      final newType = IngredientType(
+      final newType = shared.IngredientType(
         id: null,
         name: name,
         sortOrder: sortOrder,
       );
 
-      await provider.addType(franchiseId, newType);
+      await provider.addIngredientType(franchiseId, newType);
 
       _nameController.clear();
       _sortOrderController.clear();
@@ -61,11 +64,10 @@ class _InlineAddIngredientTypeRowState
         );
       }
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to add new ingredient type inline',
         stack: stack.toString(),
         severity: 'error',
-        source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
         source: 'InlineAddIngredientTypeRow',
         contextData: {
           'nameAttempted': name,
@@ -140,7 +142,3 @@ class _InlineAddIngredientTypeRowState
     );
   }
 }
-
-
-
-

@@ -3,16 +3,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_impl.dart';
 
 class MissingTypeResolutionDialog extends StatefulWidget {
   /// Ingredients that reference a typeId not present in current ingredient types
-  final List<IngredientMetadata> ingredientsWithMissingTypes;
+  final List<shared.IngredientMetadata> ingredientsWithMissingTypes;
 
   /// List of all available types (id, name)
-  final List<IngredientType> availableTypes;
+  final List<shared.IngredientType> availableTypes;
 
   /// Callback when all missing types are resolved. Receives list of resolved ingredients (with updated typeId if needed)
-  final void Function(List<IngredientMetadata> resolvedIngredients) onResolved;
+  final void Function(List<shared.IngredientMetadata> resolvedIngredients)
+      onResolved;
 
   /// Context from the dialog builder for safe pops!
   final BuildContext dialogContext;
@@ -32,11 +34,11 @@ class MissingTypeResolutionDialog extends StatefulWidget {
 
 class _MissingTypeResolutionDialogState
     extends State<MissingTypeResolutionDialog> {
-  late List<IngredientMetadata>
+  late List<shared.IngredientMetadata>
       workingList; // Current ingredient rows (removable)
   late Map<String, String?>
       typeMapping; // ingredientId -> selected typeId (null if unresolved)
-  late List<IngredientType>
+  late List<shared.IngredientType>
       allTypes; // local, can be updated when new type added
   bool _addingType = false;
   final TextEditingController _newTypeNameCtrl = TextEditingController();
@@ -58,7 +60,8 @@ class _MissingTypeResolutionDialogState
     setState(() => _addingType = true);
 
     try {
-      final provider = context.read<IngredientTypeProvider>();
+      final provider =
+          Provider.of<shared.IngredientTypeProvider>(context, listen: false);
       final id = name.toLowerCase().replaceAll(' ', '_');
       final added = provider.stageIfNew(id: id, name: name);
       if (!added) {
@@ -82,11 +85,10 @@ class _MissingTypeResolutionDialogState
         _addingType = false;
       });
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to create new ingredient type',
         stack: stack.toString(),
         source: 'MissingTypeResolutionDialog',
-        source: 'onboarding_ingredients_screen' /* was screen, Phase 4 fix */,
         severity: 'error',
       );
       setState(() => _addingType = false);
@@ -110,9 +112,9 @@ class _MissingTypeResolutionDialogState
   @override
   Widget build(BuildContext context) {
     print(
-        '[MissingTypeResolutionDialog] FranchiseId in context: ${context.read<shared.FranchiseProvider>().franchiseId}');
+        '[MissingTypeResolutionDialog] FranchiseId in context: ${Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId}');
     print(
-        '[MissingTypeResolutionDialog] IngredientTypeProvider franchiseId: ${context.read<IngredientTypeProvider>().franchiseId}');
+        '[MissingTypeResolutionDialog] IngredientTypeProvider franchiseId: ${Provider.of<IngredientTypeProviderImpl>(context, listen: false).franchiseId}');
 
     print('[MissingTypeResolutionDialog] build() called');
     final theme = Theme.of(context);
@@ -262,7 +264,3 @@ class _MissingTypeResolutionDialogState
     super.deactivate();
   }
 }
-
-
-
-

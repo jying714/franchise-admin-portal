@@ -30,7 +30,7 @@ class _CategoryCreationDialogState extends State<CategoryCreationDialog> {
 
   void _handleSubmit() {
     if (_formKey.currentState?.validate() ?? false) {
-      final newCategory = Category(
+      final newCategory = shared.Category(
         id: const Uuid().v4(),
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim(),
@@ -82,5 +82,3 @@ class _CategoryCreationDialogState extends State<CategoryCreationDialog> {
     );
   }
 }
-
-

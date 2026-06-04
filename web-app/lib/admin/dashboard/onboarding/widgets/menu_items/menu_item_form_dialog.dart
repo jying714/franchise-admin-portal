@@ -6,12 +6,12 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 
 class MenuItemFormDialog extends StatefulWidget {
-  final MenuItem? initialItem;
+  final shared.MenuItem? initialItem;
 
   const MenuItemFormDialog({super.key, this.initialItem});
 
   static Future<void> show(BuildContext context,
-      {MenuItem? initialItem}) async {
+      {shared.MenuItem? initialItem}) async {
     await showDialog(
       context: context,
       builder: (_) => MenuItemFormDialog(initialItem: initialItem),
@@ -52,12 +52,14 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
 
   Future<void> _save() async {
     final loc = AppLocalizations.of(context)!;
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
 
     if (!_formKey.currentState!.validate()) return;
 
     try {
-      final menuItem = MenuItem(
+      final menuItem = shared.MenuItem(
         id: widget.initialItem?.id ?? UniqueKey().toString(),
         available: true,
         name: _nameController.text.trim(),
@@ -74,10 +76,9 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
       if (!mounted) return;
       Navigator.of(context).pop(menuItem);
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to create menu item',
         source: 'menu_item_form_dialog',
-        source: 'menu_item_form_dialog' /* was screen, Phase 4 fix */,
         severity: 'error',
         stack: stack.toString(),
         contextData: {
@@ -151,7 +152,3 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
     );
   }
 }
-
-
-
-

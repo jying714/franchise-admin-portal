@@ -12,10 +12,13 @@ class MenuItemJsonImportExportDialog {
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final shared.menuItemProvider = context.read<shared.MenuItemProvider>();
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
+    final shared.MenuItemProvider menuItemProvider =
+        Provider.of<shared.MenuItemProvider>(context, listen: false);
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
 
-    final itemsJson = shared.menuItemProvider.menuItems.map((e) {
+    final itemsJson = menuItemProvider.menuItems.map((e) {
       final map = e.toMap();
       map.updateAll((key, value) {
         if (value is Timestamp) return value.toDate().toIso8601String();
@@ -77,21 +80,23 @@ class MenuItemJsonImportExportDialog {
                 final parsed = jsonDecode(controller.text);
                 if (parsed is! List)
                   throw Exception('Invalid JSON: Not a List');
-                final items = parsed.map<MenuItem>((e) {
-                  return MenuItem.fromMap(Map<String, dynamic>.from(e));
+                final items = parsed.map<shared.MenuItem>((e) {
+                  return shared.MenuItem.fromMap(Map<String, dynamic>.from(e));
                 }).toList();
 
-                await shared.menuItemProvider.loadMenuItems(franchiseId);
+                await Provider.of<shared.MenuItemProvider>(context,
+                        listen: false)
+                    .load(franchiseIdOverride: franchiseId);
                 for (final item in items) {
-                  shared.menuItemProvider.addOrUpdateMenuItem(item);
+                  Provider.of<shared.MenuItemProvider>(context, listen: false)
+                      .addOrUpdateMenuItem(item);
                 }
 
                 Navigator.pop(context);
               } catch (e, stack) {
-                await shared.ErrorLogger.log(
+                shared.ErrorLogger.log(
                   message: 'Invalid JSON in MenuItemJsonImportExportDialog',
                   source: 'MenuItemJsonImportExportDialog',
-                  source: 'onboarding_menu_items_screen.dart' /* was screen, Phase 4 fix */,
                   severity: 'warning',
                   stack: stack.toString(),
                   contextData: {
@@ -114,8 +119,3 @@ class MenuItemJsonImportExportDialog {
     );
   }
 }
-
-
-
-
-

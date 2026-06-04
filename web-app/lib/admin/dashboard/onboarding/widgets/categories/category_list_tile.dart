@@ -7,7 +7,7 @@ import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class CategoryListTile extends StatelessWidget {
-  final Category category;
+  final shared.Category category;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final bool isSelected;
@@ -91,23 +91,27 @@ class CategoryListTile extends StatelessWidget {
                 );
 
                 if (confirmed == true) {
-                  final provider = context.read<shared.CategoryProvider>();
-                  final franchiseId =
-                      context.read<shared.FranchiseProvider>().franchiseId;
+                  final provider = Provider.of<shared.CategoryProvider>(context,
+                      listen: false);
+                  final franchiseId = Provider.of<shared.FranchiseProvider>(
+                          context,
+                          listen: false)
+                      .franchiseId;
 
                   try {
-                    await context.read<shared.FirestoreService>().deleteCategory(
-                          franchiseId: franchiseId,
-                          categoryId: category.id,
-                        );
+                    await Provider.of<shared.FirestoreService>(context,
+                            listen: false)
+                        .deleteCategory(
+                      franchiseId: franchiseId,
+                      categoryId: category.id,
+                    );
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(loc.deleteSuccess)),
                     );
                   } catch (e, stack) {
-                    await shared.ErrorLogger.log(
+                    shared.ErrorLogger.log(
                       message: 'Failed to delete category',
                       source: 'CategoryListTile',
-                      source: 'onboarding_categories_screen' /* was screen, Phase 4 fix */,
                       severity: 'error',
                       stack: stack.toString(),
                       contextData: {
@@ -129,9 +133,3 @@ class CategoryListTile extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-
