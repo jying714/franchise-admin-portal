@@ -29,7 +29,8 @@ class _OnboardingFeatureSetupScreenState
   void initState() {
     super.initState();
     Future.microtask(() async {
-      final provider = context.read<FranchiseFeatureProvider>();
+      final provider =
+          Provider.of<shared.FranchiseFeatureProvider>(context, listen: false);
       await provider.initialize();
 
       try {
@@ -46,11 +47,10 @@ class _OnboardingFeatureSetupScreenState
         debugPrint(
             '[FeatureSetup] Loaded ${_featureMetadata.length} features from Firestore.');
       } catch (e, st) {
-        await shared.ErrorLogger.log(
+        shared.ErrorLogger.log(
           message: 'Failed to fetch platform_features from Firestore',
           stack: st.toString(),
           source: 'onboarding_feature_setup_screen.dart',
-          source: 'OnboardingFeatureSetupScreen' /* was screen, Phase 4 fix */,
         );
       }
 
@@ -93,7 +93,8 @@ class _OnboardingFeatureSetupScreenState
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final featureProvider = context.watch<FranchiseFeatureProvider>();
+    final featureProvider =
+        Provider.of<shared.FranchiseFeatureProvider>(context, listen: false);
     final isInitialized = featureProvider.isInitialized;
 
     return Scaffold(
@@ -172,10 +173,15 @@ class _OnboardingFeatureSetupScreenState
   /// Handles saving the current feature setup to Firestore and marking the onboarding step complete.
   Future<void> _handleSave() async {
     setState(() => _isSaving = true);
-    final featureProvider = context.read<FranchiseFeatureProvider>();
-    final onboarding = context.read<shared.OnboardingProgressProvider>();
+    final featureProvider =
+        Provider.of<shared.FranchiseFeatureProvider>(context, listen: false);
+    final onboarding =
+        Provider.of<shared.OnboardingProgressProvider>(context, listen: false);
     final franchiseId =
-        context.read<FranchiseInfoProvider>().franchise?.id ?? 'unknown';
+        Provider.of<shared.FranchiseInfoProvider>(context, listen: false)
+                .franchise
+                ?.id ??
+            'unknown';
 
     try {
       final success = await featureProvider.persistToFirestore();
@@ -208,11 +214,10 @@ class _OnboardingFeatureSetupScreenState
         );
       }
     } catch (e, st) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to save onboarding features',
         stack: st.toString(),
         source: 'onboarding_feature_setup_screen.dart',
-        source: 'OnboardingFeatureSetupScreen' /* was screen, Phase 4 fix */,
         contextData: {'franchiseId': franchiseId},
       );
 
@@ -255,11 +260,10 @@ class _OnboardingFeatureSetupScreenState
         }
       }
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to toggle onboarding step "onboarding_feature_setup"',
         stack: stack.toString(),
         source: 'OnboardingFeatureSetupScreen',
-        source: 'onboarding_feature_setup_screen' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {'error': e.toString()},
       );
@@ -271,9 +275,3 @@ class _OnboardingFeatureSetupScreenState
     }
   }
 }
-
-
-
-
-
-

@@ -11,7 +11,7 @@ class FranchiseSubscriptionSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.read<AdminUserProvider>().user;
+    final user = Provider.of<shared.AdminUserProvider>(context).user;
     if (!(user?.isPlatformOwner ?? false) && !(user?.isDeveloper ?? false)) {
       return const SizedBox.shrink();
     }
@@ -20,8 +20,11 @@ class FranchiseSubscriptionSummaryCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return FutureBuilder<List<FranchiseSubscription>>(
-      future: shared.FirestoreService.getFranchiseSubscriptions(),
+    final firestore =
+        Provider.of<shared.FirestoreService>(context, listen: false);
+
+    return FutureBuilder<List<shared.FranchiseSubscription>>(
+      future: firestore.getFranchiseSubscriptions(), // ← Fixed: instance call
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());
@@ -31,7 +34,6 @@ class FranchiseSubscriptionSummaryCard extends StatelessWidget {
           shared.ErrorLogger.log(
             message: 'franchise_subscription_summary_error',
             source: 'FranchiseSubscriptionSummaryCard',
-            source: 'platform_owner_dashboard' /* was screen, Phase 5 */,
             severity: 'error',
             contextData: {'error': snapshot.error.toString()},
           );
@@ -107,9 +109,3 @@ class FranchiseSubscriptionSummaryCard extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-

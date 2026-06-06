@@ -1,8 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 5 final cleanup
-    as order_model;
-    as admin_user;
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
@@ -10,6 +8,7 @@ import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/widgets/orders/order_detail_dialog.dart';
+import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 
 class OrderManagementScreen extends StatelessWidget {
   const OrderManagementScreen({super.key});
@@ -44,14 +43,13 @@ class _OrderManagementScreenContentState
   String? _filterStatus;
   DateTimeRange? _dateRange;
   bool _showRefunded = true;
-  List<order_model.Order> _lastOrders = [];
+  List<shared.Order> _lastOrders = [];
 
-  Future<void> _updateOrderStatus(String franchiseId, order_model.Order order,
-      String newStatus, admin_user.User user) async {
-    await context
-        .read<shared.FirestoreService>()
+  Future<void> _updateOrderStatus(String franchiseId, shared.Order order,
+      String newStatus, shared.User user) async {
+    await Provider.of<shared.FirestoreService>(context, listen: false)
         .updateOrderStatus(franchiseId, order.id, newStatus);
-    await AuditLogService().addLog(
+    await Provider.of<shared.AuditLogService>(context, listen: false).addLog(
       franchiseId: franchiseId,
       userId: user.id,
       action: 'update_order_status',
@@ -61,12 +59,11 @@ class _OrderManagementScreenContentState
     );
   }
 
-  Future<void> _processRefund(String franchiseId, order_model.Order order,
-      double amount, admin_user.User user) async {
-    await context
-        .read<shared.FirestoreService>()
+  Future<void> _processRefund(String franchiseId, shared.Order order,
+      double amount, shared.User user) async {
+    await Provider.of<shared.FirestoreService>(context, listen: false)
         .refundOrder(franchiseId, order.id, amount: amount);
-    await AuditLogService().addLog(
+    await Provider.of<shared.AuditLogService>(context, listen: false).addLog(
       franchiseId: franchiseId,
       userId: user.id,
       action: 'refund_order',
@@ -76,8 +73,10 @@ class _OrderManagementScreenContentState
     );
   }
 
-  void _showRefundDialog(order_model.Order order, admin_user.User user) {
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
+  void _showRefundDialog(shared.Order order, shared.User user) {
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
     final controller =
         TextEditingController(text: order.total.toStringAsFixed(2));
     final colorScheme = Theme.of(context).colorScheme;
@@ -112,8 +111,10 @@ class _OrderManagementScreenContentState
     );
   }
 
-  void _showStatusDialog(order_model.Order order, admin_user.User user) {
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
+  void _showStatusDialog(shared.Order order, shared.User user) {
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
     const allowedStatuses = [
       'Placed',
       'Preparing',
@@ -157,7 +158,7 @@ class _OrderManagementScreenContentState
     );
   }
 
-  List<order_model.Order> _filterOrders(List<order_model.Order> orders) {
+  List<shared.Order> _filterOrders(List<shared.Order> orders) {
     return orders.where((o) {
       if (!_showRefunded && o.status == 'Refunded') return false;
       if (_filterStatus != null && o.status != _filterStatus) return false;
@@ -178,9 +179,9 @@ class _OrderManagementScreenContentState
     }).toList();
   }
 
-  void _showExportDialog(String franchiseId, List<order_model.Order> orders,
-      admin_user.User user) async {
-    await AuditLogService().addLog(
+  void _showExportDialog(
+      String franchiseId, List<shared.Order> orders, shared.User user) async {
+    await Provider.of<shared.AuditLogService>(context, listen: false).addLog(
       franchiseId: franchiseId,
       userId: user.id,
       action: 'export_orders',
@@ -196,10 +197,15 @@ class _OrderManagementScreenContentState
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
-    final user = context.watch<AdminUserProvider>().user;
-    final loading = context.watch<AdminUserProvider>().loading;
-    final shared.firestoreService = context.read<shared.FirestoreService>();
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
+    final user =
+        Provider.of<shared.AdminUserProvider>(context, listen: false).user;
+    final loading =
+        Provider.of<shared.AdminUserProvider>(context, listen: false).loading;
+    final firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final colorScheme = Theme.of(context).colorScheme;
 
     if (user == null) {
@@ -303,9 +309,9 @@ class _OrderManagementScreenContentState
                       ),
                       const SizedBox(height: 16),
                       Expanded(
-                        child: StreamBuilder<List<order_model.Order>>(
+                        child: StreamBuilder<List<shared.Order>>(
                           stream:
-                              shared.firestoreService.getAllOrdersStream(franchiseId),
+                              firestoreService.getAllOrdersStream(franchiseId),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
@@ -404,8 +410,3 @@ class _OrderManagementScreenContentState
     );
   }
 }
-
-
-
-
-

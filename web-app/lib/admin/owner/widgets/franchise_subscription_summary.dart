@@ -6,7 +6,7 @@ import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:provider/provider.dart';
 
 class FranchiseSubscriptionSummary extends StatelessWidget {
-  final FranchiseSubscription subscription;
+  final shared.FranchiseSubscription subscription;
 
   const FranchiseSubscriptionSummary({
     super.key,
@@ -18,7 +18,8 @@ class FranchiseSubscriptionSummary extends StatelessWidget {
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final user = context.read<AdminUserProvider>().user;
+    final user =
+        Provider.of<shared.AdminUserProvider>(context, listen: false).user;
 
     // ðŸ” Access Control
     final isDevOrOwner =
@@ -171,7 +172,6 @@ class FranchiseSubscriptionSummary extends StatelessWidget {
       shared.ErrorLogger.log(
         message: 'franchise_subscription_summary_render_error',
         source: 'FranchiseSubscriptionSummary',
-        source: 'franchise_subscription_list_screen' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {'exception': e.toString()},
         stack: stack.toString(),
@@ -180,8 +180,3 @@ class FranchiseSubscriptionSummary extends StatelessWidget {
     }
   }
 }
-
-
-
-
-

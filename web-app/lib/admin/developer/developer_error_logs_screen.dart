@@ -54,7 +54,7 @@ class _DeveloperErrorLogsScreenState extends State<DeveloperErrorLogsScreen> {
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final adminUser = Provider.of<AdminUserProvider>(context).user;
+    final adminUser = Provider.of<shared.AdminUserProvider>(context).user;
 
     if (!(adminUser?.isDeveloper ?? false)) {
       return Scaffold(
@@ -76,16 +76,17 @@ class _DeveloperErrorLogsScreenState extends State<DeveloperErrorLogsScreen> {
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         child: Consumer<shared.FranchiseProvider>(
-          builder: (context, shared.FranchiseProvider, _) {
-            final options = shared.FranchiseProvider.viewableFranchises;
+          builder: (context, franchiseProvider, _) {
+            final options = franchiseProvider.viewableFranchises;
             final selectedFranchiseId =
                 (_franchiseId == null || _franchiseId == 'all')
                     ? null
                     : _franchiseId;
 
-            return StreamBuilder<List<ErrorLog>>(
-              stream: Provider.of<shared.FirestoreService>(context, listen: false)
-                  .streamErrorLogsGlobal(
+            return StreamBuilder<List<shared.ErrorLog>>(
+              stream:
+                  Provider.of<shared.FirestoreService>(context, listen: false)
+                      .streamErrorLogsGlobal(
                 franchiseId: selectedFranchiseId,
                 severity: _severity,
                 userId: null,
@@ -282,7 +283,7 @@ class _DeveloperErrorLogsScreenState extends State<DeveloperErrorLogsScreen> {
 }
 
 class _DevErrorLogList extends StatelessWidget {
-  final List<ErrorLog> logs;
+  final List<shared.ErrorLog> logs;
   final ColorScheme colorScheme;
   final AppLocalizations loc;
   final ThemeData theme;
@@ -424,8 +425,3 @@ class _ComingSoonCard extends StatelessWidget {
     );
   }
 }
-
-
-
-
-

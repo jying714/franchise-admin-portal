@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_sidebar.dart';
@@ -24,14 +24,15 @@ import 'package:franchise_admin_portal/widgets/header/help_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
+import 'package:franchise_admin_portal/core/section_registry.dart'; // DashboardSection
 
 class DeveloperDashboardScreen extends StatefulWidget {
   final String currentScreen;
 
   const DeveloperDashboardScreen({
-    Key? key,
+    super.key,
     required this.currentScreen,
-  }) : super(key: key);
+  });
 
   @override
   State<DeveloperDashboardScreen> createState() =>
@@ -39,7 +40,7 @@ class DeveloperDashboardScreen extends StatefulWidget {
 }
 
 class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
-  late final List<DashboardSection> _sections;
+  late final List<shared.DashboardSection> _sections;
   int _selectedIndex = 0;
 
   @override
@@ -49,52 +50,35 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
   }
 
   Future<void> _selectFranchiseDialog(BuildContext context) async {
-    final selectedId = await showDialog<String>(
+    await showDialog(
       context: context,
       builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: SizedBox(
+        child: const SizedBox(
           width: 420,
-          child: FranchiseSelector(
-            onSelected: (franchiseId) {
-              Navigator.of(context).pop(franchiseId);
-            },
-          ),
+          child: FranchiseSelectorDialogContent(),
         ),
       ),
     );
-    if (selectedId != null && selectedId.isNotEmpty) {
-      await context.read<shared.FranchiseProvider>().setFranchiseId(selectedId);
-    }
+    // The dialog updates the FranchiseProvider internally — no extra handling needed
   }
 
   @override
   Widget build(BuildContext context) {
-    final appUser = Provider.of<AdminUserProvider>(context).user;
+    final appUser = Provider.of<shared.AdminUserProvider>(context).user;
     if (appUser == null) {
-      print(
-          '[DEBUG] DeveloperDashboardsource: appUser is null /* was screen, Phase 5 */, showing spinner');
-      return Scaffold(
+      return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
-    final shared.firestoreService =
-        Provider.of<shared.FirestoreService>(context, listen: false);
+
     final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     final isMobile = MediaQuery.of(context).size.width < 800;
-    final loc = AppLocalizations.of(context);
-    if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
-      );
-    }
+    final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
 
     final roles = appUser.roles;
     if (!roles.contains('developer')) {
-      print('[DEBUG] Blocked. appUser=${appUser?.email}, roles=${roles}');
       return Scaffold(
         body: Center(
           child: Text(
@@ -108,12 +92,11 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
       );
     }
 
-    // --- Robust app bar franchise label ---
     final showFranchise = franchiseId != 'all' &&
         franchiseId != 'unknown' &&
         franchiseId.isNotEmpty;
     final appBarTitle = showFranchise
-        ? '${loc.developerDashboardTitle} â€” $franchiseId'
+        ? '${loc.developerDashboardTitle} — $franchiseId'
         : loc.developerDashboardTitle;
 
     return Scaffold(
@@ -124,14 +107,9 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
           FranchisePickerDropdown(),
           const SizedBox(width: 8),
           DashboardSwitcherDropdown(
-            currentsource: '/developer/dashboard' /* was screen, Phase 5 */,
+            currentScreen: widget.currentScreen,
             user: appUser,
           ),
-          // IconButton(
-          //   icon: const Icon(Icons.sync_alt),
-          //   tooltip: loc.switchFranchise,
-          //   onPressed: () => _selectFranchiseDialog(context),
-          // ),
           const SizedBox(width: 8),
           NotificationsIconButton(),
           const SizedBox(width: 8),
@@ -183,7 +161,6 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
                           shared.ErrorLogger.log(
                             message: 'Developer dashboard section error: $e',
                             source: 'DeveloperDashboardScreen',
-                            source: section.title /* was screen, Phase 5 */,
                             stack: stack.toString(),
                             severity: 'error',
                             contextData: {
@@ -191,7 +168,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
                               'sectionIndex': _selectedIndex,
                               'sectionTitle': section.title,
                               'errorType': e.runtimeType.toString(),
-                              if (appUser?.id != null) 'userId': appUser!.id,
+                              if (appUser.id != null) 'userId': appUser.id,
                             },
                           );
                           return Center(
@@ -220,14 +197,14 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
     );
   }
 
-  List<DashboardSection> _getDeveloperSections() {
+  List<shared.DashboardSection> _getDeveloperSections() {
     String? getFranchiseOrNull(BuildContext context) {
       final id = context.watch<shared.FranchiseProvider>().franchiseId;
       return (id == 'unknown' || id.isEmpty) ? null : id;
     }
 
     return [
-      DashboardSection(
+      shared.DashboardSection(
         key: 'overview',
         title: 'Overview',
         icon: Icons.dashboard_outlined,
@@ -235,7 +212,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
             OverviewSection(franchiseId: getFranchiseOrNull(context)),
         sidebarOrder: 0,
       ),
-      DashboardSection(
+      shared.DashboardSection(
         key: 'impersonationTools',
         title: 'Impersonation Tools',
         icon: Icons.switch_account_outlined,
@@ -244,7 +221,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         ),
         sidebarOrder: 1,
       ),
-      DashboardSection(
+      shared.DashboardSection(
         key: 'errorMonitoring',
         title: 'Error Logs',
         icon: Icons.bug_report_outlined,
@@ -253,7 +230,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         ),
         sidebarOrder: 2,
       ),
-      DashboardSection(
+      shared.DashboardSection(
         key: 'featureFlags',
         title: 'Feature Toggles',
         icon: Icons.toggle_on_outlined,
@@ -262,7 +239,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         ),
         sidebarOrder: 3,
       ),
-      DashboardSection(
+      shared.DashboardSection(
         key: 'pluginRegistry',
         title: 'Plugin Registry',
         icon: Icons.extension_outlined,
@@ -271,7 +248,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         ),
         sidebarOrder: 4,
       ),
-      DashboardSection(
+      shared.DashboardSection(
         key: 'firestoreSchema',
         title: 'Schema Browser',
         icon: Icons.schema_outlined,
@@ -280,7 +257,7 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         ),
         sidebarOrder: 5,
       ),
-      DashboardSection(
+      shared.DashboardSection(
         key: 'auditTrail',
         title: 'Audit Trail',
         icon: Icons.timeline_outlined,
@@ -290,21 +267,21 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
         sidebarOrder: 6,
       ),
       // --- DEV TOOLS GROUP ---
-      DashboardSection(
+      shared.DashboardSection(
         key: 'billingSubscriptionTools',
         title: 'Billing Tools',
         icon: Icons.receipt_long_outlined,
         builder: (context) => const BillingSubscriptionToolsScreen(),
         sidebarOrder: 7,
       ),
-      DashboardSection(
+      shared.DashboardSection(
         key: 'subscriptionDevTools',
         title: 'Subscription Tools',
         icon: Icons.subscriptions_outlined,
         builder: (context) => const SubscriptionDevToolsScreen(),
         sidebarOrder: 8,
       ),
-      DashboardSection(
+      shared.DashboardSection(
         key: 'platformFeaturePlanTools',
         title: 'Platform Feature & Plan Tools',
         icon: Icons.tune_outlined,
@@ -314,9 +291,3 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
     ];
   }
 }
-
-
-
-
-
-

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-    as admin_user;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class FeatureSettingsScreen extends StatefulWidget {
@@ -16,7 +15,7 @@ class FeatureSettingsScreen extends StatefulWidget {
 class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
   bool _unauthorizedLogged = false;
 
-  Future<void> _updateFeature(String key, bool value, admin_user.User user,
+  Future<void> _updateFeature(String key, bool value, shared.User user,
       Map<String, dynamic> meta) async {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
@@ -28,10 +27,11 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
       return;
     }
     final franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
 
     if (!(user.isOwner || user.isAdmin || user.isDeveloper)) {
-      await AuditLogService().addLog(
+      await Provider.of<shared.AuditLogService>(context, listen: false).addLog(
         franchiseId: franchiseId,
         userId: user.id,
         action: 'unauthorized_feature_toggle_attempt',
@@ -42,10 +42,9 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
           'message': 'User with insufficient role tried to toggle feature.',
         },
       );
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Unauthorized feature toggle attempt by ${user.email}',
         source: 'FeatureSettingsScreen',
-        source: 'FeatureSettingsScreen' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {
           'roles': user.roles,
@@ -69,7 +68,7 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
     try {
       await Provider.of<shared.FirestoreService>(context, listen: false)
           .updateFeatureToggle(franchiseId, key, value);
-      await AuditLogService().addLog(
+      await Provider.of<shared.AuditLogService>(context, listen: false).addLog(
         franchiseId: franchiseId,
         userId: user.id,
         action: 'update_feature_toggle',
@@ -104,7 +103,8 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId!;
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId!;
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       print(
@@ -113,7 +113,8 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
         body: Center(child: Text('Localization missing! [debug]')),
       );
     }
-    final user = Provider.of<AdminUserProvider>(context, listen: false).user;
+    final user =
+        Provider.of<shared.AdminUserProvider>(context, listen: false).user;
 
     // Not logged in
     if (user == null) {
@@ -136,7 +137,8 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
       if (!_unauthorizedLogged) {
         _unauthorizedLogged = true;
         Future.microtask(() async {
-          await AuditLogService().addLog(
+          await Provider.of<shared.AuditLogService>(context, listen: false)
+              .addLog(
             franchiseId: franchiseId,
             userId: user.id,
             action: 'unauthorized_feature_settings_access',
@@ -147,10 +149,9 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
                   'User with insufficient role tried to access feature settings.',
             },
           );
-          await shared.ErrorLogger.log(
+          shared.ErrorLogger.log(
             message: 'Unauthorized feature settings access by ${user.email}',
             source: 'FeatureSettingsScreen',
-            source: 'FeatureSettingsScreen' /* was screen, Phase 5 */,
             severity: 'warning',
             contextData: {
               'roles': user.roles,
@@ -249,9 +250,3 @@ class _FeatureSettingsScreenState extends State<FeatureSettingsScreen> {
     );
   }
 }
-
-
-
-
-
-

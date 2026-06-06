@@ -33,14 +33,15 @@ class _AdminErrorLogsScreenState extends State<AdminErrorLogsScreen> {
       // TODO: Replace with real shared.FirestoreService error log query scoped to this franchise.
       await Future.delayed(const Duration(milliseconds: 500));
       final franchiseId =
-          Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
+          Provider.of<shared.FranchiseProvider>(context, listen: false)
+              .franchiseId;
       _logs = [
         AdminErrorLog(
           id: '1',
           timestamp: DateTime.now().subtract(const Duration(minutes: 14)),
           message: 'Customer order failed during checkout.',
           severity: 'error',
-          source: 'CheckoutScreen' /* was screen, Phase 5 */,
+          screen: 'CheckoutScreen',
           franchiseId: franchiseId,
         ),
         AdminErrorLog(
@@ -48,7 +49,7 @@ class _AdminErrorLogsScreenState extends State<AdminErrorLogsScreen> {
           timestamp: DateTime.now().subtract(const Duration(hours: 2)),
           message: 'Receipt printer not responding.',
           severity: 'warning',
-          source: 'OrderScreen' /* was screen, Phase 5 */,
+          screen: 'OrderScreen',
           franchiseId: franchiseId,
         ),
         AdminErrorLog(
@@ -56,7 +57,7 @@ class _AdminErrorLogsScreenState extends State<AdminErrorLogsScreen> {
           timestamp: DateTime.now().subtract(const Duration(days: 1)),
           message: 'Loyalty points failed to sync for customer.',
           severity: 'error',
-          source: 'CustomerLoyaltyScreen' /* was screen, Phase 5 */,
+          screen: 'CustomerLoyaltyScreen',
           franchiseId: franchiseId,
         ),
       ];
@@ -67,11 +68,10 @@ class _AdminErrorLogsScreenState extends State<AdminErrorLogsScreen> {
         _loading = false;
       });
       final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to fetch admin error logs: $e',
         stack: stack.toString(),
         source: 'AdminErrorLogsScreen',
-        source: 'AdminErrorLogsScreen' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {
           'franchiseId': franchiseId,
@@ -120,7 +120,7 @@ class _AdminErrorLogsScreenState extends State<AdminErrorLogsScreen> {
     }
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final adminUser = Provider.of<AdminUserProvider>(context).user;
+    final adminUser = Provider.of<shared.AdminUserProvider>(context).user;
     final roles = adminUser?.roles ?? [];
     final isAdmin = roles.contains('owner') ||
         roles.contains('manager') ||
@@ -410,9 +410,3 @@ class AdminErrorLog {
     required this.franchiseId,
   });
 }
-
-
-
-
-
-

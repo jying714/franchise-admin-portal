@@ -23,7 +23,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final userProvider = context.watch<AdminUserProvider>();
+    final userProvider = context.watch<shared.AdminUserProvider>();
     final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
 
     return Scaffold(
@@ -57,9 +57,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                         tooltip: "Export Current Summary (CSV)",
                         onPressed: () async {
                           if (_selectedPeriod == null) return;
-                          final summaries = await context
-                              .read<AnalyticsService>()
-                              .getAnalyticsSummaries(franchiseId);
+                          final summaries =
+                              await Provider.of<shared.AnalyticsService>(
+                                      context,
+                                      listen: false)
+                                  .getAnalyticsSummaries(franchiseId);
                           final current = summaries.firstWhere(
                             (s) => s.period == _selectedPeriod,
                             orElse: () => summaries.first,
@@ -78,9 +80,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   ),
                   const SizedBox(height: 16),
                   Expanded(
-                    child: StreamBuilder<List<AnalyticsSummary>>(
-                      stream: context
-                          .read<AnalyticsService>()
+                    child: StreamBuilder<List<shared.AnalyticsSummary>>(
+                      stream: Provider.of<shared.AnalyticsService>(context,
+                              listen: false)
                           .getSummaryMetrics(franchiseId),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
@@ -105,8 +107,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           );
                         }
 
-                        final sorted = List<AnalyticsSummary>.from(summaries)
-                          ..sort((a, b) => b.period.compareTo(a.period));
+                        final sorted =
+                            List<shared.AnalyticsSummary>.from(summaries)
+                              ..sort((a, b) => b.period.compareTo(a.period));
                         final periods =
                             sorted.map((s) => s.period).toSet().toList();
                         final selected = _selectedPeriod ?? periods.first;
@@ -178,7 +181,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  List<Widget> _buildMetrics(AnalyticsSummary summary, BuildContext context) {
+  List<Widget> _buildMetrics(
+      shared.AnalyticsSummary summary, BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final metrics = <String, dynamic>{
       "Total Orders": summary.totalOrders,
@@ -209,7 +213,3 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     }).toList();
   }
 }
-
-
-
-

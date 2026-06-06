@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-
+import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
@@ -30,12 +30,13 @@ class InvoiceDetailScreen extends StatefulWidget {
 class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
   late final shared.FirestoreService _firestoreService;
 
-  late Future<Invoice?> _invoiceFuture;
+  late Future<shared.Invoice?> _invoiceFuture;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _firestoreService = Provider.of<shared.FirestoreService>(context, listen: false);
+    _firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     _invoiceFuture = _firestoreService.getInvoiceById(widget.invoiceId);
   }
 
@@ -52,14 +53,13 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
       appBar: AppBar(
         title: Text('${loc.invoice} ${widget.invoiceId}'),
       ),
-      body: FutureBuilder<Invoice?>(
+      body: FutureBuilder<shared.Invoice?>(
         future: _invoiceFuture,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             shared.ErrorLogger.log(
               message: snapshot.error.toString(),
               source: 'InvoiceDetailScreen',
-              source: 'FutureBuilder' /* was screen, Phase 5 */,
               severity: 'error',
               contextData: {'invoiceId': widget.invoiceId},
             );
@@ -79,29 +79,29 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
   }
 
   Widget _buildInvoiceDetail(
-      BuildContext context, Invoice invoice, AppLocalizations loc) {
+      BuildContext context, shared.Invoice invoice, AppLocalizations loc) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(DesignTokens.paddingLg),
+      padding: const EdgeInsets.all(shared.DesignTokens.paddingLg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildInvoiceHeader(invoice, loc),
-          const SizedBox(height: DesignTokens.paddingMd),
+          const SizedBox(height: shared.DesignTokens.paddingMd),
           _buildLineItemsList(invoice, loc),
-          const SizedBox(height: DesignTokens.paddingMd),
+          const SizedBox(height: shared.DesignTokens.paddingMd),
           _buildTotalsSection(invoice, loc),
-          const SizedBox(height: DesignTokens.paddingMd),
+          const SizedBox(height: shared.DesignTokens.paddingMd),
           _buildStatusSection(invoice, loc),
-          const SizedBox(height: DesignTokens.paddingMd),
+          const SizedBox(height: shared.DesignTokens.paddingMd),
           _buildAuditTrail(invoice, loc),
-          const SizedBox(height: DesignTokens.paddingMd),
+          const SizedBox(height: shared.DesignTokens.paddingMd),
           _buildSupportNotes(invoice, loc),
         ],
       ),
     );
   }
 
-  Widget _buildInvoiceHeader(Invoice invoice, AppLocalizations loc) {
+  Widget _buildInvoiceHeader(shared.Invoice invoice, AppLocalizations loc) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -114,7 +114,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     );
   }
 
-  Widget _buildLineItemsList(Invoice invoice, AppLocalizations loc) {
+  Widget _buildLineItemsList(shared.Invoice invoice, AppLocalizations loc) {
     if (invoice.items.isEmpty) {
       return Text(loc.noLineItems);
     }
@@ -128,7 +128,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     );
   }
 
-  Widget _buildLineItemRow(InvoiceLineItem item, AppLocalizations loc) {
+  Widget _buildLineItemRow(shared.InvoiceLineItem item, AppLocalizations loc) {
     final total = (item.unitPrice * item.quantity) + (item.tax ?? 0.0);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -143,7 +143,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     );
   }
 
-  Widget _buildTotalsSection(Invoice invoice, AppLocalizations loc) {
+  Widget _buildTotalsSection(shared.Invoice invoice, AppLocalizations loc) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -172,7 +172,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     );
   }
 
-  Widget _buildStatusSection(Invoice invoice, AppLocalizations loc) {
+  Widget _buildStatusSection(shared.Invoice invoice, AppLocalizations loc) {
     return Row(
       children: [
         Text('${loc.status}: ', style: _headerStyle()),
@@ -181,7 +181,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     );
   }
 
-  Widget _buildStatusChip(InvoiceStatus status, AppLocalizations loc) {
+  Widget _buildStatusChip(shared.InvoiceStatus status, AppLocalizations loc) {
     final color = _statusColor(status);
     final label = _localizedStatus(status, loc);
     return Chip(
@@ -190,7 +190,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     );
   }
 
-  Widget _buildAuditTrail(Invoice invoice, AppLocalizations loc) {
+  Widget _buildAuditTrail(shared.Invoice invoice, AppLocalizations loc) {
     if (invoice.auditTrail.isEmpty) {
       return Text(loc.noAuditTrail);
     }
@@ -204,7 +204,8 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     );
   }
 
-  Widget _buildAuditEventRow(InvoiceAuditEvent event, AppLocalizations loc) {
+  Widget _buildAuditEventRow(
+      shared.InvoiceAuditEvent event, AppLocalizations loc) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Text(
@@ -214,7 +215,7 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     );
   }
 
-  Widget _buildSupportNotes(Invoice invoice, AppLocalizations loc) {
+  Widget _buildSupportNotes(shared.Invoice invoice, AppLocalizations loc) {
     if (invoice.supportNotes.isEmpty) {
       return Text(loc.noSupportNotes);
     }
@@ -228,7 +229,8 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     );
   }
 
-  Widget _buildSupportNoteRow(InvoiceSupportNote note, AppLocalizations loc) {
+  Widget _buildSupportNoteRow(
+      shared.InvoiceSupportNote note, AppLocalizations loc) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Text(
@@ -256,58 +258,60 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
     return '$dateStr $timeStr';
   }
 
-  Color _statusColor(InvoiceStatus status) {
+  Color _statusColor(shared.InvoiceStatus status) {
     switch (status) {
-      case InvoiceStatus.paid:
+      case shared.InvoiceStatus.paid:
         return Colors.green;
-      case InvoiceStatus.overdue:
-        return Colors.red;
-      case InvoiceStatus.sent:
-        return Colors.blue;
-      case InvoiceStatus.draft:
-        return Colors.grey;
-      case InvoiceStatus.refunded:
+      case shared.InvoiceStatus.unpaid:
         return Colors.orange;
-      case InvoiceStatus.voided:
-      case InvoiceStatus.failed:
+      case shared.InvoiceStatus.overdue:
+        return Colors.red;
+      case shared.InvoiceStatus.sent:
+        return Colors.blue;
+      case shared.InvoiceStatus.draft:
+        return Colors.grey;
+      case shared.InvoiceStatus.refunded:
+        return Colors.orange;
+      case shared.InvoiceStatus.voided:
+      case shared.InvoiceStatus.failed:
         return Colors.black45;
-      case InvoiceStatus.archived:
+      case shared.InvoiceStatus.archived:
         return Colors.grey.shade600;
-      case InvoiceStatus.viewed:
+      case shared.InvoiceStatus.viewed:
         return Colors.lightBlue;
-      case InvoiceStatus.open: // <--- add this case
+      case shared.InvoiceStatus.open:
         return Colors.teal;
+      default:
+        return Colors.grey;
     }
   }
 
-  String _localizedStatus(InvoiceStatus status, AppLocalizations loc) {
+  String _localizedStatus(shared.InvoiceStatus status, AppLocalizations loc) {
     switch (status) {
-      case InvoiceStatus.paid:
+      case shared.InvoiceStatus.paid:
         return loc.paid;
-      case InvoiceStatus.overdue:
+      case shared.InvoiceStatus.unpaid:
+        return loc.unpaid ?? 'Unpaid';
+      case shared.InvoiceStatus.overdue:
         return loc.overdue;
-      case InvoiceStatus.sent:
+      case shared.InvoiceStatus.sent:
         return loc.sent;
-      case InvoiceStatus.draft:
+      case shared.InvoiceStatus.draft:
         return loc.draft;
-      case InvoiceStatus.refunded:
+      case shared.InvoiceStatus.refunded:
         return loc.refunded;
-      case InvoiceStatus.voided:
+      case shared.InvoiceStatus.voided:
         return loc.voided;
-      case InvoiceStatus.failed:
+      case shared.InvoiceStatus.failed:
         return loc.failed;
-      case InvoiceStatus.archived:
+      case shared.InvoiceStatus.archived:
         return loc.archived;
-      case InvoiceStatus.viewed:
+      case shared.InvoiceStatus.viewed:
         return loc.viewed;
-      case InvoiceStatus.open: // <--- add this case
+      case shared.InvoiceStatus.open:
         return loc.open ?? "Open";
+      default:
+        return status.toString();
     }
   }
 }
-
-
-
-
-
-

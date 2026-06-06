@@ -13,9 +13,8 @@ import 'package:franchise_admin_portal/widgets/status_chip.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_delete_confirm_dialog.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' show MenuItem;
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dietary_allergen_chips_row.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
@@ -27,6 +26,7 @@ import 'package:franchise_admin_portal/admin/menu/customization_types.dart'
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
+import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart'; // RoleGuard
 
 const menuItemColumns = [
   {"key": "image", "width": 56.0, "header": "Image"},
@@ -64,18 +64,22 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
   bool _sortAsc = true;
   String? _categoryFilter;
   bool _showDeleted = false;
-  MenuItem? _lastDeletedItem;
+  shared.MenuItem? _lastDeletedItem;
+
+  late final shared.AuditLogService auditLogService;
 
   final ValueNotifier<String> _searchQuery = ValueNotifier<String>('');
   final TextEditingController _searchController = TextEditingController();
   String? _selectedCategoryForEditor;
   // Panel state for add/edit
-  MenuItem? _editingMenuItem;
+  shared.MenuItem? _editingMenuItem;
   bool _showEditorPanel = false;
 
   @override
   void initState() {
     super.initState();
+    auditLogService =
+        Provider.of<shared.AuditLogService>(context, listen: false);
   }
 
   @override
@@ -110,7 +114,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
     _selectedIds.value = [];
   }
 
-  Future<void> _addOrEditMenuItemPanel({MenuItem? item}) async {
+  Future<void> _addOrEditMenuItemPanel({shared.MenuItem? item}) async {
     setState(() {
       _editingMenuItem = item;
       _showEditorPanel = true;
@@ -129,8 +133,11 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
   }
 
   Future<void> _bulkUpload(String franchiseId, BuildContext context,
-      List<Category> categories, admin_user.User user) async {
-    if (!UserPermissions.canDeleteMenu(user)) {
+      List<shared.Category> categories, shared.User user) async {
+    if (!(user.isAdmin ||
+        user.isHqOwner ||
+        user.isManager ||
+        user.isPlatformOwner)) {
       await _logUnauthorizedAttempt(
           franchiseId, user, 'bulk_upload_menu_items');
       _showUnauthorizedDialog();
@@ -140,12 +147,12 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
       context: context,
       builder: (_) => BulkMenuUploadDialog(
         categories: categories,
-        franchiseId: context.read<shared.FranchiseProvider>().franchiseId,
+        franchiseId: Provider.of<shared.FranchiseProvider>(context).franchiseId,
         onComplete: () => Navigator.of(context).pop(true),
       ),
     );
     if (result == true) {
-      await AuditLogService().addLog(
+      await auditLogService.addLog(
         franchiseId: franchiseId,
         userId: user.id,
         action: 'bulk_upload_menu_items',
@@ -161,10 +168,13 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
   }
 
   Future<void> _deleteMenuItems(String franchiseId, BuildContext context,
-      List<MenuItem> items, admin_user.User user) async {
+      List<shared.MenuItem> items, shared.User user) async {
     final firestore =
         Provider.of<shared.FirestoreService>(context, listen: false);
-    if (!UserPermissions.canDeleteMenu(user)) {
+    if (!(user.isAdmin ||
+        user.isHqOwner ||
+        user.isManager ||
+        user.isPlatformOwner)) {
       await _logUnauthorizedAttempt(franchiseId, user, 'delete_menu_items');
       _showUnauthorizedDialog();
       return;
@@ -177,7 +187,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
     if (confirm == true) {
       for (final item in items) {
         await firestore.deleteMenuItem(franchiseId, item.id, userId: user.id);
-        await AuditLogService().addLog(
+        await auditLogService.addLog(
           franchiseId: franchiseId,
           userId: user.id,
           action: 'delete_menu_item',
@@ -199,7 +209,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
               if (_lastDeletedItem != null) {
                 await firestore.addMenuItem(franchiseId, _lastDeletedItem!,
                     userId: user.id);
-                await AuditLogService().addLog(
+                await auditLogService.addLog(
                   franchiseId: franchiseId,
                   userId: user.id,
                   action: 'undo_delete_menu_item',
@@ -217,8 +227,11 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
   }
 
   Future<void> _openCustomizations(String franchiseId, BuildContext context,
-      MenuItem item, admin_user.User user) async {
-    if (!UserPermissions.canEditMenu(user)) {
+      shared.MenuItem item, shared.User user) async {
+    if (!(user.isAdmin ||
+        user.isHqOwner ||
+        user.isManager ||
+        user.isPlatformOwner)) {
       await _logUnauthorizedAttempt(
           franchiseId, user, 'edit_customizations', item.id);
       _showUnauthorizedDialog();
@@ -246,7 +259,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
         item.copyWith(customizations: updatedCustomizations),
         userId: user.id,
       );
-      await AuditLogService().addLog(
+      await auditLogService.addLog(
         franchiseId: franchiseId,
         userId: user.id,
         action: 'update_customizations',
@@ -262,14 +275,17 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
   }
 
   Future<void> _exportToCSV(String franchiseId, BuildContext context,
-      List<MenuItem> items, admin_user.User user) async {
-    if (!UserPermissions.canDeleteMenu(user)) {
+      List<shared.MenuItem> items, shared.User user) async {
+    if (!(user.isAdmin ||
+        user.isHqOwner ||
+        user.isManager ||
+        user.isPlatformOwner)) {
       await _logUnauthorizedAttempt(franchiseId, user, 'export_menu_csv');
       _showUnauthorizedDialog();
       return;
     }
     // Export logic handled elsewhere
-    await AuditLogService().addLog(
+    await auditLogService.addLog(
       franchiseId: franchiseId,
       userId: user.id,
       action: 'export_menu_csv',
@@ -283,9 +299,9 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
   }
 
   Future<void> _logUnauthorizedAttempt(
-      String franchiseId, admin_user.User user, String action,
+      String franchiseId, shared.User user, String action,
       [String? targetId]) async {
-    await AuditLogService().addLog(
+    await auditLogService.addLog(
       franchiseId: franchiseId,
       userId: user.id,
       action: 'unauthorized_attempt',
@@ -348,15 +364,15 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
   Widget buildMenuDataRow(
     String franchiseId,
     BuildContext context,
-    MenuItem item,
-    List<Category> categories,
-    admin_user.User user,
+    shared.MenuItem item,
+    List<shared.Category> categories,
+    shared.User user,
     bool isSelected,
     bool canEdit,
     bool canDeleteOrExport,
   ) {
     final cat = categories.firstWhere((c) => c.id == item.category,
-        orElse: () => Category(id: item.category, name: item.category));
+        orElse: () => shared.Category(id: item.category, name: item.category));
     final colorScheme = Theme.of(context).colorScheme;
     final bool available = item.availability;
     return InkWell(
@@ -519,11 +535,13 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
+    final franchiseProvider = context.watch<shared.FranchiseProvider>();
+    final franchiseId = franchiseProvider.franchiseId;
     final firestore =
         Provider.of<shared.FirestoreService>(context, listen: false);
-    final user = Provider.of<AdminUserProvider>(context).user;
-    final isLoading = context.watch<AdminUserProvider>().loading;
+    final adminUserProvider = Provider.of<shared.AdminUserProvider>(context);
+    final user = adminUserProvider.user;
+    final isLoading = adminUserProvider.loading;
     final loc = AppLocalizations.of(context);
 
     debugPrint('[MenuEditorScreen] ðŸ§­ Route Loaded');
@@ -559,7 +577,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
     final canEdit = true;
     final canDeleteOrExport = true;
 
-    return shared.RoleGuard(
+    return RoleGuard(
       allowedRoles: const [
         'platform_owner',
         'hq_owner',
@@ -568,7 +586,6 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
         'admin'
       ],
       featureName: 'menu_editor_screen',
-      source: 'MenuEditorScreen' /* was screen, Phase 4 fix */,
       child: SubscriptionAccessGuard(
         child: Scaffold(
           backgroundColor: colorScheme.background,
@@ -577,7 +594,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
             children: [
               Expanded(
                 flex: 11,
-                child: StreamBuilder<List<Category>>(
+                child: StreamBuilder<List<shared.Category>>(
                   stream: firestore.getCategories(franchiseId),
                   builder: (context, catSnapshot) {
                     return DelayedLoadingShimmer(
@@ -601,7 +618,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
                             );
                           }
 
-                          return StreamBuilder<List<MenuItem>>(
+                          return StreamBuilder<List<shared.MenuItem>>(
                             stream: firestore.getMenuItems(franchiseId),
                             builder: (context, itemSnapshot) {
                               return DelayedLoadingShimmer(

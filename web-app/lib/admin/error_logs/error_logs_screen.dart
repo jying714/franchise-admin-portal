@@ -67,7 +67,7 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
         body: Center(child: Text('Localization missing! [debug]')),
       );
     }
-    final adminUserProvider = Provider.of<AdminUserProvider>(context);
+    final adminUserProvider = Provider.of<shared.AdminUserProvider>(context);
     final appUser = adminUserProvider.user;
 
     if (appUser == null) {
@@ -128,7 +128,7 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
               child: ErrorLogFilterBar(
                 severity: _severity,
                 source: _source,
-                source: _screen /* was screen, Phase 5 */,
+                screen: _screen,
                 start: _start,
                 end: _end,
                 search: _search,
@@ -204,18 +204,20 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
           Expanded(
             child: Container(
               color: colorScheme.background,
-              child: StreamBuilder<List<ErrorLog>>(
-                stream: context.read<shared.FirestoreService>().streamErrorLogs(
-                      franchiseId,
-                      severity: querySeverity,
-                      source: _source,
-                      source: _screen /* was screen, Phase 5 */,
-                      start: _start,
-                      end: _end,
-                      search: _search,
-                      archived: _showArchived,
-                      showResolved: _showResolved,
-                    ),
+              child: StreamBuilder<List<shared.ErrorLog>>(
+                stream:
+                    Provider.of<shared.FirestoreService>(context, listen: false)
+                        .streamErrorLogs(
+                  franchiseId,
+                  severity: querySeverity,
+                  source: _source,
+                  screen: _screen,
+                  start: _start,
+                  end: _end,
+                  search: _search,
+                  archived: _showArchived,
+                  showResolved: _showResolved,
+                ),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -252,9 +254,3 @@ class _ErrorLogsScreenState extends State<ErrorLogsScreen> {
     );
   }
 }
-
-
-
-
-
-

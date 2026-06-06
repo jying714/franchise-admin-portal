@@ -6,7 +6,7 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_i
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MenuItemEditorScreen extends StatefulWidget {
-  final MenuItem? item;
+  final shared.MenuItem? item;
 
   const MenuItemEditorScreen({Key? key, this.item}) : super(key: key);
 
@@ -18,9 +18,9 @@ class _MenuItemEditorScreenState extends State<MenuItemEditorScreen> {
   final GlobalKey<MenuItemEditorSheetState> _sheetKey =
       GlobalKey<MenuItemEditorSheetState>();
 
-  List<MenuItemSchemaIssue> _schemaIssues = [];
+  List<shared.MenuItemSchemaIssue> _schemaIssues = [];
 
-  void _handleSchemaIssueUpdate(List<MenuItemSchemaIssue> updated) {
+  void _handleSchemaIssueUpdate(List<shared.MenuItemSchemaIssue> updated) {
     print('[MenuItemEditorScreen] Schema issues updated:');
     for (final issue in updated) {
       print(' - ${issue.displayMessage} | resolved=${issue.resolved}');
@@ -36,7 +36,7 @@ class _MenuItemEditorScreenState extends State<MenuItemEditorScreen> {
     });
   }
 
-  void _handleRepair(MenuItemSchemaIssue issue, String newValue) {
+  void _handleRepair(shared.MenuItemSchemaIssue issue, String newValue) {
     final sheet = _sheetKey.currentState;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       print(
@@ -64,7 +64,9 @@ class _MenuItemEditorScreenState extends State<MenuItemEditorScreen> {
             onSave: (item) => Navigator.of(context).pop(item),
             onSchemaIssuesChanged: _handleSchemaIssueUpdate,
             firestore: FirebaseFirestore.instance,
-            franchiseId: context.read<shared.FranchiseProvider>().franchiseId,
+            franchiseId:
+                Provider.of<shared.FranchiseProvider>(context, listen: false)
+                    .franchiseId,
           ),
         ),
         const VerticalDivider(width: 1),
@@ -81,7 +83,3 @@ class _MenuItemEditorScreenState extends State<MenuItemEditorScreen> {
     );
   }
 }
-
-
-
-

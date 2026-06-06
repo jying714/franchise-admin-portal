@@ -7,6 +7,7 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingred
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/editable_ingredient_type_row.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/inline_add_ingredient_type_row.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_type_json_import_export_dialog.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_impl.dart';
 
 class IngredientTypeManagementScreen extends StatefulWidget {
   const IngredientTypeManagementScreen({super.key});
@@ -23,7 +24,7 @@ class _IngredientTypeManagementScreenState
   bool _hasLoaded = false;
   final Map<String, bool> _editingMap = {};
   bool _reorderChanged = false;
-  List<IngredientType> _pendingReorder = [];
+  List<shared.IngredientType> _pendingReorder = [];
 
   bool get _isEditingAny => _editingMap.values.any((v) => v == true);
 
@@ -31,7 +32,8 @@ class _IngredientTypeManagementScreenState
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    final newFranchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
+    final newFranchiseId =
+        context.watch<shared.FranchiseProvider>().franchiseId;
     if (newFranchiseId != franchiseId) {
       franchiseId = newFranchiseId;
     }
@@ -44,16 +46,20 @@ class _IngredientTypeManagementScreenState
 
       Future.microtask(() {
         final provider =
-            Provider.of<IngredientTypeProvider>(context, listen: false);
-        provider.loadTypes(franchiseId!);
+            Provider.of<shared.IngredientTypeProvider>(context, listen: false);
+        provider.load(
+            franchiseIdOverride: franchiseId!, forceReloadFromFirestore: true);
       });
     }
   }
 
-  void _showFormDialog({IngredientType? initial}) {
+  void _showFormDialog({shared.IngredientType? initial}) {
     final loc = AppLocalizations.of(context);
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
-    final ingredientTypeProvider = context.read<IngredientTypeProvider>();
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
+    final ingredientTypeProvider =
+        Provider.of<IngredientTypeProviderImpl>(context, listen: false);
 
     print(
         '[OnboardingIngredientTypeScreen] FAB pressed â€“ loc: $loc, franchiseId: $franchiseId');
@@ -67,7 +73,7 @@ class _IngredientTypeManagementScreenState
           context: dialogContext,
           child: Builder(
             builder: (innerContext) {
-              return ChangeNotifierProvider.value(
+              return ChangeNotifierProvider<IngredientTypeProviderImpl>.value(
                 value: ingredientTypeProvider,
                 child: IngredientTypeFormDialog(
                   loc: loc,
@@ -87,9 +93,9 @@ class _IngredientTypeManagementScreenState
     final onboardingProvider =
         Provider.of<shared.OnboardingProgressProvider>(context, listen: false);
     final provider =
-        Provider.of<IngredientTypeProvider>(context, listen: false);
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
 
-    if (provider.types.isEmpty) {
+    if (provider.ingredientTypes.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.pleaseAddIngredientTypesFirst)),
       );
@@ -115,11 +121,10 @@ class _IngredientTypeManagementScreenState
         }
       }
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to toggle onboarding step "ingredientTypes"',
         stack: stack.toString(),
         source: 'OnboardingIngredientTypeScreen',
-        source: 'onboarding_ingredient_type_screen' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {'error': e.toString()},
       );
@@ -132,18 +137,19 @@ class _IngredientTypeManagementScreenState
   }
 
   Future<void> _persistReorder() async {
-    final provider = context.read<IngredientTypeProvider>();
+    final provider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
     try {
       await provider.reorderIngredientTypes(franchiseId!, _pendingReorder);
-      await provider.loadTypes(franchiseId!);
+      await provider.load(
+          franchiseIdOverride: franchiseId!, forceReloadFromFirestore: true);
       setState(() {
         _reorderChanged = false;
       });
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to persist ingredient type reorder',
         source: 'IngredientTypeManagementScreen',
-        source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
         severity: 'error',
         stack: stack.toString(),
         contextData: {'franchiseId': franchiseId},
@@ -155,16 +161,19 @@ class _IngredientTypeManagementScreenState
     setState(() {
       _reorderChanged = false;
     });
-    final provider = context.read<IngredientTypeProvider>();
-    provider.loadTypes(franchiseId!);
+    final provider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
+    provider.load(
+        franchiseIdOverride: franchiseId!, forceReloadFromFirestore: true);
   }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
-    final provider = context.watch<IngredientTypeProvider>();
-    final types = provider.types;
+    final provider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
+    final types = provider.ingredientTypes;
 
     if (franchiseId == null || franchiseId!.isEmpty) {
       return Scaffold(
@@ -187,8 +196,9 @@ class _IngredientTypeManagementScreenState
             icon: const Icon(Icons.data_object),
             tooltip: loc.importExport,
             onPressed: () {
-              final typeProvider =
-                  Provider.of<IngredientTypeProvider>(context, listen: false);
+              final typeProvider = Provider.of<shared.IngredientTypeProvider>(
+                  context,
+                  listen: false);
               IngredientTypeJsonImportExportDialog.show(context, typeProvider);
             },
           ),
@@ -198,7 +208,8 @@ class _IngredientTypeManagementScreenState
             onPressed: () async {
               final parentLoc = AppLocalizations.of(context);
               final ingredientTypeProvider =
-                  context.read<IngredientTypeProvider>();
+                  Provider.of<shared.IngredientTypeProvider>(context,
+                      listen: false);
 
               print(
                   '[OnboardingIngredientTypeScreen] Opening template picker dialog...');
@@ -228,8 +239,12 @@ class _IngredientTypeManagementScreenState
                 },
               );
 
-              final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
-              await ingredientTypeProvider.loadTypes(franchiseId);
+              final franchiseId =
+                  Provider.of<shared.FranchiseProvider>(context, listen: false)
+                      .franchiseId;
+              await ingredientTypeProvider.load(
+                  franchiseIdOverride: franchiseId,
+                  forceReloadFromFirestore: true);
 
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -282,8 +297,9 @@ class _IngredientTypeManagementScreenState
                               icon: const Icon(Icons.select_all),
                               label: Text(loc.selectAll),
                               onPressed: () {
-                                final allIds =
-                                    provider.types.map((t) => t.id!).toList();
+                                final allIds = provider.ingredientTypes
+                                    .map((t) => t.id!)
+                                    .toList();
                                 for (final id in allIds) {
                                   provider.stageTypeForDelete(id);
                                 }
@@ -350,11 +366,11 @@ class _IngredientTypeManagementScreenState
                     child: ReorderableListView.builder(
                       buildDefaultDragHandles: false,
                       onReorder: (oldIndex, newIndex) async {
-                        if (provider.types.isEmpty || oldIndex == newIndex)
-                          return;
+                        if (provider.ingredientTypes.isEmpty ||
+                            oldIndex == newIndex) return;
 
-                        final updatedList =
-                            List<IngredientType>.from(provider.types);
+                        final updatedList = List<shared.IngredientType>.from(
+                            provider.ingredientTypes);
 
                         if (newIndex > oldIndex) newIndex -= 1;
 
@@ -447,7 +463,9 @@ class _IngredientTypeManagementScreenState
                               setState(() {});
                             },
                             onSaveTapped: () async {
-                              await provider.loadTypes(franchiseId!);
+                              await provider.load(
+                                  franchiseIdOverride: franchiseId!,
+                                  forceReloadFromFirestore: true);
                               setState(() {
                                 _editingMap[type.id!] = false;
                               });
@@ -482,7 +500,7 @@ class _IngredientTypeManagementScreenState
 }
 
 class IngredientTypeFormDialog extends StatefulWidget {
-  final IngredientType? initial;
+  final shared.IngredientType? initial;
   final String franchiseId;
   final AppLocalizations loc;
 
@@ -519,7 +537,8 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
   Widget build(BuildContext context) {
     final loc = widget.loc;
     final colorScheme = Theme.of(context).colorScheme;
-    final provider = context.read<IngredientTypeProvider>();
+    final provider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
 
     return AlertDialog(
       title: Text(widget.initial == null
@@ -570,7 +589,7 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
           onPressed: () async {
             if (_formKey.currentState?.validate() != true) return;
 
-            final newType = IngredientType(
+            final newType = shared.IngredientType(
               id: widget.initial?.id,
               name: name.trim(),
               description: description?.trim(),
@@ -580,16 +599,17 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
 
             try {
               if (newType.id == null) {
-                await provider.addType(widget.franchiseId, newType);
+                await provider.createType(widget.franchiseId, newType);
               } else {
-                await provider.updateType(widget.franchiseId, newType);
+                await provider.updateIngredientType(widget.franchiseId,
+                    newType.id!, newType.toMap() // or appropriate update map
+                    );
               }
               if (mounted) Navigator.of(context).pop();
             } catch (e, stack) {
-              await shared.ErrorLogger.log(
+              shared.ErrorLogger.log(
                 message: 'Failed to save ingredient type',
                 source: 'IngredientTypeFormDialog',
-                source: 'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
                 severity: 'error',
                 stack: stack.toString(),
                 contextData: {
@@ -605,9 +625,3 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
     );
   }
 }
-
-
-
-
-
-

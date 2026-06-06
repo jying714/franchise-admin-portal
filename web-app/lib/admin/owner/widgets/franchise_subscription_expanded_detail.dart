@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
 
 class FranchiseSubscriptionExpandedDetail extends StatefulWidget {
-  final EnrichedFranchiseSubscription enriched;
+  final shared.EnrichedFranchiseSubscription enriched;
 
   const FranchiseSubscriptionExpandedDetail({
     super.key,
@@ -20,7 +20,7 @@ class FranchiseSubscriptionExpandedDetail extends StatefulWidget {
 
 class _FranchiseSubscriptionExpandedDetailState
     extends State<FranchiseSubscriptionExpandedDetail> {
-  List<PlatformInvoice> _invoices = [];
+  List<shared.PlatformInvoice> _invoices = [];
   bool _loading = true;
 
   @override
@@ -31,7 +31,8 @@ class _FranchiseSubscriptionExpandedDetailState
 
   Future<void> _loadInvoices() async {
     try {
-      final firestore = context.read<shared.FirestoreService>();
+      final firestore =
+          Provider.of<shared.FirestoreService>(context, listen: false);
       final invoices = await firestore.getPlatformInvoicesForFranchisee(
         widget.enriched.franchiseId,
       );
@@ -40,9 +41,8 @@ class _FranchiseSubscriptionExpandedDetailState
         _loading = false;
       });
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'invoice_fetch_failed',
-        source: 'franchise_subscription_expanded_detail' /* was screen, Phase 5 */,
         source: 'ExpandedDetailInit',
         stack: stack.toString(),
         contextData: {
@@ -50,6 +50,7 @@ class _FranchiseSubscriptionExpandedDetailState
           'subscriptionId': widget.enriched.subscription.id,
         },
       );
+      setState(() => _loading = false);
     }
   }
 
@@ -145,7 +146,7 @@ class _FranchiseSubscriptionExpandedDetailState
     );
   }
 
-  String _resolveInvoiceStatus(EnrichedFranchiseSubscription enriched) {
+  String _resolveInvoiceStatus(shared.EnrichedFranchiseSubscription enriched) {
     if (enriched.latestInvoice == null) return 'â€”';
     if (enriched.isInvoicePaid) return AppLocalizations.of(context)!.paid;
     if (enriched.isInvoicePartial) return AppLocalizations.of(context)!.partial;
@@ -154,9 +155,3 @@ class _FranchiseSubscriptionExpandedDetailState
     return enriched.latestInvoice!.status;
   }
 }
-
-
-
-
-
-

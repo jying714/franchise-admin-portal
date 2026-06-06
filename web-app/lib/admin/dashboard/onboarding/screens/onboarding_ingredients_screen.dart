@@ -10,6 +10,8 @@ import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_metadata_json_import_export_dialog.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/missing_type_resolution_dialog.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_impl.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider_impl.dart';
 
 class OnboardingIngredientsScreen extends StatefulWidget {
   const OnboardingIngredientsScreen({super.key});
@@ -41,7 +43,8 @@ class _OnboardingIngredientsScreenState
     if (!mounted || _appliedFocusFromArgs != false) return;
     if (_focusIdFromArgs == null) return;
 
-    final provider = context.read<IngredientMetadataProvider>();
+    final provider =
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
 
     // Only try when items are present and the target exists
     if (provider.ingredients.isEmpty) return;
@@ -135,10 +138,10 @@ class _OnboardingIngredientsScreenState
   // Set to track selected ingredients for bulk actions
   final Set<String> _selectedIngredientIds = {};
 
-  void _openIngredientForm([IngredientMetadata? ingredient]) {
+  void _openIngredientForm([shared.IngredientMetadata? ingredient]) {
     final loc = AppLocalizations.of(context);
     final provider =
-        Provider.of<IngredientMetadataProvider>(context, listen: false);
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
 
     if (loc == null) {
       print('[OnboardingIngredientsScreen] ERROR: loc is null in FAB');
@@ -150,15 +153,15 @@ class _OnboardingIngredientsScreenState
       builder: (dialogContext) {
         // Get the providers from the parent context
         final ingredientProvider =
-            Provider.of<IngredientMetadataProvider>(context, listen: false);
+            Provider.of<IngredientMetadataProviderImpl>(context, listen: false);
         final typeProvider =
-            Provider.of<IngredientTypeProvider>(context, listen: false);
+            Provider.of<IngredientTypeProviderImpl>(context, listen: false);
 
         return MultiProvider(
           providers: [
-            ChangeNotifierProvider<IngredientMetadataProvider>.value(
+            ChangeNotifierProvider<IngredientMetadataProviderImpl>.value(
                 value: ingredientProvider),
-            ChangeNotifierProvider<IngredientTypeProvider>.value(
+            ChangeNotifierProvider<IngredientTypeProviderImpl>.value(
                 value: typeProvider),
           ],
           child: IngredientFormCard(
@@ -175,8 +178,10 @@ class _OnboardingIngredientsScreenState
   }
 
   Future<void> _markComplete() async {
-    final provider = context.read<IngredientMetadataProvider>();
-    final onboardingProvider = context.read<shared.OnboardingProgressProvider>();
+    final provider =
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
+    final onboardingProvider =
+        Provider.of<shared.OnboardingProgressProvider>(context, listen: false);
 
     if (provider.ingredients.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -204,11 +209,10 @@ class _OnboardingIngredientsScreenState
         }
       }
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to toggle onboarding step completion',
         stack: stack.toString(),
         source: '_markComplete',
-        source: 'onboarding_ingredients_screen' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {'ingredientsCount': provider.ingredients.length},
       );
@@ -247,7 +251,8 @@ class _OnboardingIngredientsScreenState
     );
 
     if (confirmed == true) {
-      final provider = context.read<IngredientMetadataProvider>();
+      final provider = Provider.of<shared.IngredientMetadataProvider>(context,
+          listen: false);
       final deletedCount =
           _selectedIngredientIds.length; // Capture before clearing
 
@@ -270,10 +275,9 @@ class _OnboardingIngredientsScreenState
           );
         }
       } catch (e, stack) {
-        await shared.ErrorLogger.log(
+        shared.ErrorLogger.log(
           message: 'Bulk delete ingredients failed',
           source: 'OnboardingIngredientsScreen',
-          source: 'onboarding_ingredients_screen' /* was screen, Phase 4 fix */,
           severity: 'error',
           stack: stack.toString(),
           contextData: {'selectedCount': deletedCount},
@@ -289,7 +293,7 @@ class _OnboardingIngredientsScreenState
   }
 
   void _toggleSelectAll(
-      List<IngredientMetadata> allIngredients, bool? checked) {
+      List<shared.IngredientMetadata> allIngredients, bool? checked) {
     setState(() {
       if (checked == true) {
         _selectedIngredientIds.addAll(allIngredients.map((e) => e.id));
@@ -333,7 +337,8 @@ class _OnboardingIngredientsScreenState
     }
 
     // 2ï¸âƒ£ Ensure provider data & keys exist BEFORE attempting focus
-    final provider = context.read<IngredientMetadataProvider>();
+    final provider =
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
     provider.load(forceReloadFromFirestore: true).then((_) {
       if (!mounted) return;
 
@@ -357,7 +362,7 @@ class _OnboardingIngredientsScreenState
 
     try {
       final typeProvider =
-          Provider.of<IngredientTypeProvider>(context, listen: false);
+          Provider.of<shared.IngredientTypeProvider>(context, listen: false);
       print(
           '[OnboardingIngredientsScreen] IngredientTypeProvider FOUND: hashCode=${typeProvider.hashCode}');
     } catch (e) {
@@ -369,7 +374,8 @@ class _OnboardingIngredientsScreenState
       loc = AppLocalizations.of(context)!;
       final theme = Theme.of(context);
       final colorScheme = theme.colorScheme;
-      final provider = context.watch<IngredientMetadataProvider>();
+      final provider = Provider.of<shared.IngredientMetadataProvider>(context,
+          listen: false);
       _maybeApplyInitialFocus();
       print(
           '[OnboardingIngredientsScreen] IngredientMetadataProvider build() provider hashCode=${provider.hashCode}');
@@ -411,9 +417,9 @@ class _OnboardingIngredientsScreenState
                   icon: const Icon(Icons.data_object),
                   tooltip: loc.importExport,
                   onPressed: () {
-                    final provider = Provider.of<IngredientMetadataProvider>(
-                        context,
-                        listen: false);
+                    final provider =
+                        Provider.of<IngredientMetadataProviderImpl>(context,
+                            listen: false);
                     IngredientMetadataJsonImportExportDialog.show(
                         context, provider);
                   },
@@ -426,18 +432,22 @@ class _OnboardingIngredientsScreenState
                   onPressed: () async {
                     print(
                         '[OnboardingIngredientsScreen] Template import button pressed');
-                    final franchiseId =
-                        context.read<shared.FranchiseProvider>().franchiseId;
+                    final franchiseId = Provider.of<shared.FranchiseProvider>(
+                            context,
+                            listen: false)
+                        .franchiseId;
 
                     // 1. Let user select and load the template ingredients (returns list or null)
-                    final List<IngredientMetadata>? templateIngredients =
+                    final List<shared.IngredientMetadata>? templateIngredients =
                         await IngredientMetadataTemplatePickerDialog.show(
                             context);
 
                     if (templateIngredients == null ||
                         templateIngredients.isEmpty) return;
 
-                    final typeProvider = context.read<IngredientTypeProvider>();
+                    final typeProvider =
+                        Provider.of<shared.IngredientTypeProvider>(context,
+                            listen: false);
                     final existingTypeIds =
                         typeProvider.ingredientTypes.map((t) => t.id).toSet();
 
@@ -446,12 +456,12 @@ class _OnboardingIngredientsScreenState
                         .where((ing) => !existingTypeIds.contains(ing.typeId))
                         .toList();
 
-                    List<IngredientMetadata> allToImport = [];
+                    List<shared.IngredientMetadata> allToImport = [];
 
                     if (ingredientsWithMissingTypes.isNotEmpty) {
                       // 3. Show resolution dialog, block until all are mapped or skipped
                       final resolved =
-                          await showDialog<List<IngredientMetadata>>(
+                          await showDialog<List<shared.IngredientMetadata>>(
                         context: context,
                         barrierDismissible: false,
                         builder: (dialogContext) => MissingTypeResolutionDialog(
@@ -479,7 +489,9 @@ class _OnboardingIngredientsScreenState
                     // 4. Add resolved/valid ingredients to provider
                     if (allToImport.isNotEmpty) {
                       final metadataProvider =
-                          context.read<IngredientMetadataProvider>();
+                          Provider.of<shared.IngredientMetadataProvider>(
+                              context,
+                              listen: false);
                       print(
                           '[OnboardingIngredientsScreen] About to add ${allToImport.length} imported ingredients');
                       for (final ing in allToImport) {
@@ -554,11 +566,17 @@ class _OnboardingIngredientsScreenState
                       ElevatedButton(
                         onPressed: () async {
                           final franchiseId =
-                              context.read<shared.FranchiseProvider>().franchiseId;
+                              Provider.of<shared.FranchiseProvider>(context,
+                                      listen: false)
+                                  .franchiseId;
                           final metadataProvider =
-                              context.read<IngredientMetadataProvider>();
+                              Provider.of<shared.IngredientMetadataProvider>(
+                                  context,
+                                  listen: false);
                           final onboardingProvider =
-                              context.read<shared.OnboardingProgressProvider>();
+                              Provider.of<shared.OnboardingProgressProvider>(
+                                  context,
+                                  listen: false);
 
                           try {
                             await metadataProvider.saveAllChanges(franchiseId);
@@ -569,11 +587,10 @@ class _OnboardingIngredientsScreenState
                               SnackBar(content: Text(loc.saveSuccessful)),
                             );
                           } catch (e, stack) {
-                            await shared.ErrorLogger.log(
+                            shared.ErrorLogger.log(
                               message: 'ingredient_save_error',
                               stack: stack.toString(),
                               source: 'onboarding_ingredients_screen',
-                              source: 'onboarding_ingredients_screen' /* was screen, Phase 4 fix */,
                               severity: 'error',
                             );
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -725,7 +742,11 @@ class _OnboardingIngredientsScreenState
                                     key: itemKey,
                                     child: IngredientListTile(
                                       ingredient: item,
-                                      franchiseId: provider.franchiseId,
+                                      franchiseId:
+                                          Provider.of<shared.FranchiseProvider>(
+                                                  context,
+                                                  listen: false)
+                                              .franchiseId,
                                       onEdited: () => _openIngredientForm(item),
                                       onRefresh: () => provider.load(),
                                     ),
@@ -756,9 +777,3 @@ class _OnboardingIngredientsScreenState
     super.dispose();
   }
 }
-
-
-
-
-
-

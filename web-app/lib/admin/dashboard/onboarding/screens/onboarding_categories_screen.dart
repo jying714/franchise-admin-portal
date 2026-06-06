@@ -3,7 +3,8 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_admin_portal/core/providers/category_provider_impl.dart' show CategoryProviderImplImpl;
+import 'package:franchise_admin_portal/core/providers/category_provider_impl.dart'
+    show CategoryProviderImpl;
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/categories/category_list_tile.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/categories/category_form_dialog.dart';
@@ -31,21 +32,24 @@ class _OnboardingCategoriesScreenState
     super.didChangeDependencies();
     if (_hasInitialized) return;
 
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
 
     if (franchiseId.isNotEmpty && franchiseId != 'unknown') {
-      final provider = context.read<CategoryProviderImpl>();
+      final provider =
+          Provider.of<CategoryProviderImpl>(context, listen: false);
 
-      // ðŸ”¹ Force reload from Firestore to ensure UI shows latest categories
+      // Force reload from Firestore
       provider
-          .loadCategories(
-        franchiseId,
+          .load(
+        franchiseIdOverride: franchiseId,
         forceReloadFromFirestore: true,
       )
           .then((_) {
         if (!mounted) return;
         debugPrint(
-          '[OnboardingCategoriesScreen] âœ… Category reload complete. '
+          '[OnboardingCategoriesScreen] ✅ Category reload complete. '
           'Count=${provider.categories.length}',
         );
         setState(() {}); // Trigger UI refresh after load
@@ -59,9 +63,11 @@ class _OnboardingCategoriesScreenState
     _hasInitialized = true;
   }
 
-  Future<void> _openCategoryForm([Category? category]) async {
+  Future<void> _openCategoryForm([shared.Category? category]) async {
     final loc = AppLocalizations.of(context)!;
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
 
     final result = await CategoryFormDialog.show(
       parentContext: context,
@@ -70,7 +76,8 @@ class _OnboardingCategoriesScreenState
     );
 
     if (result != null) {
-      context.read<CategoryProviderImpl>().addOrUpdateCategory(result);
+      Provider.of<CategoryProviderImpl>(context, listen: false)
+          .addOrUpdateCategory(result);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.categorySaved)),
       );
@@ -83,7 +90,8 @@ class _OnboardingCategoriesScreenState
   }
 
   Future<void> _markComplete() async {
-    final onboarding = context.read<shared.OnboardingProgressProvider>();
+    final onboarding =
+        Provider.of<shared.OnboardingProgressProvider>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
 
     final isCompleted = onboarding.isStepComplete('categories');
@@ -105,10 +113,9 @@ class _OnboardingCategoriesScreenState
         }
       }
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'onboarding_mark_complete_toggle_failed',
         source: 'onboarding_categories_screen.dart',
-        source: 'onboarding_categories_screen' /* was screen, Phase 4 fix */,
         severity: 'warning',
         stack: stack.toString(),
         contextData: {'step': 'categories'},
@@ -123,9 +130,12 @@ class _OnboardingCategoriesScreenState
 
   Future<void> _saveChanges() async {
     final loc = AppLocalizations.of(context)!;
-    final provider = context.read<CategoryProviderImpl>();
-    final onboarding = context.read<shared.OnboardingProgressProvider>();
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
+    final provider = Provider.of<CategoryProviderImpl>(context, listen: false);
+    final onboarding =
+        Provider.of<shared.OnboardingProgressProvider>(context, listen: false);
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
 
     try {
       await provider.saveCategories();
@@ -135,10 +145,9 @@ class _OnboardingCategoriesScreenState
         );
       }
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to save categories',
         source: 'onboarding_categories_screen.dart',
-        source: 'onboarding_categories_screen' /* was screen, Phase 4 fix */,
         severity: 'error',
         stack: stack.toString(),
         contextData: {'franchiseId': franchiseId},
@@ -175,7 +184,8 @@ class _OnboardingCategoriesScreenState
     );
 
     if (confirmed == true) {
-      final provider = context.read<CategoryProviderImpl>();
+      final provider =
+          Provider.of<CategoryProviderImpl>(context, listen: false);
       final deletedCount = _stagedForDelete.length;
 
       try {
@@ -189,11 +199,10 @@ class _OnboardingCategoriesScreenState
           );
         }
       } catch (e, stack) {
-        await shared.ErrorLogger.log(
+        shared.ErrorLogger.log(
           message: 'bulk_delete_categories_failed',
           stack: stack.toString(),
           source: 'OnboardingCategoriesScreen',
-          source: 'onboarding_categories_screen' /* was screen, Phase 4 fix */,
           severity: 'error',
           contextData: {'selectedCount': deletedCount},
         );
@@ -372,7 +381,9 @@ class _OnboardingCategoriesScreenState
                             },
                             onEdit: () => _openCategoryForm(cat),
                             onDelete: () async {
-                              final provider = context.read<CategoryProviderImpl>();
+                              final provider =
+                                  Provider.of<CategoryProviderImpl>(context,
+                                      listen: false);
                               final loc = AppLocalizations.of(context)!;
                               final scaffold = ScaffoldMessenger.of(context);
 
@@ -397,8 +408,3 @@ class _OnboardingCategoriesScreenState
     );
   }
 }
-
-
-
-
-

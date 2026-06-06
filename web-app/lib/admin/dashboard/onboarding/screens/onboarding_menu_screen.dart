@@ -35,7 +35,8 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final newFranchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
+    final newFranchiseId =
+        context.watch<shared.FranchiseProvider>().franchiseId;
     if (newFranchiseId != franchiseId) {
       setState(() {
         franchiseId = newFranchiseId;
@@ -57,18 +58,18 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
 
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
-    final user = context.watch<UserProfileNotifier>().user;
-    final franchiseInfoProvider = context.watch<FranchiseInfoProvider>();
+    final user = context.watch<shared.AdminUserProvider>().user;
+    final franchiseInfoProvider = context.watch<shared.FranchiseInfoProvider>();
     final franchise = franchiseInfoProvider.franchise;
     final isLoading = franchiseInfoProvider.loading;
 
-    final shared.onboardingProgressProvider =
+    final onboardingProgressProvider =
         context.watch<shared.OnboardingProgressProvider>();
-    final progress = shared.onboardingProgressProvider.stepStatus;
+    final progress = onboardingProgressProvider.stepStatus;
 
     print('[OnboardingMenuScreen] progress: $progress');
 
-    if (isLoading || shared.onboardingProgressProvider.loading) {
+    if (isLoading || onboardingProgressProvider.loading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -223,8 +224,3 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
     );
   }
 }
-
-
-
-
-

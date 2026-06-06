@@ -12,7 +12,7 @@ class PlatformPlansSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.read<AdminUserProvider>().user;
+    final user = Provider.of<shared.AdminUserProvider>(context).user;
     if (!(user?.isPlatformOwner ?? false) && !(user?.isDeveloper ?? false)) {
       return const SizedBox.shrink();
     }
@@ -21,8 +21,12 @@ class PlatformPlansSummaryCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return FutureBuilder<List<PlatformPlan>>(
-      future: FranchiseSubscriptionService().getPlatformPlans(),
+    final franchiseSubscriptionService =
+        Provider.of<shared.FranchiseSubscriptionService>(context,
+            listen: false);
+
+    return FutureBuilder<List<shared.PlatformPlan>>(
+      future: franchiseSubscriptionService.getPlatformPlans(),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());
@@ -32,7 +36,6 @@ class PlatformPlansSummaryCard extends StatelessWidget {
           shared.ErrorLogger.log(
             message: 'platform_plans_summary_card_error',
             source: 'PlatformPlansSummaryCard',
-            source: 'platform_owner_dashboard' /* was screen, Phase 5 */,
             severity: 'error',
             contextData: {'error': snapshot.error.toString()},
           );
@@ -108,8 +111,3 @@ class PlatformPlansSummaryCard extends StatelessWidget {
     );
   }
 }
-
-
-
-
-

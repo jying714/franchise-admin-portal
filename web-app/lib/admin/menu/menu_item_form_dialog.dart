@@ -2,6 +2,8 @@
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/menu/menu_item_customizations_dialog.dart';
+import 'package:franchise_admin_portal/admin/menu/customization_types.dart'
+    as ct;
 
 class MenuItemFormDialog extends StatefulWidget {
   final shared.MenuItem? initialItem;
@@ -107,14 +109,15 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
 
   void _openCustomizationDialog() async {
     final groups =
-        _customizations.map((c) => shared.customizationToGroup(c)).toList();
-    final result = await showDialog<List<shared.CustomizationGroup>>(
+        _customizations.map((c) => ct.customizationToGroup(c)).toList();
+    final result = await showDialog<List<ct.CustomizationGroup>>(
       context: context,
       builder: (ctx) => MenuItemCustomizationsDialog(initialGroups: groups),
     );
+    if (!mounted) return;
     if (result != null) {
       setState(() => _customizations =
-          result.map((g) => shared.groupToCustomization(g)).toList());
+          result.map((g) => ct.groupToCustomization(g)).toList());
     }
   }
 
@@ -181,6 +184,11 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
                   title: Text(loc.colAvailable),
                   value: _availability,
                   onChanged: (v) => setState(() => _availability = v),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _openCustomizationDialog,
+                  child: Text('Edit Customizations'),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(

@@ -19,9 +19,9 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
   @override
   void initState() {
     super.initState();
-    final shared.firestoreService =
+    final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
-    _franchisesFuture = shared.firestoreService.fetchFranchiseList();
+    _franchisesFuture = firestoreService.fetchFranchiseList();
     print('[FranchiseSelectorScreen] initState: fetching franchise list...');
   }
 
@@ -38,7 +38,7 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
         body: Center(child: Text('Localization missing! [debug]')),
       );
     }
-    final shared.franchiseProvider =
+    final franchiseProvider =
         Provider.of<shared.FranchiseProvider>(context, listen: false);
 
     return Scaffold(
@@ -51,7 +51,7 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
         onSelect: (_) {},
       ),
       body: SafeArea(
-        child: FutureBuilder<List<FranchiseInfo>>(
+        child: FutureBuilder<List<shared.FranchiseInfo>>(
           future: _franchisesFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -74,13 +74,13 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
               padding: const EdgeInsets.all(16.0),
               child: FranchiseSelector(
                 items: franchises,
-                selectedFranchiseId: shared.franchiseProvider.franchiseId,
+                selectedFranchiseId: franchiseProvider.franchiseId,
                 onSelected: (franchiseId) {
                   print(
                       '[FranchiseSelectorScreen] onSelected fired with: $franchiseId');
-                  shared.franchiseProvider.setFranchiseId(franchiseId).then((_) {
+                  franchiseProvider.setFranchiseId(franchiseId).then((_) {
                     print(
-                        '[FranchiseSelectorScreen] shared.franchiseProvider updated.');
+                        '[FranchiseSelectorScreen] franchiseProvider updated.');
                     Navigator.of(context)
                         .pushReplacementNamed('/admin/dashboard');
                     print('[Routing] Navigating to /admin/dashboard');
@@ -94,8 +94,3 @@ class _FranchiseSelectorScreenState extends State<FranchiseSelectorScreen> {
     );
   }
 }
-
-
-
-
-

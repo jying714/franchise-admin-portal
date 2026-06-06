@@ -29,7 +29,7 @@ class CategoryManagementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RoleGuard(
+    return const RoleGuard(
       requireAnyRole: [
         'platform_owner',
         'hq_owner',
@@ -38,8 +38,7 @@ class CategoryManagementScreen extends StatelessWidget {
         'admin',
       ],
       featureName: 'category_management_screen',
-      source: 'CategoryManagementScreen',
-      child: const CategoryManagementScreenContent(),
+      child: CategoryManagementScreenContent(),
     );
   }
 }
@@ -72,9 +71,14 @@ class _CategoryManagementScreenContentState
   }
 
   bool get _canManage {
-    final user =
-        Provider.of<shared.UserProfileNotifier>(context, listen: false).user;
-    return shared.UserPermissions.canManageCategories(user);
+    final userProvider =
+        Provider.of<shared.AdminUserProvider>(context, listen: false);
+    final user = userProvider.user;
+    return user != null &&
+        (user.isAdmin ||
+            user.isHqOwner ||
+            user.isManager ||
+            user.isPlatformOwner);
   }
 
   void _onCategorySelect(String id, bool selected) {
@@ -91,7 +95,9 @@ class _CategoryManagementScreenContentState
   }
 
   Future<void> _openCategoryDialog({shared.Category? category}) async {
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
     if (!_canManage || _isLoading || _bulkLoading) return;
 
     await showDialog<shared.Category>(
@@ -102,7 +108,7 @@ class _CategoryManagementScreenContentState
         onSaved: (shared.Category saved) async {
           setState(() => _isLoading = true);
           final userId =
-              Provider.of<shared.UserProfileNotifier?>(context, listen: false)
+              Provider.of<shared.AdminUserProvider>(context, listen: false)
                   ?.user
                   ?.id;
           try {
@@ -124,7 +130,7 @@ class _CategoryManagementScreenContentState
               );
             }
           } catch (e, stack) {
-            await shared.ErrorLogger.log(
+            shared.ErrorLogger.log(
               message: e.toString(),
               stack: stack.toString(),
               source: 'CategoryManagementScreen',
@@ -157,9 +163,7 @@ class _CategoryManagementScreenContentState
     if (!_canManage || _isLoading || _bulkLoading) return;
     final loc = AppLocalizations.of(context)!;
     final userId =
-        Provider.of<shared.UserProfileNotifier?>(context, listen: false)
-            ?.user
-            ?.id;
+        Provider.of<shared.AdminUserProvider>(context, listen: false)?.user?.id;
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -190,7 +194,7 @@ class _CategoryManagementScreenContentState
           categoryId: category.id!,
         );
       } catch (e, stack) {
-        await shared.ErrorLogger.log(
+        shared.ErrorLogger.log(
           message: e.toString(),
           stack: stack.toString(),
           source: 'CategoryManagementScreen',
@@ -216,7 +220,7 @@ class _CategoryManagementScreenContentState
               await firestoreService.addCategory(
                   franchiseId: franchiseId, category: category);
             } catch (e, stack) {
-              await shared.ErrorLogger.log(
+              shared.ErrorLogger.log(
                 message: e.toString(),
                 stack: stack.toString(),
                 source: 'CategoryManagementScreen',
@@ -243,7 +247,9 @@ class _CategoryManagementScreenContentState
 
   void _showBulkUploadDialog() async {
     if (!_canManage || _isLoading || _bulkLoading) return;
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
 
     final uploaded = await showDialog<bool>(
       context: context,

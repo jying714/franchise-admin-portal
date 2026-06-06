@@ -4,6 +4,7 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/active_plan_banner.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/platform_plan_tile.dart';
+import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 
 class AvailablePlatformPlansScreen extends StatefulWidget {
   const AvailablePlatformPlansScreen({super.key});
@@ -15,7 +16,7 @@ class AvailablePlatformPlansScreen extends StatefulWidget {
 
 class _AvailablePlatformPlansScreenState
     extends State<AvailablePlatformPlansScreen> {
-  late Future<List<PlatformPlan>> _plansFuture;
+  late Future<List<shared.PlatformPlan>> _plansFuture;
   int? _expandedIndex;
 
   @override
@@ -24,9 +25,12 @@ class _AvailablePlatformPlansScreenState
     _plansFuture = _loadPlans();
   }
 
-  Future<List<PlatformPlan>> _loadPlans() async {
+  Future<List<shared.PlatformPlan>> _loadPlans() async {
     try {
-      final plans = await FranchiseSubscriptionService().getPlatformPlans();
+      final plans = await Provider.of<shared.FranchiseSubscriptionService>(
+              context,
+              listen: false)
+          .getPlatformPlans();
       debugPrint(
           '[DEBUG][AvailablePlatformPlansScreen] Loaded plans: ${plans.length}');
       for (final p in plans) {
@@ -34,11 +38,10 @@ class _AvailablePlatformPlansScreenState
       }
       return plans;
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'platform_plans_load_error',
         stack: stack.toString(),
         source: 'AvailablePlatformPlansScreen',
-        source: 'available_platform_plans_screen' /* was screen, Phase 5 */,
         severity: 'error',
       );
       return [];
@@ -67,7 +70,7 @@ class _AvailablePlatformPlansScreenState
       ],
       child: Scaffold(
         appBar: AppBar(title: Text(loc.platformPlansTitle)),
-        body: FutureBuilder<List<PlatformPlan>>(
+        body: FutureBuilder<List<shared.PlatformPlan>>(
           future: _plansFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
@@ -75,9 +78,10 @@ class _AvailablePlatformPlansScreenState
             }
 
             final allPlans = snapshot.data ?? [];
-            final planProvider = context.watch<PlatformPlanSelectionProvider>();
+            final planProvider =
+                context.watch<shared.PlatformPlanSelectionProvider>();
             final subscriptionNotifier =
-                context.watch<FranchiseSubscriptionNotifier>();
+                context.watch<shared.FranchiseSubscriptionProvider>();
             final subscription = subscriptionNotifier.currentSubscription;
 
             final currentPlanId =
@@ -123,15 +127,20 @@ class _AvailablePlatformPlansScreenState
                             });
                           },
                           onPlanUpdated: () async {
-                            final franchiseId = context
-                                .read<AdminUserProvider>()
-                                .user
-                                ?.defaultFranchise;
+                            final franchiseId =
+                                Provider.of<shared.AdminUserProvider>(context,
+                                        listen: false)
+                                    .user
+                                    ?.defaultFranchise;
                             if (franchiseId != null) {
-                              await FranchiseOnboardingService()
+                              await Provider.of<
+                                          shared.FranchiseOnboardingService>(
+                                      context,
+                                      listen: false)
                                   .markOnboardingComplete(franchiseId);
-                              context
-                                  .read<FranchiseSubscriptionNotifier>()
+                              Provider.of<shared.FranchiseSubscriptionProvider>(
+                                      context,
+                                      listen: false)
                                   .updateFranchiseId(franchiseId);
                             }
                             setState(() => _expandedIndex = null);
@@ -148,8 +157,3 @@ class _AvailablePlatformPlansScreenState
     );
   }
 }
-
-
-
-
-

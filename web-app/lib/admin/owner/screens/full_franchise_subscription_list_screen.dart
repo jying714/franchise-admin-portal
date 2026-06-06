@@ -19,7 +19,7 @@ class FullFranchiseSubscriptionListScreen extends StatefulWidget {
 
 class _FullFranchiseSubscriptionListScreenState
     extends State<FullFranchiseSubscriptionListScreen> {
-  late Future<List<EnrichedFranchiseSubscription>> _enrichedSubsFuture;
+  late Future<List<shared.EnrichedFranchiseSubscription>> _enrichedSubsFuture;
 
   @override
   void initState() {
@@ -27,11 +27,12 @@ class _FullFranchiseSubscriptionListScreenState
     _enrichedSubsFuture = _loadEnrichedSubscriptions();
   }
 
-  Future<List<EnrichedFranchiseSubscription>>
+  Future<List<shared.EnrichedFranchiseSubscription>>
       _loadEnrichedSubscriptions() async {
     try {
-      final firestore = context.read<shared.FirestoreService>();
-      final enricher = FranchiseSubscriptionEnricher(firestore);
+      final firestore =
+          Provider.of<shared.FirestoreService>(context, listen: false);
+      final enricher = shared.FranchiseSubscriptionEnricher(firestore);
       final enriched = await enricher.enrichAllSubscriptions();
 
       // ðŸž Debug & duplicate detection
@@ -42,7 +43,8 @@ class _FullFranchiseSubscriptionListScreenState
         final fid = e.franchiseId;
 
         if (seen.contains(id)) {
-          debugPrint('[âš ï¸ DUPLICATE] FranchiseId: $fid, Plan: $plan, ID: $id');
+          debugPrint(
+              '[âš ï¸ DUPLICATE] FranchiseId: $fid, Plan: $plan, ID: $id');
         } else {
           seen.add(id);
         }
@@ -52,11 +54,10 @@ class _FullFranchiseSubscriptionListScreenState
 
       return enriched;
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'load_enriched_subscriptions_failed',
         stack: stack.toString(),
         source: 'FullFranchiseSubscriptionListScreen',
-        source: 'full_franchise_subscription_list_screen' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {'exception': e.toString()},
       );
@@ -66,7 +67,7 @@ class _FullFranchiseSubscriptionListScreenState
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AdminUserProvider>().user;
+    final user = context.watch<shared.AdminUserProvider>().user;
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -94,7 +95,7 @@ class _FullFranchiseSubscriptionListScreenState
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: FutureBuilder<List<EnrichedFranchiseSubscription>>(
+        child: FutureBuilder<List<shared.EnrichedFranchiseSubscription>>(
           future: _enrichedSubsFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
@@ -130,9 +131,3 @@ class _FullFranchiseSubscriptionListScreenState
     );
   }
 }
-
-
-
-
-
-

@@ -9,7 +9,7 @@ import 'package:franchise_admin_portal/admin/developer/platform/franchise_subscr
 import 'package:provider/provider.dart';
 
 class FranchiseSubscriptionListTile extends StatefulWidget {
-  final EnrichedFranchiseSubscription enriched;
+  final shared.EnrichedFranchiseSubscription enriched;
   final VoidCallback? onRefreshRequested;
 
   const FranchiseSubscriptionListTile({
@@ -43,10 +43,9 @@ class _FranchiseSubscriptionListTileState
         widget.onRefreshRequested!();
       }
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'edit_subscription_failed',
         source: 'FranchiseSubscriptionListTile',
-        source: 'franchise_subscription_list_screen' /* was screen, Phase 5 */,
         severity: 'error',
         stack: stack.toString(),
         contextData: {
@@ -64,7 +63,7 @@ class _FranchiseSubscriptionListTileState
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AdminUserProvider>().user;
+    final user = context.watch<shared.AdminUserProvider>().user;
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -196,8 +195,3 @@ class _FranchiseSubscriptionListTileState
     );
   }
 }
-
-
-
-
-

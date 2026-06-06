@@ -12,7 +12,7 @@ class QuickLinksCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.read<AdminUserProvider>().user;
+    final user = Provider.of<shared.AdminUserProvider>(context).user;
     if (!(user?.isPlatformOwner ?? false) && !(user?.isDeveloper ?? false)) {
       return const SizedBox.shrink();
     }
@@ -28,7 +28,6 @@ class QuickLinksCard extends StatelessWidget {
         shared.ErrorLogger.log(
           message: 'quick_links_navigation_failed',
           source: 'QuickLinksCard',
-          source: 'platform_owner_dashboard' /* was screen, Phase 5 */,
           severity: 'error',
           contextData: {
             'exception': e.toString(),
@@ -122,8 +121,3 @@ class _QuickLinkTile extends StatelessWidget {
     );
   }
 }
-
-
-
-
-

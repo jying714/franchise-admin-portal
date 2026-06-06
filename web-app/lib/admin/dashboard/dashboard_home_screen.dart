@@ -37,7 +37,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     debugPrint('[DashboardHomeScreen] Building dashboard UI');
 
     final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
-    final featureProvider = context.watch<FranchiseFeatureProvider>();
+    final featureProvider = context.watch<shared.FranchiseFeatureProvider>();
     final isMobile = MediaQuery.of(context).size.width < 800;
     final gridColumns = isMobile ? 1 : 4;
     final gap = isMobile ? 16.0 : 24.0;
@@ -48,11 +48,11 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     }
 
     final liveSnapshotEnabled = featureProvider.liveSnapshotEnabled;
-    final userCanToggle = UserPermissions.isPlatformPrivileged(
-          context.read<AdminUserProvider>().user,
+    final userCanToggle = shared.UserPermissions.isPlatformPrivileged(
+          Provider.of<shared.AdminUserProvider>(context, listen: false).user,
         ) ||
-        UserPermissions.canManageSubscriptions(
-          context.read<AdminUserProvider>().user,
+        shared.UserPermissions.canManageSubscriptions(
+          Provider.of<shared.AdminUserProvider>(context, listen: false).user,
         );
 
     return Padding(
@@ -69,8 +69,9 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                   child: DashboardStatCard(
                     label: 'Orders Today',
                     icon: Icons.shopping_cart,
-                    getValue: () => context
-                        .read<shared.FirestoreService>()
+                    getValue: () => Provider.of<shared.FirestoreService>(
+                            context,
+                            listen: false)
                         .getTotalOrdersTodayCount(franchiseId: franchiseId),
                     tooltip: 'Total orders placed today',
                     semanticLabel: 'Total orders placed today',
@@ -100,10 +101,9 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                     height: _expandedSnapshot
                         ? (3 * 120 + 2 * 12) // 3 rows + 2 gaps in expanded mode
                         : null, // auto height when collapsed
-                    child: shared.RoleGuard(
+                    child: RoleGuard(
                       requireAnyRole: ['platform_owner', 'hq_owner'],
                       featureName: 'real_time_ops_snapshot',
-                      source: 'dashboard_home_screen.dart' /* was screen, Phase 4 fix */,
                       child: Card(
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
@@ -158,14 +158,13 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                                                 );
                                               }
                                             } catch (e, st) {
-                                              await shared.ErrorLogger.log(
+                                              shared.ErrorLogger.log(
                                                 message:
                                                     'Error updating liveSnapshotEnabled',
                                                 stack: st.toString(),
                                                 source:
                                                     'DashboardHomeScreen.onChanged',
                                                 severity: 'error',
-                                                source: 'dashboard_home_screen.dart' /* was screen, Phase 4 fix */,
                                                 contextData: {
                                                   'franchiseId': franchiseId,
                                                   'newValue': value,
@@ -225,10 +224,3 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
     );
   }
 }
-
-
-
-
-
-
-

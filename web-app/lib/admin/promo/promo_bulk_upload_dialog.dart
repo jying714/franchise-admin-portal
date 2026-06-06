@@ -17,7 +17,7 @@ class PromoBulkUploadDialog extends StatefulWidget {
 class _PromoBulkUploadDialogState extends State<PromoBulkUploadDialog> {
   bool isLoading = false;
   String? errorMsg;
-  List<Promo> previewPromos = [];
+  List<shared.Promo> previewPromos = [];
 
   Future<void> _pickAndParseFile() async {
     setState(() => errorMsg = null);
@@ -30,8 +30,9 @@ class _PromoBulkUploadDialogState extends State<PromoBulkUploadDialog> {
       final content = await file.readAsString();
       if (result.files.single.extension == 'json') {
         final List<dynamic> data = json.decode(content);
-        previewPromos =
-            data.map((e) => Promo.fromFirestore(e, e['id'] ?? '')).toList();
+        previewPromos = data
+            .map((e) => shared.Promo.fromFirestore(e, e['id'] ?? ''))
+            .toList();
       } else if (result.files.single.extension == 'csv') {
         // TODO: Add CSV parsing logic (headers must match Promo fields)
         throw UnimplementedError('CSV import not implemented.');
@@ -44,7 +45,8 @@ class _PromoBulkUploadDialogState extends State<PromoBulkUploadDialog> {
 
   Future<void> _uploadAll() async {
     final franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
 
     setState(() => isLoading = true);
     for (final promo in previewPromos) {
@@ -106,8 +108,3 @@ class _PromoBulkUploadDialogState extends State<PromoBulkUploadDialog> {
     );
   }
 }
-
-
-
-
-

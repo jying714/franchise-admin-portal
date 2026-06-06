@@ -1,8 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 5 final cleanup
-    as feedback_model;
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
@@ -21,10 +20,12 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
   String _sortOrder = 'recent';
   String _search = '';
 
-  void _confirmDelete(
-      BuildContext context, shared.FirestoreService service, String feedbackId) {
+  void _confirmDelete(BuildContext context, shared.FirestoreService service,
+      String feedbackId) {
     final loc = AppLocalizations.of(context);
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
     if (loc == null) return;
 
     showDialog(
@@ -149,7 +150,8 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
-    final shared.firestoreService = context.read<shared.FirestoreService>();
+    final firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
@@ -255,14 +257,15 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
                   ),
                   const SizedBox(height: 12),
                   Expanded(
-                    child: StreamBuilder<List<feedback_model.FeedbackEntry>>(
-                      stream: shared.firestoreService.getFeedbackEntries(franchiseId),
+                    child: StreamBuilder<List<shared.FeedbackEntry>>(
+                      stream: Provider.of<shared.FirestoreService>(context,
+                              listen: false)
+                          .getFeedbackEntries(franchiseId),
                       builder: (context, snapshot) {
                         if (!snapshot.hasData || snapshot.data!.isEmpty) {
                           return Center(child: Text(loc.noFeedbackSubmitted));
                         }
-                        List<feedback_model.FeedbackEntry> feedbacks =
-                            snapshot.data!;
+                        List<shared.FeedbackEntry> feedbacks = snapshot.data!;
                         if (_filterType != 'all') {
                           feedbacks = feedbacks
                               .where((f) => f.feedbackMode == _filterType)
@@ -436,7 +439,7 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
                                 onSelected: (val) {
                                   if (val == 'delete') {
                                     _confirmDelete(
-                                        context, shared.firestoreService, feedback.id);
+                                        context, firestoreService, feedback.id);
                                   }
                                 },
                                 itemBuilder: (context) => [
@@ -476,7 +479,7 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
 }
 
 class _TypeIcon extends StatelessWidget {
-  final feedback_model.FeedbackEntry feedback;
+  final shared.FeedbackEntry feedback;
   const _TypeIcon({required this.feedback});
 
   @override
@@ -491,8 +494,3 @@ class _TypeIcon extends StatelessWidget {
     );
   }
 }
-
-
-
-
-

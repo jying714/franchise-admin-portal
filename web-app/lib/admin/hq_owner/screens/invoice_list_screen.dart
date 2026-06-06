@@ -17,7 +17,7 @@ class InvoiceListScreen extends StatefulWidget {
 
 class _InvoiceListScreenState extends State<InvoiceListScreen> {
   late final shared.FirestoreService _firestoreService;
-  late final shared.FranchiseProvider _shared.FranchiseProvider;
+  late final shared.FranchiseProvider _franchiseProvider;
   InvoiceSortOrder _selectedSortOrder = InvoiceSortOrder.dateDesc;
 
   String? _searchTerm;
@@ -26,10 +26,11 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _shared.FranchiseProvider = Provider.of<shared.FranchiseProvider>(context);
-    _firestoreService = Provider.of<shared.FirestoreService>(context, listen: false);
+    _franchiseProvider = Provider.of<shared.FranchiseProvider>(context);
+    _firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     print(
-        '[InvoiceListScreen] didChangeDependencies called, franchiseId=${_shared.FranchiseProvider.franchiseId}');
+        '[InvoiceListScreen] didChangeDependencies called, franchiseId=${_franchiseProvider.franchiseId}');
   }
 
   void _onSearchChanged(String value) {
@@ -51,8 +52,9 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
     super.dispose();
   }
 
-  List<PlatformInvoice> _applySearchFilter(List<PlatformInvoice> invoices) {
-    List<PlatformInvoice> filtered = invoices;
+  List<shared.PlatformInvoice> _applySearchFilter(
+      List<shared.PlatformInvoice> invoices) {
+    List<shared.PlatformInvoice> filtered = invoices;
 
     if (_searchTerm != null && _searchTerm!.isNotEmpty) {
       final lowerSearch = _searchTerm!.toLowerCase();
@@ -85,7 +87,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
       print('[InvoiceListScreen] loc is null!');
       return const SizedBox.shrink();
     }
-    final franchiseId = _shared.FranchiseProvider.franchiseId;
+    final franchiseId = _franchiseProvider.franchiseId;
     print(
         '[InvoiceListScreen] build called with franchiseId=$franchiseId, searchTerm=$_searchTerm, statusFilter=$_statusFilter');
 
@@ -96,7 +98,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(loc.invoiceListTitle)),
       body: Padding(
-        padding: const EdgeInsets.all(DesignTokens.paddingLg),
+        padding: const EdgeInsets.all(shared.DesignTokens.paddingLg),
         child: Column(
           children: [
             InvoiceSearchBar(
@@ -124,9 +126,9 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                 });
               },
             ),
-            const SizedBox(height: DesignTokens.paddingMd),
+            const SizedBox(height: shared.DesignTokens.paddingMd),
             Expanded(
-              child: StreamBuilder<List<PlatformInvoice>>(
+              child: StreamBuilder<List<shared.PlatformInvoice>>(
                 stream: _firestoreService.platformInvoicesStream(
                   franchiseeId: franchiseId,
                   status: _statusFilter,
@@ -138,7 +140,6 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                     shared.ErrorLogger.log(
                       message: snapshot.error.toString(),
                       source: 'InvoiceListScreen',
-                      source: 'StreamBuilder' /* was screen, Phase 5 */,
                     );
                     return Center(child: Text(loc.errorLoadingInvoices));
                   }
@@ -166,7 +167,7 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
   }
 
   Widget _buildInvoiceListView(
-      List<PlatformInvoice> invoices, AppLocalizations loc) {
+      List<shared.PlatformInvoice> invoices, AppLocalizations loc) {
     return ListView.separated(
       itemCount: invoices.length,
       separatorBuilder: (_, __) => const Divider(),
@@ -209,7 +210,6 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
                       shared.ErrorLogger.log(
                         message: 'Could not launch PDF: $url',
                         source: 'InvoiceListScreen',
-                        source: '_buildInvoiceListView' /* was screen, Phase 5 */,
                       );
                     }
                   },
@@ -275,9 +275,3 @@ class _InvoiceListScreenState extends State<InvoiceListScreen> {
     }
   }
 }
-
-
-
-
-
-

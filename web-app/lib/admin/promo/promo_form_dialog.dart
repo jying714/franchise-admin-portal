@@ -3,8 +3,8 @@ import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
 
 class PromoFormDialog extends StatefulWidget {
-  final Promo? promo;
-  final Future<void> Function(Promo)? onSave; // <-- FIXED
+  final shared.Promo? promo;
+  final Future<void> Function(shared.Promo)? onSave; // <-- FIXED
 
   const PromoFormDialog({super.key, this.promo, this.onSave}); // <-- FIXED
 
@@ -46,11 +46,12 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
 
   Future<void> _save() async {
     final franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
 
-    final promo = Promo(
+    final promo = shared.Promo(
       id: widget.promo?.id ?? UniqueKey().toString(),
       name: name,
       description: description,
@@ -193,8 +194,3 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
     );
   }
 }
-
-
-
-
-

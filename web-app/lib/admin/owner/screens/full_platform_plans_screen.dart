@@ -16,7 +16,7 @@ class FullPlatformPlansScreen extends StatefulWidget {
 }
 
 class _FullPlatformPlansScreenState extends State<FullPlatformPlansScreen> {
-  late Future<List<PlatformPlan>> _plansFuture;
+  late Future<List<shared.PlatformPlan>> _plansFuture;
 
   @override
   void initState() {
@@ -24,15 +24,16 @@ class _FullPlatformPlansScreenState extends State<FullPlatformPlansScreen> {
     _plansFuture = _loadPlans();
   }
 
-  Future<List<PlatformPlan>> _loadPlans() async {
+  Future<List<shared.PlatformPlan>> _loadPlans() async {
     try {
-      return await FranchiseSubscriptionService().getPlatformPlans();
+      return await Provider.of<shared.FranchiseSubscriptionService>(context,
+              listen: false)
+          .getPlatformPlans();
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'load_platform_plans_failed',
         stack: stack.toString(),
         source: 'FullPlatformPlansScreen',
-        source: 'full_platform_plans_screen' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {'exception': e.toString()},
       );
@@ -42,7 +43,7 @@ class _FullPlatformPlansScreenState extends State<FullPlatformPlansScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AdminUserProvider>().user;
+    final user = context.watch<shared.AdminUserProvider>().user;
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
@@ -58,7 +59,7 @@ class _FullPlatformPlansScreenState extends State<FullPlatformPlansScreen> {
       appBar: AppBar(
         title: Text(loc.platformPlansTitle),
       ),
-      body: FutureBuilder<List<PlatformPlan>>(
+      body: FutureBuilder<List<shared.PlatformPlan>>(
         future: _plansFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
@@ -160,8 +161,3 @@ class _FullPlatformPlansScreenState extends State<FullPlatformPlansScreen> {
     );
   }
 }
-
-
-
-
-
