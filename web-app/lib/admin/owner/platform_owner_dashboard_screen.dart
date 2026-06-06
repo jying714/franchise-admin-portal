@@ -3,20 +3,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 import 'package:franchise_admin_portal/widgets/dialogs/franchisee_invitation_dialog.dart';
 import 'package:franchise_admin_portal/widgets/financials/platform_revenue_summary_panel.dart';
-import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
 import 'package:franchise_admin_portal/admin/owner/sections/platform_plans_summary_card.dart';
 import 'package:franchise_admin_portal/admin/owner/sections/franchise_subscription_summary_card.dart';
-import 'package:franchise_admin_portal/admin/owner/screens/full_platform_plans_screen.dart';
 import 'package:franchise_admin_portal/admin/owner/sections/quick_links_card.dart';
 import 'package:franchise_admin_portal/widgets/header/settings_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/help_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.dart';
+import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_invitation_provider_impl.dart';
+import 'package:franchise_admin_portal/core/providers/platform_financials_provider_impl.dart';
 
 class PlatformOwnerDashboardScreen extends StatelessWidget {
   final String currentScreen;
@@ -26,8 +27,7 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
     required this.currentScreen,
   }) : super(key: key);
 
-  bool _isPlatformOwner(app.User? user) {
-    // Adjust this logic as needed; assumes you have a 'platform_owner' or similar role.
+  bool _isPlatformOwner(shared.User? user) {
     return user != null &&
         (user.roles.contains('platform_owner') ||
             user.roles.contains('developer'));
@@ -37,35 +37,31 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     print('[PlatformOwnerDashboardScreen] build called');
     final adminUserProvider =
-        Provider.of<AdminUserProvider>(context, listen: false);
+        Provider.of<shared.AdminUserProvider>(context, listen: false);
     final user = adminUserProvider.user;
     final loc = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    print('[PlatformOwnerDashboardScreen] user: $user');
-    print('[PlatformOwnerDashboardScreen] loc: $loc');
+
     if (user == null) {
-      print('[PlatformOwnerDashboardScreen] user is null! Returning error.');
       return Scaffold(
         body: Center(child: Text('User profile missing. [debug]')),
       );
     }
     if (loc == null) {
-      print('[PlatformOwnerDashboardScreen] loc is null! Localization error.');
       return Scaffold(
         body: Center(child: Text('Localization missing! [debug]')),
       );
     }
+
     // === Platform Owner Access Guard ===
     if (!_isPlatformOwner(user)) {
-      // Log unauthorized access attempt
       shared.ErrorLogger.log(
         message: 'Unauthorized PlatformOwnerDashboardScreen access',
         source: 'PlatformOwnerDashboardScreen',
-        source: 'PlatformOwnerDashboardScreen' /* was screen, Phase 5 */,
         severity: 'warning',
         contextData: {
-          'userId': user?.id,
-          'roles': user?.roles,
+          'userId': user.id,
+          'roles': user.roles,
         },
       );
       return Center(
@@ -118,8 +114,8 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
     final hPadding = isWide ? 38.0 : 16.0;
     final vPadding = isWide ? 28.0 : 14.0;
 
-    return ChangeNotifierProvider(
-        create: (_) => PlatformFinancialsProvider()..loadFinancials(),
+    return ChangeNotifierProvider<PlatformFinancialsProviderImpl>(
+        create: (_) => PlatformFinancialsProviderImpl()..loadFinancials(),
         child: Scaffold(
           backgroundColor: colorScheme.background,
           appBar: AppBar(
@@ -129,7 +125,7 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
               children: [
                 const SizedBox(width: 8),
                 Image.network(
-                  BrandingConfig.logoUrl,
+                  BrandingConfig.logoUrl ?? BrandingConfig.logoMain,
                   height: 36,
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => SizedBox(
@@ -152,7 +148,7 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
             ),
             actions: [
               DashboardSwitcherDropdown(
-                currentsource: '/platform-owner/dashboard' /* was screen, Phase 5 */,
+                currentScreen: '/platform-owner/dashboard',
                 user: user,
               ),
               // Padding(
@@ -191,15 +187,18 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
 
                 const SizedBox(height: 36),
                 // --- Franchise Invitation Panel ---
-                ChangeNotifierProvider(
-                  create: (context) => FranchiseeInvitationProvider(
-                    service: FranchiseeInvitationService(
-                      shared.firestoreService:
-                          Provider.of<shared.FirestoreService>(context, listen: false),
+                ChangeNotifierProvider<FranchiseeInvitationProviderImpl>(
+                  create: (context) => FranchiseeInvitationProviderImpl(
+                    service: shared.FranchiseeInvitationService(
+                      firestoreService: Provider.of<shared.FirestoreService>(
+                          context,
+                          listen: false),
                     ),
                   )..fetchInvitations(),
                   child: FranchiseInvitationPanel(
-                      loc: loc, colorScheme: colorScheme),
+                    loc: loc,
+                    colorScheme: colorScheme,
+                  ),
                 ),
 
                 const SizedBox(height: 36),
@@ -212,17 +211,16 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
                 // --- Global Financial Panel ---
                 Padding(
                   padding: const EdgeInsets.only(bottom: 36.0),
-                  child: Consumer<PlatformFinancialsProvider>(
+                  child: Consumer<shared.PlatformFinancialsProvider>(
                     builder: (context, provider, _) {
                       if (provider.loading) {
-                        return Center(child: CircularProgressIndicator());
+                        return const Center(child: CircularProgressIndicator());
                       }
                       if (provider.error != null) {
                         return Card(
                           color: colorScheme.errorContainer,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
+                              borderRadius: BorderRadius.circular(18)),
                           child: Padding(
                             padding: const EdgeInsets.all(24),
                             child: Column(
@@ -234,9 +232,8 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
                                   AppLocalizations.of(context)!
                                       .genericErrorOccurred,
                                   style: TextStyle(
-                                    color: colorScheme.error,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                      color: colorScheme.error,
+                                      fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(provider.error!),
@@ -251,13 +248,7 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
                           ),
                         );
                       }
-                      if (provider.overview == null || provider.kpis == null) {
-                        return Center(child: CircularProgressIndicator());
-                      }
-                      return PlatformRevenueSummaryPanel(
-                          // Optionally pass values if you want more fine-grained control
-                          // (If your PlatformRevenueSummaryPanel consumes the Provider directly, you don't need to pass anything)
-                          );
+                      return const PlatformRevenueSummaryPanel();
                     },
                   ),
                 ),
@@ -320,7 +311,7 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
             Text(
               loc.futureFeaturesBody,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.8),
+                    color: colorScheme.onSurface.withValues(alpha: 0.8),
                   ),
               textAlign: TextAlign.center,
             ),
@@ -372,7 +363,7 @@ class FranchiseInvitationPanel extends StatelessWidget {
                     );
                     if (result == true) {
                       // Optionally refresh invitations or show a SnackBar
-                      Provider.of<FranchiseeInvitationProvider>(context,
+                      Provider.of<shared.FranchiseeInvitationProvider>(context,
                               listen: false)
                           .fetchInvitations();
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -405,7 +396,7 @@ class FranchiseInvitationPanel extends StatelessWidget {
   }
 
   Widget _pendingInvitesTable(BuildContext context) {
-    return Consumer<FranchiseeInvitationProvider>(
+    return Consumer<shared.FranchiseeInvitationProvider>(
       builder: (context, provider, child) {
         if (provider.loading) {
           return Center(child: CircularProgressIndicator());
@@ -852,7 +843,3 @@ class OwnerAnnouncementsPanel extends StatelessWidget {
     );
   }
 }
-
-
-
-

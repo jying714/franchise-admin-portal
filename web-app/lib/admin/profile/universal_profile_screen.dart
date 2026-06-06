@@ -41,8 +41,10 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
     });
 
     try {
-      final user = Provider.of<AdminUserProvider>(context, listen: false).user;
-      final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
+      final user =
+          Provider.of<shared.AdminUserProvider>(context, listen: false).user;
+      final firestore =
+          Provider.of<shared.FirestoreService>(context, listen: false);
 
       if (user == null) {
         setState(() {
@@ -79,11 +81,10 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
         setState(() => _billingData = null);
       }
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'UniversalProfileScreen',
-        source: 'profile' /* was screen, Phase 5 */,
         severity: 'error',
       );
       setState(() {
@@ -104,7 +105,8 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
         body: Center(child: Text('Localization missing! [debug]')),
       );
     }
-    final user = Provider.of<AdminUserProvider>(context).user;
+    final user =
+        Provider.of<shared.AdminUserProvider>(context, listen: false).user;
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -153,7 +155,7 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
           onProfileUpdated: () async {
             // Refresh user data from Firestore after save.
             final provider =
-                Provider.of<AdminUserProvider>(context, listen: false);
+                Provider.of<shared.AdminUserProvider>(context, listen: false);
             provider.listenToAdminUser(
               Provider.of<shared.FirestoreService>(context, listen: false),
               user.id,
@@ -239,13 +241,13 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
       children: [
         FranchiseeInvoiceList(
           invoices: invoices
-              .map((data) => PlatformInvoice.fromMap(data['id'], data))
+              .map((data) => shared.PlatformInvoice.fromMap(data['id'], data))
               .toList(),
         ),
         const SizedBox(height: 14),
         FranchiseePaymentList(
           payments: payments
-              .map((data) => PlatformPayment.fromMap(data['id'], data))
+              .map((data) => shared.PlatformPayment.fromMap(data['id'], data))
               .toList(),
         ),
         // Future: payment methods, disputes, receipts
@@ -282,7 +284,8 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
             trailing: Icon(Icons.arrow_forward_ios,
                 size: 16, color: colorScheme.secondary),
             onTap: () {
-              final parsedInvoice = PlatformInvoice.fromMap(inv, inv['id']);
+              final parsedInvoice =
+                  shared.PlatformInvoice.fromMap(inv, inv['id']);
               debugPrint(
                   '[PayInvoiceDialog] Opening dialog for invoice: ${parsedInvoice.invoiceNumber} (${parsedInvoice.id})');
 
@@ -357,9 +360,3 @@ class _UniversalProfileScreenState extends State<UniversalProfileScreen> {
     );
   }
 }
-
-
-
-
-
-

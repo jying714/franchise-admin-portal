@@ -2,7 +2,6 @@
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl.dart' show UserProfileNotifier;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/social_sign_in_buttons.dart';
@@ -51,15 +50,12 @@ class _SignInScreenState extends State<SignInScreen> {
 
   void _handleSuccess(shared.User? user) async {
     if (user != null) {
-      // getIdToken handled via authService if needed; shared.User has no direct method
       debugPrint('User signed in: ${user.email}');
-      final shared.firestoreService =
+      final firestoreService =
           Provider.of<shared.FirestoreService>(context, listen: false);
 
-      // --- NEW: Check Firestore user status ---
-      final userDoc = await shared.firestoreService.getUser(user.uid);
+      final userDoc = await firestoreService.getUser(user.id);
       if (userDoc == null) {
-        // Not invited or user doc deleted
         await FirebaseAuth.instance.signOut();
         setState(() {
           _errorMessage = "Your account is not authorized. Contact your admin.";
@@ -75,22 +71,20 @@ class _SignInScreenState extends State<SignInScreen> {
         return;
       }
 
-      // Existing logic:
       final userProfileNotifier =
-          Provider.of<UserProfileNotifier>(context, listen: false);
-      userProfileNotifier.listenToUser(shared.firestoreService, user.id);
+          Provider.of<shared.UserProfileProvider>(context, listen: false);
+      userProfileNotifier.listenToUser(user.id);
 
-      final token =
-          Provider.of<shared.AuthService>(context, listen: false).getInviteToken();
+      final token = Provider.of<shared.AuthService>(context, listen: false)
+          .getInviteToken();
       if (token != null) {
-        debugPrint(
-            '[SignInScreen] Navigating to onboarding, token=$token'); // <-- ADD THIS LINE
-        Provider.of<shared.AuthService>(context, listen: false).clearInviteToken();
+        debugPrint('[SignInScreen] Navigating to onboarding, token=$token');
+        Provider.of<shared.AuthService>(context, listen: false)
+            .clearInviteToken();
         Navigator.pushReplacementNamed(context, '/franchise-onboarding',
             arguments: {'token': token});
         return;
       }
-      // Go to dashboard, etc.
     }
   }
 
@@ -208,7 +202,6 @@ class _SignInScreenState extends State<SignInScreen> {
                             });
                             final email = emailController.text.trim();
                             final password = passwordController.text;
-                            // --- Simple validation
                             if (email.isEmpty || !email.contains('@')) {
                               setDialogState(() {
                                 emailError =
@@ -226,11 +219,12 @@ class _SignInScreenState extends State<SignInScreen> {
                               return;
                             }
                             try {
-                              final authService = Provider.of<shared.AuthService>(
-                                  context,
-                                  listen: false);
-                              final user = await authService.signInWithEmailAndPassword(
-                                  email: email, password: password);
+                              final authService =
+                                  Provider.of<shared.AuthService>(context,
+                                      listen: false);
+                              final user =
+                                  await authService.signInWithEmailAndPassword(
+                                      email: email, password: password);
                               _handleSuccess(user);
                             } catch (e) {
                               setState(() => _errorMessage = e.toString());
@@ -262,9 +256,9 @@ class _SignInScreenState extends State<SignInScreen> {
                               return;
                             }
                             try {
-                              final authService = Provider.of<shared.AuthService>(
-                                  context,
-                                  listen: false);
+                              final authService =
+                                  Provider.of<shared.AuthService>(context,
+                                      listen: false);
                               await authService.sendPasswordResetEmail(email);
                               setState(() {
                                 _errorMessage = "Password reset email sent!";
@@ -314,6 +308,3 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 }
-
-
-

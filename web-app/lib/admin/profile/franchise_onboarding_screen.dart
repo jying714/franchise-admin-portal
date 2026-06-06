@@ -9,7 +9,6 @@ import 'package:franchise_admin_portal/widgets/business/business_hours_editor.da
 import 'dart:html' as html;
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-    as admin_user;
 
 String roleToDashboardRoute(List<String> roles) {
   if (roles.contains('platform_owner')) return '/platform-owner/dashboard';
@@ -58,7 +57,8 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
     super.didChangeDependencies();
     if (_didLoadToken) return;
     _didLoadToken = true;
-    Provider.of<RestaurantTypeProvider>(context, listen: false).loadTypes();
+    Provider.of<shared.RestaurantTypeProvider>(context, listen: false)
+        .loadTypes();
     _effectiveToken = widget.inviteToken;
     if (_effectiveToken == null) {
       final args = (ModalRoute.of(context)?.settings.arguments as Map?) ?? {};
@@ -120,11 +120,10 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
 
       setState(() => _loading = false);
     } catch (e, st) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Error loading invite: $e',
         stack: st.toString(),
         source: 'FranchiseOnboardingScreen',
-        source: 'franchise_onboarding' /* was screen, Phase 5 */,
         severity: 'error',
       );
       setState(() {
@@ -142,7 +141,8 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
     });
 
     try {
-      final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
+      final firestore =
+          Provider.of<shared.FirestoreService>(context, listen: false);
       final userId = _inviteData?['invitedUserId'] as String?;
       if (userId == null) throw Exception('No user linked to invite.');
 
@@ -243,7 +243,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       }
 
       // ðŸ•“ Poll Firestore until roles are updated
-      admin_user.User? updatedUser;
+      shared.User? updatedUser;
       int attempt = 0;
       while (attempt < 10) {
         updatedUser = await firestore.getUser(userId);
@@ -261,9 +261,10 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
       }
 
       if (updatedUser != null) {
-        Provider.of<AdminUserProvider>(context, listen: false).user =
+        Provider.of<shared.AdminUserProvider>(context, listen: false).user =
             updatedUser;
-        Provider.of<UserProfileNotifier>(context, listen: false).reload();
+        Provider.of<shared.UserProfileProvider>(context, listen: false)
+            .reload();
 
         // Optional: double sync shared.FranchiseProvider if defaultFranchise is found
         if (updatedUser.defaultFranchise != null &&
@@ -273,7 +274,8 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
         }
       }
 
-      Provider.of<AuthService>(context, listen: false).clearInviteToken();
+      Provider.of<shared.AuthService>(context, listen: false)
+          .clearInviteToken();
       print(
           '[FranchiseOnboardingScreen] Invite token cleared from localStorage');
 
@@ -301,11 +303,10 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
         );
       }
     } catch (e, st) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to save franchise profile: $e',
         stack: st.toString(),
         source: 'FranchiseOnboardingScreen',
-        source: 'franchise_onboarding' /* was screen, Phase 5 */,
         severity: 'error',
       );
       print('[FranchiseOnboardingScreen] ERROR: $e\n$st');
@@ -477,7 +478,7 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        Consumer<RestaurantTypeProvider>(
+        Consumer<shared.RestaurantTypeProvider>(
           builder: (context, typeProvider, _) {
             final types = typeProvider.types;
             final selectedType = _categoryController.text;
@@ -562,9 +563,3 @@ class _FranchiseOnboardingScreenState extends State<FranchiseOnboardingScreen> {
     );
   }
 }
-
-
-
-
-
-

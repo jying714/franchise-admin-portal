@@ -1,7 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 5 final cleanup
-    as admin_user;
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
@@ -11,6 +10,7 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
 import 'package:franchise_admin_portal/widgets/staff/show_add_staff_dialog.dart';
+import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 
 class StaffAccessScreen extends StatefulWidget {
   const StaffAccessScreen({super.key});
@@ -22,7 +22,7 @@ class StaffAccessScreen extends StatefulWidget {
 class _StaffAccessScreenState extends State<StaffAccessScreen> {
   @override
   Widget build(BuildContext context) {
-    final shared.firestoreService =
+    final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context);
     if (loc == null) {
@@ -43,7 +43,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
         'admin'
       ],
       featureName: 'staff_access_screen',
-      source: 'StaffAccessScreen' /* was screen, Phase 5 */,
+      screen: 'StaffAccessScreen' /* was screen, Phase 5 */,
       child: SubscriptionAccessGuard(
         child: Scaffold(
           backgroundColor: colorScheme.background,
@@ -82,11 +82,10 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                               onPressed: () async {
                                 final parentLoc = AppLocalizations.of(context);
                                 if (parentLoc == null) {
-                                  await shared.ErrorLogger.log(
+                                  shared.ErrorLogger.log(
                                     message:
                                         'AppLocalizations.of(context) returned null.',
                                     source: 'staff_access_screen',
-                                    source: 'StaffAccessScreen' /* was screen, Phase 5 */,
                                     severity: 'error',
                                     contextData: {
                                       'widget': 'FloatingActionButton',
@@ -111,7 +110,6 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                                               message:
                                                   'Localization still null after Localizations.override.',
                                               source: 'staff_access_screen',
-                                              source: 'StaffAccessScreen' /* was screen, Phase 5 */,
                                               severity: 'error',
                                               contextData: {
                                                 'widget': 'AddStaffDialog',
@@ -136,8 +134,8 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                         ),
                       ),
                       Expanded(
-                        child: StreamBuilder<List<admin_user.User>>(
-                          stream: shared.firestoreService.getStaffUsers(franchiseId),
+                        child: StreamBuilder<List<shared.User>>(
+                          stream: firestoreService.getStaffUsers(franchiseId),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
@@ -185,7 +183,7 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                                         color: colorScheme.error),
                                     tooltip: loc.staffRemoveTooltip,
                                     onPressed: () => _confirmRemoveStaff(
-                                        context, shared.firestoreService, user, loc),
+                                        context, firestoreService, user, loc),
                                   ),
                                 );
                               },
@@ -205,8 +203,8 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
     );
   }
 
-  void _confirmRemoveStaff(BuildContext context, shared.FirestoreService service,
-      admin_user.User user, AppLocalizations loc) {
+  void _confirmRemoveStaff(BuildContext context,
+      shared.FirestoreService service, shared.User user, AppLocalizations loc) {
     final colorScheme = Theme.of(context).colorScheme;
     showDialog(
       context: context,
@@ -233,11 +231,10 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
                 if (!context.mounted) return;
                 Navigator.of(context).pop();
               } catch (e, stack) {
-                await shared.ErrorLogger.log(
+                shared.ErrorLogger.log(
                   message: e.toString(),
                   stack: stack.toString(),
                   source: 'staff_access_screen',
-                  source: 'StaffAccessScreen' /* was screen, Phase 5 */,
                   severity: 'error',
                   contextData: {
                     'franchiseId': franchiseId,
@@ -256,9 +253,3 @@ class _StaffAccessScreenState extends State<StaffAccessScreen> {
     );
   }
 }
-
-
-
-
-
-

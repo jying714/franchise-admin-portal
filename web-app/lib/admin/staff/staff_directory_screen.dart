@@ -1,7 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 5 final cleanup
-    as admin_user;
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:provider/provider.dart';
 
 class StaffDirectoryScreen extends StatefulWidget {
@@ -12,14 +11,17 @@ class StaffDirectoryScreen extends StatefulWidget {
 }
 
 class _StaffDirectoryScreenState extends State<StaffDirectoryScreen> {
-  late Future<List<admin_user.User>> _staffFuture;
+  late Future<List<shared.User>> _staffFuture;
 
   @override
   void initState() {
     super.initState();
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
-    final shared.firestoreService = context.read<shared.FirestoreService>();
-    _staffFuture = shared.firestoreService.allUsers(franchiseId: franchiseId).first;
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
+    final firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
+    _staffFuture = firestoreService.allUsers(franchiseId: franchiseId).first;
   }
 
   @override
@@ -36,7 +38,7 @@ class _StaffDirectoryScreenState extends State<StaffDirectoryScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(loc.staffDirectory)),
-      body: FutureBuilder<List<admin_user.User>>(
+      body: FutureBuilder<List<shared.User>>(
         future: _staffFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -72,8 +74,3 @@ class _StaffDirectoryScreenState extends State<StaffDirectoryScreen> {
     );
   }
 }
-
-
-
-
-

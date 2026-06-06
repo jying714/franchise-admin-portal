@@ -1,14 +1,14 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-    as admin_user;
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/admin/promo/promo_form_dialog.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
+import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
+import 'package:franchise_admin_portal/core/services/audit_log_service_impl.dart';
 
 class PromoManagementScreen extends StatelessWidget {
   const PromoManagementScreen({super.key});
@@ -18,9 +18,9 @@ class PromoManagementScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
-    final shared.firestoreService =
+    final firestoreService =
         Provider.of<shared.FirestoreService>(context, listen: false);
-    final userProvider = context.watch<AdminUserProvider>();
+    final userProvider = context.watch<shared.AdminUserProvider>();
     final user = userProvider.user;
     final loading = userProvider.loading;
 
@@ -44,7 +44,7 @@ class PromoManagementScreen extends StatelessWidget {
         'admin'
       ],
       featureName: 'promo_management_screen',
-      source: 'PromoManagementScreen' /* was screen, Phase 5 */,
+      screen: 'PromoManagementScreen',
       child: SubscriptionAccessGuard(
         child: Scaffold(
           backgroundColor: colorScheme.background,
@@ -85,9 +85,9 @@ class PromoManagementScreen extends StatelessWidget {
                                     builder: (_) => PromoFormDialog(
                                       onSave: (promo) async {
                                         try {
-                                          await shared.firestoreService.addPromo(
+                                          await firestoreService.addPromo(
                                               franchiseId, promo);
-                                          await AuditLogService().addLog(
+                                          await AuditLogServiceImpl().addLog(
                                             franchiseId: franchiseId,
                                             userId: user.id,
                                             action: 'add_promo',
@@ -96,10 +96,9 @@ class PromoManagementScreen extends StatelessWidget {
                                             details: {'name': promo.name},
                                           );
                                         } catch (e, stack) {
-                                          await shared.ErrorLogger.log(
+                                          shared.ErrorLogger.log(
                                             message: e.toString(),
                                             source: 'promo_management_screen',
-                                            source: 'PromoManagementScreen' /* was screen, Phase 5 */,
                                             stack: stack.toString(),
                                             contextData: {
                                               'franchiseId': franchiseId,
@@ -118,8 +117,8 @@ class PromoManagementScreen extends StatelessWidget {
                         ),
                       ),
                       Expanded(
-                        child: StreamBuilder<List<Promo>>(
-                          stream: shared.firestoreService.getPromos(franchiseId),
+                        child: StreamBuilder<List<shared.Promo>>(
+                          stream: firestoreService.getPromos(franchiseId),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
@@ -171,11 +170,11 @@ class PromoManagementScreen extends StatelessWidget {
                                                 promo: promo,
                                                 onSave: (updated) async {
                                                   try {
-                                                    await shared.firestoreService
+                                                    await firestoreService
                                                         .updatePromo(
                                                             franchiseId,
                                                             updated);
-                                                    await AuditLogService()
+                                                    await AuditLogServiceImpl()
                                                         .addLog(
                                                       franchiseId: franchiseId,
                                                       userId: user.id,
@@ -187,11 +186,10 @@ class PromoManagementScreen extends StatelessWidget {
                                                       },
                                                     );
                                                   } catch (e, stack) {
-                                                    await shared.ErrorLogger.log(
+                                                    shared.ErrorLogger.log(
                                                       message: e.toString(),
                                                       source:
-                                                          'promo_management_screen',
-                                                      source: 'PromoManagementScreen' /* was screen, Phase 5 */,
+                                                          'PromoManagementScreen',
                                                       stack: stack.toString(),
                                                       contextData: {
                                                         'franchiseId':
@@ -213,7 +211,7 @@ class PromoManagementScreen extends StatelessWidget {
                                               color: Colors.red),
                                           onPressed: () => _confirmDelete(
                                             context,
-                                            shared.firestoreService,
+                                            firestoreService,
                                             promo.id,
                                             user,
                                           ),
@@ -239,7 +237,7 @@ class PromoManagementScreen extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context, shared.FirestoreService service,
-      String promoId, admin_user.User user) {
+      String promoId, shared.User user) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     showDialog(
@@ -261,7 +259,7 @@ class PromoManagementScreen extends StatelessWidget {
                       .franchiseId;
               try {
                 await service.deletePromo(franchiseId, promoId);
-                await AuditLogService().addLog(
+                await AuditLogServiceImpl().addLog(
                   franchiseId: franchiseId,
                   userId: user.id,
                   action: 'delete_promo',
@@ -270,10 +268,9 @@ class PromoManagementScreen extends StatelessWidget {
                   details: {},
                 );
               } catch (e, stack) {
-                await shared.ErrorLogger.log(
+                shared.ErrorLogger.log(
                   message: e.toString(),
                   source: 'promo_management_screen',
-                  source: 'PromoManagementScreen' /* was screen, Phase 5 */,
                   stack: stack.toString(),
                   contextData: {
                     'franchiseId': franchiseId,
@@ -294,9 +291,3 @@ class PromoManagementScreen extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-

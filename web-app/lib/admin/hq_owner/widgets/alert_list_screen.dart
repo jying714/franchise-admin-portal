@@ -5,6 +5,7 @@ import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 
 class AlertListScreen extends StatelessWidget {
   final String franchiseId;
@@ -30,14 +31,14 @@ class AlertListScreen extends StatelessWidget {
     }
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final appConfig = AppConfig.instance;
-    final fireService = Provider.of<shared.FirestoreService>(context, listen: false);
-    final user = Provider.of<AdminUserProvider>(context, listen: false).user;
+    final fireService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
+    final user =
+        Provider.of<shared.AdminUserProvider>(context, listen: false).user;
     final isDeveloper = user?.isDeveloper ?? false;
 
     final repo = AlertsRepository(
-      shared.firestoreService: fireService,
-      appConfig: appConfig,
+      firestoreService: fireService,
     );
 
     return RoleGuard(
@@ -67,7 +68,7 @@ class AlertListScreen extends StatelessWidget {
           ],
         ),
         body: SafeArea(
-          child: StreamBuilder<List<AlertModel>>(
+          child: StreamBuilder<List<shared.AlertModel>>(
             stream: repo.watchActiveAlerts(
               franchiseId: franchiseId,
               locationId: locationId,
@@ -78,7 +79,6 @@ class AlertListScreen extends StatelessWidget {
                 shared.ErrorLogger.log(
                   message: 'Failed to load alert list: ${snapshot.error}',
                   source: 'alert_list_screen',
-                  source: 'AlertListScreen' /* was screen, Phase 5 */,
                   stack: snapshot.stackTrace?.toString(),
                   severity: 'error',
                   contextData: {
@@ -123,16 +123,15 @@ class AlertListScreen extends StatelessWidget {
                           franchiseId,
                           alert.id,
                           user?.id ?? '',
-                          source: 'AlertListScreen' /* was screen, Phase 5 */,
+                          screen: 'AlertListScreen' /* was screen, Phase 5 */,
                         );
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text(loc.alert_dismissed_success)),
                         );
                       } catch (e, stack) {
-                        await shared.ErrorLogger.log(
+                        shared.ErrorLogger.log(
                           message: 'Failed to dismiss alert: $e',
                           source: 'alert_list_screen',
-                          source: 'AlertListScreen' /* was screen, Phase 5 */,
                           stack: stack.toString(),
                           severity: 'error',
                           contextData: {
@@ -184,7 +183,7 @@ class AlertListScreen extends StatelessWidget {
 
 // Alert tile for list view.
 class _AlertListTile extends StatelessWidget {
-  final AlertModel alert;
+  final shared.AlertModel alert;
   final ColorScheme colorScheme;
   final AppLocalizations loc;
   final VoidCallback? onDismiss;
@@ -285,9 +284,3 @@ class _AlertListError extends StatelessWidget {
         ),
       );
 }
-
-
-
-
-
-
