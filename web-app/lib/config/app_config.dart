@@ -2,7 +2,7 @@
 // P2.5 Config Integration Sprint - Delegation Layer
 // Single source of truth for the web-app: all code should import from here.
 // Delegates to shared_core public barrel. Dynamic values driven by shared.FranchiseProvider.
-
+import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
@@ -86,4 +86,25 @@ class AppConfig {
       shared.AppConfig.featureDisplayName(featureKey);
 
   static String formatDate(DateTime? date) => shared.AppConfig.formatDate(date);
+
+  /// Returns appropriate Chip background color for subscription/status
+  static Color statusColor(String status, ThemeData theme) {
+    final lower = status.toLowerCase().trim();
+    switch (lower) {
+      case 'active':
+      case 'trialing':
+        return Colors.green.shade100;
+      case 'paused':
+        return Colors.orange.shade100;
+      case 'canceled':
+      case 'cancelled':
+      case 'past_due':
+      case 'overdue':
+        return Colors.red.shade100;
+      case 'unpaid':
+        return Colors.amber.shade100;
+      default:
+        return theme.colorScheme.surfaceVariant.withOpacity(0.6);
+    }
+  }
 }

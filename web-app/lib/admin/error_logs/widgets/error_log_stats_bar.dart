@@ -29,14 +29,15 @@ class ErrorLogStatsBar extends StatelessWidget {
 
     Color _chipText(Color? token, Color fallback) => token ?? fallback;
 
-    return StreamBuilder<List<ErrorLog>>(
-      stream: context.read<shared.FirestoreService>().streamErrorLogs(
-            franchiseId,
-            severity: severity,
-            start: start,
-            end: end,
-            limit: 1000,
-          ),
+    return StreamBuilder<List<shared.ErrorLog>>(
+      stream: Provider.of<shared.FirestoreService>(context, listen: false)
+          .streamErrorLogs(
+        franchiseId,
+        severity: severity,
+        start: start,
+        end: end,
+        limit: 1000,
+      ),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const SizedBox(height: 48);
         final logs = snapshot.data!;
@@ -113,8 +114,3 @@ class ErrorLogStatsBar extends StatelessWidget {
     );
   }
 }
-
-
-
-
-

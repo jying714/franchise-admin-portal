@@ -1,7 +1,7 @@
-﻿﻿import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
+﻿﻿import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:flutter/material.dart';
 
 class EmptyStateWidget extends StatelessWidget {
   final String title;

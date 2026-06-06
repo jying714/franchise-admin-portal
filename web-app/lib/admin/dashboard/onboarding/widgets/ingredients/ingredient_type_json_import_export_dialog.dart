@@ -38,7 +38,7 @@ class IngredientTypeJsonImportExportDialog extends StatefulWidget {
         return Localizations.override(
           context: context,
           child: ChangeNotifierProvider<IngredientTypeProviderImpl>.value(
-            value: provider,
+            value: provider as IngredientTypeProviderImpl,
             child: Builder(
               builder: (innerContext) {
                 return Center(

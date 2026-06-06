@@ -60,7 +60,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
             const SizedBox(width: 14),
             DashboardSwitcherDropdown(
               currentScreen: currentScreen,
-              user: user,
+              user: user!,
             ),
             const SizedBox(width: 8),
             NotificationsIconButton(),

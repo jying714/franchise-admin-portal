@@ -2,12 +2,12 @@
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/branding_config.dart';
-    as admin_user;
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
+import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -18,12 +18,12 @@ class InventoryScreen extends StatefulWidget {
 
 class _InventoryScreenState extends State<InventoryScreen> {
   String _search = '';
-  Inventory? _lastDeleted;
+  shared.Inventory? _lastDeleted;
 
   void _onSearchChanged(String val) => setState(() => _search = val);
 
   bool _canEdit(BuildContext context) {
-    final user = Provider.of<admin_user.User?>(context, listen: false);
+    final user = Provider.of<shared.User?>(context, listen: false);
     if (user == null) return false;
     return user.roles.contains('owner') ||
         user.roles.contains('manager') ||
@@ -31,8 +31,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   Future<void> _addOrEditInventory(String franchiseId, BuildContext context,
-      {Inventory? item}) async {
-    final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
+      {shared.Inventory? item}) async {
+    final firestore =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       print(
@@ -108,7 +109,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
 
     if (result == true) {
-      final inventory = Inventory(
+      final inventory = shared.Inventory(
         id: item?.id ?? '',
         name: nameController.text.trim(),
         sku: skuController.text.trim(),
@@ -136,8 +137,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   Future<void> _deleteInventory(
-      String franchiseId, BuildContext context, Inventory item) async {
-    final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
+      String franchiseId, BuildContext context, shared.Inventory item) async {
+    final firestore =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       print(
@@ -205,7 +207,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
   @override
   Widget build(BuildContext context) {
     final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
-    final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
+    final firestore =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -227,7 +230,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
         'admin'
       ],
       featureName: 'inventory_screen',
-      source: 'InventoryScreen' /* was screen, Phase 5 */,
       child: SubscriptionAccessGuard(
         child: Scaffold(
           backgroundColor: colorScheme.background,
@@ -293,7 +295,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       ),
                       // Inventory list
                       Expanded(
-                        child: StreamBuilder<List<Inventory>>(
+                        child: StreamBuilder<List<shared.Inventory>>(
                           stream: firestore.getInventory(franchiseId),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
@@ -434,9 +436,3 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 }
-
-
-
-
-
-

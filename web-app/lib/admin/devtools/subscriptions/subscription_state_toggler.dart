@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
 class SubscriptionStateToggler extends StatefulWidget {
   const SubscriptionStateToggler({super.key});
@@ -12,18 +12,25 @@ class SubscriptionStateToggler extends StatefulWidget {
 }
 
 class _SubscriptionStateTogglerState extends State<SubscriptionStateToggler> {
-  FranchiseSubscription? _selectedSubscription;
+  shared.FranchiseSubscription? _selectedSubscription;
   String? _selectedState;
   bool _saving = false;
 
-  final _states = ['active', 'paused', 'cancelled'];
+  final _states = ['active', 'paused', 'canceled'];
 
   Future<void> _updateStatus() async {
     if (_selectedSubscription == null || _selectedState == null) return;
+
     setState(() => _saving = true);
+    final loc = AppLocalizations.of(context)!;
 
     try {
-      await FranchiseSubscriptionService().updateFranchiseSubscription(
+      final service = Provider.of<shared.FranchiseSubscriptionService>(
+        context,
+        listen: false,
+      );
+
+      await service.updateFranchiseSubscription(
         documentId: _selectedSubscription!.id,
         data: {
           'status': _selectedState,
@@ -31,44 +38,47 @@ class _SubscriptionStateTogglerState extends State<SubscriptionStateToggler> {
         },
       );
 
-      await shared.ErrorLogger.log(
-        message: 'Manually updated subscription status',
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.genericSavedSuccess)),
+      );
+
+      setState(() {
+        _selectedSubscription = null;
+        _selectedState = null;
+      });
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to update subscription status: $e',
+        stack: stack.toString(),
         source: 'SubscriptionStateToggler',
-        source: 'subscription_dev_tools_screen' /* was screen, Phase 5 */,
+        severity: 'error',
         contextData: {
-          'franchiseId': _selectedSubscription!.franchiseId,
+          'franchiseId': _selectedSubscription?.franchiseId,
           'newStatus': _selectedState,
         },
       );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context)!.genericSavedSuccess),
-          ),
-        );
-      }
-    } catch (e, stack) {
-      await shared.ErrorLogger.log(
-        message: 'Failed to update subscription status: $e',
-        source: 'SubscriptionStateToggler',
-        source: 'subscription_dev_tools_screen' /* was screen, Phase 5 */,
-        severity: 'error',
-        stack: stack.toString(),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${loc.subscriptionInjectionFailed}: $e')),
       );
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
-
-    setState(() => _saving = false);
   }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
-    return StreamBuilder<List<FranchiseSubscription>>(
-      stream: FranchiseSubscriptionService().watchAllFranchiseSubscriptions(),
+    final subscriptionService =
+        Provider.of<shared.FranchiseSubscriptionService>(
+      context,
+      listen: false,
+    );
+
+    return StreamBuilder<List<shared.FranchiseSubscription>>(
+      stream: subscriptionService.watchAllFranchiseSubscriptions(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
@@ -82,13 +92,8 @@ class _SubscriptionStateTogglerState extends State<SubscriptionStateToggler> {
             Text(loc.toggleSubscriptionTitle,
                 style: theme.textTheme.titleMedium),
             const SizedBox(height: 12),
-            DropdownButtonFormField<FranchiseSubscription>(
-              value: _selectedSubscription != null
-                  ? subscriptions.firstWhere(
-                      (s) => s.id == _selectedSubscription!.id,
-                      orElse: () => subscriptions.first,
-                    )
-                  : null,
+            DropdownButtonFormField<shared.FranchiseSubscription>(
+              value: _selectedSubscription,
               items: subscriptions.map((sub) {
                 return DropdownMenuItem(
                   value: sub,
@@ -137,10 +142,7 @@ class _SubscriptionStateTogglerState extends State<SubscriptionStateToggler> {
             if (_selectedSubscription != null) ...[
               Text(
                   '${loc.franchiseIdLabel}: ${_selectedSubscription!.franchiseId}'),
-              Text(
-                  '${loc.startDateLabel}: ${_selectedSubscription!.startDate.toIso8601String()}'),
-              Text(
-                  '${loc.nextBillingDateLabel}: ${_selectedSubscription!.nextBillingDate.toIso8601String()}'),
+              Text('${loc.statusLabel}: ${_selectedSubscription!.status}'),
             ],
           ],
         );
@@ -148,8 +150,3 @@ class _SubscriptionStateTogglerState extends State<SubscriptionStateToggler> {
     );
   }
 }
-
-
-
-
-

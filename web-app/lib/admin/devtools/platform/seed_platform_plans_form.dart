@@ -43,11 +43,10 @@ class _SeedPlatformPlansFormState extends State<SeedPlatformPlansForm> {
       final featureKeys = snap.docs.map((doc) => doc.id).toList();
       setState(() => _availableFeatures = featureKeys);
     } catch (e, st) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load platform_features',
         stack: st.toString(),
         source: 'SeedPlatformPlansForm',
-        source: 'seed_platform_plans_form' /* was screen, Phase 5 */,
         severity: 'error',
       );
     }
@@ -84,11 +83,10 @@ class _SeedPlatformPlansFormState extends State<SeedPlatformPlansForm> {
 
       setState(() => _statusMessage = loc.devtoolsSeedSuccess);
     } catch (e, st) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to seed platform_plan',
         stack: st.toString(),
         source: 'SeedPlatformPlansForm',
-        source: 'seed_platform_plans_form' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {
           'formData': planData,
@@ -289,8 +287,3 @@ class _SeedPlatformPlansFormState extends State<SeedPlatformPlansForm> {
     super.dispose();
   }
 }
-
-
-
-
-

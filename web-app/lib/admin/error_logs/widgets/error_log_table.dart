@@ -10,7 +10,7 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 
 class ErrorLogTable extends StatefulWidget {
-  final List<ErrorLog> logs;
+  final List<shared.ErrorLog> logs;
   const ErrorLogTable({super.key, required this.logs});
 
   @override
@@ -18,7 +18,7 @@ class ErrorLogTable extends StatefulWidget {
 }
 
 class _ErrorLogTableState extends State<ErrorLogTable> {
-  late List<ErrorLog> _sortedLogs;
+  late List<shared.ErrorLog> _sortedLogs;
   final Set<String> _selectedIds = {};
   int? _sortColumnIndex;
   bool _sortAscending = false;
@@ -36,9 +36,9 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
     _sortedLogs = _applySort(widget.logs);
   }
 
-  List<ErrorLog> _applySort(List<ErrorLog> logs) {
+  List<shared.ErrorLog> _applySort(List<shared.ErrorLog> logs) {
     if (_sortColumnIndex == null) return List.of(logs);
-    List<ErrorLog> sorted = List.of(logs);
+    List<shared.ErrorLog> sorted = List.of(logs);
     switch (_sortColumnIndex) {
       case 0:
         sorted.sort((a, b) => a.timestamp.compareTo(b.timestamp));
@@ -161,8 +161,10 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
 
   Future<void> _bulkResolve(bool resolved) async {
     String franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
-    final service = context.read<shared.FirestoreService>();
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
+    final service =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final ids = _selectedIds.toList();
     for (final id in ids) {
       await service.setErrorLogStatus(franchiseId, id, resolved: resolved);
@@ -179,8 +181,10 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
 
   Future<void> _bulkArchive(bool archived) async {
     String franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
-    final service = context.read<shared.FirestoreService>();
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
+    final service =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final ids = _selectedIds.toList();
     for (final id in ids) {
       await service.setErrorLogStatus(franchiseId, id, archived: archived);
@@ -200,8 +204,10 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
 
   Future<void> _bulkDelete() async {
     String franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
-    final service = context.read<shared.FirestoreService>();
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
+    final service =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final ids = _selectedIds.toList();
     for (final id in ids) {
       await service.deleteErrorLog(franchiseId, id);
@@ -219,15 +225,15 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
 
   Future<void> _addComment(String logId, String text) async {
     String franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
     if (text.trim().isEmpty) return;
     final comment = {
       'text': text,
       'userId': 'admin', // You may replace with currentUser
       'timestamp': DateTime.now().toIso8601String(),
     };
-    await context
-        .read<shared.FirestoreService>()
+    await Provider.of<shared.FirestoreService>(context, listen: false)
         .addCommentToErrorLog(franchiseId, logId, comment);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -554,13 +560,15 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
                                   tooltip: resolved
                                       ? "Mark Unresolved"
                                       : "Mark Resolved",
-                                  onPressed: () => context
-                                      .read<shared.FirestoreService>()
-                                      .setErrorLogStatus(
-                                        franchiseId,
-                                        log.id,
-                                        resolved: !resolved,
-                                      ),
+                                  onPressed: () =>
+                                      Provider.of<shared.FirestoreService>(
+                                              context,
+                                              listen: false)
+                                          .setErrorLogStatus(
+                                    franchiseId,
+                                    log.id,
+                                    resolved: !resolved,
+                                  ),
                                 ),
                               ),
                               DataCell(
@@ -573,13 +581,15 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
                                     size: 20,
                                   ),
                                   tooltip: archived ? "Unarchive" : "Archive",
-                                  onPressed: () => context
-                                      .read<shared.FirestoreService>()
-                                      .setErrorLogStatus(
-                                        franchiseId,
-                                        log.id,
-                                        archived: !archived,
-                                      ),
+                                  onPressed: () =>
+                                      Provider.of<shared.FirestoreService>(
+                                              context,
+                                              listen: false)
+                                          .setErrorLogStatus(
+                                    franchiseId,
+                                    log.id,
+                                    archived: !archived,
+                                  ),
                                 ),
                               ),
                               DataCell(
@@ -657,8 +667,3 @@ class _ErrorLogTableState extends State<ErrorLogTable> {
     );
   }
 }
-
-
-
-
-

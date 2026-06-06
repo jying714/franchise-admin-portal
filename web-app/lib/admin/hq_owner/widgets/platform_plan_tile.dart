@@ -6,9 +6,10 @@ import 'package:franchise_admin_portal/admin/hq_owner/widgets/tight_section_card
 import 'package:provider/provider.dart';
 import 'mock_payment_form.dart';
 import 'mock_payment_data.dart';
+import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 
 class PlatformPlanTile extends StatefulWidget {
-  final PlatformPlan plan;
+  final shared.PlatformPlan plan;
   final bool isExpanded;
   final VoidCallback onExpand;
   final Function() onPlanUpdated;
@@ -217,7 +218,9 @@ class _PlatformPlanTileState extends State<PlatformPlanTile> {
   Future<void> _submitSelectedPlan() async {
     final loc = AppLocalizations.of(context)!;
     final franchiseId =
-        context.read<AdminUserProvider>().user?.defaultFranchise;
+        Provider.of<shared.AdminUserProvider>(context, listen: false)
+            .user
+            ?.defaultFranchise;
 
     if (!_formKey.currentState!.validate() || !_canSubmit()) return;
 
@@ -238,39 +241,11 @@ class _PlatformPlanTileState extends State<PlatformPlanTile> {
       final nextBilling = now.add(const Duration(days: 30));
       final billingCycleInDays = _selectedInterval == 'yearly' ? 365 : 30;
 
-      final subscription = FranchiseSubscription(
-        id: franchiseId,
-        franchiseId: franchiseId,
-        platformPlanId: widget.plan.id,
-        status: 'active',
-        startDate: now,
-        nextBillingDate: nextBilling,
-        billingCycleInDays: billingCycleInDays,
-        isTrial: false,
-        discountPercent: 0,
-        priceAtSubscription: widget.plan.price,
-        billingInterval: _selectedInterval!,
-        planSnapshot: {
-          'name': widget.plan.name,
-          'price': widget.plan.price,
-          'billingInterval': widget.plan.billingInterval,
-          'features': widget.plan.features,
-          'isCustom': widget.plan.isCustom,
-          'maskedCardString': _paymentInfo?.maskedCardString ?? '',
-        },
-        cancelAtPeriodEnd: false,
-        createdAt: now,
-        updatedAt: now,
-        subscribedAt: now,
-        lastInvoiceId: null,
-        trialEndsAt: null,
-        customQuoteDetails: null,
-        lastActivity: now,
-        autoRenew: true,
-        hasOverdueInvoice: false,
+      final service = Provider.of<shared.FranchiseSubscriptionService>(
+        context,
+        listen: false,
       );
-
-      await FranchiseSubscriptionService().subscribeFranchiseToPlan(
+      await service.subscribeFranchiseToPlan(
         franchiseId: franchiseId,
         plan: widget.plan,
       );
@@ -281,11 +256,10 @@ class _PlatformPlanTileState extends State<PlatformPlanTile> {
         SnackBar(content: Text(loc.subscriptionUpdated)),
       );
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Plan subscription failed',
         stack: stack.toString(),
         source: 'PlatformPlanTile',
-        source: 'available_platform_plans_screen' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {'exception': e.toString()},
       );
@@ -301,8 +275,3 @@ class _PlatformPlanTileState extends State<PlatformPlanTile> {
     }
   }
 }
-
-
-
-
-

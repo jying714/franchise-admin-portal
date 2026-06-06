@@ -1,13 +1,11 @@
-﻿// lib/admin/dashboard/onboarding/widgets/categories/category_form_dialog.dart
-
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
 class CategoryFormDialog extends StatefulWidget {
-  final Category? initialCategory;
+  final shared.Category? initialCategory;
   final String franchiseId;
   final AppLocalizations loc;
 
@@ -18,30 +16,19 @@ class CategoryFormDialog extends StatefulWidget {
     required this.loc,
   });
 
-  static Future<Category?> show({
+  static Future<shared.Category?> show({
     required BuildContext parentContext,
-    Category? initialCategory,
+    shared.Category? initialCategory,
     required String franchiseId,
   }) {
     final loc = AppLocalizations.of(parentContext)!;
-    final shared.categoryProvider =
-        Provider.of<shared.CategoryProvider>(parentContext, listen: false);
-    final shared.FranchiseProvider =
-        Provider.of<shared.FranchiseProvider>(parentContext, listen: false);
 
-    return showDialog<Category>(
+    return showDialog<shared.Category>(
       context: parentContext,
-      builder: (dialogContext) =>
-          ChangeNotifierProvider<shared.FranchiseProvider>.value(
-        value: shared.FranchiseProvider,
-        child: ChangeNotifierProvider<shared.CategoryProvider>.value(
-          value: shared.categoryProvider,
-          child: CategoryFormDialog(
-            initialCategory: initialCategory,
-            franchiseId: franchiseId,
-            loc: loc,
-          ),
-        ),
+      builder: (dialogContext) => CategoryFormDialog(
+        initialCategory: initialCategory,
+        franchiseId: franchiseId,
+        loc: loc,
       ),
     );
   }
@@ -73,44 +60,49 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
   }
 
   Future<void> _submitForm() async {
-    final loc = widget.loc;
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _loading = true);
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
-    final firestore = context.read<shared.FirestoreService>();
-    final shared.categoryProvider = context.read<shared.CategoryProvider>();
-
-    final isEdit = widget.initialCategory != null;
-    final id = widget.initialCategory?.id ?? UniqueKey().toString();
-    final category = Category(
-      id: id,
-      name: _nameController.text.trim(),
-      description: _descriptionController.text.trim(),
-      sortOrder: widget.initialCategory?.sortOrder ??
-          shared.categoryProvider.categories.length,
-    );
+    final loc = widget.loc;
 
     try {
-      if (context.mounted) Navigator.of(context).pop(category);
+      final categoryProvider =
+          Provider.of<shared.CategoryProvider>(context, listen: false);
+      final franchiseProvider =
+          Provider.of<shared.FranchiseProvider>(context, listen: false);
+
+      final isEdit = widget.initialCategory != null;
+      final id = widget.initialCategory?.id ?? UniqueKey().toString();
+
+      final category = shared.Category(
+        id: id,
+        name: _nameController.text.trim(),
+        description: _descriptionController.text.trim(),
+        sortOrder: widget.initialCategory?.sortOrder ??
+            categoryProvider.categories.length,
+        isActive: true,
+      );
+
+      categoryProvider.addOrUpdateCategory(category);
+
+      if (mounted) {
+        Navigator.of(context).pop(category);
+      }
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
-        message: 'Failed to save category',
+      shared.ErrorLogger.log(
+        message: 'Failed to save category: $e',
         stack: stack.toString(),
         source: 'CategoryFormDialog',
-        source: 'onboarding_categories_screen' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {
-          'franchiseId': franchiseId,
-          'categoryId': id,
-          'name': _nameController.text.trim(),
-          'operation': isEdit ? 'update' : 'create',
+          'franchiseId': widget.franchiseId,
+          'isEdit': widget.initialCategory != null,
         },
       );
 
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(loc.errorGeneric)),
+          SnackBar(content: Text(loc.saveFailed)),
         );
       }
     } finally {
@@ -152,8 +144,9 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                   children: [
                     TextFormField(
                       controller: _nameController,
-                      decoration:
-                          InputDecoration(labelText: loc.categoryNameLabel),
+                      decoration: InputDecoration(
+                        labelText: loc.categoryNameLabel,
+                      ),
                       validator: (value) =>
                           value == null || value.trim().isEmpty
                               ? loc.requiredField
@@ -163,8 +156,9 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                     TextFormField(
                       controller: _descriptionController,
                       decoration: InputDecoration(
-                          labelText: loc.categoryDescriptionLabel),
-                      maxLines: 2,
+                        labelText: loc.categoryDescriptionLabel,
+                      ),
+                      maxLines: 3,
                     ),
                   ],
                 ),
@@ -182,9 +176,6 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                     const SizedBox(width: 16),
                     ElevatedButton(
                       onPressed: _loading ? null : _submitForm,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: DesignTokens.primaryColor,
-                      ),
                       child: _loading
                           ? const SizedBox(
                               width: 16,
@@ -203,9 +194,3 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
     );
   }
 }
-
-
-
-
-
-

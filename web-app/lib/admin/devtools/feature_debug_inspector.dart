@@ -15,7 +15,7 @@ class _FeatureDebugInspectorState extends State<FeatureDebugInspector> {
   @override
   Widget build(BuildContext context) {
     final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
-    final featureProvider = context.watch<FranchiseFeatureProvider>();
+    final featureProvider = context.watch<shared.FranchiseFeatureProvider>();
 
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       return const Center(child: Text('âš ï¸ No franchise selected.'));
@@ -25,7 +25,7 @@ class _FeatureDebugInspectorState extends State<FeatureDebugInspector> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final features = PlatformFeature.values.where((f) {
+    final features = shared.PlatformFeature.values.where((f) {
       final key = f.key;
       final isAvailable = featureProvider.hasFeature(key);
       final isEnabled = featureProvider.isModuleEnabled(key);
@@ -110,7 +110,3 @@ class _FeatureDebugInspectorState extends State<FeatureDebugInspector> {
 
   String _yesNo(bool val) => val ? 'âœ…' : 'âŒ';
 }
-
-
-
-

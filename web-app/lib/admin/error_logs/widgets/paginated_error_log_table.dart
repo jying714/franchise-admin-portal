@@ -11,9 +11,9 @@ String _truncateTooltip(String text, [int max = 150]) {
 }
 
 class PaginatedErrorLogTable extends StatelessWidget {
-  final List<ErrorLog> logs;
+  final List<shared.ErrorLog> logs;
   final int rowsPerPage;
-  final void Function(ErrorLog)? onRowTap;
+  final void Function(shared.ErrorLog)? onRowTap;
 
   const PaginatedErrorLogTable({
     super.key,
@@ -72,9 +72,9 @@ class PaginatedErrorLogTable extends StatelessWidget {
 }
 
 class _ErrorLogDataSource extends DataTableSource {
-  final List<ErrorLog> logs;
+  final List<shared.ErrorLog> logs;
   final BuildContext context;
-  final void Function(ErrorLog)? onRowTap;
+  final void Function(shared.ErrorLog)? onRowTap;
   final AppLocalizations loc;
 
   _ErrorLogDataSource(this.logs, this.context, this.onRowTap, this.loc);
@@ -149,6 +149,3 @@ class _ErrorLogDataSource extends DataTableSource {
   @override
   int get selectedRowCount => 0;
 }
-
-
-

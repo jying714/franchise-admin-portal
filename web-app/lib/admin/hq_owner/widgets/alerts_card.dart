@@ -1,25 +1,25 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
 
 class AlertsCard extends StatelessWidget {
   final String franchiseId;
   final String? locationId;
   final String? userId;
-  final bool
-      developerMode; // Set true to show dev-only alerts, otherwise false.
+  final bool developerMode;
   final AlertsRepository? repository;
 
   const AlertsCard({
-    Key? key,
+    super.key,
     required this.franchiseId,
     this.locationId,
     this.userId,
     this.developerMode = false,
     this.repository,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -30,25 +30,17 @@ class AlertsCard extends StatelessWidget {
     if (loc == null) {
       print(
           '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
-      );
+      return const Center(child: Text('Localization missing! [debug]'));
     }
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final appConfig = AppConfig.instance;
-    final fireService = Provider.of<shared.FirestoreService>(context, listen: false);
-
-    // --- ROLE/PERMISSION DEBUGGING ---
-    print(
-        '[AlertsCard] Checking access: userId=$userId, developerMode=$developerMode');
-
-    final showForDeveloper = developerMode;
+    final fireService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
 
     final repo = repository ??
         AlertsRepository(
-          shared.firestoreService: fireService,
-          appConfig: appConfig,
+          firestoreService: fireService,
         );
 
     return Card(
@@ -77,35 +69,30 @@ class AlertsCard extends StatelessWidget {
                 IconButton(
                   icon: Icon(Icons.filter_alt_outlined,
                       color: colorScheme.onSurface.withOpacity(0.45)),
-                  onPressed: null, // Placeholder for future filtering
+                  onPressed: null,
                   tooltip: loc.dashboard_alerts_filter_tooltip,
                 ),
               ],
             ),
             const SizedBox(height: 10),
-            StreamBuilder<List<AlertModel>>(
+            StreamBuilder<List<shared.AlertModel>>(
               stream: repo.watchActiveAlerts(
                 franchiseId: franchiseId,
                 locationId: locationId,
-                developerMode: showForDeveloper,
+                developerMode: developerMode,
               ),
               builder: (context, snapshot) {
-                print(
-                    '[AlertsCard] StreamBuilder connectionState=${snapshot.connectionState}');
                 if (snapshot.hasError) {
-                  print('[AlertsCard] ERROR loading alerts: ${snapshot.error}');
                   shared.ErrorLogger.log(
                     message: 'Failed to load active alerts: ${snapshot.error}',
-                    source: 'alerts_card',
-                    source: 'AlertsCard' /* was screen, Phase 5 */,
                     stack: snapshot.stackTrace?.toString(),
+                    source: 'AlertsCard',
                     severity: 'error',
                     contextData: {
                       'franchiseId': franchiseId,
                       'locationId': locationId,
                       'userId': userId,
                       'developerMode': developerMode,
-                      'errorType': snapshot.error.runtimeType.toString(),
                     },
                   );
                   return _AlertError(
@@ -114,40 +101,29 @@ class AlertsCard extends StatelessWidget {
                   );
                 }
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  print('[AlertsCard] Loading alerts...');
                   return _AlertLoading(color: colorScheme.primary);
                 }
 
                 final alerts = snapshot.data ?? [];
-                print('[AlertsCard] Alerts loaded: count=${alerts.length}');
 
                 if (alerts.isEmpty) {
-                  print('[AlertsCard] No active alerts.');
                   return _AlertEmpty(message: loc.dashboard_no_active_alerts);
                 }
 
-                // Render list of active alerts
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ...alerts.take(3).map(
-                      (alert) {
-                        print(
-                            '[AlertsCard] Rendering alert: id=${alert.id}, title=${alert.title}, level=${alert.level}');
-                        return _AlertItem(
-                          alert: alert,
-                          colorScheme: colorScheme,
-                          loc: loc,
-                        );
-                      },
-                    ),
+                          (alert) => _AlertItem(
+                            alert: alert,
+                            colorScheme: colorScheme,
+                            loc: loc,
+                          ),
+                        ),
                     if (alerts.length > 3)
                       TextButton(
-                        onPressed: () {
-                          print(
-                              '[AlertsCard] See all alerts tapped - navigating to /alerts');
-                          Navigator.of(context).pushNamed('/alerts');
-                        },
+                        onPressed: () =>
+                            Navigator.of(context).pushNamed('/alerts'),
                         child: Text(
                           loc.dashboard_see_all_alerts,
                           style: theme.textTheme.labelLarge?.copyWith(
@@ -160,7 +136,6 @@ class AlertsCard extends StatelessWidget {
                 );
               },
             ),
-            // ðŸ”œ Future placeholders (filter, quick-dismiss, etc.)
           ],
         ),
       ),
@@ -169,22 +144,22 @@ class AlertsCard extends StatelessWidget {
 }
 
 class _AlertItem extends StatelessWidget {
-  final AlertModel alert;
+  final shared.AlertModel alert;
   final ColorScheme colorScheme;
   final AppLocalizations loc;
 
   const _AlertItem({
-    Key? key,
+    super.key,
     required this.alert,
     required this.colorScheme,
     required this.loc,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     Color iconColor;
     IconData icon;
-    switch (alert.level) {
+    switch (alert.level.toLowerCase()) {
       case 'warning':
         iconColor = colorScheme.error;
         icon = Icons.warning_amber_rounded;
@@ -198,9 +173,6 @@ class _AlertItem extends StatelessWidget {
         iconColor = colorScheme.primary;
         icon = Icons.info_outline_rounded;
     }
-
-    print(
-        '[AlertsCard] _AlertItem: id=${alert.id}, title=${alert.title}, level=${alert.level}');
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
@@ -236,7 +208,7 @@ class _AlertItem extends StatelessWidget {
 
 class _AlertEmpty extends StatelessWidget {
   final String message;
-  const _AlertEmpty({Key? key, required this.message}) : super(key: key);
+  const _AlertEmpty({super.key, required this.message});
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -257,7 +229,7 @@ class _AlertEmpty extends StatelessWidget {
 
 class _AlertLoading extends StatelessWidget {
   final Color color;
-  const _AlertLoading({Key? key, required this.color}) : super(key: key);
+  const _AlertLoading({super.key, required this.color});
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -274,8 +246,7 @@ class _AlertLoading extends StatelessWidget {
 class _AlertError extends StatelessWidget {
   final String message;
   final Color color;
-  const _AlertError({Key? key, required this.message, required this.color})
-      : super(key: key);
+  const _AlertError({super.key, required this.message, required this.color});
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -295,9 +266,3 @@ class _AlertError extends StatelessWidget {
         ),
       );
 }
-
-
-
-
-
-

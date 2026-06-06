@@ -99,7 +99,7 @@ class _InvoiceSearchBarState extends State<InvoiceSearchBar> {
     }
 
     return Padding(
-      padding: const EdgeInsets.all(DesignTokens.paddingMd),
+      padding: EdgeInsets.all(DesignTokens.paddingMd),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -114,7 +114,7 @@ class _InvoiceSearchBarState extends State<InvoiceSearchBar> {
             ),
             onChanged: (_) => _onSearchChanged(),
           ),
-          const SizedBox(height: DesignTokens.paddingMd),
+          SizedBox(height: DesignTokens.paddingMd),
 
           // Filters & Sort Row
           Row(
@@ -150,7 +150,7 @@ class _InvoiceSearchBarState extends State<InvoiceSearchBar> {
                 ),
               ),
 
-              const SizedBox(width: DesignTokens.paddingMd),
+              SizedBox(width: DesignTokens.paddingMd),
 
               // Sort order dropdown
               Expanded(
@@ -193,5 +193,3 @@ class _InvoiceSearchBarState extends State<InvoiceSearchBar> {
   String _capitalize(String s) =>
       s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 }
-
-

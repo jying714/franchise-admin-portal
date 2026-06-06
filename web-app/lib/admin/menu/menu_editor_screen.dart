@@ -2,7 +2,8 @@
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_dialog.dart';
 import 'package:franchise_admin_portal/widgets/delayed_loading_shimmer.dart';
 import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl.dart' show UserProfileNotifier;
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl.dart'
+    show UserProfileNotifier;
 import 'package:franchise_admin_portal/admin/menu/dynamic_menu_item_editor_screen.dart';
 import 'package:franchise_admin_portal/widgets/admin/admin_menu_editor_popup_menu.dart';
 import 'package:franchise_admin_portal/widgets/header/franchise_app_bar.dart';
@@ -16,7 +17,6 @@ import 'package:shared_core/shared_core.dart' show MenuItem;
 import 'package:franchise_admin_portal/widgets/admin/admin_unauthorized_widget.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/dietary_allergen_chips_row.dart';
-    as admin_user;
 import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/filter_dropdown.dart';
@@ -162,7 +162,8 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
 
   Future<void> _deleteMenuItems(String franchiseId, BuildContext context,
       List<MenuItem> items, admin_user.User user) async {
-    final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
+    final firestore =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     if (!UserPermissions.canDeleteMenu(user)) {
       await _logUnauthorizedAttempt(franchiseId, user, 'delete_menu_items');
       _showUnauthorizedDialog();
@@ -223,7 +224,8 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
       _showUnauthorizedDialog();
       return;
     }
-    final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
+    final firestore =
+        Provider.of<shared.FirestoreService>(context, listen: false);
 
     // Use shared mapping utilities
     final List<ct.CustomizationGroup> groups =
@@ -518,7 +520,8 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
   @override
   Widget build(BuildContext context) {
     final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
-    final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
+    final firestore =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final user = Provider.of<AdminUserProvider>(context).user;
     final isLoading = context.watch<AdminUserProvider>().loading;
     final loc = AppLocalizations.of(context);
@@ -996,10 +999,3 @@ extension _LocTry on AppLocalizations {
     }
   }
 }
-
-
-
-
-
-
-

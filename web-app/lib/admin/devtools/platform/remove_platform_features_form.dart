@@ -33,11 +33,10 @@ class _RemovePlatformFeaturesFormState
 
       setState(() => _featureKeys = keys);
     } catch (e, st) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to fetch platform_features for deletion',
         stack: st.toString(),
-        source: 'RemovePlatformFeaturesForm' /* was screen, Phase 5 */,
-        source: 'remove_platform_features_form.dart',
+        source: 'RemovePlatformFeaturesForm',
         severity: 'warning',
       );
     }
@@ -65,10 +64,9 @@ class _RemovePlatformFeaturesFormState
         _statusMessage = loc.devtoolsDeleteSuccess;
       });
     } catch (e, st) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to delete platform_feature',
         stack: st.toString(),
-        source: 'RemovePlatformFeaturesForm' /* was screen, Phase 5 */,
         source: 'remove_platform_features_form.dart',
         contextData: {'featureKey': _selectedFeatureKey},
         severity: 'error',
@@ -155,8 +153,3 @@ class _RemovePlatformFeaturesFormState
     );
   }
 }
-
-
-
-
-

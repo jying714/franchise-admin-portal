@@ -52,7 +52,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
       }
     }
     if (_effectiveToken != null && _effectiveToken!.isNotEmpty) {
-      Provider.of<AuthService>(context, listen: false)
+      Provider.of<shared.AuthService>(context, listen: false)
           .saveInviteToken(_effectiveToken!);
       _fetchInvite(_effectiveToken!);
     } else {
@@ -70,8 +70,9 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
       _inviteData = null;
     });
     try {
-      final doc = await Provider.of<shared.FirestoreService>(context, listen: false)
-          .getFranchiseeInvitationByToken(token);
+      final doc =
+          await Provider.of<shared.FirestoreService>(context, listen: false)
+              .getFranchiseeInvitationByToken(token);
       if (doc == null) {
         setState(() => _error = "Invitation not found or expired.");
         return;
@@ -102,11 +103,10 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         _emailRegistered = emailRegistered;
       });
     } catch (e, st) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Invite fetch failed: $e',
         stack: st.toString(),
         source: 'InviteAcceptScreen',
-        source: 'invite_accept' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {'token': token},
       );
@@ -163,11 +163,10 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
         arguments: {'token': _effectiveToken!},
       );
     } catch (e, st) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Invite accept failed: $e',
         stack: st.toString(),
         source: 'InviteAcceptScreen',
-        source: 'invite_accept' /* was screen, Phase 4 fix */,
         severity: 'error',
         contextData: {'token': _effectiveToken},
       );
@@ -293,7 +292,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
                     icon: const Icon(Icons.login),
                     label: const Text("Sign In"),
                     onPressed: () {
-                      Provider.of<AuthService>(context, listen: false)
+                      Provider.of<shared.AuthService>(context, listen: false)
                           .saveInviteToken(_effectiveToken ?? '');
                       Navigator.of(context).pushNamed(
                         '/sign-in',
@@ -319,7 +318,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
                     icon: const Icon(Icons.login),
                     label: const Text("Sign In"),
                     onPressed: () {
-                      Provider.of<AuthService>(context, listen: false)
+                      Provider.of<shared.AuthService>(context, listen: false)
                           .saveInviteToken(_effectiveToken ?? '');
                       Navigator.of(context).pushNamed(
                         '/sign-in',
@@ -345,7 +344,7 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
                     label: const Text("Switch Account"),
                     onPressed: () async {
                       await fb_auth.FirebaseAuth.instance.signOut();
-                      Provider.of<AuthService>(context, listen: false)
+                      Provider.of<shared.AuthService>(context, listen: false)
                           .saveInviteToken(_effectiveToken ?? '');
                       Navigator.of(context).pushNamed(
                         '/sign-in',
@@ -413,9 +412,3 @@ class _InviteAcceptScreenState extends State<InviteAcceptScreen> {
     );
   }
 }
-
-
-
-
-
-

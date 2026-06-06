@@ -13,7 +13,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 /// and modular UI architecture.
 
 class InvoiceAuditTrailWidget extends StatelessWidget {
-  final List<InvoiceAuditEvent> auditEvents;
+  final List<shared.InvoiceAuditEvent> auditEvents;
 
   const InvoiceAuditTrailWidget({Key? key, required this.auditEvents})
       : super(key: key);
@@ -35,7 +35,7 @@ class InvoiceAuditTrailWidget extends StatelessWidget {
       );
     }
 
-    final sortedEvents = List<InvoiceAuditEvent>.from(auditEvents)
+    final sortedEvents = List<shared.InvoiceAuditEvent>.from(auditEvents)
       ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
     return ListView.builder(
@@ -51,7 +51,7 @@ class InvoiceAuditTrailWidget extends StatelessWidget {
   }
 
   Widget _buildTimelineTile(
-      BuildContext context, InvoiceAuditEvent event, bool isLast) {
+      BuildContext context, shared.InvoiceAuditEvent event, bool isLast) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       print(
@@ -97,7 +97,7 @@ class InvoiceAuditTrailWidget extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(width: DesignTokens.paddingMd),
+          SizedBox(width: DesignTokens.paddingMd),
 
           // Event details
           Expanded(
@@ -161,6 +161,3 @@ class InvoiceAuditTrailWidget extends StatelessWidget {
     }
   }
 }
-
-
-

@@ -4,7 +4,7 @@ import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class BulkMenuUploadDialog extends StatefulWidget {
-  final List<Category> categories;
+  final List<shared.Category> categories;
   final VoidCallback onComplete;
   final String franchiseId;
 
@@ -193,6 +193,3 @@ class _BulkMenuUploadDialogState extends State<BulkMenuUploadDialog> {
     );
   }
 }
-
-
-

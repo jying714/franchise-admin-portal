@@ -13,7 +13,7 @@ String _truncateTooltip(String text, [int max = 150]) {
 }
 
 class ErrorLogDetailDrawer extends StatefulWidget {
-  final ErrorLog log;
+  final shared.ErrorLog log;
   const ErrorLogDetailDrawer({Key? key, required this.log}) : super(key: key);
 
   @override
@@ -25,7 +25,7 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
   bool _isCommenting = false;
   bool _isResolving = false;
   bool _isArchiving = false;
-  late ErrorLog log;
+  late shared.ErrorLog log;
 
   @override
   void initState() {
@@ -35,7 +35,8 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
 
   Future<void> _addComment() async {
     final franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
     final text = _commentController.text.trim();
     if (text.isEmpty) return;
     setState(() => _isCommenting = true);
@@ -45,8 +46,7 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
         'userId': log.userId ?? 'system',
         'timestamp': DateTime.now().toIso8601String(),
       };
-      await context
-          .read<shared.FirestoreService>()
+      await Provider.of<shared.FirestoreService>(context, listen: false)
           .addCommentToErrorLog(franchiseId, log.id, comment);
       setState(() {
         log = log.copyWith(
@@ -63,11 +63,11 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
 
   Future<void> _toggleResolved() async {
     final franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
     setState(() => _isResolving = true);
     try {
-      await context
-          .read<shared.FirestoreService>()
+      await Provider.of<shared.FirestoreService>(context, listen: false)
           .setErrorLogStatus(franchiseId, log.id, resolved: !(log.resolved));
       setState(() {
         log = log.copyWith(resolved: !log.resolved);
@@ -79,11 +79,11 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
 
   Future<void> _toggleArchived() async {
     final franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
     setState(() => _isArchiving = true);
     try {
-      await context
-          .read<shared.FirestoreService>()
+      await Provider.of<shared.FirestoreService>(context, listen: false)
           .setErrorLogStatus(franchiseId, log.id, archived: !(log.archived));
       setState(() {
         log = log.copyWith(archived: !log.archived);
@@ -475,8 +475,8 @@ class _ErrorLogDetailDrawerState extends State<ErrorLogDetailDrawer> {
   }
 }
 
-extension ErrorLogCopyWith on ErrorLog {
-  ErrorLog copyWith({
+extension ErrorLogCopyWith on shared.ErrorLog {
+  shared.ErrorLog copyWith({
     String? id,
     String? message,
     String? severity,
@@ -494,12 +494,12 @@ extension ErrorLogCopyWith on ErrorLog {
     DateTime? timestamp,
     DateTime? updatedAt,
   }) {
-    return ErrorLog(
+    return shared.ErrorLog(
       id: id ?? this.id,
       message: message ?? this.message,
       severity: severity ?? this.severity,
       source: source ?? this.source,
-      source: screen ?? this.screen /* was screen, Phase 5 */,
+      screen: screen ?? this.screen,
       stackTrace: stackTrace ?? this.stackTrace,
       contextData: contextData ?? this.contextData,
       deviceInfo: deviceInfo ?? this.deviceInfo,
@@ -514,9 +514,3 @@ extension ErrorLogCopyWith on ErrorLog {
     );
   }
 }
-
-
-
-
-
-

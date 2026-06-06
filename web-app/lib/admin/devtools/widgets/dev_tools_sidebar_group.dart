@@ -3,7 +3,7 @@ import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class DevToolsSidebarGroup extends StatefulWidget {
-  final List<DashboardSection> tools;
+  final List<shared.DashboardSection> tools;
   final int selectedIndex;
   final ValueChanged<int> onSelect;
   final String label;
@@ -111,6 +111,3 @@ class _DevToolsSidebarGroupState extends State<DevToolsSidebarGroup> {
     );
   }
 }
-
-
-

@@ -7,7 +7,7 @@ import 'package:franchise_admin_portal/admin/hq_owner/widgets/mock_payment_data.
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/mock_payment_form.dart';
 
 class MockPaymentTester extends StatefulWidget {
-  final PlatformInvoice invoice;
+  final shared.PlatformInvoice invoice;
 
   const MockPaymentTester({super.key, required this.invoice});
 
@@ -76,7 +76,7 @@ class _MockPaymentTesterState extends State<MockPaymentTester> {
   }
 
   Future<void> _submitMockPayment(BuildContext context) async {
-    final fs = context.read<shared.FirestoreService>();
+    final fs = Provider.of<shared.FirestoreService>(context, listen: false);
     final invoice = widget.invoice;
     final mock = _mockData!;
     final loc = AppLocalizations.of(context)!;
@@ -84,7 +84,7 @@ class _MockPaymentTesterState extends State<MockPaymentTester> {
     final now = DateTime.now();
     final paymentId = const Uuid().v4();
 
-    final payment = PlatformPayment(
+    final payment = shared.PlatformPayment(
       id: paymentId,
       franchiseeId: invoice.franchiseeId,
       invoiceId: invoice.id,
@@ -123,11 +123,10 @@ class _MockPaymentTesterState extends State<MockPaymentTester> {
         SnackBar(content: Text(loc.mockPaymentValidated)),
       );
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to simulate payment: $e',
         stack: stack.toString(),
         source: 'MockPaymentTester',
-        source: 'dev_tools_screen' /* was screen, Phase 5 */,
         severity: 'error',
       );
 
@@ -139,9 +138,3 @@ class _MockPaymentTesterState extends State<MockPaymentTester> {
     }
   }
 }
-
-
-
-
-
-

@@ -1,8 +1,9 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/core/providers/category_provider_impl.dart';
 
 class CategoriesTemplatePickerDialog extends StatefulWidget {
   final AppLocalizations loc;
@@ -11,7 +12,7 @@ class CategoriesTemplatePickerDialog extends StatefulWidget {
   const CategoriesTemplatePickerDialog({
     super.key,
     required this.loc,
-    required this.parentContext, // <-- required param
+    required this.parentContext,
   });
 
   static Future<void> show(BuildContext parentContext) {
@@ -22,10 +23,12 @@ class CategoriesTemplatePickerDialog extends StatefulWidget {
     return showDialog(
       context: parentContext,
       builder: (dialogContext) =>
-          ChangeNotifierProvider<shared.CategoryProvider>.value(
-        value: provider,
+          ChangeNotifierProvider<CategoryProviderImpl>.value(
+        value: provider as CategoryProviderImpl,
         child: CategoriesTemplatePickerDialog(
-            loc: loc, parentContext: parentContext), // add param
+          loc: loc,
+          parentContext: parentContext,
+        ),
       ),
     );
   }
@@ -41,8 +44,11 @@ class _CategoriesTemplatePickerDialogState
 
   Future<void> _loadTemplate(String templateId) async {
     final loc = widget.loc;
-    final provider = context.read<shared.CategoryProvider>();
-    final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
+    final provider =
+        Provider.of<shared.CategoryProvider>(context, listen: false);
+    final franchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final franchiseId = franchiseProvider.franchiseId;
 
     if (franchiseId.isEmpty || franchiseId == 'unknown') {
       if (widget.parentContext.mounted) {
@@ -67,10 +73,9 @@ class _CategoriesTemplatePickerDialogState
         }
       }
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
-        message: 'category_template_load_failed',
+      shared.ErrorLogger.log(
+        message: 'Failed to load category template',
         stack: stack.toString(),
-        source: 'onboarding_categories_screen' /* was screen, Phase 4 fix */,
         source: 'CategoriesTemplatePickerDialog',
         severity: 'error',
         contextData: {
@@ -118,17 +123,17 @@ class _CategoriesTemplatePickerDialogState
               children: [
                 _buildTemplateTile(
                   id: 'pizzeria',
-                  icon: 'ðŸ•',
+                  icon: '🍕',
                   label: loc.pizzaShopTemplateLabel,
                   subtitle: loc.pizzaShopTemplateSubtitle,
                 ),
                 const SizedBox(height: 12),
                 _buildTemplateTile(
                   id: 'wing_bar',
-                  icon: 'ðŸ—',
+                  icon: '🍗',
                   label: loc.wingBarTemplateLabel,
                   subtitle: loc.wingBarTemplateSubtitle,
-                  enabled: false, // Reserved for future
+                  enabled: false,
                 ),
               ],
             ),
@@ -174,8 +179,3 @@ class _CategoriesTemplatePickerDialogState
     );
   }
 }
-
-
-
-
-

@@ -3,6 +3,7 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_impl.dart';
 
 class IngredientTypeTemplatePickerDialog extends StatefulWidget {
   final AppLocalizations loc;
@@ -58,7 +59,9 @@ class _IngredientTypeTemplatePickerDialogState
     setState(() => _loading = true);
 
     try {
-      await shared.FirestoreService.copyIngredientTypesFromTemplate(
+      final firestore =
+          Provider.of<shared.FirestoreService>(context, listen: false);
+      await firestore.copyIngredientTypesFromTemplate(
         franchiseId: franchiseId,
         templateId: templateId,
       );
@@ -67,8 +70,8 @@ class _IngredientTypeTemplatePickerDialogState
       if (context.mounted) Navigator.of(context).pop();
 
       // âœ… Reload types after closing
-      await Provider.of<IngredientTypeProvider>(context, listen: false)
-          .loadTypes(franchiseId);
+      await Provider.of<IngredientTypeProviderImpl>(context, listen: false)
+          .load(franchiseIdOverride: franchiseId);
 
       // âœ… Show snackbar after frame settles
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -77,11 +80,9 @@ class _IngredientTypeTemplatePickerDialogState
         );
       });
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'ingredient_type_template_load_failed',
         stack: stack.toString(),
-        source:
-            'ingredient_type_management_screen' /* was screen, Phase 4 fix */,
         source: 'IngredientTypeTemplatePickerDialog',
         severity: 'error',
         contextData: {

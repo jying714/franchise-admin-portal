@@ -42,7 +42,7 @@ class CustomizationOption {
   final bool allowExtra;
   final bool allowSide;
   final int quantity;
-  final Portion portion;
+  final shared.Portion portion;
   final String? tag; // e.g., "vegan", "spicy"
 
   CustomizationOption({
@@ -54,13 +54,13 @@ class CustomizationOption {
     this.allowExtra = false,
     this.allowSide = false,
     this.quantity = 1,
-    this.portion = Portion.whole,
+    this.portion = shared.Portion.whole,
     this.tag,
   });
 }
 
 /// Convert a [Customization] model (from DB) to [CustomizationGroup] for dialog editing.
-CustomizationGroup customizationToGroup(Customization c) {
+CustomizationGroup customizationToGroup(shared.Customization c) {
   return CustomizationGroup(
     groupName: c.name,
     type: (c.maxChoices ?? 1) > 1 ? 'multi' : 'single',
@@ -90,8 +90,8 @@ CustomizationGroup customizationToGroup(Customization c) {
 }
 
 /// Convert a [CustomizationGroup] (from admin dialog) back to [Customization] for saving to DB.
-Customization groupToCustomization(CustomizationGroup g) {
-  return Customization(
+shared.Customization groupToCustomization(CustomizationGroup g) {
+  return shared.Customization(
     name: g.groupName,
     isGroup: true,
     price: g.groupUpcharge ?? 0.0,
@@ -103,7 +103,7 @@ Customization groupToCustomization(CustomizationGroup g) {
     allowExtra: g.allowExtra,
     allowSide: g.allowSide,
     options: g.options
-        .map((o) => Customization(
+        .map((o) => shared.Customization(
               name: o.name,
               isGroup: false,
               price: o.price,
@@ -119,6 +119,3 @@ Customization groupToCustomization(CustomizationGroup g) {
         .toList(),
   );
 }
-
-
-

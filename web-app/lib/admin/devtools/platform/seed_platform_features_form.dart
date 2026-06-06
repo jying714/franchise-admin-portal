@@ -86,11 +86,10 @@ class _SeedPlatformFeaturesFormState extends State<SeedPlatformFeaturesForm> {
         _statusMessage = loc.devtoolsSeedSuccess;
       });
     } catch (e, st) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to seed platform_features',
         stack: st.toString(),
         source: 'SeedPlatformFeaturesForm',
-        source: 'seed_platform_features_form' /* was screen, Phase 5 */,
         severity: 'error',
       );
       setState(() => _statusMessage = loc.devtoolsSeedError);
@@ -241,8 +240,3 @@ class _SeedPlatformFeaturesFormState extends State<SeedPlatformFeaturesForm> {
     );
   }
 }
-
-
-
-
-

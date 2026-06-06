@@ -212,7 +212,7 @@ class _MenuItemCustomizationsDialogState
     bool allowExtra = false;
     bool allowSide = false;
     int quantity = 1;
-    Portion portion = Portion.whole;
+    shared.Portion portion = shared.Portion.whole;
     String? tag;
     showDialog(
       context: context,
@@ -260,17 +260,17 @@ class _MenuItemCustomizationsDialogState
                   Row(
                     children: [
                       Expanded(
-                        child: DropdownButtonFormField<Portion>(
+                        child: DropdownButtonFormField<shared.Portion>(
                           value: portion,
                           decoration: InputDecoration(labelText: loc.portion),
-                          items: Portion.values
+                          items: shared.Portion.values
                               .map((p) => DropdownMenuItem(
                                     value: p,
                                     child: Text(p.toString().split('.').last),
                                   ))
                               .toList(),
                           onChanged: (v) => setStateDialog(
-                              () => portion = v ?? Portion.whole),
+                              () => portion = v ?? shared.Portion.whole),
                         ),
                       ),
                       Expanded(
@@ -359,7 +359,7 @@ class _MenuItemCustomizationsDialogState
     bool allowExtra = opt.allowExtra;
     bool allowSide = opt.allowSide;
     int quantity = opt.quantity;
-    Portion portion = opt.portion;
+    shared.Portion portion = opt.portion;
     String? tag = opt.tag;
     showDialog(
       context: context,
@@ -412,17 +412,17 @@ class _MenuItemCustomizationsDialogState
                   Row(
                     children: [
                       Expanded(
-                        child: DropdownButtonFormField<Portion>(
+                        child: DropdownButtonFormField<shared.Portion>(
                           value: portion,
                           decoration: InputDecoration(labelText: loc.portion),
-                          items: Portion.values
+                          items: shared.Portion.values
                               .map((p) => DropdownMenuItem(
                                     value: p,
                                     child: Text(p.toString().split('.').last),
                                   ))
                               .toList(),
                           onChanged: (v) => setStateDialog(
-                              () => portion = v ?? Portion.whole),
+                              () => portion = v ?? shared.Portion.whole),
                         ),
                       ),
                       Expanded(
@@ -663,6 +663,3 @@ class _MenuItemCustomizationsDialogState
     );
   }
 }
-
-
-

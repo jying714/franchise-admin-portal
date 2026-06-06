@@ -13,9 +13,9 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
   bool _loading = false;
   String? _selectedEvent;
   String? _selectedFranchiseId;
-  PlatformInvoice? _selectedInvoice;
-  List<FranchiseInfo> _franchises = [];
-  List<PlatformInvoice> _invoices = [];
+  shared.PlatformInvoice? _selectedInvoice;
+  List<shared.FranchiseInfo> _franchises = [];
+  List<shared.PlatformInvoice> _invoices = [];
   double _delaySeconds = 0.0;
 
   final List<String> _webhookEvents = [
@@ -31,16 +31,15 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
   }
 
   Future<void> _loadFranchises() async {
-    final fs = context.read<shared.FirestoreService>();
+    final fs = Provider.of<shared.FirestoreService>(context, listen: false);
     try {
       final list = await fs.getAllFranchises();
       setState(() {
         _franchises = list;
       });
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         source: 'AdminWebhookSimulator',
-        source: 'dev_tools_screen' /* was screen, Phase 5 */,
         message: 'Failed to load franchises: $e',
         stack: stack.toString(),
         severity: 'error',
@@ -59,7 +58,7 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
       return;
     }
 
-    final fs = context.read<shared.FirestoreService>();
+    final fs = Provider.of<shared.FirestoreService>(context, listen: false);
     try {
       setState(() {
         _loading = true;
@@ -80,9 +79,8 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
       });
     } catch (e, stack) {
       setState(() => _loading = false);
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         source: 'AdminWebhookSimulator',
-        source: 'dev_tools_screen' /* was screen, Phase 5 */,
         message: 'Failed to load test invoices: $e',
         stack: stack.toString(),
         severity: 'warning',
@@ -98,7 +96,8 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
     final delay = Duration(milliseconds: (_delaySeconds * 1000).round());
 
     try {
-      await context.read<shared.FirestoreService>().logSimulatedWebhookEvent({
+      await Provider.of<shared.FirestoreService>(context, listen: false)
+          .logSimulatedWebhookEvent({
         'eventType': _selectedEvent,
         'invoiceId': invoice.id,
         'franchiseeId': invoice.franchiseeId,
@@ -108,9 +107,8 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
         'simulated': true,
       });
 
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         source: 'AdminWebhookSimulator',
-        source: 'dev_tools_screen' /* was screen, Phase 5 */,
         message:
             'Simulated webhook $_selectedEvent for invoice ${invoice.id} with $_delaySeconds sec delay.',
         severity: 'info',
@@ -131,9 +129,8 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
         ),
       );
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         source: 'AdminWebhookSimulator',
-        source: 'dev_tools_screen' /* was screen, Phase 5 */,
         message: 'Webhook simulation failed: $e',
         stack: stack.toString(),
         severity: 'error',
@@ -218,7 +215,7 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
             if (_loading)
               const Center(child: CircularProgressIndicator())
             else
-              DropdownButtonFormField<PlatformInvoice>(
+              DropdownButtonFormField<shared.PlatformInvoice>(
                 value: _selectedInvoice,
                 items: _invoices
                     .map((invoice) => DropdownMenuItem(
@@ -271,9 +268,3 @@ class _AdminWebhookSimulatorState extends State<AdminWebhookSimulator> {
     );
   }
 }
-
-
-
-
-
-

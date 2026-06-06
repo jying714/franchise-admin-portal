@@ -153,7 +153,6 @@ class BulkOpsBar extends StatelessWidget {
                         message: 'BulkOpsBar: CustomAction failed: $e',
                         stack: stack.toString(),
                         source: 'BulkOpsBar',
-                        source: 'bulk_ops_bar.dart' /* was screen, Phase 5 */,
                         severity: 'error',
                       );
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -171,8 +170,3 @@ class BulkOpsBar extends StatelessWidget {
     );
   }
 }
-
-
-
-
-

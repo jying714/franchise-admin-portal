@@ -13,7 +13,7 @@ class PlatformPlansSection extends StatefulWidget {
 }
 
 class _PlatformPlansSectionState extends State<PlatformPlansSection> {
-  late Future<List<PlatformPlan>> _plansFuture;
+  late Future<List<shared.PlatformPlan>> _plansFuture;
 
   @override
   void initState() {
@@ -21,16 +21,18 @@ class _PlatformPlansSectionState extends State<PlatformPlansSection> {
     _plansFuture = _loadPlans();
   }
 
-  Future<List<PlatformPlan>> _loadPlans() async {
+  Future<List<shared.PlatformPlan>> _loadPlans() async {
     try {
-      final service = FranchiseSubscriptionService();
+      final service = Provider.of<shared.FranchiseSubscriptionService>(
+        context,
+        listen: false,
+      );
       return await service.getPlatformPlans();
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message: "platform_plans_load_error",
         stack: stack.toString(),
         source: 'PlatformPlansSection',
-        source: 'platform_plans_section' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {'exception': e.toString()},
       );
@@ -40,7 +42,7 @@ class _PlatformPlansSectionState extends State<PlatformPlansSection> {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AdminUserProvider>().user;
+    final user = context.watch<shared.AdminUserProvider>().user;
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
@@ -50,7 +52,7 @@ class _PlatformPlansSectionState extends State<PlatformPlansSection> {
       return const SizedBox.shrink();
     }
 
-    return FutureBuilder<List<PlatformPlan>>(
+    return FutureBuilder<List<shared.PlatformPlan>>(
       future: _plansFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
@@ -80,8 +82,8 @@ class _PlatformPlansSectionState extends State<PlatformPlansSection> {
     );
   }
 
-  Widget _buildPlanCard(
-      PlatformPlan plan, AppLocalizations loc, ThemeData theme, user) {
+  Widget _buildPlanCard(shared.PlatformPlan plan, AppLocalizations loc,
+      ThemeData theme, shared.User? user) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -158,8 +160,3 @@ class _PlatformPlansSectionState extends State<PlatformPlansSection> {
     );
   }
 }
-
-
-
-
-

@@ -1,10 +1,11 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
-
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/widgets/tight_section_card.dart';
+import 'package:intl/intl.dart';
 
 class ActivePlanBanner extends StatefulWidget {
   const ActivePlanBanner({Key? key}) : super(key: key);
@@ -21,7 +22,9 @@ class _ActivePlanBannerState extends State<ActivePlanBanner> {
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final subscriptionNotifier = context.watch<FranchiseSubscriptionNotifier>();
+
+    final subscriptionNotifier =
+        context.watch<shared.FranchiseSubscriptionProvider>();
 
     if (!subscriptionNotifier.hasLoaded) {
       return const LinearProgressIndicator();
@@ -30,7 +33,8 @@ class _ActivePlanBannerState extends State<ActivePlanBanner> {
     final subscription = subscriptionNotifier.currentSubscription;
     final plan = subscriptionNotifier.activePlatformPlan;
 
-    if (subscription == null || subscription.platformPlanId.isEmpty) {
+    if (subscription == null ||
+        (subscription.platformPlanId?.isEmpty ?? true)) {
       return RoleGuard(
         allowedRoles: const ['hq_owner', 'platform_owner', 'developer'],
         child: TightSectionCard(
@@ -65,12 +69,11 @@ class _ActivePlanBannerState extends State<ActivePlanBanner> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Row: Plan name + price + interval + chevron
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '$name â€“ \$${price.toStringAsFixed(2)} / $interval',
+                    '$name – \$${price.toStringAsFixed(2)} / $interval',
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -85,7 +88,6 @@ class _ActivePlanBannerState extends State<ActivePlanBanner> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 8),
               Text(
                 loc.nextBillingDate(formattedNextBilling),
@@ -93,7 +95,6 @@ class _ActivePlanBannerState extends State<ActivePlanBanner> {
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
-
               const SizedBox(height: 8),
               Wrap(
                 spacing: 6,
@@ -108,30 +109,23 @@ class _ActivePlanBannerState extends State<ActivePlanBanner> {
                   );
                 }).toList(),
               ),
-
               if (_isExpanded) ...[
                 const SizedBox(height: 12),
                 Divider(
                     thickness: 1, color: colorScheme.outline.withOpacity(0.1)),
-                Text(
-                  '${loc.subscriptionStartDate(formattedStartDate)}',
-                  style: textTheme.bodyMedium,
-                ),
+                Text('${loc.subscriptionStartDate(formattedStartDate)}',
+                    style: textTheme.bodyMedium),
+                const SizedBox(height: 4),
+                Text('${loc.status}: ${subscription.status}',
+                    style: textTheme.bodyMedium),
                 const SizedBox(height: 4),
                 Text(
-                  '${loc.status}: ${subscription.status}',
-                  style: textTheme.bodyMedium,
-                ),
+                    '${loc.autoRenewLabel}: ${subscription.autoRenew ? loc.yes : loc.no}',
+                    style: textTheme.bodyMedium),
                 const SizedBox(height: 4),
                 Text(
-                  '${loc.autoRenewLabel}: ${subscription.autoRenew ? loc.yes : loc.no}',
-                  style: textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${loc.cancelAtPeriodEndLabel}: ${subscription.cancelAtPeriodEnd ? loc.yes : loc.no}',
-                  style: textTheme.bodyMedium,
-                ),
+                    '${loc.cancelAtPeriodEndLabel}: ${subscription.cancelAtPeriodEnd ? loc.yes : loc.no}',
+                    style: textTheme.bodyMedium),
                 if (subscription.hasOverdueInvoice)
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
@@ -146,25 +140,23 @@ class _ActivePlanBannerState extends State<ActivePlanBanner> {
                 if (subscription.paymentStatus != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    '${loc.paymentStatusLabel}: ${subscription.paymentStatus}',
-                    style: textTheme.bodyMedium,
-                  ),
+                      '${loc.paymentStatusLabel}: ${subscription.paymentStatus}',
+                      style: textTheme.bodyMedium),
                 ],
                 if (subscription.cardLast4 != null &&
-                    subscription.cardBrand != null &&
-                    subscription.paymentTokenId != null) ...[
+                    subscription.cardBrand != null) ...[
                   const SizedBox(height: 4),
                   Text(
-                    '${loc.cardOnFileLabel}: ${subscription.cardBrand} â€¢â€¢â€¢â€¢ ${subscription.cardLast4}',
-                    style: textTheme.bodyMedium,
-                  ),
+                      '${loc.cardOnFileLabel}: ${subscription.cardBrand} •••• ${subscription.cardLast4}',
+                      style: textTheme.bodyMedium),
                 ],
-                if (subscription.receiptUrl != null &&
+                if (_isExpanded &&
+                    subscription.receiptUrl != null &&
                     subscription.receiptUrl!.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   GestureDetector(
                     onTap: () {
-                      // Ideally you use `url_launcher` to open the receipt
+                      // TODO: url_launcher
                     },
                     child: Text(
                       loc.viewLastReceipt,
@@ -172,15 +164,6 @@ class _ActivePlanBannerState extends State<ActivePlanBanner> {
                         color: colorScheme.primary,
                         decoration: TextDecoration.underline,
                       ),
-                    ),
-                  ),
-                ],
-                if (subscription.gracePeriodEndsAt != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    '${loc.gracePeriodEndsAtLabel}: ${DateFormat.yMMMMd().format(subscription.gracePeriodEndsAt!)}',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.error,
                     ),
                   ),
                 ],
@@ -192,6 +175,3 @@ class _ActivePlanBannerState extends State<ActivePlanBanner> {
     );
   }
 }
-
-
-

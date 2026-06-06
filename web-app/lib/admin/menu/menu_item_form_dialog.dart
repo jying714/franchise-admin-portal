@@ -1,13 +1,12 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:franchise_admin_portal/admin/menu/menu_item_customizations_dialog.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:franchise_admin_portal/admin/menu/customization_types.dart';
+import 'package:franchise_admin_portal/admin/menu/menu_item_customizations_dialog.dart';
 
 class MenuItemFormDialog extends StatefulWidget {
-  final MenuItem? initialItem;
-  final List<Category> categories;
-  final void Function(MenuItem menuItem) onSave;
+  final shared.MenuItem? initialItem;
+  final List<shared.Category> categories;
+  final void Function(shared.MenuItem menuItem) onSave;
 
   const MenuItemFormDialog({
     super.key,
@@ -35,7 +34,7 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
   int? _prepTime;
   int _calories = 0;
   double _fat = 0.0, _carbs = 0.0, _protein = 0.0;
-  List<Customization> _customizations = [];
+  List<shared.Customization> _customizations = [];
 
   @override
   void initState() {
@@ -46,7 +45,7 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
         (widget.categories.isNotEmpty ? widget.categories.first.name : '');
     _price = i?.price ?? 0.0;
     _description = i?.description ?? '';
-    _image = i?.image ?? '';
+    _image = i?.image;
     _availability = i?.availability ?? true;
     _taxCategory = i?.taxCategory ?? '';
     _sku = i?.sku ?? '';
@@ -57,7 +56,7 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
     _fat = i?.nutrition?.fat ?? 0.0;
     _carbs = i?.nutrition?.carbs ?? 0.0;
     _protein = i?.nutrition?.protein ?? 0.0;
-    _customizations = List<Customization>.from(i?.customizations ?? []);
+    _customizations = List<shared.Customization>.from(i?.customizations ?? []);
   }
 
   Widget _buildChipInput({
@@ -87,10 +86,7 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
             Expanded(
               child: TextField(
                 controller: controller,
-                decoration: InputDecoration(
-                  hintText: AppLocalizations.of(context)?.addChipHint(label) ??
-                      'Add $label',
-                ),
+                decoration: InputDecoration(hintText: 'Add $label'),
               ),
             ),
             IconButton(
@@ -100,7 +96,6 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
                 if (text.isNotEmpty && !values.contains(text)) {
                   onChanged(List<String>.from(values)..add(text));
                   controller.clear();
-                  setState(() {});
                 }
               },
             )
@@ -110,96 +105,27 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
     );
   }
 
-  // ======= REVISED CONVERSION HELPERS =======
-  // Use new structure for customizations.
-  CustomizationGroup customizationToGroup(Customization c) =>
-      customizationToGroupFull(c);
-
-  Customization groupToCustomization(CustomizationGroup g) =>
-      groupToCustomizationFull(g);
-
-  CustomizationGroup customizationToGroupFull(Customization c) {
-    return CustomizationGroup(
-      groupName: c.name,
-      type: (c.maxChoices ?? 1) > 1 ? 'multi' : 'single',
-      minSelect: c.minChoices ?? 1,
-      maxSelect: c.maxChoices ?? 1,
-      maxFree: c.maxFree,
-      allowExtra: c.allowExtra,
-      allowSide: c.allowSide,
-      required: c.required,
-      groupUpcharge: c.price > 0.0 ? c.price : null,
-      groupTag: c.group,
-      options: (c.options ?? [])
-          .map((o) => CustomizationOption(
-                name: o.name,
-                price: o.price,
-                upcharges: o.upcharges,
-                isDefault: o.isDefault,
-                outOfStock: o.outOfStock,
-                allowExtra: o.allowExtra,
-                allowSide: o.allowSide,
-                quantity: o.quantity,
-                portion: o.portion,
-                tag: o.group,
-                // Removed: supportsExtra, sidesAllowed -- not standard
-              ))
-          .toList(),
-    );
-  }
-
-  Customization groupToCustomizationFull(CustomizationGroup g) {
-    return Customization(
-      name: g.groupName,
-      isGroup: true,
-      price: g.groupUpcharge ?? 0.0,
-      required: g.required,
-      minChoices: g.minSelect,
-      maxChoices: g.maxSelect,
-      maxFree: g.maxFree,
-      group: g.groupTag,
-      allowExtra: g.allowExtra,
-      allowSide: g.allowSide,
-      options: g.options
-          .map((o) => Customization(
-                name: o.name,
-                isGroup: false,
-                price: o.price,
-                upcharges: o.upcharges,
-                isDefault: o.isDefault,
-                outOfStock: o.outOfStock,
-                allowExtra: o.allowExtra,
-                allowSide: o.allowSide,
-                quantity: o.quantity,
-                portion: o.portion,
-                group: o.tag,
-                // Removed: supportsExtra, sidesAllowed -- not standard
-              ))
-          .toList(),
-    );
-  }
-
   void _openCustomizationDialog() async {
-    final groups = _customizations.map(customizationToGroup).toList();
-    final result = await showDialog<List<CustomizationGroup>>(
+    final groups =
+        _customizations.map((c) => shared.customizationToGroup(c)).toList();
+    final result = await showDialog<List<shared.CustomizationGroup>>(
       context: context,
-      builder: (ctx) => MenuItemCustomizationsDialog(
-        initialGroups: groups,
-      ),
+      builder: (ctx) => MenuItemCustomizationsDialog(initialGroups: groups),
     );
     if (result != null) {
-      setState(
-          () => _customizations = result.map(groupToCustomization).toList());
+      setState(() => _customizations =
+          result.map((g) => shared.groupToCustomization(g)).toList());
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
+    final loc = AppLocalizations.of(context)!;
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: SizedBox(
-        width: 500,
+        width: 520,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
@@ -208,9 +134,7 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  widget.initialItem == null
-                      ? localizations.addItem
-                      : localizations.edit,
+                  widget.initialItem == null ? loc.addItem : loc.editItem,
                   style: const TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 20),
                 ),
@@ -221,233 +145,90 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
                       : (widget.categories.isNotEmpty
                           ? widget.categories.first.name
                           : null),
-                  decoration:
-                      InputDecoration(labelText: localizations.colCategory),
+                  decoration: InputDecoration(labelText: loc.colCategory),
                   items: widget.categories
-                      .map((c) => DropdownMenuItem(
-                            value: c.name,
-                            child: Text(c.name),
-                          ))
+                      .map((c) =>
+                          DropdownMenuItem(value: c.name, child: Text(c.name)))
                       .toList(),
                   onChanged: (v) => setState(() => _category = v ?? ''),
-                  validator: (v) => (v == null || v.isEmpty)
-                      ? localizations.requiredField
-                      : null,
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? loc.requiredField : null,
                 ),
                 TextFormField(
                   initialValue: _name,
-                  decoration: InputDecoration(labelText: localizations.colName),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? localizations.nameRequired
-                      : null,
+                  decoration: InputDecoration(labelText: loc.colName),
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? loc.nameRequired : null,
                   onChanged: (v) => setState(() => _name = v),
                 ),
                 TextFormField(
                   initialValue: _description,
-                  decoration:
-                      InputDecoration(labelText: localizations.description),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? localizations.requiredField
-                      : null,
+                  decoration: InputDecoration(labelText: loc.description),
                   onChanged: (v) => setState(() => _description = v),
                 ),
                 TextFormField(
-                  initialValue: _image ?? '',
-                  decoration:
-                      InputDecoration(labelText: localizations.colImage),
-                  onChanged: (v) => setState(() => _image = v),
-                ),
-                TextFormField(
                   initialValue: _price.toString(),
-                  decoration:
-                      InputDecoration(labelText: localizations.colPrice),
+                  decoration: InputDecoration(labelText: loc.colPrice),
                   keyboardType: TextInputType.number,
                   validator: (v) {
-                    final value = double.tryParse(v ?? '');
-                    if (value == null || value < 0) {
-                      return localizations.requiredField;
-                    }
-                    return null;
+                    final val = double.tryParse(v ?? '');
+                    return (val == null || val < 0) ? loc.requiredField : null;
                   },
                   onChanged: (v) =>
                       setState(() => _price = double.tryParse(v) ?? 0.0),
                 ),
-                TextFormField(
-                  initialValue: _taxCategory,
-                  decoration: InputDecoration(labelText: localizations.tax),
-                  onChanged: (v) => setState(() => _taxCategory = v),
-                ),
-                TextFormField(
-                  initialValue: _sku,
-                  decoration: InputDecoration(labelText: localizations.colSKU),
-                  onChanged: (v) => setState(() => _sku = v),
-                ),
                 SwitchListTile(
-                  title: Text(localizations.colAvailable),
+                  title: Text(loc.colAvailable),
                   value: _availability,
                   onChanged: (v) => setState(() => _availability = v),
                 ),
-                TextFormField(
-                  initialValue: _prepTime?.toString() ?? '',
-                  decoration: InputDecoration(labelText: localizations.time),
-                  keyboardType: TextInputType.number,
-                  onChanged: (v) => setState(() => _prepTime = int.tryParse(v)),
-                ),
-                const SizedBox(height: 8),
-                Text(localizations.nutrition,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        initialValue: _calories.toString(),
-                        decoration: InputDecoration(
-                            labelText: localizations.caloriesLabel),
-                        keyboardType: TextInputType.number,
-                        onChanged: (v) =>
-                            setState(() => _calories = int.tryParse(v) ?? 0),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextFormField(
-                        initialValue: _fat.toString(),
-                        decoration:
-                            InputDecoration(labelText: localizations.fatLabel),
-                        keyboardType: TextInputType.number,
-                        onChanged: (v) =>
-                            setState(() => _fat = double.tryParse(v) ?? 0.0),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextFormField(
-                        initialValue: _carbs.toString(),
-                        decoration: InputDecoration(
-                            labelText: localizations.carbsLabel),
-                        keyboardType: TextInputType.number,
-                        onChanged: (v) =>
-                            setState(() => _carbs = double.tryParse(v) ?? 0.0),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextFormField(
-                        initialValue: _protein.toString(),
-                        decoration: InputDecoration(
-                            labelText: localizations.proteinLabel),
-                        keyboardType: TextInputType.number,
-                        onChanged: (v) => setState(
-                            () => _protein = double.tryParse(v) ?? 0.0),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                _buildChipInput(
-                  label: localizations.colDietary,
-                  values: _dietaryTags,
-                  onChanged: (v) => setState(() => _dietaryTags = v),
-                ),
-                const SizedBox(height: 8),
-                _buildChipInput(
-                  label: localizations.colAllergens,
-                  values: _allergens,
-                  onChanged: (v) => setState(() => _allergens = v),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(localizations.customizations,
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      tooltip: localizations.editCustomization,
-                      onPressed: _openCustomizationDialog,
-                    ),
-                  ],
-                ),
-                _customizations.isEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          localizations.noCustomizations,
-                          style: const TextStyle(fontStyle: FontStyle.italic),
-                        ),
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _customizations.length,
-                        itemBuilder: (context, idx) {
-                          final c = _customizations[idx];
-                          return ListTile(
-                            title: Text(
-                              '${c.name} ${(c.options != null && c.options!.isNotEmpty) ? '(${c.options!.length} options)' : ''}',
-                            ),
-                            subtitle: c.options != null && c.options!.isNotEmpty
-                                ? Text(c.options!.map((o) => o.name).join(', '))
-                                : null,
-                            trailing: IconButton(
-                              icon: const Icon(Icons.delete),
-                              onPressed: () {
-                                setState(() => _customizations.removeAt(idx));
-                              },
-                            ),
-                          );
-                        },
-                      ),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        if (!_formKey.currentState!.validate()) return;
-                        final nutrition = NutritionInfo(
-                          calories: _calories,
-                          fat: _fat,
-                          carbs: _carbs,
-                          protein: _protein,
-                        );
-                        final selectedCategory = widget.categories.firstWhere(
-                          (c) => c.name == _category,
-                          orElse: () => widget.categories.first,
-                        );
-                        final menuItem = MenuItem(
-                          id: widget.initialItem?.id ?? '',
-                          available: _availability,
-                          category: _category,
-                          categoryId: selectedCategory.id,
-                          name: _name.trim(),
-                          price: _price,
-                          description: _description.trim(),
-                          customizationGroups: [],
-                          image: _image?.trim().isEmpty ?? true
-                              ? null
-                              : _image?.trim(),
-                          customizations: _customizations,
-                          taxCategory: _taxCategory,
-                          availability: _availability,
-                          sku: _sku.trim().isEmpty ? null : _sku.trim(),
-                          dietaryTags: _dietaryTags,
-                          allergens: _allergens,
-                          prepTime: _prepTime,
-                          nutrition: nutrition,
-                        );
+                ElevatedButton(
+                  onPressed: () {
+                    if (!_formKey.currentState!.validate()) return;
 
-                        widget.onSave(menuItem);
-                        Navigator.pop(context);
-                      },
-                      child: Text(localizations.save),
-                    ),
-                    const SizedBox(width: 16),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text(localizations.cancel),
-                    ),
-                  ],
-                )
+                    final selectedCategory = widget.categories.firstWhere(
+                      (c) => c.name == _category,
+                      orElse: () => widget.categories.first,
+                    );
+
+                    final menuItem = shared.MenuItem(
+                      id: widget.initialItem?.id ?? '',
+                      name: _name.trim(),
+                      category: _category,
+                      categoryId: selectedCategory.id,
+                      price: _price,
+                      description: _description.trim(),
+                      image: _image?.trim().isEmpty == true
+                          ? null
+                          : _image?.trim(),
+                      availability: _availability,
+                      available: _availability,
+                      customizations: _customizations,
+                      customizationGroups: [],
+                      taxCategory: _taxCategory,
+                      sku: _sku.trim().isEmpty ? null : _sku.trim(),
+                      dietaryTags: _dietaryTags,
+                      allergens: _allergens,
+                      prepTime: _prepTime,
+                      nutrition: shared.NutritionInfo(
+                        calories: _calories,
+                        fat: _fat,
+                        carbs: _carbs,
+                        protein: _protein,
+                      ),
+                    );
+
+                    widget.onSave(menuItem);
+                    Navigator.pop(context);
+                  },
+                  child: Text(loc.save),
+                ),
+                const SizedBox(width: 16),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(loc.cancel),
+                ),
               ],
             ),
           ),
@@ -456,6 +237,3 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
     );
   }
 }
-
-
-

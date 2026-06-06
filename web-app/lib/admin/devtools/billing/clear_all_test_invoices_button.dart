@@ -60,11 +60,10 @@ class _ClearAllTestInvoicesButtonState
 
       widget.onCleared?.call();
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to clear test invoices: $e',
         stack: stack.toString(),
         source: 'ClearAllTestInvoicesButton',
-        source: 'dev_tools' /* was screen, Phase 5 */,
         severity: 'fatal',
       );
       if (mounted) {
@@ -87,8 +86,3 @@ class _ClearAllTestInvoicesButtonState
     );
   }
 }
-
-
-
-
-

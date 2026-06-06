@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 
 class PlanSwapperTool extends StatefulWidget {
   const PlanSwapperTool({super.key});
@@ -11,85 +11,42 @@ class PlanSwapperTool extends StatefulWidget {
 }
 
 class _PlanSwapperToolState extends State<PlanSwapperTool> {
-  final _subscriptionService = FranchiseSubscriptionService();
-  FranchiseSubscription? _selectedSub;
-  PlatformPlan? _selectedPlan;
+  shared.FranchiseSubscription? _selectedSub;
+  shared.PlatformPlan? _selectedPlan;
   bool _saving = false;
-
-  Future<void> _handleSwap() async {
-    if (_selectedSub == null || _selectedPlan == null) return;
-
-    setState(() => _saving = true);
-    final loc = AppLocalizations.of(context)!;
-
-    try {
-      await _subscriptionService.subscribeFranchiseToPlan(
-        franchiseId: _selectedSub!.franchiseId,
-        plan: _selectedPlan!,
-      );
-
-      await shared.ErrorLogger.log(
-        message: 'Plan manually swapped by developer',
-        source: 'PlanSwapperTool',
-        source: 'subscription_dev_tools_screen' /* was screen, Phase 5 */,
-        contextData: {
-          'franchiseId': _selectedSub!.franchiseId,
-          'newPlanId': _selectedPlan!.id,
-        },
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(loc.genericSavedSuccess)),
-        );
-      }
-
-      setState(() {
-        _selectedSub = null;
-        _selectedPlan = null;
-      });
-    } catch (e, stack) {
-      await shared.ErrorLogger.log(
-        message: 'Failed to swap plan: $e',
-        source: 'PlanSwapperTool',
-        source: 'subscription_dev_tools_screen' /* was screen, Phase 5 */,
-        stack: stack.toString(),
-        severity: 'error',
-      );
-    }
-
-    if (mounted) setState(() => _saving = false);
-  }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+
+    final subscriptionService =
+        Provider.of<shared.FranchiseSubscriptionService>(
+      context,
+      listen: false,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(loc.planSwapperTitle, style: theme.textTheme.titleMedium),
         const SizedBox(height: 12),
-        StreamBuilder<List<FranchiseSubscription>>(
-          stream: _subscriptionService.watchAllFranchiseSubscriptions(),
+        StreamBuilder<List<shared.FranchiseSubscription>>(
+          stream: subscriptionService.watchAllFranchiseSubscriptions(),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return const LinearProgressIndicator();
             }
 
             final subs = snapshot.data!;
-            return DropdownButtonFormField<FranchiseSubscription>(
-              value: subs.any((sub) => sub.id == _selectedSub?.id)
-                  ? _selectedSub
-                  : null,
+            return DropdownButtonFormField<shared.FranchiseSubscription>(
+              value: _selectedSub,
               decoration: InputDecoration(
                 labelText: loc.selectFranchise,
                 border: const OutlineInputBorder(),
               ),
               items: subs
-                  .map((sub) => DropdownMenuItem<FranchiseSubscription>(
+                  .map((sub) => DropdownMenuItem<shared.FranchiseSubscription>(
                         value: sub,
                         child: Text('${sub.franchiseId} (${sub.status})'),
                       ))
@@ -99,26 +56,25 @@ class _PlanSwapperToolState extends State<PlanSwapperTool> {
           },
         ),
         const SizedBox(height: 12),
-        FutureBuilder<List<PlatformPlan>>(
-          future: _subscriptionService.getAllPlatformPlans(),
+        FutureBuilder<List<shared.PlatformPlan>>(
+          future: subscriptionService.getAllPlatformPlans(),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return const LinearProgressIndicator();
             }
 
             final plans = snapshot.data!;
-            return DropdownButtonFormField<PlatformPlan>(
-              value: plans.any((p) => p.id == _selectedPlan?.id)
-                  ? _selectedPlan
-                  : null,
+            return DropdownButtonFormField<shared.PlatformPlan>(
+              value: _selectedPlan,
               decoration: InputDecoration(
                 labelText: loc.selectPlan,
                 border: const OutlineInputBorder(),
               ),
               items: plans
-                  .map((plan) => DropdownMenuItem(
+                  .map((plan) => DropdownMenuItem<shared.PlatformPlan>(
                         value: plan,
-                        child: Text('${plan.name} (${plan.billingInterval})'),
+                        child: Text(
+                            '${plan.name} (${plan.billingInterval}, \$${plan.price})'),
                       ))
                   .toList(),
               onChanged: (val) => setState(() => _selectedPlan = val),
@@ -137,16 +93,52 @@ class _PlanSwapperToolState extends State<PlanSwapperTool> {
           label: Text(loc.swap),
           onPressed: _saving ? null : _handleSwap,
         ),
-        const SizedBox(height: 20),
-        if (_selectedSub != null)
-          Text('${loc.franchiseIdLabel}: ${_selectedSub!.franchiseId}'),
-        // ðŸ’¡ Future: Show before/after plan snapshot diff or audit trail
       ],
     );
   }
+
+  Future<void> _handleSwap() async {
+    if (_selectedSub == null || _selectedPlan == null) return;
+
+    setState(() => _saving = true);
+    final loc = AppLocalizations.of(context)!;
+
+    try {
+      final service = Provider.of<shared.FranchiseSubscriptionService>(
+        context,
+        listen: false,
+      );
+
+      await service.subscribeFranchiseToPlan(
+        franchiseId: _selectedSub!.franchiseId,
+        plan: _selectedPlan!,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(loc.genericSavedSuccess),
+      ));
+
+      setState(() {
+        _selectedSub = null;
+        _selectedPlan = null;
+      });
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to swap plan: $e',
+        stack: stack.toString(),
+        source: 'PlanSwapperTool',
+        severity: 'error',
+        contextData: {
+          'franchiseId': _selectedSub?.franchiseId,
+          'newPlanId': _selectedPlan?.id,
+        },
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('${loc.subscriptionInjectionFailed}: $e'),
+      ));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
 }
-
-
-
-
-

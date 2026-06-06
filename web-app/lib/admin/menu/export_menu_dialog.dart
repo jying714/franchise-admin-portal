@@ -30,10 +30,13 @@ class _ExportMenuDialogState extends State<ExportMenuDialog> {
 
   Future<void> _exportMenu() async {
     setState(() => _loading = true);
-    final firestore = Provider.of<shared.FirestoreService>(context, listen: false);
+    final firestore =
+        Provider.of<shared.FirestoreService>(context, listen: false);
     final franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId;
-    final List<MenuItem> items = await firestore.getMenuItemsOnce(franchiseId);
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
+    final List<shared.MenuItem> items =
+        await firestore.getMenuItemsOnce(franchiseId);
 
     final header = [
       'Category',
@@ -263,8 +266,3 @@ class _ExportMenuDialogState extends State<ExportMenuDialog> {
     );
   }
 }
-
-
-
-
-

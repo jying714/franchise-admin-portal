@@ -1,9 +1,13 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:convert';
+
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:uuid/uuid.dart';
-import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:uuid/uuid.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_impl.dart'; // if needed elsewhere
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
 class TestInvoiceGenerator extends StatefulWidget {
   const TestInvoiceGenerator({super.key});
@@ -22,8 +26,8 @@ class _TestInvoiceGeneratorState extends State<TestInvoiceGenerator> {
   bool _isSaving = false;
   String? _statusMessage;
 
-  List<FranchiseInfo> _franchises = [];
-  FranchiseInfo? _selectedFranchise;
+  List<shared.FranchiseInfo> _franchises = [];
+  shared.FranchiseInfo? _selectedFranchise;
 
   @override
   void initState() {
@@ -33,20 +37,19 @@ class _TestInvoiceGeneratorState extends State<TestInvoiceGenerator> {
 
   Future<void> _loadFranchises() async {
     try {
-      final shared.firestoreService =
+      final firestoreService =
           Provider.of<shared.FirestoreService>(context, listen: false);
-      final franchises = await shared.firestoreService.fetchFranchiseList();
+      final franchises = await firestoreService.fetchFranchiseList();
       if (mounted) {
         setState(() {
           _franchises = franchises;
         });
       }
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load franchises: $e',
         stack: stack.toString(),
         source: 'TestInvoiceGenerator',
-        source: 'test_invoice_generator' /* was screen, Phase 5 */,
         severity: 'error',
       );
     }
@@ -72,9 +75,9 @@ class _TestInvoiceGeneratorState extends State<TestInvoiceGenerator> {
       final invoiceNumber =
           'TEST-${DateFormat('yyMMdd-HHmm').format(now)}-${uuid.substring(0, 6).toUpperCase()}';
 
-      final invoice = PlatformInvoice(
+      final invoice = shared.PlatformInvoice(
         id: uuid,
-        franchiseeId: franchise.id,
+        franchiseeId: franchise.id ?? '',
         invoiceNumber: invoiceNumber,
         amount: double.tryParse(_amountController.text.trim()) ?? 0.0,
         currency: _currencyController.text.trim().toUpperCase(),
@@ -83,29 +86,30 @@ class _TestInvoiceGeneratorState extends State<TestInvoiceGenerator> {
         status: 'unpaid',
         issuedBy: 'platform',
         isTest: true,
-        paymentIds: [],
+        paymentIds: const [],
         lineItems: {
           'mockItem': {'label': 'Dev Item', 'amount': 9999}
         },
         note: _noteController.text.trim(),
       );
 
-      final shared.firestoreService =
+      final firestoreService =
           Provider.of<shared.FirestoreService>(context, listen: false);
-      await shared.firestoreService.createPlatformInvoice(invoice);
+      await firestoreService.createPlatformInvoice(invoice);
 
-      if (!mounted) return;
-      setState(() => _statusMessage = 'Test invoice created: $invoiceNumber');
+      if (mounted) {
+        setState(() => _statusMessage = 'Test invoice created: $invoiceNumber');
+      }
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to generate test invoice: $e',
         stack: stack.toString(),
         source: 'TestInvoiceGenerator',
-        source: 'test_invoice_generator' /* was screen, Phase 5 */,
         severity: 'error',
       );
-      if (!mounted) return;
-      setState(() => _statusMessage = 'Error generating invoice.');
+      if (mounted) {
+        setState(() => _statusMessage = 'Error generating invoice.');
+      }
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -128,7 +132,7 @@ class _TestInvoiceGeneratorState extends State<TestInvoiceGenerator> {
               Text('Test Invoice Generator',
                   style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 16),
-              DropdownButtonFormField<FranchiseInfo>(
+              DropdownButtonFormField<shared.FranchiseInfo>(
                 decoration:
                     const InputDecoration(labelText: 'Select Franchise'),
                 items: _franchises
@@ -168,7 +172,7 @@ class _TestInvoiceGeneratorState extends State<TestInvoiceGenerator> {
                 firstDate: DateTime.now().subtract(const Duration(days: 1)),
                 lastDate: DateTime.now().add(const Duration(days: 365)),
                 initialDate: _dueDate,
-                onDateSubmitted: (val) => _dueDate = val,
+                onDateSubmitted: (val) => setState(() => _dueDate = val),
                 fieldLabelText: 'Due Date',
               ),
               const SizedBox(height: 16),
@@ -196,9 +200,3 @@ class _TestInvoiceGeneratorState extends State<TestInvoiceGenerator> {
     );
   }
 }
-
-
-
-
-
-

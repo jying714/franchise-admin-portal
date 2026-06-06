@@ -2,9 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:franchise_admin_portal/core/providers/category_provider_impl.dart';
+import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider_impl.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
+import 'package:shared_core/shared_core.dart' as shared;
 
 class CategoryJsonImportExportDialog extends StatefulWidget {
   final AppLocalizations loc;
@@ -25,10 +27,10 @@ class CategoryJsonImportExportDialog extends StatefulWidget {
       context: context,
       builder: (dialogContext) => MultiProvider(
         providers: [
-          ChangeNotifierProvider<shared.CategoryProvider>.value(
-              value: categoryProvider),
-          ChangeNotifierProvider<shared.OnboardingProgressProvider>.value(
-              value: onboardingProvider),
+          ChangeNotifierProvider<CategoryProviderImpl>.value(
+              value: categoryProvider as CategoryProviderImpl),
+          ChangeNotifierProvider<OnboardingProgressProviderImpl>.value(
+              value: onboardingProvider as OnboardingProgressProviderImpl),
         ],
         child: CategoryJsonImportExportDialog(loc: loc),
       ),
@@ -49,8 +51,7 @@ class _CategoryJsonImportExportDialogState
   @override
   void initState() {
     super.initState();
-    final template = shared
-        .pizzaShopCategoriesTemplate; // assuming this exists in shared_core
+    final template = shared.pizzaShopCategoriesTemplate;
     final jsonStr = const JsonEncoder.withIndent('  ').convert(template);
     _controller = TextEditingController(text: jsonStr);
   }
@@ -73,18 +74,19 @@ class _CategoryJsonImportExportDialogState
           .map((e) => shared.Category.fromMap(Map<String, dynamic>.from(e)))
           .toList();
 
-      final franchiseId = context.read<shared.FranchiseProvider>().franchiseId;
-      final firestore = context.read<shared.FirestoreService>();
+      final franchiseId =
+          Provider.of<shared.FranchiseProvider>(context, listen: false)
+              .franchiseId;
+
+      final categoryProvider =
+          Provider.of<CategoryProviderImpl>(context, listen: false);
 
       for (final cat in categories) {
-        await firestore.addCategory(
-          franchiseId: franchiseId,
-          category: cat,
-        );
+        categoryProvider.addOrUpdateCategory(cat); // staged or direct
       }
 
-      await context
-          .read<shared.OnboardingProgressProvider>()
+      await Provider.of<shared.OnboardingProgressProvider>(context,
+              listen: false)
           .markStepComplete('categories');
 
       setState(() {
@@ -99,9 +101,9 @@ class _CategoryJsonImportExportDialogState
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message: 'category_json_import_error',
+        stack: stack.toString(),
         source: 'CategoryJsonImportExportDialog',
         severity: 'error',
-        stack: stack.toString(),
       );
 
       setState(() {
@@ -114,9 +116,9 @@ class _CategoryJsonImportExportDialogState
         );
       }
     } finally {
-      setState(() {
-        _isImporting = false;
-      });
+      if (mounted) {
+        setState(() => _isImporting = false);
+      }
     }
   }
 

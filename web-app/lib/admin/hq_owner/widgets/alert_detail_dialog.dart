@@ -1,47 +1,41 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:franchise_admin_portal/config/app_config.dart';
-import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
 import 'package:provider/provider.dart';
+import 'package:franchise_admin_portal/config/app_config.dart';
+import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
 
 class AlertDetailDialog extends StatelessWidget {
-  final AlertModel alert;
+  final shared.AlertModel alert;
   final String franchiseId;
   final bool canDismiss;
   final AlertsRepository? repository;
   final VoidCallback? onDismissed;
-  final VoidCallback? onAcknowledge; // For future: acknowledge flow
+  final VoidCallback? onAcknowledge;
 
   const AlertDetailDialog({
-    Key? key,
+    super.key,
     required this.alert,
     required this.franchiseId,
     this.canDismiss = true,
     this.repository,
     this.onDismissed,
     this.onAcknowledge,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context);
-    if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
-      );
-    }
+    final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
-    final appConfig = AppConfig.instance;
-    final fireService = Provider.of<shared.FirestoreService>(context, listen: false);
-    final user = Provider.of<AdminUserProvider>(context, listen: false).user;
+    final fireService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
+    final user =
+        Provider.of<shared.AdminUserProvider>(context, listen: false).user;
 
     final repo = repository ??
         AlertsRepository(
-          shared.firestoreService: fireService,
-          appConfig: appConfig,
+          firestoreService: fireService,
         );
 
     return Dialog(
@@ -129,21 +123,20 @@ class AlertDetailDialog extends StatelessWidget {
                             franchiseId,
                             alert.id,
                             user?.id ?? '',
-                            source: "AlertDetailDialog" /* was screen, Phase 5 */,
                           );
                           onDismissed?.call();
-                          Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(loc.alert_dismissed_success),
-                            ),
-                          );
+                          if (context.mounted) {
+                            Navigator.of(context).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text(loc.alert_dismissed_success)),
+                            );
+                          }
                         } catch (e, stack) {
-                          await shared.ErrorLogger.log(
+                          shared.ErrorLogger.log(
                             message: 'Failed to dismiss alert: $e',
                             stack: stack.toString(),
-                            source: 'alert_detail_dialog',
-                            source: 'AlertDetailDialog' /* was screen, Phase 5 */,
+                            source: 'AlertDetailDialog',
                             severity: 'error',
                             contextData: {
                               'franchiseId': franchiseId,
@@ -151,16 +144,16 @@ class AlertDetailDialog extends StatelessWidget {
                               'userId': user?.id,
                             },
                           );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(loc.alert_dismissed_error),
-                            ),
-                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                  content: Text(loc.alert_dismissed_error)),
+                            );
+                          }
                         }
                       },
                       label: Text(loc.alert_dismiss_button),
                     ),
-                  // ðŸ”œ Future: Acknowledge, view related invoice, etc.
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(loc.close),
@@ -175,7 +168,7 @@ class AlertDetailDialog extends StatelessWidget {
   }
 
   static Widget _iconForLevel(String level, ColorScheme colorScheme) {
-    switch (level) {
+    switch (level.toLowerCase()) {
       case 'warning':
         return Icon(Icons.warning_amber_rounded,
             color: colorScheme.error, size: 32);
@@ -189,60 +182,48 @@ class AlertDetailDialog extends StatelessWidget {
   }
 
   static String _formatDateTime(BuildContext context, DateTime dateTime) {
-    final loc = AppLocalizations.of(context);
-    if (loc == null) {
-      print(
-          '[YourWidget] loc is null! Localization not available for this context.');
-      // Handle gracefully or show fallback string
-      return 'N/A'; // Or any suitable fallback string
-    }
-    final d = dateTime;
-    return "${d.year}-${_two(d.month)}-${_two(d.day)} ${_two(d.hour)}:${_two(d.minute)}";
+    return "${dateTime.year}-${_two(dateTime.month)}-${_two(dateTime.day)} "
+        "${_two(dateTime.hour)}:${_two(dateTime.minute)}";
   }
 
   static String _two(int n) => n.toString().padLeft(2, '0');
 }
 
-/// Simple detail line row for alert properties.
 class _DetailLine extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
 
   const _DetailLine({
-    Key? key,
+    super.key,
     required this.icon,
     required this.label,
     required this.value,
-  }) : super(key: key);
+  });
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4.5),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: 9),
-            Text(
-              "$label: ",
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.5),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 9),
+          Text(
+            "$label: ",
+            style: theme.textTheme.bodySmall
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: theme.textTheme.bodySmall,
+              overflow: TextOverflow.ellipsis,
             ),
-            Expanded(
-              child: Text(
-                value,
-                style: Theme.of(context).textTheme.bodySmall,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
+  }
 }
-
-
-
-
-
-

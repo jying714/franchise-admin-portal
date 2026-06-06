@@ -54,11 +54,10 @@ class _MockPaymentEditorState extends State<MockPaymentEditor> {
         _statusMessage = 'Mock payment data copied to clipboard!';
       });
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'MockPaymentEditor error: $e',
         stack: stack.toString(),
         source: 'MockPaymentEditor',
-        source: 'mock_payment_editor' /* was screen, Phase 5 */,
         severity: 'error',
       );
       if (!mounted) return;
@@ -141,8 +140,3 @@ class _MockPaymentEditorState extends State<MockPaymentEditor> {
     );
   }
 }
-
-
-
-
-

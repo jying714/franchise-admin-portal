@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/feature_config.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
 class FeatureToggleDialog extends StatefulWidget {
   final VoidCallback? onChanged;
@@ -15,7 +16,7 @@ class _FeatureToggleDialogState extends State<FeatureToggleDialog> {
   @override
   void initState() {
     super.initState();
-    featureMap = Map<String, bool>.from(FeatureConfig.instance.asMap);
+    featureMap = Map<String, bool>.from(shared.FeatureConfig.instance.asMap);
   }
 
   Future<void> _save() async {
@@ -50,6 +51,3 @@ class _FeatureToggleDialogState extends State<FeatureToggleDialog> {
     );
   }
 }
-
-
-

@@ -1,14 +1,14 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/admin/developer/platform/franchise_subscription_editor_dialog.dart';
 import 'package:franchise_admin_portal/admin/categories/bulk_action_bar.dart';
 
-final DashboardSection franchiseSubscriptionsSection = DashboardSection(
+final shared.DashboardSection franchiseSubscriptionsSection =
+    shared.DashboardSection(
   key: 'franchiseSubscriptions',
   title: 'Franchise Subscriptions',
   icon: Icons.subscriptions,
@@ -26,10 +26,10 @@ class FranchiseSubscriptionsSection extends StatefulWidget {
 
 class _FranchiseSubscriptionsSectionState
     extends State<FranchiseSubscriptionsSection> {
-  late Future<List<FranchiseSubscription>> _subsFuture;
+  late Future<List<shared.FranchiseSubscription>> _subsFuture;
   final Set<String> _selectedIds = {};
   bool _isBulkMode = false;
-  List<FranchiseSubscription> _subs = [];
+  List<shared.FranchiseSubscription> _subs = [];
 
   @override
   void initState() {
@@ -37,17 +37,20 @@ class _FranchiseSubscriptionsSectionState
     _subsFuture = _loadSubscriptions();
   }
 
-  Future<List<FranchiseSubscription>> _loadSubscriptions() async {
+  Future<List<shared.FranchiseSubscription>> _loadSubscriptions() async {
     try {
-      final result = await shared.FirestoreService.getFranchiseSubscriptions();
+      final service = Provider.of<shared.FranchiseSubscriptionService>(
+        context,
+        listen: false,
+      );
+      final result = await service.getAllFranchiseSubscriptions();
       _subs = result;
       return result;
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'load_franchise_subscriptions_failed',
         stack: stack.toString(),
         source: 'FranchiseSubscriptionsSection',
-        source: 'franchise_subscriptions_section' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {'exception': e.toString()},
       );
@@ -76,18 +79,25 @@ class _FranchiseSubscriptionsSectionState
 
     if (confirmed == true) {
       try {
-        await FranchiseSubscriptionService().deleteFranchiseSubscription(subId);
-        setState(() => _subsFuture = _loadSubscriptions());
+        final service = Provider.of<shared.FranchiseSubscriptionService>(
+          context,
+          listen: false,
+        );
+        await service.deleteFranchiseSubscription(subId);
+        if (mounted) {
+          setState(() => _subsFuture = _loadSubscriptions());
+        }
       } catch (e, st) {
-        await shared.ErrorLogger.log(
+        shared.ErrorLogger.log(
           message: 'Failed to delete subscription: $e',
           stack: st.toString(),
           source: 'FranchiseSubscriptionsSection',
-          source: 'franchise_subscriptions_section' /* was screen, Phase 5 */,
           severity: 'error',
         );
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(loc.deleteFailed)));
+        if (mounted) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(loc.deleteFailed)));
+        }
       }
     }
   }
@@ -98,35 +108,41 @@ class _FranchiseSubscriptionsSectionState
     final subsToRestore = [..._subs.where((s) => idsToDelete.contains(s.id))];
 
     try {
-      await FranchiseSubscriptionService()
-          .deleteManyFranchiseSubscriptions(idsToDelete);
+      final service = Provider.of<shared.FranchiseSubscriptionService>(
+        context,
+        listen: false,
+      );
+      await service.deleteManyFranchiseSubscriptions(idsToDelete);
 
-      setState(() {
-        _subsFuture = _loadSubscriptions();
-        _selectedIds.clear();
-        _isBulkMode = false;
-      });
+      if (mounted) {
+        setState(() {
+          _subsFuture = _loadSubscriptions();
+          _selectedIds.clear();
+          _isBulkMode = false;
+        });
 
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(loc.bulkDeleteSuccess(idsToDelete.length.toString())),
-        action: SnackBarAction(
-          label: loc.undo,
-          onPressed: () async {
-            for (final sub in subsToRestore) {
-              await FranchiseSubscriptionService()
-                  .saveFranchiseSubscription(sub);
-            }
-            setState(() => _subsFuture = _loadSubscriptions());
-          },
-        ),
-      ));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(loc.bulkDeleteSuccess(idsToDelete.length.toString())),
+          action: SnackBarAction(
+            label: loc.undo,
+            onPressed: () async {
+              for (final sub in subsToRestore) {
+                await service.saveFranchiseSubscription(sub);
+              }
+              if (mounted) setState(() => _subsFuture = _loadSubscriptions());
+            },
+          ),
+        ));
+      }
     } catch (_) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(loc.deleteFailed)));
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(loc.deleteFailed)));
+      }
     }
   }
 
-  void _openEditorDialog(FranchiseSubscription sub) async {
+  void _openEditorDialog(shared.FranchiseSubscription sub) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => FranchiseSubscriptionEditorDialog(
@@ -134,24 +150,22 @@ class _FranchiseSubscriptionsSectionState
         subscription: sub,
       ),
     );
-    if (result == true) {
+    if (result == true && mounted) {
       setState(() => _subsFuture = _loadSubscriptions());
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AdminUserProvider>().user;
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final user = context.watch<shared.AdminUserProvider>().user;
 
-    if (!(user?.isDeveloper == true ||
-        user?.isAdmin == false ||
-        user?.isPlatformOwner == true)) {
+    if (!(user?.isDeveloper == true || user?.isPlatformOwner == true)) {
       return const SizedBox.shrink();
     }
 
-    return FutureBuilder<List<FranchiseSubscription>>(
+    return FutureBuilder<List<shared.FranchiseSubscription>>(
       future: _subsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
@@ -159,6 +173,7 @@ class _FranchiseSubscriptionsSectionState
         }
 
         final subs = snapshot.data ?? [];
+        _subs = subs;
 
         if (subs.isEmpty) {
           return Padding(
@@ -166,8 +181,6 @@ class _FranchiseSubscriptionsSectionState
             child: Text(loc.noSubscriptionsFound),
           );
         }
-
-        _subs = subs;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,15 +198,11 @@ class _FranchiseSubscriptionsSectionState
                   )
                 : Align(
                     alignment: Alignment.centerRight,
-                    child: (user?.isDeveloper == true ||
-                            user?.isAdmin == false ||
-                            user?.isPlatformOwner == true)
-                        ? ElevatedButton.icon(
-                            icon: const Icon(Icons.select_all),
-                            label: Text(loc.enableBulkSelect),
-                            onPressed: () => setState(() => _isBulkMode = true),
-                          )
-                        : const SizedBox.shrink(),
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.select_all),
+                      label: Text(loc.enableBulkSelect),
+                      onPressed: () => setState(() => _isBulkMode = true),
+                    ),
                   ),
             const SizedBox(height: 12),
             ...subs.map((sub) => _buildSubscriptionCard(sub, loc, theme)),
@@ -204,7 +213,7 @@ class _FranchiseSubscriptionsSectionState
   }
 
   Widget _buildSubscriptionCard(
-    FranchiseSubscription sub,
+    shared.FranchiseSubscription sub,
     AppLocalizations loc,
     ThemeData theme,
   ) {
@@ -228,75 +237,60 @@ class _FranchiseSubscriptionsSectionState
         color: theme.colorScheme.surface,
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(
-              children: [
-                Text('${loc.franchiseIdLabel}: ${sub.franchiseId}',
-                    style: theme.textTheme.titleSmall),
-                const Spacer(),
-                if (!_isBulkMode &&
-                    (context
-                                .read<AdminUserProvider>()
-                                .user
-                                ?.isDeveloper ==
-                            true ||
-                        context.read<AdminUserProvider>().user?.isAdmin ==
-                            false ||
-                        context
-                                .read<AdminUserProvider>()
-                                .user
-                                ?.isPlatformOwner ==
-                            true)) ...[
-                  IconButton(
-                    icon: const Icon(Icons.edit, size: 20),
-                    tooltip: loc.editSubscription,
-                    onPressed: () => _openEditorDialog(sub),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, size: 20),
-                    tooltip: loc.deleteSubscription,
-                    onPressed: () => _confirmDelete(sub.id, loc),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text('${loc.franchiseIdLabel}: ${sub.franchiseId}',
+                      style: theme.textTheme.titleSmall),
+                  const Spacer(),
+                  if (!_isBulkMode) ...[
+                    IconButton(
+                      icon: const Icon(Icons.edit, size: 20),
+                      tooltip: loc.editSubscription,
+                      onPressed: () => _openEditorDialog(sub),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, size: 20),
+                      tooltip: loc.deleteSubscription,
+                      onPressed: () => _confirmDelete(sub.id, loc),
+                    ),
+                  ],
+                  Chip(
+                    label: Text(loc.translateStatus(sub.status)),
+                    backgroundColor: AppConfig.statusColor(
+                        sub.status, theme), // ensure this exists in AppConfig
                   ),
                 ],
-                Chip(
-                  label: Text(loc.translateStatus(sub.status)),
-                  backgroundColor: AppConfig.statusColor(sub.status, theme),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text('${loc.planIdLabel}: ${sub.platformPlanId}'),
-            const SizedBox(height: 4),
-            if (sub.isTrial)
-              Text(
-                  '${loc.trialEndsLabel}: ${AppConfig.formatDate(sub.trialEndsAt)}',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.secondary,
-                  )),
-            const SizedBox(height: 8),
-            Text(
-                '${loc.nextBillingLabel}: ${AppConfig.formatDate(sub.nextBillingDate)}'),
-            const SizedBox(height: 4),
-            if (sub.discountPercent > 0)
-              Text('${loc.discountLabel}: ${sub.discountPercent}%',
-                  style: theme.textTheme.labelSmall),
-            const SizedBox(height: 12),
-            Text(
-              loc.featureComingSoon('Subscription settings'),
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.outline,
               ),
-            )
-          ]),
+              const SizedBox(height: 8),
+              Text('${loc.planIdLabel}: ${sub.platformPlanId}'),
+              const SizedBox(height: 4),
+              if (sub.isTrial)
+                Text(
+                    '${loc.trialEndsLabel}: ${AppConfig.formatDate(sub.trialEndsAt)}',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.secondary,
+                    )),
+              const SizedBox(height: 8),
+              Text(
+                  '${loc.nextBillingLabel}: ${AppConfig.formatDate(sub.nextBillingDate)}'),
+              const SizedBox(height: 4),
+              if (sub.discountPercent > 0)
+                Text('${loc.discountLabel}: ${sub.discountPercent}%',
+                    style: theme.textTheme.labelSmall),
+              const SizedBox(height: 12),
+              Text(
+                loc.featureComingSoon('Subscription settings'),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );
   }
 }
-
-
-
-
-
-

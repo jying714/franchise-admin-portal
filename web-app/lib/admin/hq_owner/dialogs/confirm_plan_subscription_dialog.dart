@@ -1,12 +1,11 @@
-﻿// ðŸ“ lib/admin/hq_owner/dialogs/confirm_plan_subscription_dialog.dart
-
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class ConfirmPlanSubscriptionDialog extends StatelessWidget {
-  final PlatformPlan plan;
+  final shared.PlatformPlan plan;
   final String franchiseId;
 
   const ConfirmPlanSubscriptionDialog({
@@ -17,7 +16,7 @@ class ConfirmPlanSubscriptionDialog extends StatelessWidget {
 
   static Future<void> show({
     required BuildContext context,
-    required PlatformPlan plan,
+    required shared.PlatformPlan plan,
     required String franchiseId,
   }) {
     return showDialog(
@@ -52,7 +51,7 @@ class ConfirmPlanSubscriptionDialog extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(plan.description),
+          Text(plan.description ?? ''),
           const SizedBox(height: 16),
           Text('${loc.billingIntervalLabel}: ${plan.billingInterval}'),
           Text(
@@ -72,20 +71,26 @@ class ConfirmPlanSubscriptionDialog extends StatelessWidget {
           ),
           onPressed: () async {
             Navigator.of(context).pop(); // Close dialog immediately
+
             try {
-              await FranchiseSubscriptionService().subscribeFranchiseToPlan(
+              final service = Provider.of<shared.FranchiseSubscriptionService>(
+                context,
+                listen: false,
+              );
+
+              await service.subscribeFranchiseToPlan(
                 franchiseId: franchiseId,
                 plan: plan,
               );
+
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(loc.subscriptionSuccessMessage)),
               );
             } catch (e, st) {
-              await shared.ErrorLogger.log(
+              shared.ErrorLogger.log(
                 message: 'Subscription failed: $e',
                 stack: st.toString(),
                 source: 'ConfirmPlanSubscriptionDialog',
-                source: 'available_platform_plans_screen' /* was screen, Phase 5 */,
                 severity: 'error',
               );
               ScaffoldMessenger.of(context).showSnackBar(
@@ -102,8 +107,3 @@ class ConfirmPlanSubscriptionDialog extends StatelessWidget {
     );
   }
 }
-
-
-
-
-

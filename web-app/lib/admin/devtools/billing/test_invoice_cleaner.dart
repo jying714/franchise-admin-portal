@@ -36,11 +36,10 @@ class _TestInvoiceCleanerState extends State<TestInvoiceCleaner> {
       }
       return _invoices;
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to load test invoices: $e',
         stack: stack.toString(),
         source: 'TestInvoiceCleaner',
-        source: 'dev_tools' /* was screen, Phase 5 */,
         severity: 'error',
       );
       rethrow;
@@ -58,11 +57,10 @@ class _TestInvoiceCleanerState extends State<TestInvoiceCleaner> {
       );
       _refresh();
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to delete invoice: $e',
         stack: stack.toString(),
         source: 'TestInvoiceCleaner',
-        source: 'dev_tools' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {'invoiceId': id},
       );
@@ -85,11 +83,10 @@ class _TestInvoiceCleanerState extends State<TestInvoiceCleaner> {
       );
       _refresh();
     } catch (e, stack) {
-      await shared.ErrorLogger.log(
+      shared.ErrorLogger.log(
         message: 'Failed to reset invoice: $e',
         stack: stack.toString(),
         source: 'TestInvoiceCleaner',
-        source: 'dev_tools' /* was screen, Phase 5 */,
         severity: 'error',
         contextData: {'invoiceId': id},
       );
@@ -230,8 +227,3 @@ class _TestInvoiceCleanerState extends State<TestInvoiceCleaner> {
     );
   }
 }
-
-
-
-
-
