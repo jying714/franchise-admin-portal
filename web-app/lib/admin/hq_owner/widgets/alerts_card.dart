@@ -1,7 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_admin_portal/config/app_config.dart';
+import 'package:franchise_admin_portal/config/ui_config.dart';
+import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
 
@@ -23,14 +24,9 @@ class AlertsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(
-        '[AlertsCard] build: franchiseId=$franchiseId, locationId=$locationId, userId=$userId, developerMode=$developerMode');
-
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      return const Center(child: Text('Localization missing! [debug]'));
+      return const Center(child: Text('Localization missing'));
     }
 
     final theme = Theme.of(context);
@@ -45,38 +41,38 @@ class AlertsCard extends StatelessWidget {
 
     return Card(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
       ),
-      elevation: 2,
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      elevation: DesignTokens.adminCardElevation,
+      margin: UiConfig.defaultPadding,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: UiConfig.defaultPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.notifications, color: colorScheme.primary),
+                Icon(Icons.notifications, color: DesignTokens.primaryColor),
                 const SizedBox(width: 8),
                 Text(
                   loc.dashboard_active_alerts,
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: colorScheme.primary,
+                    color: DesignTokens.primaryColor,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: Icon(Icons.filter_alt_outlined,
-                      color: colorScheme.onSurface.withOpacity(0.45)),
+                  icon: Icon(
+                    Icons.filter_alt_outlined,
+                    color: colorScheme.onSurface.withOpacity(0.45),
+                  ),
                   onPressed: null,
                   tooltip: loc.dashboard_alerts_filter_tooltip,
                 ),
               ],
             ),
             const SizedBox(height: 10),
-
-            // Fixed overflow with Expanded + ScrollView
             Expanded(
               child: StreamBuilder<List<shared.AlertModel>>(
                 stream: repo.watchActiveAlerts(
@@ -132,7 +128,7 @@ class AlertsCard extends StatelessWidget {
                             child: Text(
                               loc.dashboard_see_all_alerts,
                               style: theme.textTheme.labelLarge?.copyWith(
-                                color: colorScheme.primary,
+                                color: DesignTokens.primaryColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -177,7 +173,7 @@ class _AlertItem extends StatelessWidget {
         break;
       case 'info':
       default:
-        iconColor = colorScheme.primary;
+        iconColor = DesignTokens.primaryColor;
         icon = Icons.info_outline_rounded;
     }
 
@@ -185,7 +181,7 @@ class _AlertItem extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         children: [
-          Icon(icon, color: iconColor, size: 26),
+          Icon(icon, color: iconColor, size: DesignTokens.iconSize),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -223,7 +219,7 @@ class _AlertEmpty extends StatelessWidget {
         child: Row(
           children: [
             Icon(Icons.check_circle_outline,
-                color: Theme.of(context).colorScheme.primary, size: 24),
+                color: DesignTokens.primaryColor, size: DesignTokens.iconSize),
             const SizedBox(width: 8),
             Text(
               message,
@@ -260,7 +256,8 @@ class _AlertError extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: Row(
           children: [
-            Icon(Icons.error_outline, color: color, size: 24),
+            Icon(Icons.error_outline,
+                color: color, size: DesignTokens.iconSize),
             const SizedBox(width: 10),
             Text(
               message,

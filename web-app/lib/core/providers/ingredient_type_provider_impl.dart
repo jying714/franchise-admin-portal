@@ -88,25 +88,34 @@ class IngredientTypeProviderImpl extends ChangeNotifier
     notifyListeners();
 
     try {
-      await _firestoreService.fetchIngredientTypeIds(franchiseId);
       final fetched =
           await _firestoreService.fetchIngredientTypeIds(franchiseId);
       _ingredientTypes = fetched
           .map((id) => shared.IngredientType(
                 id: id,
-                name:
-                    id, // placeholder - replace with real name lookup if needed
+                name: id,
                 visibleInApp: true,
               ))
           .toList();
     } catch (e, stack) {
-      _error = e.toString();
-      shared.ErrorLogger.log(
-        message: 'Failed to load ingredient types',
-        stack: stack.toString(),
-        source: 'IngredientTypeProviderImpl',
-        severity: 'error',
-      );
+      if (e.toString().contains('UnimplementedError')) {
+        shared.ErrorLogger.log(
+          message:
+              'Lightweight service in admin context - ingredient types skipped',
+          stack: stack.toString(),
+          source: 'IngredientTypeProviderImpl',
+          severity: 'warning',
+        );
+        _ingredientTypes = [];
+      } else {
+        _error = e.toString();
+        shared.ErrorLogger.log(
+          message: 'Failed to load ingredient types',
+          stack: stack.toString(),
+          source: 'IngredientTypeProviderImpl',
+          severity: 'error',
+        );
+      }
     } finally {
       _loading = false;
       notifyListeners();

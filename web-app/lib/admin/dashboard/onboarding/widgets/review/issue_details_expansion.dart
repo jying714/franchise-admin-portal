@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
+import 'package:franchise_admin_portal/core/providers/onboarding_review_provider_impl.dart';
 
 /// Displays an expandable issue detail panel for each onboarding section.
 /// - Groups by severity (critical, warning, info)
@@ -55,37 +56,49 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
   }
 
   void _logReviewState(BuildContext context, {String at = ''}) {
-    final reviewProvider =
-        Provider.of<shared.OnboardingReviewProvider>(context, listen: false);
-    final issuesBySection = reviewProvider.allIssuesBySection;
+    try {
+      // listen: false is REQUIRED here because this is called from scheduler / post-frame callbacks
+      final reviewProvider =
+          Provider.of<OnboardingReviewProviderImpl>(context, listen: false);
 
-    debugPrint('[IssueDetailsExpansion] $at '
-        'sections=${widget.sectionOrder.length} '
-        'expanded=${_expanded.length}:${_expanded} '
-        'isPublishable=${reviewProvider.isPublishable} '
-        'allIssuesKeys=${issuesBySection.keys.toList()}');
+      final issuesBySection = reviewProvider.allIssuesBySection;
 
-    for (final sec in widget.sectionOrder) {
-      final list =
-          issuesBySection[sec] ?? const <shared.OnboardingValidationIssue>[];
-      final crit = list
-          .where((e) => e.severity == shared.OnboardingIssueSeverity.critical)
-          .length;
-      final warn = list
-          .where((e) => e.severity == shared.OnboardingIssueSeverity.warning)
-          .length;
-      final info = list
-          .where((e) => e.severity == shared.OnboardingIssueSeverity.info)
-          .length;
-      debugPrint('[IssueDetailsExpansion] $at section="$sec" '
-          'total=${list.length} critical=$crit warning=$warn info=$info');
+      debugPrint('[IssueDetailsExpansion] $at '
+          'sections=${widget.sectionOrder.length} '
+          'expanded=${_expanded.length}:${_expanded} '
+          'isPublishable=${reviewProvider.isPublishable} '
+          'allIssuesKeys=${issuesBySection.keys.toList()}');
+
+      for (final sec in widget.sectionOrder) {
+        final list =
+            issuesBySection[sec] ?? const <shared.OnboardingValidationIssue>[];
+        final crit = list
+            .where((e) => e.severity == shared.OnboardingIssueSeverity.critical)
+            .length;
+        final warn = list
+            .where((e) => e.severity == shared.OnboardingIssueSeverity.warning)
+            .length;
+        final info = list
+            .where((e) => e.severity == shared.OnboardingIssueSeverity.info)
+            .length;
+        debugPrint('[IssueDetailsExpansion] $at section="$sec" '
+            'total=${list.length} critical=$crit warning=$warn info=$info');
+      }
+    } catch (e, st) {
+      shared.ErrorLogger.log(
+        message: 'Failed to log review state: $e',
+        source: 'IssueDetailsExpansion._logReviewState',
+        severity: 'warning',
+        stack: st.toString(),
+        contextData: {'at': at},
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final reviewProvider =
-        Provider.of<shared.OnboardingReviewProvider>(context);
+        Provider.of<OnboardingReviewProviderImpl>(context, listen: true);
     final issuesBySection = reviewProvider.allIssuesBySection;
     final colorScheme = Theme.of(context).colorScheme;
 

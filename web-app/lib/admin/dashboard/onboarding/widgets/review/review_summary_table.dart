@@ -5,6 +5,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_impl.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider_impl.dart';
+import 'package:franchise_admin_portal/core/providers/onboarding_review_provider_impl.dart';
 
 class ReviewSummaryTable extends StatelessWidget {
   static const List<String> _sectionOrder = [
@@ -21,7 +22,7 @@ class ReviewSummaryTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final reviewProvider =
-        Provider.of<shared.OnboardingReviewProvider>(context);
+        Provider.of<OnboardingReviewProviderImpl>(context, listen: true);
     final issuesBySection = reviewProvider.allIssuesBySection;
 
     return Material(

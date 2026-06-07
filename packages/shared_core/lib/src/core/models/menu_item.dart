@@ -733,11 +733,25 @@ class MenuItem {
 
   /// Utility: All available ingredient IDs from all customization groups
   List<String> get allGroupIngredientIds {
-    if (customizationGroups == null) return [];
-    return customizationGroups!
-        .expand((group) =>
-            (group['ingredientIds'] as List<dynamic>).whereType<String>())
-        .toList();
+    if (customizationGroups == null || customizationGroups!.isEmpty) {
+      return [];
+    }
+
+    final List<String> ids = [];
+
+    for (final group in customizationGroups!) {
+      if (group == null) continue;
+      final ingredientIds = group['ingredientIds'];
+      if (ingredientIds is List) {
+        for (final id in ingredientIds) {
+          if (id is String && id.isNotEmpty) {
+            ids.add(id);
+          }
+        }
+      }
+    }
+
+    return ids;
   }
 
   /// Utility: Add-on ingredient IDs

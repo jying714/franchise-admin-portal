@@ -2,8 +2,8 @@
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/config/ui_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/role_badge.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
@@ -17,7 +17,6 @@ import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
 import 'package:franchise_admin_portal/widgets/header/settings_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/help_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.dart';
-import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 
 class OwnerHQDashboardScreen extends StatelessWidget {
   final String currentScreen;
@@ -34,28 +33,24 @@ class OwnerHQDashboardScreen extends StatelessWidget {
 
     final franchiseProvider =
         Provider.of<shared.FranchiseProvider>(context, listen: true);
-    final adminUser =
-        Provider.of<shared.AdminUserProvider>(context, listen: true).user;
+    final adminUserProvider =
+        Provider.of<shared.AdminUserProvider>(context, listen: true);
+    final adminUser = adminUserProvider.user;
 
-    // Initialize FranchiseProvider with user data (critical for hq_owner)
-    if (adminUser != null && franchiseProvider.franchiseId == 'unknown') {
+    // Ensure initialization (defensive)
+    if (adminUser != null &&
+        (franchiseProvider.franchiseId == 'unknown' ||
+            franchiseProvider.franchiseId.isEmpty)) {
       franchiseProvider.initializeWithUser(adminUser);
     }
 
-    // Strong franchise resolution
-    String franchiseId = franchiseProvider.franchiseId ??
-        adminUser?.defaultFranchise ??
-        (adminUser?.franchiseIds != null && adminUser!.franchiseIds!.isNotEmpty
-            ? adminUser.franchiseIds!.first
-            : '');
-
-    if (franchiseId.isEmpty) {
-      debugPrint(
-          '[OwnerHQDashboardScreen] WARNING: No franchiseId resolved for hq_owner');
-    } else {
-      debugPrint(
-          '[OwnerHQDashboardScreen] Resolved franchiseId: $franchiseId for user ${adminUser?.id}');
-    }
+    final franchiseId = franchiseProvider.franchiseId != 'unknown' &&
+            franchiseProvider.franchiseId.isNotEmpty
+        ? franchiseProvider.franchiseId
+        : (adminUser?.defaultFranchise ??
+            (adminUser?.franchiseIds?.isNotEmpty == true
+                ? adminUser!.franchiseIds!.first
+                : 'test'));
 
     final isMobile = MediaQuery.of(context).size.width < 800;
     final gridColumns = isMobile ? 1 : 3;
@@ -64,11 +59,12 @@ class OwnerHQDashboardScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: colorScheme.background,
       appBar: AppBar(
-        elevation: 1,
+        elevation: DesignTokens.adminCardElevation,
         title: Row(
           children: [
             const SizedBox(width: 8),
-            Icon(Icons.business_center_rounded, color: colorScheme.primary),
+            Icon(Icons.business_center_rounded,
+                color: DesignTokens.primaryColor),
             const SizedBox(width: 12),
             Text(
               loc.ownerHQDashboardTitle ?? "Franchise HQ Dashboard",
@@ -150,16 +146,16 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                 mainAxisSpacing: gap,
                 childAspectRatio: isMobile ? 1.8 : 2.4,
                 children: [
-                  MultiBrandOverviewPanel(),
+                  const MultiBrandOverviewPanel(),
                   AlertsCard(
                     franchiseId: franchiseId,
                     userId: adminUser?.id ?? '',
                   ),
-                  QuickLinksPanel(),
+                  const QuickLinksPanel(),
                 ],
               ),
               SizedBox(height: gap),
-              FutureFeaturePlaceholderPanel(),
+              const FutureFeaturePlaceholderPanel(),
             ],
           ),
         ),
@@ -185,7 +181,7 @@ class MultiBrandOverviewPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: UiConfig.defaultPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -216,7 +212,7 @@ class QuickLinksPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: UiConfig.defaultPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -263,7 +259,7 @@ class _QuickLinkTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Chip(
-        avatar: Icon(icon),
+        avatar: Icon(icon, color: DesignTokens.primaryColor),
         label: Text(label),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       ),
@@ -278,8 +274,12 @@ class FutureFeaturePlaceholderPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     return Card(
+      elevation: DesignTokens.adminCardElevation,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: UiConfig.defaultPadding,
         child: Text(loc.comingSoonFeatures ?? "Future Features - Coming Soon"),
       ),
     );

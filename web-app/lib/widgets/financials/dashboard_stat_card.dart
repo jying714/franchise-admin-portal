@@ -42,7 +42,6 @@ class DashboardStatCard<T extends num> extends StatelessWidget {
               future: getValue(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  // Loading State
                   return Column(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -51,28 +50,13 @@ class DashboardStatCard<T extends num> extends StatelessWidget {
                         valueColor: AlwaysStoppedAnimation<Color>(cardColor),
                       ),
                       const SizedBox(height: 14),
-                      Container(
-                        height: 18,
-                        width: 60,
-                        decoration: BoxDecoration(
-                          color: background.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        height: 10,
-                        width: 80,
-                        decoration: BoxDecoration(
-                          color: background.withOpacity(0.16),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
+                      Text(label,
+                          style: Theme.of(context).textTheme.titleMedium),
                     ],
                   );
                 }
+
                 if (snapshot.hasError) {
-                  // Error State
                   return Column(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -80,32 +64,18 @@ class DashboardStatCard<T extends num> extends StatelessWidget {
                       Icon(Icons.error,
                           color: Theme.of(context).colorScheme.error, size: 32),
                       const SizedBox(height: 8),
-                      Text(
-                        'Error',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
+                      Text('Error loading $label',
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.error)),
                       const SizedBox(height: 4),
-                      Flexible(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            snapshot.error.toString(),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 2,
-                          ),
-                        ),
-                      ),
+                      Text(snapshot.error.toString(),
+                          style: const TextStyle(fontSize: 12),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis),
                     ],
                   );
                 }
+
                 final value = (snapshot.data ?? (T == int ? 0 : 0.0)) as T;
                 final display =
                     formatter != null ? formatter!(value) : value.toString();
@@ -120,43 +90,22 @@ class DashboardStatCard<T extends num> extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       padding: const EdgeInsets.all(10),
-                      child: Icon(
-                        icon,
-                        color: cardColor,
-                        size: 36,
-                        semanticLabel: semanticLabel ?? label,
-                      ),
+                      child: Icon(icon, color: cardColor, size: 36),
                     ),
                     const SizedBox(height: 14),
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          display,
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: cardColor,
-                          ),
-                          semanticsLabel: display,
-                        ),
+                    Text(
+                      display,
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: cardColor,
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          label,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
+                    Text(
+                      label,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 );
@@ -168,5 +117,3 @@ class DashboardStatCard<T extends num> extends StatelessWidget {
     );
   }
 }
-
-

@@ -1,6 +1,5 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-
 // Import ALL your admin sections (ensure these files exist!)
 import 'package:franchise_admin_portal/admin/dashboard/dashboard_home_screen.dart';
 import 'package:franchise_admin_portal/admin/menu/menu_editor_screen.dart';
@@ -116,6 +115,7 @@ final List<shared.DashboardSection> sectionRegistry = [
   ),
 
   // ---- Onboarding Steps (now unified, sidebarOrder >= 100 for grouping) ----
+  // Onboarding sections (simple builders)
   shared.DashboardSection(
     key: 'onboardingMenu',
     title: 'Overview',
@@ -172,7 +172,6 @@ final List<shared.DashboardSection> sectionRegistry = [
     sidebarOrder: 106,
     showInSidebar: true,
   ),
-  // Add further onboarding/future steps here...
 ];
 
 // ---- Sidebar and Section List Utilities ----

@@ -12,10 +12,10 @@ class CashFlowForecastCard extends StatefulWidget {
   final String? brandId;
 
   const CashFlowForecastCard({
-    Key? key,
+    super.key,
     required this.franchiseId,
     this.brandId,
-  }) : super(key: key);
+  });
 
   @override
   State<CashFlowForecastCard> createState() => _CashFlowForecastCardState();
@@ -23,26 +23,11 @@ class CashFlowForecastCard extends StatefulWidget {
 
 class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
   late Future<shared.CashFlowForecast?> _forecastFuture;
-  bool _isDeveloper = false;
 
   @override
   void initState() {
     super.initState();
     _forecastFuture = _loadForecast();
-    _checkRole();
-  }
-
-  void _checkRole() {
-    final user = provider.Provider.of<shared.AdminUserProvider>(
-      context,
-      listen: false,
-    ).user;
-    final roles = user?.roles ?? [];
-    setState(() {
-      _isDeveloper = roles.contains('developer') ||
-          roles.contains('hq_owner') ||
-          roles.contains('finance_manager');
-    });
   }
 
   Future<shared.CashFlowForecast?> _loadForecast() async {
@@ -74,7 +59,16 @@ class _CashFlowForecastCardState extends State<CashFlowForecastCard> {
     final loc = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
 
-    if (!_isDeveloper) return const SizedBox.shrink();
+    final adminUser = provider.Provider.of<shared.AdminUserProvider>(
+      context,
+      listen: true,
+    ).user;
+
+    final isAllowed = adminUser?.roles?.any(
+            (r) => ['developer', 'hq_owner', 'finance_manager'].contains(r)) ??
+        false;
+
+    if (!isAllowed) return const SizedBox.shrink();
 
     return DashboardSectionCard(
       title: loc?.featureComingSoonCashFlow ?? 'Cash Flow Forecast',

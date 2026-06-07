@@ -176,32 +176,76 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      return IndexedStack(
-                        index: _selectedIndex,
-                        children: _sections.map((section) {
-                          return Builder(
-                            builder: (context) {
-                              try {
-                                return section.builder(context);
-                              } catch (e, stack) {
-                                shared.ErrorLogger.log(
-                                  message: 'Dashboard section error: $e',
-                                  source: "AdminDashboardScreen",
-                                  severity: "error",
-                                  contextData: {
-                                    'sectionTitle': section.title,
-                                    'franchiseId': franchiseId,
-                                  },
-                                );
-                                return Center(
-                                  child: Text('Section failed: $e',
-                                      style:
-                                          const TextStyle(color: Colors.red)),
-                                );
-                              }
-                            },
-                          );
-                        }).toList(),
+                      // === PROVIDER ALIASING FOR ONBOARDING SCREENS (FINAL CORRECT PLACEMENT) ===
+                      // Use the LayoutBuilder's own builder context (descendant of main.dart providers)
+                      final featureProv =
+                          Provider.of<shared.FranchiseFeatureProvider>(context,
+                              listen: false);
+                      final infoProv =
+                          Provider.of<shared.FranchiseInfoProvider>(context,
+                              listen: false);
+                      final metaProv =
+                          Provider.of<shared.IngredientMetadataProvider>(
+                              context,
+                              listen: false);
+                      final catProv = Provider.of<shared.CategoryProvider>(
+                          context,
+                          listen: false);
+                      final typeProv =
+                          Provider.of<shared.IngredientTypeProvider>(context,
+                              listen: false);
+                      final menuItemProv = Provider.of<shared.MenuItemProvider>(
+                          context,
+                          listen: false);
+                      final onboardingProg =
+                          Provider.of<shared.OnboardingProgressProvider>(
+                              context,
+                              listen: false);
+
+                      return MultiProvider(
+                        providers: [
+                          Provider<shared.FranchiseFeatureProvider>.value(
+                              value: featureProv),
+                          Provider<shared.FranchiseInfoProvider>.value(
+                              value: infoProv),
+                          Provider<shared.IngredientMetadataProvider>.value(
+                              value: metaProv),
+                          Provider<shared.CategoryProvider>.value(
+                              value: catProv),
+                          Provider<shared.IngredientTypeProvider>.value(
+                              value: typeProv),
+                          Provider<shared.MenuItemProvider>.value(
+                              value: menuItemProv),
+                          Provider<shared.OnboardingProgressProvider>.value(
+                              value: onboardingProg),
+                        ],
+                        child: IndexedStack(
+                          index: _selectedIndex,
+                          children: _sections.map((section) {
+                            return Builder(
+                              builder: (context) {
+                                try {
+                                  return section.builder(context);
+                                } catch (e, stack) {
+                                  shared.ErrorLogger.log(
+                                    message: 'Dashboard section error: $e',
+                                    source: "AdminDashboardScreen",
+                                    severity: "error",
+                                    contextData: {
+                                      'sectionTitle': section.title,
+                                      'franchiseId': franchiseId,
+                                    },
+                                  );
+                                  return Center(
+                                    child: Text('Section failed: $e',
+                                        style:
+                                            const TextStyle(color: Colors.red)),
+                                  );
+                                }
+                              },
+                            );
+                          }).toList(),
+                        ),
                       );
                     },
                   ),

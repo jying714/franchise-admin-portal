@@ -32,31 +32,41 @@ class _OnboardingCategoriesScreenState
     super.didChangeDependencies();
     if (_hasInitialized) return;
 
-    final franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false)
-            .franchiseId;
+    final franchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final franchiseId = franchiseProvider.franchiseId;
 
     if (franchiseId.isNotEmpty && franchiseId != 'unknown') {
       final provider =
           Provider.of<CategoryProviderImpl>(context, listen: false);
 
-      // Force reload from Firestore
-      provider
-          .load(
-        franchiseIdOverride: franchiseId,
-        forceReloadFromFirestore: true,
-      )
-          .then((_) {
+      // Defer load to after build phase
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
-        debugPrint(
-          '[OnboardingCategoriesScreen] ✅ Category reload complete. '
-          'Count=${provider.categories.length}',
-        );
-        setState(() {}); // Trigger UI refresh after load
+        try {
+          await provider.load(
+            franchiseIdOverride: franchiseId,
+            forceReloadFromFirestore: true,
+          );
+          if (mounted) {
+            debugPrint(
+              '[OnboardingCategoriesScreen] ✅ Category reload complete. '
+              'Count=${provider.categories.length}',
+            );
+            setState(() {}); // Safe UI refresh
+          }
+        } catch (e, st) {
+          shared.ErrorLogger.log(
+            message: 'Category load failed in onboarding screen',
+            source: 'OnboardingCategoriesScreen',
+            severity: 'error',
+            stack: st.toString(),
+          );
+        }
       });
     } else {
       debugPrint(
-        '[OnboardingCategoriesScreen] âš ï¸ Skipping load: blank/unknown franchiseId.',
+        '[OnboardingCategoriesScreen] ⚠️ Skipping load: blank/unknown franchiseId.',
       );
     }
 

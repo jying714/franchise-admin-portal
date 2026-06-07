@@ -92,15 +92,15 @@ class _RevenueStatCardState extends State<RevenueStatCard> {
                     });
                   },
                   itemBuilder: (context) => [
-                    PopupMenuItem(
+                    const PopupMenuItem(
                       value: RevenuePeriod.daily,
                       child: Text('Today'),
                     ),
-                    PopupMenuItem(
+                    const PopupMenuItem(
                       value: RevenuePeriod.weekly,
                       child: Text('This Week'),
                     ),
-                    PopupMenuItem(
+                    const PopupMenuItem(
                       value: RevenuePeriod.monthly,
                       child: Text('This Month'),
                     ),
@@ -110,7 +110,8 @@ class _RevenueStatCardState extends State<RevenueStatCard> {
               // Main KPI column, always vertically centered
               Padding(
                 padding: const EdgeInsets.all(20),
-                child: Center(
+                child: SizedBox(
+                  height: 180, // Add this to prevent collapse
                   child: FutureBuilder<double>(
                     future: _getValue(context, widget.franchiseId),
                     builder: (context, snapshot) {

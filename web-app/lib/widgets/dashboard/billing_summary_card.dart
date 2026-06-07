@@ -1,9 +1,10 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:franchise_admin_portal/config/branding_config.dart';
-import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
 import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/config/ui_config.dart';
+import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
 import 'package:intl/intl.dart';
 
 class BillingSummaryCard extends StatefulWidget {
@@ -22,20 +23,43 @@ class _BillingSummaryCardState extends State<BillingSummaryCard> {
     _summaryFuture = _fetchSummary();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final franchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
+    if (franchiseProvider.franchiseId != 'unknown' &&
+        franchiseProvider.franchiseId.isNotEmpty) {
+      _summaryFuture = _fetchSummary();
+    }
+  }
+
   Future<shared.BillingSummaryData> _fetchSummary() async {
+    if (!mounted) {
+      return shared.BillingSummaryData(
+        totalOutstanding: 0.0,
+        overdueCount: 0,
+        paidLast30Days: 0.0,
+      );
+    }
+
     try {
       final franchiseProvider = Provider.of<shared.FranchiseProvider>(
         context,
         listen: false,
       );
-
       final invoiceService = Provider.of<shared.InvoiceService>(
         context,
         listen: false,
       );
 
+      final franchiseId = franchiseProvider.franchiseId != 'unknown' &&
+              franchiseProvider.franchiseId.isNotEmpty
+          ? franchiseProvider.franchiseId
+          : 'test';
+
       final invoices = await invoiceService.getInvoices(
-        franchiseId: franchiseProvider.franchiseId ?? '',
+        franchiseId: franchiseId,
         statuses: ['unpaid', 'partial', 'open'],
       );
 
@@ -68,7 +92,11 @@ class _BillingSummaryCardState extends State<BillingSummaryCard> {
         source: 'BillingSummaryCard',
         severity: 'error',
       );
-      rethrow;
+      return shared.BillingSummaryData(
+        totalOutstanding: 0.0,
+        overdueCount: 0,
+        paidLast30Days: 0.0,
+      );
     }
   }
 
@@ -85,15 +113,22 @@ class _BillingSummaryCardState extends State<BillingSummaryCard> {
           future: _summaryFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 40),
-                child: Center(child: CircularProgressIndicator()),
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: CircularProgressIndicator(),
+                ),
               );
             }
-            if (snapshot.hasError) {
+
+            if (snapshot.hasError || !snapshot.hasData) {
               return _ErrorWidget(
                 errorMessage: localize.failedToLoadSummary,
-                onRetry: () => setState(() => _summaryFuture = _fetchSummary()),
+                onRetry: () {
+                  if (mounted) {
+                    setState(() => _summaryFuture = _fetchSummary());
+                  }
+                },
               );
             }
 
@@ -159,8 +194,8 @@ class _BillingSummaryContent extends StatelessWidget {
               icon: const Icon(Icons.payment_rounded),
               label: Text(localize.payNow),
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    BrandingConfig.accentColor ?? theme.colorScheme.primary,
+                backgroundColor: DesignTokens.primaryColor,
+                foregroundColor: Colors.white,
               ),
               onPressed: data.hasOutstanding ? () => _onPayNow(context) : null,
             ),

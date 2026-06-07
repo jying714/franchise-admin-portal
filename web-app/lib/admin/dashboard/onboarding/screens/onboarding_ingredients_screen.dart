@@ -318,40 +318,39 @@ class _OnboardingIngredientsScreenState
     super.didChangeDependencies();
     if (_hasInitialized) return;
 
-    // 1ï¸âƒ£ Capture router args ONCE
+    loc = AppLocalizations.of(context)!;
+
+    // Capture router args ONCE
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args is Map) {
       _focusIdFromArgs = (args['focusItemId'] ??
           args['ingredientId'] ??
           args['itemId']) as String?;
       final fields = args['focusFields'];
-      if (fields is List) {
-        _focusFieldsFromArgs = fields.cast<String>();
-      }
-      debugPrint(
-        '[OnboardingIngredientsScreen] Router args captured: '
-        'focusItemId=$_focusIdFromArgs, focusFields=$_focusFieldsFromArgs',
-      );
-    } else {
-      debugPrint('[OnboardingIngredientsScreen] No router args provided.');
+      if (fields is List) _focusFieldsFromArgs = fields.cast<String>();
     }
 
-    // 2ï¸âƒ£ Ensure provider data & keys exist BEFORE attempting focus
-    final provider =
-        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
-    provider.load(forceReloadFromFirestore: true).then((_) {
-      if (!mounted) return;
+    // Ensure providers exist before loading
+    try {
+      final metadataProvider = Provider.of<shared.IngredientMetadataProvider>(
+          context,
+          listen: false);
+      final typeProvider =
+          Provider.of<shared.IngredientTypeProvider>(context, listen: false);
 
-      // 3ï¸âƒ£ Try initial focus once data & keys are ready
-      _maybeApplyInitialFocus();
-
-      debugPrint(
-        '[OnboardingIngredientsScreen] âœ… Ingredient reload complete. '
-        'Count=${provider.ingredients.length}',
+      metadataProvider.load(forceReloadFromFirestore: true).then((_) {
+        if (!mounted) return;
+        _maybeApplyInitialFocus();
+        setState(() {}); // Safe UI refresh after load
+      });
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Provider access failed in didChangeDependencies',
+        stack: stack.toString(),
+        source: 'OnboardingIngredientsScreen',
+        severity: 'error',
       );
-
-      setState(() {}); // Force UI refresh after load
-    });
+    }
 
     _hasInitialized = true;
   }
@@ -360,415 +359,395 @@ class _OnboardingIngredientsScreenState
   Widget build(BuildContext context) {
     print('[OnboardingIngredientsScreen] build() called');
 
-    try {
-      final typeProvider =
-          Provider.of<shared.IngredientTypeProvider>(context, listen: false);
-      print(
-          '[OnboardingIngredientsScreen] IngredientTypeProvider FOUND: hashCode=${typeProvider.hashCode}');
-    } catch (e) {
-      print(
-          '[OnboardingIngredientsScreen] IngredientTypeProvider NOT FOUND: $e');
-    }
+    loc = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
-    try {
-      loc = AppLocalizations.of(context)!;
-      final theme = Theme.of(context);
-      final colorScheme = theme.colorScheme;
-      final provider = Provider.of<shared.IngredientMetadataProvider>(context,
-          listen: false);
-      _maybeApplyInitialFocus();
-      print(
-          '[OnboardingIngredientsScreen] IngredientMetadataProvider build() provider hashCode=${provider.hashCode}');
-      print(
-          '[Screen] build: provider.ingredients.length = ${provider.ingredients.length}');
+    // Safe provider access with proper reactivity
+    final metadataProvider =
+        Provider.of<shared.IngredientMetadataProvider>(context);
+    final typeProvider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
 
-      final groupedIngredients = provider.groupedIngredients;
-      final allIngredientsFlat = provider.ingredients;
+    _maybeApplyInitialFocus();
 
-      final allSelected =
-          _selectedIngredientIds.length == allIngredientsFlat.length &&
-              allIngredientsFlat.isNotEmpty;
-      final someSelected = _selectedIngredientIds.isNotEmpty && !allSelected;
-      print(
-          '[OnboardingIngredientsScreen] BUILD OK! INGREDIENTS: ${provider.ingredients.length}');
-      try {
-        print('[OnboardingIngredientsScreen] Scaffold building...');
-        return Scaffold(
-          appBar: AppBar(
-            backgroundColor: theme.scaffoldBackgroundColor,
-            elevation: 0,
-            iconTheme: const IconThemeData(color: Colors.black),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.of(context).pop(),
-              tooltip: loc.back,
+    print(
+        '[OnboardingIngredientsScreen] IngredientMetadataProvider FOUND - Count: ${metadataProvider.ingredients.length}');
+    print('[OnboardingIngredientsScreen] IngredientTypeProvider FOUND');
+
+    final groupedIngredients = metadataProvider.groupedIngredients;
+    final allIngredientsFlat = metadataProvider.ingredients;
+
+    final allSelected =
+        _selectedIngredientIds.length == allIngredientsFlat.length &&
+            allIngredientsFlat.isNotEmpty;
+    final someSelected = _selectedIngredientIds.isNotEmpty && !allSelected;
+
+    print(
+        '[OnboardingIngredientsScreen] BUILD OK! INGREDIENTS: ${metadataProvider.ingredients.length}');
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+          tooltip: loc.back,
+        ),
+        title: Text(
+          loc.onboardingIngredients,
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        centerTitle: false,
+        actions: [
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.data_object),
+              tooltip: loc.importExport,
+              onPressed: () {
+                final provider = Provider.of<IngredientMetadataProviderImpl>(
+                    context,
+                    listen: false);
+                IngredientMetadataJsonImportExportDialog.show(
+                    context, provider);
+              },
             ),
-            title: Text(
-              loc.onboardingIngredients,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            centerTitle: false,
-            actions: [
-              Builder(
-                builder: (context) => IconButton(
-                  icon: const Icon(Icons.data_object),
-                  tooltip: loc.importExport,
-                  onPressed: () {
-                    final provider =
-                        Provider.of<IngredientMetadataProviderImpl>(context,
-                            listen: false);
-                    IngredientMetadataJsonImportExportDialog.show(
-                        context, provider);
-                  },
-                ),
-              ),
-              Builder(
-                builder: (context) => IconButton(
-                  icon: const Icon(Icons.library_add),
-                  tooltip: loc.selectIngredientTemplate,
-                  onPressed: () async {
+          ),
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.library_add),
+              tooltip: loc.selectIngredientTemplate,
+              onPressed: () async {
+                print(
+                    '[OnboardingIngredientsScreen] Template import button pressed');
+                final franchiseId = Provider.of<shared.FranchiseProvider>(
+                        context,
+                        listen: false)
+                    .franchiseId;
+
+                // 1. Let user select and load the template ingredients (returns list or null)
+                final List<shared.IngredientMetadata>? templateIngredients =
+                    await IngredientMetadataTemplatePickerDialog.show(context);
+
+                if (templateIngredients == null || templateIngredients.isEmpty)
+                  return;
+
+                final typeProvider = Provider.of<shared.IngredientTypeProvider>(
+                    context,
+                    listen: false);
+                final existingTypeIds =
+                    typeProvider.ingredientTypes.map((t) => t.id).toSet();
+
+                // 2. Find all imported ingredients with missing types
+                final ingredientsWithMissingTypes = templateIngredients
+                    .where((ing) => !existingTypeIds.contains(ing.typeId))
+                    .toList();
+
+                List<shared.IngredientMetadata> allToImport = [];
+
+                if (ingredientsWithMissingTypes.isNotEmpty) {
+                  // 3. Show resolution dialog, block until all are mapped or skipped
+                  final resolved =
+                      await showDialog<List<shared.IngredientMetadata>>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (dialogContext) => MissingTypeResolutionDialog(
+                      ingredientsWithMissingTypes: ingredientsWithMissingTypes,
+                      availableTypes: typeProvider.ingredientTypes,
+                      dialogContext: dialogContext,
+                      onResolved: (fixed) {
+                        Navigator.of(dialogContext)
+                            .pop(fixed); // GOOD: local dialog context
+                      },
+                    ),
+                  );
+
+                  // Merge: valid+resolved
+                  allToImport = [
+                    ...templateIngredients
+                        .where((ing) => existingTypeIds.contains(ing.typeId)),
+                    if (resolved != null) ...resolved,
+                  ];
+                } else {
+                  allToImport = templateIngredients;
+                }
+
+                // 4. Add resolved/valid ingredients to provider
+                if (allToImport.isNotEmpty) {
+                  final metadataProvider =
+                      Provider.of<shared.IngredientMetadataProvider>(context,
+                          listen: false);
+                  print(
+                      '[OnboardingIngredientsScreen] About to add ${allToImport.length} imported ingredients');
+                  for (final ing in allToImport) {
                     print(
-                        '[OnboardingIngredientsScreen] Template import button pressed');
-                    final franchiseId = Provider.of<shared.FranchiseProvider>(
-                            context,
-                            listen: false)
-                        .franchiseId;
+                        '[OnboardingIngredientsScreen][DEBUG] New ingredient: id=${ing.id}, typeId=${ing.typeId}, name=${ing.name}');
+                    assert(ing.typeId != null && ing.typeId!.isNotEmpty,
+                        'ingredient typeId must not be null/empty!');
+                  }
 
-                    // 1. Let user select and load the template ingredients (returns list or null)
-                    final List<shared.IngredientMetadata>? templateIngredients =
-                        await IngredientMetadataTemplatePickerDialog.show(
-                            context);
+                  metadataProvider.addImportedIngredients(allToImport);
+                  print(
+                      '[Provider] after add, ingredients.length=${metadataProvider.ingredients.length}, staged=${metadataProvider.stagedIngredients.length}');
+                  for (final ing in metadataProvider.ingredients) {
+                    print(
+                        '[Provider][DEBUG] Stored ingredient: id=${ing.id}, typeId=${ing.typeId}, name=${ing.name}');
+                    assert(ing.typeId != null && ing.typeId!.isNotEmpty,
+                        'ingredient typeId must not be null/empty!');
+                  }
+                  print(
+                      '[OnboardingIngredientsScreen] build() after template import and dialog resolution. Ingredients: ${metadataProvider.ingredients.length}');
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    print(
+                        '[OnboardingIngredientsScreen][STACK] ModalRoute.of(context): ${ModalRoute.of(context)}');
+                    print(
+                        '[OnboardingIngredientsScreen][STACK] context.mounted: $mounted');
+                  });
 
-                    if (templateIngredients == null ||
-                        templateIngredients.isEmpty) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content:
+                          Text(loc.ingredientsImported(allToImport.length)),
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.check_circle_outline),
+              tooltip: loc.markAsComplete,
+              onPressed: _markComplete,
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: Builder(
+        builder: (context) {
+          final loc = AppLocalizations.of(context);
+          if (loc == null) {
+            debugPrint(
+                '[OnboardingIngredientsScreen] ERROR: loc is null in FAB');
+            return const SizedBox.shrink(); // Prevents crash
+          }
 
-                    final typeProvider =
-                        Provider.of<shared.IngredientTypeProvider>(context,
-                            listen: false);
-                    final existingTypeIds =
-                        typeProvider.ingredientTypes.map((t) => t.id).toSet();
-
-                    // 2. Find all imported ingredients with missing types
-                    final ingredientsWithMissingTypes = templateIngredients
-                        .where((ing) => !existingTypeIds.contains(ing.typeId))
-                        .toList();
-
-                    List<shared.IngredientMetadata> allToImport = [];
-
-                    if (ingredientsWithMissingTypes.isNotEmpty) {
-                      // 3. Show resolution dialog, block until all are mapped or skipped
-                      final resolved =
-                          await showDialog<List<shared.IngredientMetadata>>(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (dialogContext) => MissingTypeResolutionDialog(
-                          ingredientsWithMissingTypes:
-                              ingredientsWithMissingTypes,
-                          availableTypes: typeProvider.ingredientTypes,
-                          dialogContext: dialogContext,
-                          onResolved: (fixed) {
-                            Navigator.of(dialogContext)
-                                .pop(fixed); // GOOD: local dialog context
-                          },
-                        ),
-                      );
-
-                      // Merge: valid+resolved
-                      allToImport = [
-                        ...templateIngredients.where(
-                            (ing) => existingTypeIds.contains(ing.typeId)),
-                        if (resolved != null) ...resolved,
-                      ];
-                    } else {
-                      allToImport = templateIngredients;
-                    }
-
-                    // 4. Add resolved/valid ingredients to provider
-                    if (allToImport.isNotEmpty) {
+          return FloatingActionButton.extended(
+            onPressed: () => _openIngredientForm(),
+            icon: const Icon(Icons.add),
+            label: Text(loc.addIngredient),
+            backgroundColor: DesignTokens.primaryColor,
+            heroTag: 'onboarding_ingredients_fab',
+          );
+        },
+      ),
+      body: Padding(
+        padding: DesignTokens.gridPadding,
+        child: Column(
+          children: [
+            if (metadataProvider.isDirty)
+              Row(
+                children: [
+                  ElevatedButton(
+                    onPressed: () async {
+                      final franchiseId = Provider.of<shared.FranchiseProvider>(
+                              context,
+                              listen: false)
+                          .franchiseId;
                       final metadataProvider =
                           Provider.of<shared.IngredientMetadataProvider>(
                               context,
                               listen: false);
-                      print(
-                          '[OnboardingIngredientsScreen] About to add ${allToImport.length} imported ingredients');
-                      for (final ing in allToImport) {
-                        print(
-                            '[OnboardingIngredientsScreen][DEBUG] New ingredient: id=${ing.id}, typeId=${ing.typeId}, name=${ing.name}');
-                        assert(ing.typeId != null && ing.typeId!.isNotEmpty,
-                            'ingredient typeId must not be null/empty!');
-                      }
+                      final onboardingProvider =
+                          Provider.of<shared.OnboardingProgressProvider>(
+                              context,
+                              listen: false);
 
-                      metadataProvider.addImportedIngredients(allToImport);
-                      print(
-                          '[Provider] after add, ingredients.length=${metadataProvider.ingredients.length}, staged=${metadataProvider.stagedIngredients.length}');
-                      for (final ing in metadataProvider.ingredients) {
-                        print(
-                            '[Provider][DEBUG] Stored ingredient: id=${ing.id}, typeId=${ing.typeId}, name=${ing.name}');
-                        assert(ing.typeId != null && ing.typeId!.isNotEmpty,
-                            'ingredient typeId must not be null/empty!');
-                      }
-                      print(
-                          '[OnboardingIngredientsScreen] build() after template import and dialog resolution. Ingredients: ${provider.ingredients.length}');
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        print(
-                            '[OnboardingIngredientsScreen][STACK] ModalRoute.of(context): ${ModalRoute.of(context)}');
-                        print(
-                            '[OnboardingIngredientsScreen][STACK] context.mounted: $mounted');
-                      });
+                      try {
+                        await metadataProvider.saveAllChanges(franchiseId);
+                        await onboardingProvider
+                            .markStepComplete('ingredients');
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content:
-                              Text(loc.ingredientsImported(allToImport.length)),
-                        ),
-                      );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(loc.saveSuccessful)),
+                        );
+                      } catch (e, stack) {
+                        shared.ErrorLogger.log(
+                          message: 'ingredient_save_error',
+                          stack: stack.toString(),
+                          source: 'onboarding_ingredients_screen',
+                          severity: 'error',
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(loc.saveFailed)),
+                        );
+                      }
+                    },
+                    child: Text(loc.saveChanges),
+                  ),
+                  const SizedBox(width: 12),
+                  OutlinedButton(
+                    onPressed: metadataProvider.revertChanges,
+                    child: Text(loc.revertChanges),
+                  ),
+                ],
+              ),
+            const SizedBox(height: 12),
+
+            // --- Grouping & Sorting Controls ---
+            Row(
+              children: [
+                Text(loc.groupBy + ': '),
+                DropdownButton<String?>(
+                  value: metadataProvider.groupByKey,
+                  items: <DropdownMenuItem<String?>>[
+                    const DropdownMenuItem(value: null, child: Text('None')),
+                    DropdownMenuItem(value: 'type', child: Text(loc.type)),
+                    DropdownMenuItem(value: 'typeId', child: Text(loc.typeId)),
+                  ],
+                  onChanged: (val) {
+                    metadataProvider.groupByKey = val;
+                  },
+                ),
+                const SizedBox(width: 24),
+                Text(loc.sortBy + ': '),
+                DropdownButton<String>(
+                  value: metadataProvider.sortKey,
+                  items: [
+                    DropdownMenuItem(value: 'name', child: Text(loc.name)),
+                    DropdownMenuItem(
+                        value: 'description', child: Text(loc.description)),
+                    DropdownMenuItem(value: 'type', child: Text(loc.type)),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      metadataProvider.sortKey = val;
                     }
                   },
                 ),
-              ),
-              Builder(
-                builder: (context) => IconButton(
-                  icon: const Icon(Icons.check_circle_outline),
-                  tooltip: loc.markAsComplete,
-                  onPressed: _markComplete,
-                ),
-              ),
-            ],
-          ),
-          floatingActionButton: Builder(
-            builder: (context) {
-              final loc = AppLocalizations.of(context);
-              if (loc == null) {
-                debugPrint(
-                    '[OnboardingIngredientsScreen] ERROR: loc is null in FAB');
-                return const SizedBox.shrink(); // Prevents crash
-              }
-
-              return FloatingActionButton.extended(
-                onPressed: () => _openIngredientForm(),
-                icon: const Icon(Icons.add),
-                label: Text(loc.addIngredient),
-                backgroundColor: DesignTokens.primaryColor,
-                heroTag: 'onboarding_ingredients_fab',
-              );
-            },
-          ),
-          body: Padding(
-            padding: DesignTokens.gridPadding,
-            child: Column(
-              children: [
-                if (provider.isDirty)
-                  Row(
-                    children: [
-                      ElevatedButton(
-                        onPressed: () async {
-                          final franchiseId =
-                              Provider.of<shared.FranchiseProvider>(context,
-                                      listen: false)
-                                  .franchiseId;
-                          final metadataProvider =
-                              Provider.of<shared.IngredientMetadataProvider>(
-                                  context,
-                                  listen: false);
-                          final onboardingProvider =
-                              Provider.of<shared.OnboardingProgressProvider>(
-                                  context,
-                                  listen: false);
-
-                          try {
-                            await metadataProvider.saveAllChanges(franchiseId);
-                            await onboardingProvider
-                                .markStepComplete('ingredients');
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(loc.saveSuccessful)),
-                            );
-                          } catch (e, stack) {
-                            shared.ErrorLogger.log(
-                              message: 'ingredient_save_error',
-                              stack: stack.toString(),
-                              source: 'onboarding_ingredients_screen',
-                              severity: 'error',
-                            );
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(loc.saveFailed)),
-                            );
-                          }
-                        },
-                        child: Text(loc.saveChanges),
-                      ),
-                      const SizedBox(width: 12),
-                      OutlinedButton(
-                        onPressed: provider.revertChanges,
-                        child: Text(loc.revertChanges),
-                      ),
-                    ],
+                const SizedBox(width: 12),
+                IconButton(
+                  tooltip: metadataProvider.ascending
+                      ? loc.ascending
+                      : loc.descending,
+                  icon: Icon(
+                    metadataProvider.ascending
+                        ? Icons.arrow_upward
+                        : Icons.arrow_downward,
                   ),
-                const SizedBox(height: 12),
-
-                // --- Grouping & Sorting Controls ---
-                Row(
-                  children: [
-                    Text(loc.groupBy + ': '),
-                    DropdownButton<String?>(
-                      value: provider.groupByKey,
-                      items: <DropdownMenuItem<String?>>[
-                        const DropdownMenuItem(
-                            value: null, child: Text('None')),
-                        DropdownMenuItem(value: 'type', child: Text(loc.type)),
-                        DropdownMenuItem(
-                            value: 'typeId', child: Text(loc.typeId)),
-                      ],
-                      onChanged: (val) {
-                        provider.groupByKey = val;
-                      },
-                    ),
-                    const SizedBox(width: 24),
-                    Text(loc.sortBy + ': '),
-                    DropdownButton<String>(
-                      value: provider.sortKey,
-                      items: [
-                        DropdownMenuItem(value: 'name', child: Text(loc.name)),
-                        DropdownMenuItem(
-                            value: 'description', child: Text(loc.description)),
-                        DropdownMenuItem(value: 'type', child: Text(loc.type)),
-                      ],
-                      onChanged: (val) {
-                        if (val != null) {
-                          provider.sortKey = val;
-                        }
-                      },
-                    ),
-                    const SizedBox(width: 12),
-                    IconButton(
-                      tooltip:
-                          provider.ascending ? loc.ascending : loc.descending,
-                      icon: Icon(
-                        provider.ascending
-                            ? Icons.arrow_upward
-                            : Icons.arrow_downward,
-                      ),
-                      onPressed: () {
-                        provider.ascending = !provider.ascending;
-                      },
-                    )
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-
-                if (_selectedIngredientIds.isNotEmpty)
-                  Row(
-                    children: [
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.delete_forever),
-                        label: Text(loc.deleteSelected),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                        ),
-                        onPressed: _confirmBulkDelete,
-                      ),
-                      const SizedBox(width: 12),
-                      OutlinedButton(
-                        onPressed: () {
-                          setState(() {
-                            _selectedIngredientIds.clear();
-                          });
-                        },
-                        child: Text(loc.clearSelection),
-                      ),
-                    ],
-                  ),
-
-                const SizedBox(height: 12),
-
-                Expanded(
-                  child: provider.ingredients.isEmpty
-                      ? EmptyStateWidget(
-                          title: loc.noIngredientsFound,
-                          message: loc.noIngredientsMessage,
-                        )
-                      : ListView(
-                          controller: _scrollController,
-                          children: groupedIngredients.entries.map((entry) {
-                            print(
-                                '[OnboardingIngredientsScreen] Building ingredient group: ${entry.key}');
-                            final groupName = entry.key ?? loc.ungrouped;
-                            final groupItems = entry.value;
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 8.0, horizontal: 16),
-                                  child: Row(
-                                    children: [
-                                      Checkbox(
-                                        value: groupItems.every((item) =>
-                                            _selectedIngredientIds
-                                                .contains(item.id)),
-                                        onChanged: (checked) {
-                                          setState(() {
-                                            for (final item in groupItems) {
-                                              if (checked == true) {
-                                                _selectedIngredientIds
-                                                    .add(item.id);
-                                              } else {
-                                                _selectedIngredientIds
-                                                    .remove(item.id);
-                                              }
-                                            }
-                                          });
-                                        },
-                                      ),
-                                      Text(
-                                        groupName,
-                                        style: theme.textTheme.titleMedium
-                                            ?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                ...groupItems.map((item) {
-                                  final itemKey = _itemKeys.putIfAbsent(
-                                      item.id, () => GlobalKey());
-
-                                  return Container(
-                                    key: itemKey,
-                                    child: IngredientListTile(
-                                      ingredient: item,
-                                      franchiseId:
-                                          Provider.of<shared.FranchiseProvider>(
-                                                  context,
-                                                  listen: false)
-                                              .franchiseId,
-                                      onEdited: () => _openIngredientForm(item),
-                                      onRefresh: () => provider.load(),
-                                    ),
-                                  );
-                                }),
-                              ],
-                            );
-                          }).toList(),
-                        ),
-                ),
+                  onPressed: () {
+                    metadataProvider.ascending = !metadataProvider.ascending;
+                  },
+                )
               ],
             ),
-          ),
-        );
-      } catch (e, stack) {
-        print('[OnboardingIngredientsScreen] CRITICAL BUILD ERROR: $e\n$stack');
-        return Center(child: Text('Critical UI error: $e'));
-      }
-    } catch (e, stack) {
-      print('[OnboardingIngredientsScreen] build error: $e\n$stack');
-      return Center(child: Text('An error occurred: $e'));
-    }
+
+            const SizedBox(height: 12),
+
+            if (_selectedIngredientIds.isNotEmpty)
+              Row(
+                children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.delete_forever),
+                    label: Text(loc.deleteSelected),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                    ),
+                    onPressed: _confirmBulkDelete,
+                  ),
+                  const SizedBox(width: 12),
+                  OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedIngredientIds.clear();
+                      });
+                    },
+                    child: Text(loc.clearSelection),
+                  ),
+                ],
+              ),
+
+            const SizedBox(height: 12),
+
+            Expanded(
+              child: metadataProvider.ingredients.isEmpty
+                  ? EmptyStateWidget(
+                      title: loc.noIngredientsFound,
+                      message: loc.noIngredientsMessage,
+                    )
+                  : ListView(
+                      controller: _scrollController,
+                      children: groupedIngredients.entries.map((entry) {
+                        print(
+                            '[OnboardingIngredientsScreen] Building ingredient group: ${entry.key}');
+                        final groupName = entry.key ?? loc.ungrouped;
+                        final groupItems = entry.value;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 8.0, horizontal: 16),
+                              child: Row(
+                                children: [
+                                  Checkbox(
+                                    value: groupItems.every((item) =>
+                                        _selectedIngredientIds
+                                            .contains(item.id)),
+                                    onChanged: (checked) {
+                                      setState(() {
+                                        for (final item in groupItems) {
+                                          if (checked == true) {
+                                            _selectedIngredientIds.add(item.id);
+                                          } else {
+                                            _selectedIngredientIds
+                                                .remove(item.id);
+                                          }
+                                        }
+                                      });
+                                    },
+                                  ),
+                                  Text(
+                                    groupName,
+                                    style:
+                                        theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ...groupItems.map((item) {
+                              final itemKey = _itemKeys.putIfAbsent(
+                                  item.id, () => GlobalKey());
+
+                              return Container(
+                                key: itemKey,
+                                child: IngredientListTile(
+                                  ingredient: item,
+                                  franchiseId:
+                                      Provider.of<shared.FranchiseProvider>(
+                                              context,
+                                              listen: false)
+                                          .franchiseId,
+                                  onEdited: () => _openIngredientForm(item),
+                                  onRefresh: () => metadataProvider.load(),
+                                ),
+                              );
+                            }),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override

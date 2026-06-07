@@ -2,10 +2,11 @@
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_admin_portal/config/branding_config.dart';
+import 'package:franchise_admin_portal/config/ui_config.dart';
+import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
-import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl.dart'; // ← Added concrete import
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl.dart';
 
 class PayoutStatusCard extends StatelessWidget {
   const PayoutStatusCard({super.key});
@@ -77,9 +78,11 @@ class _PayoutCardContentState extends State<_PayoutCardContent> {
   }
 
   void _retry() {
-    setState(() {
-      _future = _loadPayoutStats();
-    });
+    if (mounted) {
+      setState(() {
+        _future = _loadPayoutStats();
+      });
+    }
   }
 
   @override
@@ -129,7 +132,7 @@ class _PayoutCardContentState extends State<_PayoutCardContent> {
             final topAlert = hasAlert ? payoutAlerts.first : null;
 
             return Padding(
-              padding: const EdgeInsets.all(10),
+              padding: UiConfig.defaultPadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -143,17 +146,15 @@ class _PayoutCardContentState extends State<_PayoutCardContent> {
                   ],
                   Row(
                     children: [
-                      _StatusDot(color: widget.theme.colorScheme.primary),
+                      _StatusDot(color: DesignTokens.primaryColor),
                       const SizedBox(width: 4),
                       Text("${widget.loc.pending}: $pending",
-                          style: TextStyle(
-                              color: widget.theme.colorScheme.primary)),
+                          style: TextStyle(color: DesignTokens.primaryColor)),
                       const SizedBox(width: 14),
-                      _StatusDot(color: widget.theme.colorScheme.secondary),
+                      _StatusDot(color: DesignTokens.secondaryColor),
                       const SizedBox(width: 4),
                       Text("${widget.loc.sent}: $sent",
-                          style: TextStyle(
-                              color: widget.theme.colorScheme.secondary)),
+                          style: TextStyle(color: DesignTokens.secondaryColor)),
                       const SizedBox(width: 14),
                       _StatusDot(color: widget.theme.colorScheme.error),
                       const SizedBox(width: 4),
@@ -208,13 +209,15 @@ class _AlertBanner extends StatelessWidget {
     final levelColor = alert.level == 'critical'
         ? theme.colorScheme.error
         : (alert.level == 'warning'
-            ? theme.colorScheme.secondary
-            : theme.colorScheme.primary);
+            ? DesignTokens.secondaryColor
+            : DesignTokens.primaryColor);
 
     return Card(
-      color: levelColor.withValues(alpha: 0.12),
+      color: levelColor.withOpacity(0.12),
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
+      ),
       child: ListTile(
         leading: Icon(Icons.warning_rounded, color: levelColor),
         title: Text(

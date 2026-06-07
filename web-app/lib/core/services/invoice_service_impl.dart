@@ -8,11 +8,10 @@ class InvoiceServiceImpl implements shared.InvoiceService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseFunctions _functions = FirebaseFunctions.instance;
 
+  // Updated to match common franchise subcollection pattern + platform fallback
   CollectionReference<Map<String, dynamic>> _franchiseInvoicesRef(
           String franchiseId) =>
       _firestore
-          .collection('platforms')
-          .doc('default')
           .collection('franchises')
           .doc(franchiseId)
           .collection('invoices');
@@ -39,6 +38,7 @@ class InvoiceServiceImpl implements shared.InvoiceService {
         'dueDate': dueDate ?? FieldValue.serverTimestamp(),
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
+        'franchiseId': franchiseId,
       };
 
       final ref = await _franchiseInvoicesRef(franchiseId).add(data);
@@ -166,12 +166,10 @@ class InvoiceServiceImpl implements shared.InvoiceService {
     if (statuses != null && statuses.isNotEmpty) {
       query = query.where('status', whereIn: statuses);
     }
-    if (fromDate != null) {
+    if (fromDate != null)
       query = query.where('createdAt', isGreaterThanOrEqualTo: fromDate);
-    }
-    if (toDate != null) {
+    if (toDate != null)
       query = query.where('createdAt', isLessThanOrEqualTo: toDate);
-    }
 
     return query.snapshots().map((snap) => snap.docs
         .map((doc) => shared.Invoice.fromFirestore(doc.data(), doc.id))
@@ -193,12 +191,10 @@ class InvoiceServiceImpl implements shared.InvoiceService {
       if (statuses != null && statuses.isNotEmpty) {
         query = query.where('status', whereIn: statuses);
       }
-      if (fromDate != null) {
+      if (fromDate != null)
         query = query.where('createdAt', isGreaterThanOrEqualTo: fromDate);
-      }
-      if (toDate != null) {
+      if (toDate != null)
         query = query.where('createdAt', isLessThanOrEqualTo: toDate);
-      }
 
       final snap = await query.get();
       return snap.docs

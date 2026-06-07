@@ -47,7 +47,6 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
       stream: _liveOpsStream(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          // Check for index creation link in Firestore error
           final errorStr = snapshot.error.toString();
           if (errorStr.contains('FAILED_PRECONDITION') &&
               errorStr.contains('index')) {
@@ -60,7 +59,6 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
             }
           }
 
-          // Log the error
           shared.ErrorLogger.log(
             message: 'Live ops snapshot stream error',
             stack: snapshot.error.toString(),
@@ -68,7 +66,10 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
             severity: 'error',
             contextData: {'franchiseId': franchiseId},
           );
-          return const Text('Error loading live metrics.');
+          return const Center(
+            child: Text('Error loading live metrics.',
+                style: TextStyle(color: Colors.red)),
+          );
         }
 
         if (!snapshot.hasData) {
@@ -84,7 +85,7 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
         final todayStart = DateTime(now.year, now.month, now.day);
 
         try {
-          // --- Metric calculations ---
+          // --- Safe Metric calculations ---
           final activeOrders =
               docs.where((d) => d['status'] == 'active').length;
 
@@ -129,12 +130,12 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
               : completedOrders.reduce((a, b) => a + b) /
                   completedOrders.length;
 
-          debugPrint('[LiveOperationalSnapshotWidget] Metrics â†’ '
+          debugPrint('[LiveOperationalSnapshotWidget] Metrics → '
               'Active: $activeOrders, LastHour: $recentOrders, '
               'KitchenTickets: $kitchenTickets, KitchenLoad: $kitchenLoad, '
               'RevenueToday: $todayRevenue, AvgFulfillment: $avgFulfillmentTime');
 
-          // Expanded â†’ 2Ã—3 grid
+          // Expanded → 2×3 grid
           if (expanded) {
             return GridView.count(
               crossAxisCount: 2,
@@ -160,7 +161,7 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
             );
           }
 
-          // Collapsed â†’ single compact row
+          // Collapsed → single compact row
           return Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -182,7 +183,10 @@ class LiveOperationalSnapshotWidget extends StatelessWidget {
             severity: 'error',
             contextData: {'franchiseId': franchiseId, 'docCount': docs.length},
           );
-          return const Text('Error calculating metrics.');
+          return const Center(
+            child: Text('Error calculating metrics.',
+                style: TextStyle(color: Colors.red)),
+          );
         }
       },
     );

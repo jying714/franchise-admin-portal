@@ -23,28 +23,11 @@ class FranchiseFinancialKpiCard extends StatefulWidget {
 
 class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
   late Future<Map<String, dynamic>> _kpiFuture;
-  bool _isDeveloper = false;
 
   @override
   void initState() {
     super.initState();
     _kpiFuture = _loadKpis();
-    _checkRole();
-  }
-
-  void _checkRole() {
-    // Use aliased Provider.of to bypass FeatureContextExtension.read collision
-    final user = provider.Provider.of<shared.AdminUserProvider>(
-      context,
-      listen: false,
-    ).user;
-
-    final roles = user?.roles ?? [];
-    setState(() {
-      _isDeveloper = roles.contains('developer') ||
-          roles.contains('hq_owner') ||
-          roles.contains('finance_manager');
-    });
   }
 
   Future<Map<String, dynamic>> _loadKpis() async {
@@ -83,7 +66,16 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
     final loc = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
 
-    if (!_isDeveloper) return const SizedBox.shrink();
+    final adminUser = provider.Provider.of<shared.AdminUserProvider>(
+      context,
+      listen: true,
+    ).user;
+
+    final isAllowed = adminUser?.roles?.any(
+            (r) => ['developer', 'hq_owner', 'finance_manager'].contains(r)) ??
+        false;
+
+    if (!isAllowed) return const SizedBox.shrink();
 
     return DashboardSectionCard(
       title: loc?.kpiFinancials ?? 'Financial KPIs',
@@ -104,8 +96,7 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
               return Card(
                 color: colorScheme.errorContainer,
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(DesignTokens.radiusLg), // Fixed
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
                 ),
                 child: Padding(
                   padding: EdgeInsets.all(DesignTokens.paddingMd),
@@ -189,7 +180,7 @@ class _KpiRow extends StatelessWidget {
             Text(
               label,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurface.withValues(alpha: 0.7),
+                    color: colorScheme.onSurface.withOpacity(0.7),
                   ),
             ),
             const SizedBox(height: 2),

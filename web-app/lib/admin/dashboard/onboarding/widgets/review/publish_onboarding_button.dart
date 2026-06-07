@@ -1,5 +1,5 @@
 ﻿// File: lib/admin/dashboard/onboarding/widgets/review/publish_onboarding_button.dart
-
+import 'package:franchise_admin_portal/core/providers/onboarding_review_provider_impl.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
@@ -78,7 +78,7 @@ class _PublishOnboardingButtonState extends State<PublishOnboardingButton> {
   @override
   Widget build(BuildContext context) {
     final reviewProvider =
-        Provider.of<shared.OnboardingReviewProvider>(context);
+        Provider.of<OnboardingReviewProviderImpl>(context, listen: true);
     final colorScheme = Theme.of(context).colorScheme;
     final canPublish = reviewProvider.isPublishable && !_publishing;
 

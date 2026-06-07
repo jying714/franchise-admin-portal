@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-
+import 'package:franchise_admin_portal/config/ui_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class InvoicesCard extends StatelessWidget {
@@ -16,7 +16,7 @@ class InvoicesCard extends StatelessWidget {
   final VoidCallback? onCreateInvoicePressed;
 
   const InvoicesCard({
-    Key? key,
+    super.key,
     required this.totalInvoices,
     required this.openInvoiceCount,
     required this.overdueInvoiceCount,
@@ -26,7 +26,7 @@ class InvoicesCard extends StatelessWidget {
     this.lastInvoiceDate,
     required this.onViewAllPressed,
     this.onCreateInvoicePressed,
-  }) : super(key: key);
+  });
 
   String _formatNumber(int number) {
     if (number >= 1000) return '${(number / 1000).toStringAsFixed(1)}K';
@@ -42,8 +42,6 @@ class InvoicesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[InvoicesCard] loc is null! Localization not available for this context.');
       return const SizedBox.shrink();
     }
     final colorScheme = Theme.of(context).colorScheme;
@@ -57,14 +55,15 @@ class InvoicesCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding: UiConfig.defaultPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header Row: Title + Actions
               Row(
                 children: [
-                  Icon(Icons.description_outlined, color: colorScheme.primary),
+                  Icon(Icons.description_outlined,
+                      color: DesignTokens.primaryColor),
                   const SizedBox(width: 10),
                   Text(loc.invoices ?? "Invoices",
                       style: Theme.of(context).textTheme.titleMedium),
@@ -72,7 +71,7 @@ class InvoicesCard extends StatelessWidget {
                   if (onCreateInvoicePressed != null)
                     IconButton(
                       icon: Icon(Icons.add_circle_outline,
-                          color: colorScheme.primary),
+                          color: DesignTokens.primaryColor),
                       tooltip: loc.createInvoice ?? "Create Invoice",
                       onPressed: onCreateInvoicePressed,
                       splashRadius: 20,
@@ -80,7 +79,8 @@ class InvoicesCard extends StatelessWidget {
                   Tooltip(
                     message: loc.viewAllInvoices ?? "View All Invoices",
                     child: IconButton(
-                      icon: Icon(Icons.open_in_new, color: colorScheme.primary),
+                      icon: Icon(Icons.open_in_new,
+                          color: DesignTokens.primaryColor),
                       onPressed: onViewAllPressed,
                       tooltip: loc.viewAllInvoices ?? "View All Invoices",
                       splashRadius: 20,
@@ -102,7 +102,7 @@ class InvoicesCard extends StatelessWidget {
                         label: loc.totalInvoices ?? "Total Invoices",
                         value: _formatNumber(totalInvoices),
                         icon: Icons.format_list_numbered,
-                        color: colorScheme.primary,
+                        color: DesignTokens.primaryColor,
                       ),
                       _StatTile(
                         label: loc.openInvoices ?? "Open",
@@ -169,7 +169,7 @@ class _StatTile extends StatelessWidget {
         children: [
           CircleAvatar(
             backgroundColor: color.withOpacity(0.15),
-            child: Icon(icon, color: color),
+            child: Icon(icon, color: color, size: DesignTokens.iconSize),
             radius: 18,
           ),
           const SizedBox(width: 8),

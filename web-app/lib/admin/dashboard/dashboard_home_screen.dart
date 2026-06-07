@@ -34,26 +34,56 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('[DashboardHomeScreen] Building dashboard UI');
-
-    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
+    final franchiseProvider = context.watch<shared.FranchiseProvider>();
+    final franchiseId = franchiseProvider.franchiseId ?? 'test';
     final featureProvider = context.watch<shared.FranchiseFeatureProvider>();
-    final isMobile = MediaQuery.of(context).size.width < 800;
-    final gridColumns = isMobile ? 1 : 4;
-    final gap = isMobile ? 16.0 : 24.0;
 
     if (!featureProvider.isInitialized) {
-      debugPrint('[DashboardHomeScreen] Waiting for featureProvider init...');
-      return const Center(child: CircularProgressIndicator());
+      debugPrint(
+          '[DashboardHomeScreen] Forcing feature provider initialization...');
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        try {
+          await featureProvider.initialize();
+          if (franchiseId.isNotEmpty && franchiseId != 'unknown') {
+            await featureProvider.loadLiveSnapshotFlag(franchiseId);
+          }
+          if (mounted) setState(() {});
+        } catch (e, st) {
+          shared.ErrorLogger.log(
+            message: 'DashboardHomeScreen feature init failed',
+            source: 'DashboardHomeScreen',
+            severity: 'error',
+            stack: st.toString(),
+            contextData: {'franchiseId': franchiseId},
+          );
+          if (mounted) setState(() {});
+        }
+      });
+
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Loading dashboard features...',
+                style: TextStyle(fontSize: 16)),
+          ],
+        ),
+      );
     }
 
     final liveSnapshotEnabled = featureProvider.liveSnapshotEnabled;
-    final userCanToggle = shared.UserPermissions.isPlatformPrivileged(
-          Provider.of<shared.AdminUserProvider>(context, listen: false).user,
-        ) ||
-        shared.UserPermissions.canManageSubscriptions(
-          Provider.of<shared.AdminUserProvider>(context, listen: false).user,
-        );
+    final adminUser =
+        Provider.of<shared.AdminUserProvider>(context, listen: false).user;
+    final userCanToggle =
+        shared.UserPermissions.isPlatformPrivileged(adminUser) ||
+            shared.UserPermissions.canManageSubscriptions(adminUser);
+
+    final isMobile = MediaQuery.of(context).size.width < 800;
+    final gridColumns = isMobile ? 1 : 4;
+    final gap = isMobile ? 16.0 : 24.0;
 
     return Padding(
       padding: EdgeInsets.all(gap),
@@ -91,109 +121,18 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                   child: const NotificationsPanel(),
                 ),
 
-                // ðŸ“¡ Real-Time Ops Snapshot
-                // ðŸ“¡ Real-Time Ops Snapshot
+                // Live Ops Snapshot — now safely wrapped
                 if (liveSnapshotEnabled || userCanToggle)
-                  Container(
+                  SizedBox(
                     width: isMobile
                         ? double.infinity
-                        : (_expandedSnapshot ? (290 * 2 + gap) : 290),
-                    height: _expandedSnapshot
-                        ? (3 * 120 + 2 * 12) // 3 rows + 2 gaps in expanded mode
-                        : null, // auto height when collapsed
+                        : (_expandedSnapshot ? 600 : 290),
                     child: RoleGuard(
                       requireAnyRole: ['platform_owner', 'hq_owner'],
                       featureName: 'real_time_ops_snapshot',
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Real-Time Ops Snapshot',
-                                    style:
-                                        Theme.of(context).textTheme.titleMedium,
-                                  ),
-                                  Row(
-                                    children: [
-                                      IconButton(
-                                        icon: Icon(_expandedSnapshot
-                                            ? Icons.expand_less
-                                            : Icons.expand_more),
-                                        tooltip: _expandedSnapshot
-                                            ? 'Collapse view'
-                                            : 'Expand view',
-                                        onPressed: () {
-                                          setState(() {
-                                            _expandedSnapshot =
-                                                !_expandedSnapshot;
-                                          });
-                                        },
-                                      ),
-                                      if (userCanToggle)
-                                        Switch(
-                                          value: liveSnapshotEnabled,
-                                          onChanged: (value) async {
-                                            try {
-                                              featureProvider
-                                                  .setLiveSnapshotEnabled(
-                                                      value);
-                                              final saved =
-                                                  await featureProvider
-                                                      .persistToFirestore();
-                                              debugPrint(
-                                                  '[DashboardHomeScreen] liveSnapshotEnabled persisted: $saved');
-                                              if (!saved) {
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(
-                                                  const SnackBar(
-                                                    content: Text(
-                                                        'Failed to save snapshot setting.'),
-                                                  ),
-                                                );
-                                              }
-                                            } catch (e, st) {
-                                              shared.ErrorLogger.log(
-                                                message:
-                                                    'Error updating liveSnapshotEnabled',
-                                                stack: st.toString(),
-                                                source:
-                                                    'DashboardHomeScreen.onChanged',
-                                                severity: 'error',
-                                                contextData: {
-                                                  'franchiseId': franchiseId,
-                                                  'newValue': value,
-                                                },
-                                              );
-                                            }
-                                          },
-                                        ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              if (liveSnapshotEnabled)
-                                Expanded(
-                                  // âœ… Fill vertical space when expanded
-                                  child: LiveOperationalSnapshotWidget(
-                                    franchiseId: franchiseId,
-                                    expanded: _expandedSnapshot,
-                                  ),
-                                )
-                              else
-                                Text(
-                                  'Disabled â€” enable to view live operational metrics.',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                            ],
-                          ),
-                        ),
+                      child: LiveOperationalSnapshotWidget(
+                        franchiseId: franchiseId,
+                        expanded: _expandedSnapshot,
                       ),
                     ),
                   ),
@@ -201,7 +140,7 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
             ),
             SizedBox(height: gap),
 
-            // Second row: Analytics, Urgent, Activity Feed
+            // Second row
             SizedBox(
               height: isMobile ? 780 : 270,
               child: GridView.count(

@@ -19,7 +19,7 @@ import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl
 import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider_impl.dart';
 import 'package:franchise_admin_portal/core/providers/menu_item_provider_impl.dart';
 import 'package:franchise_admin_portal/core/providers/category_provider_impl.dart';
-
+import 'package:franchise_admin_portal/core/providers/onboarding_review_provider_impl.dart';
 import 'package:franchise_admin_portal/core/services/franchise_subscription_service_impl.dart';
 import 'package:franchise_admin_portal/core/services/franchise_feature_service_impl.dart';
 import 'package:franchise_admin_portal/core/services/analytics_service_impl.dart';
@@ -95,6 +95,8 @@ void main() {
       contextData: {'library': details.library},
     );
   };
+
+  Provider.debugCheckInvalidValueType = null;
 
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
@@ -243,6 +245,42 @@ class _FranchiseAuthenticatedRootState
             ],
             supportedLocales: AppLocalizations.supportedLocales,
             home: dashboard,
+            onGenerateRoute: (settings) {
+              final name = settings.name?.toLowerCase() ?? '/';
+              debugPrint('[onGenerateRoute] Requested: $name');
+
+              if (name.contains('hq-owner') || name.contains('hq')) {
+                return MaterialPageRoute(
+                    builder: (_) => const OwnerHQDashboardScreen(
+                        currentScreen: 'owner-hq/dashboard'));
+              }
+              if (name.contains('admin')) {
+                return MaterialPageRoute(
+                    builder: (_) => const AdminDashboardScreen());
+              }
+              if (name.contains('platform-owner') ||
+                  name.contains('platform')) {
+                return MaterialPageRoute(
+                    builder: (_) => const PlatformOwnerDashboardScreen(
+                        currentScreen: 'platform-owner/dashboard'));
+              }
+              if (name.contains('developer')) {
+                return MaterialPageRoute(
+                    builder: (_) => const DeveloperDashboardScreen(
+                        currentScreen: 'developer/dashboard'));
+              }
+
+              if (name.contains('onboarding')) {
+                return MaterialPageRoute(
+                  builder: (_) => const AdminDashboardScreen(
+                    initialSectionKey: 'onboardingMenu',
+                  ),
+                );
+              }
+
+              // Fallback
+              return MaterialPageRoute(builder: (_) => dashboard);
+            },
           );
         },
       ),
@@ -297,7 +335,6 @@ class FranchiseAppRootSplit extends StatelessWidget {
           });
         }
 
-        // AUTHENTICATED - Force dashboard
         // AUTHENTICATED - Force dashboard
         return MultiProvider(
           providers: [
@@ -411,6 +448,60 @@ class FranchiseAppRootSplit extends StatelessWidget {
             Provider<shared.AnalyticsService>.value(
                 value: shared.AnalyticsServiceImpl()),
 
+            // === ALIAS SHARED INTERFACES FOR ONBOARDING + DASHBOARD SCREENS ===
+            // Use plain Provider.value (debugCheckInvalidValueType = null; suppresses the assertion)
+            Provider<shared.FranchiseFeatureProvider>.value(
+              value: FranchiseFeatureProviderImpl(
+                service: FranchiseFeatureServiceImpl(),
+                franchiseId: '',
+              ),
+            ),
+            Provider<shared.FranchiseInfoProvider>.value(
+              value: FranchiseInfoProviderImpl(
+                firestore: shared.FirestoreServiceImpl(),
+                franchiseProvider: shared.FranchiseProvider(AppLocalStorage()),
+              ),
+            ),
+            Provider<shared.IngredientMetadataProvider>.value(
+              value: IngredientMetadataProviderImpl(
+                firestore: shared.FirestoreServiceImpl(),
+                franchiseId: '',
+              ),
+            ),
+            Provider<shared.CategoryProvider>.value(
+              value: CategoryProviderImpl(
+                firestore: shared.FirestoreServiceImpl(),
+                franchiseId: '',
+              ),
+            ),
+            Provider<shared.IngredientTypeProvider>.value(
+              value: IngredientTypeProviderImpl(
+                firestoreService: shared.FirestoreServiceImpl(),
+              ),
+            ),
+            Provider<shared.MenuItemProvider>.value(
+              value: MenuItemProviderImpl(
+                firestoreService: shared.FirestoreServiceImpl(),
+                franchiseInfoProvider: FranchiseInfoProviderImpl(
+                  firestore: shared.FirestoreServiceImpl(),
+                  franchiseProvider:
+                      shared.FranchiseProvider(AppLocalStorage()),
+                ),
+              ),
+            ),
+            Provider<shared.OnboardingProgressProvider>.value(
+              value: OnboardingProgressProviderImpl(
+                firestore: shared.FirestoreServiceImpl(),
+                franchiseId: '',
+              ),
+            ),
+
+            Provider<shared.FranchiseSubscriptionProvider>.value(
+              value: FranchiseSubscriptionProviderImpl(
+                service: FranchiseSubscriptionServiceImpl(),
+                franchiseId: '',
+              ),
+            ),
             // NO duplicate StreamProvider here
           ],
           child: const FranchiseAuthenticatedRoot(),

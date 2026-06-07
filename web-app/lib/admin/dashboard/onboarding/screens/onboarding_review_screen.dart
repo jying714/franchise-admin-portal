@@ -256,8 +256,11 @@ class _OnboardingReviewContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final loc = AppLocalizations.of(context)!;
+
+    // Use concrete Impl here because the local ChangeNotifierProvider.value in build provides the Impl
     final reviewProvider =
-        Provider.of<shared.OnboardingReviewProvider>(context);
+        Provider.of<OnboardingReviewProviderImpl>(context, listen: true);
+
     final franchiseId =
         Provider.of<shared.FranchiseProvider>(context, listen: false)
             .franchiseId;
