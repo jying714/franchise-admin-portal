@@ -91,49 +91,53 @@ class InvoicesCard extends StatelessWidget {
 
               const SizedBox(height: 14),
 
-              // Stats Rows
-              Wrap(
-                spacing: 20,
-                runSpacing: 10,
-                children: [
-                  _StatTile(
-                    label: loc.totalInvoices ?? "Total Invoices",
-                    value: _formatNumber(totalInvoices),
-                    icon: Icons.format_list_numbered,
-                    color: colorScheme.primary,
+              // Stats Rows - Wrapped to prevent overflow
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Wrap(
+                    spacing: 20,
+                    runSpacing: 10,
+                    children: [
+                      _StatTile(
+                        label: loc.totalInvoices ?? "Total Invoices",
+                        value: _formatNumber(totalInvoices),
+                        icon: Icons.format_list_numbered,
+                        color: colorScheme.primary,
+                      ),
+                      _StatTile(
+                        label: loc.openInvoices ?? "Open",
+                        value: _formatNumber(openInvoiceCount),
+                        icon: Icons.pending_actions,
+                        color: Colors.orange.shade700,
+                      ),
+                      _StatTile(
+                        label: loc.overdueInvoices ?? "Overdue",
+                        value:
+                            '$overdueInvoiceCount (${overdueAmount.toStringAsFixed(2)})',
+                        icon: Icons.error_outline,
+                        color: colorScheme.error,
+                      ),
+                      _StatTile(
+                        label: loc.paidInvoices ?? "Paid",
+                        value: _formatNumber(paidInvoiceCount),
+                        icon: Icons.check_circle_outline,
+                        color: Colors.green.shade600,
+                      ),
+                      _StatTile(
+                        label: loc.outstandingBalance ?? "Outstanding",
+                        value: '\$${outstandingBalance.toStringAsFixed(2)}',
+                        icon: Icons.account_balance_wallet_outlined,
+                        color: Colors.red.shade700,
+                      ),
+                      _StatTile(
+                        label: loc.lastInvoiceDate ?? "Last Invoice",
+                        value: _formatDate(context, lastInvoiceDate),
+                        icon: Icons.calendar_today_outlined,
+                        color: colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ],
                   ),
-                  _StatTile(
-                    label: loc.openInvoices ?? "Open",
-                    value: _formatNumber(openInvoiceCount),
-                    icon: Icons.pending_actions,
-                    color: Colors.orange.shade700,
-                  ),
-                  _StatTile(
-                    label: loc.overdueInvoices ?? "Overdue",
-                    value:
-                        '$overdueInvoiceCount (${overdueAmount.toStringAsFixed(2)})',
-                    icon: Icons.error_outline,
-                    color: colorScheme.error,
-                  ),
-                  _StatTile(
-                    label: loc.paidInvoices ?? "Paid",
-                    value: _formatNumber(paidInvoiceCount),
-                    icon: Icons.check_circle_outline,
-                    color: Colors.green.shade600,
-                  ),
-                  _StatTile(
-                    label: loc.outstandingBalance ?? "Outstanding",
-                    value: '\$${outstandingBalance.toStringAsFixed(2)}',
-                    icon: Icons.account_balance_wallet_outlined,
-                    color: Colors.red.shade700,
-                  ),
-                  _StatTile(
-                    label: loc.lastInvoiceDate ?? "Last Invoice",
-                    value: _formatDate(context, lastInvoiceDate),
-                    icon: Icons.calendar_today_outlined,
-                    color: colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
@@ -190,5 +194,3 @@ class _StatTile extends StatelessWidget {
     );
   }
 }
-
-

@@ -48,7 +48,7 @@ class AdminUserProvider extends ChangeNotifier {
     if (uid == null) {
       _user = null;
       _loading = false;
-      franchiseProvider.clearFranchiseContext(); // Ensure state is reset
+      franchiseProvider.clearFranchiseContext();
       notifyListeners();
       return;
     }
@@ -57,15 +57,20 @@ class AdminUserProvider extends ChangeNotifier {
       (userDoc) async {
         _user = userDoc;
 
-        // ✅ Inject the user into FranchiseProvider so it can compute viewableFranchises
+        // Inject user into FranchiseProvider
         franchiseProvider.setAdminUser(_user);
 
-        // ✅ Fetch allowed franchises immediately after user loads
+        // CRITICAL: Initialize franchise context for HQ Owner / all roles
+        if (_user != null) {
+          await franchiseProvider.initializeWithUser(_user!);
+        }
+
+        // Fetch allowed franchises
         try {
           List<FranchiseInfo> fList;
 
           if (_user?.isPlatformOwner == true || _user?.isDeveloper == true) {
-            fList = await firestoreService.getAllFranchises(); // 🧠 must exist
+            fList = await firestoreService.getAllFranchises();
           } else {
             fList = await firestoreService
                 .getFranchisesByIds(_user?.franchiseIds ?? []);

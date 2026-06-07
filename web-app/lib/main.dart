@@ -25,7 +25,7 @@ import 'package:franchise_admin_portal/core/services/franchise_feature_service_i
 import 'package:franchise_admin_portal/core/services/analytics_service_impl.dart';
 import 'package:franchise_admin_portal/core/services/audit_log_service_impl.dart';
 import 'package:franchise_admin_portal/core/services/auth_service_impl.dart';
-
+import 'package:franchise_admin_portal/core/services/invoice_service_impl.dart';
 // === WEB-APP SCREENS & WIDGETS ===
 import 'package:franchise_admin_portal/firebase_options.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
@@ -42,6 +42,7 @@ import 'package:franchise_admin_portal/admin/franchise/franchise_selector_screen
 import 'package:franchise_admin_portal/admin/hq_owner/owner_hq_dashboard_screen.dart';
 import 'package:franchise_admin_portal/admin/owner/platform_owner_dashboard_screen.dart';
 import 'package:franchise_admin_portal/widgets/profile_gate_screen.dart';
+import 'package:franchise_admin_portal/widgets/auth_profile_listener.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart'; // Web-specific DesignTokens (returns Color)
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -146,24 +147,105 @@ class FranchiseAuthenticatedRoot extends StatefulWidget {
 class _FranchiseAuthenticatedRootState
     extends State<FranchiseAuthenticatedRoot> {
   @override
-  Widget build(BuildContext context) {
-    return Consumer<shared.FranchiseProvider>(
-      builder: (context, franchiseProvider, _) {
-        final userNotifier =
-            Provider.of<UserProfileNotifier>(context, listen: false);
-        final user = userNotifier.user;
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
 
-        if (user?.roles?.contains(shared.User.rolePlatformOwner) ?? false) {
-          return const MaterialApp(
-            home: PlatformOwnerDashboardScreen(
-                currentScreen: 'platform-owner/dashboard'),
+      final firebaseUser = Provider.of<fb_auth.User?>(context, listen: false);
+      if (firebaseUser == null) {
+        shared.ErrorLogger.log(
+          message: 'FranchiseAuthenticatedRoot: firebaseUser still null',
+          source: 'main.dart',
+          severity: 'error',
+        );
+        return;
+      }
+
+      debugPrint(
+          '[FranchiseAuthenticatedRoot] Handoff STARTED for uid: ${firebaseUser.uid}');
+
+      final userNotifier =
+          Provider.of<UserProfileNotifier>(context, listen: false);
+      final adminProvider =
+          Provider.of<shared.AdminUserProvider>(context, listen: false);
+      final franchiseProvider =
+          Provider.of<shared.FranchiseProvider>(context, listen: false);
+      final firestoreService =
+          Provider.of<shared.FirestoreService>(context, listen: false);
+
+      userNotifier.listenToUser(firebaseUser.uid);
+      adminProvider.listenToAdminUser(
+          firestoreService, firebaseUser.uid, franchiseProvider);
+
+      shared.ErrorLogger.log(
+        message: 'FranchiseAuthenticatedRoot handoff SUCCESS',
+        source: 'main.dart',
+        severity: 'info',
+        contextData: {'userId': firebaseUser.uid},
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AuthProfileListener(
+      child: Consumer<shared.AdminUserProvider>(
+        builder: (context, adminUserProvider, _) {
+          final user = adminUserProvider.user;
+          debugPrint(
+              '[FranchiseAuthenticatedRoot] Consumer rebuild - user: ${user?.id} roles: ${user?.roles}');
+
+          if (user == null) {
+            return const MaterialApp(
+              home: Scaffold(
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 24),
+                      Text('Loading dashboard...'),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+
+          Widget dashboard;
+          if (user.roles?.contains(shared.User.rolePlatformOwner) ?? false) {
+            dashboard = const PlatformOwnerDashboardScreen(
+                currentScreen: 'platform-owner/dashboard');
+          } else if (user.roles?.contains(shared.User.roleHqOwner) ?? false) {
+            dashboard = const OwnerHQDashboardScreen(
+                currentScreen: 'owner-hq/dashboard');
+          } else if (user.roles?.contains(shared.User.roleDeveloper) ?? false) {
+            dashboard = const DeveloperDashboardScreen(
+                currentScreen: 'developer/dashboard');
+          } else {
+            dashboard = const AdminDashboardScreen();
+          }
+
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Franchise Admin Portal',
+            theme: _lightTheme,
+            darkTheme: _darkTheme,
+            themeMode:
+                Provider.of<ThemeProvider>(context, listen: true).themeMode ??
+                    ThemeMode.system,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: dashboard,
           );
-        }
-        if (user?.roles?.contains(shared.User.roleHqOwner) ?? false) {
-          return const MaterialApp(home: OwnerHQDashboardScreen());
-        }
-        return FranchiseGate(child: const AdminDashboardScreen());
-      },
+        },
+      ),
     );
   }
 }
@@ -173,76 +255,59 @@ class FranchiseAppRootSplit extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final firebaseUser = Provider.of<fb_auth.User?>(context);
-    final userNotifier =
-        Provider.of<UserProfileNotifier>(context, listen: false);
-
-    if (firebaseUser != null &&
-        userNotifier.user == null &&
-        !userNotifier.loading) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => userNotifier.loadUser());
-    }
-
-    // UNAUTHENTICATED
-    if (firebaseUser == null) {
-      return Builder(builder: (ctx) {
-        final initial = getInitialUnauthRoute();
-        return MaterialApp(
-          navigatorKey: navigatorKey,
-          debugShowCheckedModeBanner: false,
-          title: 'Franchise Admin Portal',
-          theme: _lightTheme,
-          darkTheme: _darkTheme,
-          themeMode:
-              Provider.of<ThemeProvider>(context, listen: true).themeMode ??
-                  ThemeMode.system,
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          initialRoute: initial['route'] as String,
-          onGenerateRoute: (settings) {
-            final path = Uri.parse(settings.name ?? '/').path;
-            if (path == '/' || path == '/landing')
-              return MaterialPageRoute(builder: (_) => const LandingPage());
-            if (path == '/sign-in')
-              return MaterialPageRoute(builder: (_) => const SignInScreen());
-            if (path == '/invite-accept') {
-              String? token = (settings.arguments as Map?)?['token'] as String?;
-              return MaterialPageRoute(
-                  builder: (_) => InviteAcceptScreen(inviteToken: token));
-            }
-            return MaterialPageRoute(builder: (_) => const LandingPage());
-          },
-        );
-      });
-    }
-
-    // AUTHENTICATED
-    return Selector<UserProfileNotifier, bool>(
-      selector: (_, notifier) => notifier.user != null && !notifier.loading,
-      builder: (context, isUserReady, _) {
-        final franchiseProvider =
-            Provider.of<shared.FranchiseProvider>(context, listen: false);
-        final user =
-            Provider.of<UserProfileNotifier>(context, listen: false).user;
-        final requiresFranchise = user?.isFranchiseRequired ?? true;
-        final fid = franchiseProvider.franchiseId;
-        final isFranchiseReady = !requiresFranchise ||
-            (fid != null && fid.isNotEmpty && fid != 'unknown');
-
-        if (!isUserReady || !isFranchiseReady) {
-          return const MaterialApp(
-              home: Scaffold(body: Center(child: CircularProgressIndicator())));
+    return Consumer<fb_auth.User?>(
+      builder: (context, firebaseUser, _) {
+        // UNAUTHENTICATED
+        if (firebaseUser == null) {
+          return Builder(builder: (ctx) {
+            final initial = getInitialUnauthRoute();
+            return MaterialApp(
+              navigatorKey: navigatorKey,
+              debugShowCheckedModeBanner: false,
+              title: 'Franchise Admin Portal',
+              theme: _lightTheme,
+              darkTheme: _darkTheme,
+              themeMode:
+                  Provider.of<ThemeProvider>(context, listen: true).themeMode ??
+                      ThemeMode.system,
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: AppLocalizations.supportedLocales,
+              initialRoute: initial['route'] as String,
+              onGenerateRoute: (settings) {
+                final path = Uri.parse(settings.name ?? '/').path;
+                if (path == '/' || path == '/landing')
+                  return MaterialPageRoute(builder: (_) => const LandingPage());
+                if (path == '/sign-in')
+                  return MaterialPageRoute(
+                      builder: (_) => const SignInScreen());
+                if (path == '/invite-accept') {
+                  String? token =
+                      (settings.arguments as Map?)?['token'] as String?;
+                  return MaterialPageRoute(
+                      builder: (_) => InviteAcceptScreen(inviteToken: token));
+                }
+                return MaterialPageRoute(builder: (_) => const LandingPage());
+              },
+            );
+          });
         }
 
+        // AUTHENTICATED - Force dashboard
+        // AUTHENTICATED - Force dashboard
         return MultiProvider(
           providers: [
+            // === Core Providers (Critical for HQ/Owner dashboards) ===
             ChangeNotifierProvider(create: (_) => shared.AdminUserProvider()),
+            Provider<shared.InvoiceService>(
+              create: (_) => InvoiceServiceImpl(),
+            ),
+
+            // === Franchise & Subscription ===
             ChangeNotifierProxyProvider<shared.FranchiseProvider,
                 FranchiseSubscriptionProviderImpl>(
               create: (_) => FranchiseSubscriptionProviderImpl(
@@ -260,6 +325,8 @@ class FranchiseAppRootSplit extends StatelessWidget {
             ),
             ChangeNotifierProvider(
                 create: (_) => PlatformPlanSelectionProviderImpl()),
+
+            // === Franchise Info & Features ===
             ChangeNotifierProxyProvider2<shared.FranchiseProvider,
                 shared.FirestoreService, FranchiseInfoProviderImpl>(
               create: (_) => FranchiseInfoProviderImpl(
@@ -284,6 +351,8 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 return p;
               },
             ),
+
+            // === Onboarding, Menu, Categories, Ingredients ===
             ChangeNotifierProxyProvider2<shared.FirestoreService,
                 shared.FranchiseProvider, OnboardingProgressProviderImpl>(
               create: (_) => OnboardingProgressProviderImpl(
@@ -335,15 +404,16 @@ class FranchiseAppRootSplit extends StatelessWidget {
                   prev ?? IngredientTypeProviderImpl(firestoreService: fs)
                     ..franchiseId = fp.franchiseId ?? '',
             ),
+
+            // === Logging & Analytics ===
             Provider<shared.AuditLogService>.value(
                 value: AuditLogServiceImpl()),
             Provider<shared.AnalyticsService>.value(
                 value: shared.AnalyticsServiceImpl()),
-            StreamProvider<fb_auth.User?>.value(
-                value: fb_auth.FirebaseAuth.instance.authStateChanges(),
-                initialData: null),
+
+            // NO duplicate StreamProvider here
           ],
-          child: FranchiseAuthenticatedRoot(key: ValueKey(firebaseUser?.uid)),
+          child: const FranchiseAuthenticatedRoot(),
         );
       },
     );

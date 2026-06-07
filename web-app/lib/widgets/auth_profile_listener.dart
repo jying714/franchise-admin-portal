@@ -85,6 +85,8 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
     fb_auth.User? firebaseUser,
     shared.FranchiseProvider franchiseProvider,
   ) {
+    if (!mounted) return;
+
     final user = notifier.user;
     if (_navigated ||
         firebaseUser == null ||
@@ -93,24 +95,28 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
       return;
     }
 
-    if (user.status.toLowerCase() != 'active') {
+    // Skip navigation for HQ Owner since we are already in the correct dashboard
+    if (user.isHqOwner || user.isHqManager) {
       _navigated = true;
-      Navigator.of(context).pushReplacementNamed('/unauthorized');
+      debugPrint(
+          '[AuthProfileListener] HQ Owner detected - skipping navigation');
       return;
     }
 
-    if (user.isHqOwner || user.isHqManager) {
+    if (user.status.toLowerCase() != 'active') {
       _navigated = true;
-      Navigator.of(context).pushReplacementNamed('/hq-owner/dashboard');
+      if (mounted) Navigator.of(context).pushReplacementNamed('/unauthorized');
       return;
     }
 
     if (user.isDeveloper) {
       final selected = franchiseProvider.isFranchiseSelected;
       _navigated = true;
-      Navigator.of(context).pushReplacementNamed(
-        selected ? '/developer/dashboard' : '/developer/select-franchise',
-      );
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed(
+          selected ? '/developer/dashboard' : '/developer/select-franchise',
+        );
+      }
       return;
     }
 
@@ -118,14 +124,16 @@ class _AuthProfileListenerState extends State<AuthProfileListener> {
       final lockedId = user.defaultFranchise;
       if (lockedId == null || lockedId.isEmpty) {
         _navigated = true;
-        Navigator.of(context).pushReplacementNamed('/unauthorized');
+        if (mounted)
+          Navigator.of(context).pushReplacementNamed('/unauthorized');
         return;
       }
       if (franchiseProvider.franchiseId != lockedId) {
         franchiseProvider.setFranchiseId(lockedId);
       }
       _navigated = true;
-      Navigator.of(context).pushReplacementNamed('/admin/dashboard');
+      if (mounted)
+        Navigator.of(context).pushReplacementNamed('/admin/dashboard');
       return;
     }
   }

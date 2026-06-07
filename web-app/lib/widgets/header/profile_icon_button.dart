@@ -1,4 +1,4 @@
-﻿﻿import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 // Mobile canonical in mobile_app/lib/widgets/header/.

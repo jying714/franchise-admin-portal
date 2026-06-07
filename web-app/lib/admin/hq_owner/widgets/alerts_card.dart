@@ -75,66 +75,73 @@ class AlertsCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            StreamBuilder<List<shared.AlertModel>>(
-              stream: repo.watchActiveAlerts(
-                franchiseId: franchiseId,
-                locationId: locationId,
-                developerMode: developerMode,
+
+            // Fixed overflow with Expanded + ScrollView
+            Expanded(
+              child: StreamBuilder<List<shared.AlertModel>>(
+                stream: repo.watchActiveAlerts(
+                  franchiseId: franchiseId,
+                  locationId: locationId,
+                  developerMode: developerMode,
+                ),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    shared.ErrorLogger.log(
+                      message:
+                          'Failed to load active alerts: ${snapshot.error}',
+                      stack: snapshot.stackTrace?.toString(),
+                      source: 'AlertsCard',
+                      severity: 'error',
+                      contextData: {
+                        'franchiseId': franchiseId,
+                        'locationId': locationId,
+                        'userId': userId,
+                        'developerMode': developerMode,
+                      },
+                    );
+                    return _AlertError(
+                      message: loc.dashboard_alerts_error,
+                      color: colorScheme.error,
+                    );
+                  }
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return _AlertLoading(color: colorScheme.primary);
+                  }
+
+                  final alerts = snapshot.data ?? [];
+
+                  if (alerts.isEmpty) {
+                    return _AlertEmpty(message: loc.dashboard_no_active_alerts);
+                  }
+
+                  return SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ...alerts.take(3).map(
+                              (alert) => _AlertItem(
+                                alert: alert,
+                                colorScheme: colorScheme,
+                                loc: loc,
+                              ),
+                            ),
+                        if (alerts.length > 3)
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.of(context).pushNamed('/alerts'),
+                            child: Text(
+                              loc.dashboard_see_all_alerts,
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
               ),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  shared.ErrorLogger.log(
-                    message: 'Failed to load active alerts: ${snapshot.error}',
-                    stack: snapshot.stackTrace?.toString(),
-                    source: 'AlertsCard',
-                    severity: 'error',
-                    contextData: {
-                      'franchiseId': franchiseId,
-                      'locationId': locationId,
-                      'userId': userId,
-                      'developerMode': developerMode,
-                    },
-                  );
-                  return _AlertError(
-                    message: loc.dashboard_alerts_error,
-                    color: colorScheme.error,
-                  );
-                }
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return _AlertLoading(color: colorScheme.primary);
-                }
-
-                final alerts = snapshot.data ?? [];
-
-                if (alerts.isEmpty) {
-                  return _AlertEmpty(message: loc.dashboard_no_active_alerts);
-                }
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ...alerts.take(3).map(
-                          (alert) => _AlertItem(
-                            alert: alert,
-                            colorScheme: colorScheme,
-                            loc: loc,
-                          ),
-                        ),
-                    if (alerts.length > 3)
-                      TextButton(
-                        onPressed: () =>
-                            Navigator.of(context).pushNamed('/alerts'),
-                        child: Text(
-                          loc.dashboard_see_all_alerts,
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: colorScheme.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              },
             ),
           ],
         ),

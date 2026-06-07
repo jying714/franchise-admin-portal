@@ -31,9 +31,31 @@ class OwnerHQDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
-    final franchiseProvider = Provider.of<shared.FranchiseProvider>(context);
-    final user = Provider.of<shared.AdminUserProvider>(context).user;
-    final franchiseId = franchiseProvider.franchiseId ?? '';
+
+    final franchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: true);
+    final adminUser =
+        Provider.of<shared.AdminUserProvider>(context, listen: true).user;
+
+    // Initialize FranchiseProvider with user data (critical for hq_owner)
+    if (adminUser != null && franchiseProvider.franchiseId == 'unknown') {
+      franchiseProvider.initializeWithUser(adminUser);
+    }
+
+    // Strong franchise resolution
+    String franchiseId = franchiseProvider.franchiseId ??
+        adminUser?.defaultFranchise ??
+        (adminUser?.franchiseIds != null && adminUser!.franchiseIds!.isNotEmpty
+            ? adminUser.franchiseIds!.first
+            : '');
+
+    if (franchiseId.isEmpty) {
+      debugPrint(
+          '[OwnerHQDashboardScreen] WARNING: No franchiseId resolved for hq_owner');
+    } else {
+      debugPrint(
+          '[OwnerHQDashboardScreen] Resolved franchiseId: $franchiseId for user ${adminUser?.id}');
+    }
 
     final isMobile = MediaQuery.of(context).size.width < 800;
     final gridColumns = isMobile ? 1 : 3;
@@ -60,7 +82,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
             const SizedBox(width: 14),
             DashboardSwitcherDropdown(
               currentScreen: currentScreen,
-              user: user!,
+              user: adminUser!,
             ),
             const SizedBox(width: 8),
             NotificationsIconButton(),
@@ -89,9 +111,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                 children: [
                   ConstrainedBox(
                     constraints: const BoxConstraints(minHeight: 180),
-                    child: FranchiseFinancialKpiCard(
-                      franchiseId: franchiseId,
-                    ),
+                    child: FranchiseFinancialKpiCard(franchiseId: franchiseId),
                   ),
                   ConstrainedBox(
                     constraints: const BoxConstraints(minHeight: 220),
@@ -100,7 +120,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                   ConstrainedBox(
                     constraints: const BoxConstraints(minHeight: 220),
                     child: InvoicesCard(
-                      totalInvoices: 0, // TODO: Replace with real data
+                      totalInvoices: 0,
                       openInvoiceCount: 0,
                       overdueInvoiceCount: 0,
                       overdueAmount: 0.0,
@@ -133,7 +153,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                   MultiBrandOverviewPanel(),
                   AlertsCard(
                     franchiseId: franchiseId,
-                    userId: user?.id ?? '',
+                    userId: adminUser?.id ?? '',
                   ),
                   QuickLinksPanel(),
                 ],

@@ -5,6 +5,7 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_section_card.dart';
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
+import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl.dart'; // ← Added concrete import
 
 class PayoutStatusCard extends StatelessWidget {
   const PayoutStatusCard({super.key});
@@ -12,20 +13,16 @@ class PayoutStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
-    if (loc == null) {
-      return const SizedBox.shrink();
-    }
+    if (loc == null) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
     final franchiseProvider = context.watch<shared.FranchiseProvider>();
     final franchiseId = franchiseProvider.franchiseId;
     final colorScheme = theme.colorScheme;
 
-    // Role guard using shared provider
-    final userProfile = Provider.of<shared.UserProfileProvider>(
-      context,
-      listen: false,
-    );
+    // Use concrete impl + null guard
+    final userProfile =
+        Provider.of<UserProfileNotifier>(context, listen: false);
     final user = userProfile.user;
 
     if (user == null ||
@@ -215,7 +212,7 @@ class _AlertBanner extends StatelessWidget {
             : theme.colorScheme.primary);
 
     return Card(
-      color: levelColor.withValues(alpha: 0.12), // Fixed deprecated withOpacity
+      color: levelColor.withValues(alpha: 0.12),
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
       child: ListTile(

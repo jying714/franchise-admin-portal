@@ -19,12 +19,7 @@ class PlatformFinancialKpiRow extends StatelessWidget {
 
   String _formatCurrency(BuildContext context, double value) {
     final loc = AppLocalizations.of(context);
-    if (loc == null) {
-      print(
-          '[PlatformFinancialKpiRow] loc is null! Localization not available for this context.');
-      // Return a sensible string fallback, NOT a widget:
-      return '--'; // Or value.toStringAsFixed(2)
-    }
+    if (loc == null) return value.toStringAsFixed(2);
     return loc.currencyFormat(value);
   }
 
@@ -32,57 +27,45 @@ class PlatformFinancialKpiRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[Platform financial KIP row BUILD] loc is null! Localization not available for this context.');
-      // Handle gracefully or show fallback UI
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
-      );
+      return const Center(child: Text('Localization missing! [debug]'));
     }
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     final kpis = [
       _KpiBlock(
-        label: loc.platformKpiMrr,
-        value: _formatCurrency(context, mrr),
-        color: BrandingConfig.brandRed,
-      ),
+          label: loc.platformKpiMrr,
+          value: _formatCurrency(context, mrr),
+          color: BrandingConfig.brandRed),
       _KpiBlock(
-        label: loc.platformKpiArr,
-        value: _formatCurrency(context, arr),
-        color: theme.colorScheme.secondary,
-      ),
+          label: loc.platformKpiArr,
+          value: _formatCurrency(context, arr),
+          color: colorScheme.secondary),
       _KpiBlock(
-        label: loc.platformKpiActiveFranchises,
-        value: activeFranchises.toString(),
-        color: theme.colorScheme.primary,
-      ),
+          label: loc.platformKpiActiveFranchises,
+          value: activeFranchises.toString(),
+          color: colorScheme.primary),
       _KpiBlock(
-        label: loc.platformKpiRecentPayouts,
-        value: _formatCurrency(context, recentPayouts),
-        color: theme.colorScheme.tertiary,
-      ),
-      // ðŸ’¡ Future Feature Placeholder (uncomment as needed)
-      // _KpiBlock(label: loc.platformKpiChurn, value: "...", color: Colors.orange),
+          label: loc.platformKpiRecentPayouts,
+          value: _formatCurrency(context, recentPayouts),
+          color: colorScheme.tertiary ?? colorScheme.secondary),
     ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth > 800;
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 0),
+          padding: const EdgeInsets.symmetric(vertical: 2.0),
           child: isWide
               ? Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: kpis,
-                )
+                  children: kpis)
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: kpis
                       .map((w) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: w,
-                          ))
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: w))
                       .toList(),
                 ),
         );
@@ -96,26 +79,21 @@ class _KpiBlock extends StatelessWidget {
   final String value;
   final Color color;
 
-  const _KpiBlock({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+  const _KpiBlock(
+      {required this.label, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Container(
       constraints: const BoxConstraints(minWidth: 120),
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.07),
+        color: color.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(DesignTokens.cardBorderRadiusSmall),
-        border: Border.all(
-          color: color.withOpacity(0.22),
-          width: 1.5,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.22), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,10 +101,7 @@ class _KpiBlock extends StatelessWidget {
           Text(
             value,
             style: theme.textTheme.titleLarge?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.5,
-            ),
+                color: color, fontWeight: FontWeight.w700, letterSpacing: -0.5),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -134,9 +109,8 @@ class _KpiBlock extends StatelessWidget {
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: color.withOpacity(0.9),
-              fontWeight: FontWeight.w500,
-            ),
+                color: color.withValues(alpha: 0.9),
+                fontWeight: FontWeight.w500),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -145,5 +119,3 @@ class _KpiBlock extends StatelessWidget {
     );
   }
 }
-
-

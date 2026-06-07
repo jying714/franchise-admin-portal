@@ -1,74 +1,61 @@
 # Comprehensive Project Analysis & Current State
 **Doughboys Pizzeria Franchise Platform**  
-**Last Updated**: May 30, 2026  
-**Status**: Option B Complete | P1 Cleanup In Progress
+**Last Updated**: June 06, 2026  
+**Status**: P2.5 Web-App Cleanup Sprint COMPLETE
 
 ## 1. Executive Summary
-The project has made significant progress from a fragmented, error-prone state to a stable core ordering flow on the new shared_core architecture.
+The project has successfully transitioned from a fragmented state with persistent login spinner and provider handoff issues to a stable, production-ready admin dashboard foundation.
 
-**Key Achievements (May 28–30, 2026)**:
-- **Option B (Core Ordering Flow)**: Fully complete and device-tested on Samsung S25.
-- **FranchiseProvider Unification**: Local duplicate removed — shared_core is now the single source of truth.
-- **src/ Imports Cleanup**: ~41 direct `src/` imports eliminated across 6 batches.
-- **Duplicated Models Cleanup**: Address, Banner, Category, MenuItem, Order, FeedbackEntry, ScheduledOrder, etc., cleaned and moved to shared_core.
-- **FirestoreServiceImpl Hardening**: All fallback logic removed.
-- Git hygiene maintained with dedicated branch and consistent commits.
+**Key Achievements (June 01–06, 2026)**:
+- Critical auth handoff & persistent spinner fully resolved (`main.dart`, `sign_in_screen.dart`, `AuthProfileListener`, `FranchiseAuthenticatedRoot`).
+- `AdminUserProvider` + `FranchiseProvider` synchronization stabilized with reliable `initializeWithUser` call.
+- `hq_owner` login now loads correctly with `franchiseId: "test"`.
+- Large-scale surgical cleanup of duplicated widgets, type conflicts, deprecated APIs, and RenderFlex overflows.
+- Firestore security rules iteratively refined for proper `hq_owner` access.
+- Comprehensive logging and error handling improvements across auth flow.
 
-**Current Maturity**: Late Alpha / Early Beta.  
-Core customer flow is stable. Admin portal is feature-rich but needs further architectural work.
+**Current Maturity**: Late Alpha → Early Beta.  
+Core admin dashboard and auth infrastructure are now stable.
 
-## 2. Project Vision & Business Objective
-Single multi-tenant white-label Flutter app (one published binary for Android + iOS) that can serve unlimited restaurants/franchises.  
-Long-term goal: Scalable platform for rapid client onboarding, undercutting competitors via AI development speed and shared_core architecture.
+## 2. Project Vision & Business Objective (Unchanged)
+Single multi-tenant white-label Flutter app (one published binary) that can serve unlimited franchises.  
+Long-term goal: Scalable platform for rapid client onboarding using AI speed and shared_core architecture.
 
-## 3. Non-Negotiable Technical Rules
+## 3. Non-Negotiable Technical Rules (Strictly Enforced)
 - All customer data scoped under `franchises/{franchiseId}/...`
-- `shared_core` = single source of truth for models, services, providers.
+- FirestoreService: Strict 3-tier split.
+- FranchiseProvider: Central state manager for franchise + branding.
 - Use `import 'package:shared_core/shared_core.dart' as shared;`
-- `UiConfig` for Flutter types. `DesignTokens` for pure scalars only.
-- Git hygiene: `flutter clean && flutter pub get && flutter gen-l10n && flutter analyze` after major changes.
+- `UiConfig` for Flutter types, `DesignTokens` for scalars only.
+- Git hygiene: Dedicated branch + full `flutter clean && flutter pub get && flutter gen-l10n && flutter analyze` after changes.
 
-## 4. Major Architecture Achievements
-- FirestoreService 3-tier split fully enforced.
-- FranchiseProvider unification complete.
-- Systematic src/ imports cleanup (6 batches).
-- Duplicated models largely resolved.
-- End-to-end ordering flow stable on device (no fallback spam).
-- Git branch `fix/core-flow-stabilization-phase1` contains all work.
+## 4. Major Architecture Achievements (P2.5)
+- Auth flow handoff stabilized (no more null `firebaseUser` in authenticated root).
+- `FranchiseProvider.initializeWithUser` reliably called from `AdminUserProvider`.
+- `OwnerHQDashboardScreen` now correctly resolves `franchiseId`.
+- Multiple RenderFlex overflows fixed with `Expanded` + `SingleChildScrollView`.
+- Security rules updated for `hq_owner` access to franchise data.
 
-## 5. Current Status (May 30, 2026)
-- **Option B**: COMPLETE ✅
-- **P1 (Cleanup & Polish)**: In progress (src/ imports and duplicated models largely done).
-- Remaining focus: Duplicated widgets, Profile + Loyalty polish, log spam reduction.
-- Git: Clean commits, up-to-date branch.
+## 5. Current Status (June 06, 2026)
+- **P2.5 Web-App Cleanup Sprint**: COMPLETE ✅
+- Dashboard loads for `hq_owner` with correct franchise context.
+- Remaining minor work: Final card permission validation after rules publish + any lingering UI polish.
 
-## 6. Key Files & Architecture Notes
-- `packages/shared_core/` → Single source of truth.
-- `mobile_app/lib/main.dart` → App bootstrap + providers.
-- `mobile_app/lib/core/providers/franchise_provider.dart` → Thin wrapper (now clean).
-- `mobile_app/lib/config/ui_config.dart` → Mobile UI bridge.
-- Planning documents: `p1-cleanup-and-shared-core-migration-plan.md`
+## 6. Next Priorities (Immediate)
+1. Publish latest Firestore rules and validate cards (`AlertsCard`, `BillingSummaryCard`, `InvoicesCard`).
+2. Final Tier 1 widget polish and full `flutter analyze`.
+3. Production build + Samsung S25 testing.
+4. Move to **P3 – Advanced Features & Production Readiness**.
 
-## 7. Next Priorities (P1)
-1. Finish duplicated widgets cleanup.
-2. Profile screen + order history / loyalty foundations.
-3. Reduce log spam.
-4. Full regression test on Samsung S25.
-5. Move to P2 (White-Label features).
-
-## 8. Future Milestones
-- Dynamic theming & white-label support.
-- QR code / deep linking.
-- Complete franchise-aware loyalty & favorites.
-- Firebase security rules final hardening.
-- Admin dashboard improvements + test suite.
+## 7. Future Milestones (P3)
+- Real payment gateway + webhooks.
+- Full white-label onboarding flow.
+- Comprehensive test suite + CI/CD.
+- App Store / Play Store readiness.
+- Advanced analytics and multi-location support.
 
 ---
 
-**This document is the single source of truth for project state and should be referenced in all future Grok / Heavy CLI sessions.**
+**This document is the single source of truth for project state and should be referenced in all future sessions.**
 
-**Last Major Updates**:
-- May 30, 2026: Completed src/ imports cleanup (6 batches) and duplicated models cleanup.
-- Option B officially closed.
-
-**Generated during active development sessions with Grok.**
+**Generated & Maintained with Grok Project Manager.**

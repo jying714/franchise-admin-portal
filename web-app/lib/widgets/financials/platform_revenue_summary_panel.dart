@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
@@ -21,13 +21,11 @@ class _PlatformRevenueSummaryPanelState
   bool _error = false;
   String? _errorMsg;
 
-  // Revenue Overview Data (Top Row)
   double totalRevenueYtd = 0;
   double subscriptionRevenue = 0;
   double royaltyRevenue = 0;
   double overdueAmount = 0;
 
-  // KPIs (Second Row)
   double mrr = 0;
   double arr = 0;
   int activeFranchises = 0;
@@ -40,6 +38,7 @@ class _PlatformRevenueSummaryPanelState
   }
 
   Future<void> _loadPlatformFinancials() async {
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = false;
@@ -47,35 +46,30 @@ class _PlatformRevenueSummaryPanelState
     });
 
     try {
-      // You should implement/extend these methods in firestore_service.dart
       final fs = Provider.of<shared.FirestoreService>(context, listen: false);
       final financials = await fs.fetchPlatformRevenueOverview();
       final kpis = await fs.fetchPlatformFinancialKpis();
 
+      if (!mounted) return;
       setState(() {
-        totalRevenueYtd = financials.totalRevenueYtd;
-        subscriptionRevenue = financials.subscriptionRevenue;
-        royaltyRevenue = financials.royaltyRevenue;
-        overdueAmount = financials.overdueAmount;
+        totalRevenueYtd = financials?.totalRevenueYtd ?? 0;
+        subscriptionRevenue = financials?.subscriptionRevenue ?? 0;
+        royaltyRevenue = financials?.royaltyRevenue ?? 0;
+        overdueAmount = financials?.overdueAmount ?? 0;
 
-        mrr = kpis.mrr;
-        arr = kpis.arr;
-        activeFranchises = kpis.activeFranchises;
-        recentPayouts = kpis.recentPayouts;
+        mrr = kpis?.mrr ?? 0;
+        arr = kpis?.arr ?? 0;
+        activeFranchises = kpis?.activeFranchises ?? 0;
+        recentPayouts = kpis?.recentPayouts ?? 0;
         _loading = false;
       });
     } catch (e, stack) {
+      if (!mounted) return;
       shared.ErrorLogger.log(
         message: e.toString(),
         stack: stack.toString(),
         source: 'PlatformRevenueSummaryPanel',
         severity: 'error',
-        contextData: {
-          'userEmail':
-              Provider.of<shared.AdminUserProvider>(context, listen: false)
-                  .user
-                  ?.email,
-        },
       );
       setState(() {
         _error = true;
@@ -89,21 +83,12 @@ class _PlatformRevenueSummaryPanelState
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
-      print(
-          '[PlatformRevenueSummaryPanel] loc is null! Localization not available for this context.');
-      return Card(
-        color: Colors.red.shade100,
+      return const Card(
+        color: Colors.red,
         child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Row(
-            children: [
-              Icon(Icons.error, color: Colors.red),
-              const SizedBox(width: 12),
-              Expanded(
-                  child: Text('Localization missing! [debug]',
-                      style: TextStyle(color: Colors.red))),
-            ],
-          ),
+          padding: EdgeInsets.all(24),
+          child: Text('Localization missing!',
+              style: TextStyle(color: Colors.white)),
         ),
       );
     }
@@ -112,7 +97,7 @@ class _PlatformRevenueSummaryPanelState
 
     return Card(
       elevation: 0,
-      margin: EdgeInsets.symmetric(vertical: 12, horizontal: 0),
+      margin: const EdgeInsets.symmetric(vertical: 12),
       color:
           isDark ? theme.colorScheme.surfaceVariant : theme.colorScheme.surface,
       shape: RoundedRectangleBorder(
@@ -132,35 +117,24 @@ class _PlatformRevenueSummaryPanelState
             ),
             const SizedBox(height: 12),
             if (_loading)
-              Center(child: CircularProgressIndicator())
+              const Center(child: CircularProgressIndicator())
             else if (_error)
               Column(
                 children: [
-                  Text(
-                    loc.genericErrorOccurred,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.error,
-                    ),
-                  ),
+                  Text(loc.genericErrorOccurred,
+                      style: TextStyle(color: theme.colorScheme.error)),
                   if (_errorMsg != null)
-                    Text(
-                      _errorMsg!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.error,
-                      ),
-                    ),
-                  const SizedBox(height: 10),
+                    Text(_errorMsg!,
+                        style: TextStyle(color: theme.colorScheme.error)),
                   ElevatedButton(
-                    onPressed: _loadPlatformFinancials,
-                    child: Text(loc.retry),
-                  ),
+                      onPressed: _loadPlatformFinancials,
+                      child: Text(loc.retry)),
                 ],
               )
             else
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top Row: Revenue Overview
                   PlatformRevenueStatsRow(
                     totalRevenueYtd: totalRevenueYtd,
                     subscriptionRevenue: subscriptionRevenue,
@@ -168,25 +142,12 @@ class _PlatformRevenueSummaryPanelState
                     overdueAmount: overdueAmount,
                   ),
                   const SizedBox(height: 24),
-                  // Second Row: KPIs and Projections
                   PlatformFinancialKpiRow(
                     mrr: mrr,
                     arr: arr,
                     activeFranchises: activeFranchises,
                     recentPayouts: recentPayouts,
                   ),
-                  const SizedBox(height: 10),
-                  // Future Feature Placeholder
-                  if (false)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 18.0),
-                      child: Text(
-                        '[Future: SaaS Churn Rate, Growth Cohorts, ARPU]',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: theme.colorScheme.outline,
-                        ),
-                      ),
-                    ),
                 ],
               ),
           ],

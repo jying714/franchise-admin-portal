@@ -36,20 +36,16 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     print('[PlatformOwnerDashboardScreen] build called');
+
     final adminUserProvider =
-        Provider.of<shared.AdminUserProvider>(context, listen: false);
+        Provider.of<shared.AdminUserProvider>(context, listen: true);
     final user = adminUserProvider.user;
     final loc = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
 
-    if (user == null) {
-      return Scaffold(
-        body: Center(child: Text('User profile missing. [debug]')),
-      );
-    }
-    if (loc == null) {
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
+    if (user == null || loc == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -59,10 +55,7 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
         message: 'Unauthorized PlatformOwnerDashboardScreen access',
         source: 'PlatformOwnerDashboardScreen',
         severity: 'warning',
-        contextData: {
-          'userId': user.id,
-          'roles': user.roles,
-        },
+        contextData: {'userId': user.id ?? '', 'roles': user.roles},
       );
       return Center(
         child: Card(
@@ -78,19 +71,13 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
                 Icon(Icons.lock_outline_rounded,
                     color: colorScheme.error, size: 46),
                 const SizedBox(height: 18),
-                Text(
-                  loc.unauthorizedAccessTitle,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: colorScheme.error,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
+                Text(loc.unauthorizedAccessTitle,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: colorScheme.error, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
-                Text(
-                  loc.unauthorizedAccessMessage,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
+                Text(loc.unauthorizedAccessMessage,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center),
                 const SizedBox(height: 26),
                 ElevatedButton.icon(
                   onPressed: () =>
@@ -98,9 +85,8 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
                   icon: const Icon(Icons.home_rounded),
                   label: Text(loc.returnHome),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.primary,
-                    foregroundColor: colorScheme.onPrimary,
-                  ),
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: colorScheme.onPrimary),
                 ),
               ],
             ),
@@ -109,182 +95,115 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
       );
     }
 
-    // === Main Dashboard Layout ===
     final isWide = MediaQuery.of(context).size.width > 1200;
     final hPadding = isWide ? 38.0 : 16.0;
     final vPadding = isWide ? 28.0 : 14.0;
 
     return ChangeNotifierProvider<PlatformFinancialsProviderImpl>(
-        create: (_) => PlatformFinancialsProviderImpl()..loadFinancials(),
-        child: Scaffold(
-          backgroundColor: colorScheme.background,
-          appBar: AppBar(
-            titleSpacing: 0,
-            elevation: 1,
-            title: Row(
-              children: [
-                const SizedBox(width: 8),
-                Image.network(
-                  BrandingConfig.logoUrl ?? BrandingConfig.logoMain,
-                  height: 36,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => SizedBox(
-                    height: 36,
-                    child: Center(
-                      child:
-                          Icon(Icons.domain, size: 34, color: Colors.grey[400]),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  loc.platformOwnerDashboardTitle,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
-                ),
-              ],
-            ),
-            actions: [
-              DashboardSwitcherDropdown(
-                currentScreen: '/platform-owner/dashboard',
-                user: user,
+      create: (_) => PlatformFinancialsProviderImpl()..loadFinancials(),
+      child: Scaffold(
+        backgroundColor: colorScheme.surface,
+        appBar: AppBar(
+          titleSpacing: 0,
+          elevation: 1,
+          title: Row(
+            children: [
+              const SizedBox(width: 8),
+              Image.network(
+                BrandingConfig.logoUrl ?? BrandingConfig.logoMain,
+                height: 36,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.domain, size: 34, color: Colors.grey),
               ),
-              // Padding(
-              //   padding: const EdgeInsets.only(right: 16),
-              //   child: Chip(
-              //     label: Text(
-              //       loc.platformOwner,
-              //       style: TextStyle(
-              //         color: colorScheme.onPrimary,
-              //         fontWeight: FontWeight.w600,
-              //       ),
-              //     ),
-              //     backgroundColor: colorScheme.primary,
-              //     avatar: const Icon(Icons.verified_user,
-              //         color: Colors.white, size: 20),
-              //   ),
-              // ),
-              const SizedBox(width: 8),
-              NotificationsIconButton(),
-              const SizedBox(width: 8),
-              HelpIconButton(),
-              const SizedBox(width: 8),
-              SettingsIconButton(),
-              const SizedBox(width: 8),
-              UserAvatarMenu(size: 36),
-              const SizedBox(width: 8),
+              const SizedBox(width: 16),
+              Text(loc.platformOwnerDashboardTitle,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface)),
             ],
           ),
-          body: Padding(
-            padding:
-                EdgeInsets.symmetric(horizontal: hPadding, vertical: vPadding),
-            child: ListView(
-              children: [
-                // --- Quick Links Card ---
-                const QuickLinksCard(),
-
-                const SizedBox(height: 36),
-                // --- Franchise Invitation Panel ---
-                ChangeNotifierProvider<FranchiseeInvitationProviderImpl>(
-                  create: (context) => FranchiseeInvitationProviderImpl(
-                    service: shared.FranchiseeInvitationService(
-                      firestoreService: Provider.of<shared.FirestoreService>(
-                          context,
-                          listen: false),
-                    ),
-                  )..fetchInvitations(),
-                  child: FranchiseInvitationPanel(
-                    loc: loc,
-                    colorScheme: colorScheme,
+          actions: [
+            DashboardSwitcherDropdown(
+                currentScreen: '/platform-owner/dashboard', user: user),
+            const SizedBox(width: 8),
+            NotificationsIconButton(),
+            const SizedBox(width: 8),
+            HelpIconButton(),
+            const SizedBox(width: 8),
+            SettingsIconButton(),
+            const SizedBox(width: 8),
+            UserAvatarMenu(size: 36),
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: Padding(
+          padding:
+              EdgeInsets.symmetric(horizontal: hPadding, vertical: vPadding),
+          child: ListView(
+            children: [
+              const QuickLinksCard(),
+              const SizedBox(height: 36),
+              ChangeNotifierProvider<FranchiseeInvitationProviderImpl>(
+                create: (_) => FranchiseeInvitationProviderImpl(
+                  service: shared.FranchiseeInvitationService(
+                    firestoreService: Provider.of<shared.FirestoreService>(
+                        context,
+                        listen: false),
                   ),
+                )..fetchInvitations(),
+                child: FranchiseInvitationPanel(
+                    loc: loc, colorScheme: colorScheme),
+              ),
+              const SizedBox(height: 36),
+              FranchiseListPanel(loc: loc, colorScheme: colorScheme),
+              const SizedBox(height: 36),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 36.0),
+                child: Consumer<PlatformFinancialsProviderImpl>(
+                  builder: (context, provider, _) {
+                    if (provider.loading ||
+                        provider.overview == null ||
+                        provider.kpis == null) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (provider.error != null) {
+                      return Card(
+                        color: colorScheme.errorContainer,
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(children: [
+                            Icon(Icons.warning,
+                                color: colorScheme.error, size: 32),
+                            Text(provider.error ?? 'Unknown error'),
+                            ElevatedButton(
+                                onPressed: provider.refresh,
+                                child: const Text('Retry')),
+                          ]),
+                        ),
+                      );
+                    }
+                    return const PlatformRevenueSummaryPanel();
+                  },
                 ),
-
-                const SizedBox(height: 36),
-
-                // --- Franchise List Panel ---
-                FranchiseListPanel(loc: loc, colorScheme: colorScheme),
-
-                const SizedBox(height: 36),
-
-                // --- Global Financial Panel ---
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 36.0),
-                  child: Consumer<shared.PlatformFinancialsProvider>(
-                    builder: (context, provider, _) {
-                      if (provider.loading) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (provider.error != null) {
-                        return Card(
-                          color: colorScheme.errorContainer,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18)),
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              children: [
-                                Icon(Icons.warning,
-                                    color: colorScheme.error, size: 32),
-                                const SizedBox(height: 8),
-                                Text(
-                                  AppLocalizations.of(context)!
-                                      .genericErrorOccurred,
-                                  style: TextStyle(
-                                      color: colorScheme.error,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(provider.error!),
-                                const SizedBox(height: 12),
-                                ElevatedButton(
-                                  onPressed: () => provider.refresh(),
-                                  child:
-                                      Text(AppLocalizations.of(context)!.retry),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-                      return const PlatformRevenueSummaryPanel();
-                    },
-                  ),
-                ),
-
-                const SizedBox(height: 36),
-
-                // --- Platform Analytics Panel ---
-                PlatformAnalyticsPanel(loc: loc, colorScheme: colorScheme),
-
-                const SizedBox(height: 36),
-
-                // --- Platform plans summary card ---
-                const PlatformPlansSummaryCard(),
-
-                const SizedBox(height: 36),
-                // --- Franchise subscriptions summary card ---
-                const FranchiseSubscriptionSummaryCard(),
-
-                const SizedBox(height: 36),
-
-                // --- Platform Settings Panel ---
-                PlatformSettingsPanel(loc: loc, colorScheme: colorScheme),
-
-                const SizedBox(height: 36),
-
-                // --- Owner Announcements Panel ---
-                OwnerAnnouncementsPanel(loc: loc, colorScheme: colorScheme),
-
-                const SizedBox(height: 36),
-
-                // === Future Features Placeholder ===
-                _futureFeaturePlaceholder(context, loc, colorScheme),
-              ],
-            ),
+              ),
+              const SizedBox(height: 36),
+              // PlatformAnalyticsPanel(loc: loc, colorScheme: colorScheme), // Disabled until rows are fixed
+              const SizedBox(height: 36),
+              const PlatformPlansSummaryCard(),
+              const SizedBox(height: 36),
+              const FranchiseSubscriptionSummaryCard(),
+              const SizedBox(height: 36),
+              PlatformSettingsPanel(loc: loc, colorScheme: colorScheme),
+              const SizedBox(height: 36),
+              OwnerAnnouncementsPanel(loc: loc, colorScheme: colorScheme),
+              const SizedBox(height: 36),
+              _futureFeaturePlaceholder(context, loc, colorScheme),
+            ],
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   Widget _futureFeaturePlaceholder(
@@ -325,16 +244,18 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
 // === Modular Panels for Each Dashboard Section ===
 
 // 1. Franchise Invitations
+// 1. Franchise Invitations
 class FranchiseInvitationPanel extends StatelessWidget {
   final AppLocalizations loc;
   final ColorScheme colorScheme;
-  const FranchiseInvitationPanel(
-      {required this.loc, required this.colorScheme, Key? key})
-      : super(key: key);
+  const FranchiseInvitationPanel({
+    required this.loc,
+    required this.colorScheme,
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Wire up real invite logic
     return Card(
       elevation: DesignTokens.adminCardElevation,
       color: colorScheme.surface,
@@ -362,15 +283,18 @@ class FranchiseInvitationPanel extends StatelessWidget {
                       builder: (_) => const FranchiseeInvitationDialog(),
                     );
                     if (result == true) {
-                      // Optionally refresh invitations or show a SnackBar
-                      Provider.of<shared.FranchiseeInvitationProvider>(context,
-                              listen: false)
-                          .fetchInvitations();
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content:
-                            Text(AppLocalizations.of(context)!.invitationSent),
-                        backgroundColor: colorScheme.primary,
-                      ));
+                      if (context.mounted) {
+                        Provider.of<shared.FranchiseeInvitationProvider>(
+                                context,
+                                listen: false)
+                            .fetchInvitations();
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(
+                              AppLocalizations.of(context)?.invitationSent ??
+                                  'Invitation sent'),
+                          backgroundColor: colorScheme.primary,
+                        ));
+                      }
                     }
                   },
                   icon: const Icon(Icons.person_add_alt_1),
@@ -379,7 +303,6 @@ class FranchiseInvitationPanel extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            // Placeholder table for pending invitations
             Text(
               loc.pendingInvitations,
               style: Theme.of(context)
@@ -399,31 +322,31 @@ class FranchiseInvitationPanel extends StatelessWidget {
     return Consumer<shared.FranchiseeInvitationProvider>(
       builder: (context, provider, child) {
         if (provider.loading) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
         final pendingInvites = provider.invitations
             .where((invite) => invite.status == "pending")
             .toList();
         if (pendingInvites.isEmpty) {
           return Text(
-            AppLocalizations.of(context)!.noPendingInvitations,
+            AppLocalizations.of(context)?.noPendingInvitations ??
+                'No pending invitations',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: colorScheme.secondary,
                 ),
           );
         }
-        // Display as a table/list
         return Column(
           children: pendingInvites.map((invite) {
             return ListTile(
               leading: Icon(Icons.email_outlined, color: colorScheme.primary),
               title: Text(invite.email),
-              subtitle: Text("${invite.role ?? ''} â€¢ ${invite.status}"),
+              subtitle: Text("${invite.role ?? ''} • ${invite.status}"),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: Icon(Icons.cancel, color: colorScheme.error),
+                    icon: const Icon(Icons.cancel, color: Colors.red),
                     tooltip: loc.revokeInvitation,
                     onPressed: () async {
                       final confirm = await showDialog<bool>(
@@ -443,31 +366,9 @@ class FranchiseInvitationPanel extends StatelessWidget {
                           ],
                         ),
                       );
-                      if (confirm == true) {
-                        if (invite.token != null) {
-                          await provider.cancelInvitation(invite.token!);
-                        } else {
-                          // Handle gracefully (shouldnâ€™t happen in valid UI)
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text('Invalid invitation token.'),
-                            backgroundColor:
-                                Theme.of(context).colorScheme.error,
-                          ));
-                        }
+                      if (confirm == true && invite.token != null) {
+                        await provider.cancelInvitation(invite.token!);
                       }
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.refresh, color: colorScheme.secondary),
-                    tooltip: loc.resendInvitation,
-                    onPressed: () async {
-                      // Optionally implement resend via provider
-                      // await provider.resendInvitation(invite.token);
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content:
-                            Text(loc.featureComingSoon(loc.resendInvitation)),
-                        backgroundColor: colorScheme.primary,
-                      ));
                     },
                   ),
                 ],
@@ -607,7 +508,7 @@ class GlobalFinancialPanel extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return Card(
       elevation: 0,
-      color: colorScheme.secondary.withOpacity(0.13),
+      color: colorScheme.secondary.withValues(alpha: 0.13),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -621,8 +522,9 @@ class GlobalFinancialPanel extends StatelessWidget {
             const SizedBox(height: 5),
             Text(label,
                 style: TextStyle(
-                    fontSize: 14,
-                    color: colorScheme.onSurface.withOpacity(0.75))),
+                  fontSize: 14,
+                  color: colorScheme.secondary.withValues(alpha: 0.75),
+                )),
           ],
         ),
       ),
@@ -692,7 +594,7 @@ class PlatformAnalyticsPanel extends StatelessWidget {
             Container(
               width: double.infinity,
               height: 160,
-              color: colorScheme.surfaceVariant.withOpacity(0.34),
+              color: colorScheme.secondary.withValues(alpha: 0.34),
               child: Center(
                 child: Text(
                   loc.analyticsComingSoon,
@@ -712,7 +614,7 @@ class PlatformAnalyticsPanel extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     return Card(
       elevation: 0,
-      color: colorScheme.secondary.withOpacity(0.13),
+      color: colorScheme.secondary.withValues(alpha: 0.13),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -727,7 +629,7 @@ class PlatformAnalyticsPanel extends StatelessWidget {
             Text(label,
                 style: TextStyle(
                     fontSize: 13,
-                    color: colorScheme.onSurface.withOpacity(0.75))),
+                    color: colorScheme.secondary.withValues(alpha: 0.75))),
           ],
         ),
       ),

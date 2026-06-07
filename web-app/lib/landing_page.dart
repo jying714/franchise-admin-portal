@@ -99,13 +99,7 @@ class GlassHero extends StatelessWidget {
   Widget _verticalContent(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final loc = AppLocalizations.of(context);
-    if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
-      );
-    }
+    if (loc == null) return const SizedBox.shrink();
     final media = MediaQuery.of(context);
     final isMobile = media.size.width < 700;
 
@@ -114,87 +108,66 @@ class GlassHero extends StatelessWidget {
           isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          "The Modern Franchise Platform",
-          style: TextStyle(
-            fontSize: isMobile ? 21 : 28,
-            color: Colors.green[700],
-            fontWeight: FontWeight.w500,
-            letterSpacing: 1,
-            fontFamily: DesignTokens.fontFamily,
-          ),
-        ),
+        Text("The Modern Franchise Platform",
+            style: TextStyle(
+                fontSize: isMobile ? 21 : 28,
+                color: Colors.green[700],
+                fontWeight: FontWeight.w500,
+                letterSpacing: 1,
+                fontFamily: DesignTokens.fontFamily)),
         const SizedBox(height: 10),
-        Text(
-          "All-in-One SaaS for Food Service Franchises",
-          style: TextStyle(
-            fontSize: isMobile ? 34 : 48,
-            fontWeight: FontWeight.bold,
-            color: Colors.black.withOpacity(0.94),
-            height: 1.14,
-            fontFamily: DesignTokens.fontFamily,
-          ),
-          textAlign: isMobile ? TextAlign.center : TextAlign.left,
-        ),
+        Text("All-in-One SaaS for Food Service Franchises",
+            style: TextStyle(
+                fontSize: isMobile ? 34 : 48,
+                fontWeight: FontWeight.bold,
+                color: Colors.black.withOpacity(0.94),
+                height: 1.14,
+                fontFamily: DesignTokens.fontFamily),
+            textAlign: isMobile ? TextAlign.center : TextAlign.left),
         const SizedBox(height: 22),
         Text(
-          "Ordering â€¢ Customization â€¢ Analytics â€¢ Modular Admin Tools\nFor Franchise, Restaurant, and Food-Service Brands",
-          style: TextStyle(
-            fontSize: isMobile ? 16 : 20,
-            color: Colors.black.withOpacity(0.68),
-            fontWeight: FontWeight.w400,
-            fontFamily: DesignTokens.fontFamily,
-          ),
-          textAlign: isMobile ? TextAlign.center : TextAlign.left,
-        ),
+            "Ordering • Customization • Analytics • Modular Admin Tools\nFor Franchise, Restaurant, and Food-Service Brands",
+            style: TextStyle(
+                fontSize: isMobile ? 16 : 20,
+                color: Colors.black.withOpacity(0.68),
+                fontWeight: FontWeight.w400,
+                fontFamily: DesignTokens.fontFamily),
+            textAlign: isMobile ? TextAlign.center : TextAlign.left),
         const SizedBox(height: 34),
         Wrap(
-          spacing: 18,
-          runSpacing: 10,
-          alignment: WrapAlignment.start,
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                print('[landing_page.dart] Login button pressed');
-                Navigator.of(context).pushNamed('/sign-in');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green[700],
-                foregroundColor: Colors.white,
-                elevation: 2,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 38, vertical: 18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              child: const Text("Login"),
-            ),
-            OutlinedButton(
-              onPressed: () {
-                // TODO: Open contact form or demo request modal
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.green[700],
-                side: BorderSide(color: Colors.green[700]!, width: 2.2),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 38, vertical: 18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              child: const Text("Book a Demo"),
-            ),
-          ],
-        ),
+            spacing: 18,
+            runSpacing: 10,
+            alignment: WrapAlignment.start,
+            children: [
+              ElevatedButton(
+                  onPressed: () {
+                    print('[landing_page.dart] Login button pressed');
+                    Navigator.of(context).pushNamed('/sign-in');
+                  },
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green[700],
+                      foregroundColor: Colors.white,
+                      elevation: 2,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 38, vertical: 18),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18)),
+                      textStyle: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold)),
+                  child: const Text("Login")),
+              OutlinedButton(
+                  onPressed: () {},
+                  style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.green[700],
+                      side: BorderSide(color: Colors.green[700]!, width: 2.2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 38, vertical: 18),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18)),
+                      textStyle: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold)),
+                  child: const Text("Book a Demo")),
+            ]),
       ],
     );
   }
@@ -563,10 +536,15 @@ class LandingPage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Expanded(
-              child: Text(
-                desc,
-                style: TextStyle(
-                    fontSize: 15, color: Colors.grey[700], height: 1.2),
+              child: SingleChildScrollView(
+                child: Text(
+                  desc,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.grey[700],
+                    height: 1.2,
+                  ),
+                ),
               ),
             ),
           ],
@@ -611,5 +589,3 @@ class LandingPage extends StatelessWidget {
     );
   }
 }
-
-

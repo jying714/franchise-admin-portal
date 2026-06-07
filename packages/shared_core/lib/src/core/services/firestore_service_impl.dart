@@ -881,12 +881,17 @@ class FirestoreServiceImpl implements FirestoreService {
   // ===================== ERROR LOGS (basic global + franchise) =====================
   @override
   Future<void> addErrorLogGlobal(ErrorLog log) async {
-    await _db.collection('error_logs').add(log.toFirestore());
+    final data = log.toFirestore();
+    data['createdAt'] = firestore.FieldValue.serverTimestamp();
+    data['timestamp'] = firestore.FieldValue.serverTimestamp();
+    data['env'] = 'production';
+    await _db.collection('error_logs').add(data);
   }
 
   @override
   Future<void> updateErrorLogGlobal(
       String logId, Map<String, dynamic> updates) async {
+    updates['updatedAt'] = firestore.FieldValue.serverTimestamp();
     await _db.collection('error_logs').doc(logId).update(updates);
   }
 
@@ -945,13 +950,15 @@ class FirestoreServiceImpl implements FirestoreService {
   }
 
   @override
-  Future<void> logSchemaError(String franchiseId,
-      {required String message,
-      String? templateId,
-      String? menuItemId,
-      String? stackTrace,
-      String? userId}) async {
-    await _franchiseCollection(franchiseId, 'error_logs').add({
+  Future<void> logSchemaError(
+    String franchiseId, {
+    required String message,
+    String? templateId,
+    String? menuItemId,
+    String? stackTrace,
+    String? userId,
+  }) async {
+    final data = {
       'type': 'schema',
       'message': message,
       'templateId': templateId,
@@ -959,25 +966,33 @@ class FirestoreServiceImpl implements FirestoreService {
       'stackTrace': stackTrace,
       'userId': userId,
       'timestamp': firestore.FieldValue.serverTimestamp(),
-    });
+      'createdAt': firestore.FieldValue.serverTimestamp(),
+      'severity': 'error',
+      'env': 'production',
+    };
+
+    await _franchiseCollection(franchiseId, 'error_logs').add(data);
   }
 
   @override
-  Future<void> logError(String? franchiseId,
-      {required String message,
-      required String source,
-      String? userId,
-      String? screen,
-      String? stackTrace,
-      String? errorType,
-      String? severity,
-      Map<String, dynamic>? contextData,
-      Map<String, dynamic>? deviceInfo,
-      String? assignedTo}) async {
+  Future<void> logError(
+    String? franchiseId, {
+    required String message,
+    required String source,
+    String? userId,
+    String? screen,
+    String? stackTrace,
+    String? errorType,
+    String? severity,
+    Map<String, dynamic>? contextData,
+    Map<String, dynamic>? deviceInfo,
+    String? assignedTo,
+  }) async {
     final col = franchiseId != null
         ? _franchiseCollection(franchiseId, 'error_logs')
         : _db.collection('error_logs');
-    await col.add({
+
+    final data = {
       'message': message,
       'source': source,
       'userId': userId,
@@ -985,11 +1000,22 @@ class FirestoreServiceImpl implements FirestoreService {
       'stackTrace': stackTrace,
       'errorType': errorType,
       'severity': severity ?? 'error',
-      'contextData': contextData,
-      'deviceInfo': deviceInfo,
+      'contextData': contextData ?? {},
+      'deviceInfo': deviceInfo ?? {},
       'assignedTo': assignedTo,
-      'timestamp': firestore.FieldValue.serverTimestamp(),
-    });
+      'timestamp':
+          firestore.FieldValue.serverTimestamp(), // For sorting + display
+      'createdAt': firestore.FieldValue
+          .serverTimestamp(), // Explicit createdAt per your example doc
+      'env': 'production', // Matches your schema example
+    };
+
+    try {
+      await col.add(data);
+    } catch (e) {
+      // Fallback to top-level if scoped fails
+      await _db.collection('error_logs').add(data);
+    }
   }
 
   @override

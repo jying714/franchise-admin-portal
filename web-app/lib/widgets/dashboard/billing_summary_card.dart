@@ -35,7 +35,7 @@ class _BillingSummaryCardState extends State<BillingSummaryCard> {
       );
 
       final invoices = await invoiceService.getInvoices(
-        franchiseId: franchiseProvider.franchiseId,
+        franchiseId: franchiseProvider.franchiseId ?? '',
         statuses: ['unpaid', 'partial', 'open'],
       );
 
