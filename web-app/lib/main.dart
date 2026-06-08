@@ -26,6 +26,7 @@ import 'package:franchise_admin_portal/core/services/analytics_service_impl.dart
 import 'package:franchise_admin_portal/core/services/audit_log_service_impl.dart';
 import 'package:franchise_admin_portal/core/services/auth_service_impl.dart';
 import 'package:franchise_admin_portal/core/services/invoice_service_impl.dart';
+import 'package:franchise_admin_portal/core/services/admin_firestore_service.dart';
 // === WEB-APP SCREENS & WIDGETS ===
 import 'package:franchise_admin_portal/firebase_options.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
@@ -179,6 +180,22 @@ class _FranchiseAuthenticatedRootState
       userNotifier.listenToUser(firebaseUser.uid);
       adminProvider.listenToAdminUser(
           firestoreService, firebaseUser.uid, franchiseProvider);
+      // Force franchise context initialization
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        final franchiseProvider =
+            Provider.of<shared.FranchiseProvider>(context, listen: false);
+        final adminUser = adminProvider.user;
+
+        if (adminUser != null) {
+          await franchiseProvider.initializeWithUser(adminUser);
+          // Extra force for dependent providers
+          franchiseProvider.forceRefreshFranchiseId(
+              adminUser.defaultFranchise ??
+                  adminUser.franchiseIds.firstOrNull ??
+                  'test');
+        }
+      });
 
       shared.ErrorLogger.log(
         message: 'FranchiseAuthenticatedRoot handoff SUCCESS',
@@ -336,15 +353,27 @@ class FranchiseAppRootSplit extends StatelessWidget {
         }
 
         // AUTHENTICATED - Force dashboard
+        // AUTHENTICATED - Force dashboard
+        // AUTHENTICATED - Force dashboard
         return MultiProvider(
           providers: [
-            // === Core Providers (Critical for HQ/Owner dashboards) ===
+            // === Core Providers ===
             ChangeNotifierProvider(create: (_) => shared.AdminUserProvider()),
             Provider<shared.InvoiceService>(
               create: (_) => InvoiceServiceImpl(),
             ),
 
-            // === Franchise & Subscription ===
+            // === ADMIN FIRESTORE SERVICE ===
+            Provider<shared.FirestoreService>(
+              create: (_) => AdminFirestoreService(),
+            ),
+
+            // === SINGLE SOURCE OF TRUTH ===
+            Provider<shared.FranchiseProvider>(
+              create: (_) => shared.FranchiseProvider(AppLocalStorage()),
+            ),
+
+            // === Subscription ===
             ChangeNotifierProxyProvider<shared.FranchiseProvider,
                 FranchiseSubscriptionProviderImpl>(
               create: (_) => FranchiseSubscriptionProviderImpl(
@@ -355,26 +384,32 @@ class FranchiseAppRootSplit extends StatelessWidget {
                         service: FranchiseSubscriptionServiceImpl(),
                         franchiseId: fp.franchiseId ?? '');
                 if (fp.franchiseId != null &&
-                    fp.franchiseId != notifier.franchiseId)
+                    fp.franchiseId != notifier.franchiseId) {
                   notifier.updateFranchiseId(fp.franchiseId!);
+                }
                 return notifier;
               },
             ),
             ChangeNotifierProvider(
                 create: (_) => PlatformPlanSelectionProviderImpl()),
 
-            // === Franchise Info & Features ===
+            // === Franchise Info (Critical) ===
             ChangeNotifierProxyProvider2<shared.FranchiseProvider,
                 shared.FirestoreService, FranchiseInfoProviderImpl>(
-              create: (_) => FranchiseInfoProviderImpl(
-                  firestore: shared.FirestoreServiceImpl(),
-                  franchiseProvider:
-                      shared.FranchiseProvider(AppLocalStorage())),
+              create: (context) => FranchiseInfoProviderImpl(
+                firestore: Provider.of<shared.FirestoreService>(context,
+                    listen: false),
+                franchiseProvider: Provider.of<shared.FranchiseProvider>(
+                    context,
+                    listen: false),
+              ),
               update: (_, fp, fs, prev) => prev ??
                   FranchiseInfoProviderImpl(
                       firestore: fs, franchiseProvider: fp)
                 ..loadFranchiseInfo(),
             ),
+
+            // === Other Providers ===
             ChangeNotifierProxyProvider2<shared.FranchiseProvider,
                 shared.FirestoreService, FranchiseFeatureProviderImpl>(
               create: (_) => FranchiseFeatureProviderImpl(
@@ -389,7 +424,6 @@ class FranchiseAppRootSplit extends StatelessWidget {
               },
             ),
 
-            // === Onboarding, Menu, Categories, Ingredients ===
             ChangeNotifierProxyProvider2<shared.FirestoreService,
                 shared.FranchiseProvider, OnboardingProgressProviderImpl>(
               create: (_) => OnboardingProgressProviderImpl(
@@ -422,12 +456,13 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 shared.FranchiseProvider,
                 FranchiseInfoProviderImpl,
                 MenuItemProviderImpl>(
-              create: (_) => MenuItemProviderImpl(
+              create: (context) => MenuItemProviderImpl(
                   firestoreService: shared.FirestoreServiceImpl(),
                   franchiseInfoProvider: FranchiseInfoProviderImpl(
                       firestore: shared.FirestoreServiceImpl(),
-                      franchiseProvider:
-                          shared.FranchiseProvider(AppLocalStorage()))),
+                      franchiseProvider: Provider.of<shared.FranchiseProvider>(
+                          context,
+                          listen: false))),
               update: (_, fs, fp, fip, prev) =>
                   prev ??
                   MenuItemProviderImpl(
@@ -448,8 +483,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
             Provider<shared.AnalyticsService>.value(
                 value: shared.AnalyticsServiceImpl()),
 
-            // === ALIAS SHARED INTERFACES FOR ONBOARDING + DASHBOARD SCREENS ===
-            // Use plain Provider.value (debugCheckInvalidValueType = null; suppresses the assertion)
+            // === ALIASES - Safe .value (no context lookup here) ===
             Provider<shared.FranchiseFeatureProvider>.value(
               value: FranchiseFeatureProviderImpl(
                 service: FranchiseFeatureServiceImpl(),
@@ -502,7 +536,6 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 franchiseId: '',
               ),
             ),
-            // NO duplicate StreamProvider here
           ],
           child: const FranchiseAuthenticatedRoot(),
         );

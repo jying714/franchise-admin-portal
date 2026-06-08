@@ -1966,6 +1966,18 @@
   "tagOrganicDescription": "Made with organic ingredients.",
   "@tagOrganicDescription": {
     "description": "Tooltip description for organic dietary tag."
+  },
+    "franchiseNotFound": "Franchise not found",
+  "@franchiseNotFound": {
+    "description": "Error message when franchise data cannot be loaded"
+  },
+    "stepFeatures": "Features",
+  "@stepFeatures": {
+    "description": "Onboarding step for enabling features"
+  },
+  "stepFeaturesDesc": "Enable core platform features for your franchise",
+  "@stepFeaturesDesc": {
+    "description": "Description for features onboarding step"
   }
 
 

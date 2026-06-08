@@ -10310,6 +10310,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Made with organic ingredients.'**
   String get tagOrganicDescription;
+
+  /// Error message when franchise data cannot be loaded
+  ///
+  /// In en, this message translates to:
+  /// **'Franchise not found'**
+  String get franchiseNotFound;
+
+  /// Onboarding step for enabling features
+  ///
+  /// In en, this message translates to:
+  /// **'Features'**
+  String get stepFeatures;
+
+  /// Description for features onboarding step
+  ///
+  /// In en, this message translates to:
+  /// **'Enable core platform features for your franchise'**
+  String get stepFeaturesDesc;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

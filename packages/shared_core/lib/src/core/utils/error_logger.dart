@@ -1,29 +1,11 @@
 // shared_core/lib/src/core/utils/error_logger.dart
 
-/// Pure Dart error logger interface + fallback
-/// Apps override via setCustomLogger()
-class ErrorLogger {
-  /// Default fallback logger (prints to console)
-  static void _defaultLog({
-    required String message,
-    String? source,
-    String? severity,
-    String? stack,
-    Map<String, dynamic>? contextData,
-  }) {
-    final buffer = StringBuffer();
-    buffer.writeln('[ERROR] $message');
-    if (source != null) buffer.writeln('  Source: $source');
-    if (severity != null) buffer.writeln('  Severity: $severity');
-    if (stack != null) buffer.writeln('  Stack: $stack');
-    if (contextData != null && contextData.isNotEmpty) {
-      buffer.writeln('  Context: $contextData');
-    }
-    // ignore: avoid_print
-    print(buffer.toString());
-  }
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
-  /// Custom logger set by app
+/// Pure Dart error logger with Firestore persistence + smart severity
+class ErrorLogger {
+  /// Custom logger override (set in main.dart if needed)
   static void Function({
     required String message,
     String? source,
@@ -32,7 +14,6 @@ class ErrorLogger {
     Map<String, dynamic>? contextData,
   })? _customLogger;
 
-  /// Set custom logger (called once in main.dart)
   static void setCustomLogger(
     void Function({
       required String message,
@@ -45,27 +26,65 @@ class ErrorLogger {
     _customLogger = logger;
   }
 
-  /// Public entry point — safe to call from anywhere
-  static void log({
+  /// Smart severity adjustment
+  static String _normalizeSeverity(String? severity, String message) {
+    final msg = message.toLowerCase();
+    if (severity == 'fatal') return 'fatal';
+
+    if (msg.contains('lightweight') ||
+        msg.contains('unimplemented') ||
+        msg.contains('admin-only') ||
+        msg.contains('skipped')) {
+      return 'warning';
+    }
+    if (msg.contains('permission-denied') ||
+        msg.contains('failed-precondition') ||
+        msg.contains('index')) {
+      return 'error';
+    }
+    return severity?.toLowerCase() ?? 'info';
+  }
+
+  /// Public entry point
+  static Future<void> log({
     required String message,
     String? source,
     String? severity,
     String? stack,
     Map<String, dynamic>? contextData,
-  }) {
+  }) async {
+    final finalSeverity = _normalizeSeverity(severity, message);
+    final fullContext = {
+      if (contextData != null) ...contextData,
+      'platform': kIsWeb ? 'web' : 'mobile',
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+
+    // Call custom logger if set
     _customLogger?.call(
       message: message,
       source: source,
-      severity: severity,
+      severity: finalSeverity,
       stack: stack,
-      contextData: contextData,
+      contextData: fullContext,
     );
-    _defaultLog(
-      message: message,
-      source: source,
-      severity: severity,
-      stack: stack,
-      contextData: contextData,
-    );
+
+    // Console output (development friendly)
+    print('[$finalSeverity] $source: $message');
+
+    // Persist to Firestore (non-blocking)
+    try {
+      await FirebaseFirestore.instance.collection('error_logs').add({
+        'message': message,
+        'source': source ?? 'unknown',
+        'severity': finalSeverity,
+        'stack': stack ?? '',
+        'context': fullContext,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      // Fallback if Firestore itself fails
+      print('[ErrorLogger] Failed to write to error_logs: $e');
+    }
   }
 }

@@ -720,4 +720,55 @@ class AdminFirestoreService extends shared.FirestoreServiceImpl {
       get invitationCollection => db.collection('franchisee_invitations');
 
   // The thin wrapper (see firestore_service_impl.dart in web-app) simply extends this class for full backward compatibility.
+
+  @override
+  Stream<List<shared.Inventory>> getInventory(String franchiseId) {
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      return Stream.value(<shared.Inventory>[]);
+    }
+
+    return db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('inventory')
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => shared.Inventory.fromFirestore(d.data(), d.id))
+            .toList());
+  }
+
+  @override
+  Future<void> addInventory(String franchiseId, shared.Inventory item) async {
+    final id =
+        item.id?.isNotEmpty == true ? item.id! : db.collection('temp').doc().id;
+    final data = item.toFirestore()..['id'] = id;
+    await db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('inventory')
+        .doc(id)
+        .set(data, firestore.SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> updateInventory(
+      String franchiseId, shared.Inventory item) async {
+    if (item.id == null || item.id!.isEmpty) return;
+    await db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('inventory')
+        .doc(item.id)
+        .update(item.toFirestore());
+  }
+
+  @override
+  Future<void> deleteInventory(String franchiseId, String inventoryId) async {
+    await db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('inventory')
+        .doc(inventoryId)
+        .delete();
+  }
 }

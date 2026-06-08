@@ -8,6 +8,7 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
 import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
+import 'package:franchise_admin_portal/core/services/admin_firestore_service.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -27,7 +28,240 @@ class _InventoryScreenState extends State<InventoryScreen> {
     if (user == null) return false;
     return user.roles.contains('owner') ||
         user.roles.contains('manager') ||
-        user.roles.contains('developer');
+        user.roles.contains('developer') ||
+        user.roles.contains('hq_owner') ||
+        user.roles.contains('admin') ||
+        user.roles.contains('platform_owner');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final franchiseProvider = context.watch<shared.FranchiseProvider>();
+    final franchiseId = franchiseProvider.franchiseId;
+
+    if (franchiseId == null ||
+        franchiseId.isEmpty ||
+        franchiseId == 'unknown') {
+      return const Scaffold(
+        body: Center(
+          child: Text(
+            'Inventory management is available in full Admin mode only.\n\n(Admin-only feature)',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    // Prefer AdminFirestoreService if available
+    final adminService =
+        Provider.of<shared.FirestoreService?>(context, listen: false)
+            as dynamic;
+    final firestore = (adminService is AdminFirestoreService)
+        ? adminService as AdminFirestoreService
+        : Provider.of<shared.FirestoreService>(context, listen: false);
+
+    final loc = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    if (loc == null) {
+      return const Scaffold(body: Center(child: Text('Localization missing!')));
+    }
+
+    final canEdit = _canEdit(context);
+
+    return RoleGuard(
+      allowedRoles: const [
+        'platform_owner',
+        'hq_owner',
+        'manager',
+        'developer',
+        'admin'
+      ],
+      featureName: 'inventory_screen',
+      child: SubscriptionAccessGuard(
+        child: Scaffold(
+          backgroundColor: colorScheme.background,
+          body: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 11,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const GracePeriodBanner(),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: Row(
+                          children: [
+                            Text(
+                              loc.inventory,
+                              style: TextStyle(
+                                color: colorScheme.onBackground,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 22,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (canEdit)
+                              IconButton(
+                                icon: Icon(Icons.add,
+                                    color: colorScheme.onBackground),
+                                tooltip: loc.addInventory,
+                                onPressed: () =>
+                                    _addOrEditInventory(franchiseId, context),
+                              ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: loc.inventorySearchHint,
+                            prefixIcon: const Icon(Icons.search),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            isDense: true,
+                          ),
+                          onChanged: _onSearchChanged,
+                        ),
+                      ),
+                      Expanded(
+                        child: StreamBuilder<List<shared.Inventory>>(
+                          stream: firestore.getInventory(franchiseId),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const LoadingShimmerWidget();
+                            }
+
+                            if (snapshot.hasError) {
+                              final error = snapshot.error.toString();
+                              if (error.contains('UnimplementedError') ||
+                                  error.contains('Admin-only method')) {
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(32.0),
+                                    child: Text(
+                                      'Inventory management is available in full Admin mode only.\n\n(Feature in progress for P3)',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(fontSize: 18),
+                                    ),
+                                  ),
+                                );
+                              }
+                              return EmptyStateWidget(
+                                title: loc.errorLoadingInventory,
+                                message: error,
+                                onRetry: () => setState(() {}),
+                              );
+                            }
+
+                            var items = snapshot.data ?? [];
+                            if (_search.isNotEmpty) {
+                              items = items
+                                  .where((inv) =>
+                                      inv.name
+                                          .toLowerCase()
+                                          .contains(_search.toLowerCase()) ||
+                                      (inv.sku?.toLowerCase().contains(
+                                              _search.toLowerCase()) ??
+                                          false))
+                                  .toList();
+                            }
+
+                            if (items.isEmpty) {
+                              return EmptyStateWidget(
+                                title: loc.noInventory,
+                                message: loc.noInventoryMsg,
+                              );
+                            }
+
+                            return ListView.separated(
+                              padding: const EdgeInsets.all(8),
+                              separatorBuilder: (_, __) =>
+                                  const Divider(height: 1),
+                              itemCount: items.length,
+                              itemBuilder: (context, idx) {
+                                final item = items[idx];
+                                return Card(
+                                  elevation: 2,
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 4),
+                                  child: ListTile(
+                                    leading: Icon(
+                                      item.available
+                                          ? Icons.check_circle
+                                          : Icons.cancel,
+                                      color: item.available
+                                          ? colorScheme.primary
+                                          : colorScheme.error,
+                                    ),
+                                    title: Text(item.name,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                    subtitle: Text(
+                                      '${loc.sku}: ${item.sku ?? "—"}\n'
+                                      '${loc.stock}: ${item.stock}\n'
+                                      '${loc.threshold}: ${item.threshold}\n'
+                                      '${loc.unitType}: ${item.unitType ?? "—"}',
+                                    ),
+                                    trailing: canEdit
+                                        ? Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              IconButton(
+                                                icon: Icon(Icons.edit,
+                                                    color:
+                                                        colorScheme.secondary),
+                                                onPressed: () =>
+                                                    _addOrEditInventory(
+                                                        franchiseId, context,
+                                                        item: item),
+                                              ),
+                                              IconButton(
+                                                icon: Icon(Icons.delete,
+                                                    color: colorScheme.error),
+                                                onPressed: () =>
+                                                    _deleteInventory(
+                                                        franchiseId,
+                                                        context,
+                                                        item),
+                                              ),
+                                            ],
+                                          )
+                                        : null,
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(flex: 9, child: Container()),
+            ],
+          ),
+          floatingActionButton: canEdit
+              ? FloatingActionButton.extended(
+                  heroTag: 'inventory_fab',
+                  icon: const Icon(Icons.add),
+                  label: Text(loc.addInventory),
+                  backgroundColor: BrandingConfig.brandRed,
+                  onPressed: () => _addOrEditInventory(franchiseId, context),
+                )
+              : null,
+        ),
+      ),
+    );
   }
 
   Future<void> _addOrEditInventory(String franchiseId, BuildContext context,
@@ -202,237 +436,5 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ),
       );
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
-    final firestore =
-        Provider.of<shared.FirestoreService>(context, listen: false);
-    final loc = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    if (loc == null) {
-      print(
-          '[${runtimeType}] loc is null! Localization not available for this context.');
-      return Scaffold(
-        body: Center(child: Text('Localization missing! [debug]')),
-      );
-    }
-    final canEdit = _canEdit(context);
-
-    return RoleGuard(
-      allowedRoles: const [
-        'platform_owner',
-        'hq_owner',
-        'manager',
-        'developer',
-        'admin'
-      ],
-      featureName: 'inventory_screen',
-      child: SubscriptionAccessGuard(
-        child: Scaffold(
-          backgroundColor: colorScheme.background,
-          body: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Main content column
-              Expanded(
-                flex: 11,
-                child: Padding(
-                  padding:
-                      const EdgeInsets.only(top: 24.0, left: 24.0, right: 24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const GracePeriodBanner(),
-                      // Header row (matches Menu Editor & Category Management)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              loc.inventory,
-                              style: TextStyle(
-                                color:
-                                    Theme.of(context).colorScheme.onBackground,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 22,
-                              ),
-                            ),
-                            const Spacer(),
-                            IconButton(
-                              icon: Icon(Icons.add,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onBackground
-                                      .withOpacity(0.87)),
-                              tooltip: loc.addInventory,
-                              onPressed: canEdit
-                                  ? () =>
-                                      _addOrEditInventory(franchiseId, context)
-                                  : null,
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Search bar
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 0, vertical: 8),
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: loc.inventorySearchHint,
-                            prefixIcon: const Icon(Icons.search),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            isDense: true,
-                          ),
-                          onChanged: _onSearchChanged,
-                        ),
-                      ),
-                      // Inventory list
-                      Expanded(
-                        child: StreamBuilder<List<shared.Inventory>>(
-                          stream: firestore.getInventory(franchiseId),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const LoadingShimmerWidget();
-                            }
-                            if (snapshot.hasError) {
-                              return EmptyStateWidget(
-                                title: loc.errorLoadingInventory,
-                                message: snapshot.error.toString(),
-                              );
-                            }
-                            var items = snapshot.data ?? [];
-                            if (_search.isNotEmpty) {
-                              items = items
-                                  .where((inv) =>
-                                      inv.name
-                                          .toLowerCase()
-                                          .contains(_search.toLowerCase()) ||
-                                      (inv.sku
-                                          .toLowerCase()
-                                          .contains(_search.toLowerCase())))
-                                  .toList();
-                            }
-                            if (items.isEmpty) {
-                              return EmptyStateWidget(
-                                title: loc.noInventory,
-                                message: loc.noInventoryMsg,
-                              );
-                            }
-                            return ListView.separated(
-                              padding: const EdgeInsets.all(8),
-                              separatorBuilder: (_, __) =>
-                                  const Divider(height: 1),
-                              itemCount: items.length,
-                              itemBuilder: (context, idx) {
-                                final item = items[idx];
-                                return Card(
-                                  elevation: 2,
-                                  margin:
-                                      const EdgeInsets.symmetric(vertical: 4),
-                                  child: ListTile(
-                                    leading: Icon(
-                                      item.available
-                                          ? Icons.check_circle
-                                          : Icons.cancel,
-                                      color: item.available
-                                          ? Theme.of(context)
-                                              .colorScheme
-                                              .primary
-                                          : Theme.of(context).colorScheme.error,
-                                    ),
-                                    title: Text(
-                                      item.name,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onBackground,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      '${loc.sku}: ${item.sku}\n'
-                                      '${loc.stock}: ${item.stock}\n'
-                                      '${loc.threshold}: ${item.threshold}\n'
-                                      '${loc.unitType}: ${item.unitType}',
-                                      style: TextStyle(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onBackground
-                                            .withOpacity(0.8),
-                                      ),
-                                    ),
-                                    trailing: canEdit
-                                        ? Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              IconButton(
-                                                icon: Icon(Icons.edit,
-                                                    color: Theme.of(context)
-                                                        .colorScheme
-                                                        .secondary),
-                                                tooltip: loc.edit,
-                                                onPressed: () =>
-                                                    _addOrEditInventory(
-                                                        franchiseId, context,
-                                                        item: item),
-                                              ),
-                                              IconButton(
-                                                icon: Icon(Icons.delete,
-                                                    color: Theme.of(context)
-                                                        .colorScheme
-                                                        .error),
-                                                tooltip: loc.delete,
-                                                onPressed: () =>
-                                                    _deleteInventory(
-                                                        franchiseId,
-                                                        context,
-                                                        item),
-                                              ),
-                                            ],
-                                          )
-                                        : null,
-                                    onTap: canEdit
-                                        ? () => _addOrEditInventory(
-                                            franchiseId, context,
-                                            item: item)
-                                        : null,
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Right panel placeholder
-              Expanded(
-                flex: 9,
-                child: Container(),
-              ),
-            ],
-          ),
-          floatingActionButton: canEdit
-              ? FloatingActionButton.extended(
-                  heroTag: 'inventory_fab',
-                  icon: const Icon(Icons.add),
-                  label: Text(loc.addInventory),
-                  backgroundColor: BrandingConfig.brandRed,
-                  onPressed: () => _addOrEditInventory(franchiseId, context),
-                )
-              : null,
-        ),
-      ),
-    );
   }
 }

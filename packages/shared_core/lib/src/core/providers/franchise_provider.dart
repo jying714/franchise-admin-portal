@@ -177,7 +177,8 @@ class FranchiseProvider {
   }
 
   /// Merge basic info (name/logo) from FranchiseInfo + optional extra branding.
-  void applyBrandingFromInfo(FranchiseInfo info, {Map<String, dynamic>? extraBranding}) {
+  void applyBrandingFromInfo(FranchiseInfo info,
+      {Map<String, dynamic>? extraBranding}) {
     _brandingData = {
       ..._brandingData,
       'name': info.name,
@@ -192,5 +193,19 @@ class FranchiseProvider {
   void _bumpConfig() {
     _configVersion++;
     if (onFranchiseChanged != null) onFranchiseChanged!();
+  }
+
+  // Force refresh for providers that depend on franchiseId
+  void notifyFranchiseChanged() {
+    _bumpConfig();
+  }
+
+  // Force update for dependent providers
+  void forceRefreshFranchiseId(String id) {
+    if (id.isNotEmpty && id != 'unknown' && id != _franchiseId) {
+      print('[FranchiseProvider] forceRefreshFranchiseId: $id');
+      _franchiseId = id;
+      _bumpConfig();
+    }
   }
 }

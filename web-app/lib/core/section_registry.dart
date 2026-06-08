@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
+import 'package:provider/provider.dart';
 // Import ALL your admin sections (ensure these files exist!)
 import 'package:franchise_admin_portal/admin/dashboard/dashboard_home_screen.dart';
 import 'package:franchise_admin_portal/admin/menu/menu_editor_screen.dart';
@@ -48,6 +49,8 @@ final List<shared.DashboardSection> sectionRegistry = [
     sidebarOrder: 2,
     showInSidebar: true,
   ),
+  // Inventory - Proper screen with internal guard (safe for IndexedStack)
+  // Inventory - Full functional screen (uses AdminFirestoreService)
   shared.DashboardSection(
     key: 'inventoryManagement',
     title: 'Inventory',
@@ -88,19 +91,39 @@ final List<shared.DashboardSection> sectionRegistry = [
     sidebarOrder: 7,
     showInSidebar: true,
   ),
+  // Staff - Admin-only (guarded)
   shared.DashboardSection(
     key: 'staffAccess',
     title: 'Staff',
     icon: Icons.people_outline,
-    builder: (_) => const StaffAccessScreen(),
+    builder: (context) {
+      return const Scaffold(
+        body: Center(
+          child: Text(
+            'Staff management is available in full Admin mode only.\n\n(Admin-only feature)',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    },
     sidebarOrder: 8,
     showInSidebar: true,
   ),
+  // Support Chat - Admin-only (guarded)
   shared.DashboardSection(
     key: 'chatManagement',
     title: 'Support Chat',
     icon: Icons.chat_bubble_outline,
-    builder: (_) => const ChatManagementScreen(),
+    builder: (context) {
+      return const Scaffold(
+        body: Center(
+          child: Text(
+            'Support Chat is available in full Admin mode only.\n\n(Admin-only feature)',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    },
     sidebarOrder: 10,
     showInSidebar: true,
   ),

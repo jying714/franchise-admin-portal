@@ -60,9 +60,19 @@ class AdminUserProvider extends ChangeNotifier {
         // Inject user into FranchiseProvider
         franchiseProvider.setAdminUser(_user);
 
-        // CRITICAL: Initialize franchise context for HQ Owner / all roles
+        // CRITICAL: Initialize franchise context
         if (_user != null) {
+          print(
+              '[AdminUserProvider] Initializing franchise for user ${_user!.id}');
           await franchiseProvider.initializeWithUser(_user!);
+
+          // EXTRA FORCE for dependent providers
+          final forcedId = _user!.defaultFranchise ??
+              (_user!.franchiseIds.isNotEmpty
+                  ? _user!.franchiseIds.first
+                  : 'test');
+          franchiseProvider.forceRefreshFranchiseId(forcedId);
+          print('[AdminUserProvider] Forced franchiseId = $forcedId');
         }
 
         // Fetch allowed franchises

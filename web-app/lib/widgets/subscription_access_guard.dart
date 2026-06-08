@@ -12,31 +12,34 @@ class SubscriptionAccessGuard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Use Provider.of to avoid ambiguous read extension
     final user = Provider.of<shared.AdminUserProvider>(
       context,
       listen: false,
     ).user;
 
-    // Bypass check for privileged roles
+    // Bypass for privileged roles
     final roles = user?.roles ?? [];
-    final isBypass =
-        roles.contains('platform_owner') || roles.contains('developer');
+    final isBypass = roles.contains('platform_owner') ||
+        roles.contains('developer') ||
+        roles.contains('hq_owner');
 
     if (isBypass) return child;
 
-    final sub = Provider.of<shared.FranchiseSubscriptionProvider>(
+    final subscription = Provider.of<shared.FranchiseSubscriptionProvider>(
       context,
       listen: true,
     ).currentSubscription;
 
-    if (sub == null || sub.status != 'active') {
+    // Improved active subscription check
+    if (subscription == null || subscription.status != 'active') {
       return const Center(child: Text('No active subscription.'));
     }
 
+    // Only block on overdue + past grace period
     final now = DateTime.now();
-    final isBlocked = sub.hasOverdueInvoice &&
-        (sub.gracePeriodEndsAt != null && now.isAfter(sub.gracePeriodEndsAt!));
+    final isBlocked = subscription.hasOverdueInvoice &&
+        (subscription.gracePeriodEndsAt != null &&
+            now.isAfter(subscription.gracePeriodEndsAt!));
 
     if (isBlocked) {
       return const Center(
@@ -54,7 +57,7 @@ class SubscriptionAccessGuard extends StatelessWidget {
               ),
               SizedBox(height: 8),
               Text(
-                'Please update your billing info or contact support to regain access.',
+                'Please update your billing info or contact support.',
                 textAlign: TextAlign.center,
               ),
             ],

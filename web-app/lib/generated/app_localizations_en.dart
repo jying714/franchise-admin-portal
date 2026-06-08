@@ -5311,4 +5311,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tagOrganicDescription => 'Made with organic ingredients.';
+
+  @override
+  String get franchiseNotFound => 'Franchise not found';
+
+  @override
+  String get stepFeatures => 'Features';
+
+  @override
+  String get stepFeaturesDesc => 'Enable core platform features for your franchise';
 }
