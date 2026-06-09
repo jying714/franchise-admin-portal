@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/onboarding_step_card.dart';
@@ -14,16 +14,8 @@ class OnboardingMenuScreen extends StatefulWidget {
 }
 
 class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
-  String? _franchiseId;
-  int _loadAttempts = 0;
-  bool _isLoading = true;
-
-  final Map<String, bool> _stepCompletion = {
-    'ingredients': false,
-    'categories': false,
-    'menuItems': false,
-    'review': false,
-  };
+  bool _hasLoadedFranchise = false;
+  bool _hasInitialized = false;
 
   @override
   void initState() {
@@ -32,47 +24,44 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
   }
 
   @override
-  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    final newFranchiseId =
-        context.watch<shared.FranchiseProvider>().franchiseId;
-    print('[OnboardingMenuScreen] Detected franchiseId: $newFranchiseId');
+    final franchiseProvider = context.watch<shared.FranchiseProvider>();
+    final infoProvider = context.watch<shared.FranchiseInfoProvider>();
+    final franchiseId = franchiseProvider.franchiseId;
 
-    if (newFranchiseId != _franchiseId &&
-        newFranchiseId != 'unknown' &&
-        newFranchiseId.isNotEmpty) {
-      _franchiseId = newFranchiseId;
-      _loadAttempts = 0;
-      _triggerLoadFranchiseInfo();
-    }
-  }
-
-  void _triggerLoadFranchiseInfo() {
-    if (_loadAttempts >= 5) {
-      print('[OnboardingMenuScreen] Max load attempts reached');
-      setState(() => _isLoading = false);
-      return;
-    }
-
-    _loadAttempts++;
     print(
-        '[OnboardingMenuScreen] Triggering loadFranchiseInfo() attempt $_loadAttempts');
+        '[OnboardingMenuScreen] didChangeDependencies - franchiseId: $franchiseId, hasLoaded: $_hasLoadedFranchise');
 
-    Future.delayed(Duration(milliseconds: 100 * _loadAttempts), () {
-      if (!mounted) return;
-      final infoProvider =
-          Provider.of<shared.FranchiseInfoProvider>(context, listen: false);
-      final franchiseProvider =
-          Provider.of<shared.FranchiseProvider>(context, listen: false);
+    if (!_hasLoadedFranchise &&
+        franchiseId != 'unknown' &&
+        franchiseId.isNotEmpty) {
+      _hasLoadedFranchise = true;
+      print(
+          '[OnboardingMenuScreen] Valid franchiseId → forcing loadFranchiseInfo');
 
-      // Extra force
-      if (franchiseProvider.franchiseId == 'test') {
-        franchiseProvider.forceRefreshFranchiseId('test');
-      }
-      infoProvider.loadFranchiseInfo();
-    });
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        await infoProvider.loadFranchiseInfo();
+        if (mounted) setState(() {});
+      });
+    }
+
+    if (!_hasInitialized) {
+      _hasInitialized = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false).load(
+            franchiseIdOverride: franchiseId, forceReloadFromFirestore: true);
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
+            .load(forceReloadFromFirestore: true);
+        Provider.of<shared.CategoryProvider>(context, listen: false).load(
+            franchiseIdOverride: franchiseId, forceReloadFromFirestore: true);
+        Provider.of<shared.MenuItemProvider>(context, listen: false).load(
+            franchiseIdOverride: franchiseId, forceReloadFromFirestore: true);
+      });
+    }
   }
 
   @override
@@ -85,12 +74,13 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
 
     final franchiseId = franchiseProvider.franchiseId;
     final franchise = infoProvider.franchise;
-    final isLoading = infoProvider.loading || _isLoading;
+    final isLoading = infoProvider.loading ||
+        franchise == null; // ← CHANGED: removed _hasLoadedFranchise dependency
 
     print(
-        '[OnboardingMenuScreen] build() called - franchiseId=$franchiseId, franchise=${franchise?.name}, loading=$isLoading');
+        '[OnboardingMenuScreen] build() - franchiseId=$franchiseId, franchise=${franchise?.name ?? "null"}, loading=$isLoading');
 
-    if (isLoading || franchise == null) {
+    if (isLoading) {
       return const Scaffold(
         body: Center(
           child: Column(
@@ -114,7 +104,7 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
               Text(loc?.franchiseNotFound ?? 'Franchise not found'),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: _triggerLoadFranchiseInfo,
+                onPressed: () => infoProvider.loadFranchiseInfo(),
                 child: const Text('Reload Franchise'),
               ),
             ],
@@ -123,7 +113,7 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
       );
     }
 
-    // Normal UI
+    // Fully loaded UI (unchanged from your code)
     return Scaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -131,19 +121,45 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Onboarding - ${franchise.name}',
+              'Onboarding – ${franchise?.name ?? franchiseId}',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 32),
-            // Your OnboardingStepCard list here (keep your existing cards)
             OnboardingStepCard(
               stepNumber: 1,
               title: loc?.stepFeatures ?? 'Features',
               subtitle: loc?.stepFeaturesDesc ?? '',
-              completed: _stepCompletion['features'] ?? false,
+              completed: progressProvider.isStepComplete('ingredientTypes'),
               onTap: () => _navigateToSection(context, 'onboardingFeatures'),
             ),
-            // ... add the rest of your step cards (ingredients, categories, menuItems, review) ...
+            OnboardingStepCard(
+              stepNumber: 2,
+              title: loc?.stepIngredients ?? 'Ingredients',
+              subtitle: loc?.stepIngredientsDesc ?? '',
+              completed: progressProvider.isStepComplete('ingredients'),
+              onTap: () => _navigateToSection(context, 'onboardingIngredients'),
+            ),
+            OnboardingStepCard(
+              stepNumber: 3,
+              title: loc?.stepCategories ?? 'Categories',
+              subtitle: loc?.stepCategoriesDesc ?? '',
+              completed: progressProvider.isStepComplete('categories'),
+              onTap: () => _navigateToSection(context, 'onboardingCategories'),
+            ),
+            OnboardingStepCard(
+              stepNumber: 4,
+              title: loc?.stepMenuItems ?? 'Menu Items',
+              subtitle: loc?.stepMenuItemsDesc ?? '',
+              completed: progressProvider.isStepComplete('menuItems'),
+              onTap: () => _navigateToSection(context, 'onboardingMenuItems'),
+            ),
+            OnboardingStepCard(
+              stepNumber: 5,
+              title: loc?.stepReview ?? 'Review & Publish',
+              subtitle: loc?.stepReviewDesc ?? '',
+              completed: progressProvider.isStepComplete('review'),
+              onTap: () => _navigateToSection(context, 'onboardingReview'),
+            ),
             const SizedBox(height: 16),
             Text(
               loc?.progressComingSoon ?? 'More steps coming soon',
@@ -158,6 +174,6 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
   }
 
   void _navigateToSection(BuildContext context, String sectionKey) {
-    Navigator.pushNamed(context, '/dashboard?section=$sectionKey');
+    Navigator.pushNamed(context, '/admin/dashboard?section=$sectionKey');
   }
 }

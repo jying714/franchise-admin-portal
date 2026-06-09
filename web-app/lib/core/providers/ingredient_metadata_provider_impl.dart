@@ -8,7 +8,7 @@ import 'package:collection/collection.dart';
 class IngredientMetadataProviderImpl extends ChangeNotifier
     implements shared.IngredientMetadataProvider {
   final shared.FirestoreService _firestore;
-  final String _franchiseId;
+  String _franchiseId;
 
   List<shared.IngredientMetadata> _original = [];
   List<shared.IngredientMetadata> _current = [];
@@ -24,6 +24,14 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
 
   final Map<String, GlobalKey> itemGlobalKeys = {};
   final Map<String, GlobalKey> fieldGlobalKeys = {};
+
+  void updateFranchiseId(String newId) {
+    if (newId != _franchiseId && newId.isNotEmpty) {
+      _franchiseId =
+          newId; // Remove 'final' from the field declaration above if needed
+      load(forceReloadFromFirestore: true);
+    }
+  }
 
   IngredientMetadataProviderImpl({
     required shared.FirestoreService firestore,
@@ -142,7 +150,8 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
       _original.clear();
       itemGlobalKeys.clear();
 
-      final fetched = await _firestore.fetchIngredientMetadata(_franchiseId);
+      final fetched =
+          await _firestore.getIngredientMetadata(_franchiseId).first;
       _original = List.from(fetched);
       _current = List.from(fetched);
       _hasLoaded = true;
@@ -151,6 +160,12 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
       for (final ing in _current) {
         itemGlobalKeys[ing.id] = GlobalKey();
       }
+
+      shared.ErrorLogger.log(
+        message: '✅ Ingredients reload complete. Count=${fetched.length}',
+        source: 'IngredientMetadataProviderImpl',
+        severity: 'info',
+      );
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message: 'Failed to load ingredient metadata',

@@ -89,14 +89,14 @@ class IngredientTypeProviderImpl extends ChangeNotifier
 
     try {
       final fetched =
-          await _firestoreService.fetchIngredientTypeIds(franchiseId);
-      _ingredientTypes = fetched
-          .map((id) => shared.IngredientType(
-                id: id,
-                name: id,
-                visibleInApp: true,
-              ))
-          .toList();
+          await _firestoreService.getIngredientTypes(franchiseId).first;
+      _ingredientTypes = List.from(fetched);
+
+      shared.ErrorLogger.log(
+        message: '✅ Ingredient Types reload complete. Count=${fetched.length}',
+        source: 'IngredientTypeProviderImpl',
+        severity: 'info',
+      );
     } catch (e, stack) {
       if (e.toString().contains('UnimplementedError')) {
         shared.ErrorLogger.log(

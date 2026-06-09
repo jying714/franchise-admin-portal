@@ -4652,7 +4652,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noIngredientsFound => 'No ingredients found';
 
   @override
-  String get noIngredientsMessage => 'You have not added any ingredients yet. Start by tapping the add button.';
+  String get noIngredientsMessage => 'Add ingredient types to continue with menu setup.';
 
   @override
   String get ingredientName => 'Name';
@@ -4706,7 +4706,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editIngredientType => 'Edit Ingredient Type';
 
   @override
-  String get noIngredientTypesFound => 'No ingredient types found.';
+  String get noIngredientTypesFound => 'No Ingredient Types Found';
 
   @override
   String get noDescription => 'No description provided.';

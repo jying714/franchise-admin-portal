@@ -2780,26 +2780,6 @@ class FirestoreServiceImpl implements FirestoreService {
     }
   }
 
-  @override
-  Stream<List<model.Category>> getCategories(String franchiseId) {
-    if (franchiseId.isEmpty ||
-        franchiseId == 'unknown' ||
-        franchiseId == 'default') {
-      return Stream.value(<model.Category>[]);
-    }
-
-    final effectiveId = franchiseId; // already validated
-
-    return _franchiseCollection(effectiveId, _categories)
-        .where('isActive', isEqualTo: true)
-        .orderBy('sortOrder')
-        .snapshots()
-        .map((s) => s.docs
-            .map((d) => model.Category.fromFirestore(
-                d.data() as Map<String, dynamic>, d.id))
-            .toList());
-  }
-
   // ===================== MENU ITEMS =====================
   @override
   Future<void> addMenuItem(String franchiseId, MenuItem item,
@@ -3471,4 +3451,22 @@ class FirestoreServiceImpl implements FirestoreService {
   firestore.CollectionReference<Map<String, dynamic>>
       get invitationCollection => throw UnimplementedError(_adminOnly(
           'invitationCollection (use invitationCollectionPath or dedicated invitation methods instead in lightweight tier)'));
+
+  @override
+  Stream<List<model.Category>> getCategories(String franchiseId) {
+    // Lightweight impl returns empty - AdminFirestoreService provides real stream
+    return Stream.value(<model.Category>[]);
+  }
+
+  @override
+  Stream<List<IngredientType>> getIngredientTypes(String franchiseId) {
+    // Lightweight impl returns empty - AdminFirestoreService provides real stream
+    return Stream.value(<IngredientType>[]);
+  }
+
+  @override
+  Stream<List<IngredientMetadata>> getIngredientMetadata(String franchiseId) {
+    // Lightweight impl returns empty - AdminFirestoreService provides real stream
+    return Stream.value(<IngredientMetadata>[]);
+  }
 }

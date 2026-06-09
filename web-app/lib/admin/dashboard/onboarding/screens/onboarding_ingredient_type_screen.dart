@@ -8,6 +8,7 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingred
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/inline_add_ingredient_type_row.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/ingredients/ingredient_type_json_import_export_dialog.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_impl.dart';
+import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 
 class IngredientTypeManagementScreen extends StatefulWidget {
   const IngredientTypeManagementScreen({super.key});
@@ -22,6 +23,7 @@ class _IngredientTypeManagementScreenState
   String? franchiseId;
   bool _showSelectAllBanner = false;
   bool _hasLoaded = false;
+  bool _hasInitialized = false;
   final Map<String, bool> _editingMap = {};
   bool _reorderChanged = false;
   List<shared.IngredientType> _pendingReorder = [];
@@ -34,8 +36,11 @@ class _IngredientTypeManagementScreenState
 
     final newFranchiseId =
         context.watch<shared.FranchiseProvider>().franchiseId;
+
     if (newFranchiseId != franchiseId) {
       franchiseId = newFranchiseId;
+      _hasLoaded = false;
+      _hasInitialized = false;
     }
 
     if (!_hasLoaded &&
@@ -44,11 +49,15 @@ class _IngredientTypeManagementScreenState
         franchiseId != 'unknown') {
       _hasLoaded = true;
 
-      Future.microtask(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
         final provider =
             Provider.of<shared.IngredientTypeProvider>(context, listen: false);
-        provider.load(
-            franchiseIdOverride: franchiseId!, forceReloadFromFirestore: true);
+        await provider.load(
+          franchiseIdOverride: franchiseId!,
+          forceReloadFromFirestore: true,
+        );
+        if (mounted) setState(() {}); // Force Consumer rebuild
       });
     }
   }
@@ -171,16 +180,6 @@ class _IngredientTypeManagementScreenState
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
-    final provider =
-        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
-    final types = provider.ingredientTypes;
-
-    if (franchiseId == null || franchiseId!.isEmpty) {
-      return Scaffold(
-        appBar: AppBar(title: Text(loc.ingredientTypes)),
-        body: Center(child: Text(loc.selectAFranchiseFirst)),
-      );
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -211,16 +210,7 @@ class _IngredientTypeManagementScreenState
                   Provider.of<shared.IngredientTypeProvider>(context,
                       listen: false);
 
-              print(
-                  '[OnboardingIngredientTypeScreen] Opening template picker dialog...');
-              print(
-                  '[OnboardingIngredientTypeScreen] AppLocalizations.of(context): $parentLoc');
-
-              if (parentLoc == null) {
-                print(
-                    '[OnboardingIngredientTypeScreen] ERROR: Localization is null on this screen!');
-                return;
-              }
+              if (parentLoc == null) return;
 
               await showDialog(
                 context: context,
@@ -239,11 +229,11 @@ class _IngredientTypeManagementScreenState
                 },
               );
 
-              final franchiseId =
+              final currentFranchiseId =
                   Provider.of<shared.FranchiseProvider>(context, listen: false)
                       .franchiseId;
               await ingredientTypeProvider.load(
-                  franchiseIdOverride: franchiseId,
+                  franchiseIdOverride: currentFranchiseId,
                   forceReloadFromFirestore: true);
 
               if (context.mounted) {
@@ -273,227 +263,260 @@ class _IngredientTypeManagementScreenState
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
-        child: types.isEmpty
-            ? Center(child: Text(loc.noIngredientTypesFound))
-            : Column(
-                children: [
-                  const InlineAddIngredientTypeRow(),
-                  if (_showSelectAllBanner)
-                    Card(
-                      color: Colors.amber[100],
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 12),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                loc.selectAllPrompt, // Add this to your .arb
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                            ElevatedButton.icon(
-                              icon: const Icon(Icons.select_all),
-                              label: Text(loc.selectAll),
-                              onPressed: () {
-                                final allIds = provider.ingredientTypes
-                                    .map((t) => t.id!)
-                                    .toList();
-                                for (final id in allIds) {
-                                  provider.stageTypeForDelete(id);
-                                }
-                                setState(() {
-                                  _showSelectAllBanner = false;
-                                });
-                              },
-                            ),
-                            const SizedBox(width: 8),
-                            TextButton(
-                              child: Text(loc.cancel),
-                              onPressed: () {
-                                setState(() {
-                                  _showSelectAllBanner = false;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
+        child: Consumer<shared.IngredientTypeProvider>(
+          builder: (context, provider, child) {
+            final types = provider.ingredientTypes;
+
+            if (franchiseId == null || franchiseId!.isEmpty) {
+              return Center(child: Text(loc.selectAFranchiseFirst));
+            }
+
+            return Column(
+              children: [
+                if (types.isEmpty)
+                  Expanded(
+                    child: Center(
+                      child: EmptyStateWidget(
+                        title: loc.noIngredientTypesFound,
+                        message: loc.noIngredientsMessage ??
+                            "No ingredient types defined yet. Add some to continue.",
                       ),
                     ),
-                  const SizedBox(height: 12),
-                  if (provider.hasStagedDeletes)
-                    Row(
-                      children: [
-                        ElevatedButton(
-                          onPressed: () async {
-                            await provider.commitStagedDeletes(franchiseId!);
-                            setState(() {});
-                          },
-                          child: Text(loc.saveChanges),
-                        ),
-                        const SizedBox(width: 12),
-                        OutlinedButton(
-                          onPressed: () {
-                            provider.clearStagedDeletes();
-                            setState(() {});
-                          },
-                          child: Text(loc.revertChanges),
-                        ),
-                        const SizedBox(width: 24),
-                        Text(
-                          '${provider.stagedForDelete.length} ${loc.toDelete}',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      ],
-                    ),
-                  if (_reorderChanged)
-                    Row(
-                      children: [
-                        ElevatedButton(
-                          onPressed: _persistReorder,
-                          child: Text(loc.saveChanges),
-                        ),
-                        const SizedBox(width: 12),
-                        OutlinedButton(
-                          onPressed: _cancelReorder,
-                          child: Text(loc.revertChanges),
-                        ),
-                      ],
-                    ),
-                  const SizedBox(height: 12),
+                  )
+                else
                   Expanded(
-                    child: ReorderableListView.builder(
-                      buildDefaultDragHandles: false,
-                      onReorder: (oldIndex, newIndex) async {
-                        if (provider.ingredientTypes.isEmpty ||
-                            oldIndex == newIndex) return;
-
-                        final updatedList = List<shared.IngredientType>.from(
-                            provider.ingredientTypes);
-
-                        if (newIndex > oldIndex) newIndex -= 1;
-
-                        final movedItem = updatedList.removeAt(oldIndex);
-                        updatedList.insert(newIndex, movedItem);
-
-                        for (int i = 0; i < updatedList.length; i++) {
-                          updatedList[i] =
-                              updatedList[i].copyWith(sortOrder: i);
-                        }
-
-                        await provider.reorderIngredientTypes(
-                            franchiseId!, updatedList);
-
-                        setState(() {
-                          _reorderChanged = true;
-                          _pendingReorder = updatedList;
-                        });
-                      },
-                      itemCount: types.length,
-                      itemBuilder: (_, index) {
-                        final type = types[index];
-                        if (provider.stagedForDelete.contains(type.id)) {
-                          return Container(
-                            key: ValueKey('deleted_${type.id}'),
-                            color: Colors.red.withOpacity(0.07),
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            child: Row(
-                              children: [
-                                Icon(Icons.delete, color: Colors.red),
-                                const SizedBox(width: 10),
-                                Text(
-                                  type.name,
-                                  style: TextStyle(
-                                    color: Colors.red,
-                                    decoration: TextDecoration.lineThrough,
+                    child: Column(
+                      children: [
+                        const InlineAddIngredientTypeRow(),
+                        if (_showSelectAllBanner)
+                          Card(
+                            color: Colors.amber[100],
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      loc.selectAllPrompt,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w600),
+                                    ),
                                   ),
-                                ),
-                                const Spacer(),
-                                IconButton(
-                                  icon: Icon(Icons.undo),
-                                  tooltip: loc.undo,
-                                  onPressed: () => setState(() {
-                                    provider.unstageTypeForDelete(type.id!);
-                                  }),
-                                ),
-                              ],
+                                  ElevatedButton.icon(
+                                    icon: const Icon(Icons.select_all),
+                                    label: Text(loc.selectAll),
+                                    onPressed: () {
+                                      final allIds = provider.ingredientTypes
+                                          .map((t) => t.id!)
+                                          .toList();
+                                      for (final id in allIds) {
+                                        provider.stageTypeForDelete(id);
+                                      }
+                                      setState(() {
+                                        _showSelectAllBanner = false;
+                                      });
+                                    },
+                                  ),
+                                  const SizedBox(width: 8),
+                                  TextButton(
+                                    child: Text(loc.cancel),
+                                    onPressed: () {
+                                      setState(() {
+                                        _showSelectAllBanner = false;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
-                          );
-                        }
-                        return ReorderableDragStartListener(
-                          key: ValueKey(type.id!),
-                          index: index,
-                          enabled: !_isEditingAny,
-                          child: EditableIngredientTypeRow(
-                            type: type,
-                            isEditing: _editingMap[type.id!] == true,
-                            onEditTapped: () {
+                          ),
+                        const SizedBox(height: 12),
+                        if (provider.hasStagedDeletes)
+                          Row(
+                            children: [
+                              ElevatedButton(
+                                onPressed: () async {
+                                  await provider
+                                      .commitStagedDeletes(franchiseId!);
+                                  setState(() {});
+                                },
+                                child: Text(loc.saveChanges),
+                              ),
+                              const SizedBox(width: 12),
+                              OutlinedButton(
+                                onPressed: () {
+                                  provider.clearStagedDeletes();
+                                  setState(() {});
+                                },
+                                child: Text(loc.revertChanges),
+                              ),
+                              const SizedBox(width: 24),
+                              Text(
+                                '${provider.stagedForDelete.length} ${loc.toDelete}',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ],
+                          ),
+                        if (_reorderChanged)
+                          Row(
+                            children: [
+                              ElevatedButton(
+                                onPressed: _persistReorder,
+                                child: Text(loc.saveChanges),
+                              ),
+                              const SizedBox(width: 12),
+                              OutlinedButton(
+                                onPressed: _cancelReorder,
+                                child: Text(loc.revertChanges),
+                              ),
+                            ],
+                          ),
+                        const SizedBox(height: 12),
+                        Expanded(
+                          child: ReorderableListView.builder(
+                            buildDefaultDragHandles: false,
+                            onReorder: (oldIndex, newIndex) async {
+                              if (provider.ingredientTypes.isEmpty ||
+                                  oldIndex == newIndex) return;
+
+                              final updatedList =
+                                  List<shared.IngredientType>.from(
+                                      provider.ingredientTypes);
+
+                              if (newIndex > oldIndex) newIndex -= 1;
+
+                              final movedItem = updatedList.removeAt(oldIndex);
+                              updatedList.insert(newIndex, movedItem);
+
+                              for (int i = 0; i < updatedList.length; i++) {
+                                updatedList[i] =
+                                    updatedList[i].copyWith(sortOrder: i);
+                              }
+
+                              await provider.reorderIngredientTypes(
+                                  franchiseId!, updatedList);
+
                               setState(() {
-                                _editingMap[type.id!] = true;
+                                _reorderChanged = true;
+                                _pendingReorder = updatedList;
                               });
                             },
-                            onDeleteTapped: () async {
-                              final inUse =
-                                  await provider.isIngredientTypeInUse(
-                                franchiseId: franchiseId!,
-                                typeId: type.id!,
-                              );
-
-                              if (inUse) {
-                                if (!context.mounted) return;
-                                await showDialog(
-                                  context: context,
-                                  builder: (_) => AlertDialog(
-                                    title: Text(loc.deletionBlocked),
-                                    content: Text(loc.ingredientTypeInUseError),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: Text(loc.ok),
+                            itemCount: types.length,
+                            itemBuilder: (_, index) {
+                              final type = types[index];
+                              if (provider.stagedForDelete.contains(type.id)) {
+                                return Container(
+                                  key: ValueKey('deleted_${type.id}'),
+                                  color: Colors.red.withOpacity(0.07),
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.delete, color: Colors.red),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        type.name,
+                                        style: TextStyle(
+                                          color: Colors.red,
+                                          decoration:
+                                              TextDecoration.lineThrough,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      IconButton(
+                                        icon: Icon(Icons.undo),
+                                        tooltip: loc.undo,
+                                        onPressed: () => setState(() {
+                                          provider
+                                              .unstageTypeForDelete(type.id!);
+                                        }),
                                       ),
                                     ],
                                   ),
                                 );
-                                return;
                               }
-
-                              provider.stageTypeForDelete(type.id!);
-                              setState(() {});
-                            },
-                            onSaveTapped: () async {
-                              await provider.load(
-                                  franchiseIdOverride: franchiseId!,
-                                  forceReloadFromFirestore: true);
-                              setState(() {
-                                _editingMap[type.id!] = false;
-                              });
-                            },
-                            trailing: Checkbox(
-                              value: provider.stagedForDelete.contains(type.id),
-                              onChanged: (selected) {
-                                if (selected == true) {
-                                  provider.stageTypeForDelete(type.id!);
-                                  // If this was the first selection, prompt for select all
-                                  if (provider.stagedForDelete.length == 1) {
+                              return ReorderableDragStartListener(
+                                key: ValueKey(type.id!),
+                                index: index,
+                                enabled: !_isEditingAny,
+                                child: EditableIngredientTypeRow(
+                                  type: type,
+                                  isEditing: _editingMap[type.id!] == true,
+                                  onEditTapped: () {
                                     setState(() {
-                                      _showSelectAllBanner = true;
+                                      _editingMap[type.id!] = true;
                                     });
-                                  }
-                                } else {
-                                  provider.unstageTypeForDelete(type.id!);
-                                }
-                                setState(() {});
-                              },
-                            ),
+                                  },
+                                  onDeleteTapped: () async {
+                                    final inUse =
+                                        await provider.isIngredientTypeInUse(
+                                      franchiseId: franchiseId!,
+                                      typeId: type.id!,
+                                    );
+
+                                    if (inUse) {
+                                      if (!context.mounted) return;
+                                      await showDialog(
+                                        context: context,
+                                        builder: (_) => AlertDialog(
+                                          title: Text(loc.deletionBlocked),
+                                          content: Text(
+                                              loc.ingredientTypeInUseError),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context),
+                                              child: Text(loc.ok),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    provider.stageTypeForDelete(type.id!);
+                                    setState(() {});
+                                  },
+                                  onSaveTapped: () async {
+                                    await provider.load(
+                                        franchiseIdOverride: franchiseId!,
+                                        forceReloadFromFirestore: true);
+                                    setState(() {
+                                      _editingMap[type.id!] = false;
+                                    });
+                                  },
+                                  trailing: Checkbox(
+                                    value: provider.stagedForDelete
+                                        .contains(type.id),
+                                    onChanged: (selected) {
+                                      if (selected == true) {
+                                        provider.stageTypeForDelete(type.id!);
+                                        if (provider.stagedForDelete.length ==
+                                            1) {
+                                          setState(() {
+                                            _showSelectAllBanner = true;
+                                          });
+                                        }
+                                      } else {
+                                        provider.unstageTypeForDelete(type.id!);
+                                      }
+                                      setState(() {});
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

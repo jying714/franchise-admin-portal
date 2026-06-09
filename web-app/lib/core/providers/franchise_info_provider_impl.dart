@@ -15,14 +15,14 @@ class FranchiseInfoProviderImpl extends ChangeNotifier
     required shared.FranchiseProvider franchiseProvider,
   })  : _firestore = firestore,
         _franchiseProvider = franchiseProvider {
-    // Strong listener binding
-    _franchiseProvider.onFranchiseChanged = loadFranchiseInfo;
+    // Bind to every change from the single source of truth
+    _franchiseProvider.onFranchiseChanged = _onFranchiseChanged;
 
-    // Aggressive initial + delayed retry
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      loadFranchiseInfo();
-    });
-    Future.delayed(const Duration(milliseconds: 800), loadFranchiseInfo);
+    // Aggressive initial + post-handoff loads
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadWithRetry());
+    Future.delayed(const Duration(milliseconds: 200), _loadWithRetry);
+    Future.delayed(const Duration(milliseconds: 600), _loadWithRetry);
+    Future.delayed(const Duration(milliseconds: 1400), _loadWithRetry);
   }
 
   @override
@@ -31,20 +31,22 @@ class FranchiseInfoProviderImpl extends ChangeNotifier
   @override
   bool get loading => _loading;
 
-  @override
-  Future<void> loadFranchiseInfo() async {
-    final fid = _franchiseProvider.franchiseId;
-
+  void _onFranchiseChanged() {
     print(
-        '[FranchiseInfoProviderImpl] loadFranchiseInfo() called with fid: "$fid"');
+        '[FranchiseInfoProviderImpl] onFranchiseChanged triggered - forcing reload');
+    _lastLoadedId = null; // Force fresh
+    _loadWithRetry();
+  }
+
+  Future<void> _loadWithRetry() async {
+    // Always read the LATEST from the single source of truth
+    final fid = _franchiseProvider.franchiseId;
+    print(
+        '[FranchiseInfoProviderImpl] _loadWithRetry() called with CURRENT fid: "$fid"');
 
     if (fid == null || fid.isEmpty || fid == 'unknown' || fid == 'default') {
-      print('[FranchiseInfoProviderImpl] Invalid fid → clearing');
-      if (_franchise != null) {
-        _franchise = null;
-        _lastLoadedId = null;
-        notifyListeners();
-      }
+      print(
+          '[FranchiseInfoProviderImpl] Invalid fid → no-op (preserve previous if any)');
       return;
     }
 
@@ -85,7 +87,13 @@ class FranchiseInfoProviderImpl extends ChangeNotifier
   }
 
   @override
-  Future<void> reload() async => loadFranchiseInfo();
+  Future<void> loadFranchiseInfo() async => _loadWithRetry();
+
+  @override
+  Future<void> reload() async {
+    _lastLoadedId = null;
+    await _loadWithRetry();
+  }
 
   @override
   void clear() {

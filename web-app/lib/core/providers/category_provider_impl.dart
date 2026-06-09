@@ -95,22 +95,33 @@ class CategoryProviderImpl extends ChangeNotifier
   Future<void> _loadCategories(String franchiseId,
       {bool forceReloadFromFirestore = false}) async {
     _loading = true;
-    notifyListeners(); // Safe initial state update
+    notifyListeners();
 
     try {
-      final fetched = await _firestore.fetchCategories(franchiseId);
+      // Use admin service stream (first emission gives current data)
+      final fetched = await _firestore.getCategories(franchiseId).first;
       _current
         ..clear()
         ..addAll(fetched);
       _original = List.from(fetched);
       _hasLoaded = true;
       _loadedFranchiseId = franchiseId;
+
+      shared.ErrorLogger.log(
+        message: '✅ Category reload complete. Count=${fetched.length}',
+        source: 'CategoryProviderImpl',
+        severity: 'info',
+      );
     } catch (e, stack) {
       if (e.toString().contains('UnimplementedError')) {
-        // Silent in admin context - expected
         _current = [];
         _original = [];
-        return; // Early return to avoid extra logging noise
+        shared.ErrorLogger.log(
+          message: 'Lightweight service fallback in admin context',
+          stack: stack.toString(),
+          source: 'CategoryProviderImpl',
+          severity: 'warning',
+        );
       } else {
         shared.ErrorLogger.log(
           message: 'Failed to load categories',
@@ -122,7 +133,6 @@ class CategoryProviderImpl extends ChangeNotifier
       }
     } finally {
       _loading = false;
-      // Defer final notify to avoid "during build" error
       WidgetsBinding.instance.addPostFrameCallback((_) {
         notifyListeners();
       });

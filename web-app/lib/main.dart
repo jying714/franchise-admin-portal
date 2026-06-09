@@ -355,6 +355,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
         // AUTHENTICATED - Force dashboard
         // AUTHENTICATED - Force dashboard
         // AUTHENTICATED - Force dashboard
+        // AUTHENTICATED - Force dashboard
         return MultiProvider(
           providers: [
             // === Core Providers ===
@@ -433,109 +434,80 @@ class FranchiseAppRootSplit extends StatelessWidget {
                   OnboardingProgressProviderImpl(
                       firestore: fs, franchiseId: fp.franchiseId ?? ''),
             ),
+            // === INGREDIENT METADATA PROVIDER (ADMIN) ===
             ChangeNotifierProxyProvider2<shared.FirestoreService,
                 shared.FranchiseProvider, IngredientMetadataProviderImpl>(
-              create: (_) => IngredientMetadataProviderImpl(
-                  firestore: shared.FirestoreServiceImpl(), franchiseId: ''),
-              update: (_, fs, fp, prev) =>
-                  prev ??
-                  IngredientMetadataProviderImpl(
-                      firestore: fs, franchiseId: fp.franchiseId ?? ''),
+              create: (context) => IngredientMetadataProviderImpl(
+                firestore: Provider.of<shared.FirestoreService>(context,
+                    listen: false),
+                franchiseId: '',
+              ),
+              update: (_, fs, fp, prev) {
+                final notifier = prev ??
+                    IngredientMetadataProviderImpl(
+                      firestore: fs,
+                      franchiseId: fp.franchiseId ?? '',
+                    );
+                if (fp.franchiseId != null && fp.franchiseId!.isNotEmpty) {
+                  notifier.updateFranchiseId(fp.franchiseId!);
+                }
+                return notifier;
+              },
             ),
+            // === CATEGORY PROVIDER (ADMIN) ===
             ChangeNotifierProxyProvider2<shared.FirestoreService,
                 shared.FranchiseProvider, CategoryProviderImpl>(
-              create: (_) => CategoryProviderImpl(
-                  firestore: shared.FirestoreServiceImpl(), franchiseId: ''),
+              create: (context) => CategoryProviderImpl(
+                firestore: AdminFirestoreService(),
+                franchiseId: '',
+              ),
               update: (_, fs, fp, prev) =>
                   prev ??
                   CategoryProviderImpl(
                       firestore: fs, franchiseId: fp.franchiseId ?? ''),
             ),
+            // === MENU ITEM PROVIDER (ADMIN) ===
             ChangeNotifierProxyProvider3<
                 shared.FirestoreService,
                 shared.FranchiseProvider,
                 FranchiseInfoProviderImpl,
                 MenuItemProviderImpl>(
               create: (context) => MenuItemProviderImpl(
-                  firestoreService: shared.FirestoreServiceImpl(),
-                  franchiseInfoProvider: FranchiseInfoProviderImpl(
-                      firestore: shared.FirestoreServiceImpl(),
-                      franchiseProvider: Provider.of<shared.FranchiseProvider>(
-                          context,
-                          listen: false))),
+                firestoreService: AdminFirestoreService(),
+                franchiseInfoProvider: FranchiseInfoProviderImpl(
+                  firestore: AdminFirestoreService(),
+                  franchiseProvider: Provider.of<shared.FranchiseProvider>(
+                      context,
+                      listen: false),
+                ),
+              ),
               update: (_, fs, fp, fip, prev) =>
                   prev ??
                   MenuItemProviderImpl(
                       firestoreService: fs, franchiseInfoProvider: fip),
             ),
+            // === INGREDIENT TYPE PROVIDER (ADMIN) ===
             ChangeNotifierProxyProvider2<shared.FirestoreService,
                 shared.FranchiseProvider, IngredientTypeProviderImpl>(
-              create: (_) => IngredientTypeProviderImpl(
-                  firestoreService: shared.FirestoreServiceImpl()),
-              update: (_, fs, fp, prev) =>
-                  prev ?? IngredientTypeProviderImpl(firestoreService: fs)
-                    ..franchiseId = fp.franchiseId ?? '',
+              create: (context) => IngredientTypeProviderImpl(
+                firestoreService: AdminFirestoreService(),
+              ),
+              update: (_, fs, fp, prev) {
+                final notifier = prev ??
+                    IngredientTypeProviderImpl(
+                      firestoreService: AdminFirestoreService(),
+                    );
+                if (fp.franchiseId != null && fp.franchiseId!.isNotEmpty) {
+                  notifier.franchiseId = fp.franchiseId!; // Use public setter
+                }
+                return notifier;
+              },
             ),
-
             // === Logging & Analytics ===
             Provider<shared.AuditLogService>.value(
                 value: AuditLogServiceImpl()),
             Provider<shared.AnalyticsService>.value(
                 value: shared.AnalyticsServiceImpl()),
-
-            // === ALIASES - Safe .value (no context lookup here) ===
-            Provider<shared.FranchiseFeatureProvider>.value(
-              value: FranchiseFeatureProviderImpl(
-                service: FranchiseFeatureServiceImpl(),
-                franchiseId: '',
-              ),
-            ),
-            Provider<shared.FranchiseInfoProvider>.value(
-              value: FranchiseInfoProviderImpl(
-                firestore: shared.FirestoreServiceImpl(),
-                franchiseProvider: shared.FranchiseProvider(AppLocalStorage()),
-              ),
-            ),
-            Provider<shared.IngredientMetadataProvider>.value(
-              value: IngredientMetadataProviderImpl(
-                firestore: shared.FirestoreServiceImpl(),
-                franchiseId: '',
-              ),
-            ),
-            Provider<shared.CategoryProvider>.value(
-              value: CategoryProviderImpl(
-                firestore: shared.FirestoreServiceImpl(),
-                franchiseId: '',
-              ),
-            ),
-            Provider<shared.IngredientTypeProvider>.value(
-              value: IngredientTypeProviderImpl(
-                firestoreService: shared.FirestoreServiceImpl(),
-              ),
-            ),
-            Provider<shared.MenuItemProvider>.value(
-              value: MenuItemProviderImpl(
-                firestoreService: shared.FirestoreServiceImpl(),
-                franchiseInfoProvider: FranchiseInfoProviderImpl(
-                  firestore: shared.FirestoreServiceImpl(),
-                  franchiseProvider:
-                      shared.FranchiseProvider(AppLocalStorage()),
-                ),
-              ),
-            ),
-            Provider<shared.OnboardingProgressProvider>.value(
-              value: OnboardingProgressProviderImpl(
-                firestore: shared.FirestoreServiceImpl(),
-                franchiseId: '',
-              ),
-            ),
-
-            Provider<shared.FranchiseSubscriptionProvider>.value(
-              value: FranchiseSubscriptionProviderImpl(
-                service: FranchiseSubscriptionServiceImpl(),
-                franchiseId: '',
-              ),
-            ),
           ],
           child: const FranchiseAuthenticatedRoot(),
         );

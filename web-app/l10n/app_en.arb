@@ -1978,7 +1978,11 @@
   "stepFeaturesDesc": "Enable core platform features for your franchise",
   "@stepFeaturesDesc": {
     "description": "Description for features onboarding step"
-  }
+  },
+  "noIngredientTypesFound": "No Ingredient Types Found",
+  "noIngredientsMessage": "Add ingredient types to continue with menu setup.",
+  "@noIngredientTypesFound": {},
+  "@noIngredientsMessage": {}
 
 
 

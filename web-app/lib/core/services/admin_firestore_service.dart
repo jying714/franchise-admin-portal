@@ -607,13 +607,19 @@ class AdminFirestoreService extends shared.FirestoreServiceImpl {
 
   @override
   Stream<List<shared.Category>> getCategories(String franchiseId) {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      return Stream.value(<shared.Category>[]);
+    }
     return db
         .collection('franchises')
         .doc(franchiseId)
         .collection('categories')
+        .orderBy('sortOrder')
         .snapshots()
         .map((snap) => snap.docs
-            .map((d) => shared.Category.fromMap({...d.data(), 'id': d.id}))
+            .map((d) => shared.Category.fromFirestore(d.data(), d.id))
             .toList());
   }
 
@@ -770,5 +776,189 @@ class AdminFirestoreService extends shared.FirestoreServiceImpl {
         .collection('inventory')
         .doc(inventoryId)
         .delete();
+  }
+
+  // ===================== INGREDIENT TYPES (ADMIN OVERRIDE) =====================
+  // Fixed signatures + model API usage to match shared interface exactly
+
+  @override
+  Future<List<String>> fetchIngredientTypeIds(String franchiseId) async {
+    try {
+      final snap = await db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_types')
+          .orderBy('sortOrder')
+          .get();
+      return snap.docs.map((d) => d.id).toList();
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to fetch ingredient type IDs',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.fetchIngredientTypeIds',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return [];
+    }
+  }
+
+  @override
+  Future<void> saveIngredientType(
+      String franchiseId, shared.IngredientType type) async {
+    try {
+      final data = type.toMap(includeTimestamps: true);
+      await db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_types')
+          .doc(type.id)
+          .set(data, firestore.SetOptions(merge: true));
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to save ingredient type',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.saveIngredientType',
+        contextData: {'franchiseId': franchiseId, 'typeId': type.id},
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> updateIngredientType(String franchiseId, String typeId,
+      Map<String, dynamic> updatedFields) async {
+    try {
+      await db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_types')
+          .doc(typeId)
+          .update(updatedFields);
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to update ingredient type',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.updateIngredientType',
+        contextData: {'franchiseId': franchiseId, 'typeId': typeId},
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteIngredientType(String franchiseId, String typeId) async {
+    try {
+      await db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('ingredient_types')
+          .doc(typeId)
+          .delete();
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to delete ingredient type',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.deleteIngredientType',
+        contextData: {'franchiseId': franchiseId, 'typeId': typeId},
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> updateIngredientTypeSortOrders({
+    required String franchiseId,
+    required List<Map<String, dynamic>> sortedUpdates,
+  }) async {
+    try {
+      final batch = db.batch();
+      for (final update in sortedUpdates) {
+        final docRef = db
+            .collection('franchises')
+            .doc(franchiseId)
+            .collection('ingredient_types')
+            .doc(update['id'] as String);
+        batch.update(docRef, {'sortOrder': update['sortOrder']});
+      }
+      await batch.commit();
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to update ingredient type sort orders',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.updateIngredientTypeSortOrders',
+        contextData: {'franchiseId': franchiseId},
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Stream<List<shared.IngredientType>> getIngredientTypes(String franchiseId) {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      return Stream.value(<shared.IngredientType>[]);
+    }
+    return db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('ingredient_types')
+        .orderBy('sortOrder')
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => shared.IngredientType.fromFirestore(
+                d)) // full DocumentSnapshot as required by model
+            .toList());
+  }
+
+  @override
+  Stream<List<shared.IngredientMetadata>> getIngredientMetadata(
+      String franchiseId) {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      print(
+          '❌ [AdminFirestoreService] getIngredientMetadata - invalid franchiseId: $franchiseId');
+      return Stream.value(<shared.IngredientMetadata>[]);
+    }
+
+    print(
+        '🔍 [AdminFirestoreService] getIngredientMetadata - Querying franchises/$franchiseId/ingredient_metadata');
+
+    return db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('ingredient_metadata')
+        .snapshots()
+        .map((snap) {
+      print(
+          '📊 [AdminFirestoreService] Snapshot received - ${snap.docs.length} documents');
+      final list = snap.docs
+          .map((d) {
+            try {
+              final metadata = shared.IngredientMetadata.fromMap(
+                  d.data() as Map<String, dynamic>);
+              print(
+                  '✅ Parsed ingredient: id=${metadata.id}, name=${metadata.name}');
+              return metadata;
+            } catch (e, stack) {
+              print('❌ fromMap failed for doc ${d.id}: $e');
+              shared.ErrorLogger.log(
+                message: 'fromMap failed for ingredient_metadata',
+                stack: stack.toString(),
+                source: 'AdminFirestoreService.getIngredientMetadata',
+                severity: 'error',
+                contextData: {'docId': d.id, 'franchiseId': franchiseId},
+              );
+              return null;
+            }
+          })
+          .where((item) => item != null)
+          .cast<shared.IngredientMetadata>()
+          .toList();
+
+      print('✅ [AdminFirestoreService] Final parsed count: ${list.length}');
+      return list;
+    });
   }
 }

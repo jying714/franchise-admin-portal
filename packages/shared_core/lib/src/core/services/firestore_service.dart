@@ -609,7 +609,6 @@ abstract class FirestoreService {
     required String franchiseId,
     required String categoryId,
   });
-  Stream<List<model.Category>> getCategories(String franchiseId);
 
   // === MENU / CATEGORY SCHEMA HELPERS (admin) ===
   Future<Map<String, dynamic>?> getCategorySchema(
@@ -634,4 +633,9 @@ abstract class FirestoreService {
   // === COLLECTIONS (pure Dart getters) ===
   String get invitationCollectionPath;
   // You can add others: menuItemsCollectionPath, etc.
+
+  // === ONBOARDING / ADMIN STREAM HELPERS (added for P2.5) ===
+  Stream<List<model.Category>> getCategories(String franchiseId);
+  Stream<List<IngredientType>> getIngredientTypes(String franchiseId);
+  Stream<List<IngredientMetadata>> getIngredientMetadata(String franchiseId);
 }

@@ -30,24 +30,43 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_hasInitialized) return;
 
-    final franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false)
-            .franchiseId;
-    if (franchiseId.isNotEmpty && franchiseId != 'unknown') {
-      // Force reload all prerequisites so screen is always in sync
-      Provider.of<shared.IngredientTypeProvider>(context, listen: false).load(
-          franchiseIdOverride: franchiseId, forceReloadFromFirestore: true);
-      Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
-          .load(forceReloadFromFirestore: true);
-      Provider.of<shared.CategoryProvider>(context, listen: false).load(
-          franchiseIdOverride: franchiseId, forceReloadFromFirestore: true);
-      Provider.of<shared.MenuItemProvider>(context, listen: false).load(
-          franchiseIdOverride: franchiseId, forceReloadFromFirestore: true);
+    final franchiseProvider = context.watch<shared.FranchiseProvider>();
+    final franchiseId = franchiseProvider.franchiseId;
+
+    if (franchiseId.isNotEmpty &&
+        franchiseId != 'unknown' &&
+        !_hasInitialized) {
+      _hasInitialized = true;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+
+        // Capture consistent instances once
+        final typeProvider =
+            Provider.of<shared.IngredientTypeProvider>(context, listen: false);
+        final metadataProvider = Provider.of<shared.IngredientMetadataProvider>(
+            context,
+            listen: false);
+        final categoryProvider =
+            Provider.of<shared.CategoryProvider>(context, listen: false);
+        final menuProvider =
+            Provider.of<shared.MenuItemProvider>(context, listen: false);
+
+        await Future.wait([
+          typeProvider.load(
+              franchiseIdOverride: franchiseId, forceReloadFromFirestore: true),
+          metadataProvider.load(forceReloadFromFirestore: true),
+          categoryProvider.load(
+              franchiseIdOverride: franchiseId, forceReloadFromFirestore: true),
+          menuProvider.load(
+              franchiseIdOverride: franchiseId, forceReloadFromFirestore: true),
+        ]);
+
+        if (mounted)
+          setState(() {}); // Force watches + missingSteps re-evaluation
+      });
     }
-
-    _hasInitialized = true;
   }
 
   Future<void> _markComplete() async {
@@ -79,31 +98,27 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print('[DEBUG][OnboardingMenuScreen] build called');
     final loc = AppLocalizations.of(context)!;
-    final provider = context.watch<shared.MenuItemProvider>();
-    // print(
-    //     '[DEBUG] MenuItems in source: ${provider.menuItems.map((m /* was screen, Phase 4 fix */) => m.toJson())}');
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    // === Robust dependency checks for required onboarding steps ===
+    // === Consistent listening providers (aligned with load instances) ===
     final ingredientTypes =
         context.watch<shared.IngredientTypeProvider>().ingredientTypes;
     final ingredients =
         context.watch<shared.IngredientMetadataProvider>().ingredients;
     final categories = context.watch<shared.CategoryProvider>().categories;
+    final provider = context.watch<shared.MenuItemProvider>();
 
+    // === Robust dependency checks ===
     final missingSteps = <String>[];
     if (ingredientTypes.isEmpty) missingSteps.add(loc.stepIngredientTypes);
     if (ingredients.isEmpty) missingSteps.add(loc.stepIngredients);
     if (categories.isEmpty) missingSteps.add(loc.stepCategories);
 
-// If any dependencies are missing, return a clear EmptyState UI with actionable buttons
     if (missingSteps.isNotEmpty) {
       print(
           '[OnboardingMenuItemsScreen] Blocked: Missing dependencies: $missingSteps');
-      // Show a SnackBar on first build, not every frame
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           ScaffoldMessenger.of(context).removeCurrentSnackBar();
@@ -116,7 +131,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
           );
         }
       });
-      // Return an EmptyStateWidget that lists what to do next
+
       return Scaffold(
         appBar: AppBar(
           title: Text(loc.onboardingMenuItems),
@@ -168,38 +183,35 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
       );
     }
 
-    // Helper to check and maybe show schema sidebar
+    // === Main Content (reached when all deps are populated) ===
     void checkForSchemaIssues(shared.MenuItem menuItem) {
-      final categories =
+      final categoriesLocal =
           Provider.of<shared.CategoryProvider>(context, listen: false)
               .categories;
-      final ingredients =
+      final ingredientsLocal =
           Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
               .ingredients;
-      final ingredientTypes =
+      final ingredientTypesLocal =
           Provider.of<shared.IngredientTypeProvider>(context, listen: false)
               .ingredientTypes;
 
-      // Call your schema issue detection util
       schemaIssues = shared.MenuItemSchemaIssue.detectAllIssues(
         menuItem: menuItem,
-        categories: categories,
-        ingredients: ingredients,
-        ingredientTypes: ingredientTypes,
+        categories: categoriesLocal,
+        ingredients: ingredientsLocal,
+        ingredientTypes: ingredientTypesLocal,
       );
       showSchemaSidebar = schemaIssues.isNotEmpty;
       itemPendingRepair = showSchemaSidebar ? menuItem : null;
-      if (showSchemaSidebar) setState(() {}); // Redraw for the sidebar
+      if (showSchemaSidebar) setState(() {});
     }
 
-    // Callback for repair sidebar
     void handleSidebarRepair(
         shared.MenuItemSchemaIssue issue, String newValue) {
       if (itemPendingRepair == null) return;
 
       shared.MenuItem repaired = itemPendingRepair!;
 
-      // Repair logic for each issue type
       switch (issue.type) {
         case shared.MenuItemSchemaIssueType.category:
           repaired = repaired.copyWith(categoryId: newValue);
@@ -215,10 +227,8 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
           repaired = repaired.copyWith(includedIngredients: updatedIncluded);
           break;
         case shared.MenuItemSchemaIssueType.ingredientType:
-          // (add your logic here as needed)
           break;
         case shared.MenuItemSchemaIssueType.missingField:
-          // Repair missing fields by field name
           switch (issue.field) {
             case 'name':
               repaired = repaired.copyWith(name: newValue);
@@ -233,12 +243,10 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
             case 'categoryId':
               repaired = repaired.copyWith(categoryId: newValue);
               break;
-            // Add additional fields as needed
           }
           break;
       }
 
-      // Re-run issue detection after repairing this field
       final List<shared.MenuItemSchemaIssue> remainingIssues =
           shared.MenuItemSchemaIssue.detectAllIssues(
         menuItem: repaired,
@@ -259,7 +267,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
           schemaIssues = [];
           itemPendingRepair = null;
         });
-        Navigator.of(context).pop(); // Close sidebar/modal if desired
       } else {
         setState(() {
           schemaIssues = remainingIssues;
@@ -268,9 +275,8 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
       }
     }
 
-    // Reusable openEditor with schema checking logic
     void openEditor({shared.MenuItem? item}) {
-      final provider =
+      final menuProvider =
           Provider.of<shared.MenuItemProvider>(context, listen: false);
 
       showModalBottomSheet(
@@ -278,7 +284,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
         context: context,
         backgroundColor: Colors.transparent,
         builder: (context) {
-          // locally track your issues in the sheet
           List<shared.MenuItemSchemaIssue> issues = [];
 
           return StatefulBuilder(
@@ -309,14 +314,9 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                     listen: false)
                                 .franchiseId,
                             onSave: (updatedItem) async {
-                              final provider =
-                                  Provider.of<shared.MenuItemProvider>(context,
-                                      listen: false);
-                              provider.addOrUpdateMenuItem(
-                                  updatedItem); // modifies local cache
-
+                              menuProvider.addOrUpdateMenuItem(updatedItem);
                               if (mounted) {
-                                Navigator.of(context).pop(); // dismiss sheet
+                                Navigator.of(context).pop();
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text('Item saved.')),
                                 );
@@ -373,11 +373,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                 tooltip: loc.importExport,
                 onPressed: () => MenuItemJsonImportExportDialog.show(context),
               ),
-              // IconButton(
-              //   icon: const Icon(Icons.library_add),
-              //   tooltip: loc.loadDefaultTemplates,
-              //   onPressed: () => MenuItemTemplatePickerDialog.show(context),
-              // ),
               IconButton(
                 icon: const Icon(Icons.check_circle_outline),
                 tooltip: loc.markAsComplete,
@@ -390,9 +385,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
             onPressed: () async {
               print('[DEBUG][FAB] FloatingActionButton pressed.');
               try {
-                print(
-                    '[DEBUG][FAB] About to navigate to /dashboard?section=menuItemEditor');
-
                 Navigator.pushNamed(
                   context,
                   '/dashboard?section=menuItemEditor',
@@ -419,9 +411,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                   stack: st.toString(),
                   source: 'onboarding_menu_items_screen.dart',
                   severity: 'error',
-                  contextData: {
-                    'exception': e.toString(),
-                  },
+                  contextData: {'exception': e.toString()},
                 );
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -482,7 +472,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                             print(
                                 '[DEBUG] Staged Ingredient Types: ${typeProvider.stagedTypes.length}');
 
-                            // Call persist once deps injected
                             await menuItemProvider.persistChanges();
                           },
                           child: Text(loc.saveChanges),

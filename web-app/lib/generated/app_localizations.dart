@@ -9036,7 +9036,7 @@ abstract class AppLocalizations {
   /// No description provided for @noIngredientsMessage.
   ///
   /// In en, this message translates to:
-  /// **'You have not added any ingredients yet. Start by tapping the add button.'**
+  /// **'Add ingredient types to continue with menu setup.'**
   String get noIngredientsMessage;
 
   /// No description provided for @ingredientName.
@@ -9144,7 +9144,7 @@ abstract class AppLocalizations {
   /// No description provided for @noIngredientTypesFound.
   ///
   /// In en, this message translates to:
-  /// **'No ingredient types found.'**
+  /// **'No Ingredient Types Found'**
   String get noIngredientTypesFound;
 
   /// No description provided for @noDescription.

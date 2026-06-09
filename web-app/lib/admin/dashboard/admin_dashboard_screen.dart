@@ -16,6 +16,15 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/franchise_picker_dropdown.dart';
 import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_feature_provider_impl.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_info_provider_impl.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider_impl.dart';
+import 'package:franchise_admin_portal/core/providers/category_provider_impl.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_impl.dart';
+import 'package:franchise_admin_portal/core/providers/menu_item_provider_impl.dart';
+import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider_impl.dart';
+import 'package:franchise_admin_portal/core/providers/franchise_subscription_provider_impl.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final String? initialSectionKey;
@@ -173,32 +182,34 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                     ),
                   ),
+                // Inside AdminDashboardScreen _AdminDashboardScreenState build(), replace the Expanded child LayoutBuilder with this:
+
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      // === PROVIDER ALIASING FOR ONBOARDING SCREENS (FINAL CORRECT PLACEMENT) ===
-                      // Use the LayoutBuilder's own builder context (descendant of main.dart providers)
+                      // === LIVE ALIASES (safe, no rebuilds during build) ===
                       final featureProv =
-                          Provider.of<shared.FranchiseFeatureProvider>(context,
+                          Provider.of<FranchiseFeatureProviderImpl>(context,
                               listen: false);
-                      final infoProv =
-                          Provider.of<shared.FranchiseInfoProvider>(context,
-                              listen: false);
-                      final metaProv =
-                          Provider.of<shared.IngredientMetadataProvider>(
-                              context,
-                              listen: false);
-                      final catProv = Provider.of<shared.CategoryProvider>(
+                      final infoProv = Provider.of<FranchiseInfoProviderImpl>(
                           context,
                           listen: false);
-                      final typeProv =
-                          Provider.of<shared.IngredientTypeProvider>(context,
+                      final metaProv =
+                          Provider.of<IngredientMetadataProviderImpl>(context,
                               listen: false);
-                      final menuItemProv = Provider.of<shared.MenuItemProvider>(
+                      final catProv = Provider.of<CategoryProviderImpl>(context,
+                          listen: false);
+                      final typeProv = Provider.of<IngredientTypeProviderImpl>(
+                          context,
+                          listen: false);
+                      final menuItemProv = Provider.of<MenuItemProviderImpl>(
                           context,
                           listen: false);
                       final onboardingProg =
-                          Provider.of<shared.OnboardingProgressProvider>(
+                          Provider.of<OnboardingProgressProviderImpl>(context,
+                              listen: false);
+                      final subscriptionProv =
+                          Provider.of<FranchiseSubscriptionProviderImpl>(
                               context,
                               listen: false);
 
@@ -218,6 +229,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               value: menuItemProv),
                           Provider<shared.OnboardingProgressProvider>.value(
                               value: onboardingProg),
+                          Provider<shared.FranchiseSubscriptionProvider>.value(
+                              value: subscriptionProv),
                         ],
                         child: IndexedStack(
                           index: _selectedIndex,
