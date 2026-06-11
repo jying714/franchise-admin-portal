@@ -1,10 +1,12 @@
 # scripts\dump_schema.ps1
 # Run from: C:\Users\jying\franchise_platform\scripts\
-# Output:   project_schema.txt (in project root)
+# Output:   project_schema.txt (in scripts folder)
 
 $root = Split-Path -Parent $PSScriptRoot
 
-$outputFile = Join-Path $root "project_schema.txt"
+# === CHANGED LINE BELOW ===
+$outputFile = Join-Path $PSScriptRoot "project_schema.txt"
+# =========================
 
 # Clear previous output
 "" | Out-File -FilePath $outputFile -Encoding UTF8 -Force

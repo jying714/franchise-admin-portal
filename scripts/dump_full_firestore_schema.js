@@ -1,31 +1,24 @@
 /**
- * Full Firestore Schema Dumper
+ * Full Firestore Schema Dumper - COMPLETE DOCUMENTS
  * 
  * Usage:
  *   cd web-app
- *   node ../scripts/dump_full_firestore_schema.js
- * 
- * Requirements:
- *   - firebase-admin in web-app/node_modules (already present)
- *   - web-app/serviceAccountKey.json (service account with Firestore read access)
+ *   node ..\scripts\dump_full_firestore_schema.js
  * 
  * Output: scripts/full_firestore_schema_YYYY-MM-DD_HH-mm-ss.txt
- * 
- * Samples up to 3 documents per collection + recurses into subcollections.
- * Safe for production (limited reads).
  */
 
 const path = require('path');
 const fs = require('fs');
 
-// Load firebase-admin from web-app's node_modules (avoids path issues)
+// Load firebase-admin
 const firebaseAdminPath = path.join(__dirname, '..', 'web-app', 'node_modules', 'firebase-admin');
 const admin = require(firebaseAdminPath);
 
 // === CONFIG ===
 const SERVICE_ACCOUNT_PATH = path.join(__dirname, '..', 'web-app', 'serviceAccountKey.json');
-const OUTPUT_DIR = path.join(__dirname);
-const MAX_DOCS_PER_COLLECTION = 3;
+const OUTPUT_DIR = path.join(__dirname);  // scripts folder in project root
+const MAX_DOCS_LIMITED = 3;  // for audit/error logs only
 
 // === INIT ===
 if (!fs.existsSync(SERVICE_ACCOUNT_PATH)) {
@@ -43,7 +36,6 @@ admin.initializeApp({
 const db = admin.firestore();
 
 // === HELPERS ===
-
 function getType(value) {
   if (value === null) return 'null';
   if (value === undefined) return 'undefined';
@@ -51,30 +43,20 @@ function getType(value) {
   if (value instanceof admin.firestore.DocumentReference) return `DocumentReference -> ${value.path}`;
   if (value instanceof admin.firestore.GeoPoint) return `GeoPoint(${value.latitude}, ${value.longitude})`;
   if (Array.isArray(value)) return `array[${value.length}]`;
-  if (typeof value === 'object') return 'map';
+  if (typeof value === 'object' && value !== null) return 'map';
   return typeof value;
 }
 
 function sanitizeValue(value, depth = 0) {
-  if (depth > 2) return '[nested]';
+  if (depth > 3) return '[deeply nested]';
   if (value === null || value === undefined) return value;
-  if (value instanceof admin.firestore.Timestamp) {
-    return value.toDate().toISOString();
-  }
-  if (value instanceof admin.firestore.DocumentReference) {
-    return `ref:${value.path}`;
-  }
-  if (value instanceof admin.firestore.GeoPoint) {
-    return { _type: 'GeoPoint', lat: value.latitude, lng: value.longitude };
-  }
-  if (Array.isArray(value)) {
-    return value.slice(0, 3).map(v => sanitizeValue(v, depth + 1)); // limit array samples
-  }
-  if (typeof value === 'object') {
+  if (value instanceof admin.firestore.Timestamp) return value.toDate().toISOString();
+  if (value instanceof admin.firestore.DocumentReference) return `ref:${value.path}`;
+  if (value instanceof admin.firestore.GeoPoint) return { _type: 'GeoPoint', lat: value.latitude, lng: value.longitude };
+  if (Array.isArray(value)) return value.map(v => sanitizeValue(v, depth + 1));
+  if (typeof value === 'object' && value !== null) {
     const out = {};
-    let count = 0;
     for (const [k, v] of Object.entries(value)) {
-      if (count++ > 12) { out['...'] = '[truncated]'; break; }
       out[k] = sanitizeValue(v, depth + 1);
     }
     return out;
@@ -82,9 +64,11 @@ function sanitizeValue(value, depth = 0) {
   return value;
 }
 
-async function getSampleDocs(collectionRef) {
+async function getFullDocs(collectionRef, limit = null) {
   try {
-    const snapshot = await collectionRef.limit(MAX_DOCS_PER_COLLECTION).get();
+    let query = collectionRef;
+    if (limit) query = query.limit(limit);
+    const snapshot = await query.get();
     const docs = [];
     snapshot.forEach(doc => {
       const data = doc.data() || {};
@@ -92,7 +76,7 @@ async function getSampleDocs(collectionRef) {
       for (const [key, val] of Object.entries(data)) {
         sanitized[key] = {
           type: getType(val),
-          sample: sanitizeValue(val)
+          value: sanitizeValue(val)
         };
       }
       docs.push({
@@ -114,42 +98,42 @@ async function exploreCollection(collectionPath, depth = 0, visited = new Set())
   visited.add(collectionPath);
 
   const collectionRef = db.collection(collectionPath);
+  const isLimitedCollection = ['audit_logs', 'error_logs', 'public_error_logs'].some(c => 
+    collectionPath === c || collectionPath.startsWith(c + '/')
+  );
 
-  // Get collection metadata + samples
-  let docCount = 0;
+  const limit = isLimitedCollection ? MAX_DOCS_LIMITED : null;
+
+  lines.push(`${indent}Collection: ${collectionPath}`);
+  lines.push(`${indent}  Full documents: ${limit ? limit + ' (limited)' : 'ALL'}`);
+
   try {
-    // Note: count() is expensive on huge collections; we just sample
-    const samples = await getSampleDocs(collectionRef);
-    docCount = samples.length;
-
-    lines.push(`${indent}Collection: ${collectionPath}`);
-    lines.push(`${indent}  Sampled documents: ${docCount} (max ${MAX_DOCS_PER_COLLECTION})`);
-
-    if (samples.length === 0) {
-      lines.push(`${indent}  (empty or no permission)`);
+    const docs = await getFullDocs(collectionRef, limit);
+    if (docs.length === 0) {
+      lines.push(`${indent}  (empty)`);
     } else {
-      samples.forEach((doc, idx) => {
+      docs.forEach((doc, idx) => {
         lines.push(`${indent}  --- Doc ${idx + 1} (id: ${doc.id}) ---`);
         if (doc.error) {
           lines.push(`${indent}    ERROR: ${doc.error}`);
         } else {
           for (const [field, info] of Object.entries(doc.fields)) {
-            const sampleStr = typeof info.sample === 'object' 
-              ? JSON.stringify(info.sample, null, 0).slice(0, 180)
-              : String(info.sample).slice(0, 120);
-            lines.push(`${indent}    • ${field}: ${info.type}   = ${sampleStr}`);
+            const valueStr = typeof info.value === 'object' 
+              ? JSON.stringify(info.value, null, 2).slice(0, 500) 
+              : String(info.value);
+            lines.push(`${indent}    • ${field}: ${info.type}`);
+            lines.push(`${indent}      ${valueStr}`);
           }
         }
       });
     }
   } catch (err) {
-    lines.push(`${indent}Collection: ${collectionPath}`);
-    lines.push(`${indent}  ERROR accessing collection: ${err.message}`);
+    lines.push(`${indent}  ERROR: ${err.message}`);
   }
 
-  // Discover subcollections for the sampled documents
+  // Recurse into subcollections
   try {
-    const snapshot = await collectionRef.limit(2).get(); // small number for subcollection discovery
+    const snapshot = await collectionRef.limit(5).get(); // small sample for discovery
     for (const doc of snapshot.docs) {
       const subcollections = await doc.ref.listCollections();
       for (const sub of subcollections) {
@@ -158,7 +142,7 @@ async function exploreCollection(collectionPath, depth = 0, visited = new Set())
       }
     }
   } catch (e) {
-    // ignore subcollection discovery errors
+    // ignore discovery errors
   }
 
   return lines;
@@ -168,77 +152,50 @@ async function dumpFullSchema() {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   const outputFile = path.join(OUTPUT_DIR, `full_firestore_schema_${timestamp}.txt`);
 
-  console.log('🚀 Starting full Firestore schema dump for project: doughboyspizzeria-2b3d2');
-  console.log('   Sampling max 3 documents per collection + recursing subcollections...\n');
+  console.log('🚀 Starting COMPLETE Firestore schema dump...');
+  console.log('   Full documents everywhere except 3 limited log collections.\n');
 
   const allLines = [
     '================================================================================',
-    'DOUGHBOYS PIZZERIA — COMPLETE FIRESTORE SCHEMA DUMP',
+    'DOUGHBOYS PIZZERIA — COMPLETE FIRESTORE SCHEMA DUMP (FULL DOCUMENTS)',
     `Generated: ${new Date().toISOString()}`,
     'Project: doughboyspizzeria-2b3d2',
-    `Method: firebase-admin (service account) + recursive collection walk`,
-    `Sample limit: ${MAX_DOCS_PER_COLLECTION} documents per collection`,
+    'Limited collections (3 docs each): audit_logs, error_logs, public_error_logs',
     '================================================================================',
-    '',
-    'NOTE: This is a live snapshot. Structure is dominated by franchises/{franchiseId}/ subcollections.',
     ''
   ];
 
-  // Start from known important root collections + full discovery
-  const rootCollectionsToExplore = [
-    'alerts',
-    'audit_logs',
-    'banners',
-    'categories',
-    'config',
-    'error_logs',
-    'feedback',
-    'franchise_subscriptions',
-    'franchisee_invitations',
-    'franchises',           // CRITICAL ROOT
-    'integrations',
-    'invoices',
-    'menu_items',
-    'onboarding_progress',
-    'orders',
-    'payouts',
-    'platform_features',
-    'platform_invoices',
-    'platform_payments',
-    'platform_plans',
-    'promotions',
-    'restaurant_types',
-    'support_chats',
-    'support_requests',
-    'tax_reports',
-    'users',                 // CRITICAL ROOT (has subcollections)
-    'onboarding_templates'
+  const rootCollections = [
+    'alerts', 'banners', 'categories', 'config', 'feedback', 'franchise_subscriptions',
+    'franchisee_invitations', 'franchises', 'integrations', 'invoices', 'menu_items',
+    'onboarding_progress', 'orders', 'payouts', 'platform_features', 'platform_invoices',
+    'platform_payments', 'platform_plans', 'promotions', 'restaurant_types', 'support_chats',
+    'support_requests', 'tax_reports', 'users', 'onboarding_templates', 'audit_logs',
+    'error_logs', 'public_error_logs'
   ];
 
   const visited = new Set();
 
-  for (const coll of rootCollectionsToExplore) {
+  for (const coll of rootCollections) {
     console.log(`Exploring: ${coll} ...`);
     const lines = await exploreCollection(coll, 0, visited);
     allLines.push(...lines);
     allLines.push('');
   }
 
-  // Final note
-  allLines.push('');
   allLines.push('================================================================================');
-  allLines.push('END OF SCHEMA DUMP');
-  allLines.push(`Total collections explored (including subcollections): ${visited.size}`);
+  allLines.push('END OF COMPLETE SCHEMA DUMP');
+  allLines.push(`Total collections/subcollections visited: ${visited.size}`);
   allLines.push('================================================================================');
 
   fs.writeFileSync(outputFile, allLines.join('\n'), 'utf8');
 
-  console.log(`\n✅ Complete schema written to:\n   ${outputFile}`);
-  console.log(`   Collections/subcollections visited: ${visited.size}`);
+  console.log(`\n✅ Full schema dump completed!`);
+  console.log(`   File: ${outputFile}`);
+  console.log(`   Collections visited: ${visited.size}`);
 }
 
-// Run
 dumpFullSchema().catch(err => {
-  console.error('FATAL ERROR during schema dump:', err);
+  console.error('FATAL ERROR:', err);
   process.exit(1);
 });
