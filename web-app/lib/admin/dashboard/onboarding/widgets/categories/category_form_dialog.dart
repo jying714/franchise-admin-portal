@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/core/providers/category_provider_impl.dart'
+    show CategoryProviderImpl;
 
 class CategoryFormDialog extends StatefulWidget {
   final shared.Category? initialCategory;
@@ -22,13 +24,19 @@ class CategoryFormDialog extends StatefulWidget {
     required String franchiseId,
   }) {
     final loc = AppLocalizations.of(parentContext)!;
+    final provider =
+        Provider.of<CategoryProviderImpl>(parentContext, listen: false);
 
     return showDialog<shared.Category>(
       context: parentContext,
-      builder: (dialogContext) => CategoryFormDialog(
-        initialCategory: initialCategory,
-        franchiseId: franchiseId,
-        loc: loc,
+      builder: (dialogContext) =>
+          ChangeNotifierProvider<CategoryProviderImpl>.value(
+        value: provider,
+        child: CategoryFormDialog(
+          initialCategory: initialCategory,
+          franchiseId: franchiseId,
+          loc: loc,
+        ),
       ),
     );
   }
@@ -67,9 +75,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
 
     try {
       final categoryProvider =
-          Provider.of<shared.CategoryProvider>(context, listen: false);
-      final franchiseProvider =
-          Provider.of<shared.FranchiseProvider>(context, listen: false);
+          Provider.of<CategoryProviderImpl>(context, listen: false);
 
       final isEdit = widget.initialCategory != null;
       final id = widget.initialCategory?.id ?? UniqueKey().toString();
@@ -78,19 +84,22 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
         id: id,
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim(),
-        sortOrder: widget.initialCategory?.sortOrder ??
-            categoryProvider.categories.length,
+        sortOrder: widget.initialCategory?.sortOrder ?? 0,
         isActive: true,
       );
 
-      categoryProvider.addOrUpdateCategory(category);
+      if (isEdit) {
+        categoryProvider.addOrUpdateCategory(category);
+      } else {
+        await categoryProvider.createCategory(category);
+      }
 
       if (mounted) {
         Navigator.of(context).pop(category);
       }
     } catch (e, stack) {
       shared.ErrorLogger.log(
-        message: 'Failed to save category: $e',
+        message: 'Failed to save category',
         stack: stack.toString(),
         source: 'CategoryFormDialog',
         severity: 'error',
@@ -102,7 +111,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(loc.saveFailed)),
+          SnackBar(content: Text(loc.saveFailed ?? 'Failed to save category')),
         );
       }
     } finally {

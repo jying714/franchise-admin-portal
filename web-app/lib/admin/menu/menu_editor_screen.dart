@@ -117,6 +117,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
   Future<void> _addOrEditMenuItemPanel({shared.MenuItem? item}) async {
     setState(() {
       _editingMenuItem = item;
+      _selectedCategoryForEditor = item?.categoryId;
       _showEditorPanel = true;
     });
   }
@@ -971,6 +972,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
                   child: MenuItemEditorPanel(
                     isOpen: _showEditorPanel,
                     initialCategoryId: _selectedCategoryForEditor,
+                    initialItem: _editingMenuItem,
                     onClose: _saveOrCloseEditor,
                     onCategoryCleared: _onCategoryCleared,
                     onCategorySelected: (category) {

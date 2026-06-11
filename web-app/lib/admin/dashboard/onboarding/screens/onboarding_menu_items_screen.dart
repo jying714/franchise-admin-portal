@@ -11,6 +11,7 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_i
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_template_picker_dialog.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/schema_issue_sidebar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.dart';
 
 class OnboardingMenuItemsScreen extends StatefulWidget {
   const OnboardingMenuItemsScreen({super.key});
@@ -112,32 +113,22 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
 
     // === Robust dependency checks ===
     final missingSteps = <String>[];
-    if (ingredientTypes.isEmpty) missingSteps.add(loc.stepIngredientTypes);
-    if (ingredients.isEmpty) missingSteps.add(loc.stepIngredients);
-    if (categories.isEmpty) missingSteps.add(loc.stepCategories);
+    if (ingredientTypes.isEmpty)
+      missingSteps.add(loc.stepIngredientTypes ?? 'Ingredient Types');
+    if (ingredients.isEmpty)
+      missingSteps.add(loc.stepIngredients ?? 'Ingredients');
+    if (categories.isEmpty)
+      missingSteps.add(loc.stepCategories ?? 'Categories');
 
     if (missingSteps.isNotEmpty) {
       print(
           '[OnboardingMenuItemsScreen] Blocked: Missing dependencies: $missingSteps');
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).removeCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                  loc.menuItemsMissingPrerequisites(missingSteps.join(', '))),
-              backgroundColor: colorScheme.error,
-            ),
-          );
-        }
-      });
 
       return Scaffold(
         appBar: AppBar(
           title: Text(loc.onboardingMenuItems),
           backgroundColor: theme.scaffoldBackgroundColor,
           elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.black),
         ),
         body: Center(
           child: Column(
@@ -149,34 +140,65 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                 message:
                     loc.menuItemsMissingPrerequisites(missingSteps.join(', ')),
               ),
-              const SizedBox(height: 24),
-              if (ingredientTypes.isEmpty)
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.list_alt),
-                  onPressed: () => Navigator.pushNamed(
-                    context,
-                    '/dashboard?section=onboardingIngredientTypes',
-                  ),
-                  label: Text(loc.goToStep(loc.stepIngredientTypes)),
-                ),
-              if (ingredients.isEmpty)
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.egg),
-                  onPressed: () => Navigator.pushNamed(
-                    context,
-                    '/dashboard?section=onboardingIngredients',
-                  ),
-                  label: Text(loc.goToStep(loc.stepIngredients)),
-                ),
-              if (categories.isEmpty)
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.category),
-                  onPressed: () => Navigator.pushNamed(
-                    context,
-                    '/dashboard?section=onboardingCategories',
-                  ),
-                  label: Text(loc.goToStep(loc.stepCategories)),
-                ),
+              const SizedBox(height: 32),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                alignment: WrapAlignment.center,
+                children: [
+                  if (ingredientTypes.isEmpty)
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.list_alt),
+                      onPressed: () {
+                        final dashboardState = context.findAncestorStateOfType<
+                            State<AdminDashboardScreen>>();
+                        if (dashboardState != null) {
+                          (dashboardState as dynamic)
+                              .switchToSection('onboardingIngredientTypes');
+                        } else {
+                          Navigator.pushNamed(context,
+                              '/dashboard?section=onboardingIngredientTypes');
+                        }
+                      },
+                      label: Text(loc.goToStep(
+                          loc.stepIngredientTypes ?? 'Ingredient Types')),
+                    ),
+                  if (ingredients.isEmpty)
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.egg),
+                      onPressed: () {
+                        final dashboardState = context.findAncestorStateOfType<
+                            State<AdminDashboardScreen>>();
+                        if (dashboardState != null) {
+                          (dashboardState as dynamic)
+                              .switchToSection('onboardingIngredients');
+                        } else {
+                          Navigator.pushNamed(context,
+                              '/dashboard?section=onboardingIngredients');
+                        }
+                      },
+                      label: Text(
+                          loc.goToStep(loc.stepIngredients ?? 'Ingredients')),
+                    ),
+                  if (categories.isEmpty)
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.category),
+                      onPressed: () {
+                        final dashboardState = context.findAncestorStateOfType<
+                            State<AdminDashboardScreen>>();
+                        if (dashboardState != null) {
+                          (dashboardState as dynamic)
+                              .switchToSection('onboardingCategories');
+                        } else {
+                          Navigator.pushNamed(context,
+                              '/dashboard?section=onboardingCategories');
+                        }
+                      },
+                      label: Text(
+                          loc.goToStep(loc.stepCategories ?? 'Categories')),
+                    ),
+                ],
+              ),
             ],
           ),
         ),

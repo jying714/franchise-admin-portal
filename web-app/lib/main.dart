@@ -266,6 +266,14 @@ class _FranchiseAuthenticatedRootState
               final name = settings.name?.toLowerCase() ?? '/';
               debugPrint('[onGenerateRoute] Requested: $name');
 
+              // === NEW: Parse query param and pass initialSectionKey ===
+              String? initialSectionKey;
+              final uri = name.startsWith('/') ? Uri.parse(name) : null;
+              if (uri?.queryParameters['section'] != null) {
+                initialSectionKey = uri!.queryParameters['section'];
+              }
+              // === END NEW ===
+
               if (name.contains('hq-owner') || name.contains('hq')) {
                 return MaterialPageRoute(
                     builder: (_) => const OwnerHQDashboardScreen(
@@ -287,10 +295,10 @@ class _FranchiseAuthenticatedRootState
                         currentScreen: 'developer/dashboard'));
               }
 
-              if (name.contains('onboarding')) {
+              if (name.contains('onboarding') || initialSectionKey != null) {
                 return MaterialPageRoute(
-                  builder: (_) => const AdminDashboardScreen(
-                    initialSectionKey: 'onboardingMenu',
+                  builder: (_) => AdminDashboardScreen(
+                    initialSectionKey: initialSectionKey ?? 'onboardingMenu',
                   ),
                 );
               }

@@ -43,12 +43,12 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
   @override
   void didUpdateWidget(covariant IssueDetailsExpansion oldWidget) {
     super.didUpdateWidget(oldWidget);
-    debugPrint(
-        '[IssueDetailsExpansion][didUpdateWidget] oldSections=${oldWidget.sectionOrder} newSections=${widget.sectionOrder}');
+    // debugPrint(
+    //     '[IssueDetailsExpansion][didUpdateWidget] oldSections=${oldWidget.sectionOrder} newSections=${widget.sectionOrder}');
     if (widget.sectionOrder.length != oldWidget.sectionOrder.length) {
       _expanded = List.generate(widget.sectionOrder.length, (_) => false);
-      debugPrint(
-          '[IssueDetailsExpansion][didUpdateWidget] Reset expanded to $_expanded');
+      // debugPrint(
+      //     '[IssueDetailsExpansion][didUpdateWidget] Reset expanded to $_expanded');
       _logReviewState(context, at: 'didUpdateWidget:lengthChanged');
     } else {
       _logReviewState(context, at: 'didUpdateWidget');
@@ -63,11 +63,11 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
 
       final issuesBySection = reviewProvider.allIssuesBySection;
 
-      debugPrint('[IssueDetailsExpansion] $at '
-          'sections=${widget.sectionOrder.length} '
-          'expanded=${_expanded.length}:${_expanded} '
-          'isPublishable=${reviewProvider.isPublishable} '
-          'allIssuesKeys=${issuesBySection.keys.toList()}');
+      // debugPrint('[IssueDetailsExpansion] $at '
+      //     'sections=${widget.sectionOrder.length} '
+      //     'expanded=${_expanded.length}:${_expanded} '
+      //     'isPublishable=${reviewProvider.isPublishable} '
+      //     'allIssuesKeys=${issuesBySection.keys.toList()}');
 
       for (final sec in widget.sectionOrder) {
         final list =
@@ -81,8 +81,8 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
         final info = list
             .where((e) => e.severity == shared.OnboardingIssueSeverity.info)
             .length;
-        debugPrint('[IssueDetailsExpansion] $at section="$sec" '
-            'total=${list.length} critical=$crit warning=$warn info=$info');
+        // debugPrint('[IssueDetailsExpansion] $at section="$sec" '
+        //     'total=${list.length} critical=$crit warning=$warn info=$info');
       }
     } catch (e, st) {
       shared.ErrorLogger.log(
@@ -114,8 +114,8 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
           if (idx >= 0 && idx < _expanded.length) {
             setState(() => _expanded[idx] = !_expanded[idx]);
           } else {
-            debugPrint(
-                '[IssueDetailsExpansion][WARN] expansionCallback index out of range');
+            // debugPrint(
+            //     '[IssueDetailsExpansion][WARN] expansionCallback index out of range');
           }
         },
         animationDuration: const Duration(milliseconds: 200),
@@ -383,27 +383,27 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
                         const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   ),
                   onPressed: () {
-                    debugPrint(
-                        '[IssueDetailsExpansion] Attempting navigation...');
-                    debugPrint('  Section (raw): "$section"');
-                    debugPrint('  Issue.itemId: "${issue.itemId}"');
-                    debugPrint('  Issue.itemLocator: "${issue.itemLocator}"');
-                    debugPrint('  Issue.actionLabel: "${issue.actionLabel}"');
-                    debugPrint(
-                        '  Issue.affectedFields: ${issue.affectedFields}');
+                    // debugPrint(
+                    //     '[IssueDetailsExpansion] Attempting navigation...');
+                    // debugPrint('  Section (raw): "$section"');
+                    // debugPrint('  Issue.itemId: "${issue.itemId}"');
+                    // debugPrint('  Issue.itemLocator: "${issue.itemLocator}"');
+                    // debugPrint('  Issue.actionLabel: "${issue.actionLabel}"');
+                    // debugPrint(
+                    //     '  Issue.affectedFields: ${issue.affectedFields}');
 
                     // âœ… Normalize section before navigation (fix)
                     final normalizedSection =
                         OnboardingNavigationUtils.normalizeForRouting(section);
-                    debugPrint('  Normalized section: "$normalizedSection"');
+                    // debugPrint('  Normalized section: "$normalizedSection"');
 
                     final route = OnboardingNavigationUtils.resolveRoute(
                         normalizedSection, issue);
                     debugPrint('  Resolved route: "$route"');
 
                     if (route.isEmpty) {
-                      debugPrint(
-                          '[IssueDetailsExpansion][WARN] Route is empty â€” navigation aborted.');
+                      // debugPrint(
+                      //     '[IssueDetailsExpansion][WARN] Route is empty â€” navigation aborted.');
                       return;
                     }
 
@@ -412,7 +412,7 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
                       section: normalizedSection,
                       issue: issue,
                     );
-                    debugPrint('  Nav args: $args');
+                    // debugPrint('  Nav args: $args');
 
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       Navigator.of(context).pushNamed(route, arguments: args);

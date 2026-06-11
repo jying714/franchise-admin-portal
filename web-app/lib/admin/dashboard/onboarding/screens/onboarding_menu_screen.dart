@@ -5,6 +5,8 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/onboarding_step_card.dart';
+import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.dart';
+import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.dart';
 
 class OnboardingMenuScreen extends StatefulWidget {
   const OnboardingMenuScreen({Key? key}) : super(key: key);
@@ -74,8 +76,7 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
 
     final franchiseId = franchiseProvider.franchiseId;
     final franchise = infoProvider.franchise;
-    final isLoading = infoProvider.loading ||
-        franchise == null; // ← CHANGED: removed _hasLoadedFranchise dependency
+    final isLoading = infoProvider.loading || franchise == null;
 
     print(
         '[OnboardingMenuScreen] build() - franchiseId=$franchiseId, franchise=${franchise?.name ?? "null"}, loading=$isLoading');
@@ -113,7 +114,6 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
       );
     }
 
-    // Fully loaded UI (unchanged from your code)
     return Scaffold(
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -129,35 +129,49 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
               stepNumber: 1,
               title: loc?.stepFeatures ?? 'Features',
               subtitle: loc?.stepFeaturesDesc ?? '',
-              completed: progressProvider.isStepComplete('ingredientTypes'),
-              onTap: () => _navigateToSection(context, 'onboardingFeatures'),
+              completed:
+                  progressProvider.isStepComplete('onboarding_feature_setup'),
+              onTap: () =>
+                  _navigateToSection(context, 'onboarding_feature_setup'),
             ),
             OnboardingStepCard(
               stepNumber: 2,
-              title: loc?.stepIngredients ?? 'Ingredients',
-              subtitle: loc?.stepIngredientsDesc ?? '',
-              completed: progressProvider.isStepComplete('ingredients'),
-              onTap: () => _navigateToSection(context, 'onboardingIngredients'),
+              title: loc?.stepIngredientTypes ?? 'Ingredient Types',
+              subtitle: loc?.stepIngredientTypesDesc ??
+                  'Create logical ingredient type tags like toppings, sauces, and sides.',
+              completed:
+                  progressProvider.isStepComplete('onboardingIngredientTypes'),
+              onTap: () =>
+                  _navigateToSection(context, 'onboardingIngredientTypes'),
             ),
             OnboardingStepCard(
               stepNumber: 3,
-              title: loc?.stepCategories ?? 'Categories',
-              subtitle: loc?.stepCategoriesDesc ?? '',
-              completed: progressProvider.isStepComplete('categories'),
-              onTap: () => _navigateToSection(context, 'onboardingCategories'),
+              title: loc?.stepIngredients ?? 'Ingredients',
+              subtitle: loc?.stepIngredientsDesc ?? '',
+              completed:
+                  progressProvider.isStepComplete('onboardingIngredients'),
+              onTap: () => _navigateToSection(context, 'onboardingIngredients'),
             ),
             OnboardingStepCard(
               stepNumber: 4,
-              title: loc?.stepMenuItems ?? 'Menu Items',
-              subtitle: loc?.stepMenuItemsDesc ?? '',
-              completed: progressProvider.isStepComplete('menuItems'),
-              onTap: () => _navigateToSection(context, 'onboardingMenuItems'),
+              title: loc?.stepCategories ?? 'Categories',
+              subtitle: loc?.stepCategoriesDesc ?? '',
+              completed:
+                  progressProvider.isStepComplete('onboardingCategories'),
+              onTap: () => _navigateToSection(context, 'onboardingCategories'),
             ),
             OnboardingStepCard(
               stepNumber: 5,
+              title: loc?.stepMenuItems ?? 'Menu Items',
+              subtitle: loc?.stepMenuItemsDesc ?? '',
+              completed: progressProvider.isStepComplete('onboardingMenuItems'),
+              onTap: () => _navigateToSection(context, 'onboardingMenuItems'),
+            ),
+            OnboardingStepCard(
+              stepNumber: 6,
               title: loc?.stepReview ?? 'Review & Publish',
               subtitle: loc?.stepReviewDesc ?? '',
-              completed: progressProvider.isStepComplete('review'),
+              completed: progressProvider.isStepComplete('onboardingReview'),
               onTap: () => _navigateToSection(context, 'onboardingReview'),
             ),
             const SizedBox(height: 16),
@@ -174,6 +188,28 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
   }
 
   void _navigateToSection(BuildContext context, String sectionKey) {
-    Navigator.pushNamed(context, '/admin/dashboard?section=$sectionKey');
+    debugPrint('[OnboardingMenuScreen] Navigating to section: $sectionKey');
+
+    // Try in-place switch first (preferred)
+    final dashboardState =
+        context.findAncestorStateOfType<State<AdminDashboardScreen>>();
+    if (dashboardState != null) {
+      // Call the public method we just added
+      (dashboardState as dynamic).switchToSection(sectionKey);
+      debugPrint('[OnboardingMenuScreen] ✅ Switched via public method');
+      return;
+    }
+
+    // Fallback: named route
+    final route = OnboardingNavigationUtils.resolveRoute(sectionKey, null);
+    if (route.isNotEmpty) {
+      Navigator.pushNamed(context, route).then((_) {
+        debugPrint('[OnboardingMenuScreen] Navigation to $route completed');
+      }).catchError((e) {
+        debugPrint('[OnboardingMenuScreen] Navigation error: $e');
+      });
+    } else {
+      Navigator.pushNamed(context, '/admin/dashboard');
+    }
   }
 }

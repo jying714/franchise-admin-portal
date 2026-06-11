@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 class MenuItemEditorPanel extends StatefulWidget {
   final bool isOpen;
   final String? initialCategoryId;
+  final shared.MenuItem? initialItem;
   final VoidCallback onClose;
   final VoidCallback? onCategoryCleared;
   final ValueChanged<String>? onCategorySelected; // <-- Add this
@@ -16,6 +17,7 @@ class MenuItemEditorPanel extends StatefulWidget {
     Key? key,
     required this.isOpen,
     this.initialCategoryId,
+    this.initialItem,
     required this.onClose,
     this.onCategoryCleared,
     this.onCategorySelected, // <-- Add this
@@ -27,6 +29,8 @@ class MenuItemEditorPanel extends StatefulWidget {
 
 class _MenuItemEditorPanelState extends State<MenuItemEditorPanel> {
   String? _categoryId;
+  shared.MenuItem? _editingMenuItem;
+  bool _showEditorPanel = false;
 
   @override
   void didUpdateWidget(MenuItemEditorPanel oldWidget) {
@@ -121,14 +125,21 @@ class _MenuItemEditorPanelState extends State<MenuItemEditorPanel> {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 600),
                     child: DynamicMenuItemEditorScreen(
-                      key: ValueKey(_categoryId),
-                      franchiseId:
-                          Provider.of<shared.FranchiseProvider>(context, listen: false)
-                              .franchiseId,
-                      initialCategoryId: _categoryId,
+                      key: ValueKey(
+                          _editingMenuItem?.id ?? _categoryId ?? 'new'),
+                      franchiseId: Provider.of<shared.FranchiseProvider>(
+                              context,
+                              listen: false)
+                          .franchiseId,
+                      initialCategoryId: _categoryId ??
+                          widget.initialItem?.categoryId, // fallback
+                      initialItem:
+                          widget.initialItem ?? _editingMenuItem, // ← CRITICAL
                       onCategorySelected: (selectedCategory) {
                         setState(() {
                           _categoryId = selectedCategory;
+                          _editingMenuItem =
+                              null; // Only clear when user manually changes category
                         });
                         widget.onCategorySelected?.call(selectedCategory);
                       },
@@ -136,6 +147,7 @@ class _MenuItemEditorPanelState extends State<MenuItemEditorPanel> {
                         if (_categoryId != null) {
                           setState(() {
                             _categoryId = null;
+                            _editingMenuItem = null;
                           });
                           widget.onCategoryCleared?.call();
                         } else {
@@ -152,8 +164,12 @@ class _MenuItemEditorPanelState extends State<MenuItemEditorPanel> {
       ),
     );
   }
+
+  Future<void> _addOrEditMenuItemPanel({shared.MenuItem? item}) async {
+    setState(() {
+      _editingMenuItem = item;
+      _categoryId = item?.categoryId;
+      _showEditorPanel = true;
+    });
+  }
 }
-
-
-
-

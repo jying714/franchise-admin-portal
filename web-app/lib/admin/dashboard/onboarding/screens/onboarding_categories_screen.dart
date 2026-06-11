@@ -86,10 +86,10 @@ class _OnboardingCategoriesScreenState
     );
 
     if (result != null) {
-      Provider.of<CategoryProviderImpl>(context, listen: false)
-          .addOrUpdateCategory(result);
+      // No need to call addOrUpdateCategory again - createCategory already did it
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.categorySaved)),
+        SnackBar(
+            content: Text(loc.categorySaved ?? 'Category saved successfully')),
       );
     }
   }

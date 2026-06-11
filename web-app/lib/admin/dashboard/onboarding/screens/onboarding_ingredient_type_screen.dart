@@ -62,39 +62,48 @@ class _IngredientTypeManagementScreenState
     }
   }
 
+  Future<void> _refreshIngredientTypes() async {
+    if (franchiseId == null || franchiseId!.isEmpty) return;
+
+    final provider =
+        Provider.of<IngredientTypeProviderImpl>(context, listen: false);
+    await provider.load(
+      franchiseIdOverride: franchiseId!,
+      forceReloadFromFirestore: true,
+    );
+
+    // Force Consumer rebuild
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   void _showFormDialog({shared.IngredientType? initial}) {
     final loc = AppLocalizations.of(context);
     final franchiseId =
         Provider.of<shared.FranchiseProvider>(context, listen: false)
             .franchiseId;
+
+    if (loc == null || franchiseId.isEmpty) return;
+
     final ingredientTypeProvider =
         Provider.of<IngredientTypeProviderImpl>(context, listen: false);
-
-    print(
-        '[OnboardingIngredientTypeScreen] FAB pressed â€“ loc: $loc, franchiseId: $franchiseId');
-
-    if (loc == null) return;
 
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        return Localizations.override(
-          context: dialogContext,
-          child: Builder(
-            builder: (innerContext) {
-              return ChangeNotifierProvider<IngredientTypeProviderImpl>.value(
-                value: ingredientTypeProvider,
-                child: IngredientTypeFormDialog(
-                  loc: loc,
-                  franchiseId: franchiseId,
-                  initial: initial,
-                ),
-              );
-            },
+        return ChangeNotifierProvider<IngredientTypeProviderImpl>.value(
+          value: ingredientTypeProvider,
+          child: IngredientTypeFormDialog(
+            loc: loc,
+            franchiseId: franchiseId,
+            initial: initial,
           ),
         );
       },
-    );
+    ).then((_) {
+      _refreshIngredientTypes();
+    });
   }
 
   Future<void> _markComplete() async {
@@ -206,10 +215,6 @@ class _IngredientTypeManagementScreenState
             tooltip: loc.loadDefaultTypes,
             onPressed: () async {
               final parentLoc = AppLocalizations.of(context);
-              final ingredientTypeProvider =
-                  Provider.of<shared.IngredientTypeProvider>(context,
-                      listen: false);
-
               if (parentLoc == null) return;
 
               await showDialog(
@@ -229,12 +234,8 @@ class _IngredientTypeManagementScreenState
                 },
               );
 
-              final currentFranchiseId =
-                  Provider.of<shared.FranchiseProvider>(context, listen: false)
-                      .franchiseId;
-              await ingredientTypeProvider.load(
-                  franchiseIdOverride: currentFranchiseId,
-                  forceReloadFromFirestore: true);
+              // Force refresh after dialog closes
+              await _refreshIngredientTypes();
 
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -561,7 +562,7 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
     final loc = widget.loc;
     final colorScheme = Theme.of(context).colorScheme;
     final provider =
-        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
+        Provider.of<IngredientTypeProviderImpl>(context, listen: false);
 
     return AlertDialog(
       title: Text(widget.initial == null

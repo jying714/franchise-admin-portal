@@ -1,9 +1,10 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_impl.dart';
+import 'package:franchise_admin_portal/core/services/admin_firestore_service.dart';
 
 class IngredientTypeTemplatePickerDialog extends StatefulWidget {
   final AppLocalizations loc;
@@ -21,8 +22,7 @@ class IngredientTypeTemplatePickerDialog extends StatefulWidget {
               final loc = AppLocalizations.of(innerContext);
               if (loc == null) {
                 return const AlertDialog(
-                  content: Text('Localization unavailable'),
-                );
+                    content: Text('Localization unavailable'));
               }
               return ScaffoldMessenger(
                 child: IngredientTypeTemplatePickerDialog(loc: loc),
@@ -49,47 +49,38 @@ class _IngredientTypeTemplatePickerDialogState
         Provider.of<shared.FranchiseProvider>(context, listen: false)
             .franchiseId;
 
-    if (franchiseId.isEmpty || franchiseId == 'unknown') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.selectAFranchiseFirst)),
-      );
-      return;
-    }
+    print(
+        '[IngredientTypeTemplatePickerDialog] _loadTemplate STARTED - templateId: $templateId, franchiseId: $franchiseId');
+
+    if (franchiseId.isEmpty || franchiseId == 'unknown') return;
 
     setState(() => _loading = true);
 
     try {
-      final firestore =
+      final sharedService =
           Provider.of<shared.FirestoreService>(context, listen: false);
+      final firestore = sharedService as AdminFirestoreService;
+
       await firestore.copyIngredientTypesFromTemplate(
         franchiseId: franchiseId,
         templateId: templateId,
       );
 
-      // âœ… Immediately close dialog before triggering UI changes
+      print('[IngredientTypeTemplatePickerDialog] copy SUCCESS');
+
+      // Close dialog cleanly - NO snackbar here
       if (context.mounted) Navigator.of(context).pop();
-
-      // âœ… Reload types after closing
-      await Provider.of<IngredientTypeProviderImpl>(context, listen: false)
-          .load(franchiseIdOverride: franchiseId);
-
-      // âœ… Show snackbar after frame settles
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(loc.templateLoadedSuccessfully)),
-        );
-      });
     } catch (e, stack) {
+      print('[IngredientTypeTemplatePickerDialog] _loadTemplate ERROR: $e');
+
       shared.ErrorLogger.log(
         message: 'ingredient_type_template_load_failed',
         stack: stack.toString(),
         source: 'IngredientTypeTemplatePickerDialog',
         severity: 'error',
-        contextData: {
-          'templateId': templateId,
-          'franchiseId': franchiseId,
-        },
+        contextData: {'templateId': templateId, 'franchiseId': franchiseId},
       );
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(loc.errorGeneric)),
@@ -103,7 +94,6 @@ class _IngredientTypeTemplatePickerDialogState
   @override
   Widget build(BuildContext context) {
     final loc = widget.loc;
-    print('[IngredientTypeTemplatePickerDialog] build() called with loc: $loc');
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -130,19 +120,17 @@ class _IngredientTypeTemplatePickerDialogState
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildTemplateTile(
-                  id: 'pizzeria',
-                  icon: 'ðŸ•',
-                  label: loc.pizzaShopTemplateLabel,
-                  subtitle: loc.pizzaShopTemplateSubtitle,
-                ),
+                    id: 'pizzeria',
+                    icon: '🍕',
+                    label: loc.pizzaShopTemplateLabel,
+                    subtitle: loc.pizzaShopTemplateSubtitle),
                 const SizedBox(height: 12),
                 _buildTemplateTile(
-                  id: 'wing_bar',
-                  icon: 'ðŸ—',
-                  label: loc.wingBarTemplateLabel,
-                  subtitle: loc.wingBarTemplateSubtitle,
-                  enabled: false, // Placeholder for future
-                ),
+                    id: 'wing_bar',
+                    icon: '🍗',
+                    label: loc.wingBarTemplateLabel,
+                    subtitle: loc.wingBarTemplateSubtitle,
+                    enabled: false),
               ],
             ),
       actions: [
@@ -169,20 +157,11 @@ class _IngredientTypeTemplatePickerDialogState
       tileColor: enabled
           ? colorScheme.surfaceVariant.withOpacity(0.2)
           : Colors.grey.withOpacity(0.1),
-      leading: Text(
-        icon,
-        style: const TextStyle(fontSize: 28),
-      ),
-      title: Text(
-        label,
-        style: theme.textTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: theme.textTheme.bodySmall,
-      ),
+      leading: Text(icon, style: const TextStyle(fontSize: 28)),
+      title: Text(label,
+          style: theme.textTheme.titleSmall
+              ?.copyWith(fontWeight: FontWeight.w600)),
+      subtitle: Text(subtitle, style: theme.textTheme.bodySmall),
       onTap: enabled ? () => _loadTemplate(id) : null,
     );
   }

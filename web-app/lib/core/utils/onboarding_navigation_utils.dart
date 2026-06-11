@@ -47,16 +47,16 @@ class OnboardingSections {
 
 /// Mapping between human-facing names/aliases and internal dashboard keys.
 const Map<String, String> _sectionKeyMap = {
-  // Internal routing keys
+  // Internal registry keys
   'onboardingmenu': 'onboardingMenu',
-  'onboardingfeaturesetup': 'onboarding_feature_setup',
+  'onboarding_feature_setup': 'onboarding_feature_setup',
   'onboardingingredienttypes': 'onboardingIngredientTypes',
   'onboardingingredients': 'onboardingIngredients',
   'onboardingcategories': 'onboardingCategories',
   'onboardingmenuitems': 'onboardingMenuItems',
   'onboardingreview': 'onboardingReview',
 
-  // Aliases
+  // Human / alias variants
   'features': 'onboarding_feature_setup',
   'feature setup': 'onboarding_feature_setup',
   'ingredienttypes': 'onboardingIngredientTypes',
@@ -66,7 +66,7 @@ const Map<String, String> _sectionKeyMap = {
   'menuitems': 'onboardingMenuItems',
   'menu items': 'onboardingMenuItems',
   'review': 'onboardingReview',
-  'review&publish': 'onboardingReview',
+  'review & publish': 'onboardingReview',
   'overview': 'onboardingMenu',
 };
 
@@ -178,30 +178,34 @@ class OnboardingNavigationUtils {
   /// Resolve a dashboard route from a raw section name or key.
   static String resolveRoute(
       String section, shared.OnboardingValidationIssue? issue) {
-    final normalizedSection = _normalizeSection(section);
+    final normalized = _normalizeSection(section);
     debugPrint(
-        '[OnboardingNavigationUtils] resolveRoute: input="$section" normalized="$normalizedSection"');
+        '[OnboardingNavigationUtils] resolveRoute: input="$section" → normalized="$normalized"');
 
-    switch (normalizedSection) {
-      case 'onboardingMenu':
-        return _dashboardSectionRoute('onboardingMenu');
-      case 'onboarding_feature_setup':
-        return _dashboardSectionRoute('onboarding_feature_setup');
-      case 'onboardingIngredientTypes':
-        return _dashboardSectionRoute('onboardingIngredientTypes');
-      case 'onboardingIngredients':
-        return _dashboardSectionRoute('onboardingIngredients');
-      case 'onboardingCategories':
-        return _dashboardSectionRoute('onboardingCategories');
-      case 'onboardingMenuItems':
-        return _dashboardSectionRoute('onboardingMenuItems');
-      case 'onboardingReview':
-        return _dashboardSectionRoute('onboardingReview');
-      default:
-        debugPrint(
-            '[OnboardingNavigationUtils][WARN] No mapping for normalizedSection="$normalizedSection"');
-        return '';
+    if (normalized.contains('feature') || normalized.contains('setup')) {
+      return _dashboardSectionRoute('onboarding_feature_setup');
     }
+    if (normalized.contains('ingredienttype') || normalized.contains('types')) {
+      return _dashboardSectionRoute('onboardingIngredientTypes');
+    }
+    if (normalized.contains('ingredient')) {
+      return _dashboardSectionRoute('onboardingIngredients');
+    }
+    if (normalized.contains('categor')) {
+      return _dashboardSectionRoute('onboardingCategories');
+    }
+    if (normalized.contains('menuitem') || normalized.contains('items')) {
+      return _dashboardSectionRoute('onboardingMenuItems');
+    }
+    if (normalized.contains('review')) {
+      return _dashboardSectionRoute('onboardingReview');
+    }
+    if (normalized.contains('menu') || normalized.contains('overview')) {
+      return _dashboardSectionRoute('onboardingMenu');
+    }
+
+    debugPrint('[WARN] No mapping for $normalized - falling back');
+    return '/dashboard?section=$normalized';
   }
 
   /// Public wrapper to normalize a section string for routing.
@@ -212,8 +216,9 @@ class OnboardingNavigationUtils {
 
 /// --- Internal helpers ---
 String _normalizeSection(String section) {
-  final trimmedLower = section.trim().toLowerCase();
-  return _sectionKeyMap[trimmedLower] ?? section.trim();
+  String s =
+      section.trim().toLowerCase().replaceAll('_', '').replaceAll(' ', '');
+  return _sectionKeyMap[s] ?? section.trim();
 }
 
 String? _pickFocusItemId(shared.OnboardingValidationIssue issue) =>

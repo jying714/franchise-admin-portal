@@ -51,10 +51,10 @@ class _OnboardingIngredientsScreenState
     final exists = provider.ingredients.any((e) => e.id == _focusIdFromArgs);
     if (!exists) return;
 
-    debugPrint(
-      '[OnboardingIngredientsScreen] Applying initial focus to '
-      'ingredientId="${_focusIdFromArgs}" fields=${_focusFieldsFromArgs}',
-    );
+    // debugPrint(
+    //   '[OnboardingIngredientsScreen] Applying initial focus to '
+    //   'ingredientId="${_focusIdFromArgs}" fields=${_focusFieldsFromArgs}',
+    // );
 
     _appliedFocusFromArgs = true; // guard: run exactly once
 
@@ -76,9 +76,9 @@ class _OnboardingIngredientsScreenState
     final ctx = key.currentContext;
 
     if (ctx == null || !mounted) {
-      debugPrint(
-        '[OnboardingIngredientsScreen] No visible context for $ingredientId â€” skipping highlight.',
-      );
+      // debugPrint(
+      //   '[OnboardingIngredientsScreen] No visible context for $ingredientId â€” skipping highlight.',
+      // );
       return;
     }
 
@@ -144,7 +144,7 @@ class _OnboardingIngredientsScreenState
         Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
 
     if (loc == null) {
-      print('[OnboardingIngredientsScreen] ERROR: loc is null in FAB');
+      // print('[OnboardingIngredientsScreen] ERROR: loc is null in FAB');
       return;
     }
 
@@ -357,7 +357,7 @@ class _OnboardingIngredientsScreenState
 
   @override
   Widget build(BuildContext context) {
-    print('[OnboardingIngredientsScreen] build() called');
+    // print('[OnboardingIngredientsScreen] build() called');
 
     loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
@@ -370,9 +370,9 @@ class _OnboardingIngredientsScreenState
 
     _maybeApplyInitialFocus();
 
-    print(
-        '[OnboardingIngredientsScreen] IngredientMetadataProvider FOUND - Count: ${metadataProvider.ingredients.length}');
-    print('[OnboardingIngredientsScreen] IngredientTypeProvider FOUND');
+    // print(
+    //     '[OnboardingIngredientsScreen] IngredientMetadataProvider FOUND - Count: ${metadataProvider.ingredients.length}');
+    // print('[OnboardingIngredientsScreen] IngredientTypeProvider FOUND');
 
     final groupedIngredients = metadataProvider.groupedIngredients;
     final allIngredientsFlat = metadataProvider.ingredients;
@@ -382,8 +382,8 @@ class _OnboardingIngredientsScreenState
             allIngredientsFlat.isNotEmpty;
     final someSelected = _selectedIngredientIds.isNotEmpty && !allSelected;
 
-    print(
-        '[OnboardingIngredientsScreen] BUILD OK! INGREDIENTS: ${metadataProvider.ingredients.length}');
+    // print(
+    //     '[OnboardingIngredientsScreen] BUILD OK! INGREDIENTS: ${metadataProvider.ingredients.length}');
 
     return Scaffold(
       appBar: AppBar(
@@ -422,8 +422,8 @@ class _OnboardingIngredientsScreenState
               icon: const Icon(Icons.library_add),
               tooltip: loc.selectIngredientTemplate,
               onPressed: () async {
-                print(
-                    '[OnboardingIngredientsScreen] Template import button pressed');
+                // print(
+                //     '[OnboardingIngredientsScreen] Template import button pressed');
                 final franchiseId = Provider.of<shared.FranchiseProvider>(
                         context,
                         listen: false)
@@ -481,31 +481,31 @@ class _OnboardingIngredientsScreenState
                   final metadataProvider =
                       Provider.of<shared.IngredientMetadataProvider>(context,
                           listen: false);
-                  print(
-                      '[OnboardingIngredientsScreen] About to add ${allToImport.length} imported ingredients');
+                  // print(
+                  //     '[OnboardingIngredientsScreen] About to add ${allToImport.length} imported ingredients');
                   for (final ing in allToImport) {
-                    print(
-                        '[OnboardingIngredientsScreen][DEBUG] New ingredient: id=${ing.id}, typeId=${ing.typeId}, name=${ing.name}');
+                    // print(
+                    //     '[OnboardingIngredientsScreen][DEBUG] New ingredient: id=${ing.id}, typeId=${ing.typeId}, name=${ing.name}');
                     assert(ing.typeId != null && ing.typeId!.isNotEmpty,
                         'ingredient typeId must not be null/empty!');
                   }
 
                   metadataProvider.addImportedIngredients(allToImport);
-                  print(
-                      '[Provider] after add, ingredients.length=${metadataProvider.ingredients.length}, staged=${metadataProvider.stagedIngredients.length}');
+                  // print(
+                  //     '[Provider] after add, ingredients.length=${metadataProvider.ingredients.length}, staged=${metadataProvider.stagedIngredients.length}');
                   for (final ing in metadataProvider.ingredients) {
-                    print(
-                        '[Provider][DEBUG] Stored ingredient: id=${ing.id}, typeId=${ing.typeId}, name=${ing.name}');
+                    // print(
+                    //     '[Provider][DEBUG] Stored ingredient: id=${ing.id}, typeId=${ing.typeId}, name=${ing.name}');
                     assert(ing.typeId != null && ing.typeId!.isNotEmpty,
                         'ingredient typeId must not be null/empty!');
                   }
-                  print(
-                      '[OnboardingIngredientsScreen] build() after template import and dialog resolution. Ingredients: ${metadataProvider.ingredients.length}');
+                  // print(
+                  //     '[OnboardingIngredientsScreen] build() after template import and dialog resolution. Ingredients: ${metadataProvider.ingredients.length}');
                   WidgetsBinding.instance.addPostFrameCallback((_) {
-                    print(
-                        '[OnboardingIngredientsScreen][STACK] ModalRoute.of(context): ${ModalRoute.of(context)}');
-                    print(
-                        '[OnboardingIngredientsScreen][STACK] context.mounted: $mounted');
+                    // print(
+                    //     '[OnboardingIngredientsScreen][STACK] ModalRoute.of(context): ${ModalRoute.of(context)}');
+                    // print(
+                    //     '[OnboardingIngredientsScreen][STACK] context.mounted: $mounted');
                   });
 
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -531,8 +531,8 @@ class _OnboardingIngredientsScreenState
         builder: (context) {
           final loc = AppLocalizations.of(context);
           if (loc == null) {
-            debugPrint(
-                '[OnboardingIngredientsScreen] ERROR: loc is null in FAB');
+            // debugPrint(
+            //     '[OnboardingIngredientsScreen] ERROR: loc is null in FAB');
             return const SizedBox.shrink(); // Prevents crash
           }
 
@@ -682,8 +682,8 @@ class _OnboardingIngredientsScreenState
                   : ListView(
                       controller: _scrollController,
                       children: groupedIngredients.entries.map((entry) {
-                        print(
-                            '[OnboardingIngredientsScreen] Building ingredient group: ${entry.key}');
+                        // print(
+                        //     '[OnboardingIngredientsScreen] Building ingredient group: ${entry.key}');
                         final groupName = entry.key ?? loc.ungrouped;
                         final groupItems = entry.value;
                         return Column(
@@ -752,7 +752,7 @@ class _OnboardingIngredientsScreenState
 
   @override
   void dispose() {
-    print('[OnboardingIngredientsScreen] DISPOSED');
+    // print('[OnboardingIngredientsScreen] DISPOSED');
     super.dispose();
   }
 }

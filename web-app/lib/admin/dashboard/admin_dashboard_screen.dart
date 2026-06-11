@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:franchise_admin_portal/core/services/firebase_storage_service_impl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/core/section_registry.dart';
@@ -60,6 +61,62 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         _selectedIndex = index;
         _initializedFromKey = true;
       }
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final route = ModalRoute.of(context)?.settings.name;
+    if (route == null) return;
+
+    final uri = Uri.tryParse(route);
+    final sectionParam = uri?.queryParameters['section'];
+
+    if (sectionParam != null && sectionParam.isNotEmpty) {
+      // Very tolerant normalization to match registry keys
+      final normalizedParam =
+          sectionParam.toLowerCase().replaceAll('_', '').replaceAll(' ', '');
+
+      final index = _sections.indexWhere((s) {
+        final normalizedKey =
+            s.key.toLowerCase().replaceAll('_', '').replaceAll(' ', '');
+        return normalizedKey == normalizedParam;
+      });
+
+      if (index != -1 && index != _selectedIndex) {
+        setState(() {
+          _selectedIndex = index;
+          _initializedFromKey = true;
+        });
+        debugPrint(
+            '[AdminDashboardScreen] ✅ Switched via query param: $sectionParam → index $index (${_sections[index].key})');
+        return;
+      }
+    }
+
+    // Constructor fallback (for direct initialSectionKey usage)
+    if (widget.initialSectionKey != null && !_initializedFromKey) {
+      final index =
+          _sections.indexWhere((s) => s.key == widget.initialSectionKey);
+      if (index != -1) {
+        _selectedIndex = index;
+        _initializedFromKey = true;
+      }
+    }
+  }
+
+  /// Public safe method for onboarding navigation to switch section in place
+  void switchToSection(String sectionKey) {
+    final index = _sections.indexWhere((s) => s.key == sectionKey);
+    if (index != -1 && index != _selectedIndex) {
+      setState(() => _selectedIndex = index);
+      debugPrint(
+          '[AdminDashboardScreen] ✅ Public switchToSection: $sectionKey (index $index)');
+    } else {
+      debugPrint(
+          '[AdminDashboardScreen] ⚠️ Could not find section: $sectionKey');
     }
   }
 
@@ -231,6 +288,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               value: onboardingProg),
                           Provider<shared.FranchiseSubscriptionProvider>.value(
                               value: subscriptionProv),
+
+                          // Corrected provider line
+                          Provider<shared.FirebaseStorageService>.value(
+                              value: FirebaseStorageServiceImpl()),
                         ],
                         child: IndexedStack(
                           index: _selectedIndex,

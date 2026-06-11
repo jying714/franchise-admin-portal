@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:collection/collection.dart';
+import 'package:franchise_admin_portal/core/services/admin_firestore_service.dart';
 
 class CategoryProviderImpl extends ChangeNotifier
     implements shared.CategoryProvider {
   final shared.FirestoreService _firestore;
+  final AdminFirestoreService _adminService;
   String _franchiseId;
 
   List<shared.Category> _original = [];
@@ -22,7 +24,9 @@ class CategoryProviderImpl extends ChangeNotifier
   CategoryProviderImpl({
     required shared.FirestoreService firestore,
     required String franchiseId,
+    AdminFirestoreService? adminService,
   })  : _firestore = firestore,
+        _adminService = adminService ?? AdminFirestoreService(),
         _franchiseId = franchiseId;
 
   @override
@@ -143,7 +147,10 @@ class CategoryProviderImpl extends ChangeNotifier
   Future<void> createCategory(shared.Category newCategory) async {
     if (_franchiseId.isEmpty || _franchiseId == 'unknown') return;
     try {
-      await _firestore.saveCategory(_franchiseId, newCategory);
+      await _adminService.addCategory(
+        franchiseId: _franchiseId,
+        category: newCategory,
+      );
       addOrUpdateCategory(newCategory);
     } catch (e, stack) {
       shared.ErrorLogger.log(
@@ -154,14 +161,6 @@ class CategoryProviderImpl extends ChangeNotifier
       );
       rethrow;
     }
-  }
-
-  @override
-  void addOrUpdateCategories(List<shared.Category> newCategories) {
-    for (final cat in newCategories) {
-      addOrUpdateCategory(cat);
-    }
-    notifyListeners();
   }
 
   @override
@@ -195,6 +194,14 @@ class CategoryProviderImpl extends ChangeNotifier
       _current[index] = category;
     } else {
       _current.add(category);
+    }
+    notifyListeners();
+  }
+
+  @override
+  void addOrUpdateCategories(List<shared.Category> newCategories) {
+    for (final cat in newCategories) {
+      addOrUpdateCategory(cat);
     }
     notifyListeners();
   }
@@ -312,18 +319,26 @@ class CategoryProviderImpl extends ChangeNotifier
 
   @override
   Future<void> loadTemplate(String templateId) async {
-    // Using available method - adjust if dedicated template fetch is added later
+    if (_franchiseId.isEmpty || _franchiseId == 'unknown') return;
+
+    print(
+        '[CategoryProviderImpl] loadTemplate STARTED - templateId: $templateId, franchiseId: $_franchiseId');
+
     try {
-      final imported = await _firestore.fetchCategories(templateId); // fallback
-      _current = imported;
-      _applySortOrder();
-      notifyListeners();
+      await (_firestore as AdminFirestoreService).loadTemplateWithFranchiseId(
+        franchiseId: _franchiseId,
+        templateId: templateId,
+      );
+
+      await reload(_franchiseId, forceReloadFromFirestore: true);
+      print('[CategoryProviderImpl] loadTemplate SUCCESS');
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message: 'Failed to load category template',
         stack: stack.toString(),
-        source: 'CategoryProviderImpl',
+        source: 'CategoryProviderImpl.loadTemplate',
         severity: 'error',
+        contextData: {'templateId': templateId, 'franchiseId': _franchiseId},
       );
       rethrow;
     }

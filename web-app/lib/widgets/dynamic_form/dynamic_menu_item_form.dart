@@ -39,14 +39,25 @@ class _DynamicMenuItemFormState extends State<DynamicMenuItemForm> {
   List<Map<String, dynamic>> _customizations = [];
 
   @override
+  void didUpdateWidget(DynamicMenuItemForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialItem != oldWidget.initialItem) {
+      _initializeFromSchema();
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
     _initializeFromSchema();
   }
 
   void _initializeFromSchema() {
+    print(
+        '[DynamicMenuItemForm] _initializeFromSchema() called - initialItem ID: ${widget.initialItem?.id ?? "null"}');
     final initial = widget.initialItem?.toJson() ?? {};
-
+    print(
+        '[DynamicMenuItemForm] initial keys from item: ${initial.keys.toList()}');
     // Only loop through scalar fields (schema['fields'])
     final fields = widget.schema['fields'] as Map<String, dynamic>? ?? {};
 
@@ -56,6 +67,9 @@ class _DynamicMenuItemFormState extends State<DynamicMenuItemForm> {
       final value = initial[key] ?? fieldConfig['default'];
       _fieldValues[key] = _sanitizeValue(value);
     }
+
+    print(
+        '[DynamicMenuItemForm] After scalar init - fieldValues keys: ${_fieldValues.keys.toList()}');
 
     // Handle includedIngredients (array of maps, not a scalar field)
     if (initial['includedIngredients'] != null) {
