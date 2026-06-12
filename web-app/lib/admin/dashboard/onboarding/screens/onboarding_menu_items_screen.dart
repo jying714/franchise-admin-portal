@@ -43,7 +43,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
 
-        // Capture consistent instances once
         final typeProvider =
             Provider.of<shared.IngredientTypeProvider>(context, listen: false);
         final metadataProvider = Provider.of<shared.IngredientMetadataProvider>(
@@ -54,6 +53,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
         final menuProvider =
             Provider.of<shared.MenuItemProvider>(context, listen: false);
 
+        // Force refresh all dependencies
         await Future.wait([
           typeProvider.load(
               franchiseIdOverride: franchiseId, forceReloadFromFirestore: true),
@@ -64,9 +64,18 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
               franchiseIdOverride: franchiseId, forceReloadFromFirestore: true),
         ]);
 
-        if (mounted)
-          setState(() {}); // Force watches + missingSteps re-evaluation
+        if (mounted) setState(() {});
       });
+    }
+  }
+
+  void _navigateToSection(String sectionKey) {
+    final dashboardState =
+        context.findAncestorStateOfType<State<AdminDashboardScreen>>();
+    if (dashboardState != null) {
+      (dashboardState as dynamic).switchToSection(sectionKey);
+    } else {
+      Navigator.pushNamed(context, '/admin/dashboard?section=$sectionKey');
     }
   }
 
@@ -112,6 +121,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     final provider = context.watch<shared.MenuItemProvider>();
 
     // === Robust dependency checks ===
+
     final missingSteps = <String>[];
     if (ingredientTypes.isEmpty)
       missingSteps.add(loc.stepIngredientTypes ?? 'Ingredient Types');
@@ -146,54 +156,46 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                 runSpacing: 12,
                 alignment: WrapAlignment.center,
                 children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: () {
+                      // Manual refresh button
+                      final franchiseId = Provider.of<shared.FranchiseProvider>(
+                              context,
+                              listen: false)
+                          .franchiseId;
+                      if (franchiseId.isNotEmpty) {
+                        Provider.of<shared.CategoryProvider>(context,
+                                listen: false)
+                            .load(
+                                franchiseIdOverride: franchiseId,
+                                forceReloadFromFirestore: true);
+                      }
+                      setState(() {});
+                    },
+                    label: const Text('Refresh Dependencies'),
+                  ),
                   if (ingredientTypes.isEmpty)
                     ElevatedButton.icon(
                       icon: const Icon(Icons.list_alt),
-                      onPressed: () {
-                        final dashboardState = context.findAncestorStateOfType<
-                            State<AdminDashboardScreen>>();
-                        if (dashboardState != null) {
-                          (dashboardState as dynamic)
-                              .switchToSection('onboardingIngredientTypes');
-                        } else {
-                          Navigator.pushNamed(context,
-                              '/dashboard?section=onboardingIngredientTypes');
-                        }
-                      },
+                      onPressed: () =>
+                          _navigateToSection('onboardingIngredientTypes'),
                       label: Text(loc.goToStep(
                           loc.stepIngredientTypes ?? 'Ingredient Types')),
                     ),
                   if (ingredients.isEmpty)
                     ElevatedButton.icon(
                       icon: const Icon(Icons.egg),
-                      onPressed: () {
-                        final dashboardState = context.findAncestorStateOfType<
-                            State<AdminDashboardScreen>>();
-                        if (dashboardState != null) {
-                          (dashboardState as dynamic)
-                              .switchToSection('onboardingIngredients');
-                        } else {
-                          Navigator.pushNamed(context,
-                              '/dashboard?section=onboardingIngredients');
-                        }
-                      },
+                      onPressed: () =>
+                          _navigateToSection('onboardingIngredients'),
                       label: Text(
                           loc.goToStep(loc.stepIngredients ?? 'Ingredients')),
                     ),
                   if (categories.isEmpty)
                     ElevatedButton.icon(
                       icon: const Icon(Icons.category),
-                      onPressed: () {
-                        final dashboardState = context.findAncestorStateOfType<
-                            State<AdminDashboardScreen>>();
-                        if (dashboardState != null) {
-                          (dashboardState as dynamic)
-                              .switchToSection('onboardingCategories');
-                        } else {
-                          Navigator.pushNamed(context,
-                              '/dashboard?section=onboardingCategories');
-                        }
-                      },
+                      onPressed: () =>
+                          _navigateToSection('onboardingCategories'),
                       label: Text(
                           loc.goToStep(loc.stepCategories ?? 'Categories')),
                     ),

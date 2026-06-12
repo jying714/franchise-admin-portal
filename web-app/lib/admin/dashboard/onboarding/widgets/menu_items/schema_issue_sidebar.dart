@@ -30,11 +30,12 @@ class SchemaIssueSidebar extends StatelessWidget {
     final hasUnresolved = issues.any((issue) => !issue.resolved);
     final resolvedCount = issues.where((issue) => issue.resolved).length;
 
-    final categoryProvider = context.watch<shared.CategoryProvider>();
+    final categoryProvider =
+        Provider.of<shared.CategoryProvider>(context, listen: false);
     final ingredientProvider =
-        context.watch<shared.IngredientMetadataProvider>();
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
     final ingredientTypeProvider =
-        context.watch<shared.IngredientTypeProvider>();
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),

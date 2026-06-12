@@ -10328,6 +10328,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enable core platform features for your franchise'**
   String get stepFeaturesDesc;
+
+  /// Title for the combined Core Menu Foundation onboarding step
+  ///
+  /// In en, this message translates to:
+  /// **'Step 2: Core Menu Foundation'**
+  String get coreMenuFoundationTitle;
+
+  /// Title for the template import dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Start with Template'**
+  String get templateImportTitle;
+
+  /// Subtitle for the template import dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Select what to import for Classic Pizzeria template:'**
+  String get templateImportSubtitle;
+
+  /// Empty state message in mobile menu preview card
+  ///
+  /// In en, this message translates to:
+  /// **'Add categories and items in the tabs to see live preview'**
+  String get previewEmptyState;
+
+  /// Review summary label for the combined Core Menu Foundation step
+  ///
+  /// In en, this message translates to:
+  /// **'Core Menu Foundation'**
+  String get coreMenuFoundation;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

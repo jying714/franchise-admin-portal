@@ -1,7 +1,5 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:provider/provider.dart';
-// Import ALL your admin sections (ensure these files exist!)
 import 'package:franchise_admin_portal/admin/dashboard/dashboard_home_screen.dart';
 import 'package:franchise_admin_portal/admin/menu/menu_editor_screen.dart';
 import 'package:franchise_admin_portal/admin/categories/category_management_screen.dart';
@@ -20,11 +18,11 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboar
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredient_type_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_feature_setup_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/menu_item_editor_screen.dart';
-// Any new (plugin/module) screens can be imported and registered here
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_foundation_screen.dart';
 
 // ==== UNIFIED SECTION REGISTRY (ALL MAIN + ONBOARDING) ====
 final List<shared.DashboardSection> sectionRegistry = [
-  // ---- Core dashboard sections ----
+  // ---- Core dashboard sections (unchanged) ----
   shared.DashboardSection(
     key: 'dashboardHome',
     title: 'Dashboard',
@@ -49,8 +47,6 @@ final List<shared.DashboardSection> sectionRegistry = [
     sidebarOrder: 2,
     showInSidebar: true,
   ),
-  // Inventory - Proper screen with internal guard (safe for IndexedStack)
-  // Inventory - Full functional screen (uses AdminFirestoreService)
   shared.DashboardSection(
     key: 'inventoryManagement',
     title: 'Inventory',
@@ -91,43 +87,36 @@ final List<shared.DashboardSection> sectionRegistry = [
     sidebarOrder: 7,
     showInSidebar: true,
   ),
-  // Staff - Admin-only (guarded)
   shared.DashboardSection(
     key: 'staffAccess',
     title: 'Staff',
     icon: Icons.people_outline,
-    builder: (context) {
-      return const Scaffold(
-        body: Center(
-          child: Text(
-            'Staff management is available in full Admin mode only.\n\n(Admin-only feature)',
-            textAlign: TextAlign.center,
-          ),
+    builder: (context) => const Scaffold(
+      body: Center(
+        child: Text(
+          'Staff management is available in full Admin mode only.\n\n(Admin-only feature)',
+          textAlign: TextAlign.center,
         ),
-      );
-    },
+      ),
+    ),
     sidebarOrder: 8,
     showInSidebar: true,
   ),
-  // Support Chat - Admin-only (guarded)
   shared.DashboardSection(
     key: 'chatManagement',
     title: 'Support Chat',
     icon: Icons.chat_bubble_outline,
-    builder: (context) {
-      return const Scaffold(
-        body: Center(
-          child: Text(
-            'Support Chat is available in full Admin mode only.\n\n(Admin-only feature)',
-            textAlign: TextAlign.center,
-          ),
+    builder: (context) => const Scaffold(
+      body: Center(
+        child: Text(
+          'Support Chat is available in full Admin mode only.\n\n(Admin-only feature)',
+          textAlign: TextAlign.center,
         ),
-      );
-    },
+      ),
+    ),
     sidebarOrder: 10,
     showInSidebar: true,
   ),
-  // Hidden editor screen (utility, not in sidebar)
   shared.DashboardSection(
     key: 'menuItemEditor',
     title: 'Menu Item Editor',
@@ -137,11 +126,10 @@ final List<shared.DashboardSection> sectionRegistry = [
     showInSidebar: false,
   ),
 
-  // ---- Onboarding Steps (now unified, sidebarOrder >= 100 for grouping) ----
-  // Onboarding sections (simple builders)
+  // ---- Onboarding Steps (Updated to 4-Step Structure) ----
   shared.DashboardSection(
     key: 'onboardingMenu',
-    title: 'Overview',
+    title: 'Onboarding Overview',
     icon: Icons.list_alt_outlined,
     builder: (_) => const OnboardingMenuScreen(),
     sidebarOrder: 100,
@@ -155,56 +143,39 @@ final List<shared.DashboardSection> sectionRegistry = [
     sidebarOrder: 101,
     showInSidebar: true,
   ),
+  // NEW: Combined Core Menu Foundation (replaces old separate steps)
+  // NEW: Combined Core Menu Foundation
   shared.DashboardSection(
-    key: 'onboardingIngredientTypes',
-    title: 'Step 2: Ingredient Types',
-    icon: Icons.category_outlined,
-    builder: (_) => const IngredientTypeManagementScreen(),
+    key: 'onboarding_menu_foundation',
+    title: 'Step 2: Core Menu Foundation',
+    icon: Icons.foundation,
+    builder: (_) => const OnboardingMenuFoundationScreen(),
     sidebarOrder: 102,
     showInSidebar: true,
   ),
   shared.DashboardSection(
-    key: 'onboardingIngredients',
-    title: 'Step 3: Ingredients',
-    icon: Icons.kitchen_outlined,
-    builder: (_) => const OnboardingIngredientsScreen(),
+    key: 'onboardingMenuItems',
+    title: 'Step 3: Menu Items',
+    icon: Icons.local_pizza_outlined,
+    builder: (_) => const OnboardingMenuItemsScreen(),
     sidebarOrder: 103,
     showInSidebar: true,
   ),
   shared.DashboardSection(
-    key: 'onboardingCategories',
-    title: 'Step 4: Categories',
-    icon: Icons.category_outlined,
-    builder: (_) => const OnboardingCategoriesScreen(),
-    sidebarOrder: 104,
-    showInSidebar: true,
-  ),
-  shared.DashboardSection(
-    key: 'onboardingMenuItems',
-    title: 'Step 5: Menu Items',
-    icon: Icons.local_pizza_outlined,
-    builder: (_) => const OnboardingMenuItemsScreen(),
-    sidebarOrder: 105,
-    showInSidebar: true,
-  ),
-  shared.DashboardSection(
     key: 'onboardingReview',
-    title: 'Review & Publish',
+    title: 'Step 4: Review & Publish',
     icon: Icons.check_circle_outline,
     builder: (_) => const OnboardingReviewScreen(),
-    sidebarOrder: 106,
+    sidebarOrder: 104,
     showInSidebar: true,
   ),
 ];
 
-// ---- Sidebar and Section List Utilities ----
-
-/// Only sections with showInSidebar==true, sorted by sidebarOrder.
+// Utilities (unchanged)
 List<shared.DashboardSection> getSidebarSections() =>
     sectionRegistry.where((s) => s.showInSidebar).toList()
       ..sort((a, b) => a.sidebarOrder.compareTo(b.sidebarOrder));
 
-/// All sections (for routing, content stack, and selection), sorted by sidebarOrder.
 List<shared.DashboardSection> getAllDashboardSections() =>
     sectionRegistry.toList()
       ..sort((a, b) => a.sidebarOrder.compareTo(b.sidebarOrder));

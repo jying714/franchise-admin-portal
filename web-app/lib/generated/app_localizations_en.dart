@@ -5320,4 +5320,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get stepFeaturesDesc => 'Enable core platform features for your franchise';
+
+  @override
+  String get coreMenuFoundationTitle => 'Step 2: Core Menu Foundation';
+
+  @override
+  String get templateImportTitle => 'Quick Start with Template';
+
+  @override
+  String get templateImportSubtitle => 'Select what to import for Classic Pizzeria template:';
+
+  @override
+  String get previewEmptyState => 'Add categories and items in the tabs to see live preview';
+
+  @override
+  String get coreMenuFoundation => 'Core Menu Foundation';
 }

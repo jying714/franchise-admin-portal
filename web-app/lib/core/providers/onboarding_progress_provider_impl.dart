@@ -1,6 +1,4 @@
-﻿// web_app/lib/core/providers/onboarding_progress_provider_impl.dart
-
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 
 class OnboardingProgressProviderImpl extends ChangeNotifier
@@ -28,6 +26,15 @@ class OnboardingProgressProviderImpl extends ChangeNotifier
   @override
   bool isStepComplete(String stepKey) => _stepStatus[stepKey] == true;
 
+  /// NEW: Combined foundation progress (Types 25%, Ingredients 35%, Categories 40%)
+  @override
+  double getFoundationProgress() {
+    final types = isStepComplete('ingredientTypes') ? 0.25 : 0.0;
+    final ingredients = isStepComplete('ingredients') ? 0.35 : 0.0;
+    final categories = isStepComplete('categories') ? 0.40 : 0.0;
+    return (types + ingredients + categories).clamp(0.0, 1.0);
+  }
+
   Future<void> _loadProgress() async {
     if (_franchiseId.isEmpty) {
       _stepStatus = {};
@@ -47,6 +54,7 @@ class OnboardingProgressProviderImpl extends ChangeNotifier
         'categories',
         'menuItems',
         'review',
+        'onboarding_menu_foundation', // new combined key
       ];
 
       _stepStatus = {

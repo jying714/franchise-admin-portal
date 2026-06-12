@@ -1982,7 +1982,27 @@
   "noIngredientTypesFound": "No Ingredient Types Found",
   "noIngredientsMessage": "Add ingredient types to continue with menu setup.",
   "@noIngredientTypesFound": {},
-  "@noIngredientsMessage": {}
+  "@noIngredientsMessage": {},
+  "coreMenuFoundationTitle": "Step 2: Core Menu Foundation",
+  "@coreMenuFoundationTitle": {
+    "description": "Title for the combined Core Menu Foundation onboarding step"
+  },
+  "templateImportTitle": "Quick Start with Template",
+  "@templateImportTitle": {
+    "description": "Title for the template import dialog"
+  },
+  "templateImportSubtitle": "Select what to import for Classic Pizzeria template:",
+  "@templateImportSubtitle": {
+    "description": "Subtitle for the template import dialog"
+  },
+    "previewEmptyState": "Add categories and items in the tabs to see live preview",
+  "@previewEmptyState": {
+    "description": "Empty state message in mobile menu preview card"
+  },
+    "coreMenuFoundation": "Core Menu Foundation",
+  "@coreMenuFoundation": {
+    "description": "Review summary label for the combined Core Menu Foundation step"
+  }
 
 
 

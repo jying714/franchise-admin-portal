@@ -127,16 +127,33 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     imageUrl = item?.imageUrl ?? '';
     selectedTemplateRefs = List<String>.from(item?.templateRefs ?? []);
     nutrition = item?.nutrition;
-    includedIngredients = List.from(item?.includedIngredients ?? []);
-    optionalAddOns = List.from(item?.optionalAddOns ?? []);
-    customizations = List.from(item?.customizations ?? []);
-    sizeData = List.from(item?.sizes ?? []);
+
+    // === CRITICAL FIX: Safe deserialization from raw Firestore/template maps ===
+    includedIngredients = (item?.includedIngredients ?? [])
+        .map((dynamic e) => e is shared.IngredientReference
+            ? e
+            : shared.IngredientReference.fromMap(
+                Map<String, dynamic>.from(e as Map)))
+        .toList();
+
+    optionalAddOns = (item?.optionalAddOns ?? [])
+        .map((dynamic e) => e is shared.IngredientReference
+            ? e
+            : shared.IngredientReference.fromMap(
+                Map<String, dynamic>.from(e as Map)))
+        .toList();
+
+    customizations =
+        List<shared.Customization>.from(item?.customizations ?? []);
+    sizeData = List<shared.SizeData>.from(item?.sizes ?? []);
+
     customizationGroups = (item?.customizationGroups != null)
         ? (item!.customizationGroups as List)
             .map((g) =>
                 shared.CustomizationGroup.fromMap(Map<String, dynamic>.from(g)))
             .toList()
         : [];
+
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final franchise =

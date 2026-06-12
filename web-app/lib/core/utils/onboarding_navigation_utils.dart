@@ -1,10 +1,8 @@
-﻿// web_app/lib/core/utils/onboarding_navigation_utils.dart
+﻿// web-app/lib/core/utils/onboarding_navigation_utils.dart
 //
-// Navigation utilities for the Onboarding flow.
-// Keeps routing keys, arguments, and normalization consistent.
+// Navigation utilities for the Onboarding flow (updated for 4-Step structure).
 
 import 'package:flutter/material.dart';
-// Removed unused VisibleForTesting import
 import 'package:shared_core/shared_core.dart' as shared;
 
 /// Canonical argument keys used across onboarding routes.
@@ -24,45 +22,38 @@ class OnboardingNavKeys {
   static const message = 'message';
 }
 
-/// Human-readable section labels shown in UI.
+/// Human-readable section labels shown in UI (updated for 4 steps).
 class OnboardingSections {
   OnboardingSections._();
 
   static const features = 'Features';
-  static const ingredientTypes = 'Ingredient Types';
-  static const ingredients = 'Ingredients';
-  static const categories = 'Categories';
+  static const coreMenuFoundation = 'Core Menu Foundation';
   static const menuItems = 'Menu Items';
   static const reviewPublish = 'Review & Publish';
 
   static const all = <String>[
     features,
-    ingredientTypes,
-    ingredients,
-    categories,
+    coreMenuFoundation,
     menuItems,
     reviewPublish,
   ];
 }
 
-/// Mapping between human-facing names/aliases and internal dashboard keys.
+/// Mapping between human-facing names/aliases and internal dashboard keys (4-step).
 const Map<String, String> _sectionKeyMap = {
   // Internal registry keys
   'onboardingmenu': 'onboardingMenu',
   'onboarding_feature_setup': 'onboarding_feature_setup',
-  'onboardingingredienttypes': 'onboardingIngredientTypes',
-  'onboardingingredients': 'onboardingIngredients',
-  'onboardingcategories': 'onboardingCategories',
+  'onboarding_menu_foundation': 'onboarding_menu_foundation',
   'onboardingmenuitems': 'onboardingMenuItems',
   'onboardingreview': 'onboardingReview',
 
   // Human / alias variants
   'features': 'onboarding_feature_setup',
   'feature setup': 'onboarding_feature_setup',
-  'ingredienttypes': 'onboardingIngredientTypes',
-  'ingredient types': 'onboardingIngredientTypes',
-  'ingredients': 'onboardingIngredients',
-  'categories': 'onboardingCategories',
+  'core menu foundation': 'onboarding_menu_foundation',
+  'foundation': 'onboarding_menu_foundation',
+  'menu foundation': 'onboarding_menu_foundation',
   'menuitems': 'onboardingMenuItems',
   'menu items': 'onboardingMenuItems',
   'review': 'onboardingReview',
@@ -73,7 +64,7 @@ const Map<String, String> _sectionKeyMap = {
 String _dashboardSectionRoute(String sectionKey) =>
     '/dashboard?section=$sectionKey';
 
-/// Container for parsed onboarding navigation context.
+/// Container for parsed onboarding navigation context (unchanged).
 class OnboardingNavContext {
   final String? section;
   final String? sectionKey;
@@ -105,29 +96,18 @@ class OnboardingNavContext {
 
     if (_isNonEmpty(focusItemId)) {
       map[OnboardingNavKeys.focusItemId] = focusItemId;
-      if (section == OnboardingSections.ingredients) {
-        map[OnboardingNavKeys.legacyIngredientId] = focusItemId;
-      } else {
+      if (section == OnboardingSections.menuItems) {
         map[OnboardingNavKeys.legacyItemId] = focusItemId;
+      } else if (section?.toLowerCase().contains('ingredient') == true) {
+        map[OnboardingNavKeys.legacyIngredientId] = focusItemId;
       }
     }
 
-    if (_isNonEmpty(locator)) {
-      map[OnboardingNavKeys.locator] = locator;
-    }
-
-    if (focusFields.isNotEmpty) {
+    if (_isNonEmpty(locator)) map[OnboardingNavKeys.locator] = locator;
+    if (focusFields.isNotEmpty)
       map[OnboardingNavKeys.focusFields] = List<String>.from(focusFields);
-    }
-
-    if (createMode != null) {
-      map[OnboardingNavKeys.createMode] = createMode;
-    }
-
-    if (highlight != null) {
-      map[OnboardingNavKeys.highlight] = highlight;
-    }
-
+    if (createMode != null) map[OnboardingNavKeys.createMode] = createMode;
+    if (highlight != null) map[OnboardingNavKeys.highlight] = highlight;
     if (_isNonEmpty(severity)) map[OnboardingNavKeys.severity] = severity;
     if (_isNonEmpty(message)) map[OnboardingNavKeys.message] = message;
 
@@ -175,7 +155,7 @@ class OnboardingNavigationUtils {
     return Map<String, dynamic>.unmodifiable(args);
   }
 
-  /// Resolve a dashboard route from a raw section name or key.
+  /// Resolve a dashboard route from a raw section name or key (updated for 4 steps).
   static String resolveRoute(
       String section, shared.OnboardingValidationIssue? issue) {
     final normalized = _normalizeSection(section);
@@ -185,14 +165,8 @@ class OnboardingNavigationUtils {
     if (normalized.contains('feature') || normalized.contains('setup')) {
       return _dashboardSectionRoute('onboarding_feature_setup');
     }
-    if (normalized.contains('ingredienttype') || normalized.contains('types')) {
-      return _dashboardSectionRoute('onboardingIngredientTypes');
-    }
-    if (normalized.contains('ingredient')) {
-      return _dashboardSectionRoute('onboardingIngredients');
-    }
-    if (normalized.contains('categor')) {
-      return _dashboardSectionRoute('onboardingCategories');
+    if (normalized.contains('foundation') || normalized.contains('core menu')) {
+      return _dashboardSectionRoute('onboarding_menu_foundation');
     }
     if (normalized.contains('menuitem') || normalized.contains('items')) {
       return _dashboardSectionRoute('onboardingMenuItems');
@@ -208,7 +182,6 @@ class OnboardingNavigationUtils {
     return '/dashboard?section=$normalized';
   }
 
-  /// Public wrapper to normalize a section string for routing.
   static String normalizeForRouting(String section) {
     return _normalizeSection(section);
   }

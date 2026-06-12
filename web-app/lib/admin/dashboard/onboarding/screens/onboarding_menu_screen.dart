@@ -136,39 +136,23 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
             ),
             OnboardingStepCard(
               stepNumber: 2,
-              title: loc?.stepIngredientTypes ?? 'Ingredient Types',
-              subtitle: loc?.stepIngredientTypesDesc ??
-                  'Create logical ingredient type tags like toppings, sauces, and sides.',
+              title: loc?.coreMenuFoundation ?? 'Core Menu Foundation',
+              subtitle:
+                  'Build your menu foundation with types, ingredients, and categories',
               completed:
-                  progressProvider.isStepComplete('onboardingIngredientTypes'),
+                  progressProvider.isStepComplete('onboarding_menu_foundation'),
               onTap: () =>
-                  _navigateToSection(context, 'onboardingIngredientTypes'),
+                  _navigateToSection(context, 'onboarding_menu_foundation'),
             ),
             OnboardingStepCard(
               stepNumber: 3,
-              title: loc?.stepIngredients ?? 'Ingredients',
-              subtitle: loc?.stepIngredientsDesc ?? '',
-              completed:
-                  progressProvider.isStepComplete('onboardingIngredients'),
-              onTap: () => _navigateToSection(context, 'onboardingIngredients'),
-            ),
-            OnboardingStepCard(
-              stepNumber: 4,
-              title: loc?.stepCategories ?? 'Categories',
-              subtitle: loc?.stepCategoriesDesc ?? '',
-              completed:
-                  progressProvider.isStepComplete('onboardingCategories'),
-              onTap: () => _navigateToSection(context, 'onboardingCategories'),
-            ),
-            OnboardingStepCard(
-              stepNumber: 5,
               title: loc?.stepMenuItems ?? 'Menu Items',
               subtitle: loc?.stepMenuItemsDesc ?? '',
               completed: progressProvider.isStepComplete('onboardingMenuItems'),
               onTap: () => _navigateToSection(context, 'onboardingMenuItems'),
             ),
             OnboardingStepCard(
-              stepNumber: 6,
+              stepNumber: 4,
               title: loc?.stepReview ?? 'Review & Publish',
               subtitle: loc?.stepReviewDesc ?? '',
               completed: progressProvider.isStepComplete('onboardingReview'),

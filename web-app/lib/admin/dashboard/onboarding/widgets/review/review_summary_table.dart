@@ -8,12 +8,12 @@ import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provid
 import 'package:franchise_admin_portal/core/providers/onboarding_review_provider_impl.dart';
 
 class ReviewSummaryTable extends StatelessWidget {
+  // Updated for 4-Step Onboarding
   static const List<String> _sectionOrder = [
     OnboardingSections.features,
-    OnboardingSections.ingredientTypes,
-    OnboardingSections.ingredients,
-    OnboardingSections.categories,
+    OnboardingSections.coreMenuFoundation,
     OnboardingSections.menuItems,
+    OnboardingSections.reviewPublish,
   ];
 
   const ReviewSummaryTable({Key? key}) : super(key: key);

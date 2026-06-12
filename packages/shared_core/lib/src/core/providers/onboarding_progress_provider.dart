@@ -8,4 +8,7 @@ abstract class OnboardingProgressProvider {
   bool isStepComplete(String stepKey);
   Future<void> markStepComplete(String stepKey);
   Future<void> markStepIncomplete(String stepKey);
+
+  /// For combined steps like Core Menu Foundation – returns weighted sub-progress (0.0 - 1.0)
+  double getFoundationProgress();
 }

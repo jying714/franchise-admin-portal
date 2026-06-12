@@ -13,7 +13,7 @@ import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:cloud_functions/cloud_functions.dart';
-
+import 'package:franchise_admin_portal/core/services/audit_log_service_impl.dart';
 // Explicitly pull the *shared lightweight* FirestoreServiceImpl (customer + common).
 // We hide the name from the main shared_core barrel to avoid clashing with the local thin wrapper in this package.
 import 'package:shared_core/shared_core.dart' hide FirestoreServiceImpl;
@@ -684,6 +684,153 @@ class AdminFirestoreService extends shared.FirestoreServiceImpl {
         contextData: {'franchiseId': franchiseId},
       );
       return {};
+    }
+  }
+
+  /// Robust import of menu items from onboarding template.
+  /// Copies from onboarding_templates/pizzeria/menu_items → franchises/{franchiseId}/menu_items
+  /// Preserves original document IDs, all fields (customizations, sizes, nutrition, etc.).
+  /// Import ingredients (ingredient_metadata) from onboarding template.
+  /// Copies from onboarding_templates/pizzeria/ingredient_metadata → franchises/{franchiseId}/ingredient_metadata
+  Future<void> importIngredientsFromTemplate({
+    required String franchiseId,
+    required String templateId, // 'pizzeria'
+  }) async {
+    print(
+        '[AdminFirestoreService] importIngredientsFromTemplate STARTED - franchiseId: $franchiseId, templateId: $templateId');
+
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      shared.ErrorLogger.log(
+        message:
+            'importIngredientsFromTemplate called with invalid franchiseId',
+        source: 'AdminFirestoreService.importIngredientsFromTemplate',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
+
+    try {
+      final templateCollection = db
+          .collection('onboarding_templates')
+          .doc(templateId)
+          .collection('ingredient_metadata');
+
+      final snapshot = await templateCollection.get();
+
+      if (snapshot.docs.isEmpty) {
+        print('[WARN] No ingredients found in template $templateId');
+        return;
+      }
+
+      final batch = db.batch();
+      int copiedCount = 0;
+
+      for (final doc in snapshot.docs) {
+        final map = doc.data();
+        final newDocRef = db
+            .collection('franchises')
+            .doc(franchiseId)
+            .collection('ingredient_metadata')
+            .doc(doc.id);
+
+        batch.set(newDocRef, map, firestore.SetOptions(merge: true));
+        copiedCount++;
+      }
+
+      await batch.commit();
+
+      print(
+          '[AdminFirestoreService] importIngredientsFromTemplate SUCCESS - copied $copiedCount ingredients');
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'importIngredientsFromTemplate failed',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId, 'templateId': templateId},
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> importMenuItemsFromTemplate({
+    required String franchiseId,
+    required String templateId, // e.g. 'pizzeria'
+  }) async {
+    print(
+        '[AdminFirestoreService] importMenuItemsFromTemplate STARTED - franchiseId: $franchiseId, templateId: $templateId');
+
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      shared.ErrorLogger.log(
+        message: 'importMenuItemsFromTemplate called with invalid franchiseId',
+        source: 'AdminFirestoreService.importMenuItemsFromTemplate',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId, 'templateId': templateId},
+      );
+      return;
+    }
+
+    try {
+      final templateCollection = db
+          .collection('onboarding_templates')
+          .doc(templateId)
+          .collection('menu_items');
+
+      final snapshot = await templateCollection.get();
+
+      if (snapshot.docs.isEmpty) {
+        throw Exception('No menu items found in template $templateId');
+      }
+
+      final batch = db.batch();
+      int copiedCount = 0;
+
+      for (final doc in snapshot.docs) {
+        final map = doc.data();
+        final newDocRef = db
+            .collection('franchises')
+            .doc(franchiseId)
+            .collection('menu_items')
+            .doc(doc.id); // Preserve original ID
+
+        batch.set(newDocRef, map, firestore.SetOptions(merge: true));
+        copiedCount++;
+      }
+
+      await batch.commit();
+
+      print(
+          '[AdminFirestoreService] importMenuItemsFromTemplate SUCCESS - copied $copiedCount menu items');
+
+      // Correct audit logging using existing AuditLogServiceImpl
+      final auditService = AuditLogServiceImpl();
+      await auditService.addLog(
+        franchiseId: franchiseId,
+        userId:
+            currentUserId ?? 'system', // fallback for background/template calls
+        action: 'template_import',
+        targetType: 'menu_items',
+        targetId: 'bulk',
+        details: {
+          'templateId': templateId,
+          'count': copiedCount,
+          'importedAt': DateTime.now().toIso8601String(),
+        },
+      );
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'importMenuItemsFromTemplate failed',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId, 'templateId': templateId},
+      );
+      rethrow;
     }
   }
 
@@ -1361,5 +1508,102 @@ class AdminFirestoreService extends shared.FirestoreServiceImpl {
   }) async {
     // Production CSV generation via shared/export_utils.dart (kept as placeholder per original)
     return 'payout_id,franchise,amount,status\n'; // TODO: replace with real export call
+  }
+
+  /// Enhanced import that cleans malformed includedIngredients and customizations
+  /// before saving to prevent MenuItem.fromFirestore warnings.
+  Future<void> importMenuItemsFromTemplateClean({
+    required String franchiseId,
+    required String templateId,
+  }) async {
+    print(
+        '[AdminFirestoreService] importMenuItemsFromTemplateClean STARTED - franchiseId: $franchiseId, templateId: $templateId');
+
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      shared.ErrorLogger.log(
+        message:
+            'importMenuItemsFromTemplateClean called with invalid franchiseId',
+        source: 'AdminFirestoreService',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
+
+    try {
+      final templateCollection = db
+          .collection('onboarding_templates')
+          .doc(templateId)
+          .collection('menu_items');
+
+      final snapshot = await templateCollection.get();
+
+      if (snapshot.docs.isEmpty) {
+        print('[WARN] No menu items found in template $templateId');
+        return;
+      }
+
+      final batch = db.batch();
+      int copiedCount = 0;
+
+      for (final doc in snapshot.docs) {
+        var map = Map<String, dynamic>.from(doc.data());
+
+        // Clean malformed includedIngredients
+        if (map['includedIngredients'] is List) {
+          map['includedIngredients'] = (map['includedIngredients'] as List)
+              .where((e) =>
+                  e != null && (e is String || (e is Map && e['id'] != null)))
+              .toList();
+        } else {
+          map['includedIngredients'] = <dynamic>[];
+        }
+
+        // Clean customizations
+        if (map['customizations'] is! List) {
+          map['customizations'] = <dynamic>[];
+        }
+
+        final newDocRef = db
+            .collection('franchises')
+            .doc(franchiseId)
+            .collection('menu_items')
+            .doc(doc.id);
+
+        batch.set(newDocRef, map, firestore.SetOptions(merge: true));
+        copiedCount++;
+      }
+
+      await batch.commit();
+
+      print(
+          '[AdminFirestoreService] importMenuItemsFromTemplateClean SUCCESS - copied $copiedCount cleaned menu items');
+
+      // Audit log
+      final auditService = AuditLogServiceImpl();
+      await auditService.addLog(
+        franchiseId: franchiseId,
+        userId: currentUserId ?? 'system',
+        action: 'template_import_clean',
+        targetType: 'menu_items',
+        targetId: 'bulk',
+        details: {
+          'templateId': templateId,
+          'count': copiedCount,
+          'cleaned': true,
+        },
+      );
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'importMenuItemsFromTemplateClean failed',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId, 'templateId': templateId},
+      );
+      rethrow;
+    }
   }
 }
