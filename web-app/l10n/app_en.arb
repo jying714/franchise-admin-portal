@@ -2002,6 +2002,42 @@
     "coreMenuFoundation": "Core Menu Foundation",
   "@coreMenuFoundation": {
     "description": "Review summary label for the combined Core Menu Foundation step"
+  },
+    "selectChangeImage": "Select / Change Image",
+  "@selectChangeImage": {
+    "description": "Button label for image upload field"
+  },
+  "selectFranchiseFirst": "Please select a franchise first.",
+  "@selectFranchiseFirst": {
+    "description": "Error message when no franchise is selected for upload"
+  },
+  "uploadingImage": "Uploading image...",
+  "@uploadingImage": {
+    "description": "Snackbar message during image upload"
+  },
+  "imageUploaded": "Image uploaded successfully",
+  "@imageUploaded": {
+    "description": "Success message after image upload"
+  },
+  "uploadFailed": "Failed to upload image. Try again.",
+  "@uploadFailed": {
+    "description": "Error message when image upload fails"
+  },
+    "sizePricing": "Size Pricing",
+  "@sizePricing": {
+    "description": "Title for size pricing editor"
+  },
+  "toppingPrice": "Topping Price",
+  "@toppingPrice": {
+    "description": "Label for topping price field"
+  },
+  "removeSize": "Remove Size",
+  "@removeSize": {
+    "description": "Tooltip for remove size button"
+  },
+  "addSize": "Add Size",
+  "@addSize": {
+    "description": "Button label to add new size"
   }
 
 

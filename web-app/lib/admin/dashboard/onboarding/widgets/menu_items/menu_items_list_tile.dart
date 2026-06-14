@@ -1,9 +1,9 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
-
-import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/config/ui_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class MenuItemListTile extends StatelessWidget {
   final shared.MenuItem item;
@@ -44,9 +44,9 @@ class MenuItemListTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (item.description.isNotEmpty) Text(item.description),
-            Text('${loc.price}: \$${item.price.toStringAsFixed(2)}'),
-            if (item.sizes != null && item.sizePrices != null)
-              Text('${loc.sizes}: ${item.sizes!.join(', ')}'),
+            Text('${loc.price ?? "Price"}: \$${item.price.toStringAsFixed(2)}'),
+            if (item.sizes != null && item.sizes!.isNotEmpty)
+              Text('${loc.sizes ?? "Sizes"}: ${item.sizes!.join(', ')}'),
             if (item.highlightTags != null && item.highlightTags!.isNotEmpty)
               Wrap(
                 spacing: 4,
@@ -64,28 +64,29 @@ class MenuItemListTile extends StatelessWidget {
           children: [
             IconButton(
               icon: const Icon(Icons.edit),
-              tooltip: loc.edit,
+              tooltip: loc.edit ?? 'Edit',
               onPressed: onEdit,
             ),
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              tooltip: loc.delete,
+              tooltip: loc.delete ?? 'Delete',
               onPressed: () async {
                 final confirmed = await showDialog<bool>(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: Text(loc.confirmDeletion),
-                    content: Text(loc.deleteMenuItemConfirm(item.name)),
+                    title: Text(loc.confirmDeletion ?? 'Confirm Deletion'),
+                    content: Text(loc.deleteMenuItemConfirm(item.name) ??
+                        'Delete ${item.name}?'),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.of(ctx).pop(false),
-                        child: Text(loc.cancel),
+                        child: Text(loc.cancel ?? 'Cancel'),
                       ),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red),
                         onPressed: () => Navigator.of(ctx).pop(true),
-                        child: Text(loc.delete),
+                        child: Text(loc.delete ?? 'Delete'),
                       ),
                     ],
                   ),
@@ -95,9 +96,13 @@ class MenuItemListTile extends StatelessWidget {
                   try {
                     Provider.of<shared.MenuItemProvider>(context, listen: false)
                         .deleteMenuItem(item.id);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(loc.menuItemDeleted)),
-                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content: Text(
+                                loc.menuItemDeleted ?? 'Menu item deleted')),
+                      );
+                    }
                   } catch (e, stack) {
                     shared.ErrorLogger.log(
                       message: 'menu_item_delete_failed',
@@ -106,9 +111,13 @@ class MenuItemListTile extends StatelessWidget {
                       stack: stack.toString(),
                       contextData: {'itemId': item.id},
                     );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(loc.errorGeneric)),
-                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                            content:
+                                Text(loc.errorGeneric ?? 'An error occurred')),
+                      );
+                    }
                   }
                 }
               },

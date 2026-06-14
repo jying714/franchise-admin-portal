@@ -1,25 +1,23 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
-import 'package:provider/provider.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:uuid/uuid.dart';
-import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/config/branding_config.dart';
+import 'package:franchise_admin_portal/config/ui_config.dart';
 
 class IngredientCreationDialog extends StatefulWidget {
   final String? suggestedName;
   final AppLocalizations loc;
-  final List<String> availableTypeIds; // New
-  final Map<String, String> typeIdToName; // New
+  final List<String> availableTypeIds;
+  final Map<String, String> typeIdToName;
 
   const IngredientCreationDialog({
-    Key? key,
+    super.key,
     this.suggestedName,
     required this.loc,
     required this.availableTypeIds,
     required this.typeIdToName,
-  }) : super(key: key);
+  });
 
   @override
   State<IngredientCreationDialog> createState() =>
@@ -95,7 +93,7 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.loc.genericErrorMessage),
+            content: Text(l10n.genericErrorMessage ?? 'An error occurred'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -110,7 +108,7 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
     final l10n = widget.loc;
 
     return AlertDialog(
-      title: Text(l10n.createNewIngredient),
+      title: Text(l10n.createNewIngredient ?? 'Create New Ingredient'),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -119,18 +117,20 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  labelText: l10n.ingredientName,
-                  hintText: l10n.e_g_anchovies,
+                  labelText: l10n.ingredientName ?? 'Ingredient Name',
+                  hintText: l10n.e_g_anchovies ?? 'e.g. Anchovies',
                 ),
-                validator: (value) =>
-                    (value?.trim().isEmpty ?? true) ? l10n.fieldRequired : null,
+                validator: (value) => (value?.trim().isEmpty ?? true)
+                    ? l10n.fieldRequired ?? 'Field required'
+                    : null,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _selectedTypeId,
                 isExpanded: true,
-                hint: Text(l10n.ingredientType),
-                decoration: InputDecoration(labelText: l10n.ingredientType),
+                hint: Text(l10n.ingredientType ?? 'Ingredient Type'),
+                decoration: InputDecoration(
+                    labelText: l10n.ingredientType ?? 'Ingredient Type'),
                 items: widget.availableTypeIds.map((id) {
                   return DropdownMenuItem(
                     value: id,
@@ -139,7 +139,7 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
                 }).toList(),
                 onChanged: (value) => setState(() => _selectedTypeId = value),
                 validator: (value) => (value == null || value.isEmpty)
-                    ? l10n.fieldRequired
+                    ? l10n.fieldRequired ?? 'Field required'
                     : null,
               ),
               const SizedBox(height: 16),
@@ -151,7 +151,7 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
                   FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))
                 ],
                 decoration: InputDecoration(
-                  labelText: l10n.upchargeOptional,
+                  labelText: l10n.upchargeOptional ?? 'Upcharge (Optional)',
                   hintText: '1.00',
                   prefixText: '\$',
                 ),
@@ -160,7 +160,7 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
               SwitchListTile(
                 value: _isRemovable,
                 onChanged: (value) => setState(() => _isRemovable = value),
-                title: Text(l10n.removable),
+                title: Text(l10n.removable ?? 'Removable'),
               ),
             ],
           ),
@@ -169,7 +169,7 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
       actions: [
         TextButton(
           onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-          child: Text(l10n.cancel),
+          child: Text(l10n.cancel ?? 'Cancel'),
         ),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _handleSubmit,
@@ -178,7 +178,7 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
                   height: 20,
                   width: 20,
                   child: CircularProgressIndicator(strokeWidth: 2))
-              : Text(l10n.create),
+              : Text(l10n.create ?? 'Create'),
         ),
       ],
     );

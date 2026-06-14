@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_admin_portal/config/ui_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/widgets/menu_item_card.dart'; // Reuse existing mobile-style card
-import 'package:franchise_admin_portal/widgets/categories/category_card.dart'; // Reuse if suitable, or fallback
+import 'package:franchise_admin_portal/widgets/menu_item_card.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/config/ui_config.dart';
 
 class MobileMenuPreviewCard extends StatelessWidget {
   final String franchiseId;
@@ -19,13 +18,12 @@ class MobileMenuPreviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context);
+    final loc = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     final franchiseProvider = context.watch<shared.FranchiseProvider>();
     final categoryProvider = context.watch<shared.CategoryProvider>();
-    final franchiseInfoProvider = context.watch<shared.FranchiseInfoProvider>();
-    final franchise = franchiseInfoProvider.franchise;
-
     final categories = categoryProvider.categories;
+
     final isEmpty = categories.isEmpty;
 
     return Container(
@@ -58,16 +56,17 @@ class MobileMenuPreviewCard extends StatelessWidget {
                 ),
               ),
             ),
-            // App Header
+            // App Header (Dynamic Branding)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: UiConfig.primaryColor,
+              color: UiConfig.primaryColor, // Safe fallback via UiConfig
               child: Row(
                 children: [
-                  if (franchise?.logoUrl != null &&
-                      franchise!.logoUrl!.isNotEmpty)
+                  if (franchiseProvider.currentLogoUrl != null &&
+                      franchiseProvider.currentLogoUrl!.isNotEmpty)
                     CircleAvatar(
-                      backgroundImage: NetworkImage(franchise.logoUrl!),
+                      backgroundImage:
+                          NetworkImage(franchiseProvider.currentLogoUrl!),
                       radius: 18,
                     )
                   else
@@ -79,7 +78,7 @@ class MobileMenuPreviewCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      franchise?.name ?? 'Doughboys Pizzeria',
+                      franchiseProvider.currentAppName,
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -94,7 +93,7 @@ class MobileMenuPreviewCard extends StatelessWidget {
                 ],
               ),
             ),
-            // Category Grid Preview (matches mobile MainMenuScreen)
+            // Category Grid Preview
             Expanded(
               child: isEmpty
                   ? Center(
@@ -107,8 +106,8 @@ class MobileMenuPreviewCard extends StatelessWidget {
                                 size: 48, color: Colors.grey),
                             const SizedBox(height: 16),
                             Text(
-                              loc?.previewEmptyState ??
-                                  'Add categories in the tabs above to see live preview',
+                              loc.previewEmptyState ??
+                                  'Add categories to see live preview',
                               textAlign: TextAlign.center,
                               style: Theme.of(context)
                                   .textTheme
@@ -139,7 +138,7 @@ class MobileMenuPreviewCard extends StatelessWidget {
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12)),
                             child: InkWell(
-                              onTap: () {}, // Preview only - no navigation
+                              onTap: () {}, // Preview only
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -150,7 +149,7 @@ class MobileMenuPreviewCard extends StatelessWidget {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8),
                                     child: Text(
-                                      category.displayName ?? category.name,
+                                      category.name,
                                       textAlign: TextAlign.center,
                                       style: Theme.of(context)
                                           .textTheme

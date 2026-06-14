@@ -1,17 +1,14 @@
-﻿// lib/admin/dashboard/onboarding/widgets/menu_items/image_upload_field.dart
-
-import 'dart:io';
+﻿import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart' show Uint8List;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-
-import 'package:franchise_admin_portal/config/ui_config.dart'; // For consistent styling
+import 'package:franchise_admin_portal/config/ui_config.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 /// Industry-standard image upload field for onboarding menu items.
-/// Supports: upload, preview with error fallback, change, clear, progress.
 class ImageUploadField extends FormField<String?> {
   ImageUploadField({
     super.key,
@@ -28,6 +25,7 @@ class ImageUploadField extends FormField<String?> {
           builder: (FormFieldState<String?> state) {
             return Builder(
               builder: (context) {
+                final loc = AppLocalizations.of(context)!;
                 final franchiseProvider = Provider.of<shared.FranchiseProvider>(
                     context,
                     listen: false);
@@ -42,12 +40,9 @@ class ImageUploadField extends FormField<String?> {
                     if (label != null)
                       Text(
                         label,
-                        style:
-                            UiConfig.titleStyle, // Project-consistent styling
+                        style: UiConfig.titleStyle,
                       ),
                     const SizedBox(height: 8),
-                    // Preview with robust error handling + fallback + Refresh
-                    // Preview with robust error handling + Refresh button
                     GestureDetector(
                       onTap: () => _pickAndUploadImage(
                         context,
@@ -72,8 +67,8 @@ class ImageUploadField extends FormField<String?> {
                                   child: IconButton(
                                     icon: const Icon(Icons.refresh,
                                         size: 18, color: Colors.blue),
-                                    onPressed: () => state
-                                        .didChange(state.value), // Force reload
+                                    onPressed: () =>
+                                        state.didChange(state.value),
                                     tooltip: 'Refresh Image Preview',
                                     style: IconButton.styleFrom(
                                       backgroundColor:
@@ -87,9 +82,7 @@ class ImageUploadField extends FormField<String?> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-
-                    // Action buttons (restored + improved spacing)
+                    const SizedBox(height: 8),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -102,13 +95,14 @@ class ImageUploadField extends FormField<String?> {
                             uploadFolder,
                           ),
                           icon: const Icon(Icons.upload_file),
-                          label: const Text('Select / Change Image'),
+                          label: Text(
+                              loc.selectChangeImage ?? 'Select / Change Image'),
                         ),
                         if (state.value != null && state.value!.isNotEmpty)
                           TextButton.icon(
                             onPressed: () => state.didChange(null),
                             icon: const Icon(Icons.clear, size: 18),
-                            label: const Text('Clear'),
+                            label: Text(loc.clear ?? 'Clear'),
                             style: TextButton.styleFrom(
                               foregroundColor: Colors.red,
                             ),
@@ -131,7 +125,6 @@ class ImageUploadField extends FormField<String?> {
           },
         );
 
-  // Private helper for safe preview
   static Widget _buildPreviewImage(String? imageUrl) {
     final safeUrl = _getSafeImageUrl(imageUrl);
 
@@ -147,21 +140,15 @@ class ImageUploadField extends FormField<String?> {
 
     return Image.network(
       safeUrl,
-      key: ValueKey(
-          '${safeUrl}_${DateTime.now().millisecondsSinceEpoch}'), // Force cache bust
+      key: ValueKey('${safeUrl}_${DateTime.now().millisecondsSinceEpoch}'),
       width: 80,
       height: 80,
       fit: BoxFit.cover,
       loadingBuilder: (context, child, loadingProgress) {
         if (loadingProgress == null) return child;
-        return const Center(
-          child: CircularProgressIndicator(strokeWidth: 2),
-        );
+        return const Center(child: CircularProgressIndicator(strokeWidth: 2));
       },
-      errorBuilder: (context, error, stackTrace) {
-        // Reduced logging for fresh uploads
-        return _placeholderIcon();
-      },
+      errorBuilder: (context, error, stackTrace) => _placeholderIcon(),
     );
   }
 
@@ -184,7 +171,6 @@ class ImageUploadField extends FormField<String?> {
     );
   }
 
-  // Upload handler - Web + Mobile compatible
   static Future<void> _pickAndUploadImage(
     BuildContext context,
     FormFieldState<String?> state,
@@ -192,9 +178,13 @@ class ImageUploadField extends FormField<String?> {
     String franchiseId,
     String uploadFolder,
   ) async {
+    final loc = AppLocalizations.of(context)!;
+
     if (franchiseId == 'unknown' || franchiseId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a franchise first.')),
+        SnackBar(
+            content: Text(loc.selectFranchiseFirst ??
+                'Please select a franchise first.')),
       );
       return;
     }
@@ -209,10 +199,9 @@ class ImageUploadField extends FormField<String?> {
 
     try {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Uploading image...')),
+        SnackBar(content: Text(loc.uploadingImage ?? 'Uploading image...')),
       );
 
-      // Web-safe: Use bytes instead of path
       final bytes = await picked.readAsBytes();
 
       final uploadedUrl = await storageService.uploadFranchiseImageBytes(
@@ -222,8 +211,6 @@ class ImageUploadField extends FormField<String?> {
         folder: uploadFolder,
       );
 
-      // Increased delay + force rebuild via didChange
-      // Longer delay for CDN propagation + force rebuild
       Future.delayed(const Duration(milliseconds: 2500), () {
         if (state.mounted) {
           state.didChange(uploadedUrl);
@@ -232,19 +219,23 @@ class ImageUploadField extends FormField<String?> {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Image uploaded successfully')),
+          SnackBar(
+              content:
+                  Text(loc.imageUploaded ?? 'Image uploaded successfully')),
         );
       }
     } catch (e, stack) {
       shared.ErrorLogger.log(
-        message: 'Image upload failed: $e',
+        message: 'Image upload failed',
         stack: stack.toString(),
         source: 'ImageUploadField',
         severity: 'error',
       );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to upload image. Try again.')),
+          SnackBar(
+              content: Text(
+                  loc.uploadFailed ?? 'Failed to upload image. Try again.')),
         );
       }
     }

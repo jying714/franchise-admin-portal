@@ -76,6 +76,18 @@ class _MenuItemEditorScreenState extends State<MenuItemEditorScreen> {
           child: SchemaIssueSidebar(
             issues: _schemaIssues,
             onRepair: _handleRepair,
+            onFullRefresh: () {
+              // Trigger full re-validation from editor
+              _sheetKey.currentState?.repairSchemaIssue(
+                shared.MenuItemSchemaIssue(
+                  type: shared.MenuItemSchemaIssueType.missingField,
+                  missingReference: '',
+                  field: 'refresh',
+                ),
+                '',
+              );
+              _handleSchemaIssueUpdate(_schemaIssues); // refresh list
+            },
             onClose: () => setState(() => _schemaIssues.clear()),
           ),
         ),

@@ -1,18 +1,19 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/config/ui_config.dart';
 
 class IngredientTypeCreationDialog extends StatefulWidget {
   final AppLocalizations loc;
   final String? suggestedName;
 
   const IngredientTypeCreationDialog({
-    Key? key,
+    super.key,
     required this.loc,
     this.suggestedName,
-  }) : super(key: key);
+  });
 
   @override
   State<IngredientTypeCreationDialog> createState() =>
@@ -59,12 +60,15 @@ class _IngredientTypeCreationDialogState
         stack: stack.toString(),
         severity: 'error',
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(widget.loc.genericErrorMessage),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text(widget.loc.genericErrorMessage ?? 'An error occurred'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -75,7 +79,7 @@ class _IngredientTypeCreationDialogState
     final loc = widget.loc;
 
     return AlertDialog(
-      title: Text(loc.createNewIngredientType),
+      title: Text(loc.createNewIngredientType ?? 'Create New Ingredient Type'),
       content: Form(
         key: _formKey,
         child: Column(
@@ -85,11 +89,11 @@ class _IngredientTypeCreationDialogState
               controller: _nameController,
               autofocus: true,
               decoration: InputDecoration(
-                labelText: loc.typeName,
+                labelText: loc.typeName ?? 'Type Name',
               ),
               validator: (val) {
                 if (val == null || val.trim().isEmpty) {
-                  return loc.fieldRequired;
+                  return loc.fieldRequired ?? 'This field is required';
                 }
                 return null;
               },
@@ -101,7 +105,7 @@ class _IngredientTypeCreationDialogState
                 FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9_-]'))
               ],
               decoration: InputDecoration(
-                labelText: loc.systemTagOptional,
+                labelText: loc.systemTagOptional ?? 'System Tag (Optional)',
               ),
             ),
           ],
@@ -110,17 +114,17 @@ class _IngredientTypeCreationDialogState
       actions: [
         TextButton(
           onPressed: _saving ? null : () => Navigator.of(context).pop(),
-          child: Text(loc.cancel),
+          child: Text(loc.cancel ?? 'Cancel'),
         ),
         ElevatedButton(
           onPressed: _saving ? null : _submit,
           child: _saving
-              ? SizedBox(
+              ? const SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : Text(loc.create),
+              : Text(loc.create ?? 'Create'),
         ),
       ],
     );

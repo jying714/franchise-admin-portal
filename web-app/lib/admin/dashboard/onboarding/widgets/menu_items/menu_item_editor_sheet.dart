@@ -17,6 +17,7 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_i
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_utility.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/config/ui_config.dart';
 
 class MenuItemEditorSheet extends StatefulWidget {
   final shared.MenuItem? existing;
@@ -28,14 +29,14 @@ class MenuItemEditorSheet extends StatefulWidget {
   final String franchiseId;
 
   const MenuItemEditorSheet({
-    Key? key,
+    super.key,
     this.existing,
     required this.onCancel,
     required this.onSave,
     required this.onSchemaIssuesChanged,
     required this.firestore,
     required this.franchiseId,
-  }) : super(key: key);
+  });
 
   @override
   State<MenuItemEditorSheet> createState() => MenuItemEditorSheetState();
@@ -68,7 +69,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
   List<shared.MenuItemSchemaIssue> _schemaIssues = [];
   bool _showSchemaSidebar = false;
 
-  // Advanced fields (kept full)
+  // Advanced fields (full preservation)
   String? notes;
   String? sku;
   List<String> dietaryTags = [];
@@ -105,6 +106,63 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
   Map<String, double>? sideDipUpcharge;
   Map<String, dynamic>? extraCharges;
   List<Map<String, dynamic>>? rawCustomizations;
+
+  shared.MenuItem? get currentEditingItem {
+    // Public accessor for screen/sidebar refresh
+    return buildMenuItemForSchemaCheck(
+      existing: widget.existing,
+      name: name,
+      description: description,
+      price: price,
+      categoryId: categoryId,
+      outOfStock: outOfStock,
+      imageUrl: imageUrl,
+      customizationGroups: customizationGroups,
+      includedIngredients: includedIngredients,
+      optionalAddOns: optionalAddOns,
+      customizations: customizations,
+      nutrition: nutrition,
+      selectedTemplateRefs: selectedTemplateRefs,
+      sizeData: sizeData,
+      categories: [],
+      notes: notes,
+      sku: sku,
+      dietaryTags: dietaryTags,
+      allergens: allergens,
+      prepTime: prepTime,
+      sortOrder: sortOrder,
+      taxCategory: taxCategory,
+      exportId: exportId,
+      crustTypes: crustTypes,
+      cookTypes: cookTypes,
+      cutStyles: cutStyles,
+      sauceOptions: sauceOptions,
+      dressingOptions: dressingOptions,
+      maxFreeToppings: maxFreeToppings,
+      maxFreeSauces: maxFreeSauces,
+      maxFreeDressings: maxFreeDressings,
+      maxToppings: maxToppings,
+      customizationsUpdatedAt: customizationsUpdatedAt,
+      createdAt: createdAt,
+      comboId: comboId,
+      bundleItems: bundleItems,
+      bundleDiscount: bundleDiscount,
+      highlightTags: highlightTags,
+      allowSpecialInstructions: allowSpecialInstructions,
+      hideInMenu: hideInMenu,
+      freeSauceCount: freeSauceCount,
+      extraSauceUpcharge: extraSauceUpcharge,
+      freeDressingCount: freeDressingCount,
+      extraDressingUpcharge: extraDressingUpcharge,
+      dippingSauceOptions: dippingSauceOptions,
+      dippingSplits: dippingSplits,
+      sideDipSauceOptions: sideDipSauceOptions,
+      freeDipCupCount: freeDipCupCount,
+      sideDipUpcharge: sideDipUpcharge,
+      extraCharges: extraCharges,
+      rawCustomizations: rawCustomizations,
+    );
+  }
 
   @override
   void initState() {
@@ -166,7 +224,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     print('[repairSchemaIssue] Resolving: ${issue.displayMessage} → $newValue');
 
     setState(() {
-      // Field mutations (expanded for all common cases)
       if (issue.field == 'categoryId' ||
           issue.type == shared.MenuItemSchemaIssueType.category) {
         categoryId = newValue;
@@ -188,12 +245,9 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     _checkForSchemaIssues();
     widget.onSchemaIssuesChanged?.call(_schemaIssues);
 
-    // Strong refresh + provider reload for dropdowns
     Future.delayed(const Duration(milliseconds: 100), () {
       if (!mounted) return;
       _checkForSchemaIssues();
-
-      // Refresh providers so dropdowns see staged items
       try {
         Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
             .load(forceReloadFromFirestore: true);
@@ -218,23 +272,14 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       final ingredientExists = ingredientProvider.getById(newValue) != null;
       final typeExists = typeProvider.getById(newValue) != null;
 
-      print(
-          '[DEBUG] Lookup results: ingredientExists=$ingredientExists, typeExists=$typeExists, issueType=${issue.type}');
-
-      // Stage missing references
       if (issue.type == shared.MenuItemSchemaIssueType.ingredient &&
           !ingredientExists) {
-        final stagedName = issue.label ?? newValue;
-        final staged =
-            ingredientProvider.stageIfNew(id: newValue, name: stagedName);
-        print('[DEBUG] Staged ingredient: $staged');
+        ingredientProvider.stageIfNew(
+            id: newValue, name: issue.label ?? newValue);
       }
-
       if (issue.type == shared.MenuItemSchemaIssueType.ingredientType &&
           !typeExists) {
-        final stagedName = issue.label ?? newValue;
-        final staged = typeProvider.stageIfNew(id: newValue, name: stagedName);
-        print('[DEBUG] Staged ingredient type: $staged');
+        typeProvider.stageIfNew(id: newValue, name: issue.label ?? newValue);
       }
 
       shared.IngredientReference updateEntry(shared.IngredientReference entry) {
@@ -251,7 +296,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
             (matchesId || matchesName)) {
           return entry.copyWith(id: newValue);
         }
-
         if (issue.type == shared.MenuItemSchemaIssueType.ingredientType &&
             (matchesName || entry.typeId.trim().isEmpty)) {
           return entry.copyWith(typeId: newValue);
@@ -278,7 +322,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
         contextData: {'issueType': issue.type.toString(), 'newValue': newValue},
       );
     }
-    print('[DEBUG _repairIngredientOrType] Applied to field: ${issue.field}');
   }
 
   void _checkForSchemaIssues() {
@@ -295,9 +338,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       final ingredientTypes =
           Provider.of<shared.IngredientTypeProvider>(context, listen: false)
               .ingredientTypes;
-
-      print(
-          '[DEBUG _checkForSchemaIssues] franchise=${widget.franchiseId} | cats=${categories.length} | ings(all)=${ingredients.length} | types=${ingredientTypes.length}');
 
       final tempItem = buildMenuItemForSchemaCheck(
         existing: widget.existing,
@@ -366,8 +406,13 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       });
 
       widget.onSchemaIssuesChanged?.call(_schemaIssues);
-      print(
-          '[DEBUG _checkForSchemaIssues] Updated issues count: ${_schemaIssues.length}');
+
+      // Force save button re-evaluation
+      if (_schemaIssues.isEmpty) {
+        isDirty = true;
+      }
+
+      widget.onSchemaIssuesChanged?.call(_schemaIssues);
     } catch (e, stack) {
       shared.ErrorLogger.log(
           message: '_checkForSchemaIssues failed',
@@ -378,29 +423,21 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
   }
 
   void _applyTemplate(shared.MenuItem item) {
-    print('[MenuItemEditorSheet] _applyTemplate called with item: '
-        'id=${item.id}, name=${item.name}, categoryId=${item.categoryId}, '
-        'customizationGroups=${item.customizationGroups?.length ?? 0}');
-    print('[MenuItemEditorSheet] Template data dump: ${item.toJson()}');
+    print('[MenuItemEditorSheet] _applyTemplate called');
     try {
       final allIngredients =
           Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
               .allIngredients;
       final fieldMap = extractTemplateFieldsForEditor(item, allIngredients);
 
-      // DEFER ALL STATE UPDATES TO NEXT FRAME!
       WidgetsBinding.instance.addPostFrameCallback((_) {
         setState(() {
-          // --- Update controllers for user-editable fields ---
           _nameController.text = fieldMap['name'] ?? '';
           name = fieldMap['name'] ?? '';
-
           _descriptionController.text = fieldMap['description'] ?? '';
           description = fieldMap['description'] ?? '';
-
           _priceController.text = (fieldMap['price'] ?? 0.0).toString();
           price = fieldMap['price'] ?? 0.0;
-
           categoryId = fieldMap['categoryId'] ?? '';
           imageUrl = fieldMap['imageUrl'] ?? '';
           nutrition = fieldMap['nutrition'];
@@ -452,50 +489,30 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
           extraCharges = fieldMap['extraCharges'];
           rawCustomizations = fieldMap['rawCustomizations'];
           isDirty = true;
-          print(
-              '[MenuItemEditorSheet] Template applied. Triggered schema re-check.');
           _checkForSchemaIssues();
         });
-
         _formKey.currentState?.validate();
       });
     } catch (e, st) {
-      print('[MenuItemEditorSheet] ERROR applying template: $e\n$st');
+      print('[MenuItemEditorSheet] ERROR applying template: $e');
       shared.ErrorLogger.log(
-        message: 'Failed to apply template into editor state',
+        message: 'Failed to apply template',
         source: 'menu_item_editor_sheet.dart',
         severity: 'warning',
         stack: st.toString(),
-        contextData: {
-          'templateRefs': item.templateRefs?.join(', ') ?? 'none',
-          'menuItemId': item.id,
-          'name': item.name,
-          'env': kReleaseMode ? 'production' : 'development',
-        },
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to apply template. See logs.')),
       );
     }
   }
 
   void _saveItem() {
-    print(
-        '[DEBUG] Save Button Enabled: schemaIssues=${_schemaIssues.length}, isDirty=$isDirty');
-
-    // Sync fields from controllers before checking schema
     name = _nameController.text.trim();
     description = _descriptionController.text.trim();
     price = double.tryParse(_priceController.text.trim()) ?? 0.0;
-    _schemaIssues.removeWhere((issue) => issue.resolved);
+
     _checkForSchemaIssues();
-    print(
-        '[DEBUG] Schema issues at save: ${_schemaIssues.map((e) => e.displayMessage).toList()}');
 
     if (_schemaIssues.isNotEmpty) {
-      setState(() {
-        _showSchemaSidebar = true;
-      });
+      setState(() => _showSchemaSidebar = true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Resolve all schema issues before saving.'),
@@ -504,15 +521,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       );
       return;
     }
-    print('[MenuItemEditorSheet] _saveItem called');
-    print('[MenuItemEditorSheet] Current form state: '
-        'name=$name, description=$description, price=$price, categoryId=$categoryId, '
-        'imageUrl=$imageUrl, includedIngredients=${includedIngredients.length}, '
-        'optionalAddOns=${optionalAddOns.length}, customizations=${customizations.length}, '
-        'customizationGroups=${customizationGroups.length}, sizeData=${sizeData.length}, '
-        'selectedTemplateRefs=$selectedTemplateRefs, nutrition=$nutrition, outOfStock=$outOfStock');
-    final categories =
-        Provider.of<shared.CategoryProvider>(context, listen: false).categories;
+
     if (!_formKey.currentState!.validate()) return;
 
     if (categoryId == null || categoryId!.isEmpty) {
@@ -522,6 +531,8 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       return;
     }
 
+    final categories =
+        Provider.of<shared.CategoryProvider>(context, listen: false).categories;
     final categoryName =
         categories.firstWhere((cat) => cat.id == categoryId).name;
 
@@ -532,7 +543,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       return;
     }
 
-    print('[MenuItemEditorSheet] Constructing MenuItem for save...');
     final item = constructMenuItemFromEditorFields(
       id: widget.existing?.id ?? const Uuid().v4(),
       outOfStock: outOfStock,
@@ -587,7 +597,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       rawCustomizations: rawCustomizations,
     );
 
-    print('[MenuItemEditorSheet] MenuItem constructed: ${item.toJson()}');
     widget.onSave(item);
   }
 
@@ -607,7 +616,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // === SAFE PROVIDER ACCESS (avoids ProviderNotFound in modal context) ===
     final categoryProvider =
         Provider.of<shared.CategoryProvider>(context, listen: true);
     final categories = categoryProvider.categories;
@@ -642,19 +650,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                 color: colorScheme.onSurface,
               ),
             ),
-            actions: [
-              // Optional save button logic can be re-enabled here
-              // TextButton(
-              //   onPressed: (!(_showSchemaSidebar && _schemaIssues.isNotEmpty) &&
-              //           (_schemaIssues.isEmpty || isDirty))
-              //       ? _saveItem
-              //       : null,
-              //   child: Text(
-              //     loc.save,
-              //     style: TextStyle(color: colorScheme.primary),
-              //   ),
-              // ),
-            ],
           ),
           body: SafeArea(
             child: (!hasCategories || !hasIngredients) && _schemaIssues.isEmpty
@@ -666,7 +661,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                     isAdmin: true,
                   )
                 : SingleChildScrollView(
-                    controller: ScrollController(),
                     padding: const EdgeInsets.all(16),
                     child: Material(
                       type: MaterialType.transparency,
@@ -674,12 +668,11 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                         key: _formKey,
                         onChanged: () {
                           setState(() => isDirty = true);
-                          _checkForSchemaIssues(); // Live validation — shows sidebar immediately
+                          _checkForSchemaIssues();
                         },
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Section 0: Menu Item Template Dropdown
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
@@ -697,8 +690,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                               ],
                             ),
                             const SizedBox(height: 16),
-
-                            // Section 1: Basic Info
                             TextFormField(
                               controller: _nameController,
                               decoration:
@@ -715,7 +706,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                               onChanged: (val) => description = val,
                               maxLines: 2,
                             ),
-
                             Row(
                               children: [
                                 Expanded(
@@ -757,9 +747,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                   setState(() => outOfStock = val),
                               title: const Text('Out of Stock'),
                             ),
-
                             const SizedBox(height: 20),
-
                             ExpansionTile(
                               title: const Text('Advanced Fields'),
                               initiallyExpanded: false,
@@ -790,18 +778,12 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                   onChanged: (val) =>
                                       prepTime = int.tryParse(val),
                                 ),
-                                // Add more as needed, or use ChipsInput for tags/allergens, etc.
                               ],
                             ),
-
                             const SizedBox(height: 20),
-
-                            // Section 2b: Size Pricing
                             SizePricingEditor(
                               sizes: sizeData,
                               onChanged: (val) {
-                                print(
-                                    '[MenuItemEditorSheet] sizeData changed: $val');
                                 setState(() {
                                   sizeData = val;
                                   isDirty = true;
@@ -831,41 +813,28 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                 },
                               ),
                             ),
-
                             const SizedBox(height: 20),
-
                             const Divider(height: 40),
-
-                            // Section 3: Included Ingredients
                             MultiIngredientSelector(
                               title: 'Included Ingredients',
                               selected: includedIngredients,
                               onChanged: (val) =>
                                   setState(() => includedIngredients = val),
                             ),
-
                             const SizedBox(height: 16),
-
-                            // Section 4: Optional Add-ons
                             MultiIngredientSelector(
                               title: 'Optional Add-ons',
                               selected: optionalAddOns,
                               onChanged: (val) =>
                                   setState(() => optionalAddOns = val),
                             ),
-
                             const Divider(height: 40),
-
-                            // Section 5: Customizations
                             CustomizationGroupEditor(
                               value: customizationGroups,
                               onChanged: (val) =>
                                   setState(() => customizationGroups = val),
                             ),
-
                             const Divider(height: 40),
-
-                            // Section 6: Nutrition (FeatureGuard)
                             shared.FeatureGuard(
                               module:
                                   shared.PlatformFeature.nutritionalInfo.key,
@@ -891,18 +860,12 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                 ],
                               ),
                             ),
-
                             const Divider(height: 40),
-
-                            // Section 7: Image Upload
                             ImageUploadField(
                               initialValue: imageUrl,
                               onSaved: (val) => imageUrl = val ?? '',
                             ),
-
                             const Divider(height: 40),
-
-                            // Preview Section
                             ExpansionTile(
                               title: const Text('Live Preview'),
                               initiallyExpanded: false,
@@ -925,7 +888,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 80),
                           ],
                         ),

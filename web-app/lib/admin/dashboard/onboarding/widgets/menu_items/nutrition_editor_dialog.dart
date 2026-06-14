@@ -1,14 +1,12 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/config/ui_config.dart';
 
-/// A dialog that allows editing or creating `NutritionInfo`.
-///
-/// Used inside [MenuItemEditorSheet] when nutritional_info feature is enabled.
 class NutritionEditorDialog extends StatefulWidget {
   final shared.NutritionInfo? initialValue;
 
-  const NutritionEditorDialog({Key? key, this.initialValue}) : super(key: key);
+  const NutritionEditorDialog({super.key, this.initialValue});
 
   @override
   State<NutritionEditorDialog> createState() => _NutritionEditorDialogState();
@@ -63,7 +61,7 @@ class _NutritionEditorDialogState extends State<NutritionEditorDialog> {
     final loc = AppLocalizations.of(context)!;
 
     return AlertDialog(
-      title: Text(loc.editNutrition),
+      title: Text(loc.editNutrition ?? 'Edit Nutrition Info'),
       content: Form(
         key: _formKey,
         child: Column(
@@ -71,22 +69,22 @@ class _NutritionEditorDialogState extends State<NutritionEditorDialog> {
           children: [
             _buildField(
               controller: _caloriesController,
-              label: loc.calories,
+              label: loc.calories ?? 'Calories',
               suffix: 'kcal',
             ),
             _buildField(
               controller: _fatController,
-              label: loc.fat,
+              label: loc.fat ?? 'Fat',
               suffix: 'g',
             ),
             _buildField(
               controller: _carbsController,
-              label: loc.carbohydrates,
+              label: loc.carbohydrates ?? 'Carbohydrates',
               suffix: 'g',
             ),
             _buildField(
               controller: _proteinController,
-              label: loc.protein,
+              label: loc.protein ?? 'Protein',
               suffix: 'g',
             ),
           ],
@@ -95,11 +93,11 @@ class _NutritionEditorDialogState extends State<NutritionEditorDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(null),
-          child: Text(loc.cancel),
+          child: Text(loc.cancel ?? 'Cancel'),
         ),
         ElevatedButton(
           onPressed: _submit,
-          child: Text(loc.save),
+          child: Text(loc.save ?? 'Save'),
         ),
       ],
     );
@@ -118,7 +116,7 @@ class _NutritionEditorDialogState extends State<NutritionEditorDialog> {
           labelText: label,
           suffixText: suffix,
         ),
-        keyboardType: TextInputType.numberWithOptions(decimal: true),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
         validator: (value) {
           if (value == null || value.isEmpty) return null;
           final num = double.tryParse(value);

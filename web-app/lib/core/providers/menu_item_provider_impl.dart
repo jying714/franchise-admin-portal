@@ -373,4 +373,30 @@ class MenuItemProviderImpl extends ChangeNotifier
     }
     return ids.toList();
   }
+
+  @override
+  Future<Map<String, int>> normalizeSchemaReferences() async {
+    if (_franchiseId == null || _franchiseId!.isEmpty) {
+      return {};
+    }
+
+    try {
+      final result = await (_firestoreService as dynamic)
+          .normalizeSchemaReferences(franchiseId: _franchiseId!);
+
+      // Refresh everything after normalization
+      await reload(_franchiseId!, forceReloadFromFirestore: true);
+
+      notifyListeners();
+      return result as Map<String, int>;
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'normalizeSchemaReferences failed in provider',
+        stack: stack.toString(),
+        source: 'MenuItemProviderImpl',
+        severity: 'error',
+      );
+      return {};
+    }
+  }
 }

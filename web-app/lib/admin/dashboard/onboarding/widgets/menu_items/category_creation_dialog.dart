@@ -1,17 +1,18 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:uuid/uuid.dart';
+import 'package:franchise_admin_portal/config/ui_config.dart';
 
 class CategoryCreationDialog extends StatefulWidget {
   final AppLocalizations loc;
   final String? suggestedName;
 
   const CategoryCreationDialog({
-    Key? key,
+    super.key,
     required this.loc,
     this.suggestedName,
-  }) : super(key: key);
+  });
 
   @override
   State<CategoryCreationDialog> createState() => _CategoryCreationDialogState();
@@ -45,7 +46,7 @@ class _CategoryCreationDialogState extends State<CategoryCreationDialog> {
     final loc = widget.loc;
 
     return AlertDialog(
-      title: Text(loc.createNewCategory),
+      title: Text(loc.createNewCategory ?? 'Create New Category'),
       content: Form(
         key: _formKey,
         child: Column(
@@ -53,10 +54,12 @@ class _CategoryCreationDialogState extends State<CategoryCreationDialog> {
           children: [
             TextFormField(
               controller: _nameController,
-              decoration: InputDecoration(labelText: loc.categoryName),
+              decoration: InputDecoration(
+                labelText: loc.categoryName ?? 'Category Name',
+              ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return loc.requiredField;
+                  return loc.requiredField ?? 'This field is required';
                 }
                 return null;
               },
@@ -64,7 +67,9 @@ class _CategoryCreationDialogState extends State<CategoryCreationDialog> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _descriptionController,
-              decoration: InputDecoration(labelText: loc.descriptionOptional),
+              decoration: InputDecoration(
+                labelText: loc.descriptionOptional ?? 'Description (Optional)',
+              ),
             ),
           ],
         ),
@@ -72,11 +77,11 @@ class _CategoryCreationDialogState extends State<CategoryCreationDialog> {
       actions: [
         TextButton(
           onPressed: Navigator.of(context).pop,
-          child: Text(loc.cancel),
+          child: Text(loc.cancel ?? 'Cancel'),
         ),
         ElevatedButton(
           onPressed: _handleSubmit,
-          child: Text(loc.create),
+          child: Text(loc.create ?? 'Create'),
         ),
       ],
     );

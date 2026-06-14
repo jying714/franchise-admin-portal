@@ -5335,4 +5335,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get coreMenuFoundation => 'Core Menu Foundation';
+
+  @override
+  String get selectChangeImage => 'Select / Change Image';
+
+  @override
+  String get selectFranchiseFirst => 'Please select a franchise first.';
+
+  @override
+  String get uploadingImage => 'Uploading image...';
+
+  @override
+  String get imageUploaded => 'Image uploaded successfully';
+
+  @override
+  String get uploadFailed => 'Failed to upload image. Try again.';
+
+  @override
+  String get sizePricing => 'Size Pricing';
+
+  @override
+  String get toppingPrice => 'Topping Price';
+
+  @override
+  String get removeSize => 'Remove Size';
+
+  @override
+  String get addSize => 'Add Size';
 }

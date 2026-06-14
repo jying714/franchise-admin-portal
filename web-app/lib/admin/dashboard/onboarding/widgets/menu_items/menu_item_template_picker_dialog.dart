@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
+import 'package:franchise_admin_portal/config/ui_config.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
 class MenuItemTemplatePickerDialog extends StatelessWidget {
   final AppLocalizations loc;
@@ -50,19 +51,19 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
         },
       );
       return AlertDialog(
-        title: Text(loc.error),
-        content: Text(loc.errorGeneric),
+        title: Text(loc.error ?? 'Error'),
+        content: Text(loc.errorGeneric ?? 'An error occurred'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(loc.cancel),
+            child: Text(loc.cancel ?? 'Cancel'),
           ),
         ],
       );
     }
 
     return AlertDialog(
-      title: Text(loc.loadDefaultTemplates),
+      title: Text(loc.loadDefaultTemplates ?? 'Load Default Templates'),
       content: FutureBuilder<QuerySnapshot>(
         future: FirebaseFirestore.instance
             .collection('onboarding_templates')
@@ -71,17 +72,17 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
             .get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const CircularProgressIndicator();
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError || !snapshot.hasData) {
-            return Text(loc.errorGeneric);
+            return Text(loc.errorGeneric ?? 'Failed to load templates');
           }
 
           final docs = snapshot.data!.docs;
 
           if (docs.isEmpty) {
-            return Text(loc.noTemplatesFound);
+            return Text(loc.noTemplatesFound ?? 'No templates found');
           }
 
           return SizedBox(
@@ -110,6 +111,10 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
                         }
 
                         Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text('Templates imported successfully')),
+                        );
                       } catch (e, stack) {
                         shared.ErrorLogger.log(
                           message: 'Failed to load menu item template',
@@ -124,7 +129,9 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
 
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(loc.errorGeneric)),
+                            SnackBar(
+                                content:
+                                    Text(loc.errorGeneric ?? 'Import failed')),
                           );
                         }
                       }
@@ -132,7 +139,7 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: DesignTokens.primaryColor,
                     ),
-                    child: Text(loc.import),
+                    child: Text(loc.import ?? 'Import'),
                   ),
                 );
               },
@@ -143,7 +150,7 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(loc.cancel),
+          child: Text(loc.cancel ?? 'Cancel'),
         ),
       ],
     );

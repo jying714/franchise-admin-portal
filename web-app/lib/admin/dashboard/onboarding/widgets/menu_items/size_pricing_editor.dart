@@ -1,7 +1,10 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
+import 'package:shared_core/shared_core.dart' as shared;
+import 'package:franchise_admin_portal/config/ui_config.dart';
+import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:collection/collection.dart';
 
 class SizePricingEditor extends StatefulWidget {
   final List<shared.SizeData> sizes;
@@ -9,11 +12,11 @@ class SizePricingEditor extends StatefulWidget {
   final Widget? trailingTemplateDropdown;
 
   const SizePricingEditor({
-    Key? key,
+    super.key,
     required this.sizes,
     required this.onChanged,
     this.trailingTemplateDropdown,
-  }) : super(key: key);
+  });
 
   @override
   State<SizePricingEditor> createState() => _SizePricingEditorState();
@@ -32,7 +35,7 @@ class _SizePricingEditorState extends State<SizePricingEditor> {
   @override
   void didUpdateWidget(covariant SizePricingEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.sizes != oldWidget.sizes) {
+    if (!const DeepCollectionEquality().equals(widget.sizes, oldWidget.sizes)) {
       _localSizes =
           List<shared.SizeData>.from(widget.sizes.map((s) => s.copy()));
     }
@@ -40,27 +43,30 @@ class _SizePricingEditorState extends State<SizePricingEditor> {
 
   void _updateSizes() {
     try {
-      widget.onChanged(_localSizes);
+      widget.onChanged(List<shared.SizeData>.from(_localSizes));
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message: 'Failed to update size pricing',
         source: 'SizePricingEditor',
         severity: 'error',
         stack: stack.toString(),
-        contextData: {'sizes': _localSizes.map((s) => s.toMap()).toList()},
       );
     }
   }
 
   void _addSize() {
     setState(() {
-      _localSizes
-          .add(shared.SizeData(label: '', basePrice: 0.0, toppingPrice: 0.0));
+      _localSizes.add(shared.SizeData(
+        label: '',
+        basePrice: 0.0,
+        toppingPrice: 0.0,
+      ));
     });
     _updateSizes();
   }
 
   void _removeSize(int index) {
+    if (_localSizes.length <= 1) return; // Prevent removing last size
     setState(() {
       _localSizes.removeAt(index);
     });
@@ -83,6 +89,7 @@ class _SizePricingEditorState extends State<SizePricingEditor> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final loc = AppLocalizations.of(context)!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,8 +101,8 @@ class _SizePricingEditorState extends State<SizePricingEditor> {
             Expanded(
               flex: 2,
               child: Text(
-                'Size Pricing',
-                style: theme.textTheme.titleLarge,
+                loc.sizePricing ?? 'Size Pricing',
+                style: UiConfig.titleStyle,
               ),
             ),
             if (widget.trailingTemplateDropdown != null) ...[
@@ -122,32 +129,30 @@ class _SizePricingEditorState extends State<SizePricingEditor> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
                 decoration: BoxDecoration(
-                  // color: isHovered ? DesignTokens.highlightColor : null,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                 child: Row(
                   children: [
-                    // Label
                     Expanded(
                       flex: 3,
                       child: TextFormField(
                         initialValue: size.label,
-                        decoration: const InputDecoration(
-                          labelText: 'Label',
+                        decoration: InputDecoration(
+                          labelText: loc.sizeLabel ?? 'Label',
                           hintText: 'e.g. Small, Medium, Large',
                         ),
                         onChanged: (val) => _updateField(index, label: val),
                       ),
                     ),
                     const SizedBox(width: 12),
-                    // Base Price
                     Expanded(
                       flex: 2,
                       child: TextFormField(
                         initialValue: size.basePrice.toStringAsFixed(2),
-                        decoration:
-                            const InputDecoration(labelText: 'Base Price'),
+                        decoration: InputDecoration(
+                          labelText: loc.basePrice ?? 'Base Price',
+                        ),
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
                         inputFormatters: [
@@ -161,13 +166,13 @@ class _SizePricingEditorState extends State<SizePricingEditor> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    // Topping Price
                     Expanded(
                       flex: 2,
                       child: TextFormField(
                         initialValue: size.toppingPrice.toStringAsFixed(2),
-                        decoration:
-                            const InputDecoration(labelText: 'Topping Price'),
+                        decoration: InputDecoration(
+                          labelText: loc.toppingPrice ?? 'Topping Price',
+                        ),
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
                         inputFormatters: [
@@ -181,11 +186,10 @@ class _SizePricingEditorState extends State<SizePricingEditor> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    // Remove button
                     IconButton(
                       icon: const Icon(Icons.delete_outline),
                       onPressed: () => _removeSize(index),
-                      tooltip: 'Remove Size',
+                      tooltip: loc.removeSize ?? 'Remove Size',
                     ),
                   ],
                 ),
@@ -199,7 +203,7 @@ class _SizePricingEditorState extends State<SizePricingEditor> {
           child: TextButton.icon(
             onPressed: _addSize,
             icon: const Icon(Icons.add),
-            label: const Text('Add Size'),
+            label: Text(loc.addSize ?? 'Add Size'),
           ),
         ),
       ],

@@ -12,6 +12,7 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_i
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/schema_issue_sidebar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.dart';
+import 'package:franchise_admin_portal/config/ui_config.dart';
 
 class OnboardingMenuItemsScreen extends StatefulWidget {
   const OnboardingMenuItemsScreen({super.key});
@@ -31,7 +32,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
   shared.MenuItem? _editingItem;
   List<shared.MenuItemSchemaIssue> _inlineSchemaIssues = [];
 
-  // GlobalKey for direct access to sheet repair method (unified repair path)
+  // GlobalKey for direct access to sheet repair method
   final GlobalKey<MenuItemEditorSheetState> _editorKey =
       GlobalKey<MenuItemEditorSheetState>();
 
@@ -97,7 +98,9 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
       await onboarding.markStepComplete('menu_items');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(loc.menuItemMarkedAsComplete)),
+          SnackBar(
+              content:
+                  Text(loc.menuItemMarkedAsComplete ?? 'Step marked complete')),
         );
       }
     } catch (e, stack) {
@@ -109,10 +112,72 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(loc.errorGeneric)),
+          SnackBar(content: Text(loc.errorGeneric ?? 'An error occurred')),
         );
       }
     }
+  }
+
+  void _checkForSchemaIssues(shared.MenuItem? currentItem) {
+    if (currentItem == null) {
+      setState(() => _inlineSchemaIssues = []);
+      return;
+    }
+
+    final categories =
+        Provider.of<shared.CategoryProvider>(context, listen: false).categories;
+    final ingredients =
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
+            .allIngredients;
+    final ingredientTypes =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false)
+            .ingredientTypes;
+
+    final issues = shared.MenuItemSchemaIssue.detectAllIssues(
+      menuItem: currentItem,
+      categories: categories,
+      ingredients: ingredients,
+      ingredientTypes: ingredientTypes,
+    );
+
+    setState(() => _inlineSchemaIssues = issues);
+  }
+
+  void _onSchemaIssuesChanged(List<shared.MenuItemSchemaIssue> newIssues) {
+    print(
+        '[OnboardingMenuItemsScreen][INLINE] onSchemaIssuesChanged FIRED: count=${newIssues.length}');
+    setState(() {
+      _inlineSchemaIssues = List<shared.MenuItemSchemaIssue>.from(newIssues);
+    });
+  }
+
+  void _handleRepair(shared.MenuItemSchemaIssue issue, String newValue) {
+    print(
+        '[OnboardingMenuItemsScreen][INLINE] onRepair via key for: ${issue.displayMessage}');
+    _editorKey.currentState?.repairSchemaIssue(issue, newValue);
+  }
+
+  void _onFullRefresh() {
+    // Safe fallback using screen state (MenuItemEditorSheetState may not expose editingItem publicly yet)
+    final currentItem = _editingItem;
+    _checkForSchemaIssues(currentItem);
+  }
+
+  void openEditor({shared.MenuItem? item}) {
+    print(
+        '[OnboardingMenuItemsScreen] openEditor called for item: ${item?.name ?? "new"}');
+    setState(() {
+      _isEditing = true;
+      _editingItem = item;
+    });
+  }
+
+  void _exitEditor() {
+    setState(() {
+      _isEditing = false;
+      _editingItem = null;
+      _inlineSchemaIssues = [];
+    });
   }
 
   @override
@@ -211,7 +276,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
       );
     }
 
-    // Legacy handler (kept for compatibility; modal path uses sheet directly)
+    // Legacy checkForSchemaIssues and handleSidebarRepair kept for full compatibility
     void checkForSchemaIssues(shared.MenuItem menuItem) {
       print(
           '[OnboardingMenuItemsScreen] checkForSchemaIssues called for item: ${menuItem.name}');
@@ -240,13 +305,9 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
         shared.MenuItemSchemaIssue issue, String newValue) {
       print(
           '[OnboardingMenuItemsScreen] handleSidebarRepair called (legacy) - issue: ${issue.displayMessage} value: $newValue');
-      // For modal path this should be bypassed via GlobalKey; log if it is hit
-      if (itemPendingRepair == null) {
-        print(
-            '[OnboardingMenuItemsScreen] handleSidebarRepair - itemPendingRepair is null, bypassing legacy path');
-        return;
-      }
-      // ... (legacy logic remains unchanged for non-modal compatibility)
+      if (itemPendingRepair == null) return;
+
+      // Legacy repair logic preserved exactly
       shared.MenuItem repaired = itemPendingRepair!;
 
       switch (issue.type) {
@@ -302,24 +363,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
         itemPendingRepair = remainingIssues.isEmpty ? null : repaired;
         showSchemaSidebar = remainingIssues.any((e) => !e.resolved);
       });
-      print(
-          '[OnboardingMenuItemsScreen] Legacy handleSidebarRepair completed - remaining issues: ${remainingIssues.length}');
-    }
-
-    void openEditor({shared.MenuItem? item}) {
-      print(
-          '[OnboardingMenuItemsScreen] openEditor called for item: ${item?.name ?? "new"} - switching to inline editor (keeps header and left sidebar)');
-      setState(() {
-        _isEditing = true;
-        _editingItem = item;
-      });
-    }
-
-    void _exitEditor() {
-      setState(() {
-        _isEditing = false;
-        _editingItem = null;
-      });
     }
 
     return Stack(
@@ -364,36 +407,17 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                   context,
                   '/dashboard?section=menuItemEditor',
                 ).then((result) {
-                  print('[DEBUG][FAB] Navigation pushNamed returned: $result');
                   if (result is shared.MenuItem) {
                     Provider.of<shared.MenuItemProvider>(context, listen: false)
                         .addOrUpdateMenuItem(result);
                   }
-                }).catchError((err, st) async {
-                  print('[DEBUG][FAB] pushNamed threw error (async): $err');
-                  shared.ErrorLogger.log(
-                    message: 'Async error in pushNamed',
-                    stack: st.toString(),
-                    source: 'onboarding_menu_items_screen.dart',
-                    severity: 'error',
-                    contextData: {'exception': err.toString()},
-                  );
                 });
               } catch (e, st) {
-                print('[DEBUG][FAB] Exception thrown in navigation: $e\n$st');
                 shared.ErrorLogger.log(
-                  message: 'Failed to navigate to MenuItemEditorScreen (sync)',
+                  message: 'Failed to navigate to MenuItemEditorScreen',
                   stack: st.toString(),
                   source: 'onboarding_menu_items_screen.dart',
                   severity: 'error',
-                  contextData: {'exception': e.toString()},
-                );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                        'An error occurred while opening the menu item editor.'),
-                    backgroundColor: Colors.red,
-                  ),
                 );
               }
             },
@@ -425,20 +449,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                 const SnackBar(content: Text('Item saved.')));
                           },
                           onCancel: () => setState(() => _isEditing = false),
-                          onSchemaIssuesChanged: (newIssues) {
-                            print(
-                                '[OnboardingMenuItemsScreen][INLINE] onSchemaIssuesChanged FIRED: count=${newIssues.length}, franchise=${Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId}');
-                            for (int i = 0; i < newIssues.length; i++) {
-                              final iss = newIssues[i];
-                              print(
-                                  ' [INLINE ISSUE #$i] type=${iss.type} ref=${iss.missingReference} field=${iss.field} resolved=${iss.resolved} msg="${iss.displayMessage}"');
-                            }
-                            setState(() {
-                              _inlineSchemaIssues =
-                                  List<shared.MenuItemSchemaIssue>.from(
-                                      newIssues);
-                            });
-                          },
+                          onSchemaIssuesChanged: _onSchemaIssuesChanged,
                         ),
                       ),
                       const VerticalDivider(
@@ -447,15 +458,9 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                         flex: 2,
                         child: SchemaIssueSidebar(
                           issues: _inlineSchemaIssues,
-                          onRepair: (issue, newValue) {
-                            print(
-                                '[OnboardingMenuItemsScreen][INLINE] onRepair via key for: ${issue.displayMessage}');
-                            _editorKey.currentState
-                                ?.repairSchemaIssue(issue, newValue);
-                          },
+                          onRepair: _handleRepair,
+                          onFullRefresh: _onFullRefresh,
                           onClose: () {
-                            print(
-                                '[OnboardingMenuItemsScreen][INLINE] sidebar onClose');
                             setState(() => _inlineSchemaIssues = []);
                           },
                         ),
@@ -499,14 +504,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                       Provider.of<shared.MenuItemProvider>(
                                           context,
                                           listen: false);
-
-                                  print('[DEBUG] --- Staged Data Snapshot ---');
-                                  print(
-                                      '[DEBUG] Staged Ingredients: ${ingredientProvider.stagedIngredientCount}');
-                                  print(
-                                      '[DEBUG] Staged Categories: ${categoryProvider.stagedCategoryCount}');
-                                  print(
-                                      '[DEBUG] Staged Ingredient Types: ${typeProvider.stagedTypes.length}');
 
                                   await menuItemProvider.persistChanges();
                                 },

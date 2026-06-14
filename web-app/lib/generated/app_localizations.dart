@@ -10358,6 +10358,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Core Menu Foundation'**
   String get coreMenuFoundation;
+
+  /// Button label for image upload field
+  ///
+  /// In en, this message translates to:
+  /// **'Select / Change Image'**
+  String get selectChangeImage;
+
+  /// Error message when no franchise is selected for upload
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a franchise first.'**
+  String get selectFranchiseFirst;
+
+  /// Snackbar message during image upload
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading image...'**
+  String get uploadingImage;
+
+  /// Success message after image upload
+  ///
+  /// In en, this message translates to:
+  /// **'Image uploaded successfully'**
+  String get imageUploaded;
+
+  /// Error message when image upload fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to upload image. Try again.'**
+  String get uploadFailed;
+
+  /// Title for size pricing editor
+  ///
+  /// In en, this message translates to:
+  /// **'Size Pricing'**
+  String get sizePricing;
+
+  /// Label for topping price field
+  ///
+  /// In en, this message translates to:
+  /// **'Topping Price'**
+  String get toppingPrice;
+
+  /// Tooltip for remove size button
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Size'**
+  String get removeSize;
+
+  /// Button label to add new size
+  ///
+  /// In en, this message translates to:
+  /// **'Add Size'**
+  String get addSize;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

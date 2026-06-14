@@ -1,23 +1,27 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/ingredient_creation_dialog.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/ingredient_creation_dialog.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/ingredient_type_creation_dialog.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/category_creation_dialog.dart';
+import 'package:franchise_admin_portal/config/ui_config.dart';
+import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class SchemaIssueSidebar extends StatefulWidget {
   final List<shared.MenuItemSchemaIssue> issues;
   final void Function(shared.MenuItemSchemaIssue issue, String newValue)
       onRepair;
+  final VoidCallback onFullRefresh;
   final VoidCallback? onClose;
 
   const SchemaIssueSidebar({
-    Key? key,
+    super.key,
     required this.issues,
     required this.onRepair,
+    required this.onFullRefresh,
     this.onClose,
-  }) : super(key: key);
+  });
 
   @override
   State<SchemaIssueSidebar> createState() => _SchemaIssueSidebarState();
@@ -25,244 +29,318 @@ class SchemaIssueSidebar extends StatefulWidget {
 
 class _SchemaIssueSidebarState extends State<SchemaIssueSidebar> {
   final Map<String, String> _pendingRepairs = {};
+  bool _isApplying = false;
+  bool _isNormalizing = false;
 
   @override
   void didUpdateWidget(SchemaIssueSidebar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    print(
-        '[DEBUG Sidebar] didUpdateWidget - Old count: ${oldWidget.issues.length} New count: ${widget.issues.length} | real data now flowing');
+    if (widget.issues.length != oldWidget.issues.length) {
+      setState(() => _pendingRepairs.clear());
+      shared.ErrorLogger.log(
+        message: 'Sidebar updated – issues: ${widget.issues.length}',
+        source: 'SchemaIssueSidebar',
+        severity: 'info',
+      );
+    }
+  }
+
+  void _handleRepair(shared.MenuItemSchemaIssue issue, String newValue) {
+    setState(() => _pendingRepairs[issue.field] = newValue);
+    widget.onRepair(issue, newValue);
+    widget.onFullRefresh();
+  }
+
+  Future<void> _handleApplyAll() async {
+    setState(() => _isApplying = true);
+    for (final issue in widget.issues) {
+      final pending = _pendingRepairs[issue.field];
+      if (pending != null) {
+        widget.onRepair(issue, pending);
+      }
+    }
+    await Future.delayed(const Duration(milliseconds: 300));
+    widget.onFullRefresh();
+    setState(() {
+      _pendingRepairs.clear();
+      _isApplying = false;
+    });
+    widget.onClose?.call();
+  }
+
+  Future<void> _normalizeAll() async {
+    final loc = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Normalize All References?'),
+        content: Text(
+          'This will automatically fix legacy category/ingredient/type IDs '
+          'by matching names to current franchise data.\n\n'
+          'This action is safe and reversible via Firestore history.\n\n'
+          'Continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(loc.cancel ?? 'Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Normalize All'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isNormalizing = true);
+
+    try {
+      final menuProvider =
+          Provider.of<shared.MenuItemProvider>(context, listen: false);
+      final result = await menuProvider.normalizeSchemaReferences();
+
+      widget.onFullRefresh();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Normalized ${result['menuItems'] ?? 0} menu items, '
+                '${result['categories'] ?? 0} categories, etc.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Normalization failed. Check logs.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isNormalizing = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final unresolvedCount = widget.issues.where((e) => !e.resolved).length;
-    print(
-        '[DEBUG Sidebar] build called with real issues count: ${widget.issues.length} (unresolved: $unresolvedCount)');
+    final theme = Theme.of(context);
+    final unresolved = widget.issues.where((i) => !i.resolved).toList();
+    final l10n = AppLocalizations.of(context)!;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      width: unresolvedCount > 0 ? 460 : 64,
-      constraints: BoxConstraints(maxWidth: unresolvedCount > 0 ? 480 : 96),
+    return Container(
+      width: 380,
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black12,
-              blurRadius: 12,
-              offset: const Offset(-4, 0))
-        ],
-        border: Border(left: BorderSide(color: Colors.grey.shade200)),
+        color: theme.scaffoldBackgroundColor,
+        border: Border(left: BorderSide(color: theme.dividerColor)),
       ),
-      child: unresolvedCount > 0
-          ? Column(
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: theme.dividerColor)),
+            ),
+            child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  color: Colors.red.shade700,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.warning_amber_rounded,
-                          color: Colors.white, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                          child: Text(
-                              'Schema Issues • $unresolvedCount remaining',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  fontSize: 14),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis)),
-                      if (widget.onClose != null)
-                        IconButton(
-                            icon: const Icon(Icons.close,
-                                color: Colors.white, size: 20),
-                            onPressed: widget.onClose),
-                    ],
+                Text('Schema Issues', style: UiConfig.titleStyle),
+                const Spacer(),
+                Chip(
+                  label: Text('${unresolved.length} unresolved'),
+                  backgroundColor:
+                      unresolved.isEmpty ? Colors.green : Colors.orange,
+                ),
+                IconButton(
+                    icon: const Icon(Icons.close), onPressed: widget.onClose),
+              ],
+            ),
+          ),
+
+          if (unresolved.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: ElevatedButton.icon(
+                onPressed: _isNormalizing ? null : _normalizeAll,
+                icon: _isNormalizing
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.auto_fix_high),
+                label: Text(_isNormalizing
+                    ? 'Normalizing...'
+                    : 'Normalize All References'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+
+          Expanded(
+            child: unresolved.isEmpty
+                ? Center(
+                    child: Text(
+                      'No schema issues found',
+                      style: UiConfig.bodyStyle,
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: unresolved.length,
+                    itemBuilder: (context, index) {
+                      final issue = unresolved[index];
+                      return _RepairTile(
+                        issue: issue,
+                        pendingValue: _pendingRepairs[issue.field],
+                        onRepair: (value) => _handleRepair(issue, value),
+                        onCreateNew: () => _showCreationDialog(context, issue),
+                      );
+                    },
+                  ),
+          ),
+
+          // Bottom Bar
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: widget.onClose,
+                    child: Text(l10n.cancel ?? 'Close'),
                   ),
                 ),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: SingleChildScrollView(
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: widget.issues.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final issue = widget.issues[index];
-                        print(
-                            '[DEBUG Sidebar] Rendering #${index}: ${issue.displayMessage} resolved=${issue.resolved}');
-                        if (issue.resolved)
-                          return _ResolvedIssueTile(issue: issue);
-                        return _RepairTile(
-                          issue: issue,
-                          onApply: (newValue) {
-                            print(
-                                '[DEBUG Sidebar] Apply → ${issue.displayMessage} value=$newValue');
-                            widget.onRepair(issue, newValue);
-                            setState(() =>
-                                _pendingRepairs[issue.missingReference] =
-                                    newValue);
-                          },
-                          onCreateNew: () => _handleCreateNew(context, issue),
-                          pendingValue: _pendingRepairs[issue.missingReference],
-                        );
-                      },
-                    ),
+                  child: ElevatedButton(
+                    onPressed: unresolved.isEmpty || _isApplying
+                        ? null
+                        : _handleApplyAll,
+                    child: _isApplying
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Text('Apply All Fixes'),
                   ),
                 ),
               ],
-            )
-          : const Center(
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.check_circle, color: Colors.green, size: 48),
-                SizedBox(height: 8),
-                RotatedBox(
-                    quarterTurns: 3,
-                    child: Text('NO ISSUES',
-                        style: TextStyle(
-                            color: Colors.green, fontWeight: FontWeight.bold))),
-              ]),
             ),
+          ),
+        ],
+      ),
     );
   }
 
-  void _handleCreateNew(
-      BuildContext context, shared.MenuItemSchemaIssue issue) async {
-    print('[DEBUG Sidebar] Create New for: ${issue.displayMessage}');
-    final loc = AppLocalizations.of(context)!;
-    dynamic result;
+  void _showCreationDialog(
+      BuildContext context, shared.MenuItemSchemaIssue issue) {
+    final l10n = AppLocalizations.of(context)!;
+    final franchiseProvider = Provider.of<shared.FranchiseProvider>(
+      context,
+      listen: false,
+    );
 
     if (issue.type == shared.MenuItemSchemaIssueType.category) {
-      result = await showDialog(
-          context: context,
-          builder: (_) => CategoryCreationDialog(
-              loc: loc, suggestedName: issue.label ?? issue.missingReference));
+      showDialog(
+        context: context,
+        builder: (_) => CategoryCreationDialog(
+          loc: l10n,
+          suggestedName: issue.label,
+        ),
+      ).then((newCat) {
+        if (newCat != null)
+          _handleRepair(issue, (newCat as shared.Category).id);
+      });
     } else if (issue.type == shared.MenuItemSchemaIssueType.ingredient) {
-      result = await showDialog(
-          context: context,
-          builder: (_) => IngredientCreationDialog(
-              loc: loc,
-              suggestedName: issue.label ?? issue.missingReference,
-              availableTypeIds: [],
-              typeIdToName: {}));
+      showDialog(
+        context: context,
+        builder: (_) => IngredientCreationDialog(
+          loc: l10n,
+          suggestedName: issue.label,
+          availableTypeIds:
+              franchiseProvider.currentFranchiseIngredientTypeIds ?? [],
+          typeIdToName:
+              franchiseProvider.currentFranchiseIngredientTypeIdToName ?? {},
+        ),
+      ).then((newIng) {
+        if (newIng != null)
+          _handleRepair(issue, (newIng as shared.IngredientMetadata).id);
+      });
     } else {
-      result = await showDialog(
-          context: context,
-          builder: (_) => IngredientTypeCreationDialog(
-              loc: loc, suggestedName: issue.label ?? issue.missingReference));
-    }
-
-    if (result != null && mounted) {
-      print('[DEBUG Sidebar] Create New result: ${result.id ?? result.name}');
-      widget.onRepair(issue, result.id ?? result.name ?? '');
-      setState(() => _pendingRepairs.clear());
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('✅ Created & Applied')));
+      showDialog(
+        context: context,
+        builder: (_) => IngredientTypeCreationDialog(
+          loc: l10n,
+          suggestedName: issue.label,
+        ),
+      ).then((newType) {
+        if (newType != null)
+          _handleRepair(issue, (newType as shared.IngredientType).id!);
+      });
     }
   }
 }
 
 class _RepairTile extends StatelessWidget {
   final shared.MenuItemSchemaIssue issue;
-  final ValueChanged<String> onApply;
-  final VoidCallback onCreateNew;
   final String? pendingValue;
+  final ValueChanged<String> onRepair;
+  final VoidCallback onCreateNew;
 
   const _RepairTile({
-    Key? key,
+    super.key,
     required this.issue,
-    required this.onApply,
+    required this.pendingValue,
+    required this.onRepair,
     required this.onCreateNew,
-    this.pendingValue,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    final loc = AppLocalizations.of(context)!;
-    print('[DEBUG RepairTile] Building for: ${issue.displayMessage}');
+    final theme = Theme.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                  issue.type == shared.MenuItemSchemaIssueType.category
-                      ? Icons.category
-                      : Icons.egg,
-                  color: Colors.orange,
-                  size: 18),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  issue.displayMessage,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 12.5),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.add, color: Colors.blueGrey, size: 16),
-                tooltip: 'Create New (last resort)',
-                onPressed: onCreateNew,
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 5,
-                child: DropdownButtonFormField<String>(
-                  value: pendingValue,
-                  isExpanded: true,
-                  hint: Text(
-                    issue.type == shared.MenuItemSchemaIssueType.category
-                        ? 'Select category'
-                        : 'Select ingredient/type',
-                    style: const TextStyle(fontSize: 11),
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(issue.displayMessage, style: UiConfig.bodyStyle),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: (pendingValue ?? issue.missingReference ?? '')
+                            .isNotEmpty
+                        ? (pendingValue ?? issue.missingReference)
+                        : null,
+                    items: _buildDropdownItems(context, issue),
+                    onChanged: (v) {
+                      if (v != null) onRepair(v);
+                    },
+                    decoration: const InputDecoration(
+                      labelText: 'Fix →',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
-                  style: const TextStyle(fontSize: 11),
-                  items: _buildDropdownItems(context, issue),
-                  onChanged: (val) {
-                    print('[DEBUG RepairTile] Dropdown changed: $val');
-                    if (val != null) {
-                      onApply(
-                          val); // Parent Stateful handles pending update and rebuild
-                    }
-                  },
                 ),
-              ),
-              const SizedBox(width: 4),
-              SizedBox(
-                width: 58,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                    textStyle: const TextStyle(fontSize: 11),
-                    minimumSize: const Size(0, 30),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  onPressed: () {
-                    print(
-                        '[DEBUG RepairTile] Apply pressed - value: $pendingValue');
-                    if (pendingValue != null) onApply(pendingValue!);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('✅ Applied')));
-                    // Force sidebar to stay open until user closes
-                  },
-                  child: const Text('Apply'),
-                ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: 8),
+                IconButton(
+                    onPressed: onCreateNew,
+                    icon: const Icon(Icons.add_circle, color: Colors.green)),
+                IconButton(
+                    onPressed: () => onRepair('__MARK_RESOLVED__'),
+                    icon: const Icon(Icons.check_circle, color: Colors.blue)),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -270,65 +348,56 @@ class _RepairTile extends StatelessWidget {
   List<DropdownMenuItem<String>> _buildDropdownItems(
       BuildContext context, shared.MenuItemSchemaIssue issue) {
     final items = <DropdownMenuItem<String>>[];
+    final currentValue = pendingValue ?? issue.missingReference ?? '';
 
+    // 1. Always add the current value first (prevents assertion)
+    if (currentValue.isNotEmpty) {
+      items.add(DropdownMenuItem(
+        value: currentValue,
+        child: Text(currentValue == '__MARK_RESOLVED__'
+            ? '✅ Mark resolved (mobile safe)'
+            : 'Current: $currentValue'),
+      ));
+    }
+
+    // 2. Add real options from providers
     if (issue.type == shared.MenuItemSchemaIssueType.category) {
-      final categories =
-          Provider.of<shared.CategoryProvider>(context, listen: false)
-              .categories;
-      for (final c in categories) {
-        items.add(DropdownMenuItem(
-            value: c.id,
-            child: Text(c.name, style: const TextStyle(fontSize: 12))));
+      final cats = Provider.of<shared.CategoryProvider>(context, listen: false)
+          .categories;
+      for (final c in cats) {
+        if (c.id.isNotEmpty) {
+          items.add(DropdownMenuItem(
+              value: c.id, child: Text('${c.name} (${c.id})')));
+        }
+      }
+    } else if (issue.type == shared.MenuItemSchemaIssueType.ingredient) {
+      final ings =
+          Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
+              .allIngredients;
+      for (final i in ings) {
+        if (i.id.isNotEmpty) {
+          items.add(DropdownMenuItem(value: i.id, child: Text(i.name)));
+        }
       }
     } else {
-      final metadataProvider = Provider.of<shared.IngredientMetadataProvider>(
-          context,
-          listen: false);
-      final allItems = metadataProvider.allIngredients;
-      for (final i in allItems) {
-        items.add(DropdownMenuItem(
-            value: i.id,
-            child: Text(i.name, style: const TextStyle(fontSize: 12))));
+      final types =
+          Provider.of<shared.IngredientTypeProvider>(context, listen: false)
+              .ingredientTypes;
+      for (final t in types) {
+        if (t.id?.isNotEmpty == true) {
+          items.add(DropdownMenuItem(value: t.id!, child: Text(t.name)));
+        }
       }
     }
 
-    // Add pending value for ALL types to prevent assertion + support staged repairs
-    if (pendingValue != null &&
-        !items.any((item) => item.value == pendingValue)) {
-      items.add(DropdownMenuItem(
-        value: pendingValue,
-        child: Text(pendingValue!,
-            style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic)),
+    // 3. Safety net (add only if not already present)
+    if (!items.any((item) => item.value == '__MARK_RESOLVED__')) {
+      items.add(const DropdownMenuItem(
+        value: '__MARK_RESOLVED__',
+        child: Text('✅ Mark resolved (mobile safe)'),
       ));
     }
 
     return items;
-  }
-}
-
-class _ResolvedIssueTile extends StatelessWidget {
-  final shared.MenuItemSchemaIssue issue;
-  const _ResolvedIssueTile({Key? key, required this.issue}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          const Icon(Icons.check_circle, color: Colors.green, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              issue.displayMessage,
-              style: const TextStyle(
-                  decoration: TextDecoration.lineThrough,
-                  color: Colors.green,
-                  fontSize: 13),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

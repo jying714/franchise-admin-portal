@@ -1,19 +1,10 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/config/ui_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
-/// A reusable multi-selector for choosing ingredients from metadata.
-///
-/// Usage:
-/// ```dart
-/// MultiIngredientSelector(
-///   title: 'Included Ingredients',
-///   selected: includedIngredients,
-///   onChanged: (updated) => setState(() => includedIngredients = updated),
-/// )
-/// ```
 class MultiIngredientSelector extends StatelessWidget {
   final String title;
   final List<shared.IngredientReference> selected;
@@ -23,14 +14,14 @@ class MultiIngredientSelector extends StatelessWidget {
   final String? warningMessage;
 
   const MultiIngredientSelector({
-    Key? key,
+    super.key,
     required this.title,
     required this.selected,
     required this.onChanged,
     this.allowEmpty = true,
     this.isRequired = false,
     this.warningMessage,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -63,10 +54,10 @@ class MultiIngredientSelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                )),
+        Text(
+          title,
+          style: UiConfig.titleStyle,
+        ),
         const SizedBox(height: 8),
         ...groupedByType.entries.map((entry) {
           final typeName = entry.key;
@@ -83,7 +74,7 @@ class MultiIngredientSelector extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              loc.fieldRequired,
+              loc.fieldRequired ?? 'This field is required',
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ),
@@ -108,6 +99,7 @@ class _IngredientTypeGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -171,7 +163,9 @@ class _EmptyIngredientsWarning extends StatelessWidget {
           Icon(Icons.warning_amber_rounded, color: DesignTokens.errorColor),
           const SizedBox(height: 4),
           Text(
-            message ?? loc.noIngredientsConfigured,
+            message ??
+                loc.noIngredientsConfigured ??
+                'No ingredients configured yet.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),

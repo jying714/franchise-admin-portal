@@ -1,23 +1,19 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/multi_ingredient_selector.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:franchise_admin_portal/config/ui_config.dart';
 
-/// Allows devs to define multiple customization groups (e.g. Sauce, Toppings, Bread)
-/// within a menu item. Each group can specify label, limit, and list of ingredients.
-///
-/// This is NOT a live schema editor. It's used to select from pre-created ingredients
-/// and assemble logical groups for a menu item's customization flow.
 class CustomizationGroupEditor extends StatefulWidget {
   final List<shared.CustomizationGroup> value;
   final void Function(List<shared.CustomizationGroup>) onChanged;
 
   const CustomizationGroupEditor({
-    Key? key,
+    super.key,
     required this.value,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   State<CustomizationGroupEditor> createState() =>
@@ -64,22 +60,20 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
-    final ingredientProvider =
-        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
+    final theme = Theme.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          loc.customizationGroups,
-          style: Theme.of(context).textTheme.titleMedium,
+          loc.customizationGroups ?? 'Customization Groups',
+          style: UiConfig.titleStyle,
         ),
         const SizedBox(height: 8),
         ..._groups.asMap().entries.map((entry) {
           final index = entry.key;
           final group = entry.value;
 
-          // Validation
           final duplicateLabel = _groups
                   .where((g) =>
                       g.label.trim().toLowerCase() ==
@@ -95,19 +89,16 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ðŸ”¤ Group Label Input
                   TextFormField(
                     initialValue: group.label,
                     decoration: InputDecoration(
-                      labelText: loc.customizationGroupLabel,
+                      labelText: loc.customizationGroupLabel ?? 'Group Label',
                     ),
                     onChanged: (val) => _updateGroup(
                       index,
                       group.copyWith(label: val),
                     ),
                   ),
-
-                  // Validation after label
                   if (group.label.trim().isEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 4, bottom: 0),
@@ -126,13 +117,10 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
                             TextStyle(color: Colors.red.shade600, fontSize: 12),
                       ),
                     ),
-
                   const SizedBox(height: 8),
-
-                  // ðŸ”¢ Selection Limit Input
                   Row(
                     children: [
-                      Text(loc.selectionLimit),
+                      Text(loc.selectionLimit ?? 'Selection Limit'),
                       const SizedBox(width: 8),
                       DropdownButton<int>(
                         value: group.selectionLimit,
@@ -152,22 +140,18 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 12),
-
-                  // ðŸ§€ Ingredient Selector
                   MultiIngredientSelector(
                     title: group.label.isNotEmpty
                         ? group.label
-                        : loc.customizationGroupLabel,
+                        : (loc.customizationGroupLabel ??
+                            'Customization Group'),
                     selected: group.ingredients,
                     onChanged: (ingredients) {
                       _updateGroup(
                           index, group.copyWith(ingredients: ingredients));
                     },
                   ),
-
-                  // Validation after ingredient selection
                   if (group.ingredients.isEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 4, bottom: 0),
@@ -177,15 +161,13 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
                             TextStyle(color: Colors.red.shade600, fontSize: 12),
                       ),
                     ),
-
                   const SizedBox(height: 12),
-
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton.icon(
                       icon: const Icon(Icons.delete_outline),
                       onPressed: () => _removeGroup(index),
-                      label: Text(loc.removeGroup),
+                      label: Text(loc.removeGroup ?? 'Remove Group'),
                     ),
                   ),
                 ],
@@ -197,7 +179,7 @@ class _CustomizationGroupEditorState extends State<CustomizationGroupEditor> {
         OutlinedButton.icon(
           onPressed: _addGroup,
           icon: const Icon(Icons.add),
-          label: Text(loc.addCustomizationGroup),
+          label: Text(loc.addCustomizationGroup ?? 'Add Customization Group'),
         ),
       ],
     );

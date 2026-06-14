@@ -45,4 +45,6 @@ abstract class MenuItemProvider {
   List<String> get allReferencedCategoryIds;
   List<String> get allReferencedIngredientIds;
   List<String> get allReferencedIngredientTypeIds;
+
+  Future<Map<String, int>> normalizeSchemaReferences();
 }

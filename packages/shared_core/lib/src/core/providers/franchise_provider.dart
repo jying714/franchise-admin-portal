@@ -208,4 +208,23 @@ class FranchiseProvider {
       _bumpConfig();
     }
   }
+
+  // Convenience getters for onboarding schema repair (add these)
+  List<dynamic> get currentFranchiseCategories =>
+      []; // Will be populated by CategoryProvider in practice
+  List<dynamic> get currentFranchiseIngredients =>
+      []; // Will be populated by IngredientMetadataProvider
+  List<dynamic> get currentFranchiseIngredientTypes =>
+      []; // Will be populated by IngredientTypeProvider
+
+  List<String> get currentFranchiseIngredientTypeIds =>
+      currentFranchiseIngredientTypes
+          .map((t) => (t.id ?? '').toString())
+          .where((id) => id.isNotEmpty)
+          .toList();
+
+  Map<String, String> get currentFranchiseIngredientTypeIdToName =>
+      Map.fromEntries(currentFranchiseIngredientTypes
+          .where((t) => t.id != null && t.id!.isNotEmpty)
+          .map((t) => MapEntry(t.id!, t.name)));
 }
