@@ -2,7 +2,7 @@
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/core/utils/features/feature_gate_banner.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_editor_sheet.dart';
@@ -27,6 +27,13 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
   bool showSchemaSidebar = false;
   List<shared.MenuItemSchemaIssue> schemaIssues = [];
   shared.MenuItem? itemPendingRepair;
+  bool _isEditing = false;
+  shared.MenuItem? _editingItem;
+  List<shared.MenuItemSchemaIssue> _inlineSchemaIssues = [];
+
+  // GlobalKey for direct access to sheet repair method (unified repair path)
+  final GlobalKey<MenuItemEditorSheetState> _editorKey =
+      GlobalKey<MenuItemEditorSheetState>();
 
   @override
   void didChangeDependencies() {
@@ -53,7 +60,9 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
         final menuProvider =
             Provider.of<shared.MenuItemProvider>(context, listen: false);
 
-        // Force refresh all dependencies
+        print(
+            '[OnboardingMenuItemsScreen] Forcing dependency reload for franchise: $franchiseId');
+
         await Future.wait([
           typeProvider.load(
               franchiseIdOverride: franchiseId, forceReloadFromFirestore: true),
@@ -112,15 +121,12 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    // === Consistent listening providers (aligned with load instances) ===
     final ingredientTypes =
         context.watch<shared.IngredientTypeProvider>().ingredientTypes;
     final ingredients =
         context.watch<shared.IngredientMetadataProvider>().ingredients;
     final categories = context.watch<shared.CategoryProvider>().categories;
     final provider = context.watch<shared.MenuItemProvider>();
-
-    // === Robust dependency checks ===
 
     final missingSteps = <String>[];
     if (ingredientTypes.isEmpty)
@@ -130,10 +136,9 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     if (categories.isEmpty)
       missingSteps.add(loc.stepCategories ?? 'Categories');
 
-    if (missingSteps.isNotEmpty) {
+    if (missingSteps.isNotEmpty && !_isEditing) {
       print(
           '[OnboardingMenuItemsScreen] Blocked: Missing dependencies: $missingSteps');
-
       return Scaffold(
         appBar: AppBar(
           title: Text(loc.onboardingMenuItems),
@@ -159,7 +164,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                   ElevatedButton.icon(
                     icon: const Icon(Icons.refresh),
                     onPressed: () {
-                      // Manual refresh button
                       final franchiseId = Provider.of<shared.FranchiseProvider>(
                               context,
                               listen: false)
@@ -207,8 +211,10 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
       );
     }
 
-    // === Main Content (reached when all deps are populated) ===
+    // Legacy handler (kept for compatibility; modal path uses sheet directly)
     void checkForSchemaIssues(shared.MenuItem menuItem) {
+      print(
+          '[OnboardingMenuItemsScreen] checkForSchemaIssues called for item: ${menuItem.name}');
       final categoriesLocal =
           Provider.of<shared.CategoryProvider>(context, listen: false)
               .categories;
@@ -232,15 +238,21 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
 
     void handleSidebarRepair(
         shared.MenuItemSchemaIssue issue, String newValue) {
-      if (itemPendingRepair == null) return;
-
+      print(
+          '[OnboardingMenuItemsScreen] handleSidebarRepair called (legacy) - issue: ${issue.displayMessage} value: $newValue');
+      // For modal path this should be bypassed via GlobalKey; log if it is hit
+      if (itemPendingRepair == null) {
+        print(
+            '[OnboardingMenuItemsScreen] handleSidebarRepair - itemPendingRepair is null, bypassing legacy path');
+        return;
+      }
+      // ... (legacy logic remains unchanged for non-modal compatibility)
       shared.MenuItem repaired = itemPendingRepair!;
 
       switch (issue.type) {
         case shared.MenuItemSchemaIssueType.category:
           repaired = repaired.copyWith(categoryId: newValue);
           break;
-
         case shared.MenuItemSchemaIssueType.ingredient:
           final updatedIncluded =
               (repaired.includedIngredients ?? []).map((ing) {
@@ -251,12 +263,8 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
           }).toList();
           repaired = repaired.copyWith(includedIngredients: updatedIncluded);
           break;
-
         case shared.MenuItemSchemaIssueType.ingredientType:
-          // Add logic for ingredient type repair if needed (currently minimal)
-          // Example: update typeId in references
           break;
-
         case shared.MenuItemSchemaIssueType.missingField:
           switch (issue.field) {
             case 'name':
@@ -272,12 +280,10 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
             case 'categoryId':
               repaired = repaired.copyWith(categoryId: newValue);
               break;
-            // Add other missing fields as needed
           }
           break;
       }
 
-      // Re-detect remaining issues
       final List<shared.MenuItemSchemaIssue> remainingIssues =
           shared.MenuItemSchemaIssue.detectAllIssues(
         menuItem: repaired,
@@ -296,122 +302,24 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
         itemPendingRepair = remainingIssues.isEmpty ? null : repaired;
         showSchemaSidebar = remainingIssues.any((e) => !e.resolved);
       });
-
-      // Force modal sidebar update
-      // (This is already handled by onSchemaIssuesChanged in openEditor)
+      print(
+          '[OnboardingMenuItemsScreen] Legacy handleSidebarRepair completed - remaining issues: ${remainingIssues.length}');
     }
 
     void openEditor({shared.MenuItem? item}) {
-      final menuProvider =
-          Provider.of<shared.MenuItemProvider>(context, listen: false);
+      print(
+          '[OnboardingMenuItemsScreen] openEditor called for item: ${item?.name ?? "new"} - switching to inline editor (keeps header and left sidebar)');
+      setState(() {
+        _isEditing = true;
+        _editingItem = item;
+      });
+    }
 
-      showModalBottomSheet(
-        isScrollControlled: true,
-        context: context,
-        backgroundColor: Colors.transparent,
-        builder: (modalContext) {
-          List<shared.MenuItemSchemaIssue> issues = [];
-
-          return StatefulBuilder(
-            builder: (modalContext, setModalState) {
-              final screenWidth = MediaQuery.of(modalContext).size.width;
-              final modalWidth = issues.isEmpty
-                  ? (screenWidth > 1280 ? 1080.0 : screenWidth * 0.92)
-                  : (screenWidth > 1280
-                      ? 1480.0
-                      : screenWidth * 0.95); // Wider when sidebar is open
-
-              return MultiProvider(
-                providers: [
-                  Provider.value(
-                      value: Provider.of<shared.FranchiseProvider>(context,
-                          listen: false)),
-                  Provider.value(
-                      value: Provider.of<shared.CategoryProvider>(context,
-                          listen: false)),
-                  Provider.value(
-                      value: Provider.of<shared.IngredientMetadataProvider>(
-                          context,
-                          listen: false)),
-                  Provider.value(
-                      value: Provider.of<shared.IngredientTypeProvider>(context,
-                          listen: false)),
-                  Provider.value(
-                      value: Provider.of<shared.MenuItemProvider>(context,
-                          listen: false)),
-                  Provider.value(
-                      value: Provider.of<shared.FranchiseInfoProvider>(context,
-                          listen: false)),
-                  Provider.value(
-                      value: Provider.of<shared.FranchiseFeatureProvider>(
-                          context,
-                          listen: false)),
-                  Provider.value(
-                      value: Provider.of<shared.FirebaseStorageService>(context,
-                          listen: false)),
-                ],
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: modalWidth,
-                      maxHeight: MediaQuery.of(modalContext).size.height * 0.95,
-                    ),
-                    child: Material(
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: MenuItemEditorSheet(
-                              existing: item,
-                              firestore: FirebaseFirestore.instance,
-                              franchiseId:
-                                  Provider.of<shared.FranchiseProvider>(
-                                          modalContext,
-                                          listen: false)
-                                      .franchiseId,
-                              onSave: (updatedItem) async {
-                                menuProvider.addOrUpdateMenuItem(updatedItem);
-                                if (mounted) {
-                                  Navigator.of(modalContext).pop();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Item saved.')),
-                                  );
-                                }
-                              },
-                              onCancel: () => Navigator.of(modalContext).pop(),
-                              onSchemaIssuesChanged: (newIssues) {
-                                setModalState(() {
-                                  issues = newIssues;
-                                });
-                              },
-                            ),
-                          ),
-                          VerticalDivider(
-                              width: 1,
-                              thickness: 1,
-                              color: Colors.grey.shade300),
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            width: issues.isEmpty ? 64 : 460,
-                            child: SchemaIssueSidebar(
-                              issues: issues,
-                              onRepair: handleSidebarRepair,
-                              onClose: () => setModalState(() => issues = []),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      );
+    void _exitEditor() {
+      setState(() {
+        _isEditing = false;
+        _editingItem = null;
+      });
     }
 
     return Stack(
@@ -429,6 +337,12 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
               ),
             ),
             actions: [
+              if (_isEditing)
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  tooltip: 'Back to menu list',
+                  onPressed: _exitEditor,
+                ),
               IconButton(
                 icon: const Icon(Icons.data_object),
                 tooltip: loc.importExport,
@@ -489,134 +403,198 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
           ),
           body: Padding(
             padding: DesignTokens.gridPadding,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FeatureGateBanner(
-                  module: 'menu_item_customization',
-                  child: Container(
-                    width: double.infinity,
-                    height: 60,
-                    color: Colors.yellow.shade50,
-                    alignment: Alignment.center,
-                    child:
-                        Text('Menu Item Customization is a premium feature.'),
-                  ),
-                ),
-                if (provider.isDirty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
-                      children: [
-                        ElevatedButton(
-                          onPressed: () async {
-                            final ingredientProvider =
-                                Provider.of<shared.IngredientMetadataProvider>(
-                                    context,
-                                    listen: false);
-                            final categoryProvider =
-                                Provider.of<shared.CategoryProvider>(context,
-                                    listen: false);
-                            final typeProvider =
-                                Provider.of<shared.IngredientTypeProvider>(
-                                    context,
-                                    listen: false);
-                            final menuItemProvider =
-                                Provider.of<shared.MenuItemProvider>(context,
-                                    listen: false);
-
-                            print('[DEBUG] --- Staged Data Snapshot ---');
-                            print(
-                                '[DEBUG] Staged Ingredients: ${ingredientProvider.stagedIngredientCount}');
-                            print(
-                                '[DEBUG] Staged Categories: ${categoryProvider.stagedCategoryCount}');
-                            print(
-                                '[DEBUG] Staged Ingredient Types: ${typeProvider.stagedTypes.length}');
-
-                            await menuItemProvider.persistChanges();
+            child: _isEditing
+                ? Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: MenuItemEditorSheet(
+                          key: _editorKey,
+                          existing: _editingItem,
+                          firestore: FirebaseFirestore.instance,
+                          franchiseId: Provider.of<shared.FranchiseProvider>(
+                                  context,
+                                  listen: false)
+                              .franchiseId,
+                          onSave: (updatedItem) async {
+                            Provider.of<shared.MenuItemProvider>(context,
+                                    listen: false)
+                                .addOrUpdateMenuItem(updatedItem);
+                            setState(() => _isEditing = false);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Item saved.')));
                           },
-                          child: Text(loc.saveChanges),
-                        ),
-                        const SizedBox(width: 12),
-                        OutlinedButton(
-                          onPressed: provider.revertChanges,
-                          child: Text(loc.revertChanges),
-                        ),
-                      ],
-                    ),
-                  ),
-                Expanded(
-                  child: provider.menuItems.isEmpty
-                      ? EmptyStateWidget(
-                          title: loc.noMenuItemsFound,
-                          message: loc.noMenuItemsMessage,
-                        )
-                      : ReorderableListView(
-                          onReorder: (oldIndex, newIndex) {
-                            final items = List.of(provider.menuItems);
-                            if (newIndex > oldIndex) newIndex -= 1;
-                            final item = items.removeAt(oldIndex);
-                            items.insert(newIndex, item);
-                            provider.reorderMenuItems(items);
+                          onCancel: () => setState(() => _isEditing = false),
+                          onSchemaIssuesChanged: (newIssues) {
+                            print(
+                                '[OnboardingMenuItemsScreen][INLINE] onSchemaIssuesChanged FIRED: count=${newIssues.length}, franchise=${Provider.of<shared.FranchiseProvider>(context, listen: false).franchiseId}');
+                            for (int i = 0; i < newIssues.length; i++) {
+                              final iss = newIssues[i];
+                              print(
+                                  ' [INLINE ISSUE #$i] type=${iss.type} ref=${iss.missingReference} field=${iss.field} resolved=${iss.resolved} msg="${iss.displayMessage}"');
+                            }
+                            setState(() {
+                              _inlineSchemaIssues =
+                                  List<shared.MenuItemSchemaIssue>.from(
+                                      newIssues);
+                            });
                           },
-                          children: [
-                            for (final item in provider.menuItems)
-                              MenuItemListTile(
-                                key: ValueKey(item.id),
-                                item: item,
-                                isSelected: _selectedIds.contains(item.id),
-                                onSelect: (checked) {
-                                  setState(() {
-                                    if (checked == true) {
-                                      _selectedIds.add(item.id);
-                                    } else {
-                                      _selectedIds.remove(item.id);
-                                    }
-                                  });
+                        ),
+                      ),
+                      const VerticalDivider(
+                          width: 1, thickness: 1, color: Colors.grey),
+                      Expanded(
+                        flex: 2,
+                        child: SchemaIssueSidebar(
+                          issues: _inlineSchemaIssues,
+                          onRepair: (issue, newValue) {
+                            print(
+                                '[OnboardingMenuItemsScreen][INLINE] onRepair via key for: ${issue.displayMessage}');
+                            _editorKey.currentState
+                                ?.repairSchemaIssue(issue, newValue);
+                          },
+                          onClose: () {
+                            print(
+                                '[OnboardingMenuItemsScreen][INLINE] sidebar onClose');
+                            setState(() => _inlineSchemaIssues = []);
+                          },
+                        ),
+                      ),
+                    ],
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FeatureGateBanner(
+                        module: 'menu_item_customization',
+                        child: Container(
+                          width: double.infinity,
+                          height: 60,
+                          color: Colors.yellow.shade50,
+                          alignment: Alignment.center,
+                          child: const Text(
+                              'Menu Item Customization is a premium feature.'),
+                        ),
+                      ),
+                      if (provider.isDirty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            children: [
+                              ElevatedButton(
+                                onPressed: () async {
+                                  final ingredientProvider = Provider.of<
+                                          shared.IngredientMetadataProvider>(
+                                      context,
+                                      listen: false);
+                                  final categoryProvider =
+                                      Provider.of<shared.CategoryProvider>(
+                                          context,
+                                          listen: false);
+                                  final typeProvider = Provider.of<
+                                          shared.IngredientTypeProvider>(
+                                      context,
+                                      listen: false);
+                                  final menuItemProvider =
+                                      Provider.of<shared.MenuItemProvider>(
+                                          context,
+                                          listen: false);
+
+                                  print('[DEBUG] --- Staged Data Snapshot ---');
+                                  print(
+                                      '[DEBUG] Staged Ingredients: ${ingredientProvider.stagedIngredientCount}');
+                                  print(
+                                      '[DEBUG] Staged Categories: ${categoryProvider.stagedCategoryCount}');
+                                  print(
+                                      '[DEBUG] Staged Ingredient Types: ${typeProvider.stagedTypes.length}');
+
+                                  await menuItemProvider.persistChanges();
                                 },
-                                onEdit: () => openEditor(item: item),
-                                onDelete: () async {
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: Text(loc.confirmDeletion),
-                                      content: Text(
-                                          loc.deleteMenuItemConfirm(item.name)),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(ctx, false),
-                                          child: Text(loc.cancel),
-                                        ),
-                                        ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.red,
-                                          ),
-                                          onPressed: () =>
-                                              Navigator.pop(ctx, true),
-                                          child: Text(loc.delete),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirm == true) {
-                                    provider.deleteMenuItem(item.id);
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(loc.menuItemDeleted),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                },
+                                child: Text(loc.saveChanges),
                               ),
-                          ],
+                              const SizedBox(width: 12),
+                              OutlinedButton(
+                                onPressed: provider.revertChanges,
+                                child: Text(loc.revertChanges),
+                              ),
+                            ],
+                          ),
                         ),
-                ),
-              ],
-            ),
+                      Expanded(
+                        child: provider.menuItems.isEmpty
+                            ? EmptyStateWidget(
+                                title: loc.noMenuItemsFound,
+                                message: loc.noMenuItemsMessage,
+                              )
+                            : ReorderableListView(
+                                onReorder: (oldIndex, newIndex) {
+                                  final items = List.of(provider.menuItems);
+                                  if (newIndex > oldIndex) newIndex -= 1;
+                                  final item = items.removeAt(oldIndex);
+                                  items.insert(newIndex, item);
+                                  provider.reorderMenuItems(items);
+                                },
+                                children: [
+                                  for (final item in provider.menuItems)
+                                    MenuItemListTile(
+                                      key: ValueKey(item.id),
+                                      item: item,
+                                      isSelected:
+                                          _selectedIds.contains(item.id),
+                                      onSelect: (checked) {
+                                        setState(() {
+                                          if (checked == true) {
+                                            _selectedIds.add(item.id);
+                                          } else {
+                                            _selectedIds.remove(item.id);
+                                          }
+                                        });
+                                      },
+                                      onEdit: () => openEditor(item: item),
+                                      onDelete: () async {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            title: Text(loc.confirmDeletion),
+                                            content: Text(
+                                                loc.deleteMenuItemConfirm(
+                                                    item.name)),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, false),
+                                                child: Text(loc.cancel),
+                                              ),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.red,
+                                                ),
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, true),
+                                                child: Text(loc.delete),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirm == true) {
+                                          provider.deleteMenuItem(item.id);
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                content:
+                                                    Text(loc.menuItemDeleted),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      },
+                                    ),
+                                ],
+                              ),
+                      ),
+                    ],
+                  ),
           ),
         ),
       ],

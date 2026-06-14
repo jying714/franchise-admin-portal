@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/size_pricing_editor.dart';
-import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
+import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/image_upload_field.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/multi_ingredient_selector.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/customization_group_editor.dart';
@@ -68,7 +68,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
   List<shared.MenuItemSchemaIssue> _schemaIssues = [];
   bool _showSchemaSidebar = false;
 
-  // --- ADVANCED FIELDS ---
+  // Advanced fields (kept full)
   String? notes;
   String? sku;
   List<String> dietaryTags = [];
@@ -112,7 +112,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
         '[MenuItemEditorSheet] initState: existing=${widget.existing != null}');
     final item = widget.existing;
 
-    // --- Controller initialization ---
     _nameController = TextEditingController(text: item?.name ?? '');
     _descriptionController =
         TextEditingController(text: item?.description ?? '');
@@ -128,7 +127,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     selectedTemplateRefs = List<String>.from(item?.templateRefs ?? []);
     nutrition = item?.nutrition;
 
-    // === CRITICAL FIX: Safe deserialization from raw Firestore/template maps ===
     includedIngredients = (item?.includedIngredients ?? [])
         .map((dynamic e) => e is shared.IngredientReference
             ? e
@@ -157,183 +155,53 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-
-      final franchiseProvider =
-          Provider.of<shared.FranchiseProvider>(context, listen: false);
-
-      // FranchiseProvider does not expose currentFranchise — use franchiseId + adminUser context
-      if (franchiseProvider.isFranchiseSelected) {
-        await Provider.of<shared.MenuItemProvider>(context, listen: false)
-            .loadTemplateRefs();
-      }
-
       await Provider.of<shared.IngredientTypeProvider>(context, listen: false)
           .load(franchiseIdOverride: widget.franchiseId);
       _checkForSchemaIssues();
     });
   }
 
-  List<shared.MenuItemSchemaIssue> validateMenuItem({
-    required BuildContext context,
-    required String menuItemId,
-  }) {
-    if (!mounted) {
-      shared.ErrorLogger.log(
-        message: 'validateMenuItem called on unmounted widget',
-        source: 'menu_item_editor_sheet.dart',
-        severity: 'warning',
-        contextData: {'menuItemId': menuItemId},
-      );
-      return [];
-    }
-
-    try {
-      final categories =
-          Provider.of<shared.CategoryProvider>(context, listen: false)
-              .categories;
-      final ingredients =
-          Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
-              .allIngredients;
-      final ingredientTypes =
-          Provider.of<shared.IngredientTypeProvider>(context, listen: false)
-              .ingredientTypes;
-
-      final menuItem = constructMenuItemFromEditorFields(
-        id: menuItemId,
-        outOfStock: outOfStock,
-        categoryName: categoryId ?? '',
-        categoryId: categoryId ?? '',
-        name: name,
-        price: price,
-        description: description,
-        notes: notes,
-        sku: sku,
-        dietaryTags: dietaryTags,
-        allergens: allergens,
-        prepTime: prepTime,
-        sortOrder: sortOrder,
-        taxCategory: taxCategory,
-        exportId: exportId,
-        customizationGroups: customizationGroups,
-        includedIngredients: includedIngredients,
-        optionalAddOns: optionalAddOns,
-        customizations: customizations,
-        imageUrl: imageUrl,
-        nutrition: nutrition,
-        selectedTemplateRefs: selectedTemplateRefs,
-        sizeData: sizeData,
-        crustTypes: crustTypes,
-        cookTypes: cookTypes,
-        cutStyles: cutStyles,
-        sauceOptions: sauceOptions,
-        dressingOptions: dressingOptions,
-        maxFreeToppings: maxFreeToppings,
-        maxFreeSauces: maxFreeSauces,
-        maxFreeDressings: maxFreeDressings,
-        maxToppings: maxToppings,
-        customizationsUpdatedAt: customizationsUpdatedAt,
-        createdAt: createdAt,
-        comboId: comboId,
-        bundleItems: bundleItems,
-        bundleDiscount: bundleDiscount,
-        highlightTags: highlightTags,
-        allowSpecialInstructions: allowSpecialInstructions,
-        hideInMenu: hideInMenu,
-        freeSauceCount: freeSauceCount,
-        extraSauceUpcharge: extraSauceUpcharge,
-        freeDressingCount: freeDressingCount,
-        extraDressingUpcharge: extraDressingUpcharge,
-        dippingSauceOptions: dippingSauceOptions,
-        dippingSplits: dippingSplits,
-        sideDipSauceOptions: sideDipSauceOptions,
-        freeDipCupCount: freeDipCupCount,
-        sideDipUpcharge: sideDipUpcharge,
-        extraCharges: extraCharges,
-        rawCustomizations: rawCustomizations,
-      );
-
-      return shared.MenuItemSchemaIssue.detectAllIssues(
-        menuItem: menuItem,
-        categories: categories,
-        ingredients: ingredients,
-        ingredientTypes: ingredientTypes,
-      );
-    } catch (e, stack) {
-      shared.ErrorLogger.log(
-        message: 'validateMenuItem failed',
-        source: 'menu_item_editor_sheet.dart',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {
-          'menuItemId': menuItemId,
-          'name': name,
-          'franchiseId': widget.franchiseId,
-        },
-      );
-      return [];
-    }
-  }
-
   void repairSchemaIssue(shared.MenuItemSchemaIssue issue, String newValue) {
     if (!mounted) return;
-
     print('[repairSchemaIssue] Resolving: ${issue.displayMessage} → $newValue');
 
-    try {
-      // Apply the repair
-      final ingredientProvider = Provider.of<shared.IngredientMetadataProvider>(
-          context,
-          listen: false);
-      final typeProvider =
-          Provider.of<shared.IngredientTypeProvider>(context, listen: false);
-      final categoryProvider =
-          Provider.of<shared.CategoryProvider>(context, listen: false);
+    setState(() {
+      // Field mutations (expanded for all common cases)
+      if (issue.field == 'categoryId' ||
+          issue.type == shared.MenuItemSchemaIssueType.category) {
+        categoryId = newValue;
+      } else if (issue.field == 'price') {
+        price = double.tryParse(newValue) ?? 0.0;
+        _priceController.text = price.toString();
+      } else if (issue.field == 'name') {
+        name = newValue;
+        _nameController.text = newValue;
+      } else if (issue.field == 'description') {
+        description = newValue;
+        _descriptionController.text = newValue;
+      } else {
+        _repairIngredientOrType(issue, newValue);
+      }
+      isDirty = true;
+    });
 
-      setState(() {
-        switch (issue.field) {
-          case 'categoryId':
-            categoryId = newValue;
-            break;
-          case 'price':
-            price = double.tryParse(newValue) ?? 0.0;
-            _priceController.text = price.toString();
-            break;
-          case 'description':
-            description = newValue;
-            _descriptionController.text = newValue;
-            break;
-          case 'includedIngredients':
-          case 'optionalAddOns':
-          case 'customizationGroups':
-          case 'customizationGroups.options':
-            _repairIngredientOrType(issue, newValue);
-            break;
-          default:
-            print('[WARNING] Unhandled repair field: ${issue.field}');
-        }
-      });
+    _checkForSchemaIssues();
+    widget.onSchemaIssuesChanged?.call(_schemaIssues);
 
-      // Immediate + delayed revalidation to ensure UI sync
+    // Strong refresh + provider reload for dropdowns
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (!mounted) return;
       _checkForSchemaIssues();
-      widget.onSchemaIssuesChanged?.call(_schemaIssues);
 
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (!mounted) return;
-        _checkForSchemaIssues();
-        widget.onSchemaIssuesChanged?.call(_schemaIssues);
-        setState(() {
-          _showSchemaSidebar = _schemaIssues.any((e) => !e.resolved);
-        });
-      });
-    } catch (e, stack) {
-      shared.ErrorLogger.log(
-        message: 'repairSchemaIssue failed',
-        source: 'menu_item_editor_sheet.dart',
-        severity: 'error',
-        stack: stack.toString(),
-        contextData: {'issue': issue.toString(), 'newValue': newValue},
-      );
-    }
+      // Refresh providers so dropdowns see staged items
+      try {
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
+            .load(forceReloadFromFirestore: true);
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false).load(
+            franchiseIdOverride: widget.franchiseId,
+            forceReloadFromFirestore: true);
+      } catch (_) {}
+    });
   }
 
   void _repairIngredientOrType(
@@ -410,17 +278,12 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
         contextData: {'issueType': issue.type.toString(), 'newValue': newValue},
       );
     }
+    print('[DEBUG _repairIngredientOrType] Applied to field: ${issue.field}');
   }
 
   void _checkForSchemaIssues() {
-    if (!mounted) {
-      shared.ErrorLogger.log(
-        message: '_checkForSchemaIssues called on unmounted widget',
-        source: 'menu_item_editor_sheet.dart',
-        severity: 'warning',
-      );
-      return;
-    }
+    if (!mounted) return;
+    print('[DEBUG _checkForSchemaIssues] Running validation');
 
     try {
       final categories =
@@ -432,6 +295,9 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       final ingredientTypes =
           Provider.of<shared.IngredientTypeProvider>(context, listen: false)
               .ingredientTypes;
+
+      print(
+          '[DEBUG _checkForSchemaIssues] franchise=${widget.franchiseId} | cats=${categories.length} | ings(all)=${ingredients.length} | types=${ingredientTypes.length}');
 
       final tempItem = buildMenuItemForSchemaCheck(
         existing: widget.existing,
@@ -494,51 +360,20 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
         ingredientTypes: ingredientTypes,
       );
 
-      // Preserve resolved state
-      final updatedIssues = <shared.MenuItemSchemaIssue>[];
-      for (final newIssue in freshIssues) {
-        final existing = _schemaIssues.firstWhere(
-          (e) =>
-              e.type == newIssue.type &&
-              e.missingReference == newIssue.missingReference &&
-              e.field == newIssue.field &&
-              e.context == newIssue.context,
-          orElse: () => newIssue,
-        );
-        final resolved = existing.resolved;
-        updatedIssues.add(resolved ? newIssue.markResolved(true) : newIssue);
-      }
-
-      // Add any new issues
-      for (final newIssue in freshIssues) {
-        if (!updatedIssues.any((i) =>
-            i.type == newIssue.type &&
-            i.missingReference == newIssue.missingReference &&
-            i.field == newIssue.field &&
-            i.context == newIssue.context)) {
-          updatedIssues.add(newIssue);
-        }
-      }
-
       setState(() {
-        _schemaIssues = updatedIssues;
-        _showSchemaSidebar = updatedIssues.any((e) => !e.resolved);
+        _schemaIssues = freshIssues;
+        _showSchemaSidebar = freshIssues.any((e) => !e.resolved);
       });
 
       widget.onSchemaIssuesChanged?.call(_schemaIssues);
-      // Force sidebar update
-      if (_schemaIssues.any((e) => !e.resolved)) {
-        setState(() => _showSchemaSidebar = true);
-      }
-
-      widget.onSchemaIssuesChanged?.call(_schemaIssues);
+      print(
+          '[DEBUG _checkForSchemaIssues] Updated issues count: ${_schemaIssues.length}');
     } catch (e, stack) {
       shared.ErrorLogger.log(
-        message: '_checkForSchemaIssues failed',
-        source: 'menu_item_editor_sheet.dart',
-        severity: 'error',
-        stack: stack.toString(),
-      );
+          message: '_checkForSchemaIssues failed',
+          source: 'menu_item_editor_sheet.dart',
+          severity: 'error',
+          stack: stack.toString());
     }
   }
 
@@ -784,9 +619,10 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
 
     final hasCategories = categories.isNotEmpty;
     final hasIngredients =
-        Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
-            .allIngredients
-            .isNotEmpty;
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: true)
+                .allIngredients
+                .isNotEmpty ||
+            _schemaIssues.isNotEmpty;
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -821,8 +657,8 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
             ],
           ),
           body: SafeArea(
-            child: !hasCategories || !hasIngredients
-                ? EmptyStateWidget(
+            child: (!hasCategories || !hasIngredients) && _schemaIssues.isEmpty
+                ? const EmptyStateWidget(
                     title: 'No Categories or Ingredients',
                     message:
                         'You must create at least one category and one ingredient before adding menu items.',
