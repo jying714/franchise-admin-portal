@@ -692,6 +692,50 @@ class AdminFirestoreService extends shared.FirestoreServiceImpl {
   /// Preserves original document IDs, all fields (customizations, sizes, nutrition, etc.).
   /// Import ingredients (ingredient_metadata) from onboarding template.
   /// Copies from onboarding_templates/pizzeria/ingredient_metadata → franchises/{franchiseId}/ingredient_metadata
+  @override
+  Future<List<shared.MenuTemplateRef>> fetchMenuTemplateRefs({
+    required String restaurantType,
+  }) async {
+    print(
+        '[AdminFirestoreService] fetchMenuTemplateRefs STARTED - restaurantType: $restaurantType');
+
+    try {
+      final templateCollection = db
+          .collection('onboarding_templates')
+          .doc(restaurantType)
+          .collection('menu_items');
+
+      final snapshot = await templateCollection.get();
+
+      if (snapshot.docs.isEmpty) {
+        print(
+            '[WARN] No menu templates found for restaurantType: $restaurantType');
+        return [];
+      }
+
+      final templates = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return shared.MenuTemplateRef(
+          id: doc.id,
+          name: data['name'] as String? ?? doc.id,
+        );
+      }).toList();
+
+      print(
+          '[AdminFirestoreService] fetchMenuTemplateRefs SUCCESS - loaded ${templates.length} templates');
+      return templates;
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'fetchMenuTemplateRefs failed',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService',
+        severity: 'error',
+        contextData: {'restaurantType': restaurantType},
+      );
+      return [];
+    }
+  }
+
   Future<void> importIngredientsFromTemplate({
     required String franchiseId,
     required String templateId, // 'pizzeria'

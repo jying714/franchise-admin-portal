@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
 import 'package:shared_core/shared_core.dart' as shared;
+import 'package:flutter/foundation.dart' show Uint8List;
 
 class FirebaseStorageServiceImpl implements shared.FirebaseStorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
@@ -20,12 +21,54 @@ class FirebaseStorageServiceImpl implements shared.FirebaseStorageService {
       throw FileSystemException('File not found: $filePath');
     }
 
-    final uniqueId = _uuid.v4();
-    final storagePath = 'franchises/$franchiseId/$folder/$uniqueId.jpg';
-    final ref = _storage.ref().child(storagePath);
+    final bytes = await file.readAsBytes();
+    return await uploadFranchiseImageBytes(
+      bytes: bytes,
+      fileName: file.path.split(Platform.pathSeparator).last,
+      franchiseId: franchiseId,
+      folder: folder,
+    );
+  }
 
-    final uploadTask = await ref.putFile(file);
-    return await uploadTask.ref.getDownloadURL();
+  @override
+  Future<String> uploadFranchiseImageBytes({
+    required Uint8List bytes,
+    required String fileName,
+    required String franchiseId,
+    String folder = 'menu_items',
+  }) async {
+    if (franchiseId == 'unknown' || franchiseId.isEmpty) {
+      throw Exception('Invalid franchiseId for upload');
+    }
+
+    try {
+      final extension = fileName.split('.').last.toLowerCase();
+      final safeFileName =
+          '${DateTime.now().millisecondsSinceEpoch}_${_uuid.v4()}.$extension';
+      final storagePath = 'franchises/$franchiseId/$folder/$safeFileName';
+
+      final ref = _storage.ref().child(storagePath);
+
+      final metadata = SettableMetadata(
+        contentType: 'image/$extension',
+        customMetadata: {'franchiseId': franchiseId},
+      );
+
+      final uploadTask = await ref.putData(bytes, metadata);
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+
+      print('[FirebaseStorageServiceImpl] Upload success: $downloadUrl');
+      return downloadUrl;
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'uploadFranchiseImageBytes failed',
+        stack: stack.toString(),
+        source: 'FirebaseStorageServiceImpl',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId, 'fileName': fileName},
+      );
+      rethrow;
+    }
   }
 
   @override

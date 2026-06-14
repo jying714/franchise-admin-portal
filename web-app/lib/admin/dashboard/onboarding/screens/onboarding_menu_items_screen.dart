@@ -240,6 +240,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
         case shared.MenuItemSchemaIssueType.category:
           repaired = repaired.copyWith(categoryId: newValue);
           break;
+
         case shared.MenuItemSchemaIssueType.ingredient:
           final updatedIncluded =
               (repaired.includedIngredients ?? []).map((ing) {
@@ -250,8 +251,12 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
           }).toList();
           repaired = repaired.copyWith(includedIngredients: updatedIncluded);
           break;
+
         case shared.MenuItemSchemaIssueType.ingredientType:
+          // Add logic for ingredient type repair if needed (currently minimal)
+          // Example: update typeId in references
           break;
+
         case shared.MenuItemSchemaIssueType.missingField:
           switch (issue.field) {
             case 'name':
@@ -267,10 +272,12 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
             case 'categoryId':
               repaired = repaired.copyWith(categoryId: newValue);
               break;
+            // Add other missing fields as needed
           }
           break;
       }
 
+      // Re-detect remaining issues
       final List<shared.MenuItemSchemaIssue> remainingIssues =
           shared.MenuItemSchemaIssue.detectAllIssues(
         menuItem: repaired,
@@ -284,19 +291,14 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                 .ingredientTypes,
       );
 
-      if (remainingIssues.isEmpty) {
-        provider.addOrUpdateMenuItem(repaired);
-        setState(() {
-          showSchemaSidebar = false;
-          schemaIssues = [];
-          itemPendingRepair = null;
-        });
-      } else {
-        setState(() {
-          schemaIssues = remainingIssues;
-          itemPendingRepair = repaired;
-        });
-      }
+      setState(() {
+        schemaIssues = remainingIssues;
+        itemPendingRepair = remainingIssues.isEmpty ? null : repaired;
+        showSchemaSidebar = remainingIssues.any((e) => !e.resolved);
+      });
+
+      // Force modal sidebar update
+      // (This is already handled by onSchemaIssuesChanged in openEditor)
     }
 
     void openEditor({shared.MenuItem? item}) {
@@ -307,66 +309,101 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
         isScrollControlled: true,
         context: context,
         backgroundColor: Colors.transparent,
-        builder: (context) {
+        builder: (modalContext) {
           List<shared.MenuItemSchemaIssue> issues = [];
 
           return StatefulBuilder(
-            builder: (context, setModalState) {
-              final screenWidth = MediaQuery.of(context).size.width;
-              final modalWidth =
-                  screenWidth > 1280 ? 1080.0 : screenWidth * 0.92;
+            builder: (modalContext, setModalState) {
+              final screenWidth = MediaQuery.of(modalContext).size.width;
+              final modalWidth = issues.isEmpty
+                  ? (screenWidth > 1280 ? 1080.0 : screenWidth * 0.92)
+                  : (screenWidth > 1280
+                      ? 1480.0
+                      : screenWidth * 0.95); // Wider when sidebar is open
 
-              return Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: modalWidth,
-                    maxHeight: MediaQuery.of(context).size.height * 0.98,
-                  ),
-                  child: Material(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          flex: 3,
-                          child: MenuItemEditorSheet(
-                            existing: item,
-                            firestore: FirebaseFirestore.instance,
-                            franchiseId: Provider.of<shared.FranchiseProvider>(
-                                    context,
-                                    listen: false)
-                                .franchiseId,
-                            onSave: (updatedItem) async {
-                              menuProvider.addOrUpdateMenuItem(updatedItem);
-                              if (mounted) {
-                                Navigator.of(context).pop();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Item saved.')),
-                                );
-                              }
-                            },
-                            onCancel: () => Navigator.of(context).pop(),
-                            onSchemaIssuesChanged: (newIssues) {
-                              setModalState(() => issues = newIssues);
-                            },
+              return MultiProvider(
+                providers: [
+                  Provider.value(
+                      value: Provider.of<shared.FranchiseProvider>(context,
+                          listen: false)),
+                  Provider.value(
+                      value: Provider.of<shared.CategoryProvider>(context,
+                          listen: false)),
+                  Provider.value(
+                      value: Provider.of<shared.IngredientMetadataProvider>(
+                          context,
+                          listen: false)),
+                  Provider.value(
+                      value: Provider.of<shared.IngredientTypeProvider>(context,
+                          listen: false)),
+                  Provider.value(
+                      value: Provider.of<shared.MenuItemProvider>(context,
+                          listen: false)),
+                  Provider.value(
+                      value: Provider.of<shared.FranchiseInfoProvider>(context,
+                          listen: false)),
+                  Provider.value(
+                      value: Provider.of<shared.FranchiseFeatureProvider>(
+                          context,
+                          listen: false)),
+                  Provider.value(
+                      value: Provider.of<shared.FirebaseStorageService>(context,
+                          listen: false)),
+                ],
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: modalWidth,
+                      maxHeight: MediaQuery.of(modalContext).size.height * 0.95,
+                    ),
+                    child: Material(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: MenuItemEditorSheet(
+                              existing: item,
+                              firestore: FirebaseFirestore.instance,
+                              franchiseId:
+                                  Provider.of<shared.FranchiseProvider>(
+                                          modalContext,
+                                          listen: false)
+                                      .franchiseId,
+                              onSave: (updatedItem) async {
+                                menuProvider.addOrUpdateMenuItem(updatedItem);
+                                if (mounted) {
+                                  Navigator.of(modalContext).pop();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Item saved.')),
+                                  );
+                                }
+                              },
+                              onCancel: () => Navigator.of(modalContext).pop(),
+                              onSchemaIssuesChanged: (newIssues) {
+                                setModalState(() {
+                                  issues = newIssues;
+                                });
+                              },
+                            ),
                           ),
-                        ),
-                        VerticalDivider(
-                          width: 1,
-                          thickness: 1,
-                          color: Colors.grey.shade300,
-                        ),
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: issues.isEmpty ? 64 : 440,
-                          child: SchemaIssueSidebar(
-                            issues: issues,
-                            onRepair: handleSidebarRepair,
-                            onClose: () => setModalState(() => issues = []),
+                          VerticalDivider(
+                              width: 1,
+                              thickness: 1,
+                              color: Colors.grey.shade300),
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            width: issues.isEmpty ? 64 : 460,
+                            child: SchemaIssueSidebar(
+                              issues: issues,
+                              onRepair: handleSidebarRepair,
+                              onClose: () => setModalState(() => issues = []),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

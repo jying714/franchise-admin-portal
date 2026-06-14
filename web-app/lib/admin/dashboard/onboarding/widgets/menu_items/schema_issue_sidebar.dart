@@ -39,9 +39,9 @@ class SchemaIssueSidebar extends StatelessWidget {
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      width: hasUnresolved ? 420 : 64,
+      width: hasUnresolved ? 440 : 64,
       constraints: BoxConstraints(
-        maxWidth: hasUnresolved ? 480 : 96,
+        maxWidth: hasUnresolved ? 460 : 96,
         minWidth: 56,
       ),
       decoration: BoxDecoration(
@@ -302,6 +302,8 @@ class _CategoryRepairTile extends StatelessWidget {
                 child: Text(
                   issue.displayMessage,
                   style: const TextStyle(fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
                 ),
               ),
               IconButton(
@@ -348,21 +350,16 @@ class _IngredientRepairTile extends StatelessWidget {
   }) : super(key: key);
 
   Future<void> _handleCreateIngredient(BuildContext context) async {
+    final typeProvider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
+
     final newIngredient = await showDialog<shared.IngredientMetadata>(
       context: context,
-      builder: (ctx) => MultiProvider(
-        providers: [
-          ChangeNotifierProvider.value(
-              value: Provider.of<IngredientTypeProviderImpl>(context,
-                  listen: false)),
-          ChangeNotifierProvider.value(
-              value: Provider.of<IngredientMetadataProviderImpl>(context,
-                  listen: false)),
-        ],
-        child: IngredientCreationDialog(
-          loc: loc,
-          suggestedName: issue.context ?? issue.label ?? issue.missingReference,
-        ),
+      builder: (ctx) => IngredientCreationDialog(
+        loc: loc,
+        suggestedName: issue.context ?? issue.label ?? issue.missingReference,
+        availableTypeIds: typeProvider.allTypeIds,
+        typeIdToName: typeProvider.typeIdToName,
       ),
     );
 
@@ -422,6 +419,8 @@ class _IngredientRepairTile extends StatelessWidget {
                 child: Text(
                   issue.displayMessage,
                   style: const TextStyle(fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
                 ),
               ),
               IconButton(
@@ -537,6 +536,8 @@ class _IngredientTypeRepairTile extends StatelessWidget {
                 child: Text(
                   issue.displayMessage,
                   style: const TextStyle(fontWeight: FontWeight.w600),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
                 ),
               ),
               IconButton(
@@ -644,6 +645,8 @@ class _ResolvedIssueTile extends StatelessWidget {
                     color: Colors.green,
                     fontStyle: FontStyle.italic,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
                 ),
               ),
             ],

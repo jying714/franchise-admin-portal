@@ -156,15 +156,20 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
 
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final franchise =
-          Provider.of<shared.FranchiseInfoProvider>(context, listen: false)
-              .franchise;
-      if (franchise?.restaurantType != null) {
+      if (!mounted) return;
+
+      final franchiseProvider =
+          Provider.of<shared.FranchiseProvider>(context, listen: false);
+
+      // FranchiseProvider does not expose currentFranchise — use franchiseId + adminUser context
+      if (franchiseProvider.isFranchiseSelected) {
         await Provider.of<shared.MenuItemProvider>(context, listen: false)
             .loadTemplateRefs();
       }
+
       await Provider.of<shared.IngredientTypeProvider>(context, listen: false)
           .load(franchiseIdOverride: widget.franchiseId);
+      _checkForSchemaIssues();
     });
   }
 
@@ -172,192 +177,263 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     required BuildContext context,
     required String menuItemId,
   }) {
-    final categories =
-        Provider.of<shared.CategoryProvider>(context, listen: false).categories;
-    final ingredients =
-        Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
-            .allIngredients;
-    final ingredientTypes =
-        Provider.of<shared.IngredientTypeProvider>(context, listen: false)
-            .ingredientTypes;
+    if (!mounted) {
+      shared.ErrorLogger.log(
+        message: 'validateMenuItem called on unmounted widget',
+        source: 'menu_item_editor_sheet.dart',
+        severity: 'warning',
+        contextData: {'menuItemId': menuItemId},
+      );
+      return [];
+    }
 
-    final menuItem = constructMenuItemFromEditorFields(
-      id: menuItemId,
-      outOfStock: outOfStock,
-      categoryName: categoryId ?? '',
-      categoryId: categoryId ?? '',
-      name: name,
-      price: price,
-      description: description,
-      notes: notes,
-      sku: sku,
-      dietaryTags: dietaryTags,
-      allergens: allergens,
-      prepTime: prepTime,
-      sortOrder: sortOrder,
-      taxCategory: taxCategory,
-      exportId: exportId,
-      customizationGroups: customizationGroups,
-      includedIngredients: includedIngredients,
-      optionalAddOns: optionalAddOns,
-      customizations: customizations,
-      imageUrl: imageUrl,
-      nutrition: nutrition,
-      selectedTemplateRefs: selectedTemplateRefs,
-      sizeData: sizeData,
-      crustTypes: crustTypes,
-      cookTypes: cookTypes,
-      cutStyles: cutStyles,
-      sauceOptions: sauceOptions,
-      dressingOptions: dressingOptions,
-      maxFreeToppings: maxFreeToppings,
-      maxFreeSauces: maxFreeSauces,
-      maxFreeDressings: maxFreeDressings,
-      maxToppings: maxToppings,
-      customizationsUpdatedAt: customizationsUpdatedAt,
-      createdAt: createdAt,
-      comboId: comboId,
-      bundleItems: bundleItems,
-      bundleDiscount: bundleDiscount,
-      highlightTags: highlightTags,
-      allowSpecialInstructions: allowSpecialInstructions,
-      hideInMenu: hideInMenu,
-      freeSauceCount: freeSauceCount,
-      extraSauceUpcharge: extraSauceUpcharge,
-      freeDressingCount: freeDressingCount,
-      extraDressingUpcharge: extraDressingUpcharge,
-      dippingSauceOptions: dippingSauceOptions,
-      dippingSplits: dippingSplits,
-      sideDipSauceOptions: sideDipSauceOptions,
-      freeDipCupCount: freeDipCupCount,
-      sideDipUpcharge: sideDipUpcharge,
-      extraCharges: extraCharges,
-      rawCustomizations: rawCustomizations,
-    );
+    try {
+      final categories =
+          Provider.of<shared.CategoryProvider>(context, listen: false)
+              .categories;
+      final ingredients =
+          Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
+              .allIngredients;
+      final ingredientTypes =
+          Provider.of<shared.IngredientTypeProvider>(context, listen: false)
+              .ingredientTypes;
 
-    return shared.MenuItemSchemaIssue.detectAllIssues(
-      menuItem: menuItem,
-      categories: categories,
-      ingredients: ingredients,
-      ingredientTypes: ingredientTypes,
-    );
+      final menuItem = constructMenuItemFromEditorFields(
+        id: menuItemId,
+        outOfStock: outOfStock,
+        categoryName: categoryId ?? '',
+        categoryId: categoryId ?? '',
+        name: name,
+        price: price,
+        description: description,
+        notes: notes,
+        sku: sku,
+        dietaryTags: dietaryTags,
+        allergens: allergens,
+        prepTime: prepTime,
+        sortOrder: sortOrder,
+        taxCategory: taxCategory,
+        exportId: exportId,
+        customizationGroups: customizationGroups,
+        includedIngredients: includedIngredients,
+        optionalAddOns: optionalAddOns,
+        customizations: customizations,
+        imageUrl: imageUrl,
+        nutrition: nutrition,
+        selectedTemplateRefs: selectedTemplateRefs,
+        sizeData: sizeData,
+        crustTypes: crustTypes,
+        cookTypes: cookTypes,
+        cutStyles: cutStyles,
+        sauceOptions: sauceOptions,
+        dressingOptions: dressingOptions,
+        maxFreeToppings: maxFreeToppings,
+        maxFreeSauces: maxFreeSauces,
+        maxFreeDressings: maxFreeDressings,
+        maxToppings: maxToppings,
+        customizationsUpdatedAt: customizationsUpdatedAt,
+        createdAt: createdAt,
+        comboId: comboId,
+        bundleItems: bundleItems,
+        bundleDiscount: bundleDiscount,
+        highlightTags: highlightTags,
+        allowSpecialInstructions: allowSpecialInstructions,
+        hideInMenu: hideInMenu,
+        freeSauceCount: freeSauceCount,
+        extraSauceUpcharge: extraSauceUpcharge,
+        freeDressingCount: freeDressingCount,
+        extraDressingUpcharge: extraDressingUpcharge,
+        dippingSauceOptions: dippingSauceOptions,
+        dippingSplits: dippingSplits,
+        sideDipSauceOptions: sideDipSauceOptions,
+        freeDipCupCount: freeDipCupCount,
+        sideDipUpcharge: sideDipUpcharge,
+        extraCharges: extraCharges,
+        rawCustomizations: rawCustomizations,
+      );
+
+      return shared.MenuItemSchemaIssue.detectAllIssues(
+        menuItem: menuItem,
+        categories: categories,
+        ingredients: ingredients,
+        ingredientTypes: ingredientTypes,
+      );
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'validateMenuItem failed',
+        source: 'menu_item_editor_sheet.dart',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {
+          'menuItemId': menuItemId,
+          'name': name,
+          'franchiseId': widget.franchiseId,
+        },
+      );
+      return [];
+    }
   }
 
   void repairSchemaIssue(shared.MenuItemSchemaIssue issue, String newValue) {
-    print(
-        '[MenuItemEditorSheet] repairSchemaIssue: ${issue.displayMessage}, newValue=$newValue');
+    if (!mounted) return;
 
-    final ingredientProvider =
-        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
-    final typeProvider =
-        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
-    final categoryProvider =
-        Provider.of<shared.CategoryProvider>(context, listen: false);
+    print('[repairSchemaIssue] Resolving: ${issue.displayMessage} → $newValue');
 
-    setState(() {
-      print('[repairSchemaIssue] Resolving issue: '
-          'field=${issue.field}, type=${issue.type}, '
-          'missingReference=${issue.missingReference}, label=${issue.label}, '
-          'newValue=$newValue');
+    try {
+      // Apply the repair
+      final ingredientProvider = Provider.of<shared.IngredientMetadataProvider>(
+          context,
+          listen: false);
+      final typeProvider =
+          Provider.of<shared.IngredientTypeProvider>(context, listen: false);
+      final categoryProvider =
+          Provider.of<shared.CategoryProvider>(context, listen: false);
 
-      switch (issue.field) {
-        case 'categoryId':
-          categoryId = newValue;
-          print('[repairSchemaIssue] Assigned new categoryId: $categoryId');
+      setState(() {
+        switch (issue.field) {
+          case 'categoryId':
+            categoryId = newValue;
+            break;
+          case 'price':
+            price = double.tryParse(newValue) ?? 0.0;
+            _priceController.text = price.toString();
+            break;
+          case 'description':
+            description = newValue;
+            _descriptionController.text = newValue;
+            break;
+          case 'includedIngredients':
+          case 'optionalAddOns':
+          case 'customizationGroups':
+          case 'customizationGroups.options':
+            _repairIngredientOrType(issue, newValue);
+            break;
+          default:
+            print('[WARNING] Unhandled repair field: ${issue.field}');
+        }
+      });
 
-          final alreadyExists = categoryProvider.categories
-                  .any((c) => c.id == newValue) ||
-              categoryProvider.stagedCategories.any((c) => c.id == newValue);
+      // Immediate + delayed revalidation to ensure UI sync
+      _checkForSchemaIssues();
+      widget.onSchemaIssuesChanged?.call(_schemaIssues);
 
-          print('[repairSchemaIssue] Category exists=$alreadyExists');
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (!mounted) return;
+        _checkForSchemaIssues();
+        widget.onSchemaIssuesChanged?.call(_schemaIssues);
+        setState(() {
+          _showSchemaSidebar = _schemaIssues.any((e) => !e.resolved);
+        });
+      });
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'repairSchemaIssue failed',
+        source: 'menu_item_editor_sheet.dart',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'issue': issue.toString(), 'newValue': newValue},
+      );
+    }
+  }
 
-          if (!alreadyExists) {
-            try {
-              categoryProvider.stageCategory(
-                shared.Category(
-                  id: newValue,
-                  name: issue.label ?? 'Unnamed Category',
-                  sortOrder: 999,
-                ),
-              );
-              print('[repairSchemaIssue] Staged new category: $newValue');
-            } catch (e) {
-              print('[ERROR] Failed to stage category: $newValue â†’ $e');
-            }
-          }
-          break;
+  void _repairIngredientOrType(
+      shared.MenuItemSchemaIssue issue, String newValue) {
+    if (!mounted) return;
 
-        case 'price':
-          price = double.tryParse(newValue) ?? 0.0;
-          _priceController.text = price.toString();
-          print('[repairSchemaIssue] Updated price: $price');
-          break;
+    try {
+      final ingredientProvider = Provider.of<shared.IngredientMetadataProvider>(
+          context,
+          listen: false);
+      final typeProvider =
+          Provider.of<shared.IngredientTypeProvider>(context, listen: false);
 
-        case 'description':
-          description = newValue;
-          _descriptionController.text = newValue;
-          print('[repairSchemaIssue] Updated description');
-          break;
+      final ingredientExists = ingredientProvider.getById(newValue) != null;
+      final typeExists = typeProvider.getById(newValue) != null;
 
-        case 'includedIngredients':
-        case 'optionalAddOns':
-        case 'customizationGroups':
-        case 'customizationGroups.options':
-          print('[repairSchemaIssue] Routing to _repairIngredientOrType...');
-          _repairIngredientOrType(issue, newValue);
+      print(
+          '[DEBUG] Lookup results: ingredientExists=$ingredientExists, typeExists=$typeExists, issueType=${issue.type}');
 
-          // if (issue.type == MenuItemSchemaIssueType.ingredient) {
-          //   final alreadyExists = ingredientProvider.allIngredients
-          //           .any((e) => e.id == newValue) ||
-          //       ingredientProvider.stagedIngredients
-          //           .any((e) => e.id == newValue);
-
-          //   print('[repairSchemaIssue] Ingredient exists=$alreadyExists');
-
-          //   if (!alreadyExists) {
-          //     final staged = ingredientProvider.stageIfNew(
-          //       id: newValue,
-          //       name: issue.label ?? 'Unnamed Ingredient',
-          //     );
-          //     if (staged) {
-          //       print('[repairSchemaIssue] Staged new ingredient: $newValue');
-          //     } else {
-          //       print('[WARNING] Failed to stage ingredient: $newValue');
-          //     }
-          //   }
-          // }
-
-          // if (issue.type == MenuItemSchemaIssueType.ingredientType) {
-          //   final alreadyExists =
-          //       typeProvider.ingredientTypes.any((t) => t.id == newValue) ||
-          //           typeProvider.stagedTypes.any((t) => t.id == newValue);
-
-          //   print('[repairSchemaIssue] Ingredient type exists=$alreadyExists');
-
-          //   if (!alreadyExists) {
-          //     final staged = typeProvider.stageIfNew(
-          //       id: newValue,
-          //       name: issue.label ?? 'Unnamed Type',
-          //     );
-          //     if (staged) {
-          //       print(
-          //           '[repairSchemaIssue] Staged new ingredient type: $newValue');
-          //     } else {
-          //       print('[WARNING] Failed to stage ingredient type: $newValue');
-          //     }
-          //   }
-          // }
-          break;
-
-        default:
-          print('[WARNING] Unhandled schema repair field: ${issue.field}');
+      // Stage missing references
+      if (issue.type == shared.MenuItemSchemaIssueType.ingredient &&
+          !ingredientExists) {
+        final stagedName = issue.label ?? newValue;
+        final staged =
+            ingredientProvider.stageIfNew(id: newValue, name: stagedName);
+        print('[DEBUG] Staged ingredient: $staged');
       }
-    });
 
-    Future.delayed(const Duration(milliseconds: 50), () {
-      print('[MenuItemEditorSheet] Revalidating schema after repair...');
+      if (issue.type == shared.MenuItemSchemaIssueType.ingredientType &&
+          !typeExists) {
+        final stagedName = issue.label ?? newValue;
+        final staged = typeProvider.stageIfNew(id: newValue, name: stagedName);
+        print('[DEBUG] Staged ingredient type: $staged');
+      }
 
-      final freshItem = buildMenuItemForSchemaCheck(
+      shared.IngredientReference updateEntry(shared.IngredientReference entry) {
+        final missingLower = issue.missingReference.trim().toLowerCase();
+        final labelLower = issue.label?.trim().toLowerCase();
+
+        final entryIdLower = entry.id.trim().toLowerCase();
+        final entryNameLower = entry.name.trim().toLowerCase();
+
+        final matchesId = entryIdLower == missingLower;
+        final matchesName = labelLower != null && entryNameLower == labelLower;
+
+        if (issue.type == shared.MenuItemSchemaIssueType.ingredient &&
+            (matchesId || matchesName)) {
+          return entry.copyWith(id: newValue);
+        }
+
+        if (issue.type == shared.MenuItemSchemaIssueType.ingredientType &&
+            (matchesName || entry.typeId.trim().isEmpty)) {
+          return entry.copyWith(typeId: newValue);
+        }
+        return entry;
+      }
+
+      if (issue.field == 'includedIngredients') {
+        includedIngredients = includedIngredients.map(updateEntry).toList();
+      } else if (issue.field == 'optionalAddOns') {
+        optionalAddOns = optionalAddOns.map(updateEntry).toList();
+      } else if (issue.field.startsWith('customizationGroups')) {
+        customizationGroups = customizationGroups.map((group) {
+          final updated = group.ingredients.map(updateEntry).toList();
+          return group.copyWith(ingredients: updated);
+        }).toList();
+      }
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: '_repairIngredientOrType failed',
+        source: 'menu_item_editor_sheet.dart',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'issueType': issue.type.toString(), 'newValue': newValue},
+      );
+    }
+  }
+
+  void _checkForSchemaIssues() {
+    if (!mounted) {
+      shared.ErrorLogger.log(
+        message: '_checkForSchemaIssues called on unmounted widget',
+        source: 'menu_item_editor_sheet.dart',
+        severity: 'warning',
+      );
+      return;
+    }
+
+    try {
+      final categories =
+          Provider.of<shared.CategoryProvider>(context, listen: false)
+              .categories;
+      final ingredients =
+          Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
+              .allIngredients;
+      final ingredientTypes =
+          Provider.of<shared.IngredientTypeProvider>(context, listen: false)
+              .ingredientTypes;
+
+      final tempItem = buildMenuItemForSchemaCheck(
         existing: widget.existing,
         name: name,
         description: description,
@@ -372,7 +448,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
         nutrition: nutrition,
         selectedTemplateRefs: selectedTemplateRefs,
         sizeData: sizeData,
-        categories: categoryProvider.categories,
+        categories: categories,
         notes: notes,
         sku: sku,
         dietaryTags: dietaryTags,
@@ -412,16 +488,14 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       );
 
       final freshIssues = shared.MenuItemSchemaIssue.detectAllIssues(
-        menuItem: freshItem,
-        categories: categoryProvider.categories,
-        ingredients: ingredientProvider.allIngredients,
-        ingredientTypes: typeProvider.ingredientTypes,
+        menuItem: tempItem,
+        categories: categories,
+        ingredients: ingredients,
+        ingredientTypes: ingredientTypes,
       );
 
+      // Preserve resolved state
       final updatedIssues = <shared.MenuItemSchemaIssue>[];
-      print(
-          '[repairSchemaIssue] Found ${freshIssues.length} new issues after rebuild');
-
       for (final newIssue in freshIssues) {
         final existing = _schemaIssues.firstWhere(
           (e) =>
@@ -431,11 +505,11 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
               e.context == newIssue.context,
           orElse: () => newIssue,
         );
-
         final resolved = existing.resolved;
         updatedIssues.add(resolved ? newIssue.markResolved(true) : newIssue);
       }
 
+      // Add any new issues
       for (final newIssue in freshIssues) {
         if (!updatedIssues.any((i) =>
             i.type == newIssue.type &&
@@ -443,242 +517,29 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
             i.field == newIssue.field &&
             i.context == newIssue.context)) {
           updatedIssues.add(newIssue);
-          print(
-              '[repairSchemaIssue] Appended new issue: ${newIssue.displayMessage}');
         }
-      }
-
-      print('[MenuItemEditorSheet] Updated schema issues list:');
-      for (final i in updatedIssues) {
-        print('  â€¢ ${i.displayMessage} | resolved=${i.resolved}');
       }
 
       setState(() {
         _schemaIssues = updatedIssues;
-        _showSchemaSidebar = updatedIssues.any((i) => !i.resolved);
+        _showSchemaSidebar = updatedIssues.any((e) => !e.resolved);
       });
 
-      widget.onSchemaIssuesChanged?.call(updatedIssues);
-    });
-  }
+      widget.onSchemaIssuesChanged?.call(_schemaIssues);
+      // Force sidebar update
+      if (_schemaIssues.any((e) => !e.resolved)) {
+        setState(() => _showSchemaSidebar = true);
+      }
 
-  void _repairIngredientOrType(
-      shared.MenuItemSchemaIssue issue, String newValue) {
-    final ingredientProvider =
-        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
-    final typeProvider =
-        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
-
-    final ingredientExists = ingredientProvider.getById(newValue) != null;
-    final typeExists = typeProvider.getById(newValue) != null;
-
-    print('[DEBUG] Lookup results: ingredientExists=$ingredientExists, '
-        'typeExists=$typeExists, issueType=${issue.type}');
-
-    // Attempt to stage ingredient if missing
-    if (issue.type == shared.MenuItemSchemaIssueType.ingredient &&
-        !ingredientExists) {
-      final stagedName = issue.label ?? newValue;
-      print(
-          '[DEBUG] Attempting to stage new ingredient: id=$newValue, name=$stagedName');
-      final staged = ingredientProvider.stageIfNew(
-        id: newValue,
-        name: stagedName,
+      widget.onSchemaIssuesChanged?.call(_schemaIssues);
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: '_checkForSchemaIssues failed',
+        source: 'menu_item_editor_sheet.dart',
+        severity: 'error',
+        stack: stack.toString(),
       );
-      if (staged) {
-        print(
-            '[DEBUG] Successfully staged ingredient: id=$newValue, name=$stagedName');
-      } else {
-        print(
-            '[WARNING] Failed to stage ingredient (already exists?): id=$newValue');
-      }
     }
-
-    // Attempt to stage ingredient type if missing
-    if (issue.type == shared.MenuItemSchemaIssueType.ingredientType &&
-        !typeExists) {
-      final stagedName = issue.label ?? newValue;
-      print(
-          '[DEBUG] Attempting to stage new ingredient type: id=$newValue, name=$stagedName');
-      final staged = typeProvider.stageIfNew(
-        id: newValue,
-        name: stagedName,
-      );
-      if (staged) {
-        print(
-            '[DEBUG] Successfully staged ingredient type: id=$newValue, name=$stagedName');
-      } else {
-        print(
-            '[WARNING] Failed to stage ingredient type (already exists?): id=$newValue');
-      }
-    }
-
-    shared.IngredientReference updateEntry(shared.IngredientReference entry) {
-      final matchesId =
-          entry.id.toLowerCase() == issue.missingReference.toLowerCase();
-      final matchesName = issue.label != null &&
-          entry.name.trim().toLowerCase() == issue.label!.trim().toLowerCase();
-
-      if (issue.type == shared.MenuItemSchemaIssueType.ingredient &&
-          (matchesId || matchesName)) {
-        print('[repairIngredientOrType] Matching entry: '
-            'id=${entry.id}, name=${entry.name}, typeId=${entry.typeId}, '
-            'issueType=${issue.type}, field=${issue.field}');
-        print('[repairIngredientOrType] Updated entry â†’ '
-            'oldId=${entry.id}, newId=$newValue');
-        return entry.copyWith(id: newValue);
-      }
-
-      if (issue.type == shared.MenuItemSchemaIssueType.ingredientType &&
-          (matchesName || entry.typeId.isEmpty)) {
-        print('[repairIngredientOrType] Matching entry: '
-            'id=${entry.id}, name=${entry.name}, typeId=${entry.typeId}, '
-            'issueType=${issue.type}, field=${issue.field}');
-        print('[repairIngredientOrType] Updated entry â†’ '
-            'oldTypeId=${entry.typeId}, newTypeId=$newValue');
-        return entry.copyWith(typeId: newValue);
-      }
-
-      return entry;
-    }
-
-    if (issue.field == 'includedIngredients') {
-      includedIngredients = includedIngredients.map(updateEntry).toList();
-      print('[repairIngredientOrType] Updated includedIngredients entries: '
-          '${includedIngredients.length}');
-    } else if (issue.field == 'optionalAddOns') {
-      optionalAddOns = optionalAddOns.map(updateEntry).toList();
-      print('[repairIngredientOrType] Updated optionalAddOns entries: '
-          '${optionalAddOns.length}');
-    } else if (issue.field.startsWith('customizationGroups')) {
-      customizationGroups = customizationGroups.map((group) {
-        final updated = group.ingredients.map(updateEntry).toList();
-        return group.copyWith(ingredients: updated);
-      }).toList();
-      print('[repairIngredientOrType] Updated customizationGroups entries: '
-          '${customizationGroups.length}');
-    }
-
-    print(
-        '[DEBUG] _repairIngredientOrType completed. Issue type: ${issue.type}, newValue: $newValue');
-  }
-
-  void _checkForSchemaIssues() {
-    final categories =
-        Provider.of<shared.CategoryProvider>(context, listen: false).categories;
-    final ingredients =
-        Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
-            .allIngredients;
-    final ingredientTypes =
-        Provider.of<shared.IngredientTypeProvider>(context, listen: false)
-            .ingredientTypes;
-
-    final tempItem = buildMenuItemForSchemaCheck(
-      existing: widget.existing,
-      name: name,
-      description: description,
-      price: price,
-      categoryId: categoryId,
-      outOfStock: outOfStock,
-      imageUrl: imageUrl,
-      customizationGroups: customizationGroups,
-      includedIngredients: includedIngredients,
-      optionalAddOns: optionalAddOns,
-      customizations: customizations,
-      nutrition: nutrition,
-      selectedTemplateRefs: selectedTemplateRefs,
-      sizeData: sizeData,
-      categories: categories,
-      notes: notes,
-      sku: sku,
-      dietaryTags: dietaryTags,
-      allergens: allergens,
-      prepTime: prepTime,
-      sortOrder: sortOrder,
-      taxCategory: taxCategory,
-      exportId: exportId,
-      crustTypes: crustTypes,
-      cookTypes: cookTypes,
-      cutStyles: cutStyles,
-      sauceOptions: sauceOptions,
-      dressingOptions: dressingOptions,
-      maxFreeToppings: maxFreeToppings,
-      maxFreeSauces: maxFreeSauces,
-      maxFreeDressings: maxFreeDressings,
-      maxToppings: maxToppings,
-      customizationsUpdatedAt: customizationsUpdatedAt,
-      createdAt: createdAt,
-      comboId: comboId,
-      bundleItems: bundleItems,
-      bundleDiscount: bundleDiscount,
-      highlightTags: highlightTags,
-      allowSpecialInstructions: allowSpecialInstructions,
-      hideInMenu: hideInMenu,
-      freeSauceCount: freeSauceCount,
-      extraSauceUpcharge: extraSauceUpcharge,
-      freeDressingCount: freeDressingCount,
-      extraDressingUpcharge: extraDressingUpcharge,
-      dippingSauceOptions: dippingSauceOptions,
-      dippingSplits: dippingSplits,
-      sideDipSauceOptions: sideDipSauceOptions,
-      freeDipCupCount: freeDipCupCount,
-      sideDipUpcharge: sideDipUpcharge,
-      extraCharges: extraCharges,
-      rawCustomizations: rawCustomizations,
-    );
-
-    final freshIssues = shared.MenuItemSchemaIssue.detectAllIssues(
-      menuItem: tempItem,
-      categories: Provider.of<shared.CategoryProvider>(context, listen: false)
-          .categories,
-      ingredients:
-          Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
-              .allIngredients,
-      ingredientTypes:
-          Provider.of<shared.IngredientTypeProvider>(context, listen: false)
-              .ingredientTypes,
-    );
-
-    // Preserve resolved state
-    final updatedIssues = <shared.MenuItemSchemaIssue>[];
-
-    for (final newIssue in freshIssues) {
-      final existing = _schemaIssues.firstWhere(
-        (e) =>
-            e.type == newIssue.type &&
-            e.missingReference == newIssue.missingReference &&
-            e.field == newIssue.field &&
-            e.context == newIssue.context,
-        orElse: () => newIssue,
-      );
-
-      final resolved = existing.resolved;
-      updatedIssues.add(resolved ? newIssue.markResolved(true) : newIssue);
-    }
-
-// Add any new issues that weren't in the original list
-    for (final newIssue in freshIssues) {
-      if (!updatedIssues.any((i) =>
-          i.type == newIssue.type &&
-          i.missingReference == newIssue.missingReference &&
-          i.field == newIssue.field &&
-          i.context == newIssue.context)) {
-        updatedIssues.add(newIssue);
-      }
-    }
-
-    print(
-        '[MenuItemEditorSheet] _checkForSchemaIssues found ${updatedIssues.length} issue(s):');
-    for (final i in updatedIssues) {
-      print(' - ${i.displayMessage} | resolved=${i.resolved}');
-    }
-
-    setState(() {
-      _schemaIssues = updatedIssues;
-      _showSchemaSidebar = updatedIssues.any((e) => !e.resolved);
-    });
-
-    widget.onSchemaIssuesChanged?.call(_schemaIssues);
   }
 
   void _applyTemplate(shared.MenuItem item) {
@@ -911,12 +772,16 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = context.watch<shared.CategoryProvider>().categories;
-    final templates =
-        Provider.of<shared.MenuItemProvider>(context, listen: false)
-            .templateRefs;
-    final availableTemplates =
-        context.watch<shared.MenuItemProvider>().sizeTemplates;
+    // === SAFE PROVIDER ACCESS (avoids ProviderNotFound in modal context) ===
+    final categoryProvider =
+        Provider.of<shared.CategoryProvider>(context, listen: true);
+    final categories = categoryProvider.categories;
+
+    final menuItemProvider =
+        Provider.of<shared.MenuItemProvider>(context, listen: true);
+    final templates = menuItemProvider.templateRefs;
+    final availableTemplates = menuItemProvider.sizeTemplates;
+
     final hasCategories = categories.isNotEmpty;
     final hasIngredients =
         Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
@@ -926,6 +791,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final loc = AppLocalizations.of(context)!;
+
     return Stack(
       children: [
         Scaffold(
@@ -970,7 +836,10 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                       type: MaterialType.transparency,
                       child: Form(
                         key: _formKey,
-                        onChanged: () => setState(() => isDirty = true),
+                        onChanged: () {
+                          setState(() => isDirty = true);
+                          _checkForSchemaIssues(); // Live validation — shows sidebar immediately
+                        },
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [

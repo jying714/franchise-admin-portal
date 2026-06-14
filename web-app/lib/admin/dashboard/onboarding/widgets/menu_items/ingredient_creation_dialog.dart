@@ -10,11 +10,15 @@ import 'package:franchise_admin_portal/config/branding_config.dart';
 class IngredientCreationDialog extends StatefulWidget {
   final String? suggestedName;
   final AppLocalizations loc;
+  final List<String> availableTypeIds; // New
+  final Map<String, String> typeIdToName; // New
 
   const IngredientCreationDialog({
     Key? key,
     this.suggestedName,
     required this.loc,
+    required this.availableTypeIds,
+    required this.typeIdToName,
   }) : super(key: key);
 
   @override
@@ -48,10 +52,6 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
 
   Future<void> _handleSubmit() async {
     final l10n = widget.loc;
-    final typeProvider =
-        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
-    final colorScheme = Theme.of(context).colorScheme;
-
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSubmitting = true);
@@ -64,7 +64,7 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
       final priceText = _priceController.text.trim();
       final price = double.tryParse(priceText);
 
-      final typeName = typeProvider.typeIdToName[typeId] ?? 'Uncategorized';
+      final typeName = widget.typeIdToName[typeId] ?? 'Uncategorized';
 
       final newIngredient = shared.IngredientMetadata(
         id: id,
@@ -90,79 +90,59 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
         stack: stack.toString(),
         source: 'IngredientCreationDialog',
         severity: 'error',
-        contextData: {
-          'name': _nameController.text,
-          'typeId': _selectedTypeId,
-        },
+        contextData: {'name': _nameController.text, 'typeId': _selectedTypeId},
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(widget.loc.genericErrorMessage),
-          backgroundColor: colorScheme.error,
-        ),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(widget.loc.genericErrorMessage),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
     } finally {
-      setState(() => _isSubmitting = false);
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = widget.loc;
-    final typeProvider =
-        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
-    final colorScheme = Theme.of(context).colorScheme;
 
     return AlertDialog(
-      title: Text(widget.loc.createNewIngredient),
+      title: Text(l10n.createNewIngredient),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
           child: Column(
             children: [
-              // Name
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  labelText: widget.loc.ingredientName,
-                  hintText: widget.loc.e_g_anchovies,
+                  labelText: l10n.ingredientName,
+                  hintText: l10n.e_g_anchovies,
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return widget.loc.fieldRequired;
-                  }
-                  return null;
-                },
+                validator: (value) =>
+                    (value?.trim().isEmpty ?? true) ? l10n.fieldRequired : null,
               ),
               const SizedBox(height: 16),
-
-              // Type dropdown
               DropdownButtonFormField<String>(
                 value: _selectedTypeId,
                 isExpanded: true,
-                hint: Text(widget.loc.ingredientType),
-                decoration:
-                    InputDecoration(labelText: widget.loc.ingredientType),
-                items: [
-                  for (final id in typeProvider.allTypeIds)
-                    DropdownMenuItem(
-                      value: id,
-                      child: Text(typeProvider.typeIdToName[id] ?? id),
-                    ),
-                ],
-                onChanged: (value) {
-                  setState(() => _selectedTypeId = value);
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return widget.loc.fieldRequired;
-                  }
-                  return null;
-                },
+                hint: Text(l10n.ingredientType),
+                decoration: InputDecoration(labelText: l10n.ingredientType),
+                items: widget.availableTypeIds.map((id) {
+                  return DropdownMenuItem(
+                    value: id,
+                    child: Text(widget.typeIdToName[id] ?? id),
+                  );
+                }).toList(),
+                onChanged: (value) => setState(() => _selectedTypeId = value),
+                validator: (value) => (value == null || value.isEmpty)
+                    ? l10n.fieldRequired
+                    : null,
               ),
               const SizedBox(height: 16),
-
-              // Upcharge field
               TextFormField(
                 controller: _priceController,
                 keyboardType:
@@ -171,20 +151,16 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
                   FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))
                 ],
                 decoration: InputDecoration(
-                  labelText: widget.loc.upchargeOptional,
+                  labelText: l10n.upchargeOptional,
                   hintText: '1.00',
                   prefixText: '\$',
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Removable toggle
               SwitchListTile(
                 value: _isRemovable,
-                onChanged: (value) {
-                  setState(() => _isRemovable = value);
-                },
-                title: Text(widget.loc.removable),
+                onChanged: (value) => setState(() => _isRemovable = value),
+                title: Text(l10n.removable),
               ),
             ],
           ),
@@ -193,17 +169,16 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
       actions: [
         TextButton(
           onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-          child: Text(widget.loc.cancel),
+          child: Text(l10n.cancel),
         ),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _handleSubmit,
           child: _isSubmitting
-              ? SizedBox(
+              ? const SizedBox(
                   height: 20,
                   width: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(widget.loc.create),
+                  child: CircularProgressIndicator(strokeWidth: 2))
+              : Text(l10n.create),
         ),
       ],
     );
