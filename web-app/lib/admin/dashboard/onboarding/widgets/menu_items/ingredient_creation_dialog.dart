@@ -49,18 +49,15 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
   }
 
   Future<void> _handleSubmit() async {
-    final l10n = widget.loc;
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSubmitting = true);
 
     try {
-      final uuid = const Uuid();
-      final id = uuid.v4();
+      final id = const Uuid().v4();
       final name = _nameController.text.trim();
       final typeId = _selectedTypeId;
-      final priceText = _priceController.text.trim();
-      final price = double.tryParse(priceText);
+      final price = double.tryParse(_priceController.text.trim());
 
       final typeName = widget.typeIdToName[typeId] ?? 'Uncategorized';
 
@@ -88,12 +85,12 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
         stack: stack.toString(),
         source: 'IngredientCreationDialog',
         severity: 'error',
-        contextData: {'name': _nameController.text, 'typeId': _selectedTypeId},
       );
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.genericErrorMessage ?? 'An error occurred'),
+            content:
+                Text(widget.loc.genericErrorMessage ?? 'An error occurred'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -113,6 +110,7 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
         child: Form(
           key: _formKey,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               TextFormField(
                 controller: _nameController,
@@ -128,16 +126,21 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
               DropdownButtonFormField<String>(
                 value: _selectedTypeId,
                 isExpanded: true,
-                hint: Text(l10n.ingredientType ?? 'Ingredient Type'),
+                hint: Text(l10n.ingredientType ?? 'Select Ingredient Type'),
                 decoration: InputDecoration(
-                    labelText: l10n.ingredientType ?? 'Ingredient Type'),
+                  labelText: l10n.ingredientType ?? 'Ingredient Type',
+                ),
                 items: widget.availableTypeIds.map((id) {
                   return DropdownMenuItem(
                     value: id,
                     child: Text(widget.typeIdToName[id] ?? id),
                   );
                 }).toList(),
-                onChanged: (value) => setState(() => _selectedTypeId = value),
+                onChanged: (value) {
+                  if (mounted) {
+                    setState(() => _selectedTypeId = value);
+                  }
+                },
                 validator: (value) => (value == null || value.isEmpty)
                     ? l10n.fieldRequired ?? 'Field required'
                     : null,
@@ -159,7 +162,9 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
               const SizedBox(height: 16),
               SwitchListTile(
                 value: _isRemovable,
-                onChanged: (value) => setState(() => _isRemovable = value),
+                onChanged: (value) {
+                  if (mounted) setState(() => _isRemovable = value);
+                },
                 title: Text(l10n.removable ?? 'Removable'),
               ),
             ],
@@ -175,8 +180,8 @@ class _IngredientCreationDialogState extends State<IngredientCreationDialog> {
           onPressed: _isSubmitting ? null : _handleSubmit,
           child: _isSubmitting
               ? const SizedBox(
-                  height: 20,
                   width: 20,
+                  height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2))
               : Text(l10n.create ?? 'Create'),
         ),

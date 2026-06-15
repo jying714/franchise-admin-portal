@@ -10,17 +10,19 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class SchemaIssueSidebar extends StatefulWidget {
   final List<shared.MenuItemSchemaIssue> issues;
+  final String franchiseId;
   final void Function(shared.MenuItemSchemaIssue issue, String newValue)
       onRepair;
   final VoidCallback onFullRefresh;
-  final VoidCallback? onClose;
+  final VoidCallback onNormalizeAll;
 
   const SchemaIssueSidebar({
     super.key,
     required this.issues,
+    required this.franchiseId,
     required this.onRepair,
     required this.onFullRefresh,
-    this.onClose,
+    required this.onNormalizeAll,
   });
 
   @override
@@ -29,121 +31,50 @@ class SchemaIssueSidebar extends StatefulWidget {
 
 class _SchemaIssueSidebarState extends State<SchemaIssueSidebar> {
   final Map<String, String> _pendingRepairs = {};
-  bool _isApplying = false;
-  bool _isNormalizing = false;
+  final Set<String> _resolvedKeys = {};
 
-  @override
-  void didUpdateWidget(SchemaIssueSidebar oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.issues.length != oldWidget.issues.length) {
-      setState(() => _pendingRepairs.clear());
-      shared.ErrorLogger.log(
-        message: 'Sidebar updated – issues: ${widget.issues.length}',
-        source: 'SchemaIssueSidebar',
-        severity: 'info',
-      );
-    }
-  }
+  String _compositeKey(shared.MenuItemSchemaIssue issue) =>
+      '${issue.type}_${issue.field}_${issue.missingReference ?? ''}';
 
   void _handleRepair(shared.MenuItemSchemaIssue issue, String newValue) {
-    setState(() => _pendingRepairs[issue.field] = newValue);
+    final key = _compositeKey(issue);
+    setState(() {
+      _pendingRepairs[key] = newValue;
+      _resolvedKeys.add(key);
+    });
     widget.onRepair(issue, newValue);
     widget.onFullRefresh();
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('✅ Fix applied • Issue resolved'),
+        backgroundColor: Colors.green));
   }
 
-  Future<void> _handleApplyAll() async {
-    setState(() => _isApplying = true);
-    for (final issue in widget.issues) {
-      final pending = _pendingRepairs[issue.field];
-      if (pending != null) {
-        widget.onRepair(issue, pending);
-      }
-    }
-    await Future.delayed(const Duration(milliseconds: 300));
+  void _handleNormalizeAll() {
+    widget.onNormalizeAll();
     widget.onFullRefresh();
-    setState(() {
-      _pendingRepairs.clear();
-      _isApplying = false;
-    });
-    widget.onClose?.call();
-  }
-
-  Future<void> _normalizeAll() async {
-    final loc = AppLocalizations.of(context)!;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Normalize All References?'),
-        content: Text(
-          'This will automatically fix legacy category/ingredient/type IDs '
-          'by matching names to current franchise data.\n\n'
-          'This action is safe and reversible via Firestore history.\n\n'
-          'Continue?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(loc.cancel ?? 'Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Normalize All'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    setState(() => _isNormalizing = true);
-
-    try {
-      final menuProvider =
-          Provider.of<shared.MenuItemProvider>(context, listen: false);
-      final result = await menuProvider.normalizeSchemaReferences();
-
-      widget.onFullRefresh();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Normalized ${result['menuItems'] ?? 0} menu items, '
-                '${result['categories'] ?? 0} categories, etc.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Normalization failed. Check logs.')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isNormalizing = false);
-    }
+    setState(() => _resolvedKeys.clear());
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('✅ All references normalized'),
+        backgroundColor: Colors.green));
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final unresolved = widget.issues.where((i) => !i.resolved).toList();
-    final l10n = AppLocalizations.of(context)!;
+    final unresolved = widget.issues
+        .where((i) => !i.resolved && !_resolvedKeys.contains(_compositeKey(i)))
+        .toList();
+    final loc = AppLocalizations.of(context)!;
 
     return Container(
       width: 380,
       decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        border: Border(left: BorderSide(color: theme.dividerColor)),
+        color: Theme.of(context).scaffoldBackgroundColor,
+        border: Border(left: BorderSide(color: Theme.of(context).dividerColor)),
       ),
       child: Column(
         children: [
-          // Header
-          Container(
+          Padding(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: theme.dividerColor)),
-            ),
             child: Row(
               children: [
                 Text('Schema Issues', style: UiConfig.titleStyle),
@@ -154,81 +85,101 @@ class _SchemaIssueSidebarState extends State<SchemaIssueSidebar> {
                       unresolved.isEmpty ? Colors.green : Colors.orange,
                 ),
                 IconButton(
-                    icon: const Icon(Icons.close), onPressed: widget.onClose),
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
               ],
             ),
           ),
-
-          if (unresolved.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: ElevatedButton.icon(
-                onPressed: _isNormalizing ? null : _normalizeAll,
-                icon: _isNormalizing
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.auto_fix_high),
-                label: Text(_isNormalizing
-                    ? 'Normalizing...'
-                    : 'Normalize All References'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                ),
-              ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ElevatedButton.icon(
+              onPressed: _handleNormalizeAll,
+              icon: const Icon(Icons.auto_fix_high),
+              label: const Text('Normalize All References (Phase 1)'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
             ),
-
+          ),
+          const Divider(),
           Expanded(
             child: unresolved.isEmpty
-                ? Center(
-                    child: Text(
-                      'No schema issues found',
-                      style: UiConfig.bodyStyle,
+                ? const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.green, size: 48),
+                        Text('✅ All clean!',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
+                      ],
                     ),
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.all(12),
                     itemCount: unresolved.length,
-                    itemBuilder: (context, index) {
-                      final issue = unresolved[index];
-                      return _RepairTile(
-                        issue: issue,
-                        pendingValue: _pendingRepairs[issue.field],
-                        onRepair: (value) => _handleRepair(issue, value),
-                        onCreateNew: () => _showCreationDialog(context, issue),
+                    itemBuilder: (_, i) {
+                      final issue = unresolved[i];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.error_outline,
+                                      color: Colors.orange),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      issue.displayMessage,
+                                      style: UiConfig.bodyStyle,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Current: ${issue.missingReference ?? "unknown"}',
+                                style:
+                                    UiConfig.bodyStyle.copyWith(fontSize: 13),
+                              ),
+                              const SizedBox(height: 12),
+                              _RepairDropdown(
+                                issue: issue,
+                                currentValue:
+                                    issue.missingReference ?? 'MARK_RESOLVED',
+                                pendingValue:
+                                    _pendingRepairs[_compositeKey(issue)],
+                                franchiseId: widget.franchiseId,
+                                onSelected: (v) =>
+                                    v != null ? _handleRepair(issue, v) : null,
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  TextButton.icon(
+                                    icon: const Icon(Icons.add_circle,
+                                        color: Colors.blue),
+                                    label: const Text('Create New'),
+                                    onPressed: () => _showCreationDialog(issue),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       );
                     },
                   ),
           ),
-
-          // Bottom Bar
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: widget.onClose,
-                    child: Text(l10n.cancel ?? 'Close'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: unresolved.isEmpty || _isApplying
-                        ? null
-                        : _handleApplyAll,
-                    child: _isApplying
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('Apply All Fixes'),
-                  ),
-                ),
-              ],
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close Sidebar'),
             ),
           ),
         ],
@@ -236,21 +187,16 @@ class _SchemaIssueSidebarState extends State<SchemaIssueSidebar> {
     );
   }
 
-  void _showCreationDialog(
-      BuildContext context, shared.MenuItemSchemaIssue issue) {
-    final l10n = AppLocalizations.of(context)!;
-    final franchiseProvider = Provider.of<shared.FranchiseProvider>(
-      context,
-      listen: false,
-    );
+  void _showCreationDialog(shared.MenuItemSchemaIssue issue) {
+    final loc = AppLocalizations.of(context)!;
+    final franchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
 
     if (issue.type == shared.MenuItemSchemaIssueType.category) {
       showDialog(
         context: context,
-        builder: (_) => CategoryCreationDialog(
-          loc: l10n,
-          suggestedName: issue.label,
-        ),
+        builder: (_) =>
+            CategoryCreationDialog(loc: loc, suggestedName: issue.label),
       ).then((newCat) {
         if (newCat != null)
           _handleRepair(issue, (newCat as shared.Category).id);
@@ -259,7 +205,7 @@ class _SchemaIssueSidebarState extends State<SchemaIssueSidebar> {
       showDialog(
         context: context,
         builder: (_) => IngredientCreationDialog(
-          loc: l10n,
+          loc: loc,
           suggestedName: issue.label,
           availableTypeIds:
               franchiseProvider.currentFranchiseIngredientTypeIds ?? [],
@@ -273,10 +219,8 @@ class _SchemaIssueSidebarState extends State<SchemaIssueSidebar> {
     } else {
       showDialog(
         context: context,
-        builder: (_) => IngredientTypeCreationDialog(
-          loc: l10n,
-          suggestedName: issue.label,
-        ),
+        builder: (_) =>
+            IngredientTypeCreationDialog(loc: loc, suggestedName: issue.label),
       ).then((newType) {
         if (newType != null)
           _handleRepair(issue, (newType as shared.IngredientType).id!);
@@ -285,119 +229,75 @@ class _SchemaIssueSidebarState extends State<SchemaIssueSidebar> {
   }
 }
 
-class _RepairTile extends StatelessWidget {
+// _RepairDropdown kept 100% from your latest local (conditional + always-current-value + ValueKey)
+class _RepairDropdown extends StatelessWidget {
   final shared.MenuItemSchemaIssue issue;
+  final String currentValue;
   final String? pendingValue;
-  final ValueChanged<String> onRepair;
-  final VoidCallback onCreateNew;
+  final String franchiseId;
+  final ValueChanged<String?> onSelected;
 
-  const _RepairTile({
+  const _RepairDropdown({
     super.key,
     required this.issue,
-    required this.pendingValue,
-    required this.onRepair,
-    required this.onCreateNew,
+    required this.currentValue,
+    this.pendingValue,
+    required this.franchiseId,
+    required this.onSelected,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final catProvider =
+        Provider.of<shared.CategoryProvider>(context, listen: false);
+    final ingProvider =
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
+    final typeProvider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(issue.displayMessage, style: UiConfig.bodyStyle),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: (pendingValue ?? issue.missingReference ?? '')
-                            .isNotEmpty
-                        ? (pendingValue ?? issue.missingReference)
-                        : null,
-                    items: _buildDropdownItems(context, issue),
-                    onChanged: (v) {
-                      if (v != null) onRepair(v);
-                    },
-                    decoration: const InputDecoration(
-                      labelText: 'Fix →',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                    onPressed: onCreateNew,
-                    icon: const Icon(Icons.add_circle, color: Colors.green)),
-                IconButton(
-                    onPressed: () => onRepair('__MARK_RESOLVED__'),
-                    icon: const Icon(Icons.check_circle, color: Colors.blue)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+    final categories = catProvider.categories;
+    final ingredients = ingProvider.ingredients;
+    final ingredientTypes = typeProvider.ingredientTypes;
 
-  List<DropdownMenuItem<String>> _buildDropdownItems(
-      BuildContext context, shared.MenuItemSchemaIssue issue) {
-    final items = <DropdownMenuItem<String>>[];
-    final currentValue = pendingValue ?? issue.missingReference ?? '';
+    final items = <DropdownMenuItem<String>>[
+      DropdownMenuItem(
+          value: currentValue, child: Text('Current: $currentValue')),
+    ];
 
-    // 1. Always add the current value first (prevents assertion)
-    if (currentValue.isNotEmpty) {
-      items.add(DropdownMenuItem(
-        value: currentValue,
-        child: Text(currentValue == '__MARK_RESOLVED__'
-            ? '✅ Mark resolved (mobile safe)'
-            : 'Current: $currentValue'),
-      ));
-    }
-
-    // 2. Add real options from providers
     if (issue.type == shared.MenuItemSchemaIssueType.category) {
-      final cats = Provider.of<shared.CategoryProvider>(context, listen: false)
-          .categories;
-      for (final c in cats) {
-        if (c.id.isNotEmpty) {
-          items.add(DropdownMenuItem(
-              value: c.id, child: Text('${c.name} (${c.id})')));
-        }
-      }
+      items.addAll(categories.map(
+          (c) => DropdownMenuItem(value: c.id, child: Text('Cat: ${c.name}'))));
     } else if (issue.type == shared.MenuItemSchemaIssueType.ingredient) {
-      final ings =
-          Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
-              .allIngredients;
-      for (final i in ings) {
-        if (i.id.isNotEmpty) {
-          items.add(DropdownMenuItem(value: i.id, child: Text(i.name)));
-        }
-      }
+      items.addAll(ingredients.map(
+          (i) => DropdownMenuItem(value: i.id, child: Text('Ing: ${i.name}'))));
+    } else if (issue.type == shared.MenuItemSchemaIssueType.ingredientType) {
+      items.addAll(ingredientTypes.map((t) =>
+          DropdownMenuItem(value: t.id!, child: Text('Type: ${t.name}'))));
     } else {
-      final types =
-          Provider.of<shared.IngredientTypeProvider>(context, listen: false)
-              .ingredientTypes;
-      for (final t in types) {
-        if (t.id?.isNotEmpty == true) {
-          items.add(DropdownMenuItem(value: t.id!, child: Text(t.name)));
-        }
-      }
+      items.addAll([
+        ...categories.map((c) =>
+            DropdownMenuItem(value: c.id, child: Text('Cat: ${c.name}'))),
+        ...ingredients.map((i) =>
+            DropdownMenuItem(value: i.id, child: Text('Ing: ${i.name}'))),
+        ...ingredientTypes.map((t) =>
+            DropdownMenuItem(value: t.id!, child: Text('Type: ${t.name}'))),
+      ]);
     }
 
-    // 3. Safety net (add only if not already present)
-    if (!items.any((item) => item.value == '__MARK_RESOLVED__')) {
-      items.add(const DropdownMenuItem(
-        value: '__MARK_RESOLVED__',
-        child: Text('✅ Mark resolved (mobile safe)'),
-      ));
-    }
+    items.add(const DropdownMenuItem(
+        value: 'MARK_RESOLVED', child: Text('✅ Mark Resolved')));
 
-    return items;
+    final effective = pendingValue ??
+        (items.any((i) => i.value == currentValue) ? currentValue : null);
+
+    return DropdownButtonFormField<String>(
+      key: ValueKey('${issue.field}_${currentValue}_${items.length}'),
+      value: effective,
+      items: items,
+      onChanged: onSelected,
+      isExpanded: true,
+      decoration: const InputDecoration(
+          border: InputBorder.none, contentPadding: EdgeInsets.zero),
+    );
   }
 }

@@ -242,56 +242,39 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 // Inside AdminDashboardScreen _AdminDashboardScreenState build(), replace the Expanded child LayoutBuilder with this:
 
                 Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      // === LIVE ALIASES (safe, no rebuilds during build) ===
-                      final featureProv =
-                          Provider.of<FranchiseFeatureProviderImpl>(context,
-                              listen: false);
-                      final infoProv = Provider.of<FranchiseInfoProviderImpl>(
-                          context,
-                          listen: false);
-                      final metaProv =
-                          Provider.of<IngredientMetadataProviderImpl>(context,
-                              listen: false);
-                      final catProv = Provider.of<CategoryProviderImpl>(context,
-                          listen: false);
-                      final typeProv = Provider.of<IngredientTypeProviderImpl>(
-                          context,
-                          listen: false);
-                      final menuItemProv = Provider.of<MenuItemProviderImpl>(
-                          context,
-                          listen: false);
-                      final onboardingProg =
-                          Provider.of<OnboardingProgressProviderImpl>(context,
-                              listen: false);
-                      final subscriptionProv =
-                          Provider.of<FranchiseSubscriptionProviderImpl>(
-                              context,
-                              listen: false);
-
+                  child: Builder(
+                    builder: (context) {
                       return MultiProvider(
                         providers: [
-                          Provider<shared.FranchiseFeatureProvider>.value(
-                              value: featureProv),
-                          Provider<shared.FranchiseInfoProvider>.value(
-                              value: infoProv),
-                          Provider<shared.IngredientMetadataProvider>.value(
-                              value: metaProv),
-                          Provider<shared.CategoryProvider>.value(
-                              value: catProv),
-                          Provider<shared.IngredientTypeProvider>.value(
-                              value: typeProv),
-                          Provider<shared.MenuItemProvider>.value(
-                              value: menuItemProv),
-                          Provider<shared.OnboardingProgressProvider>.value(
-                              value: onboardingProg),
                           Provider<shared.FranchiseSubscriptionProvider>.value(
-                              value: subscriptionProv),
-
-                          // Corrected provider line
-                          Provider<shared.FirebaseStorageService>.value(
-                              value: FirebaseStorageServiceImpl()),
+                              value: Provider.of<
+                                      FranchiseSubscriptionProviderImpl>(
+                                  context,
+                                  listen: false)),
+                          Provider<shared.CategoryProvider>.value(
+                              value: Provider.of<CategoryProviderImpl>(context,
+                                  listen: false)),
+                          Provider<shared.IngredientTypeProvider>.value(
+                              value: Provider.of<IngredientTypeProviderImpl>(
+                                  context,
+                                  listen: false)),
+                          Provider<shared.IngredientMetadataProvider>.value(
+                              value:
+                                  Provider.of<IngredientMetadataProviderImpl>(
+                                      context,
+                                      listen: false)),
+                          Provider<shared.MenuItemProvider>.value(
+                              value: Provider.of<MenuItemProviderImpl>(context,
+                                  listen: false)),
+                          Provider<shared.FranchiseInfoProvider>.value(
+                              value: Provider.of<FranchiseInfoProviderImpl>(
+                                  context,
+                                  listen: false)),
+                          Provider<shared.OnboardingProgressProvider>.value(
+                              value:
+                                  Provider.of<OnboardingProgressProviderImpl>(
+                                      context,
+                                      listen: false)),
                         ],
                         child: IndexedStack(
                           index: _selectedIndex,

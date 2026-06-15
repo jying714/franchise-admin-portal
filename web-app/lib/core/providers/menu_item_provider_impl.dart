@@ -9,9 +9,10 @@ class MenuItemProviderImpl extends ChangeNotifier
   final shared.FirestoreService _firestoreService;
   final shared.FranchiseInfoProvider _franchiseInfoProvider;
 
-  late shared.IngredientMetadataProvider _ingredientProvider;
-  late shared.CategoryProvider _categoryProvider;
-  late shared.IngredientTypeProvider _typeProvider;
+  // Injected dependencies - these were late and never initialized
+  final shared.IngredientMetadataProvider _ingredientProvider;
+  final shared.CategoryProvider _categoryProvider;
+  final shared.IngredientTypeProvider _typeProvider;
 
   List<shared.MenuTemplateRef> _templateRefs = [];
   bool _templateRefsLoading = false;
@@ -31,8 +32,14 @@ class MenuItemProviderImpl extends ChangeNotifier
   MenuItemProviderImpl({
     required shared.FirestoreService firestoreService,
     required shared.FranchiseInfoProvider franchiseInfoProvider,
+    required shared.IngredientMetadataProvider ingredientProvider,
+    required shared.CategoryProvider categoryProvider,
+    required shared.IngredientTypeProvider typeProvider,
   })  : _firestoreService = firestoreService,
-        _franchiseInfoProvider = franchiseInfoProvider;
+        _franchiseInfoProvider = franchiseInfoProvider,
+        _ingredientProvider = ingredientProvider,
+        _categoryProvider = categoryProvider,
+        _typeProvider = typeProvider;
 
   @override
   List<shared.MenuItem> get menuItems => _working;

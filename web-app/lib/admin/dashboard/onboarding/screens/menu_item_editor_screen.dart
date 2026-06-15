@@ -21,34 +21,21 @@ class _MenuItemEditorScreenState extends State<MenuItemEditorScreen> {
   List<shared.MenuItemSchemaIssue> _schemaIssues = [];
 
   void _handleSchemaIssueUpdate(List<shared.MenuItemSchemaIssue> updated) {
-    print('[MenuItemEditorScreen] Schema issues updated:');
-    for (final issue in updated) {
-      print(' - ${issue.displayMessage} | resolved=${issue.resolved}');
+    if (mounted) {
+      setState(() {
+        _schemaIssues = updated;
+      });
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        setState(() {
-          _schemaIssues = updated;
-          debugPrint(
-              '[DEBUG] Schema issues updated: ${updated.length} issue(s)');
-        });
-      }
-    });
   }
 
   void _handleRepair(shared.MenuItemSchemaIssue issue, String newValue) {
-    final sheet = _sheetKey.currentState;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      print(
-          '[MenuItemEditorScreen] Repair requested for: ${issue.displayMessage}, newValue=$newValue');
-      sheet?.repairSchemaIssue(issue, newValue);
-    });
+    _sheetKey.currentState?.repairSchemaIssue(issue, newValue);
   }
 
   @override
   Widget build(BuildContext context) {
     final showSidebar = _schemaIssues.any((issue) => !issue.resolved);
-    print('[MenuItemEditorScreen] Sidebar visibility: $showSidebar');
+    // print('[MenuItemEditorScreen] Sidebar visibility: $showSidebar');
 
     final sidebarWidth = showSidebar ? 420.0 : 64.0;
 
@@ -75,20 +62,32 @@ class _MenuItemEditorScreenState extends State<MenuItemEditorScreen> {
           width: sidebarWidth,
           child: SchemaIssueSidebar(
             issues: _schemaIssues,
+            franchiseId:
+                Provider.of<shared.FranchiseProvider>(context, listen: false)
+                    .franchiseId,
             onRepair: _handleRepair,
             onFullRefresh: () {
-              // Trigger full re-validation from editor
               _sheetKey.currentState?.repairSchemaIssue(
-                shared.MenuItemSchemaIssue(
+                const shared.MenuItemSchemaIssue(
                   type: shared.MenuItemSchemaIssueType.missingField,
                   missingReference: '',
                   field: 'refresh',
                 ),
                 '',
               );
-              _handleSchemaIssueUpdate(_schemaIssues); // refresh list
             },
-            onClose: () => setState(() => _schemaIssues.clear()),
+            onNormalizeAll: () {
+              Provider.of<shared.MenuItemProvider>(context, listen: false)
+                  .normalizeSchemaReferences();
+              _sheetKey.currentState?.repairSchemaIssue(
+                const shared.MenuItemSchemaIssue(
+                  type: shared.MenuItemSchemaIssueType.missingField,
+                  missingReference: '',
+                  field: 'refresh',
+                ),
+                '',
+              );
+            },
           ),
         ),
       ],

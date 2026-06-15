@@ -44,7 +44,7 @@ class _MenuItemTemplateDropdownState extends State<MenuItemTemplateDropdown> {
     final loading =
         context.watch<shared.MenuItemProvider>().templateRefsLoading;
 
-    print('[DEBUG] selectedTemplateId: $_selectedTemplateId');
+    // print('[DEBUG] selectedTemplateId: $_selectedTemplateId');
     // print(
     //     '[DEBUG] Available templateRefs: ${templateRefs.map((t) => t.id).toList()}');
 

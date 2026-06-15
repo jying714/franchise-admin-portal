@@ -65,7 +65,7 @@ class FeatureGuard extends StatelessWidget {
 
     if (!isGranted) {
       assert(() {
-        debugPrint('⚠️ FeatureGuard: Module "$module" not found in plan.');
+        // debugPrint('⚠️ FeatureGuard: Module "$module" not found in plan.');
         return true;
       }());
       return fallback;
