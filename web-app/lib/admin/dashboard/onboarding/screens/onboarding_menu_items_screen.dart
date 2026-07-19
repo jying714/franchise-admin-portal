@@ -13,6 +13,8 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_i
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.dart';
 import 'package:franchise_admin_portal/config/ui_config.dart';
+import 'package:uuid/uuid.dart';
+import 'package:franchise_admin_portal/core/services/admin_firestore_service.dart';
 
 class OnboardingMenuItemsScreen extends StatefulWidget {
   const OnboardingMenuItemsScreen({super.key});
@@ -164,25 +166,50 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
   }
 
   void _onFullRefresh() {
-    final currentItem =
-        _editingItem ?? _editorKey.currentState?.currentEditingItem;
-    if (currentItem != null) {
-      _checkForSchemaIssues(currentItem);
+    final draft = _editorKey.currentState?.currentDraft ?? _editingItem;
+    if (draft != null) {
+      _checkForSchemaIssues(draft);
     } else {
       setState(() => _inlineSchemaIssues = []);
     }
-    // Ensure save button enables
-    if (_inlineSchemaIssues.isEmpty) {
-      setState(() => _isEditing = _isEditing); // trigger rebuild
+  }
+
+  void _onNormalizeAll() {
+    final editorState = _editorKey.currentState;
+    if (editorState != null) {
+      // Call normalize on the session / provider if exposed
+      // For now, trigger refresh + recompute
+      editorState.repairSchemaIssue(
+        const shared.MenuItemSchemaIssue(
+          type: shared.MenuItemSchemaIssueType.missingField,
+          field: 'normalize',
+          missingReference: '',
+        ),
+        '',
+      );
+      _onFullRefresh();
     }
   }
 
-  void openEditor({shared.MenuItem? item}) {
-    print(
-        '[OnboardingMenuItemsScreen] openEditor called for item: ${item?.name ?? "new"}');
+  void openEditor(shared.MenuItem item) {
     setState(() {
-      _isEditing = true;
       _editingItem = item;
+      _isEditing = true;
+      _inlineSchemaIssues = []; // clear stale
+    });
+
+    // Force initial computation after render
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _onFullRefresh();
+      _editorKey.currentState?.repairSchemaIssue(
+        // dummy to trigger
+        const shared.MenuItemSchemaIssue(
+          type: shared.MenuItemSchemaIssueType.missingField,
+          field: 'init',
+          missingReference: '',
+        ),
+        '',
+      );
     });
   }
 
@@ -480,27 +507,53 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                   listen: false)
                               .franchiseId,
                           onSave: (updatedItem) async {
+                            final adminService = AdminFirestoreService();
+                            final franchiseId =
+                                Provider.of<shared.FranchiseProvider>(context,
+                                        listen: false)
+                                    .franchiseId;
+
                             final menuProvider =
                                 Provider.of<shared.MenuItemProvider>(context,
                                     listen: false);
 
-                            // Do not await if it returns void
                             menuProvider.addOrUpdateMenuItem(updatedItem);
-                            await menuProvider
-                                .persistChanges(); // This is the important one
 
-                            if (mounted) {
-                              setState(() => _isEditing = false);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('✅ Item saved to Firestore'),
-                                  backgroundColor: Colors.green,
-                                ),
+                            try {
+                              // Correct call pattern for AdminFirestoreService
+                              await adminService.saveMenuItem(
+                                franchiseId: franchiseId,
+                                menuItem: updatedItem,
                               );
+                              await menuProvider.persistChanges();
+
+                              if (mounted) {
+                                setState(() => _isEditing = false);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('✅ Item saved to Firestore'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            } catch (e, stack) {
+                              shared.ErrorLogger.log(
+                                message: 'save_menu_item_failed',
+                                stack: stack.toString(),
+                                source: 'onboarding_menu_items_screen',
+                                severity: 'error',
+                              );
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('❌ Save failed: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
                             }
                           },
                           onCancel: () => setState(() => _isEditing = false),
-                          onSchemaIssuesChanged: _onSchemaIssuesChanged,
                         ),
                       ),
                       const VerticalDivider(
@@ -508,19 +561,19 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                       Expanded(
                         flex: 2,
                         child: SchemaIssueSidebar(
-                          issues: _inlineSchemaIssues,
+                          issues: _editorKey.currentState?.currentIssues ??
+                              _inlineSchemaIssues,
                           franchiseId: Provider.of<shared.FranchiseProvider>(
                                   context,
                                   listen: false)
                               .franchiseId,
-                          onRepair: _handleRepair,
-                          onFullRefresh: _onFullRefresh,
-                          onNormalizeAll: () {
-                            Provider.of<shared.MenuItemProvider>(context,
-                                    listen: false)
-                                .normalizeSchemaReferences();
+                          onRepair: (issue, value) {
+                            _editorKey.currentState
+                                ?.repairSchemaIssue(issue, value);
                             _onFullRefresh();
                           },
+                          onFullRefresh: _onFullRefresh,
+                          onNormalizeAll: _onNormalizeAll,
                         ),
                       ),
                     ],
@@ -630,7 +683,21 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                   ElevatedButton.icon(
                                     icon: const Icon(Icons.add),
                                     label: const Text('Create First Menu Item'),
-                                    onPressed: () => openEditor(),
+                                    onPressed: () => openEditor(shared.MenuItem(
+                                      id: const Uuid().v4(),
+                                      name: 'New Item',
+                                      price: 0.0,
+                                      categoryId: '',
+                                      category: '',
+                                      available: true,
+                                      availability: true,
+                                      description: '',
+                                      customizationGroups: [],
+                                      customizations: [],
+                                      taxCategory: 'standard',
+                                      includedIngredients: [],
+                                      optionalAddOns: [],
+                                    )),
                                   ),
                                 ],
                               )
@@ -657,7 +724,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                             _selectedIds.remove(item.id);
                                         });
                                       },
-                                      onEdit: () => openEditor(item: item),
+                                      onEdit: () => openEditor(item),
                                       onDelete: () async {
                                         /* your exact delete dialog unchanged */
                                       },
@@ -672,8 +739,23 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             IconButton(
-                                icon: const Icon(Icons.add),
-                                onPressed: () => openEditor()),
+                              icon: const Icon(Icons.add),
+                              onPressed: () => openEditor(shared.MenuItem(
+                                id: const Uuid().v4(),
+                                name: 'New Item',
+                                price: 0.0,
+                                categoryId: '',
+                                category: '',
+                                available: true,
+                                availability: true,
+                                description: '',
+                                customizationGroups: [],
+                                customizations: [],
+                                taxCategory: 'standard',
+                                includedIngredients: [],
+                                optionalAddOns: [],
+                              )),
+                            ),
                             const SizedBox(width: 16),
                             OutlinedButton.icon(
                                 icon: const Icon(Icons.import_export),

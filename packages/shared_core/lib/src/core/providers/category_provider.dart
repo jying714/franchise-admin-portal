@@ -49,4 +49,12 @@ abstract class CategoryProvider {
   bool stageIfNew({required String id, required String name});
   Future<List<OnboardingValidationIssue>> validate(
       {List<String>? referencedCategoryIds});
+
+  /// Industry-standard unique categories by id (stable order).
+  /// Use this in all dropdowns and lists to prevent duplicate key assertions.
+  List<Category> get uniqueCategories;
+
+  /// Resolves a menu-item categoryId (including legacy 'cat_pizza' prefixes) to a valid
+  /// category id from the loaded list, or null if no match.
+  String? resolveCategoryId(String? rawId);
 }

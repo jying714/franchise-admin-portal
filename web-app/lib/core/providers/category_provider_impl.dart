@@ -32,6 +32,40 @@ class CategoryProviderImpl extends ChangeNotifier
   @override
   List<shared.Category> get categories => List.unmodifiable(_current);
 
+  /// Industry-standard: Always returns unique categories by id (stable order)
+  /// Use this everywhere in UI (dropdowns, lists, etc.)
+  @override
+  List<shared.Category> get uniqueCategories {
+    final seen = <String, shared.Category>{};
+    for (final cat in _current) {
+      seen[cat.id] = cat;
+    }
+    return seen.values.toList(growable: false);
+  }
+
+  @override
+  String? resolveCategoryId(String? rawId) {
+    if (rawId == null || rawId.trim().isEmpty) return null;
+    final cats = uniqueCategories;
+
+    // Exact match
+    if (cats.any((c) => c.id == rawId)) return rawId;
+
+    // Case-insensitive
+    final ci =
+        cats.firstWhereOrNull((c) => c.id.toLowerCase() == rawId.toLowerCase());
+    if (ci != null) return ci.id;
+
+    // Legacy prefix: cat_pizza → pizza
+    var stripped = rawId.trim();
+    if (stripped.startsWith('cat_')) stripped = stripped.substring(4);
+    final legacy = cats.firstWhereOrNull((c) =>
+        c.id == stripped ||
+        c.id.toLowerCase() == stripped.toLowerCase() ||
+        c.name.trim().toLowerCase() == stripped.toLowerCase());
+    return legacy?.id;
+  }
+
   @override
   bool get isLoading => _loading;
 
@@ -102,17 +136,25 @@ class CategoryProviderImpl extends ChangeNotifier
     notifyListeners();
 
     try {
-      // Use admin service stream (first emission gives current data)
       final fetched = await _firestore.getCategories(franchiseId).first;
+
+      // === PERMANENT DEDUPLICATION (Industry Standard) ===
+      final uniqueMap = <String, shared.Category>{};
+      for (final cat in fetched) {
+        uniqueMap[cat.id] = cat; // Last occurrence wins, preserves order
+      }
+
       _current
         ..clear()
-        ..addAll(fetched);
-      _original = List.from(fetched);
+        ..addAll(uniqueMap.values);
+      _original = List.from(_current);
+
       _hasLoaded = true;
       _loadedFranchiseId = franchiseId;
 
       shared.ErrorLogger.log(
-        message: '✅ Category reload complete. Count=${fetched.length}',
+        message:
+            '✅ Category reload complete. Count=${_current.length} (deduplicated)',
         source: 'CategoryProviderImpl',
         severity: 'info',
       );

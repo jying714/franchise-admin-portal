@@ -49,7 +49,6 @@ class _MenuItemEditorScreenState extends State<MenuItemEditorScreen> {
             existing: widget.item,
             onCancel: () => Navigator.of(context).pop(),
             onSave: (item) => Navigator.of(context).pop(item),
-            onSchemaIssuesChanged: _handleSchemaIssueUpdate,
             firestore: FirebaseFirestore.instance,
             franchiseId:
                 Provider.of<shared.FranchiseProvider>(context, listen: false)

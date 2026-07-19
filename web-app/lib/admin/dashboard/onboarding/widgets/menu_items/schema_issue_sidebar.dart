@@ -51,8 +51,8 @@ class _SchemaIssueSidebarState extends State<SchemaIssueSidebar> {
 
   void _handleNormalizeAll() {
     widget.onNormalizeAll();
+    // Do NOT clear resolved keys blindly — let editor recompute
     widget.onFullRefresh();
-    setState(() => _resolvedKeys.clear());
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('✅ All references normalized'),
         backgroundColor: Colors.green));
@@ -187,45 +187,60 @@ class _SchemaIssueSidebarState extends State<SchemaIssueSidebar> {
     );
   }
 
-  void _showCreationDialog(shared.MenuItemSchemaIssue issue) {
+  Future<void> _showCreationDialog(shared.MenuItemSchemaIssue issue) async {
     final loc = AppLocalizations.of(context)!;
-    final franchiseProvider =
-        Provider.of<shared.FranchiseProvider>(context, listen: false);
 
     if (issue.type == shared.MenuItemSchemaIssueType.category) {
-      showDialog(
+      final catProvider =
+          Provider.of<shared.CategoryProvider>(context, listen: false);
+      final newCat = await showDialog<shared.Category>(
         context: context,
-        builder: (_) =>
-            CategoryCreationDialog(loc: loc, suggestedName: issue.label),
-      ).then((newCat) {
-        if (newCat != null)
-          _handleRepair(issue, (newCat as shared.Category).id);
-      });
-    } else if (issue.type == shared.MenuItemSchemaIssueType.ingredient) {
-      showDialog(
+        builder: (_) => CategoryCreationDialog(
+          loc: loc,
+          suggestedName: issue.label,
+        ),
+      );
+      if (newCat == null || !mounted) return;
+      await catProvider.createCategory(newCat);
+      _handleRepair(issue, newCat.id);
+      return;
+    }
+
+    if (issue.type == shared.MenuItemSchemaIssueType.ingredient) {
+      final typeProvider =
+          Provider.of<shared.IngredientTypeProvider>(context, listen: false);
+      final ingProvider = Provider.of<shared.IngredientMetadataProvider>(
+          context,
+          listen: false);
+
+      final newIng = await showDialog<shared.IngredientMetadata>(
         context: context,
         builder: (_) => IngredientCreationDialog(
           loc: loc,
           suggestedName: issue.label,
-          availableTypeIds:
-              franchiseProvider.currentFranchiseIngredientTypeIds ?? [],
-          typeIdToName:
-              franchiseProvider.currentFranchiseIngredientTypeIdToName ?? {},
+          availableTypeIds: typeProvider.allTypeIds,
+          typeIdToName: typeProvider.typeIdToName,
         ),
-      ).then((newIng) {
-        if (newIng != null)
-          _handleRepair(issue, (newIng as shared.IngredientMetadata).id);
-      });
-    } else {
-      showDialog(
-        context: context,
-        builder: (_) =>
-            IngredientTypeCreationDialog(loc: loc, suggestedName: issue.label),
-      ).then((newType) {
-        if (newType != null)
-          _handleRepair(issue, (newType as shared.IngredientType).id!);
-      });
+      );
+      if (newIng == null || !mounted) return;
+      await ingProvider.createIngredient(newIng);
+      _handleRepair(issue, newIng.id);
+      return;
     }
+
+    // Ingredient Type
+    final typeProvider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
+    final newType = await showDialog<shared.IngredientType>(
+      context: context,
+      builder: (_) => IngredientTypeCreationDialog(
+        loc: loc,
+        suggestedName: issue.label,
+      ),
+    );
+    if (newType == null || newType.id == null || !mounted) return;
+    await typeProvider.createType(widget.franchiseId, newType);
+    _handleRepair(issue, newType.id!);
   }
 }
 

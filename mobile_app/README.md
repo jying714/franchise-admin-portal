@@ -1,22 +1,23 @@
 # Doughboys Pizzeria Mobile App
 
-Customer-facing Flutter app (Android + iOS) for the multi-tenant white-label franchise platform.
+Customer-facing Flutter app (Android + iOS) for the multi-tenant white-label franchise platform.  
+**One published binary** that can serve unlimited franchises and restaurant types.
 
-## Current Status (June 06, 2026)
+## Current Status (July 19, 2026)
 
 **P2 – White-Label & Scalability: COMPLETE**  
 **P2.5 – Web-App Cleanup Sprint: COMPLETE**
 
-Core ordering flow is stable and device-tested. The app now shares the same `shared_core` architecture as the web portal.
+Core ordering flow is stable and device-tested on Samsung S25. The app now shares the same `shared_core` architecture as the web portal.
 
 ### Key Features
-- Dynamic branding per franchise (colors, logo, name, theming)
+- Dynamic branding per franchise (colors, logo, name, theming) via shared configs
 - Real-time menu with advanced customization
 - Cart, checkout, order history, and scheduled orders
 - Favorites & Loyalty system
-- QR Scanner + Deep Linking support
+- QR Scanner + Deep Linking support for franchise claiming
 - Fully franchise-scoped data under `franchises/{franchiseId}/...`
-- Shared models, providers, and services with the web admin portal
+- **Dynamic UI** — transitioning from pizzeria-hardcoded to fully config-driven (restaurantType support)
 
 ## Development
 
@@ -27,3 +28,18 @@ flutter pub get
 flutter gen-l10n
 flutter analyze
 flutter run
+
+Architecture Notes
+
+All business logic and models come from shared_core
+UI is becoming fully dynamic based on configs, FeatureGate, and restaurantType
+Offline support (menu cache + order queue) planned for MVP
+Hybrid single/multi-location behavior
+
+Related Documentation
+
+ARCHITECTURE.md
+MOBILE_DYNAMIC.md
+DASHBOARDS.md
+
+Last Updated: July 19, 2026

@@ -278,23 +278,22 @@ shared.MenuItem constructMenuItemFromEditorFields({
   required String name,
   required double price,
   required String description,
-  required String? notes,
-  required String? sku,
-  required List<String> dietaryTags,
-  required List<String> allergens,
-  required int? prepTime,
-  required int? sortOrder,
-  required String taxCategory,
-  required String? exportId,
-  required List<shared.CustomizationGroup> customizationGroups,
-  required List<shared.IngredientReference> includedIngredients,
-  required List<shared.IngredientReference> optionalAddOns,
-  required List<shared.Customization> customizations,
-  required String imageUrl,
-  required shared.NutritionInfo? nutrition,
-  required List<String> selectedTemplateRefs,
-  required List<shared.SizeData> sizeData,
-  // --- Advanced ---
+  String? notes,
+  String? sku,
+  List<String> dietaryTags = const [],
+  List<String> allergens = const [],
+  int? prepTime,
+  int? sortOrder,
+  String taxCategory = 'standard',
+  String? exportId,
+  List<shared.CustomizationGroup> customizationGroups = const [],
+  List<shared.IngredientReference> includedIngredients = const [],
+  List<shared.IngredientReference> optionalAddOns = const [],
+  List<shared.Customization> customizations = const [],
+  String imageUrl = '',
+  shared.NutritionInfo? nutrition,
+  List<String> selectedTemplateRefs = const [],
+  List<shared.SizeData> sizeData = const [],
   List<String>? crustTypes,
   List<String>? cookTypes,
   List<String>? cutStyles,
@@ -345,15 +344,15 @@ shared.MenuItem constructMenuItemFromEditorFields({
     includedIngredients: includedIngredients.map((i) => i.toMap()).toList(),
     optionalAddOns: optionalAddOns.map((i) => i.toMap()).toList(),
     customizations: customizations,
-    image: imageUrl,
+    image: imageUrl, // Matches your MenuItem 'image' field
     nutrition: nutrition,
     templateRefs: selectedTemplateRefs,
     sizes: sizeData,
     crustTypes: crustTypes ?? [],
-    cookTypes: cookTypes,
-    cutStyles: cutStyles,
-    sauceOptions: sauceOptions,
-    dressingOptions: dressingOptions,
+    cookTypes: cookTypes ?? [],
+    cutStyles: cutStyles ?? [],
+    sauceOptions: sauceOptions ?? [],
+    dressingOptions: dressingOptions ?? [],
     maxFreeToppings: maxFreeToppings,
     maxFreeSauces: maxFreeSauces,
     maxFreeDressings: maxFreeDressings,
@@ -478,4 +477,134 @@ shared.MenuItem buildPreviewMenuItem({
     taxCategory: 'standard',
     customizationGroups: [],
   );
+}
+
+shared.MenuItem repairMenuItem(
+  shared.MenuItem item,
+  shared.MenuItemSchemaIssue issue,
+  String newValue,
+) {
+  final included = ingredientRefsFromDraft(item.includedIngredients);
+  final optional = ingredientRefsFromDraft(item.optionalAddOns);
+  final groups = customizationGroupsFromDraft(item.customizationGroups);
+
+  bool changed = repairMenuItemSchemaIssue(
+    issue: issue,
+    newValue: newValue,
+    updateCategoryId: (v) => item = item.copyWith(categoryId: v),
+    includedIngredients: included,
+    optionalAddOns: optional,
+    customizationGroups: groups,
+  );
+
+  if (!changed) return item;
+
+  return item.copyWith(
+    includedIngredients: ingredientRefsToDraft(included),
+    optionalAddOns: ingredientRefsToDraft(optional),
+    customizationGroups: customizationGroupsToDraft(groups),
+  );
+}
+
+shared.MenuItem applyTemplateToDraft(
+    shared.MenuItem draft, shared.MenuItem template) {
+  final fields = extractTemplateFieldsForEditor(template, []);
+
+  return draft.copyWith(
+    name: fields['name'] as String? ?? draft.name,
+    description: fields['description'] as String? ?? draft.description,
+    price: fields['price'] as double? ?? draft.price,
+    categoryId: fields['categoryId'] as String? ?? draft.categoryId,
+    image: fields['imageUrl'] as String? ?? draft.image,
+    nutrition: fields['nutrition'] as shared.NutritionInfo?,
+    includedIngredients: (fields['includedIngredients'] as List?)
+            ?.map((e) => e is shared.IngredientReference
+                ? e.toMap() // Convert back to Map for MenuItem model
+                : e as Map<String, dynamic>)
+            .toList() ??
+        draft.includedIngredients ??
+        [],
+    optionalAddOns: (fields['optionalAddOns'] as List?)
+            ?.map((e) => e is shared.IngredientReference
+                ? e.toMap()
+                : e as Map<String, dynamic>)
+            .toList() ??
+        draft.optionalAddOns ??
+        [],
+    customizationGroups: (fields['customizationGroups'] as List?)
+            ?.map((g) => g is shared.CustomizationGroup
+                ? g.toMap()
+                : g as Map<String, dynamic>)
+            .toList() ??
+        draft.customizationGroups ??
+        [],
+    sizes: fields['sizeData'] as List<shared.SizeData>? ?? draft.sizes,
+    templateRefs:
+        fields['selectedTemplateRefs'] as List<String>? ?? draft.templateRefs,
+  );
+}
+
+// Helper for empty draft (used in editor initState)
+shared.MenuItem emptyDraft() {
+  return shared.MenuItem(
+    id: '',
+    name: '',
+    description: '',
+    price: 0.0,
+    categoryId: '',
+    category: '',
+    available: true,
+    availability: true,
+    image: '', // Matches MenuItem 'image' field
+    taxCategory: 'standard', // Required
+    sizes: [],
+    customizationGroups: [],
+    includedIngredients: [], // Use empty list (model expects List<Map> or references depending on shared)
+    optionalAddOns: [],
+    customizations: [],
+  );
+}
+
+// ── Draft (maps) ↔ Editor (typed) helpers ─────────────────────────────
+List<shared.IngredientReference> ingredientRefsFromDraft(List<dynamic>? raw) {
+  if (raw == null || raw.isEmpty) return const [];
+  return raw
+      .map((e) => e is shared.IngredientReference
+          ? e
+          : shared.IngredientReference.fromMap(
+              Map<String, dynamic>.from(e as Map)))
+      .toList(growable: false);
+}
+
+List<shared.CustomizationGroup> customizationGroupsFromDraft(
+    List<dynamic>? raw) {
+  if (raw == null || raw.isEmpty) return const [];
+  return raw
+      .map((g) => g is shared.CustomizationGroup
+          ? g
+          : shared.CustomizationGroup.fromMap(
+              Map<String, dynamic>.from(g as Map)))
+      .toList(growable: false);
+}
+
+List<Map<String, dynamic>> ingredientRefsToDraft(List<dynamic>? raw) {
+  if (raw == null || raw.isEmpty) return const [];
+  return raw
+      .map((e) => e is shared.IngredientReference
+          ? e.toMap()
+          : e is Map<String, dynamic>
+              ? e
+              : Map<String, dynamic>.from(e as Map))
+      .toList(growable: false);
+}
+
+List<Map<String, dynamic>> customizationGroupsToDraft(List<dynamic>? raw) {
+  if (raw == null || raw.isEmpty) return const [];
+  return raw
+      .map((g) => g is shared.CustomizationGroup
+          ? g.toMap()
+          : g is Map<String, dynamic>
+              ? g
+              : Map<String, dynamic>.from(g as Map))
+      .toList(growable: false);
 }

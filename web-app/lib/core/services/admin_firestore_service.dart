@@ -1754,4 +1754,69 @@ class AdminFirestoreService extends shared.FirestoreServiceImpl {
       rethrow;
     }
   }
+
+  /// Saves or updates a single MenuItem (Admin path)
+  /// Saves or updates a single MenuItem (Admin path - web only)
+  Future<void> saveMenuItem({
+    required String franchiseId,
+    required shared.MenuItem menuItem,
+  }) async {
+    if (franchiseId.isEmpty || menuItem.id.isEmpty) {
+      throw ArgumentError('franchiseId and menuItem.id are required');
+    }
+
+    try {
+      final docRef = firestore.FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('menu_items')
+          .doc(menuItem.id);
+
+      final data = menuItem
+          .toMap(); // Use .toMap() as defined in your shared MenuItem model
+
+      await docRef.set(data, firestore.SetOptions(merge: true));
+
+      shared.ErrorLogger.log(
+        message: 'MenuItem saved successfully',
+        source: 'AdminFirestoreService.saveMenuItem',
+        severity: 'info',
+      );
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to save menu item',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.saveMenuItem',
+        severity: 'error',
+      );
+      rethrow;
+    }
+  }
+
+  /// Batch save multiple menu items
+  @override
+  Future<void> saveMenuItems(
+      String franchiseId, List<shared.MenuItem> menuItems) async {
+    if (franchiseId.isEmpty) throw ArgumentError('franchiseId required');
+
+    final batch = firestore.FirebaseFirestore.instance.batch();
+    final baseRef = firestore.FirebaseFirestore.instance
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('menu_items');
+
+    for (final item in menuItems) {
+      if (item.id.isEmpty) continue;
+      final docRef = baseRef.doc(item.id);
+      batch.set(docRef, item.toMap(), firestore.SetOptions(merge: true));
+    }
+
+    await batch.commit();
+
+    shared.ErrorLogger.log(
+      message: '${menuItems.length} menu items saved',
+      source: 'AdminFirestoreService.saveMenuItems',
+      severity: 'info',
+    );
+  }
 }
