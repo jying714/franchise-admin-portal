@@ -6,7 +6,6 @@ import 'package:shared_core/shared_core.dart' show DesignTokens;
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
 import 'package:franchise_mobile_app/widgets/social_sign_in_buttons.dart';
-import 'package:franchise_mobile_app/config/feature_config.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

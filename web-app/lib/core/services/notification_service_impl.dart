@@ -3,7 +3,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_admin_portal/config/feature_config.dart'; // Keep this if you need local loader, but FeatureConfig comes from shared
 
 class NotificationServiceImpl implements shared.NotificationService {
   late final FirebaseMessaging _messaging;

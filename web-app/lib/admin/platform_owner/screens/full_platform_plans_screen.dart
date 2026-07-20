@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 
 class FullPlatformPlansScreen extends StatefulWidget {
@@ -135,8 +134,8 @@ class _FullPlatformPlansScreenState extends State<FullPlatformPlansScreen> {
                         children: plan.features
                             .map(
                               (feature) => Chip(
-                                label:
-                                    Text(AppConfig.featureDisplayName(feature)),
+                                label: Text(shared.AppConfig.featureDisplayName(
+                                    feature)),
                                 backgroundColor:
                                     theme.colorScheme.primaryContainer,
                               ),

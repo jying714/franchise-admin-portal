@@ -3,7 +3,6 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
-import 'package:franchise_admin_portal/config/app_config.dart';
 
 class FranchiseSubscriptionExpandedDetail extends StatefulWidget {
   final shared.EnrichedFranchiseSubscription enriched;
@@ -79,16 +78,16 @@ class _FranchiseSubscriptionExpandedDetailState
         _infoRow(
           loc.trialEndLabel,
           enriched.subscription.trialEndsAt != null
-              ? AppConfig.formatDate(enriched.subscription.trialEndsAt)
+              ? shared.AppConfig.formatDate(enriched.subscription.trialEndsAt)
               : loc.notAvailable,
         ),
         _infoRow(
           loc.nextBillingLabel,
-          AppConfig.formatDate(enriched.subscription.nextBillingDate),
+          shared.AppConfig.formatDate(enriched.subscription.nextBillingDate),
         ),
         _infoRow(
           loc.subscriptionCreated,
-          AppConfig.formatDate(enriched.subscription.startDate),
+          shared.AppConfig.formatDate(enriched.subscription.startDate),
         ),
         const SizedBox(height: 12),
         if (_loading)

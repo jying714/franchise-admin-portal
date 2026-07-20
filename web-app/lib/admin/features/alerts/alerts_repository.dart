@@ -1,16 +1,15 @@
 ﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_admin_portal/config/app_config.dart';
 
 class AlertsRepository {
   final FirebaseFirestore _firestore;
   final shared.FirestoreService _firestoreService;
-  final AppConfig? _appConfig;
+  final shared.AppConfig? _appConfig; // Unified shared version
 
   AlertsRepository({
     FirebaseFirestore? firestore,
     required shared.FirestoreService firestoreService,
-    AppConfig? appConfig,
+    shared.AppConfig? appConfig, // From shared_core
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
         _firestoreService = firestoreService,
         _appConfig = appConfig;

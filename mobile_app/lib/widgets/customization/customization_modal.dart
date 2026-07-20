@@ -1039,10 +1039,10 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                         theme: theme,
                                         loc: loc,
                                         getToppingUpcharge: _getToppingUpcharge,
-                                        currencyFormat: (double amount) {
-                                          return shared.UiConfig.currencyFormat(
-                                              amount);
-                                        },
+                                        currencyFormat: (BuildContext context,
+                                                double amount) =>
+                                            shared.UiConfig.currencyFormat(
+                                                amount),
                                       )
                                     : null,
                                 normalizeSizeKey: _normalizeSizeKey,

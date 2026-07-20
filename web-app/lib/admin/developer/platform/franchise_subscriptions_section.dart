@@ -2,7 +2,6 @@
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/admin/developer/platform/franchise_subscription_editor_dialog.dart';
 import 'package:franchise_admin_portal/admin/categories/bulk_action_bar.dart';
@@ -259,8 +258,8 @@ class _FranchiseSubscriptionsSectionState
                   ],
                   Chip(
                     label: Text(loc.translateStatus(sub.status)),
-                    backgroundColor: AppConfig.statusColor(
-                        sub.status, theme), // ensure this exists in AppConfig
+                    backgroundColor: shared.UiConfig.statusColor(sub.status,
+                        theme), // ensure this exists in shared.shared.AppConfig
                   ),
                 ],
               ),
@@ -269,13 +268,13 @@ class _FranchiseSubscriptionsSectionState
               const SizedBox(height: 4),
               if (sub.isTrial)
                 Text(
-                    '${loc.trialEndsLabel}: ${AppConfig.formatDate(sub.trialEndsAt)}',
+                    '${loc.trialEndsLabel}: ${shared.AppConfig.formatDate(sub.trialEndsAt)}',
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: theme.colorScheme.secondary,
                     )),
               const SizedBox(height: 8),
               Text(
-                  '${loc.nextBillingLabel}: ${AppConfig.formatDate(sub.nextBillingDate)}'),
+                  '${loc.nextBillingLabel}: ${shared.AppConfig.formatDate(sub.nextBillingDate)}'),
               const SizedBox(height: 4),
               if (sub.discountPercent > 0)
                 Text('${loc.discountLabel}: ${sub.discountPercent}%',

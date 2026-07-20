@@ -1,51 +1,60 @@
-﻿import 'package:flutter/material.dart';
-import 'package:shared_core/shared_core.dart' as shared;
+﻿// web-app/lib/config/branding_config.dart
+import 'package:flutter/material.dart';
+import 'package:shared_core/shared_core.dart' as shared_core;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
-/// UI-specific branding configuration for the web app (P2.5)
-/// Dynamic values now come from shared.FranchiseProvider via DesignTokens (SSoT).
+/// Web-specific branding delegation layer (P2.5)
+/// All core values now come from shared_core.BrandingConfig
 class BrandingConfig {
-  // Static asset paths (app-specific, not in shared_core)
+  // Web-specific overrides / additional assets if any
   static const String logoMain = 'assets/images/logo.png';
   static const String logoSmall = 'assets/images/logo_small.png';
-  static const String logoLarge = 'assets/logo/logo_large.png';
-  static const String logoLargeLegacy = 'assets/images/logo_large.png';
-  static const String defaultPizzaIcon = 'assets/icons/pizza.png';
-  static const String defaultPizzaIconLegacy =
-      'assets/images/default_pizza_icon.png';
-  static const String defaultCategoryIcon =
-      'assets/images/default_category_icon.png';
-  static const String bannerPlaceholder =
-      'assets/images/banner_placeholder.png';
-  static const String fallbackAppIcon = 'assets/images/pizza_icon.png';
-  static const String adminEmptyStateImage = 'assets/images/admin_empty.png';
-  static const String menuItemPlaceholderImage =
-      'assets/images/menu_item_placeholder.png';
-  static const String ingredientPlaceholder =
-      'assets/images/ingredient_placeholder.png';
-  static const String bulkUploadCSVIcon = 'assets/icons/csv_upload.png';
-  static const String exportCSVIcon = 'assets/icons/export_csv.png';
-  static const String defaultProfileIcon = 'assets/images/default_profile.png';
-  static const String appBarLogoAsset = 'assets/images/logo.png';
-  static const bool showLogoInAppBar = false;
 
-  // === DYNAMIC (P2.5) ===
+  // Delegate everything else to shared_core
+  static shared_core.BrandingConfig get shared => shared_core.BrandingConfig();
+
+  static String get franchiseName => shared_core.BrandingConfig.franchiseName;
+  static String get franchiseAddress =>
+      shared_core.BrandingConfig.franchiseAddress;
+  static String get franchisePhone => shared_core.BrandingConfig.franchisePhone;
+  static String get poweredBy => shared_core.BrandingConfig.poweredBy;
+
+  static String get brandRedHex => shared_core.BrandingConfig.brandRedHex;
+  static String get accentColorHex => shared_core.BrandingConfig.accentColorHex;
+
+  static String get logoLarge => shared_core.BrandingConfig.logoLarge;
+  static String get defaultPizzaIcon =>
+      shared_core.BrandingConfig.defaultPizzaIcon;
+  static String get defaultCategoryIcon => shared_core
+      .BrandingConfig.defaultCategoryIcon; // Added for category_card.dart
+  static String get adminEmptyStateImage =>
+      shared_core.BrandingConfig.adminEmptyStateImage;
+  static String get menuItemPlaceholderImage =>
+      shared_core.BrandingConfig.menuItemPlaceholderImage;
+  static String get ingredientPlaceholder =>
+      shared_core.BrandingConfig.ingredientPlaceholder;
+  static String get defaultProfileIcon =>
+      shared_core.BrandingConfig.defaultProfileIcon;
+  static String get bannerPlaceholder =>
+      shared_core.BrandingConfig.bannerPlaceholder;
+  static String get fallbackAppIcon =>
+      shared_core.BrandingConfig.fallbackAppIcon;
+  static String get appBarLogoAsset =>
+      shared_core.BrandingConfig.appBarLogoAsset;
+
+  static bool get showLogoInAppBar =>
+      shared_core.BrandingConfig.showLogoInAppBar;
+
+  // Dynamic (franchise-aware)
   static Color get brandRed => DesignTokens.primaryColor;
   static Color get accentColor => DesignTokens.secondaryColor;
   static const Color dashboardCardColor = Colors.white;
 
-  static Color brandColorFor(String brandId) {
-    // In real usage this would look up per-franchise; for now delegate to dynamic primary
-    return DesignTokens.primaryColor;
-  }
+  static Color brandColorFor(String brandId) => DesignTokens.primaryColor;
 
-  // Live from shared.FranchiseProvider (via DesignTokens bridge) - P2.5 dynamic
-  static String? get currentLogoUrl => DesignTokens.currentLogoUrl;
+  static String? get currentLogoUrl => shared_core.UiConfig.currentLogoUrl;
   static String get currentAppName =>
-      DesignTokens.currentAppName ?? 'Doughboys Pizzeria';
+      shared_core.UiConfig.dynamicAppName ?? 'Doughboys Pizzeria';
 
-  // Back-compat getters used by many screens
-  static String? get logoUrl => DesignTokens.currentLogoUrl;
-
-  // Removed duplicate logoMain and unused _hexToColor method
+  static String? get logoUrl => currentLogoUrl;
 }

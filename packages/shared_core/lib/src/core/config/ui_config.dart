@@ -173,4 +173,25 @@ class UiConfig {
     }
     return null;
   }
+
+  /// Returns appropriate Chip background color for subscription/status (moved from AppConfig)
+  static Color statusColor(String status, ThemeData theme) {
+    final lower = status.toLowerCase().trim();
+    switch (lower) {
+      case 'active':
+      case 'trialing':
+        return Colors.green.shade100;
+      case 'paused':
+        return Colors.orange.shade100;
+      case 'canceled':
+      case 'cancelled':
+      case 'past_due':
+      case 'overdue':
+        return Colors.red.shade100;
+      case 'unpaid':
+        return Colors.amber.shade100;
+      default:
+        return theme.colorScheme.surfaceVariant.withOpacity(0.6);
+    }
+  }
 }

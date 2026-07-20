@@ -1,4 +1,7 @@
 ﻿// packages/shared_core/lib/src/core/config/app_config.dart
+// Unified AppConfig - Single source of truth combining base shared_core, mobile_app deep links, and web-app helpers/delegation.
+// Franchise-aware via current getter (integrate FranchiseProvider as needed).
+// Pure Dart core; UI-specific (e.g., Color) can delegate to UiConfig if stricter separation required.
 
 class AppConfig {
   // ===== FIRESTORE COLLECTION NAMES =====
@@ -58,14 +61,38 @@ class AppConfig {
     'Soy'
   ];
 
-  // File-system-ish paths kept generic; apps decide actual assets/usage
+  // File-system-ish paths kept generic; apps decide actual usage
   static const String promoExportDir = 'exports/promos';
   static const String analyticsExportDir = 'exports/analytics';
   static const String dateFormat = 'yyyy-MM-dd';
 
-  // Cross-platform runtime knobs (no Flutter types)
+  // ===== MOBILE DEEP LINKING (from mobile_app) =====
+  static const String deepLinkScheme = 'fhq';
+  static const String deepLinkHost = 'f';
+
+  // Web / universal link fallback
+  static const String webDeepLinkHost = 'franchisehq.io';
+  static const String webDeepLinkScheme = 'https';
+
+  /// Builds a shareable / QR-encodable URL for a franchise.
+  static String buildFranchiseDeepLink(String franchiseId, {String? name}) {
+    final uri = Uri(
+      scheme: webDeepLinkScheme,
+      host: webDeepLinkHost,
+      path: '/f/$franchiseId',
+      queryParameters: name != null && name.isNotEmpty ? {'name': name} : null,
+    );
+    return uri.toString();
+  }
+
+  /// Alternative custom-scheme version
+  static String buildCustomSchemeLink(String franchiseId) {
+    return '$deepLinkScheme://$deepLinkHost/$franchiseId';
+  }
+
+  // ===== CROSS-PLATFORM RUNTIME =====
   final String apiBaseUrl;
-  final String brandingColorHex; // keep as hex string in shared_core
+  final String brandingColorHex;
   final bool isProduction;
 
   const AppConfig({
@@ -74,6 +101,7 @@ class AppConfig {
     required this.isProduction,
   });
 
+  // ===== HELPERS =====
   static String featureDisplayName(String featureKey) {
     switch (featureKey) {
       case 'mobile_app':
@@ -108,4 +136,17 @@ class AppConfig {
     final d = date.day.toString().padLeft(2, '0');
     return '$y-$m-$d';
   }
+
+  // Franchise-aware current instance (expand with Provider)
+  static AppConfig get current {
+    // TODO: Pull from FranchiseProvider for dynamic branding/api
+    return const AppConfig(
+      apiBaseUrl: 'https://api.yourdomain.com',
+      brandingColorHex: '#E31837',
+      isProduction: true,
+    );
+  }
+
+  // Legacy for minimal breakage during transition
+  static final AppConfig env = current;
 }

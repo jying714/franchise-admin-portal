@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/widgets/admin/role_guard_widget.dart';

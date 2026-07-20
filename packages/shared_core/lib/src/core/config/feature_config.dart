@@ -1,13 +1,19 @@
-/// Pure Dart feature configuration — shared across mobile, web, and functions
-/// Contains default values and mapping logic only
-/// No Firebase, no Logger, no async
+/// Pure Dart feature configuration — Single source of truth across mobile, web, admin, and functions.
+/// Contains defaults, apply logic from Firestore, and mapping.
+/// No Firebase, no Logger, no platform-specific imports.
+
 class FeatureConfig {
   // Singleton
   FeatureConfig._();
   static final FeatureConfig instance = FeatureConfig._();
 
-  // ===== Feature Toggles (Defaults) =====
-  bool loyaltyEnabled = false;
+  // ===== Feature Toggles (Defaults + Mobile/Web) =====
+  bool loyaltyEnabled = true; // from mobile
+  bool favoritesEnabled = true; // from mobile
+  bool scheduledOrdersEnabled = true; // from mobile
+  bool chatSupportEnabled = true; // from mobile
+  bool notificationsEnabled = true; // from mobile
+
   bool inventoryEnabled = false;
   bool statusEnabled = false;
   bool segmentationEnabled = false;
@@ -39,9 +45,15 @@ class FeatureConfig {
   bool promoExportEnabled = true;
   bool analyticsExportEnabled = true;
 
-  /// Apply Firestore data to this instance
+  /// Apply Firestore data to this instance (from shared_core)
   void apply(Map<String, dynamic> data) {
     loyaltyEnabled = data['loyaltyEnabled'] ?? loyaltyEnabled;
+    favoritesEnabled = data['favoritesEnabled'] ?? favoritesEnabled;
+    scheduledOrdersEnabled =
+        data['scheduledOrdersEnabled'] ?? scheduledOrdersEnabled;
+    chatSupportEnabled = data['chatSupportEnabled'] ?? chatSupportEnabled;
+    notificationsEnabled = data['notificationsEnabled'] ?? notificationsEnabled;
+
     inventoryEnabled = data['inventoryEnabled'] ?? inventoryEnabled;
     statusEnabled = data['statusEnabled'] ?? statusEnabled;
     segmentationEnabled = data['segmentationEnabled'] ?? segmentationEnabled;
@@ -89,6 +101,10 @@ class FeatureConfig {
   /// Export current state as map
   Map<String, bool> get asMap => {
         'loyaltyEnabled': loyaltyEnabled,
+        'favoritesEnabled': favoritesEnabled,
+        'scheduledOrdersEnabled': scheduledOrdersEnabled,
+        'chatSupportEnabled': chatSupportEnabled,
+        'notificationsEnabled': notificationsEnabled,
         'inventoryEnabled': inventoryEnabled,
         'statusEnabled': statusEnabled,
         'segmentationEnabled': segmentationEnabled,

@@ -2,7 +2,6 @@
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
-import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:provider/provider.dart';
 
 class FranchiseSubscriptionSummary extends StatelessWidget {
@@ -65,8 +64,8 @@ class FranchiseSubscriptionSummary extends StatelessWidget {
                   if (isDevOrOwner)
                     Chip(
                       label: Text(loc.translateStatus(subscription.status)),
-                      backgroundColor:
-                          AppConfig.statusColor(subscription.status, theme),
+                      backgroundColor: shared.UiConfig.statusColor(
+                          subscription.status, theme),
                       labelStyle: theme.textTheme.labelSmall
                           ?.copyWith(color: colorScheme.onPrimary),
                     ),
@@ -107,17 +106,17 @@ class FranchiseSubscriptionSummary extends StatelessWidget {
 
               /// Dates + Trial info
               Text(
-                '${loc.nextBillingLabel}: ${AppConfig.formatDate(subscription.nextBillingDate)}',
+                '${loc.nextBillingLabel}: ${shared.AppConfig.formatDate(subscription.nextBillingDate)}',
                 style: theme.textTheme.bodySmall,
               ),
               Text(
-                '${loc.startDateLabel}: ${AppConfig.formatDate(subscription.startDate)}',
+                '${loc.startDateLabel}: ${shared.AppConfig.formatDate(subscription.startDate)}',
                 style: theme.textTheme.bodySmall,
               ),
 
               if (subscription.isTrial && subscription.trialEndsAt != null)
                 Text(
-                  '${loc.trialEndsLabel}: ${AppConfig.formatDate(subscription.trialEndsAt)}',
+                  '${loc.trialEndsLabel}: ${shared.AppConfig.formatDate(subscription.trialEndsAt)}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: trialEndsSoon
                         ? colorScheme.error
@@ -150,8 +149,8 @@ class FranchiseSubscriptionSummary extends StatelessWidget {
                 runSpacing: 6,
                 children: planFeatures
                     .map((feature) => Chip(
-                          label: Text(
-                              AppConfig.featureDisplayName(feature.toString())),
+                          label: Text(shared.AppConfig.featureDisplayName(
+                              feature.toString())),
                           backgroundColor: colorScheme.primaryContainer,
                           labelStyle: theme.textTheme.labelSmall,
                         ))

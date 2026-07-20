@@ -1,4 +1,5 @@
-/// Pure Dart branding configuration — shared across mobile, web, and functions
+/// Pure Dart branding configuration — Single source of truth across mobile, web, admin, and functions.
+/// Asset paths kept generic; apps can override locally if needed.
 class BrandingConfig {
   // --------- Franchise Details (Shared) ---------
   static const String franchiseName = "Doughboys Pizzeria";
@@ -10,43 +11,43 @@ class BrandingConfig {
   static const String brandRedHex = "#D23215";
   static const String accentColorHex = "#D23215";
 
-  // --------- Assets (Paths - used by mobile & web) ---------
+  // --------- Assets (Generic paths - used by mobile & web) ---------
   static const String logoMain = 'assets/images/logo.png';
   static const String logoSmall = 'assets/images/logo_small.png';
   static const String logoLarge = 'assets/images/logo_large.png';
+  static const String logoLargeLegacy = 'assets/images/logo_large.png';
   static const String defaultPizzaIcon = 'assets/icons/pizza.png';
+  static const String defaultPizzaIconLegacy =
+      'assets/images/default_pizza_icon.png';
   static const String defaultCategoryIcon =
       'assets/images/default_category_icon.png';
+  static const String bannerPlaceholder =
+      'assets/images/banner_placeholder.png';
+  static const String fallbackAppIcon = 'assets/images/pizza_icon.png';
   static const String adminEmptyStateImage = 'assets/images/admin_empty.png';
   static const String menuItemPlaceholderImage =
       'assets/images/menu_item_placeholder.png';
   static const String ingredientPlaceholder =
       'assets/images/ingredient_placeholder.png';
+  static const String bulkUploadCSVIcon = 'assets/icons/csv_upload.png';
+  static const String exportCSVIcon = 'assets/icons/export_csv.png';
   static const String defaultProfileIcon = 'assets/images/default_profile.png';
-  static const String bannerPlaceholder =
-      'assets/images/banner_placeholder.png';
+  static const String appBarLogoAsset = 'assets/images/logo.png';
+
+  // --------- App Bar & UI Behavior ---------
+  static const bool showLogoInAppBar =
+      false; // web default; mobile can override
 
   // --------- URLs ---------
   static const String termsOfServiceUrl = 'https://franchisehq.io/terms';
   static const String privacyPolicyUrl = 'https://franchisehq.io/privacy';
 
-  // --------- App Bar ---------
-  static const bool showLogoInAppBar = true;
-  static const String appBarLogoAsset = 'assets/images/logo_small.png';
-
   // --------- Dynamic Logic ---------
   static String brandColorHexFor(String brandId) {
-    // Future white-label logic
+    // Future white-label / per-franchise logic
     return brandRedHex;
   }
 
-  // Missing statics from analyze
-  static const String fallbackAppIcon = 'assets/images/logo.png';
-
   static String get defaultFranchiseLogo => logoMain;
   static String get appIcon => logoSmall;
-
-  // ======================
-  // === FUTURE TOKENS ====
-  // ======================
 }

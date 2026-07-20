@@ -1,5 +1,4 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/config/feature_config.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 
 class FeatureToggleDialog extends StatefulWidget {
