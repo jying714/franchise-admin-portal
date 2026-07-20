@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 
 // P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
@@ -30,7 +29,7 @@ class ProfileIconButton extends StatelessWidget {
       icon: Icon(
         Icons.person,
         size: iconSize ?? shared.DesignTokens.iconSize,
-        color: iconColor ?? UiConfig.foregroundColor,
+        color: iconColor ?? shared.UiConfig.foregroundColor,
         semanticLabel: tooltip,
       ),
       tooltip: tooltip,

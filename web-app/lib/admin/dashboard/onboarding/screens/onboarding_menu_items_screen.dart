@@ -12,7 +12,6 @@ import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_i
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/schema_issue_sidebar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.dart';
-import 'package:franchise_admin_portal/config/ui_config.dart';
 import 'package:uuid/uuid.dart';
 import 'package:franchise_admin_portal/core/services/admin_firestore_service.dart';
 
@@ -591,7 +590,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                             const SizedBox(width: 8),
                             Text(
                                 '✅ Dependencies loaded • 18 ingredients • 6 categories • 17 types',
-                                style: UiConfig.bodyStyle),
+                                style: shared.UiConfig.bodyStyle),
                             const Spacer(),
                             OutlinedButton.icon(
                               icon: const Icon(Icons.sync),

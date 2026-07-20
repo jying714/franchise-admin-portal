@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/portion_selector.dart';
 import 'package:franchise_mobile_app/widgets/customization/portion_pill_toggle.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -74,7 +73,7 @@ class CurrentIngredients extends StatelessWidget {
             child: Text(
               'Add extra toppings or double any ingredient for just +${currencyFormat(context, getSaladToppingUpcharge())}.',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: UiConfig.secondaryTextColor,
+                color: shared.UiConfig.secondaryTextColor,
                 fontStyle: FontStyle.italic,
                 fontFamily: shared.DesignTokens.fontFamily,
               ),
@@ -118,8 +117,8 @@ class CurrentIngredients extends StatelessWidget {
           Text(
             loc.currentIngredientsLabel,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: UiConfig.primaryColor,
-              fontWeight: UiConfig.bold,
+              color: shared.UiConfig.primaryColor,
+              fontWeight: shared.UiConfig.bold,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
@@ -194,8 +193,8 @@ class CurrentIngredients extends StatelessWidget {
                                     ? FontWeight.normal
                                     : FontWeight.bold,
                                 color: outOfStock
-                                    ? UiConfig.secondaryTextColor
-                                    : UiConfig.textColor,
+                                    ? shared.UiConfig.secondaryTextColor
+                                    : shared.UiConfig.textColor,
                               ),
                             ),
                           ),
@@ -233,7 +232,7 @@ class CurrentIngredients extends StatelessWidget {
                         child: Text(
                           loc.ingredientRemovedLabel,
                           style: TextStyle(
-                            color: UiConfig.primaryColor,
+                            color: shared.UiConfig.primaryColor,
                             fontStyle: FontStyle.italic,
                             fontWeight: FontWeight.w600,
                           ),
@@ -246,9 +245,9 @@ class CurrentIngredients extends StatelessWidget {
                           "Amount",
                           style: TextStyle(
                             fontSize: 13,
-                            color: UiConfig.secondaryColor,
+                            color: shared.UiConfig.secondaryColor,
                             fontFamily: shared.DesignTokens.fontFamily,
-                            fontWeight: UiConfig.bold,
+                            fontWeight: shared.UiConfig.bold,
                           ),
                         ),
                       ),
@@ -310,7 +309,7 @@ class CurrentIngredients extends StatelessWidget {
                     child: Text(
                       loc.cannotBeRemoved,
                       style: TextStyle(
-                        color: UiConfig.hintTextColor,
+                        color: shared.UiConfig.hintTextColor,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -320,7 +319,7 @@ class CurrentIngredients extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 6.0),
                     child: Divider(
                       thickness: 1.0,
-                      color: UiConfig.dividerColor,
+                      color: shared.UiConfig.dividerColor,
                       height: 1,
                     ),
                   ),

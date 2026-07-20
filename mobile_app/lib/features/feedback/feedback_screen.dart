@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/core/services/offline_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -142,32 +141,33 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       appBar: FranchiseAppBar(
         title: loc.feedbackScreenTitle,
         showLogo: true,
-        logoUrl: UiConfig.currentLogoUrl,
+        logoUrl: shared.UiConfig.currentLogoUrl,
         logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
       ),
-      backgroundColor: UiConfig.backgroundColorDark,
+      backgroundColor: shared.UiConfig.backgroundColorDark,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: UiConfig.defaultPadding,
+            padding: shared.UiConfig.defaultPadding,
             child: Card(
-              color: UiConfig.surfaceColorDark,
+              color: shared.UiConfig.surfaceColorDark,
               shape: RoundedRectangleBorder(
                 borderRadius:
                     BorderRadius.circular(shared.DesignTokens.cardRadius),
               ),
               elevation: shared.DesignTokens.cardElevation,
               child: Padding(
-                padding: UiConfig.defaultPadding,
+                padding: shared.UiConfig.defaultPadding,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Image.asset(
-                      UiConfig.currentLogoUrl ?? UiConfig.logoMain,
+                      shared.UiConfig.currentLogoUrl ??
+                          shared.UiConfig.logoMain,
                       height: 56,
                       errorBuilder: (_, __, ___) => Image.asset(
-                        UiConfig.defaultPizzaIcon,
+                        shared.UiConfig.defaultPizzaIcon,
                         height: 56,
                       ),
                     ),
@@ -176,9 +176,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                       loc.feedbackPromptTitle,
                       style: TextStyle(
                         fontSize: shared.DesignTokens.titleFontSize,
-                        fontWeight: UiConfig.fontWeightBold,
+                        fontWeight: shared.UiConfig.fontWeightBold,
                         fontFamily: shared.DesignTokens.fontFamily,
-                        color: UiConfig.textColorDark,
+                        color: shared.UiConfig.textColorDark,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -202,8 +202,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                                   });
                                 },
                                 selectedColor:
-                                    UiConfig.successColor.withAlpha(51),
-                                backgroundColor: UiConfig.surfaceColorDark,
+                                    shared.UiConfig.successColor.withAlpha(51),
+                                backgroundColor:
+                                    shared.UiConfig.surfaceColorDark,
                               ))
                           .toList(),
                     ),
@@ -221,7 +222,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                         ),
                         counterStyle: TextStyle(
                           fontSize: shared.DesignTokens.captionFontSize,
-                          color: UiConfig.hintTextColor,
+                          color: shared.UiConfig.hintTextColor,
                         ),
                       ),
                     ),
@@ -232,11 +233,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                           value: _anonymous,
                           onChanged: (val) =>
                               setState(() => _anonymous = val ?? false),
-                          activeColor: UiConfig.primaryColor,
+                          activeColor: shared.UiConfig.primaryColor,
                         ),
                         Text(
                           loc.feedbackSubmitAnonymous,
-                          style: TextStyle(color: UiConfig.textColorDark),
+                          style:
+                              TextStyle(color: shared.UiConfig.textColorDark),
                         ),
                       ],
                     ),
@@ -246,8 +248,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                         child: Text(
                           _error!,
                           style: TextStyle(
-                            color: UiConfig.errorColor,
-                            fontWeight: UiConfig.fontWeightBold,
+                            color: shared.UiConfig.errorColor,
+                            fontWeight: shared.UiConfig.fontWeightBold,
                           ),
                         ),
                       ),
@@ -255,9 +257,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                     ElevatedButton(
                       onPressed: _loading ? null : _submitFeedback,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: UiConfig.primaryColor,
-                        foregroundColor: UiConfig.foregroundColorDark,
-                        padding: UiConfig.defaultPadding,
+                        backgroundColor: shared.UiConfig.primaryColor,
+                        foregroundColor: shared.UiConfig.foregroundColorDark,
+                        padding: shared.UiConfig.defaultPadding,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(
                               shared.DesignTokens.buttonRadius),
@@ -270,7 +272,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                               width: 24,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: UiConfig.onPrimaryColor,
+                                color: shared.UiConfig.onPrimaryColor,
                               ),
                             )
                           : Text(loc.feedbackSubmitButton),
@@ -307,7 +309,9 @@ class _StarRating extends StatelessWidget {
           onPressed: () => onRatingChanged(i + 1),
           icon: Icon(
             starFilled ? Icons.star : Icons.star_border,
-            color: starFilled ? UiConfig.successColor : UiConfig.hintTextColor,
+            color: starFilled
+                ? shared.UiConfig.successColor
+                : shared.UiConfig.hintTextColor,
             size: 32,
           ),
           tooltip: loc.feedbackStarTooltip(i + 1),

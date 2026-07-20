@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 class PortionPillToggle extends StatelessWidget {
   final bool isDouble;
@@ -23,20 +22,24 @@ class PortionPillToggle extends StatelessWidget {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isDouble ? UiConfig.primaryColor : UiConfig.surfaceColor,
+          color: isDouble
+              ? shared.UiConfig.primaryColor
+              : shared.UiConfig.surfaceColor,
           borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
           border: Border.all(
             color: isDouble
-                ? UiConfig.primaryColor
-                : UiConfig.secondaryTextColor.withOpacity(0.25),
+                ? shared.UiConfig.primaryColor
+                : shared.UiConfig.secondaryTextColor.withOpacity(0.25),
             width: 1.5,
           ),
         ),
         child: Text(
           isDouble ? "Double" : "Regular",
           style: TextStyle(
-            color: isDouble ? UiConfig.onPrimaryColor : UiConfig.textColor,
-            fontWeight: UiConfig.bold,
+            color: isDouble
+                ? shared.UiConfig.onPrimaryColor
+                : shared.UiConfig.textColor,
+            fontWeight: shared.UiConfig.bold,
             fontSize: 14,
             fontFamily: shared.DesignTokens.fontFamily,
           ),

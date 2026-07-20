@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/confirmation_dialog.dart';
 
 /// A reusable sign out button with built-in confirmation dialog.
@@ -27,9 +26,9 @@ class SignOutButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: UiConfig.errorColor,
-        foregroundColor: UiConfig.foregroundColor,
-        padding: UiConfig.defaultPadding,
+        backgroundColor: shared.UiConfig.errorColor,
+        foregroundColor: shared.UiConfig.foregroundColor,
+        padding: shared.UiConfig.defaultPadding,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(shared.DesignTokens.buttonRadius),
         ),
@@ -43,7 +42,7 @@ class SignOutButton extends StatelessWidget {
           icon: Icons.logout,
           confirmLabel: confirmLabel,
           cancelLabel: cancelLabel,
-          confirmColor: UiConfig.errorColor,
+          confirmColor: shared.UiConfig.errorColor,
           onConfirm: () {}, // ConfirmationDialog requires onConfirm
         );
         if (shouldSignOut == true) {
@@ -52,8 +51,8 @@ class SignOutButton extends StatelessWidget {
       },
       child: Text(
         signOutLabel,
-        style: UiConfig.bodyStyle.copyWith(
-          fontWeight: UiConfig.fontWeightBold,
+        style: shared.UiConfig.bodyStyle.copyWith(
+          fontWeight: shared.UiConfig.fontWeightBold,
         ),
       ),
     );

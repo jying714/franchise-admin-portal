@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 /// Robust, reusable info tile for profile and other label/value displays.
 /// Handles null/empty values gracefully.
@@ -22,19 +21,19 @@ class InfoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: leadingIcon != null
-          ? Icon(leadingIcon, color: UiConfig.primaryColor)
+          ? Icon(leadingIcon, color: shared.UiConfig.primaryColor)
           : null,
       title: Text(
         label,
-        style: UiConfig.bodyStyle.copyWith(
-          fontWeight: UiConfig.fontWeightBold,
-          color: UiConfig.textColor,
+        style: shared.UiConfig.bodyStyle.copyWith(
+          fontWeight: shared.UiConfig.fontWeightBold,
+          color: shared.UiConfig.textColor,
         ),
       ),
       subtitle: Text(
         (value == null || value!.trim().isEmpty) ? '—' : value!,
-        style: UiConfig.captionStyle.copyWith(
-          fontWeight: UiConfig.fontWeightNormal,
+        style: shared.UiConfig.captionStyle.copyWith(
+          fontWeight: shared.UiConfig.fontWeightNormal,
         ),
       ),
       trailing: trailing,

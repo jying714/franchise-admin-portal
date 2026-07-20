@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 class PromoBannerCard extends StatelessWidget {
   final shared.Banner banner;
@@ -45,7 +44,7 @@ class PromoBannerCard extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius:
                   BorderRadius.circular(shared.DesignTokens.bannerBorderRadius),
-              color: UiConfig.bannerOverlayColor
+              color: shared.UiConfig.bannerOverlayColor
                   .withAlpha(shared.DesignTokens.bannerOverlayAlpha),
             ),
           ),
@@ -61,8 +60,8 @@ class PromoBannerCard extends StatelessWidget {
                     banner.title,
                     style: TextStyle(
                       fontSize: shared.DesignTokens.titleFontSize,
-                      color: UiConfig.foregroundColor,
-                      fontWeight: UiConfig.fontWeightBold,
+                      color: shared.UiConfig.foregroundColor,
+                      fontWeight: shared.UiConfig.fontWeightBold,
                       shadows: const [
                         Shadow(color: Colors.black54, blurRadius: 4),
                       ],
@@ -77,7 +76,7 @@ class PromoBannerCard extends StatelessWidget {
                       banner.subtitle,
                       style: TextStyle(
                         fontSize: shared.DesignTokens.captionFontSize,
-                        color: UiConfig.foregroundColor,
+                        color: shared.UiConfig.foregroundColor,
                         fontWeight: FontWeight.w400,
                         shadows: const [
                           Shadow(color: Colors.black54, blurRadius: 4),
@@ -92,8 +91,8 @@ class PromoBannerCard extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 8),
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: UiConfig.secondaryColor,
-                        foregroundColor: UiConfig.foregroundColor,
+                        backgroundColor: shared.UiConfig.secondaryColor,
+                        foregroundColor: shared.UiConfig.foregroundColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24),
                         ),

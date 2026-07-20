@@ -2,7 +2,6 @@
 import 'package:flutter/services.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_admin_portal/config/ui_config.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:collection/collection.dart';
 
@@ -102,7 +101,7 @@ class _SizePricingEditorState extends State<SizePricingEditor> {
               flex: 2,
               child: Text(
                 loc.sizePricing ?? 'Size Pricing',
-                style: UiConfig.titleStyle,
+                style: shared.UiConfig.titleStyle,
               ),
             ),
             if (widget.trailingTemplateDropdown != null) ...[

@@ -4,7 +4,6 @@ import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 class SocialSignInButtons extends StatefulWidget {
   final void Function(shared.User? user)? onSuccess;
@@ -106,7 +105,7 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
           return AlertDialog(
             title: Text(
               smsSent ? 'Enter SMS Code' : 'Sign in with Phone',
-              style: UiConfig.titleStyle,
+              style: shared.UiConfig.titleStyle,
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -117,7 +116,7 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
                     decoration: InputDecoration(
                       labelText: 'Phone Number',
                       hintText: '+1XXXXXXXXXX',
-                      labelStyle: UiConfig.bodyStyle,
+                      labelStyle: shared.UiConfig.bodyStyle,
                     ),
                     onChanged: (v) => phone = v,
                   ),
@@ -126,18 +125,18 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       labelText: 'SMS Code',
-                      labelStyle: UiConfig.bodyStyle,
+                      labelStyle: shared.UiConfig.bodyStyle,
                     ),
                     onChanged: (v) => smsCode = v,
                   ),
                 if (error != null)
                   Padding(
-                    padding: UiConfig.defaultPadding,
+                    padding: shared.UiConfig.defaultPadding,
                     child: Text(error!,
-                        style: UiConfig.errorTextColor != null
-                            ? UiConfig.bodyStyle
-                                .copyWith(color: UiConfig.errorTextColor)
-                            : UiConfig.bodyStyle),
+                        style: shared.UiConfig.errorTextColor != null
+                            ? shared.UiConfig.bodyStyle
+                                .copyWith(color: shared.UiConfig.errorTextColor)
+                            : shared.UiConfig.bodyStyle),
                   ),
               ],
             ),
@@ -201,7 +200,8 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
             width: double.infinity,
             child: ElevatedButton.icon(
               icon: const Icon(Icons.g_mobiledata, color: Colors.red, size: 24),
-              label: Text('Sign in with Google', style: UiConfig.bodyBoldStyle),
+              label: Text('Sign in with Google',
+                  style: shared.UiConfig.bodyBoldStyle),
               onPressed: isBusy
                   ? null
                   : () => _handleSignIn(
@@ -210,36 +210,40 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
                       ),
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    widget.googleButtonColor ?? UiConfig.surfaceColor,
-                foregroundColor: UiConfig.textColor,
-                padding: UiConfig.defaultPadding,
+                    widget.googleButtonColor ?? shared.UiConfig.surfaceColor,
+                foregroundColor: shared.UiConfig.textColor,
+                padding: shared.UiConfig.defaultPadding,
               ),
             ),
           ),
-        if (widget.showGoogle) SizedBox(height: UiConfig.defaultPadding.top),
+        if (widget.showGoogle)
+          SizedBox(height: shared.UiConfig.defaultPadding.top),
         if (widget.showPhone)
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               icon: const Icon(Icons.phone, color: Colors.green, size: 22),
-              label: Text('Sign in with Phone', style: UiConfig.bodyBoldStyle),
+              label: Text('Sign in with Phone',
+                  style: shared.UiConfig.bodyBoldStyle),
               onPressed: isBusy ? null : () => _handlePhoneSignIn(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: widget.phoneButtonColor ??
-                    UiConfig.primaryColor.withOpacity(0.1),
-                foregroundColor: UiConfig.primaryColor,
-                padding: UiConfig.defaultPadding,
+                    shared.UiConfig.primaryColor.withOpacity(0.1),
+                foregroundColor: shared.UiConfig.primaryColor,
+                padding: shared.UiConfig.defaultPadding,
               ),
             ),
           ),
-        if (widget.showPhone) SizedBox(height: UiConfig.defaultPadding.top),
+        if (widget.showPhone)
+          SizedBox(height: shared.UiConfig.defaultPadding.top),
         if (widget.allowGuest)
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               icon: Icon(Icons.person_outline,
-                  color: UiConfig.hintTextColor, size: 22),
-              label: Text('Continue as Guest', style: UiConfig.bodyBoldStyle),
+                  color: shared.UiConfig.hintTextColor, size: 22),
+              label: Text('Continue as Guest',
+                  style: shared.UiConfig.bodyBoldStyle),
               onPressed: isBusy
                   ? null
                   : () async {
@@ -259,21 +263,22 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
                       }
                     },
               style: ElevatedButton.styleFrom(
-                backgroundColor: UiConfig.surfaceColor,
-                foregroundColor: UiConfig.textColor,
-                padding: UiConfig.defaultPadding,
+                backgroundColor: shared.UiConfig.surfaceColor,
+                foregroundColor: shared.UiConfig.textColor,
+                padding: shared.UiConfig.defaultPadding,
               ),
             ),
           ),
-        if (widget.allowGuest) SizedBox(height: UiConfig.defaultPadding.top),
+        if (widget.allowGuest)
+          SizedBox(height: shared.UiConfig.defaultPadding.top),
         if (widget.allowDemo)
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               icon: const Icon(Icons.visibility,
                   color: Colors.deepPurple, size: 22),
-              label:
-                  Text('Test Drive (Demo Mode)', style: UiConfig.bodyBoldStyle),
+              label: Text('Test Drive (Demo Mode)',
+                  style: shared.UiConfig.bodyBoldStyle),
               onPressed: isBusy
                   ? null
                   : () async {
@@ -295,13 +300,14 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.deepPurple.withOpacity(0.1),
                 foregroundColor: Colors.deepPurple,
-                padding: UiConfig.defaultPadding,
+                padding: shared.UiConfig.defaultPadding,
               ),
             ),
           ),
-        if (widget.allowDemo) SizedBox(height: UiConfig.defaultPadding.top),
+        if (widget.allowDemo)
+          SizedBox(height: shared.UiConfig.defaultPadding.top),
         if (isBusy) ...[
-          SizedBox(height: UiConfig.defaultPadding.top),
+          SizedBox(height: shared.UiConfig.defaultPadding.top),
           const CircularProgressIndicator(),
         ],
       ],

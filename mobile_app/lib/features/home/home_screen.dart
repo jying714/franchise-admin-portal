@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:franchise_mobile_app/features/auth/sign_in_screen.dart';
@@ -18,35 +17,35 @@ class HomeScreen extends StatelessWidget {
     final loc = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: UiConfig.backgroundColorDark,
+      backgroundColor: shared.UiConfig.backgroundColorDark,
       appBar: FranchiseAppBar(
         title: "",
         showLogo: true,
-        logoUrl: UiConfig.currentLogoUrl,
-        logoAsset: UiConfig.logoMain,
+        logoUrl: shared.UiConfig.currentLogoUrl,
+        logoAsset: shared.UiConfig.logoMain,
         centerTitle: true,
       ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: UiConfig.defaultPadding,
+            padding: shared.UiConfig.defaultPadding,
             child: Card(
               shape: RoundedRectangleBorder(
                 borderRadius:
                     BorderRadius.circular(shared.DesignTokens.cardRadius),
               ),
               elevation: shared.DesignTokens.cardElevation,
-              color: UiConfig.surfaceColorDark,
+              color: shared.UiConfig.surfaceColorDark,
               child: Padding(
-                padding: UiConfig.defaultPadding,
+                padding: shared.UiConfig.defaultPadding,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Image.asset(
-                      UiConfig.logoLarge,
+                      shared.UiConfig.logoLarge,
                       height: shared.DesignTokens.logoHeightLarge,
                       errorBuilder: (c, e, s) => Image.asset(
-                        UiConfig.defaultPizzaIcon,
+                        shared.UiConfig.defaultPizzaIcon,
                         height: shared.DesignTokens.logoHeightLarge,
                         fit: BoxFit.contain,
                         semanticLabel: loc.logoErrorTooltip,
@@ -57,9 +56,9 @@ class HomeScreen extends StatelessWidget {
                       loc.welcomeTitle(shared.BrandingConfig.franchiseName),
                       style: TextStyle(
                         fontFamily: shared.DesignTokens.fontFamily,
-                        fontWeight: UiConfig.fontWeightBold,
+                        fontWeight: shared.UiConfig.fontWeightBold,
                         fontSize: shared.DesignTokens.titleFontSize,
-                        color: UiConfig.textColorDark,
+                        color: shared.UiConfig.textColorDark,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -69,7 +68,7 @@ class HomeScreen extends StatelessWidget {
                       style: TextStyle(
                         fontFamily: shared.DesignTokens.fontFamily,
                         fontSize: shared.DesignTokens.bodyFontSize,
-                        color: UiConfig.secondaryTextColor,
+                        color: shared.UiConfig.secondaryTextColor,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -83,9 +82,9 @@ class HomeScreen extends StatelessWidget {
                               builder: (_) => const SignInScreen()),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: UiConfig.primaryColor,
-                          foregroundColor: UiConfig.foregroundColorDark,
-                          padding: UiConfig.defaultPadding,
+                          backgroundColor: shared.UiConfig.primaryColor,
+                          foregroundColor: shared.UiConfig.foregroundColorDark,
+                          padding: shared.UiConfig.defaultPadding,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
                                 shared.DesignTokens.buttonRadius),
@@ -93,7 +92,7 @@ class HomeScreen extends StatelessWidget {
                           elevation: shared.DesignTokens.buttonElevation,
                           textStyle: TextStyle(
                             fontSize: shared.DesignTokens.bodyFontSize,
-                            fontWeight: UiConfig.fontWeightBold,
+                            fontWeight: shared.UiConfig.fontWeightBold,
                             fontFamily: shared.DesignTokens.fontFamily,
                           ),
                         ),
@@ -110,9 +109,9 @@ class HomeScreen extends StatelessWidget {
                               builder: (_) => const SignUpScreen()),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: UiConfig.secondaryColor,
-                          foregroundColor: UiConfig.textColorDark,
-                          padding: UiConfig.defaultPadding,
+                          backgroundColor: shared.UiConfig.secondaryColor,
+                          foregroundColor: shared.UiConfig.textColorDark,
+                          padding: shared.UiConfig.defaultPadding,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
                                 shared.DesignTokens.buttonRadius),
@@ -120,7 +119,7 @@ class HomeScreen extends StatelessWidget {
                           elevation: shared.DesignTokens.buttonElevation,
                           textStyle: TextStyle(
                             fontSize: shared.DesignTokens.bodyFontSize,
-                            fontWeight: UiConfig.fontWeightBold,
+                            fontWeight: shared.UiConfig.fontWeightBold,
                             fontFamily: shared.DesignTokens.fontFamily,
                           ),
                         ),
@@ -135,7 +134,7 @@ class HomeScreen extends StatelessWidget {
                             builder: (_) => const MainMenuScreen()),
                       ),
                       style: TextButton.styleFrom(
-                        foregroundColor: UiConfig.primaryColor,
+                        foregroundColor: shared.UiConfig.primaryColor,
                         padding: EdgeInsets.symmetric(
                             vertical: shared.DesignTokens.gridSpacing * 1.5),
                         textStyle: TextStyle(

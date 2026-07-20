@@ -3,3 +3,4 @@ export 'src/core/config/app_config.dart';
 export 'src/core/config/branding_config.dart';
 export 'src/core/config/design_tokens.dart';
 export 'src/core/config/feature_config.dart';
+export 'src/core/config/ui_config.dart';

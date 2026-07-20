@@ -4,18 +4,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:franchise_mobile_app/core/widgets/global_error_boundary.dart';
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 
 void main() {
   group('GlobalErrorBoundary recovery (P2.3)', () {
-    testWidgets('shows friendly error UI when child throws during build', (tester) async {
+    testWidgets('shows friendly error UI when child throws during build',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: GlobalErrorBoundary(
             screenName: 'test_error',
             child: Builder(
-              builder: (_) => throw Exception('Simulated widget error for test'),
+              builder: (_) =>
+                  throw Exception('Simulated widget error for test'),
             ),
           ),
         ),

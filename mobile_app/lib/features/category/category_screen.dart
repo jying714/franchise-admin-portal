@@ -1,5 +1,4 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_core/shared_core.dart' as shared;
@@ -73,12 +72,13 @@ class _CategoryScreenState extends State<CategoryScreen> {
             content: Text(
               loc.logInToOrder,
               style: TextStyle(
-                color: UiConfig.textColor,
+                color: shared.UiConfig.textColor,
                 fontFamily: shared.DesignTokens.fontFamily,
               ),
             ),
-            backgroundColor: UiConfig.surfaceColor,
-            duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+            backgroundColor: shared.UiConfig.surfaceColor,
+            duration:
+                Duration(seconds: shared.DesignTokens.toastDurationSeconds),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -93,10 +93,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
           SnackBar(
             content: Text(
               "Franchise not selected. Please try again.",
-              style: TextStyle(color: UiConfig.textColor),
+              style: TextStyle(color: shared.UiConfig.textColor),
             ),
-            backgroundColor: UiConfig.surfaceColor,
-            duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+            backgroundColor: shared.UiConfig.surfaceColor,
+            duration:
+                Duration(seconds: shared.DesignTokens.toastDurationSeconds),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -122,12 +123,13 @@ class _CategoryScreenState extends State<CategoryScreen> {
             content: Text(
               loc.addedToCartMessage,
               style: TextStyle(
-                color: UiConfig.textColor,
+                color: shared.UiConfig.textColor,
                 fontFamily: shared.DesignTokens.fontFamily,
               ),
             ),
-            backgroundColor: UiConfig.surfaceColor,
-            duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+            backgroundColor: shared.UiConfig.surfaceColor,
+            duration:
+                Duration(seconds: shared.DesignTokens.toastDurationSeconds),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -138,10 +140,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
           SnackBar(
             content: Text(
               "Failed to add to cart",
-              style: TextStyle(color: UiConfig.textColor),
+              style: TextStyle(color: shared.UiConfig.textColor),
             ),
-            backgroundColor: UiConfig.surfaceColor,
-            duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+            backgroundColor: shared.UiConfig.surfaceColor,
+            duration:
+                Duration(seconds: shared.DesignTokens.toastDurationSeconds),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -157,7 +160,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       appBar: FranchiseAppBar(
         title: widget.categoryName,
         showLogo: true,
-        logoUrl: UiConfig.currentLogoUrl,
+        logoUrl: shared.UiConfig.currentLogoUrl,
         logoAsset: shared.BrandingConfig.appBarLogoAsset,
         actions: [
           ProfileIconButton(
@@ -179,99 +182,101 @@ class _CategoryScreenState extends State<CategoryScreen> {
           const SizedBox(width: 10),
         ],
       ),
-      backgroundColor: UiConfig.backgroundColor,
+      backgroundColor: shared.UiConfig.backgroundColor,
       body: SafeArea(
         bottom: true,
         child: Consumer<shared.FranchiseProvider>(
-        builder: (context, provider, child) {
-          if (!provider.hasValidFranchise) {
-            return const Center(child: CircularProgressIndicator());
-          }
+          builder: (context, provider, child) {
+            if (!provider.hasValidFranchise) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          return StreamBuilder<List<shared.MenuItem>>(
-            stream: Provider.of<shared.FirestoreService>(context, listen: false)
-                .getMenuItemsByCategory(
-              widget.categoryId,
-              franchiseId: provider.currentFranchiseId,
-              sortBy: _sortBy == loc.sortByPrice
-                  ? 'price'
-                  : _sortBy == loc.sortByName
-                      ? 'name'
-                      : null,
-            ),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const LoadingShimmerWidget();
-              }
+            return StreamBuilder<List<shared.MenuItem>>(
+              stream:
+                  Provider.of<shared.FirestoreService>(context, listen: false)
+                      .getMenuItemsByCategory(
+                widget.categoryId,
+                franchiseId: provider.currentFranchiseId,
+                sortBy: _sortBy == loc.sortByPrice
+                    ? 'price'
+                    : _sortBy == loc.sortByName
+                        ? 'name'
+                        : null,
+              ),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const LoadingShimmerWidget();
+                }
 
-              if (snapshot.hasError) {
-                return EmptyStateWidget(
-                  title: "Error Loading Menu Items",
-                  message: "Please try again later.",
-                  imageAsset: shared.BrandingConfig.defaultCategoryIcon,
-                );
-              }
+                if (snapshot.hasError) {
+                  return EmptyStateWidget(
+                    title: "Error Loading Menu Items",
+                    message: "Please try again later.",
+                    imageAsset: shared.BrandingConfig.defaultCategoryIcon,
+                  );
+                }
 
-              final items = snapshot.data ?? [];
+                final items = snapshot.data ?? [];
 
-              if (items.isEmpty) {
-                return EmptyStateWidget(
-                  title: loc.emptyStateMessage,
-                  message: "No menu items found for this category.",
-                  imageAsset: shared.BrandingConfig.defaultCategoryIcon,
-                );
-              }
+                if (items.isEmpty) {
+                  return EmptyStateWidget(
+                    title: loc.emptyStateMessage,
+                    message: "No menu items found for this category.",
+                    imageAsset: shared.BrandingConfig.defaultCategoryIcon,
+                  );
+                }
 
-              return Column(
-                children: [
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        FilterDropdown<String>(
-                          label: loc.sortBy,
-                          options: _sortOptions,
-                          value: _sortBy,
-                          onChanged: (val) {
-                            if (val != null) setState(() => _sortBy = val);
-                          },
-                        ),
-                      ],
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 6),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          FilterDropdown<String>(
+                            label: loc.sortBy,
+                            options: _sortOptions,
+                            value: _sortBy,
+                            onChanged: (val) {
+                              if (val != null) setState(() => _sortBy = val);
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: items.length,
-                      itemBuilder: (context, index) {
-                        final item = items[index];
-                        return MenuItemCard(
-                          menuItem: item,
-                          showDescription: true,
-                          expanded: true,
-                          // Pass isFavorited from parent stream when available (see diagnostic)
-                          isFavorited: null, // TODO: wire real-time favorites IDs stream here for full reactivity
-                          onAddToCart: (
-                            menuItem,
-                            selectedCustomizations,
-                            quantity,
-                            totalPrice,
-                          ) {
-                            _handleAddToCart(menuItem, selectedCustomizations,
-                                quantity, totalPrice);
-                          },
-                        );
-                      },
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final item = items[index];
+                          return MenuItemCard(
+                            menuItem: item,
+                            showDescription: true,
+                            expanded: true,
+                            // Pass isFavorited from parent stream when available (see diagnostic)
+                            isFavorited:
+                                null, // TODO: wire real-time favorites IDs stream here for full reactivity
+                            onAddToCart: (
+                              menuItem,
+                              selectedCustomizations,
+                              quantity,
+                              totalPrice,
+                            ) {
+                              _handleAddToCart(menuItem, selectedCustomizations,
+                                  quantity, totalPrice);
+                            },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
-              );
-            },
-          );
-        },
-      ),
+                  ],
+                );
+              },
+            );
+          },
+        ),
       ), // SafeArea close
     );
   }

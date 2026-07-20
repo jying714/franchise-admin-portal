@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class WingsOptionalAddOnsGroup extends StatelessWidget {
@@ -48,8 +47,8 @@ class WingsOptionalAddOnsGroup extends StatelessWidget {
           Text(
             "Other Add-Ons",
             style: theme.textTheme.titleMedium?.copyWith(
-              color: UiConfig.secondaryColor,
-              fontWeight: UiConfig.bold,
+              color: shared.UiConfig.secondaryColor,
+              fontWeight: shared.UiConfig.bold,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
@@ -79,7 +78,7 @@ class WingsOptionalAddOnsGroup extends StatelessWidget {
                   child: Text(
                     meta?.name ?? addOn['name'] ?? ingId,
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: UiConfig.textColor,
+                      color: shared.UiConfig.textColor,
                       fontFamily: shared.DesignTokens.fontFamily,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -91,8 +90,8 @@ class WingsOptionalAddOnsGroup extends StatelessWidget {
                     child: Text(
                       '+${upcharge.toStringAsFixed(2)}',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: UiConfig.secondaryColor,
-                        fontWeight: UiConfig.bold,
+                        color: shared.UiConfig.secondaryColor,
+                        fontWeight: shared.UiConfig.bold,
                         fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     ),

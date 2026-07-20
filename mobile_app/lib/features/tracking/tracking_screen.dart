@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -15,21 +14,21 @@ class TrackingScreen extends StatelessWidget {
       appBar: FranchiseAppBar(
         title: localizations.trackOrder,
         showLogo: false,
-        backgroundColor: UiConfig.primaryColor,
-        foregroundColor: UiConfig.foregroundColor,
+        backgroundColor: shared.UiConfig.primaryColor,
+        foregroundColor: shared.UiConfig.foregroundColor,
         centerTitle: true,
         elevation: 0,
       ),
-      backgroundColor: UiConfig.backgroundColor,
+      backgroundColor: shared.UiConfig.backgroundColor,
       body: Center(
         child: Text(
           '${localizations.orderNumber}: $orderId\n\nTracking info coming soon!',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: shared.DesignTokens.bodyFontSize,
-            color: UiConfig.textColor,
+            color: shared.UiConfig.textColor,
             fontFamily: shared.DesignTokens.fontFamily,
-            fontWeight: UiConfig.normal,
+            fontWeight: shared.UiConfig.normal,
           ),
         ),
       ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/language/language_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -26,19 +25,19 @@ class LanguageScreen extends StatelessWidget {
           loc.language,
           style: TextStyle(
             fontSize: shared.DesignTokens.titleFontSize,
-            color: UiConfig.foregroundColorDark,
-            fontWeight: UiConfig.fontWeightBold,
+            color: shared.UiConfig.foregroundColorDark,
+            fontWeight: shared.UiConfig.fontWeightBold,
             fontFamily: shared.DesignTokens.fontFamily,
           ),
         ),
-        backgroundColor: UiConfig.primaryColor,
+        backgroundColor: shared.UiConfig.primaryColor,
         elevation: 0,
-        iconTheme: IconThemeData(color: UiConfig.foregroundColorDark),
+        iconTheme: IconThemeData(color: shared.UiConfig.foregroundColorDark),
         centerTitle: true,
       ),
-      backgroundColor: UiConfig.backgroundColorDark,
+      backgroundColor: shared.UiConfig.backgroundColorDark,
       body: Padding(
-        padding: UiConfig.defaultPadding,
+        padding: shared.UiConfig.defaultPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -46,8 +45,8 @@ class LanguageScreen extends StatelessWidget {
               loc.selectLanguage,
               style: TextStyle(
                 fontSize: shared.DesignTokens.bodyFontSize,
-                fontWeight: UiConfig.fontWeightBold,
-                color: UiConfig.textColorDark,
+                fontWeight: shared.UiConfig.fontWeightBold,
+                color: shared.UiConfig.textColorDark,
                 fontFamily: shared.DesignTokens.fontFamily,
               ),
             ),
@@ -57,14 +56,14 @@ class LanguageScreen extends StatelessWidget {
                     lang['label']!,
                     style: TextStyle(
                       fontSize: shared.DesignTokens.bodyFontSize,
-                      color: UiConfig.textColorDark,
+                      color: shared.UiConfig.textColorDark,
                       fontFamily: shared.DesignTokens.fontFamily,
                     ),
                   ),
                   trailing: languageProvider.locale.languageCode == lang['code']
                       ? Icon(
                           Icons.check,
-                          color: UiConfig.primaryColor,
+                          color: shared.UiConfig.primaryColor,
                         )
                       : null,
                   onTap: () {
@@ -73,9 +72,10 @@ class LanguageScreen extends StatelessWidget {
                       SnackBar(
                         content: Text(
                           loc.languageSetTo(lang['label']!),
-                          style: TextStyle(color: UiConfig.textColorDark),
+                          style:
+                              TextStyle(color: shared.UiConfig.textColorDark),
                         ),
-                        backgroundColor: UiConfig.surfaceColorDark,
+                        backgroundColor: shared.UiConfig.surfaceColorDark,
                       ),
                     );
                   },

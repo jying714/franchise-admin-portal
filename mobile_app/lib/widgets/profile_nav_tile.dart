@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 /// A reusable navigation tile for profile/account menus.
 /// Handles optional icons and highlight states.
-/// P2: All colors (primary/adminPrimary/text) now respect live FranchiseProvider via UiConfig.
+/// P2: All colors (primary/adminPrimary/text) now respect live FranchiseProvider via shared.UiConfig.
 class ProfileNavTile extends StatelessWidget {
   final String label;
   final Widget destination;
@@ -26,20 +25,22 @@ class ProfileNavTile extends StatelessWidget {
           ? Icon(
               icon,
               color: highlight
-                  ? UiConfig.adminPrimaryColor
-                  : UiConfig.primaryColor,
+                  ? shared.UiConfig.adminPrimaryColor
+                  : shared.UiConfig.primaryColor,
             )
           : null,
       title: Text(
         label,
-        style: UiConfig.bodyStyle.copyWith(
-          color: highlight ? UiConfig.adminPrimaryColor : UiConfig.textColor,
-          fontWeight: UiConfig.fontWeightBold,
+        style: shared.UiConfig.bodyStyle.copyWith(
+          color: highlight
+              ? shared.UiConfig.adminPrimaryColor
+              : shared.UiConfig.textColor,
+          fontWeight: shared.UiConfig.fontWeightBold,
         ),
       ),
       trailing: Icon(
         Icons.arrow_forward,
-        color: UiConfig.primaryColor,
+        color: shared.UiConfig.primaryColor,
       ),
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => destination),

@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/loyalty/loyalty_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// Reusable loyalty points summary widget for Profile and other screens.
 /// Franchise-scoped via FranchiseProvider. Taps through to full LoyaltyScreen.
-/// P2: Colors (primary) now fully dynamic via UiConfig (driven by FranchiseProvider branding).
+/// P2: Colors (primary) now fully dynamic via shared.UiConfig (driven by FranchiseProvider branding).
 /// Uses only public shared_core barrel.
 class LoyaltyPointsWidget extends StatefulWidget {
   const LoyaltyPointsWidget({super.key});
@@ -18,7 +17,6 @@ class LoyaltyPointsWidget extends StatefulWidget {
 
 class _LoyaltyPointsWidgetState extends State<LoyaltyPointsWidget> {
   // Real-time reactive via franchiseProfileStream (no more one-shot Future)
-
 
   String _getTierTitle(int points, AppLocalizations loc) {
     if (points >= 1000) return loc.loyaltyRankLegend;
@@ -32,8 +30,10 @@ class _LoyaltyPointsWidgetState extends State<LoyaltyPointsWidget> {
     final loc = AppLocalizations.of(context)!;
 
     final authService = Provider.of<shared.AuthService>(context, listen: false);
-    final firestoreService = Provider.of<shared.FirestoreService>(context, listen: false);
-    final franchiseProvider = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final firestoreService =
+        Provider.of<shared.FirestoreService>(context, listen: false);
+    final franchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
     final uid = authService.currentUser?.id;
     final fid = franchiseProvider.currentFranchiseId;
 
@@ -59,7 +59,7 @@ class _LoyaltyPointsWidgetState extends State<LoyaltyPointsWidget> {
         final progress = (pts % 100) / 100.0;
 
         return Card(
-          color: UiConfig.surfaceColor,
+          color: shared.UiConfig.surfaceColor,
           elevation: shared.DesignTokens.cardElevation,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
@@ -73,7 +73,7 @@ class _LoyaltyPointsWidgetState extends State<LoyaltyPointsWidget> {
               );
             },
             child: Padding(
-              padding: UiConfig.cardPadding,
+              padding: shared.UiConfig.cardPadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -81,7 +81,7 @@ class _LoyaltyPointsWidgetState extends State<LoyaltyPointsWidget> {
                     children: [
                       Icon(
                         Icons.emoji_events,
-                        color: UiConfig.primaryColor,
+                        color: shared.UiConfig.primaryColor,
                         size: 28,
                       ),
                       const SizedBox(width: 12),
@@ -91,8 +91,8 @@ class _LoyaltyPointsWidgetState extends State<LoyaltyPointsWidget> {
                           children: [
                             Text(
                               tier,
-                              style: UiConfig.bodyBoldStyle.copyWith(
-                                color: UiConfig.primaryColor,
+                              style: shared.UiConfig.bodyBoldStyle.copyWith(
+                                color: shared.UiConfig.primaryColor,
                                 fontSize: shared.DesignTokens.bodyFontSize,
                               ),
                             ),
@@ -104,7 +104,7 @@ class _LoyaltyPointsWidgetState extends State<LoyaltyPointsWidget> {
                                       : pts >= 200
                                           ? 2
                                           : 1),
-                              style: UiConfig.captionStyle,
+                              style: shared.UiConfig.captionStyle,
                             ),
                           ],
                         ),
@@ -114,13 +114,13 @@ class _LoyaltyPointsWidgetState extends State<LoyaltyPointsWidget> {
                         children: [
                           Text(
                             loc.loyaltyPoints(pts),
-                            style: UiConfig.bodyBoldStyle.copyWith(
+                            style: shared.UiConfig.bodyBoldStyle.copyWith(
                               fontSize: shared.DesignTokens.titleFontSize,
                             ),
                           ),
                           Text(
                             'Tap for details',
-                            style: UiConfig.captionStyle.copyWith(
+                            style: shared.UiConfig.captionStyle.copyWith(
                               fontSize: shared.DesignTokens.captionFontSize - 1,
                             ),
                           ),
@@ -132,14 +132,14 @@ class _LoyaltyPointsWidgetState extends State<LoyaltyPointsWidget> {
                   LinearProgressIndicator(
                     value: progress,
                     minHeight: 6,
-                    backgroundColor: UiConfig.shimmerBaseColor,
-                    color: UiConfig.primaryColor,
+                    backgroundColor: shared.UiConfig.shimmerBaseColor,
+                    color: shared.UiConfig.primaryColor,
                     borderRadius: BorderRadius.circular(3),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     loc.loyaltyNextReward(100 - (pts % 100)),
-                    style: UiConfig.captionStyle,
+                    style: shared.UiConfig.captionStyle,
                   ),
                 ],
               ),

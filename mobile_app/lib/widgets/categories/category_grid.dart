@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/categories/category_card.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 // P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
 
@@ -43,9 +42,9 @@ class CategoryGrid extends StatelessWidget {
             child: Text(
               loc.noCategoriesAvailable,
               style: TextStyle(
-                color: UiConfig.secondaryTextColor,
+                color: shared.UiConfig.secondaryTextColor,
                 fontSize: shared.DesignTokens.bodyFontSize,
-                fontWeight: UiConfig.fontWeightNormal,
+                fontWeight: shared.UiConfig.fontWeightNormal,
                 fontFamily: shared.DesignTokens.fontFamily,
               ),
               textAlign: TextAlign.center,
@@ -59,7 +58,7 @@ class CategoryGrid extends StatelessWidget {
         crossAxisCount ?? (MediaQuery.of(context).size.width > 600 ? 3 : 2);
 
     return GridView.builder(
-      padding: padding ?? UiConfig.defaultPadding,
+      padding: padding ?? shared.UiConfig.defaultPadding,
       itemCount: categories.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: gridCount,

@@ -1,7 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_admin_portal/config/ui_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
@@ -44,9 +43,9 @@ class AlertsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
       ),
       elevation: DesignTokens.adminCardElevation,
-      margin: UiConfig.defaultPadding,
+      margin: shared.UiConfig.defaultPadding,
       child: Padding(
-        padding: UiConfig.defaultPadding,
+        padding: shared.UiConfig.defaultPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

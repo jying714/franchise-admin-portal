@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 typedef GetToppingUpcharge = double Function();
@@ -31,7 +30,7 @@ class ToppingCostLabel extends StatelessWidget {
         Text(
           loc.additionalToppingCostLabel ?? "Additional topping cost:",
           style: theme.textTheme.bodySmall?.copyWith(
-            color: UiConfig.secondaryTextColor,
+            color: shared.UiConfig.secondaryTextColor,
             fontFamily: shared.DesignTokens.fontFamily,
             fontWeight: FontWeight.w500,
           ),
@@ -40,8 +39,8 @@ class ToppingCostLabel extends StatelessWidget {
         Text(
           currencyFormat(context, upcharge),
           style: theme.textTheme.bodySmall?.copyWith(
-            color: UiConfig.primaryColor,
-            fontWeight: UiConfig.bold,
+            color: shared.UiConfig.primaryColor,
+            fontWeight: shared.UiConfig.bold,
             fontFamily: shared.DesignTokens.fontFamily,
           ),
         ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SizeDropdown extends StatelessWidget {
@@ -51,7 +50,7 @@ class SizeDropdown extends StatelessWidget {
     // Franchise scoping injected for centrality (P1 cleanup)
     Provider.of<shared.FranchiseProvider>(context, listen: false);
     // Note: franchiseId available for future per-franchise size/pricing logic if needed
- 
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Column(
@@ -62,8 +61,8 @@ class SizeDropdown extends StatelessWidget {
               Text(
                 loc.sizeLabel,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: UiConfig.secondaryColor,
-                  fontWeight: UiConfig.fontWeightBold,
+                  color: shared.UiConfig.secondaryColor,
+                  fontWeight: shared.UiConfig.fontWeightBold,
                   fontFamily: shared.DesignTokens.fontFamily,
                 ),
               ),
@@ -98,10 +97,10 @@ class SizeDropdown extends StatelessWidget {
                     return Padding(
                       padding: const EdgeInsets.only(left: 12.0),
                       child: Text(
-                        UiConfig.currencyFormat(context, price),
+                        shared.UiConfig.currencyFormat(price),
                         style: theme.textTheme.titleMedium?.copyWith(
-                          color: UiConfig.primaryColor,
-                          fontWeight: UiConfig.fontWeightBold,
+                          color: shared.UiConfig.primaryColor,
+                          fontWeight: shared.UiConfig.fontWeightBold,
                           fontFamily: shared.DesignTokens.fontFamily,
                         ),
                       ),

@@ -5,7 +5,6 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/ingredient_creation_dialog.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/ingredient_type_creation_dialog.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/category_creation_dialog.dart';
-import 'package:franchise_admin_portal/config/ui_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class SchemaIssueSidebar extends StatefulWidget {
@@ -77,7 +76,7 @@ class _SchemaIssueSidebarState extends State<SchemaIssueSidebar> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Text('Schema Issues', style: UiConfig.titleStyle),
+                Text('Schema Issues', style: shared.UiConfig.titleStyle),
                 const Spacer(),
                 Chip(
                   label: Text('${unresolved.length} unresolved'),
@@ -134,7 +133,7 @@ class _SchemaIssueSidebarState extends State<SchemaIssueSidebar> {
                                   Expanded(
                                     child: Text(
                                       issue.displayMessage,
-                                      style: UiConfig.bodyStyle,
+                                      style: shared.UiConfig.bodyStyle,
                                     ),
                                   ),
                                 ],
@@ -142,8 +141,8 @@ class _SchemaIssueSidebarState extends State<SchemaIssueSidebar> {
                               const SizedBox(height: 8),
                               Text(
                                 'Current: ${issue.missingReference ?? "unknown"}',
-                                style:
-                                    UiConfig.bodyStyle.copyWith(fontSize: 13),
+                                style: shared.UiConfig.bodyStyle
+                                    .copyWith(fontSize: 13),
                               ),
                               const SizedBox(height: 12),
                               _RepairDropdown(

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/customization/customization_modal.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-// P1 Batch 1: direct caller of customization_modal (mobile canonical, shared.FranchiseProvider + UiConfig enforced)
+// P1 Batch 1: direct caller of customization_modal (mobile canonical, shared.FranchiseProvider + shared.UiConfig enforced)
 // P1 Batch 3: menu_item_card + cross-cutting widgets (FranchiseProvider injection + public barrels enforced)
 
 typedef AddToCartCallback = void Function(
@@ -58,7 +57,9 @@ class _MenuItemCardState extends State<MenuItemCard> {
     return IconButton(
       icon: Icon(
         isFavorited ? Icons.favorite : Icons.favorite_border,
-        color: isFavorited ? UiConfig.accentColor : UiConfig.hintTextColor,
+        color: isFavorited
+            ? shared.UiConfig.accentColor
+            : shared.UiConfig.hintTextColor,
       ),
       tooltip: enabled
           ? (isFavorited
@@ -139,7 +140,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
-        side: BorderSide(color: UiConfig.cardBorderColor, width: 1),
+        side: BorderSide(color: shared.UiConfig.cardBorderColor, width: 1),
       ),
       child: Padding(
         padding: isWide
@@ -211,7 +212,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                   // NAME - HIGH CONTRAST FIX (guaranteed visible on light card background)
                   Text(
                     widget.menuItem.name,
-                    style: UiConfig.titleStyle.copyWith(
+                    style: shared.UiConfig.titleStyle.copyWith(
                       color: Colors.black, // Explicit high-contrast black
                       fontWeight: FontWeight.w600,
                     ),
@@ -221,7 +222,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                   // PRICE
                   Text(
                     '\$${widget.menuItem.price.toStringAsFixed(2)}',
-                    style: UiConfig.bodyStyle.copyWith(
+                    style: shared.UiConfig.bodyStyle.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -232,7 +233,7 @@ class _MenuItemCardState extends State<MenuItemCard> {
                       padding: const EdgeInsets.only(top: 4.0),
                       child: Text(
                         widget.menuItem.description,
-                        style: UiConfig.captionStyle,
+                        style: shared.UiConfig.captionStyle,
                         maxLines: widget.expanded ? 4 : 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -249,8 +250,9 @@ class _MenuItemCardState extends State<MenuItemCard> {
                             height: 36,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: UiConfig.secondaryColor,
-                                foregroundColor: UiConfig.foregroundColor,
+                                backgroundColor: shared.UiConfig.secondaryColor,
+                                foregroundColor:
+                                    shared.UiConfig.foregroundColor,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(18),
                                 ),
@@ -284,8 +286,9 @@ class _MenuItemCardState extends State<MenuItemCard> {
                             height: 36,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: UiConfig.primaryColor,
-                                foregroundColor: UiConfig.foregroundColor,
+                                backgroundColor: shared.UiConfig.primaryColor,
+                                foregroundColor:
+                                    shared.UiConfig.foregroundColor,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(18),
                                 ),
@@ -317,8 +320,9 @@ class _MenuItemCardState extends State<MenuItemCard> {
                             height: 36,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: UiConfig.primaryColor,
-                                foregroundColor: UiConfig.foregroundColor,
+                                backgroundColor: shared.UiConfig.primaryColor,
+                                foregroundColor:
+                                    shared.UiConfig.foregroundColor,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(18),
                                 ),

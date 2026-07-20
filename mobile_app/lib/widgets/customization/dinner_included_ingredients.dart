@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class DinnerIncludedIngredients extends StatelessWidget {
@@ -53,8 +52,8 @@ class DinnerIncludedIngredients extends StatelessWidget {
           Text(
             loc.currentIngredientsLabel,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: UiConfig.primaryColor,
-              fontWeight: UiConfig.bold,
+              color: shared.UiConfig.primaryColor,
+              fontWeight: shared.UiConfig.bold,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
@@ -116,8 +115,8 @@ class DinnerIncludedIngredients extends StatelessWidget {
                               name,
                               style: theme.textTheme.bodyLarge?.copyWith(
                                 color: outOfStock
-                                    ? UiConfig.secondaryTextColor
-                                    : UiConfig.textColor,
+                                    ? shared.UiConfig.secondaryTextColor
+                                    : shared.UiConfig.textColor,
                                 fontWeight: outOfStock
                                     ? FontWeight.normal
                                     : FontWeight.w500,
@@ -158,7 +157,7 @@ class DinnerIncludedIngredients extends StatelessWidget {
                         child: Text(
                           loc.outOfStockLabel ?? "Out of Stock",
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: UiConfig.errorTextColor,
+                            color: shared.UiConfig.errorTextColor,
                             fontStyle: FontStyle.italic,
                             fontWeight: FontWeight.bold,
                           ),
@@ -173,7 +172,7 @@ class DinnerIncludedIngredients extends StatelessWidget {
                         child: Text(
                           loc.ingredientRemovedLabel ?? "Removed",
                           style: TextStyle(
-                            color: UiConfig.primaryColor,
+                            color: shared.UiConfig.primaryColor,
                             fontStyle: FontStyle.italic,
                             fontWeight: FontWeight.w600,
                           ),
@@ -186,7 +185,7 @@ class DinnerIncludedIngredients extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 6.0),
                     child: Divider(
                       thickness: 1.0,
-                      color: UiConfig.dividerColor,
+                      color: shared.UiConfig.dividerColor,
                       height: 1,
                     ),
                   ),

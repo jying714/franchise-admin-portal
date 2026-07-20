@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class WingsPortionSelector extends StatelessWidget {
@@ -39,15 +38,15 @@ class WingsPortionSelector extends StatelessWidget {
           Text(
             "Build Your Wings",
             style: theme.textTheme.titleMedium?.copyWith(
-              color: UiConfig.secondaryColor,
-              fontWeight: UiConfig.bold,
+              color: shared.UiConfig.secondaryColor,
+              fontWeight: shared.UiConfig.bold,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
           Text(
             "Choose a sauce for each portion below. 'Plain' means no sauce—just crispy wings.",
             style: theme.textTheme.bodySmall?.copyWith(
-              color: UiConfig.secondaryTextColor,
+              color: shared.UiConfig.secondaryTextColor,
               fontStyle: FontStyle.italic,
               fontFamily: shared.DesignTokens.fontFamily,
             ),

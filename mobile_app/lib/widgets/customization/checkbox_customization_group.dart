@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CheckboxCustomizationGroup extends StatelessWidget {
@@ -60,8 +59,8 @@ class CheckboxCustomizationGroup extends StatelessWidget {
           Text(
             groupLabel,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: UiConfig.secondaryColor,
-              fontWeight: UiConfig.bold,
+              color: shared.UiConfig.secondaryColor,
+              fontWeight: shared.UiConfig.bold,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
@@ -91,17 +90,17 @@ class CheckboxCustomizationGroup extends StatelessWidget {
                     title: Text(
                       meta?.name ?? ingId,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: UiConfig.textColor,
+                        color: shared.UiConfig.textColor,
                         fontFamily: shared.DesignTokens.fontFamily,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
                     secondary: showUpcharge
                         ? Text(
-                            '+${UiConfig.currencyFormat(context, upcharge)}',
+                            '+${shared.UiConfig.currencyFormat(upcharge)}',
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: UiConfig.secondaryColor,
-                              fontWeight: UiConfig.bold,
+                              color: shared.UiConfig.secondaryColor,
+                              fontWeight: shared.UiConfig.bold,
                               fontFamily: shared.DesignTokens.fontFamily,
                             ),
                           )

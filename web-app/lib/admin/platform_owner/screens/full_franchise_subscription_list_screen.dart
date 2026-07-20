@@ -7,7 +7,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/config/app_config.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/admin/developer/platform/franchise_subscription_editor_dialog.dart';
-import 'package:franchise_admin_portal/admin/owner/widgets/franchise_subscription_list_tile.dart';
+import 'package:franchise_admin_portal/admin/platform_owner/widgets/franchise_subscription_list_tile.dart';
 
 class FullFranchiseSubscriptionListScreen extends StatefulWidget {
   const FullFranchiseSubscriptionListScreen({super.key});

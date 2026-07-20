@@ -2,7 +2,6 @@
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:uuid/uuid.dart';
-import 'package:franchise_admin_portal/config/ui_config.dart';
 
 class CategoryCreationDialog extends StatefulWidget {
   final AppLocalizations loc;

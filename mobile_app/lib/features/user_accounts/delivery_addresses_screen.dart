@@ -11,9 +11,8 @@ import 'package:franchise_mobile_app/widgets/confirmation_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-// Batch 2: Address/ widgets + header updated (FranchiseProvider + UiConfig + public barrels)
+// Batch 2: Address/ widgets + header updated (FranchiseProvider + shared.UiConfig + public barrels)
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
 
@@ -40,14 +39,14 @@ class _DeliveryAddressesScreenState extends State<DeliveryAddressesScreen> {
       appBar: FranchiseAppBar(
         title: localizations.deliveryAddresses,
         showLogo: true,
-        logoUrl: UiConfig.currentLogoUrl,
+        logoUrl: shared.UiConfig.currentLogoUrl,
         logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
-        backgroundColor: UiConfig.primaryColor,
-        foregroundColor: UiConfig.foregroundColor,
+        backgroundColor: shared.UiConfig.primaryColor,
+        foregroundColor: shared.UiConfig.foregroundColor,
         elevation: 0,
       ),
-      backgroundColor: UiConfig.backgroundColor,
+      backgroundColor: shared.UiConfig.backgroundColor,
       body: user == null
           ? EmptyStateWidget(
               title: localizations.mustSignInForAddresses,

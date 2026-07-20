@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 /// Reusable row for displaying dietary tags and allergens as chips.
 /// Hides itself if both lists are empty.
@@ -29,15 +28,15 @@ class DietaryAllergenChipsRow extends StatelessWidget {
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
               decoration: BoxDecoration(
-                color: UiConfig.successColor.withAlpha(24),
+                color: shared.UiConfig.successColor.withAlpha(24),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 tag,
                 style: TextStyle(
                   fontSize: 12,
-                  color: UiConfig.successColor,
-                  fontWeight: UiConfig.fontWeightBold,
+                  color: shared.UiConfig.successColor,
+                  fontWeight: shared.UiConfig.fontWeightBold,
                 ),
               ),
             ),
@@ -47,15 +46,15 @@ class DietaryAllergenChipsRow extends StatelessWidget {
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
               decoration: BoxDecoration(
-                color: UiConfig.warningColor.withAlpha(24),
+                color: shared.UiConfig.warningColor.withAlpha(24),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 allergen,
                 style: TextStyle(
                   fontSize: 12,
-                  color: UiConfig.warningColor,
-                  fontWeight: UiConfig.fontWeightBold,
+                  color: shared.UiConfig.warningColor,
+                  fontWeight: shared.UiConfig.fontWeightBold,
                 ),
               ),
             ),

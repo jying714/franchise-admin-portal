@@ -2,7 +2,6 @@
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:franchise_admin_portal/config/ui_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class MultiIngredientSelector extends StatelessWidget {
@@ -56,7 +55,7 @@ class MultiIngredientSelector extends StatelessWidget {
       children: [
         Text(
           title,
-          style: UiConfig.titleStyle,
+          style: shared.UiConfig.titleStyle,
         ),
         const SizedBox(height: 8),
         ...groupedByType.entries.map((entry) {

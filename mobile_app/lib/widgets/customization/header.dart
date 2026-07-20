@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CustomizationHeader extends StatelessWidget {
@@ -41,8 +40,8 @@ class CustomizationHeader extends StatelessWidget {
               Text(
                 menuItem.name,
                 style: theme.textTheme.titleLarge?.copyWith(
-                  color: UiConfig.textColor,
-                  fontWeight: UiConfig.bold,
+                  color: shared.UiConfig.textColor,
+                  fontWeight: shared.UiConfig.bold,
                   fontFamily: shared.DesignTokens.fontFamily,
                 ),
               ),
@@ -50,7 +49,7 @@ class CustomizationHeader extends StatelessWidget {
               Text(
                 menuItem.description ?? '',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: UiConfig.secondaryTextColor,
+                  color: shared.UiConfig.secondaryTextColor,
                   fontFamily: shared.DesignTokens.fontFamily,
                 ),
                 maxLines: 2,

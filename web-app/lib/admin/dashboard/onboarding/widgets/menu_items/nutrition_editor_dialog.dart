@@ -1,7 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:franchise_admin_portal/config/ui_config.dart';
 
 class NutritionEditorDialog extends StatefulWidget {
   final shared.NutritionInfo? initialValue;

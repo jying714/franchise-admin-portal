@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/loading_shimmer_widget.dart';
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 enum FeedbackMode { ordering, orderExperience }
 
@@ -168,7 +167,7 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                       _errorText = null;
                     }),
                     tooltip: null,
-                    color: UiConfig.primaryColor,
+                    color: shared.UiConfig.primaryColor,
                   ),
                 ),
                 if (_rating == 0)
@@ -177,7 +176,7 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                     child: Text(
                       loc.ratingRequiredError,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: UiConfig.errorColor,
+                        color: shared.UiConfig.errorColor,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -247,7 +246,7 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                     child: Text(
                       _errorText!,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: UiConfig.errorColor,
+                        color: shared.UiConfig.errorColor,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -256,8 +255,8 @@ class _FeedbackSubmissionDialogState extends State<FeedbackSubmissionDialog> {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: UiConfig.primaryColor,
-                      foregroundColor: UiConfig.foregroundColor,
+                      backgroundColor: shared.UiConfig.primaryColor,
+                      foregroundColor: shared.UiConfig.foregroundColor,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
@@ -359,11 +358,11 @@ class _CategoryRatingSelector extends StatelessWidget {
               onChanged(idx + 1);
             }
           },
-          fillColor: UiConfig.primaryColor,
-          selectedColor: UiConfig.foregroundColor,
+          fillColor: shared.UiConfig.primaryColor,
+          selectedColor: shared.UiConfig.foregroundColor,
           color: theme.textTheme.bodyMedium?.color,
-          borderColor: UiConfig.primaryColor.withOpacity(0.3),
-          selectedBorderColor: UiConfig.primaryColor,
+          borderColor: shared.UiConfig.primaryColor.withOpacity(0.3),
+          selectedBorderColor: shared.UiConfig.primaryColor,
           children: List.generate(
             5,
             (i) => Padding(
@@ -397,7 +396,8 @@ class _FeedbackThankYouDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_circle, color: UiConfig.primaryColor, size: 56),
+            Icon(Icons.check_circle,
+                color: shared.UiConfig.primaryColor, size: 56),
             const SizedBox(height: 18),
             Text(
               loc.feedbackThankYouTitle,
@@ -416,8 +416,8 @@ class _FeedbackThankYouDialog extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: UiConfig.primaryColor,
-                  foregroundColor: UiConfig.foregroundColor,
+                  backgroundColor: shared.UiConfig.primaryColor,
+                  foregroundColor: shared.UiConfig.foregroundColor,
                 ),
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text(loc.feedbackBackToMenu),

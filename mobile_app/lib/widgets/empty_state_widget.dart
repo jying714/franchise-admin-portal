@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 /// Reusable empty state widget with support for image, icon, retry button, and admin branding.
 class EmptyStateWidget extends StatelessWidget {
@@ -32,13 +31,13 @@ class EmptyStateWidget extends StatelessWidget {
 
     return Center(
       child: Padding(
-        padding: UiConfig.defaultPadding
+        padding: shared.UiConfig.defaultPadding
             .add(const EdgeInsets.symmetric(vertical: 32)),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (iconData != null)
-              Icon(iconData, size: 80, color: UiConfig.primaryColor)
+              Icon(iconData, size: 80, color: shared.UiConfig.primaryColor)
             else if (img != null && img.isNotEmpty)
               Image.asset(
                 img,
@@ -49,8 +48,8 @@ class EmptyStateWidget extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               title,
-              style: UiConfig.titleStyle.copyWith(
-                color: UiConfig.primaryColor,
+              style: shared.UiConfig.titleStyle.copyWith(
+                color: shared.UiConfig.primaryColor,
               ),
               textAlign: TextAlign.center,
             ),
@@ -59,7 +58,7 @@ class EmptyStateWidget extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   message!,
-                  style: UiConfig.bodyStyle,
+                  style: shared.UiConfig.bodyStyle,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -69,8 +68,8 @@ class EmptyStateWidget extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onRetry,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: UiConfig.secondaryColor,
-                    foregroundColor: UiConfig.foregroundColor,
+                    backgroundColor: shared.UiConfig.secondaryColor,
+                    foregroundColor: shared.UiConfig.foregroundColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
                           shared.DesignTokens.buttonRadius),

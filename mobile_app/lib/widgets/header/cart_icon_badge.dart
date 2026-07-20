@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 // P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
 
@@ -47,7 +46,7 @@ class CartIconBadge extends StatelessWidget {
                   Icon(
                     Icons.shopping_cart_outlined,
                     size: shared.DesignTokens.iconSize,
-                    color: UiConfig.foregroundColor,
+                    color: shared.UiConfig.foregroundColor,
                   ),
                   if (count > 0)
                     Positioned(
@@ -56,7 +55,7 @@ class CartIconBadge extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(2),
                         decoration: BoxDecoration(
-                          color: UiConfig.errorColor,
+                          color: shared.UiConfig.errorColor,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         constraints: const BoxConstraints(

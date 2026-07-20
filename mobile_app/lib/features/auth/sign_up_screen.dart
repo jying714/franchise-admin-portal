@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/shared_core.dart' show DesignTokens;
 import 'package:shared_core/shared_core.dart' show BrandingConfig;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
@@ -51,11 +50,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final pw = _passwordController.text;
     if (pw.length >= 12 &&
         RegExp(r'^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[\W_])').hasMatch(pw)) {
-      return UiConfig.successColor;
+      return shared.UiConfig.successColor;
     } else if (pw.length >= 8) {
-      return UiConfig.warningColor; // add this getter to UiConfig if missing
+      return shared
+          .UiConfig.warningColor; // add this getter to UiConfig if missing
     } else if (pw.isNotEmpty) {
-      return UiConfig.errorColor;
+      return shared.UiConfig.errorColor;
     } else {
       return Colors.transparent;
     }
@@ -211,11 +211,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final loc = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: UiConfig.backgroundColorDark,
+      backgroundColor: shared.UiConfig.backgroundColorDark,
       appBar: FranchiseAppBar(
         title: loc.signUp,
         showLogo: true,
-        logoUrl: UiConfig.currentLogoUrl,
+        logoUrl: shared.UiConfig.currentLogoUrl,
         logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
       ),
@@ -225,7 +225,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           child: Card(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.cardRadius)),
-            color: UiConfig.surfaceColor,
+            color: shared.UiConfig.surfaceColor,
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Form(
@@ -233,7 +233,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Image.asset(UiConfig.logoMain, height: 120),
+                    Image.asset(shared.UiConfig.logoMain, height: 120),
                     const SizedBox(height: 32),
                     SocialSignInButtons(
                       onSuccess: _handleSocialSuccessWrapper,
@@ -251,11 +251,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(
                                 DesignTokens.formFieldRadius)),
-                        prefixIcon: Icon(UiConfig.emailIcon), // optional
+                        prefixIcon: Icon(shared.UiConfig.emailIcon), // optional
                       ),
                       validator: (value) =>
                           value == null || value.isEmpty ? loc.enterName : null,
-                      style: TextStyle(color: UiConfig.textColorDark),
+                      style: TextStyle(color: shared.UiConfig.textColorDark),
                     ),
                     const SizedBox(height: 24),
                     TextFormField(
@@ -267,12 +267,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(
                                 DesignTokens.formFieldRadius)),
-                        prefixIcon: Icon(UiConfig.emailIcon),
+                        prefixIcon: Icon(shared.UiConfig.emailIcon),
                       ),
                       validator: (value) => value != null && value.contains('@')
                           ? null
                           : loc.validEmailRequired,
-                      style: TextStyle(color: UiConfig.textColorDark),
+                      style: TextStyle(color: shared.UiConfig.textColorDark),
                     ),
                     const SizedBox(height: 24),
                     TextFormField(
@@ -284,11 +284,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(
                                 DesignTokens.formFieldRadius)),
-                        prefixIcon: Icon(UiConfig.lockIcon),
+                        prefixIcon: Icon(shared.UiConfig.lockIcon),
                         suffixIcon: IconButton(
                           icon: Icon(_showPassword
-                              ? UiConfig.visibilityOffIcon
-                              : UiConfig.visibilityIcon),
+                              ? shared.UiConfig.visibilityOffIcon
+                              : shared.UiConfig.visibilityIcon),
                           onPressed: () =>
                               setState(() => _showPassword = !_showPassword),
                         ),
@@ -296,7 +296,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       validator: (value) => value == null || value.length < 6
                           ? loc.passwordTooShort
                           : null,
-                      style: TextStyle(color: UiConfig.textColorDark),
+                      style: TextStyle(color: shared.UiConfig.textColorDark),
                       onChanged: (v) => setState(() {}),
                     ),
                     if (_passwordStrengthLabel(context).isNotEmpty)
@@ -318,11 +318,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(
                                 DesignTokens.formFieldRadius)),
-                        prefixIcon: Icon(UiConfig.lockIcon),
+                        prefixIcon: Icon(shared.UiConfig.lockIcon),
                         suffixIcon: IconButton(
                           icon: Icon(_showConfirmPassword
-                              ? UiConfig.visibilityOffIcon
-                              : UiConfig.visibilityIcon),
+                              ? shared.UiConfig.visibilityOffIcon
+                              : shared.UiConfig.visibilityIcon),
                           onPressed: () => setState(() =>
                               _showConfirmPassword = !_showConfirmPassword),
                         ),
@@ -331,7 +331,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           value == null || value != _passwordController.text
                               ? loc.passwordsDoNotMatch
                               : null,
-                      style: TextStyle(color: UiConfig.textColorDark),
+                      style: TextStyle(color: shared.UiConfig.textColorDark),
                     ),
                     const SizedBox(height: 32),
                     CheckboxListTile(
@@ -347,7 +347,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 .termsOfServiceUrl), // or UiConfig if you prefer
                             child: Text(loc.termsOfService,
                                 style: TextStyle(
-                                    color: UiConfig.primaryColor,
+                                    color: shared.UiConfig.primaryColor,
                                     decoration: TextDecoration.underline)),
                           ),
                           Text(' ${loc.and} '),
@@ -356,7 +356,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 _launchURL(BrandingConfig.privacyPolicyUrl),
                             child: Text(loc.privacyPolicy,
                                 style: TextStyle(
-                                    color: UiConfig.primaryColor,
+                                    color: shared.UiConfig.primaryColor,
                                     decoration: TextDecoration.underline)),
                           ),
                         ],
@@ -366,7 +366,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 16),
                     if (_error != null)
                       Text(_error!,
-                          style: TextStyle(color: UiConfig.errorColor)),
+                          style: TextStyle(color: shared.UiConfig.errorColor)),
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
@@ -380,16 +380,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 }
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: UiConfig.primaryColor,
-                          foregroundColor: UiConfig.foregroundColorDark,
+                          backgroundColor: shared.UiConfig.primaryColor,
+                          foregroundColor: shared.UiConfig.foregroundColorDark,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
-                                  DesignTokens.buttonRadius)),
+                                  shared.DesignTokens.buttonRadius)),
                         ),
                         child: _loading
                             ? CircularProgressIndicator(
-                                color: UiConfig.onPrimaryColor)
+                                color: shared.UiConfig.onPrimaryColor)
                             : Text(loc.createAccount),
                       ),
                     ),

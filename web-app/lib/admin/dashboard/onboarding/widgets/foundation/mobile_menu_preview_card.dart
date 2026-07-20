@@ -4,7 +4,6 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/menu_item_card.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:franchise_admin_portal/config/ui_config.dart';
 
 class MobileMenuPreviewCard extends StatelessWidget {
   final String franchiseId;
@@ -59,7 +58,8 @@ class MobileMenuPreviewCard extends StatelessWidget {
             // App Header (Dynamic Branding)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: UiConfig.primaryColor, // Safe fallback via UiConfig
+              color: shared
+                  .UiConfig.primaryColor, // Safe fallback via shared.UiConfig
               child: Row(
                 children: [
                   if (franchiseProvider.currentLogoUrl != null &&
@@ -143,7 +143,8 @@ class MobileMenuPreviewCard extends StatelessWidget {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.local_pizza,
-                                      size: 48, color: UiConfig.primaryColor),
+                                      size: 48,
+                                      color: shared.UiConfig.primaryColor),
                                   const SizedBox(height: 8),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(

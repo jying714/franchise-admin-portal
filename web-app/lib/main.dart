@@ -42,7 +42,7 @@ import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.da
 import 'package:franchise_admin_portal/admin/developer/developer_dashboard_screen.dart';
 import 'package:franchise_admin_portal/admin/franchise/franchise_selector_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/owner_hq_dashboard_screen.dart';
-import 'package:franchise_admin_portal/admin/owner/platform_owner_dashboard_screen.dart';
+import 'package:franchise_admin_portal/admin/platform_owner/platform_owner_dashboard_screen.dart';
 import 'package:franchise_admin_portal/widgets/profile_gate_screen.dart';
 import 'package:franchise_admin_portal/widgets/auth_profile_listener.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart'; // Web-specific DesignTokens (returns Color)

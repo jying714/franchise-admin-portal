@@ -1,61 +1,71 @@
 # Comprehensive Project Analysis & Current State
 **Doughboys Pizzeria Franchise Platform**  
-**Last Updated**: June 06, 2026  
-**Status**: P2.5 Web-App Cleanup Sprint COMPLETE
+**Last Updated**: July 20, 2026  
+**Status**: Preparing for Phase 0 – Infrastructure & Multi-Agent Setup
 
 ## 1. Executive Summary
-The project has successfully transitioned from a fragmented state with persistent login spinner and provider handoff issues to a stable, production-ready admin dashboard foundation.
+The project has successfully transitioned from a fragmented state (persistent login spinner, duplicated code, provider issues) to a stable foundation with shared_core unification and completed P2.5 cleanup.
 
-**Key Achievements (June 01–06, 2026)**:
-- Critical auth handoff & persistent spinner fully resolved (`main.dart`, `sign_in_screen.dart`, `AuthProfileListener`, `FranchiseAuthenticatedRoot`).
-- `AdminUserProvider` + `FranchiseProvider` synchronization stabilized with reliable `initializeWithUser` call.
-- `hq_owner` login now loads correctly with `franchiseId: "test"`.
-- Large-scale surgical cleanup of duplicated widgets, type conflicts, deprecated APIs, and RenderFlex overflows.
-- Firestore security rules iteratively refined for proper `hq_owner` access.
-- Comprehensive logging and error handling improvements across auth flow.
+**Key Achievements (as of July 2026)**:
+- Auth handoff and persistent spinner fully resolved.
+- FranchiseProvider + shared_core unification complete.
+- Large-scale cleanup of duplicated widgets, models, and UI issues.
+- `hq_owner` dashboard functional with correct franchise resolution.
+- 4-step onboarding flows stabilized (categories, ingredients, menu items, review).
+- Core ordering flow stable and device-tested.
 
 **Current Maturity**: Late Alpha → Early Beta.  
-Core admin dashboard and auth infrastructure are now stable.
+Core infrastructure is stable. Next focus is Phase 0 (AI agent system + docs) followed by P3 advanced features.
 
 ## 2. Project Vision & Business Objective (Unchanged)
 Single multi-tenant white-label Flutter app (one published binary) that can serve unlimited franchises.  
-Long-term goal: Scalable platform for rapid client onboarding using AI speed and shared_core architecture.
+Long-term goal: Rapid client onboarding, undercutting competitors with AI-accelerated development and shared architecture.
 
 ## 3. Non-Negotiable Technical Rules (Strictly Enforced)
 - All customer data scoped under `franchises/{franchiseId}/...`
-- FirestoreService: Strict 3-tier split.
-- FranchiseProvider: Central state manager for franchise + branding.
+- Shared_core is the single source of truth.
+- Human review on every PR (especially payments, auth, security, config migrations).
+- Strict agent governance: scope control, tool restrictions, weekly resets (see `AGENT_SYSTEM.md`).
 - Use `import 'package:shared_core/shared_core.dart' as shared;`
-- `UiConfig` for Flutter types, `DesignTokens` for scalars only.
-- Git hygiene: Dedicated branch + full `flutter clean && flutter pub get && flutter gen-l10n && flutter analyze` after changes.
+- No direct Firestore writes by agents without approval.
 
-## 4. Major Architecture Achievements (P2.5)
-- Auth flow handoff stabilized (no more null `firebaseUser` in authenticated root).
-- `FranchiseProvider.initializeWithUser` reliably called from `AdminUserProvider`.
-- `OwnerHQDashboardScreen` now correctly resolves `franchiseId`.
-- Multiple RenderFlex overflows fixed with `Expanded` + `SingleChildScrollView`.
-- Security rules updated for `hq_owner` access to franchise data.
+## 4. Major Architecture Achievements
+- Auth flow handoff stabilized.
+- Franchise-aware providers unified.
+- Onboarding 4-step flow (categories → ingredients → menu items → review) stabilized.
+- Surgical cleanup of duplicated code and UI issues.
+- Firestore security rules refined for multi-role access.
 
-## 5. Current Status (June 06, 2026)
+## 5. Current Status (July 20, 2026)
 - **P2.5 Web-App Cleanup Sprint**: COMPLETE ✅
-- Dashboard loads for `hq_owner` with correct franchise context.
-- Remaining minor work: Final card permission validation after rules publish + any lingering UI polish.
+- Onboarding-4step branch ready for review.
+- Preparing for **Phase 0** (multi-agent AI system on new hardware + documentation hardening).
+- Remaining minor work: Final analyzer passes and documentation alignment.
 
-## 6. Next Priorities (Immediate)
-1. Publish latest Firestore rules and validate cards (`AlertsCard`, `BillingSummaryCard`, `InvoicesCard`).
-2. Final Tier 1 widget polish and full `flutter analyze`.
-3. Production build + Samsung S25 testing.
-4. Move to **P3 – Advanced Features & Production Readiness**.
+## 6. Next Priorities (Phase 0)
+1. Set up Docker + Ollama + LangGraph multi-agent environment.
+2. Create `AGENT_SYSTEM.md` with strict rules and Orchestrator prompt.
+3. Expand core docs (`ARCHITECTURE.md`, `DASHBOARDS.md`, `MOBILE_DYNAMIC.md`, etc.).
+4. Establish per-phase task files and review templates.
+5. Run small safe test tasks with full human review.
 
-## 7. Future Milestones (P3)
-- Real payment gateway + webhooks.
+**Defensive Focus**: Firestore schema design, localization strategy, risk register, testing foundations.
+
+## 7. Future Milestones (P3+)
+- Real payment gateway + webhooks (Stripe).
 - Full white-label onboarding flow.
+- Hybrid single/multi-location + dynamic dashboards.
 - Comprehensive test suite + CI/CD.
 - App Store / Play Store readiness.
-- Advanced analytics and multi-location support.
+
+## Risk Register (Top Risks)
+- Firestore schema migrations becoming painful
+- Localization complexity and future multi-language support
+- Agent scope creep or hallucination on code changes
+- State management inconsistency across web/mobile
+- Stripe integration security and webhook reliability
+- Mobile offline sync edge cases
 
 ---
 
 **This document is the single source of truth for project state and should be referenced in all future sessions.**
-
-**Generated & Maintained with Grok Project Manager.**

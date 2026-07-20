@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/shared_core.dart' show DesignTokens;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/sign_out_button.dart';
@@ -99,202 +98,204 @@ class _ProfileScreenState extends State<ProfileScreen> {
           appBar: FranchiseAppBar(
             title: l10n.profile,
             showLogo: true,
-            logoUrl: UiConfig.currentLogoUrl,
+            logoUrl: shared.UiConfig.currentLogoUrl,
             logoAsset: shared.BrandingConfig.appBarLogoAsset,
             centerTitle: true,
           ),
-          backgroundColor: UiConfig.backgroundColorDark,
+          backgroundColor: shared.UiConfig.backgroundColorDark,
           body: SafeArea(
             bottom: true,
             child: Padding(
-              padding: UiConfig.defaultScreenPadding,
+              padding: shared.UiConfig.defaultScreenPadding,
               child: StreamBuilder<shared.User?>(
-              stream: authService.authStateChanges,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final shared.User? user = snapshot.data;
-                if (user == null) {
-                  return EmptyStateWidget(
-                    title: l10n.notSignedIn,
-                    message: l10n.pleaseSignInToAccessProfile,
-                    iconData: Icons.person_off,
-                  );
-                }
-
-                return StreamBuilder<shared.User?>(
-                  stream: firestoreService.getUserByIdStream(user.id),
-                  builder: (context, userSnapshot) {
-                    if (userSnapshot.connectionState ==
-                        ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    final shared.User? fullUser = userSnapshot.data;
-                    if (fullUser == null) {
-                      return EmptyStateWidget(
-                        title: l10n.profileNotFound,
-                        message: l10n.couldNotRetrieveProfile,
-                        iconData: Icons.error_outline,
-                      );
-                    }
-
-                    // Forced profile completion
-                    if ((fullUser.completeProfile ?? false) == false &&
-                        !_dialogShown) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) async {
-                        if (!_dialogShown && mounted) {
-                          _dialogShown = true;
-
-                          final localUser = user_model.User(
-                            id: fullUser.id,
-                            name: fullUser.name,
-                            email: fullUser.email,
-                            phoneNumber: fullUser.phoneNumber,
-                            roles: fullUser.roles,
-                            addresses: fullUser.addresses,
-                            language: fullUser.language,
-                            status: fullUser.status,
-                            defaultFranchise: fullUser.defaultFranchise,
-                            avatarUrl: fullUser.avatarUrl,
-                            franchiseIds: fullUser.franchiseIds,
-                            completeProfile: fullUser.completeProfile,
-                            onboardingComplete: fullUser.onboardingComplete,
-                            isActive: fullUser.isActive,
-                            updatedAt: fullUser.updatedAt,
-                          );
-
-                          await showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (_) =>
-                                CompleteProfileDialog(user: localUser),
-                          );
-
-                          if (mounted) setState(() {});
-                          _dialogShown = false;
-                        }
-                      });
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                    return ListView(
-                      children: [
-                        InfoTile(
-                          label: l10n.name,
-                          value: fullUser.name,
-                          trailing: IconButton(
-                            icon:
-                                Icon(Icons.edit, color: UiConfig.primaryColor),
-                            tooltip: l10n.edit,
-                            onPressed: () {
-                              _showEditFieldDialog(
-                                title: l10n.editName,
-                                initialValue: fullUser.name,
-                                hintText: l10n.name,
-                                onSubmitted: (newName) async {
-                                  final updatedUser =
-                                      fullUser.copyWith(name: newName);
-                                  await firestoreService
-                                      .updateUser(updatedUser);
-                                  if (mounted) setState(() {});
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                        InfoTile(
-                          label: l10n.phoneNumber,
-                          value: fullUser.phoneNumber ?? '',
-                          trailing: IconButton(
-                            icon:
-                                Icon(Icons.edit, color: UiConfig.primaryColor),
-                            tooltip: l10n.edit,
-                            onPressed: () {
-                              _showEditFieldDialog(
-                                title: l10n.editPhoneNumber,
-                                initialValue: fullUser.phoneNumber ?? '',
-                                keyboardType: TextInputType.phone,
-                                hintText: l10n.phoneNumber,
-                                onSubmitted: (newPhone) async {
-                                  final updatedUser =
-                                      fullUser.copyWith(phoneNumber: newPhone);
-                                  await firestoreService
-                                      .updateUser(updatedUser);
-                                  if (mounted) setState(() {});
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                        InfoTile(label: l10n.email, value: fullUser.email),
-                        const Divider(),
-
-                        // Loyalty points display (foundational, franchise-aware)
-                        const LoyaltyPointsWidget(),
-
-                        // P2 dev-only: simple live theme switcher for white-label testing.
-                        // Toggles UiConfig + app-wide ThemeData via FranchiseProvider branding.
-                        // In real use this would come from FranchiseSelector + full reload.
-                        _buildThemeTestSection(context, franchiseProvider, firestoreService),
-
-                        // P2: Franchise QR display (shareable deep link) - foundations
-                        _buildFranchiseQRSection(context, franchiseProvider),
-
-                        ProfileNavTile(
-                          label: l10n.deliveryAddresses,
-                          destination: const DeliveryAddressesScreen(),
-                        ),
-                        ProfileNavTile(
-                          label: l10n.orderHistory,
-                          destination: const OrderHistoryScreen(),
-                        ),
-                        ProfileNavTile(
-                          label: l10n.favorites,
-                          destination: const FavoritesScreen(),
-                        ),
-                        ProfileNavTile(
-                          label: l10n.loyalty,
-                          destination: const LoyaltyScreen(),
-                          icon: Icons.card_giftcard,
-                        ),
-                        ProfileNavTile(
-                          label: l10n.scheduledOrders,
-                          destination: const ScheduledOrdersScreen(),
-                        ),
-                        ProfileNavTile(
-                          label: l10n.language,
-                          destination: const LanguageScreen(),
-                        ),
-                        ProfileNavTile(
-                          label: l10n.chatWithUs,
-                          destination: const ChatScreen(),
-                        ),
-                        const SizedBox(height: DesignTokens.gridSpacing * 2),
-                        SignOutButton(
-                          signOutLabel: l10n.signOut,
-                          confirmationTitle: l10n.signOut,
-                          confirmationMessage: l10n.signOutConfirmationMessage,
-                          confirmLabel: l10n.signOut,
-                          cancelLabel: l10n.cancel,
-                          onSignOut: () async {
-                            await authService.signOut();
-                            if (mounted) {
-                              Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(
-                                    builder: (_) => const HomeScreen()),
-                                (route) => false,
-                              );
-                            }
-                          },
-                        ),
-                      ],
+                stream: authService.authStateChanges,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final shared.User? user = snapshot.data;
+                  if (user == null) {
+                    return EmptyStateWidget(
+                      title: l10n.notSignedIn,
+                      message: l10n.pleaseSignInToAccessProfile,
+                      iconData: Icons.person_off,
                     );
-                  },
-                );
-              },
+                  }
+
+                  return StreamBuilder<shared.User?>(
+                    stream: firestoreService.getUserByIdStream(user.id),
+                    builder: (context, userSnapshot) {
+                      if (userSnapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      final shared.User? fullUser = userSnapshot.data;
+                      if (fullUser == null) {
+                        return EmptyStateWidget(
+                          title: l10n.profileNotFound,
+                          message: l10n.couldNotRetrieveProfile,
+                          iconData: Icons.error_outline,
+                        );
+                      }
+
+                      // Forced profile completion
+                      if ((fullUser.completeProfile ?? false) == false &&
+                          !_dialogShown) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) async {
+                          if (!_dialogShown && mounted) {
+                            _dialogShown = true;
+
+                            final localUser = user_model.User(
+                              id: fullUser.id,
+                              name: fullUser.name,
+                              email: fullUser.email,
+                              phoneNumber: fullUser.phoneNumber,
+                              roles: fullUser.roles,
+                              addresses: fullUser.addresses,
+                              language: fullUser.language,
+                              status: fullUser.status,
+                              defaultFranchise: fullUser.defaultFranchise,
+                              avatarUrl: fullUser.avatarUrl,
+                              franchiseIds: fullUser.franchiseIds,
+                              completeProfile: fullUser.completeProfile,
+                              onboardingComplete: fullUser.onboardingComplete,
+                              isActive: fullUser.isActive,
+                              updatedAt: fullUser.updatedAt,
+                            );
+
+                            await showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (_) =>
+                                  CompleteProfileDialog(user: localUser),
+                            );
+
+                            if (mounted) setState(() {});
+                            _dialogShown = false;
+                          }
+                        });
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      return ListView(
+                        children: [
+                          InfoTile(
+                            label: l10n.name,
+                            value: fullUser.name,
+                            trailing: IconButton(
+                              icon: Icon(Icons.edit,
+                                  color: shared.UiConfig.primaryColor),
+                              tooltip: l10n.edit,
+                              onPressed: () {
+                                _showEditFieldDialog(
+                                  title: l10n.editName,
+                                  initialValue: fullUser.name,
+                                  hintText: l10n.name,
+                                  onSubmitted: (newName) async {
+                                    final updatedUser =
+                                        fullUser.copyWith(name: newName);
+                                    await firestoreService
+                                        .updateUser(updatedUser);
+                                    if (mounted) setState(() {});
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                          InfoTile(
+                            label: l10n.phoneNumber,
+                            value: fullUser.phoneNumber ?? '',
+                            trailing: IconButton(
+                              icon: Icon(Icons.edit,
+                                  color: shared.UiConfig.primaryColor),
+                              tooltip: l10n.edit,
+                              onPressed: () {
+                                _showEditFieldDialog(
+                                  title: l10n.editPhoneNumber,
+                                  initialValue: fullUser.phoneNumber ?? '',
+                                  keyboardType: TextInputType.phone,
+                                  hintText: l10n.phoneNumber,
+                                  onSubmitted: (newPhone) async {
+                                    final updatedUser = fullUser.copyWith(
+                                        phoneNumber: newPhone);
+                                    await firestoreService
+                                        .updateUser(updatedUser);
+                                    if (mounted) setState(() {});
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                          InfoTile(label: l10n.email, value: fullUser.email),
+                          const Divider(),
+
+                          // Loyalty points display (foundational, franchise-aware)
+                          const LoyaltyPointsWidget(),
+
+                          // P2 dev-only: simple live theme switcher for white-label testing.
+                          // Toggles shared.UiConfig + app-wide ThemeData via FranchiseProvider branding.
+                          // In real use this would come from FranchiseSelector + full reload.
+                          _buildThemeTestSection(
+                              context, franchiseProvider, firestoreService),
+
+                          // P2: Franchise QR display (shareable deep link) - foundations
+                          _buildFranchiseQRSection(context, franchiseProvider),
+
+                          ProfileNavTile(
+                            label: l10n.deliveryAddresses,
+                            destination: const DeliveryAddressesScreen(),
+                          ),
+                          ProfileNavTile(
+                            label: l10n.orderHistory,
+                            destination: const OrderHistoryScreen(),
+                          ),
+                          ProfileNavTile(
+                            label: l10n.favorites,
+                            destination: const FavoritesScreen(),
+                          ),
+                          ProfileNavTile(
+                            label: l10n.loyalty,
+                            destination: const LoyaltyScreen(),
+                            icon: Icons.card_giftcard,
+                          ),
+                          ProfileNavTile(
+                            label: l10n.scheduledOrders,
+                            destination: const ScheduledOrdersScreen(),
+                          ),
+                          ProfileNavTile(
+                            label: l10n.language,
+                            destination: const LanguageScreen(),
+                          ),
+                          ProfileNavTile(
+                            label: l10n.chatWithUs,
+                            destination: const ChatScreen(),
+                          ),
+                          const SizedBox(height: DesignTokens.gridSpacing * 2),
+                          SignOutButton(
+                            signOutLabel: l10n.signOut,
+                            confirmationTitle: l10n.signOut,
+                            confirmationMessage:
+                                l10n.signOutConfirmationMessage,
+                            confirmLabel: l10n.signOut,
+                            cancelLabel: l10n.cancel,
+                            onSignOut: () async {
+                              await authService.signOut();
+                              if (mounted) {
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                      builder: (_) => const HomeScreen()),
+                                  (route) => false,
+                                );
+                              }
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
           ),
         );
       },
@@ -310,21 +311,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
   ) {
     // l10n available for future localization of test labels
     return Card(
-      color: UiConfig.surfaceColor,
+      color: shared.UiConfig.surfaceColor,
       margin: const EdgeInsets.symmetric(vertical: 12),
       child: Padding(
-        padding: UiConfig.cardPadding,
+        padding: shared.UiConfig.cardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               '🧪 Theme Test (P2 Dev)',
-              style: UiConfig.bodyBoldStyle.copyWith(color: UiConfig.primaryColor),
+              style: shared.UiConfig.bodyBoldStyle
+                  .copyWith(color: shared.UiConfig.primaryColor),
             ),
             const SizedBox(height: 4),
             Text(
               'Tap to live-switch branding. Affects this screen + global ThemeData.',
-              style: UiConfig.captionStyle,
+              style: shared.UiConfig.captionStyle,
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -332,8 +334,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE31837), // intentional test value
-                    foregroundColor: UiConfig.onPrimaryColor,
+                    backgroundColor:
+                        const Color(0xFFE31837), // intentional test value
+                    foregroundColor: shared.UiConfig.onPrimaryColor,
                   ),
                   onPressed: () async {
                     fp.setBrandingFromFranchiseDoc({
@@ -351,8 +354,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7D32), // intentional test value
-                    foregroundColor: UiConfig.onPrimaryColor,
+                    backgroundColor:
+                        const Color(0xFF2E7D32), // intentional test value
+                    foregroundColor: shared.UiConfig.onPrimaryColor,
                   ),
                   onPressed: () async {
                     fp.setBrandingFromFranchiseDoc({
@@ -404,29 +408,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final displayName = fp.currentAppName;
 
     return Card(
-      color: UiConfig.surfaceColor,
+      color: shared.UiConfig.surfaceColor,
       margin: const EdgeInsets.symmetric(vertical: 12),
       child: Padding(
-        padding: UiConfig.cardPadding,
+        padding: shared.UiConfig.cardPadding,
         child: Column(
           children: [
             Text(
               'Share this Franchise',
-              style: UiConfig.bodyBoldStyle.copyWith(color: UiConfig.primaryColor),
+              style: shared.UiConfig.bodyBoldStyle
+                  .copyWith(color: shared.UiConfig.primaryColor),
             ),
             const SizedBox(height: 8),
-            Text(displayName, style: UiConfig.captionStyle),
+            Text(displayName, style: shared.UiConfig.captionStyle),
             const SizedBox(height: 12),
             QrImageView(
               data: qrData,
               version: QrVersions.auto,
               size: 160,
-              backgroundColor: UiConfig.cardColor,
+              backgroundColor: shared.UiConfig.cardColor,
             ),
             const SizedBox(height: 8),
             Text(
               'Scan to switch to this location',
-              style: UiConfig.captionStyle.copyWith(fontSize: 11),
+              style: shared.UiConfig.captionStyle.copyWith(fontSize: 11),
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(

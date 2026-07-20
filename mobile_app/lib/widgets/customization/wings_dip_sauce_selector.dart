@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class WingsDipSauceSelector extends StatelessWidget {
@@ -61,7 +60,7 @@ class WingsDipSauceSelector extends StatelessWidget {
                   child: Text(
                     meta?.name ?? dipId,
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: UiConfig.textColor,
+                      color: shared.UiConfig.textColor,
                       fontFamily: shared.DesignTokens.fontFamily,
                     ),
                   ),
@@ -100,7 +99,7 @@ class WingsDipSauceSelector extends StatelessWidget {
                   child: Text(
                     meta?.name ?? addOn['name'] ?? ingId,
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: UiConfig.textColor,
+                      color: shared.UiConfig.textColor,
                       fontFamily: shared.DesignTokens.fontFamily,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -130,15 +129,15 @@ class WingsDipSauceSelector extends StatelessWidget {
           Text(
             "Dips & Sauces",
             style: theme.textTheme.titleMedium?.copyWith(
-              color: UiConfig.secondaryColor,
-              fontWeight: UiConfig.bold,
+              color: shared.UiConfig.secondaryColor,
+              fontWeight: shared.UiConfig.bold,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
           Text(
-            "$freeDipCups free included. Additional dips +${UiConfig.currencyFormat(context, upcharge)} each.",
+            "$freeDipCups free included. Additional dips +${shared.UiConfig.currencyFormat(upcharge)} each.",
             style: theme.textTheme.bodySmall?.copyWith(
-              color: UiConfig.secondaryTextColor,
+              color: shared.UiConfig.secondaryTextColor,
               fontStyle: FontStyle.italic,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
@@ -154,13 +153,14 @@ class WingsDipSauceSelector extends StatelessWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       color: selected
-                          ? UiConfig.primaryColor.withOpacity(0.11)
-                          : UiConfig.cardColor.withValues(alpha: 0.0),
+                          ? shared.UiConfig.primaryColor.withOpacity(0.11)
+                          : shared.UiConfig.cardColor.withValues(alpha: 0.0),
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(
                         color: selected
-                            ? UiConfig.primaryColor
-                            : UiConfig.secondaryTextColor.withOpacity(0.3),
+                            ? shared.UiConfig.primaryColor
+                            : shared.UiConfig.secondaryTextColor
+                                .withOpacity(0.3),
                         width: 1.5,
                       ),
                     ),
@@ -170,10 +170,10 @@ class WingsDipSauceSelector extends StatelessWidget {
                       tabs[i],
                       style: theme.textTheme.titleMedium?.copyWith(
                         color: selected
-                            ? UiConfig.primaryColor
-                            : UiConfig.textColor,
+                            ? shared.UiConfig.primaryColor
+                            : shared.UiConfig.textColor,
                         fontWeight:
-                            selected ? UiConfig.bold : FontWeight.normal,
+                            selected ? shared.UiConfig.bold : FontWeight.normal,
                         fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     ),
@@ -192,7 +192,7 @@ class WingsDipSauceSelector extends StatelessWidget {
                       child: Text(
                         "No dips available.",
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: UiConfig.secondaryTextColor,
+                          color: shared.UiConfig.secondaryTextColor,
                           fontFamily: shared.DesignTokens.fontFamily,
                         ),
                       ),
@@ -207,7 +207,7 @@ class WingsDipSauceSelector extends StatelessWidget {
                       child: Text(
                         "No sauces available.",
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: UiConfig.secondaryTextColor,
+                          color: shared.UiConfig.secondaryTextColor,
                           fontFamily: shared.DesignTokens.fontFamily,
                         ),
                       ),

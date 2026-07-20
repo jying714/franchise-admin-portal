@@ -17,7 +17,6 @@ import 'package:shared_core/shared_core.dart' show DesignTokens;
 // Local Providers & Config
 import 'package:franchise_mobile_app/features/language/language_provider.dart';
 import 'package:franchise_mobile_app/core/models/user.dart' as app_user;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 // Note: FranchiseProvider now comes exclusively from shared_core (single source of truth)
 
 // Screens
@@ -159,7 +158,7 @@ void _handleDeepLink(Uri uri) {
 
       // Use the same pattern as QrScanScreen for consistency
       fp.setFranchiseId(franchiseId).then((_) {
-        // Best-effort branding reload (FranchiseProvider + UiConfig)
+        // Best-effort branding reload (FranchiseProvider + shared.UiConfig)
         FirebaseFirestore.instance
             .collection('franchises')
             .doc(franchiseId)
@@ -199,7 +198,7 @@ class MyApp extends StatelessWidget {
           create: (_) => shared.FranchiseProvider(AppLocalStorage()),
         ),
         // P2: FranchiseProvider is now the single source for dynamic branding/theme.
-        // UiConfig and ThemeData react to it (via version + live getters).
+        // shared.UiConfig and ThemeData react to it (via version + live getters).
 
         Provider<shared.AnalyticsService>(
             create: (_) => shared.AnalyticsServiceImpl()),
@@ -234,10 +233,11 @@ class MyApp extends StatelessWidget {
             );
           }
 
-          // P2 white-label: wire live FranchiseProvider so all UiConfig.* (colors, appName)
+          // P2 white-label: wire live FranchiseProvider so all shared.UiConfig.* (colors, appName)
           // and downstream ThemeData become dynamic immediately.
-          final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
-          UiConfig.setFranchiseProvider(fp);
+          final fp =
+              Provider.of<shared.FranchiseProvider>(context, listen: false);
+          shared.UiConfig.setFranchiseProvider(fp);
 
           return Provider<Map<String, shared.IngredientMetadata>>.value(
             value: ingredientProvider.ingredients,
@@ -249,24 +249,26 @@ class MyApp extends StatelessWidget {
                   selector: (ctx, p) => p.currentConfigVersion,
                   builder: (context, version, _) {
                     return MaterialApp(
-                      navigatorKey: navigatorKey, // P2 deep link / QR navigation support
-                      title: UiConfig.dynamicAppName,
+                      navigatorKey:
+                          navigatorKey, // P2 deep link / QR navigation support
+                      title: shared.UiConfig.dynamicAppName,
                       theme: ThemeData(
-                        primaryColor: UiConfig.primaryColor,
-                        scaffoldBackgroundColor: UiConfig.backgroundColorDark,
+                        primaryColor: shared.UiConfig.primaryColor,
+                        scaffoldBackgroundColor:
+                            shared.UiConfig.backgroundColorDark,
                         colorScheme: ColorScheme.fromSwatch().copyWith(
-                          secondary: UiConfig.secondaryColor,
+                          secondary: shared.UiConfig.secondaryColor,
                         ),
                         textTheme: TextTheme(
                           titleLarge: TextStyle(
                             fontFamily: DesignTokens.fontFamily,
                             fontSize: DesignTokens.titleFontSize,
-                            fontWeight: UiConfig.fontWeightBold,
+                            fontWeight: shared.UiConfig.fontWeightBold,
                           ),
                           bodyLarge: TextStyle(
                             fontFamily: DesignTokens.fontFamily,
                             fontSize: DesignTokens.bodyFontSize,
-                            fontWeight: UiConfig.fontWeightNormal,
+                            fontWeight: shared.UiConfig.fontWeightNormal,
                           ),
                         ),
                       ),
@@ -327,7 +329,7 @@ class _HomeWrapperState extends State<HomeWrapper> {
         await franchiseProvider.initializeWithUser(sharedUser);
 
         // P2 foundations: fetch full franchise doc and push branding into provider.
-        // This makes UiConfig colors + appName + ThemeData live for this franchise.
+        // This makes shared.UiConfig colors + appName + ThemeData live for this franchise.
         try {
           final doc = await FirebaseFirestore.instance
               .collection('franchises')
@@ -343,10 +345,12 @@ class _HomeWrapperState extends State<HomeWrapper> {
             });
           }
         } catch (_) {
-          // Silent fallback to DesignTokens/UiConfig statics
+          // Silent fallback to DesignTokens/shared.UiConfig statics
         }
 
-        if (mounted) setState(() {}); // force rebuild (version bump also triggers Selector)
+        if (mounted)
+          setState(
+              () {}); // force rebuild (version bump also triggers Selector)
       });
     }
 

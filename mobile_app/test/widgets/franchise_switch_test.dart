@@ -5,11 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 void main() {
   group('Franchise switching (P2 white-label)', () {
-    testWidgets('FranchiseProvider setFranchiseId updates currentFranchiseId and UiConfig', (tester) async {
+    testWidgets(
+        'FranchiseProvider setFranchiseId updates currentFranchiseId and shared.UiConfig',
+        (tester) async {
       final fp = shared.FranchiseProvider(_InMemoryStorage());
 
       await tester.pumpWidget(
@@ -20,7 +21,7 @@ void main() {
               return TextButton(
                 onPressed: () async {
                   await fp.setFranchiseId('test_green_bistro');
-                  UiConfig.setFranchiseProvider(fp);
+                  shared.UiConfig.setFranchiseProvider(fp);
                 },
                 child: const Text('Switch Franchise'),
               );
@@ -33,7 +34,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(fp.currentFranchiseId, 'test_green_bistro');
-      expect(UiConfig.franchiseProvider?.currentFranchiseId, 'test_green_bistro');
+      expect(shared.UiConfig.franchiseProvider?.currentFranchiseId,
+          'test_green_bistro');
     });
   });
 }
@@ -47,4 +49,3 @@ class _InMemoryStorage extends shared.LocalStorage {
   @override
   Future<void> remove(String key) async => _data.remove(key);
 }
-

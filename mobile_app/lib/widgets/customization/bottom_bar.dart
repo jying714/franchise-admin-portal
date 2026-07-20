@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 typedef ConfirmCallback = void Function(
@@ -65,14 +64,14 @@ class CustomizationBottomBar extends StatelessWidget {
 
     // FranchiseProvider injected for scoping (P1 batch 1)
     Provider.of<shared.FranchiseProvider>(context, listen: false);
- 
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: UiConfig.surfaceColor,
+        color: shared.UiConfig.surfaceColor,
         boxShadow: [
           BoxShadow(
-            color: UiConfig.shadowColor.withValues(alpha: 0.2),
+            color: shared.UiConfig.shadowColor.withValues(alpha: 0.2),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -88,15 +87,15 @@ class CustomizationBottomBar extends StatelessWidget {
                 Text(
                   loc.total,
                   style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: UiConfig.bold,
+                    fontWeight: shared.UiConfig.bold,
                     fontFamily: shared.DesignTokens.fontFamily,
                   ),
                 ),
                 Text(
-                  UiConfig.currencyFormat(context, displayTotal),
+                  shared.UiConfig.currencyFormat(displayTotal),
                   style: theme.textTheme.titleLarge?.copyWith(
-                    color: UiConfig.primaryColor,
-                    fontWeight: UiConfig.bold,
+                    color: shared.UiConfig.primaryColor,
+                    fontWeight: shared.UiConfig.bold,
                     fontFamily: shared.DesignTokens.fontFamily,
                   ),
                 ),
@@ -108,7 +107,7 @@ class CustomizationBottomBar extends StatelessWidget {
                 child: Text(
                   error!,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: UiConfig.errorTextColor,
+                    color: shared.UiConfig.errorTextColor,
                     fontFamily: shared.DesignTokens.fontFamily,
                   ),
                 ),
@@ -119,7 +118,7 @@ class CustomizationBottomBar extends StatelessWidget {
               children: [
                 TextButton(
                   style: TextButton.styleFrom(
-                    foregroundColor: UiConfig.secondaryColor,
+                    foregroundColor: shared.UiConfig.secondaryColor,
                   ),
                   onPressed: onCancel,
                   child: Text(
@@ -131,8 +130,8 @@ class CustomizationBottomBar extends StatelessWidget {
                 const SizedBox(width: 12),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: UiConfig.primaryColor,
-                    foregroundColor: UiConfig.foregroundColor,
+                    backgroundColor: shared.UiConfig.primaryColor,
+                    foregroundColor: shared.UiConfig.foregroundColor,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 32, vertical: 14),
                     shape: RoundedRectangleBorder(

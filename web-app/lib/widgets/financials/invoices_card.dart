@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:franchise_admin_portal/config/ui_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:shared_core/shared_core.dart' as shared;
 
 class InvoicesCard extends StatelessWidget {
   final int totalInvoices;
@@ -55,7 +55,7 @@ class InvoicesCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
         ),
         child: Padding(
-          padding: UiConfig.defaultPadding,
+          padding: shared.UiConfig.defaultPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

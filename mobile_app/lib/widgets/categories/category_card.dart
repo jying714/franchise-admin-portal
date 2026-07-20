@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 // P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
 
@@ -42,7 +41,7 @@ class CategoryCard extends StatelessWidget {
           child: Ink(
             decoration: BoxDecoration(
               border: Border.all(
-                color: UiConfig.primaryColor,
+                color: shared.UiConfig.primaryColor,
                 width: shared.DesignTokens.categoryCardBorderWidth,
               ),
               borderRadius:
@@ -50,7 +49,7 @@ class CategoryCard extends StatelessWidget {
               color: Colors.transparent,
               boxShadow: [
                 BoxShadow(
-                  color: UiConfig.shadowColor.withValues(alpha: 0.12),
+                  color: shared.UiConfig.shadowColor.withValues(alpha: 0.12),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -93,7 +92,7 @@ class CategoryCard extends StatelessWidget {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          UiConfig.shadowColor.withValues(alpha: 0.55),
+                          shared.UiConfig.shadowColor.withValues(alpha: 0.55),
                         ],
                         stops: const [0.5, 1.0],
                       ),
@@ -115,12 +114,13 @@ class CategoryCard extends StatelessWidget {
                           category.name,
                           style: TextStyle(
                             fontSize: shared.DesignTokens.titleFontSize,
-                            fontWeight: UiConfig.fontWeightBold,
-                            color: UiConfig.onPrimaryColor,
+                            fontWeight: shared.UiConfig.fontWeightBold,
+                            color: shared.UiConfig.onPrimaryColor,
                             fontFamily: shared.DesignTokens.fontFamily,
                             shadows: [
                               Shadow(
-                                  color: UiConfig.shadowColor.withValues(alpha: 0.34),
+                                  color: shared.UiConfig.shadowColor
+                                      .withValues(alpha: 0.34),
                                   blurRadius: 4),
                             ],
                           ),
@@ -135,12 +135,14 @@ class CategoryCard extends StatelessWidget {
                               category.description!,
                               style: TextStyle(
                                 fontSize: shared.DesignTokens.captionFontSize,
-                                color: UiConfig.onPrimaryColor.withValues(alpha: 0.7),
+                                color: shared.UiConfig.onPrimaryColor
+                                    .withValues(alpha: 0.7),
                                 fontFamily: shared.DesignTokens.fontFamily,
-                                fontWeight: UiConfig.fontWeightNormal,
+                                fontWeight: shared.UiConfig.fontWeightNormal,
                                 shadows: [
                                   Shadow(
-                                      color: UiConfig.shadowColor.withValues(alpha: 0.2),
+                                      color: shared.UiConfig.shadowColor
+                                          .withValues(alpha: 0.2),
                                       blurRadius: 2),
                                 ],
                               ),

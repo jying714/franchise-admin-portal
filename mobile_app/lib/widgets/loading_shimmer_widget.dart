@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 class LoadingShimmerWidget extends StatelessWidget {
   final int itemCount;
@@ -27,8 +26,8 @@ class LoadingShimmerWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isAdminGrid) {
       return Shimmer.fromColors(
-        baseColor: UiConfig.shimmerBaseColor,
-        highlightColor: UiConfig.shimmerHighlightColor,
+        baseColor: shared.UiConfig.shimmerBaseColor,
+        highlightColor: shared.UiConfig.shimmerHighlightColor,
         child: GridView.count(
           physics: const NeverScrollableScrollPhysics(),
           shrinkWrap: true,
@@ -53,8 +52,8 @@ class LoadingShimmerWidget extends StatelessWidget {
     }
 
     return Shimmer.fromColors(
-      baseColor: UiConfig.shimmerBaseColor,
-      highlightColor: UiConfig.shimmerHighlightColor,
+      baseColor: shared.UiConfig.shimmerBaseColor,
+      highlightColor: shared.UiConfig.shimmerHighlightColor,
       child: GridView.count(
         crossAxisCount: 2, // or 3 for tablet
         shrinkWrap: true,

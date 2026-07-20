@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/Address/address_form.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 // P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
 
@@ -63,7 +62,7 @@ class _EditAddressDialogState extends State<EditAddressDialog> {
             Text(
               loc.editAddress,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: UiConfig.primaryColor,
+                    color: shared.UiConfig.primaryColor,
                     fontWeight: FontWeight.bold,
                   ),
             ),

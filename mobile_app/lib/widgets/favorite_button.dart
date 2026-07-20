@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// A favorite heart button for menu items, handling loading, state, and Firestore.
@@ -52,11 +51,13 @@ class _FavoriteButtonState extends State<FavoriteButton> {
       final fid = franchiseId != 'unknown' ? franchiseId : null;
       if (isFavorited) {
         await firestoreService.removeFavoriteMenuItemForUser(
-            widget.userId!, widget.itemId, franchiseId: fid);
+            widget.userId!, widget.itemId,
+            franchiseId: fid);
         widget.onChanged?.call(false);
       } else {
         await firestoreService.addFavoriteMenuItemForUser(
-            widget.userId!, widget.itemId, franchiseId: fid);
+            widget.userId!, widget.itemId,
+            franchiseId: fid);
         widget.onChanged?.call(true);
       }
     } finally {
@@ -74,13 +75,14 @@ class _FavoriteButtonState extends State<FavoriteButton> {
     if (widget.userId == null) {
       return IconButton(
         icon: Icon(Icons.favorite_border,
-            color: UiConfig.hintTextColor,
+            color: shared.UiConfig.hintTextColor,
             size: widget.iconSize ?? shared.DesignTokens.iconSize),
         onPressed: () {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(loc.signInToFavoriteTooltip),
-              duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
+              duration:
+                  Duration(seconds: shared.DesignTokens.toastDurationSeconds),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -102,12 +104,14 @@ class _FavoriteButtonState extends State<FavoriteButton> {
     }
 
     // Franchise-aware + reactive favorite state via StreamBuilder (real-time from Firestore)
-    final franchiseProvider = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final franchiseProvider =
+        Provider.of<shared.FranchiseProvider>(context, listen: false);
     final franchiseId = franchiseProvider.currentFranchiseId;
     final fidForCall = franchiseId != 'unknown' ? franchiseId : null;
 
     return StreamBuilder<List<shared.MenuItem>>(
-      stream: firestoreService.getFavoriteMenuItemsForUser(widget.userId!, franchiseId: fidForCall),
+      stream: firestoreService.getFavoriteMenuItemsForUser(widget.userId!,
+          franchiseId: fidForCall),
       builder: (context, snapshot) {
         final isFavorited = snapshot.hasData
             ? snapshot.data!.any((mi) => mi.id == widget.itemId)
@@ -115,7 +119,9 @@ class _FavoriteButtonState extends State<FavoriteButton> {
         return IconButton(
           icon: Icon(
             isFavorited ? Icons.favorite : Icons.favorite_border,
-            color: isFavorited ? UiConfig.accentColor : UiConfig.hintTextColor,
+            color: isFavorited
+                ? shared.UiConfig.accentColor
+                : shared.UiConfig.hintTextColor,
             size: widget.iconSize ?? shared.DesignTokens.iconSize,
           ),
           tooltip: widget.userId == null

@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/features/category/category_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 class BannerActionHandler {
   /// Handles what happens when a banner or its CTA is tapped.
@@ -50,9 +49,9 @@ class BannerActionHandler {
             SnackBar(
               content: Text(
                 loc.noCategoriesAvailable,
-                style: TextStyle(color: UiConfig.textColor),
+                style: TextStyle(color: shared.UiConfig.textColor),
               ),
-              backgroundColor: UiConfig.errorColor,
+              backgroundColor: shared.UiConfig.errorColor,
             ),
           );
         }
@@ -64,9 +63,9 @@ class BannerActionHandler {
             SnackBar(
               content: Text(
                 '${loc.applyPromo}: ${banner.action.value}',
-                style: TextStyle(color: UiConfig.textColor),
+                style: TextStyle(color: shared.UiConfig.textColor),
               ),
-              backgroundColor: UiConfig.warningColor,
+              backgroundColor: shared.UiConfig.warningColor,
             ),
           );
         } else {
@@ -74,9 +73,9 @@ class BannerActionHandler {
             SnackBar(
               content: Text(
                 loc.invalidPromo,
-                style: TextStyle(color: UiConfig.textColor),
+                style: TextStyle(color: shared.UiConfig.textColor),
               ),
-              backgroundColor: UiConfig.errorColor,
+              backgroundColor: shared.UiConfig.errorColor,
             ),
           );
         }
@@ -89,9 +88,9 @@ class BannerActionHandler {
           SnackBar(
             content: Text(
               loc.notImplemented,
-              style: TextStyle(color: UiConfig.textColor),
+              style: TextStyle(color: shared.UiConfig.textColor),
             ),
-            backgroundColor: UiConfig.surfaceColorDark,
+            backgroundColor: shared.UiConfig.surfaceColorDark,
           ),
         );
         break;

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_admin_portal/config/ui_config.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 /// Industry-standard image upload field for onboarding menu items.
@@ -40,7 +39,7 @@ class ImageUploadField extends FormField<String?> {
                     if (label != null)
                       Text(
                         label,
-                        style: UiConfig.titleStyle,
+                        style: shared.UiConfig.titleStyle,
                       ),
                     const SizedBox(height: 8),
                     GestureDetector(

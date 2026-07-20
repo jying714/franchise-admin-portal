@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/shared_core.dart' show DesignTokens;
 import 'package:shared_core/shared_core.dart' show BrandingConfig;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
@@ -35,243 +34,212 @@ class OrderHistoryScreen extends StatelessWidget {
           appBar: FranchiseAppBar(
             title: localizations.orderHistory,
             showLogo: true,
-            logoUrl: UiConfig.currentLogoUrl,
+            logoUrl: shared.UiConfig.currentLogoUrl,
             logoAsset: shared.BrandingConfig.appBarLogoAsset,
             centerTitle: true,
           ),
-          backgroundColor: UiConfig.backgroundColorDark,
+          backgroundColor: shared.UiConfig.backgroundColorDark,
           body: SafeArea(
             bottom: true,
             child: authUser == null
-              ? Center(
-                  child: Text(
-                    localizations.notSignedIn,
-                    style: TextStyle(
-                      fontSize: DesignTokens.bodyFontSize,
-                      color: UiConfig.textColorDark,
-                      fontFamily: DesignTokens.fontFamily,
-                      fontWeight: UiConfig.fontWeightNormal,
+                ? Center(
+                    child: Text(
+                      localizations.notSignedIn,
+                      style: TextStyle(
+                        fontSize: DesignTokens.bodyFontSize,
+                        color: shared.UiConfig.textColorDark,
+                        fontFamily: DesignTokens.fontFamily,
+                        fontWeight: shared.UiConfig.fontWeightNormal,
+                      ),
                     ),
-                  ),
-                )
-              : StreamBuilder<List<shared.Order>>(
-                  stream: firestoreService.getOrders(
-                    userId: authUser.id,
-                    franchiseId: franchiseProvider.currentFranchiseId,
-                  ),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      return Center(
-                        child: Text(
-                          localizations.loyaltyErrorLoading,
-                          style: TextStyle(
-                            fontSize: DesignTokens.bodyFontSize,
-                            color: UiConfig.errorTextColor,
-                            fontFamily: DesignTokens.fontFamily,
-                            fontWeight: UiConfig.fontWeightNormal,
-                          ),
-                        ),
-                      );
-                    }
-                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return Center(
-                        child: Text(
-                          localizations.noPastOrders,
-                          style: TextStyle(
-                            fontSize: DesignTokens.bodyFontSize,
-                            color: UiConfig.textColorDark,
-                            fontFamily: DesignTokens.fontFamily,
-                            fontWeight: UiConfig.fontWeightNormal,
-                          ),
-                        ),
-                      );
-                    }
-                    final orders = snapshot.data!;
-                    return ListView.builder(
-                      padding: UiConfig.defaultScreenPadding,
-                      itemCount: orders.length,
-                      itemBuilder: (context, index) {
-                        final order = orders[index];
-                        return Card(
-                          elevation: DesignTokens.cardElevation,
-                          margin: const EdgeInsets.symmetric(
-                            vertical: DesignTokens.gridSpacing / 2,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(DesignTokens.cardRadius),
-                          ),
-                          color: UiConfig.surfaceColor,
-                          child: ExpansionTile(
-                            title: Text(
-                              localizations.orderNumberWithId(order.id),
-                              style: TextStyle(
-                                fontSize: DesignTokens.bodyFontSize,
-                                color: UiConfig.textColorDark,
-                                fontWeight: UiConfig.fontWeightBold,
-                                fontFamily: DesignTokens.fontFamily,
-                              ),
+                  )
+                : StreamBuilder<List<shared.Order>>(
+                    stream: firestoreService.getOrders(
+                      userId: authUser.id,
+                      franchiseId: franchiseProvider.currentFranchiseId,
+                    ),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Text(
+                            localizations.loyaltyErrorLoading,
+                            style: TextStyle(
+                              fontSize: DesignTokens.bodyFontSize,
+                              color: shared.UiConfig.errorTextColor,
+                              fontFamily: DesignTokens.fontFamily,
+                              fontWeight: shared.UiConfig.fontWeightNormal,
                             ),
-                            subtitle: Text(
-                              localizations.orderDateAndTotal(
-                                DateFormat.yMMMd().format(order.timestamp),
-                                UiConfig.currencyFormat(context, order.total),
-                              ),
-                              style: TextStyle(
-                                fontSize: DesignTokens.captionFontSize,
-                                color: UiConfig.secondaryTextColor,
-                                fontFamily: DesignTokens.fontFamily,
-                                fontWeight: UiConfig.fontWeightNormal,
-                              ),
+                          ),
+                        );
+                      }
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return Center(
+                          child: Text(
+                            localizations.noPastOrders,
+                            style: TextStyle(
+                              fontSize: DesignTokens.bodyFontSize,
+                              color: shared.UiConfig.textColorDark,
+                              fontFamily: DesignTokens.fontFamily,
+                              fontWeight: shared.UiConfig.fontWeightNormal,
                             ),
-                            trailing: StatusChip(status: order.status),
-                            children: [
-                              Padding(
-                                padding: UiConfig.cardPadding,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    StatusChip(status: order.status, useIcon: true),
-                                    const SizedBox(
-                                        height: DesignTokens.gridSpacing / 2),
-                                    Text(
-                                      localizations.items,
-                                      style: TextStyle(
-                                        color: UiConfig.textColorDark,
-                                        fontSize: DesignTokens.bodyFontSize,
-                                        fontFamily: DesignTokens.fontFamily,
-                                        fontWeight: UiConfig.fontWeightBold,
-                                      ),
-                                    ),
-                                    ...order.items.map((item) => Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: DesignTokens.gridSpacing / 4,
-                                          ),
-                                          child: Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              NetworkImageWidget(
-                                                imageUrl: item.image ?? '',
-                                                fallbackAsset: BrandingConfig
-                                                    .defaultPizzaIcon,
-                                                width: 32,
-                                                height: 32,
-                                                fit: BoxFit.cover,
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                child: Text(
-                                                  '- ${item.name} x${item.quantity} (\$${item.price.toStringAsFixed(2)})',
-                                                  style: TextStyle(
-                                                    fontSize: DesignTokens
-                                                        .captionFontSize,
-                                                    color: UiConfig
-                                                        .secondaryTextColor,
-                                                    fontFamily:
-                                                        DesignTokens.fontFamily,
-                                                    fontWeight: UiConfig
-                                                        .fontWeightNormal,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        )),
-                                    const SizedBox(
-                                        height: DesignTokens.gridSpacing / 2),
-                                    Text(
-                                      '${localizations.deliveryType}: ${order.deliveryType}',
-                                      style: TextStyle(
-                                        color: UiConfig.textColorDark,
-                                        fontSize: DesignTokens.bodyFontSize,
-                                        fontFamily: DesignTokens.fontFamily,
-                                        fontWeight: UiConfig.fontWeightNormal,
-                                      ),
-                                    ),
-                                    if (order.address != null) ...[
+                          ),
+                        );
+                      }
+                      final orders = snapshot.data!;
+                      return ListView.builder(
+                        padding: shared.UiConfig.defaultScreenPadding,
+                        itemCount: orders.length,
+                        itemBuilder: (context, index) {
+                          final order = orders[index];
+                          return Card(
+                            elevation: DesignTokens.cardElevation,
+                            margin: const EdgeInsets.symmetric(
+                              vertical: DesignTokens.gridSpacing / 2,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                  DesignTokens.cardRadius),
+                            ),
+                            color: shared.UiConfig.surfaceColor,
+                            child: ExpansionTile(
+                              title: Text(
+                                localizations.orderNumberWithId(order.id),
+                                style: TextStyle(
+                                  fontSize: DesignTokens.bodyFontSize,
+                                  color: shared.UiConfig.textColorDark,
+                                  fontWeight: shared.UiConfig.fontWeightBold,
+                                  fontFamily: DesignTokens.fontFamily,
+                                ),
+                              ),
+                              subtitle: Text(
+                                localizations.orderDateAndTotal(
+                                  DateFormat.yMMMd().format(order.timestamp),
+                                  shared.UiConfig.currencyFormat(order.total),
+                                ),
+                                style: TextStyle(
+                                  fontSize: DesignTokens.captionFontSize,
+                                  color: shared.UiConfig.secondaryTextColor,
+                                  fontFamily: DesignTokens.fontFamily,
+                                  fontWeight: shared.UiConfig.fontWeightNormal,
+                                ),
+                              ),
+                              trailing: StatusChip(status: order.status),
+                              children: [
+                                Padding(
+                                  padding: shared.UiConfig.cardPadding,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      StatusChip(
+                                          status: order.status, useIcon: true),
                                       const SizedBox(
                                           height: DesignTokens.gridSpacing / 2),
                                       Text(
-                                        '${localizations.address}: ${order.address!.street}, ${order.address!.city}',
+                                        localizations.items,
                                         style: TextStyle(
-                                          fontSize:
-                                              DesignTokens.captionFontSize,
-                                          color: UiConfig.secondaryTextColor,
+                                          color: shared.UiConfig.textColorDark,
+                                          fontSize: DesignTokens.bodyFontSize,
                                           fontFamily: DesignTokens.fontFamily,
-                                          fontWeight: UiConfig.fontWeightNormal,
+                                          fontWeight:
+                                              shared.UiConfig.fontWeightBold,
                                         ),
                                       ),
-                                    ],
-                                    const SizedBox(
-                                        height: DesignTokens.gridSpacing),
-                                    FutureBuilder<bool>(
-                                      future: firestoreService
-                                          .hasOrderFeedback(order.id, franchiseId: franchiseProvider.currentFranchiseId),
-                                      builder: (context, snapshot) {
-                                        final feedbackExists =
-                                            snapshot.data == true;
-                                        if (snapshot.connectionState ==
-                                            ConnectionState.waiting) {
-                                          return const SizedBox();
-                                        }
-
-                                        return Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          children: [
-                                            ElevatedButton(
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    UiConfig.primaryColor,
-                                                foregroundColor: UiConfig
-                                                    .foregroundColorDark,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 20,
-                                                        vertical: 12),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          DesignTokens
-                                                              .buttonRadius),
-                                                ),
-                                                elevation: DesignTokens
-                                                    .buttonElevation,
-                                              ),
-                                              onPressed: () {
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(localizations
-                                                        .reorderNotImplemented),
-                                                    backgroundColor:
-                                                        UiConfig.surfaceColor,
-                                                    duration: Duration(
-                                                        seconds: DesignTokens
-                                                            .toastDurationSeconds),
-                                                    behavior: SnackBarBehavior.floating,
-                                                  ),
-                                                );
-                                              },
-                                              child:
-                                                  Text(localizations.reorder),
+                                      ...order.items.map((item) => Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: DesignTokens.gridSpacing / 4,
                                             ),
-                                            const SizedBox(width: 16),
-                                            if (order.isFeedbackEligible &&
-                                                !feedbackExists)
-                                              ElevatedButton.icon(
-                                                icon: const Icon(
-                                                    Icons.feedback_outlined),
+                                            child: Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                NetworkImageWidget(
+                                                  imageUrl: item.image ?? '',
+                                                  fallbackAsset: BrandingConfig
+                                                      .defaultPizzaIcon,
+                                                  width: 32,
+                                                  height: 32,
+                                                  fit: BoxFit.cover,
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Text(
+                                                    '- ${item.name} x${item.quantity} (\$${item.price.toStringAsFixed(2)})',
+                                                    style: TextStyle(
+                                                      fontSize: DesignTokens
+                                                          .captionFontSize,
+                                                      color: shared.UiConfig
+                                                          .secondaryTextColor,
+                                                      fontFamily: DesignTokens
+                                                          .fontFamily,
+                                                      fontWeight: shared
+                                                          .UiConfig
+                                                          .fontWeightNormal,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          )),
+                                      const SizedBox(
+                                          height: DesignTokens.gridSpacing / 2),
+                                      Text(
+                                        '${localizations.deliveryType}: ${order.deliveryType}',
+                                        style: TextStyle(
+                                          color: shared.UiConfig.textColorDark,
+                                          fontSize: DesignTokens.bodyFontSize,
+                                          fontFamily: DesignTokens.fontFamily,
+                                          fontWeight:
+                                              shared.UiConfig.fontWeightNormal,
+                                        ),
+                                      ),
+                                      if (order.address != null) ...[
+                                        const SizedBox(
+                                            height:
+                                                DesignTokens.gridSpacing / 2),
+                                        Text(
+                                          '${localizations.address}: ${order.address!.street}, ${order.address!.city}',
+                                          style: TextStyle(
+                                            fontSize:
+                                                DesignTokens.captionFontSize,
+                                            color: shared
+                                                .UiConfig.secondaryTextColor,
+                                            fontFamily: DesignTokens.fontFamily,
+                                            fontWeight: shared
+                                                .UiConfig.fontWeightNormal,
+                                          ),
+                                        ),
+                                      ],
+                                      const SizedBox(
+                                          height: DesignTokens.gridSpacing),
+                                      FutureBuilder<bool>(
+                                        future: firestoreService
+                                            .hasOrderFeedback(order.id,
+                                                franchiseId: franchiseProvider
+                                                    .currentFranchiseId),
+                                        builder: (context, snapshot) {
+                                          final feedbackExists =
+                                              snapshot.data == true;
+                                          if (snapshot.connectionState ==
+                                              ConnectionState.waiting) {
+                                            return const SizedBox();
+                                          }
+
+                                          return Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            children: [
+                                              ElevatedButton(
                                                 style: ElevatedButton.styleFrom(
-                                                  backgroundColor:
-                                                      UiConfig.secondaryColor,
-                                                  foregroundColor: UiConfig
+                                                  backgroundColor: shared
+                                                      .UiConfig.primaryColor,
+                                                  foregroundColor: shared
+                                                      .UiConfig
                                                       .foregroundColorDark,
                                                   padding: const EdgeInsets
                                                       .symmetric(
@@ -286,99 +254,159 @@ class OrderHistoryScreen extends StatelessWidget {
                                                   elevation: DesignTokens
                                                       .buttonElevation,
                                                 ),
-                                                onPressed: () async {
-                                                  final fid = franchiseProvider.currentFranchiseId;
-                                                  await showDialog(
-                                                    context: context,
-                                                    builder: (_) =>
-                                                        FeedbackSubmissionDialog(
-                                                      orderId: order.id,
-                                                      userId: authUser.id,
-                                                      feedbackMode: FeedbackMode
-                                                          .orderExperience,
-                                                      franchiseId: fid != 'unknown' ? fid : null,
-                                                      onSubmitted: () {
-                                                        ScaffoldMessenger.of(
-                                                                context)
-                                                            .showSnackBar(
-                                                          SnackBar(
-                                                            content: Text(
-                                                                localizations
-                                                                    .feedbackThankYouBody),
-                                                            backgroundColor:
-                                                                UiConfig
-                                                                    .surfaceColor,
-                                                            duration: Duration(
-                                                                seconds:
-                                                                    DesignTokens
-                                                                        .toastDurationSeconds),
-                                                            behavior: SnackBarBehavior.floating,
-                                                          ),
-                                                        );
-                                                      },
+                                                onPressed: () {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(localizations
+                                                          .reorderNotImplemented),
+                                                      backgroundColor: shared
+                                                          .UiConfig
+                                                          .surfaceColor,
+                                                      duration: Duration(
+                                                          seconds: DesignTokens
+                                                              .toastDurationSeconds),
+                                                      behavior: SnackBarBehavior
+                                                          .floating,
                                                     ),
                                                   );
                                                 },
-                                                label: Text(localizations
-                                                    .leaveFeedback),
+                                                child:
+                                                    Text(localizations.reorder),
                                               ),
-                                            if (order.isFeedbackEligible &&
-                                                feedbackExists)
-                                              Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                children: [
-                                                  Icon(Icons.feedback,
-                                                      color: UiConfig
-                                                          .secondaryColor,
-                                                      size: 18),
-                                                  const SizedBox(height: 4),
-                                                  Text(
-                                                    localizations
-                                                        .feedbackAlreadySubmittedTitle,
-                                                    style: TextStyle(
-                                                      fontSize: DesignTokens
-                                                          .captionFontSize,
-                                                      color: UiConfig
-                                                          .secondaryTextColor,
-                                                      fontFamily: DesignTokens
-                                                          .fontFamily,
-                                                      fontWeight: UiConfig
-                                                          .fontWeightNormal,
+                                              const SizedBox(width: 16),
+                                              if (order.isFeedbackEligible &&
+                                                  !feedbackExists)
+                                                ElevatedButton.icon(
+                                                  icon: const Icon(
+                                                      Icons.feedback_outlined),
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor: shared
+                                                        .UiConfig
+                                                        .secondaryColor,
+                                                    foregroundColor: shared
+                                                        .UiConfig
+                                                        .foregroundColorDark,
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 20,
+                                                        vertical: 12),
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius
+                                                          .circular(DesignTokens
+                                                              .buttonRadius),
                                                     ),
-                                                    textAlign: TextAlign.center,
+                                                    elevation: DesignTokens
+                                                        .buttonElevation,
                                                   ),
-                                                  Text(
-                                                    localizations
-                                                        .feedbackAlreadySubmittedSubtitle,
-                                                    style: TextStyle(
-                                                      fontSize: DesignTokens
-                                                          .captionFontSize,
-                                                      color: UiConfig
-                                                          .secondaryTextColor,
-                                                      fontFamily: DesignTokens
-                                                          .fontFamily,
-                                                      fontWeight: UiConfig
-                                                          .fontWeightNormal,
+                                                  onPressed: () async {
+                                                    final fid =
+                                                        franchiseProvider
+                                                            .currentFranchiseId;
+                                                    await showDialog(
+                                                      context: context,
+                                                      builder: (_) =>
+                                                          FeedbackSubmissionDialog(
+                                                        orderId: order.id,
+                                                        userId: authUser.id,
+                                                        feedbackMode:
+                                                            FeedbackMode
+                                                                .orderExperience,
+                                                        franchiseId:
+                                                            fid != 'unknown'
+                                                                ? fid
+                                                                : null,
+                                                        onSubmitted: () {
+                                                          ScaffoldMessenger.of(
+                                                                  context)
+                                                              .showSnackBar(
+                                                            SnackBar(
+                                                              content: Text(
+                                                                  localizations
+                                                                      .feedbackThankYouBody),
+                                                              backgroundColor:
+                                                                  shared
+                                                                      .UiConfig
+                                                                      .surfaceColor,
+                                                              duration: Duration(
+                                                                  seconds:
+                                                                      DesignTokens
+                                                                          .toastDurationSeconds),
+                                                              behavior:
+                                                                  SnackBarBehavior
+                                                                      .floating,
+                                                            ),
+                                                          );
+                                                        },
+                                                      ),
+                                                    );
+                                                  },
+                                                  label: Text(localizations
+                                                      .leaveFeedback),
+                                                ),
+                                              if (order.isFeedbackEligible &&
+                                                  feedbackExists)
+                                                Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.center,
+                                                  children: [
+                                                    Icon(Icons.feedback,
+                                                        color: shared.UiConfig
+                                                            .secondaryColor,
+                                                        size: 18),
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      localizations
+                                                          .feedbackAlreadySubmittedTitle,
+                                                      style: TextStyle(
+                                                        fontSize: DesignTokens
+                                                            .captionFontSize,
+                                                        color: shared.UiConfig
+                                                            .secondaryTextColor,
+                                                        fontFamily: DesignTokens
+                                                            .fontFamily,
+                                                        fontWeight: shared
+                                                            .UiConfig
+                                                            .fontWeightNormal,
+                                                      ),
+                                                      textAlign:
+                                                          TextAlign.center,
                                                     ),
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                ],
-                                              ),
-                                          ],
-                                        );
-                                      },
-                                    ),
-                                  ],
+                                                    Text(
+                                                      localizations
+                                                          .feedbackAlreadySubmittedSubtitle,
+                                                      style: TextStyle(
+                                                        fontSize: DesignTokens
+                                                            .captionFontSize,
+                                                        color: shared.UiConfig
+                                                            .secondaryTextColor,
+                                                        fontFamily: DesignTokens
+                                                            .fontFamily,
+                                                        fontWeight: shared
+                                                            .UiConfig
+                                                            .fontWeightNormal,
+                                                      ),
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                    ),
+                                                  ],
+                                                ),
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
           ),
         );
       },

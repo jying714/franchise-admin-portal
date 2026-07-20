@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:shared_core/src/core/models/favorite_order.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
@@ -102,12 +101,12 @@ class _FavoritesScreenState extends State<FavoritesScreen>
         content: Text(
           AppLocalizations.of(context)!.addedToCartMessage,
           style: TextStyle(
-            color: UiConfig.textColor,
+            color: shared.UiConfig.textColor,
             fontFamily: shared.DesignTokens.fontFamily,
-            fontWeight: UiConfig.normal,
+            fontWeight: shared.UiConfig.normal,
           ),
         ),
-        backgroundColor: UiConfig.surfaceColor,
+        backgroundColor: shared.UiConfig.surfaceColor,
         duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
       ),
     );
@@ -122,21 +121,21 @@ class _FavoritesScreenState extends State<FavoritesScreen>
         appBar: FranchiseAppBar(
           title: localizations.favorites,
           showLogo: false,
-          backgroundColor: UiConfig.primaryColor,
-          foregroundColor: UiConfig.foregroundColor,
+          backgroundColor: shared.UiConfig.primaryColor,
+          foregroundColor: shared.UiConfig.foregroundColor,
           centerTitle: true,
           elevation: 0,
         ),
-        backgroundColor: UiConfig.backgroundColor,
+        backgroundColor: shared.UiConfig.backgroundColor,
         body: SafeArea(
           child: Center(
             child: Text(
               localizations.mustSignInForFavorites,
               style: TextStyle(
                 fontSize: shared.DesignTokens.bodyFontSize,
-                color: UiConfig.textColor,
+                color: shared.UiConfig.textColor,
                 fontFamily: shared.DesignTokens.fontFamily,
-                fontWeight: UiConfig.normal,
+                fontWeight: shared.UiConfig.normal,
               ),
             ),
           ),
@@ -148,14 +147,14 @@ class _FavoritesScreenState extends State<FavoritesScreen>
       appBar: FranchiseAppBar(
         title: localizations.favorites,
         showLogo: true,
-        logoUrl: UiConfig.currentLogoUrl,
+        logoUrl: shared.UiConfig.currentLogoUrl,
         logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: UiConfig.foregroundColor,
-          labelColor: UiConfig.foregroundColor,
-          unselectedLabelColor: UiConfig.secondaryTextColor,
+          indicatorColor: shared.UiConfig.foregroundColor,
+          labelColor: shared.UiConfig.foregroundColor,
+          unselectedLabelColor: shared.UiConfig.secondaryTextColor,
           tabs: [
             Tab(
                 text: localizations.menuItems,
@@ -166,7 +165,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
           ],
         ),
       ),
-      backgroundColor: UiConfig.backgroundColor,
+      backgroundColor: shared.UiConfig.backgroundColor,
       body: SafeArea(
         bottom: true,
         child: TabBarView(
@@ -197,7 +196,8 @@ class FavoriteMenuItemsTab extends StatelessWidget {
         final fid = franchiseId != 'unknown' ? franchiseId : null;
 
         return StreamBuilder<List<shared.MenuItem>>(
-          stream: firestoreService.getFavoriteMenuItemsForUser(userId, franchiseId: fid),
+          stream: firestoreService.getFavoriteMenuItemsForUser(userId,
+              franchiseId: fid),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -208,9 +208,9 @@ class FavoriteMenuItemsTab extends StatelessWidget {
                   localizations.loyaltyErrorLoading, // reuse generic error
                   style: TextStyle(
                     fontSize: shared.DesignTokens.bodyFontSize,
-                    color: UiConfig.errorTextColor,
+                    color: shared.UiConfig.errorTextColor,
                     fontFamily: shared.DesignTokens.fontFamily,
-                    fontWeight: UiConfig.normal,
+                    fontWeight: shared.UiConfig.normal,
                   ),
                 ),
               );
@@ -224,7 +224,7 @@ class FavoriteMenuItemsTab extends StatelessWidget {
               );
             }
             return Padding(
-              padding: UiConfig.cardPadding,
+              padding: shared.UiConfig.cardPadding,
               child: ListView.builder(
                 itemCount: items.length,
                 itemBuilder: (context, index) {
@@ -238,7 +238,7 @@ class FavoriteMenuItemsTab extends StatelessWidget {
                       borderRadius:
                           BorderRadius.circular(shared.DesignTokens.cardRadius),
                     ),
-                    color: UiConfig.surfaceColor,
+                    color: shared.UiConfig.surfaceColor,
                     child: ListTile(
                       leading: NetworkImageWidget(
                         imageUrl: item.image ?? '',
@@ -246,15 +246,15 @@ class FavoriteMenuItemsTab extends StatelessWidget {
                         width: shared.DesignTokens.menuItemImageWidth,
                         height: shared.DesignTokens.menuItemImageHeight,
                         fit: BoxFit.cover,
-                        borderRadius:
-                            BorderRadius.circular(shared.DesignTokens.imageRadius),
+                        borderRadius: BorderRadius.circular(
+                            shared.DesignTokens.imageRadius),
                       ),
                       title: Text(
-                        item.name,  // Bound from shared MenuItem.name - fixed for display consistency
+                        item.name, // Bound from shared MenuItem.name - fixed for display consistency
                         style: TextStyle(
                           fontSize: shared.DesignTokens.bodyFontSize,
-                          color: UiConfig.textColor,
-                          fontWeight: UiConfig.bold,
+                          color: shared.UiConfig.textColor,
+                          fontWeight: shared.UiConfig.bold,
                           fontFamily: shared.DesignTokens.fontFamily,
                         ),
                       ),
@@ -262,32 +262,33 @@ class FavoriteMenuItemsTab extends StatelessWidget {
                         item.description,
                         style: TextStyle(
                           fontSize: shared.DesignTokens.captionFontSize,
-                          color: UiConfig.secondaryTextColor,
+                          color: shared.UiConfig.secondaryTextColor,
                           fontFamily: shared.DesignTokens.fontFamily,
-                          fontWeight: UiConfig.normal,
+                          fontWeight: shared.UiConfig.normal,
                         ),
                       ),
                       trailing: IconButton(
                         icon: Icon(
                           Icons.favorite,
-                          color: UiConfig.errorColor,
+                          color: shared.UiConfig.errorColor,
                         ),
                         tooltip: localizations.removeFromFavoritesTooltip,
                         onPressed: () async {
                           await firestoreService.removeFavoriteMenuItemForUser(
-                              userId, item.id, franchiseId: fid);
+                              userId, item.id,
+                              franchiseId: fid);
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
                                 localizations.removeFromFavoritesTooltip,
                                 style: TextStyle(
-                                  color: UiConfig.textColor,
+                                  color: shared.UiConfig.textColor,
                                   fontFamily: shared.DesignTokens.fontFamily,
-                                  fontWeight: UiConfig.normal,
+                                  fontWeight: shared.UiConfig.normal,
                                 ),
                               ),
-                              backgroundColor: UiConfig.surfaceColor,
+                              backgroundColor: shared.UiConfig.surfaceColor,
                               duration: Duration(
                                   seconds:
                                       shared.DesignTokens.toastDurationSeconds),
@@ -329,7 +330,8 @@ class FavoriteOrdersTab extends StatelessWidget {
         final fid = franchiseId != 'unknown' ? franchiseId : null;
 
         return StreamBuilder<List<shared.Order>>(
-          stream: firestoreService.getFavoriteOrdersForUser(userId, franchiseId: fid),
+          stream: firestoreService.getFavoriteOrdersForUser(userId,
+              franchiseId: fid),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -340,9 +342,9 @@ class FavoriteOrdersTab extends StatelessWidget {
                   localizations.loyaltyErrorLoading,
                   style: TextStyle(
                     fontSize: shared.DesignTokens.bodyFontSize,
-                    color: UiConfig.errorTextColor,
+                    color: shared.UiConfig.errorTextColor,
                     fontFamily: shared.DesignTokens.fontFamily,
-                    fontWeight: UiConfig.normal,
+                    fontWeight: shared.UiConfig.normal,
                   ),
                 ),
               );
@@ -351,12 +353,13 @@ class FavoriteOrdersTab extends StatelessWidget {
             if (orders.isEmpty) {
               return EmptyStateWidget(
                 title: localizations.noFavoriteOrdersSaved,
-                message: 'Favorite orders will appear here for quick reordering.',
+                message:
+                    'Favorite orders will appear here for quick reordering.',
                 iconData: Icons.receipt_long,
               );
             }
             return Padding(
-              padding: UiConfig.cardPadding,
+              padding: shared.UiConfig.cardPadding,
               child: ListView.builder(
                 itemCount: orders.length,
                 itemBuilder: (context, index) {
@@ -370,16 +373,16 @@ class FavoriteOrdersTab extends StatelessWidget {
                       borderRadius:
                           BorderRadius.circular(shared.DesignTokens.cardRadius),
                     ),
-                    color: UiConfig.surfaceColor,
+                    color: shared.UiConfig.surfaceColor,
                     child: ListTile(
-                      leading:
-                          Icon(Icons.receipt_long, color: UiConfig.secondaryColor),
+                      leading: Icon(Icons.receipt_long,
+                          color: shared.UiConfig.secondaryColor),
                       title: Text(
                         order.userName ?? 'Order',
                         style: TextStyle(
                           fontSize: shared.DesignTokens.bodyFontSize,
-                          color: UiConfig.textColor,
-                          fontWeight: UiConfig.bold,
+                          color: shared.UiConfig.textColor,
+                          fontWeight: shared.UiConfig.bold,
                           fontFamily: shared.DesignTokens.fontFamily,
                         ),
                       ),
@@ -389,9 +392,9 @@ class FavoriteOrdersTab extends StatelessWidget {
                         ),
                         style: TextStyle(
                           fontSize: shared.DesignTokens.captionFontSize,
-                          color: UiConfig.secondaryTextColor,
+                          color: shared.UiConfig.secondaryTextColor,
                           fontFamily: shared.DesignTokens.fontFamily,
-                          fontWeight: UiConfig.normal,
+                          fontWeight: shared.UiConfig.normal,
                         ),
                       ),
                       trailing: Wrap(
@@ -400,7 +403,7 @@ class FavoriteOrdersTab extends StatelessWidget {
                           IconButton(
                             icon: Icon(
                               Icons.replay,
-                              color: UiConfig.primaryColor,
+                              color: shared.UiConfig.primaryColor,
                             ),
                             tooltip: localizations.reorder,
                             onPressed: () {
@@ -415,27 +418,29 @@ class FavoriteOrdersTab extends StatelessWidget {
                           IconButton(
                             icon: Icon(
                               Icons.delete,
-                              color: UiConfig.errorColor,
+                              color: shared.UiConfig.errorColor,
                             ),
                             tooltip: localizations.remove,
                             onPressed: () async {
                               await firestoreService.removeFavoriteOrderForUser(
-                                  userId, order.id, franchiseId: fid);
+                                  userId, order.id,
+                                  franchiseId: fid);
                               if (!context.mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
                                     localizations.removeFavorite,
                                     style: TextStyle(
-                                      color: UiConfig.textColor,
-                                      fontFamily: shared.DesignTokens.fontFamily,
-                                      fontWeight: UiConfig.normal,
+                                      color: shared.UiConfig.textColor,
+                                      fontFamily:
+                                          shared.DesignTokens.fontFamily,
+                                      fontWeight: shared.UiConfig.normal,
                                     ),
                                   ),
-                                  backgroundColor: UiConfig.surfaceColor,
+                                  backgroundColor: shared.UiConfig.surfaceColor,
                                   duration: Duration(
-                                      seconds:
-                                          shared.DesignTokens.toastDurationSeconds),
+                                      seconds: shared
+                                          .DesignTokens.toastDurationSeconds),
                                   behavior: SnackBarBehavior.floating,
                                 ),
                               );

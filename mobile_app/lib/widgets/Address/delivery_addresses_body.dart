@@ -7,7 +7,6 @@ import 'package:franchise_mobile_app/widgets/confirmation_dialog.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 // P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
 
@@ -42,7 +41,7 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
     final formKey = widget.formKey;
 
     return Padding(
-      padding: UiConfig.cardPadding,
+      padding: shared.UiConfig.cardPadding,
       child: SingleChildScrollView(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom +
@@ -69,7 +68,7 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                     confirmLabel: localizations.confirm,
                     cancelLabel: localizations.cancel,
                     icon: Icons.delete,
-                    confirmColor: UiConfig.errorColor,
+                    confirmColor: shared.UiConfig.errorColor,
                   );
                   if (shouldDelete == true) {
                     await firestoreService.removeAddressForUser(
@@ -80,12 +79,12 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                         content: Text(
                           localizations.addressRemoved,
                           style: TextStyle(
-                            color: UiConfig.textColor,
+                            color: shared.UiConfig.textColor,
                             fontFamily: shared.DesignTokens.fontFamily,
-                            fontWeight: UiConfig.fontWeightNormal,
+                            fontWeight: shared.UiConfig.fontWeightNormal,
                           ),
                         ),
-                        backgroundColor: UiConfig.surfaceColor,
+                        backgroundColor: shared.UiConfig.surfaceColor,
                         duration: Duration(
                             seconds: shared.DesignTokens.toastDuration),
                       ),
@@ -107,7 +106,7 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                     confirmLabel: localizations.confirm,
                     cancelLabel: localizations.cancel,
                     icon: Icons.add_location_alt,
-                    confirmColor: UiConfig.primaryColor,
+                    confirmColor: shared.UiConfig.primaryColor,
                   );
                   if (shouldAdd == true) {
                     await firestoreService.addAddressForUser(
@@ -118,12 +117,12 @@ class _DeliveryAddressesBodyState extends State<DeliveryAddressesBody> {
                         content: Text(
                           localizations.addressAdded,
                           style: TextStyle(
-                            color: UiConfig.textColor,
+                            color: shared.UiConfig.textColor,
                             fontFamily: shared.DesignTokens.fontFamily,
-                            fontWeight: UiConfig.fontWeightNormal,
+                            fontWeight: shared.UiConfig.fontWeightNormal,
                           ),
                         ),
-                        backgroundColor: UiConfig.surfaceColor,
+                        backgroundColor: shared.UiConfig.surfaceColor,
                         duration: Duration(
                             seconds: shared.DesignTokens.toastDuration),
                       ),

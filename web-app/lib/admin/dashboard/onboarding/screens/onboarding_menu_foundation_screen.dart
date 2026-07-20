@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_admin_portal/config/ui_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredient_type_screen.dart';
@@ -120,8 +119,8 @@ class _OnboardingMenuFoundationScreenState
         bottom: TabBar(
           controller: _tabController,
           tabs: _tabTitles.map((title) => Tab(text: title)).toList(),
-          labelColor: UiConfig.primaryColor,
-          indicatorColor: UiConfig.primaryColor,
+          labelColor: shared.UiConfig.primaryColor,
+          indicatorColor: shared.UiConfig.primaryColor,
         ),
       ),
       body: Row(

@@ -5,18 +5,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 /// Minimal placeholder for future richer test doubles.
 class MinimalFirestoreStub {}
 
 /// Basic app wrapper for future widget tests (currently unused by the foundation smoke tests).
-Widget createTestAppPlaceholder({required Widget child, String franchiseId = 'test'}) {
+Widget createTestAppPlaceholder(
+    {required Widget child, String franchiseId = 'test'}) {
   // LocalStorage is abstract in shared; real tests provide a concrete impl.
   // This placeholder exists only for future expansion.
   final fp = shared.FranchiseProvider(_TestLocalStorage());
   fp.setInitialFranchiseId(franchiseId);
-  UiConfig.setFranchiseProvider(fp);
+  shared.UiConfig.setFranchiseProvider(fp);
 
   return MultiProvider(
     providers: [

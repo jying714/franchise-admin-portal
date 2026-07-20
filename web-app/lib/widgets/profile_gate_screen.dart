@@ -13,7 +13,6 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/core/providers/user_profile_notifier_impl.dart'; // Concrete impl
 import '../config/design_tokens.dart';
 import '../config/branding_config.dart';
-import '../config/ui_config.dart';
 
 class ProfileGateScreen extends StatefulWidget {
   const ProfileGateScreen({super.key});
@@ -275,7 +274,8 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
               ),
             const CircularProgressIndicator(),
             const SizedBox(height: 24),
-            Text(msg, style: UiConfig.titleStyle, textAlign: TextAlign.center),
+            Text(msg,
+                style: shared.UiConfig.titleStyle, textAlign: TextAlign.center),
           ],
         ),
       ),
@@ -309,12 +309,13 @@ class _ProfileGateScreenState extends State<ProfileGateScreen> {
                   Icon(Icons.error_outline, size: 48, color: colorScheme.error),
                   const SizedBox(height: 24),
                   Text(msg,
-                      style: UiConfig.titleStyle
+                      style: shared.UiConfig.titleStyle
                           .copyWith(color: colorScheme.error),
                       textAlign: TextAlign.center),
                   const SizedBox(height: 12),
                   Text(details,
-                      style: UiConfig.bodyStyle, textAlign: TextAlign.center),
+                      style: shared.UiConfig.bodyStyle,
+                      textAlign: TextAlign.center),
                   const SizedBox(height: 30),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.refresh),

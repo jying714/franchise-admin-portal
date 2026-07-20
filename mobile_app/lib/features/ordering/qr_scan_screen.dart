@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -9,7 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Foundational QR scan screen for franchise switching (P2).
-/// 
+///
 /// - Accepts manual paste / simulated scan (full camera scanner requires mobile_scanner + platform config - out of foundations scope)
 /// - Parses using shared qr_utils
 /// - Calls FranchiseProvider.setFranchiseId + triggers branding reload
@@ -90,7 +89,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
 
       await fp.setFranchiseId(franchiseId);
 
-      // Best-effort reload branding (FranchiseProvider + UiConfig pattern)
+      // Best-effort reload branding (FranchiseProvider + shared.UiConfig pattern)
       try {
         final doc = await FirebaseFirestore.instance
             .collection('franchises')
@@ -115,7 +114,8 @@ class _QrScanScreenState extends State<QrScanScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _statusMessage = 'Error: ${e.toString().replaceAll('Exception: ', '')}';
+          _statusMessage =
+              'Error: ${e.toString().replaceAll('Exception: ', '')}';
           _isScanning = true; // allow retry
         });
       }
@@ -147,7 +147,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
       appBar: FranchiseAppBar(
         title: 'Scan Franchise QR',
         showLogo: true,
-        logoUrl: UiConfig.currentLogoUrl,
+        logoUrl: shared.UiConfig.currentLogoUrl,
         logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
         actions: [
@@ -159,10 +159,10 @@ class _QrScanScreenState extends State<QrScanScreen> {
             ),
         ],
       ),
-      backgroundColor: UiConfig.backgroundColorDark,
+      backgroundColor: shared.UiConfig.backgroundColorDark,
       body: SafeArea(
         child: Padding(
-          padding: UiConfig.defaultScreenPadding,
+          padding: shared.UiConfig.defaultScreenPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -172,7 +172,8 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   height: 260,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: UiConfig.primaryColor, width: 2),
+                    border: Border.all(
+                        color: shared.UiConfig.primaryColor, width: 2),
                   ),
                   clipBehavior: Clip.hardEdge,
                   child: Stack(
@@ -183,11 +184,14 @@ class _QrScanScreenState extends State<QrScanScreen> {
                       ),
                       if (!_isScanning)
                         Container(
-                          color: UiConfig.shadowColor.withValues(alpha: 0.54),
+                          color: shared.UiConfig.shadowColor
+                              .withValues(alpha: 0.54),
                           child: Center(
                             child: Text(
                               'Scanner Paused',
-                              style: TextStyle(color: UiConfig.onPrimaryColor, fontSize: 18),
+                              style: TextStyle(
+                                  color: shared.UiConfig.onPrimaryColor,
+                                  fontSize: 18),
                             ),
                           ),
                         ),
@@ -197,7 +201,8 @@ class _QrScanScreenState extends State<QrScanScreen> {
                           child: Container(
                             decoration: BoxDecoration(
                               border: Border.all(
-                                color: UiConfig.secondaryColor.withValues(alpha: 0.6),
+                                color: shared.UiConfig.secondaryColor
+                                    .withValues(alpha: 0.6),
                                 width: 3,
                               ),
                               borderRadius: BorderRadius.circular(12),
@@ -214,31 +219,35 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   _isScanning
                       ? 'Point camera at a franchise QR code (fhq://f/...)'
                       : 'Scanner paused — tap play to resume',
-                  style: UiConfig.captionStyle,
+                  style: shared.UiConfig.captionStyle,
                   textAlign: TextAlign.center,
                 ),
               ] else ...[
                 Container(
                   height: 200,
                   decoration: BoxDecoration(
-                    color: UiConfig.surfaceColor,
+                    color: shared.UiConfig.surfaceColor,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.no_photography, size: 48, color: UiConfig.onPrimaryColor.withValues(alpha: 0.7)),
+                      Icon(Icons.no_photography,
+                          size: 48,
+                          color: shared.UiConfig.onPrimaryColor
+                              .withValues(alpha: 0.7)),
                       const SizedBox(height: 12),
                       Text(
                         'Camera permission required',
-                        style: UiConfig.titleStyle.copyWith(fontSize: 16),
+                        style:
+                            shared.UiConfig.titleStyle.copyWith(fontSize: 16),
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton(
                         onPressed: _requestCameraPermission,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: UiConfig.primaryColor,
-                          foregroundColor: UiConfig.foregroundColorDark,
+                          backgroundColor: shared.UiConfig.primaryColor,
+                          foregroundColor: shared.UiConfig.foregroundColorDark,
                         ),
                         child: const Text('Grant Camera Access'),
                       ),
@@ -252,19 +261,21 @@ class _QrScanScreenState extends State<QrScanScreen> {
               // Manual fallback (always available)
               Text(
                 'Or paste QR content manually',
-                style: UiConfig.captionStyle,
+                style: shared.UiConfig.captionStyle,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: _qrController,
-                style: TextStyle(color: UiConfig.textColor),
+                style: TextStyle(color: shared.UiConfig.textColor),
                 decoration: InputDecoration(
                   labelText: 'QR Payload (e.g. fhq://f/doughboys_pizzeria)',
-                  labelStyle: TextStyle(color: UiConfig.secondaryTextColor),
+                  labelStyle:
+                      TextStyle(color: shared.UiConfig.secondaryTextColor),
                   filled: true,
-                  fillColor: UiConfig.surfaceColor,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  fillColor: shared.UiConfig.surfaceColor,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 onSubmitted: (_) => _onManualSubmit(),
               ),
@@ -272,12 +283,17 @@ class _QrScanScreenState extends State<QrScanScreen> {
 
               ElevatedButton.icon(
                 icon: _processing
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.check_circle),
-                label: Text(_processing ? 'Processing...' : 'Process & Switch Franchise'),
+                label: Text(_processing
+                    ? 'Processing...'
+                    : 'Process & Switch Franchise'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: UiConfig.primaryColor,
-                  foregroundColor: UiConfig.foregroundColorDark,
+                  backgroundColor: shared.UiConfig.primaryColor,
+                  foregroundColor: shared.UiConfig.foregroundColorDark,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 onPressed: _processing ? null : _onManualSubmit,
@@ -289,16 +305,16 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: _statusMessage!.startsWith('Error')
-                        ? UiConfig.errorColor.withValues(alpha: 0.15)
-                        : UiConfig.successColor.withValues(alpha: 0.15),
+                        ? shared.UiConfig.errorColor.withValues(alpha: 0.15)
+                        : shared.UiConfig.successColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     _statusMessage!,
                     style: TextStyle(
                       color: _statusMessage!.startsWith('Error')
-                          ? UiConfig.errorColor
-                          : UiConfig.successColor,
+                          ? shared.UiConfig.errorColor
+                          : shared.UiConfig.successColor,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -309,7 +325,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
 
               Text(
                 'Supports: fhq://f/{franchiseId}  •  https://franchisehq.io/f/{franchiseId}',
-                style: UiConfig.captionStyle.copyWith(fontSize: 11),
+                style: shared.UiConfig.captionStyle.copyWith(fontSize: 11),
                 textAlign: TextAlign.center,
               ),
             ],

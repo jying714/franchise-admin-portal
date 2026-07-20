@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 /// Displays a list of included ingredients for a menu item as labeled chips.
@@ -32,8 +31,8 @@ class IncludedIngredientsPreview extends StatelessWidget {
         children: [
           Text(
             label ?? loc.includedIngredientsLabel,
-            style: UiConfig.captionStyle.copyWith(
-              fontWeight: UiConfig.fontWeightBold,
+            style: shared.UiConfig.captionStyle.copyWith(
+              fontWeight: shared.UiConfig.fontWeightBold,
             ),
             textAlign: TextAlign.start,
           ),
@@ -48,7 +47,7 @@ class IncludedIngredientsPreview extends StatelessWidget {
                             : '',
                         style: const TextStyle(fontSize: 13),
                       ),
-                      backgroundColor: UiConfig.surfaceColor,
+                      backgroundColor: shared.UiConfig.surfaceColor,
                     ))
                 .toList(),
           ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 /// Global error boundary widget for P2.3 production resilience.
 /// Wraps children and catches build/render errors, logging via shared.ErrorLogger.
@@ -32,7 +31,8 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
   }
 
   void _logError(Object error, StackTrace? stack) {
-    final msg = '[GlobalErrorBoundary${widget.screenName != null ? ' (${widget.screenName})' : ''}] ${error.toString()}';
+    final msg =
+        '[GlobalErrorBoundary${widget.screenName != null ? ' (${widget.screenName})' : ''}] ${error.toString()}';
     shared.ErrorLogger.log(
       message: msg,
       source: 'GlobalErrorBoundary',
@@ -49,21 +49,22 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
   Widget build(BuildContext context) {
     if (_hasError) {
       return Scaffold(
-        backgroundColor: UiConfig.backgroundColorDark,
+        backgroundColor: shared.UiConfig.backgroundColorDark,
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.error_outline, size: 64, color: UiConfig.errorColor),
+                Icon(Icons.error_outline,
+                    size: 64, color: shared.UiConfig.errorColor),
                 const SizedBox(height: 16),
                 Text(
                   'Something went wrong',
                   style: TextStyle(
                     fontSize: 20,
-                    fontWeight: UiConfig.fontWeightBold,
-                    color: UiConfig.textColorDark,
+                    fontWeight: shared.UiConfig.fontWeightBold,
+                    color: shared.UiConfig.textColorDark,
                     fontFamily: shared.DesignTokens.fontFamily,
                   ),
                 ),
@@ -73,7 +74,7 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: shared.DesignTokens.bodyFontSize,
-                    color: UiConfig.secondaryTextColor,
+                    color: shared.UiConfig.secondaryTextColor,
                     fontFamily: shared.DesignTokens.fontFamily,
                   ),
                 ),
@@ -88,7 +89,7 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                   icon: const Icon(Icons.refresh),
                   label: const Text('Try Again'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: UiConfig.primaryColor,
+                    backgroundColor: shared.UiConfig.primaryColor,
                     foregroundColor: Colors.white,
                   ),
                 ),

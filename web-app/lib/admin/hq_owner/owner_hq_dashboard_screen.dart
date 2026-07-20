@@ -2,7 +2,6 @@
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:franchise_admin_portal/config/ui_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/role_badge.dart';
 import 'package:franchise_admin_portal/widgets/dashboard/dashboard_switcher_dropdown.dart';
@@ -181,7 +180,7 @@ class MultiBrandOverviewPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
       ),
       child: Padding(
-        padding: UiConfig.defaultPadding,
+        padding: shared.UiConfig.defaultPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -212,7 +211,7 @@ class QuickLinksPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
       ),
       child: Padding(
-        padding: UiConfig.defaultPadding,
+        padding: shared.UiConfig.defaultPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -279,7 +278,7 @@ class FutureFeaturePlaceholderPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
       ),
       child: Padding(
-        padding: UiConfig.defaultPadding,
+        padding: shared.UiConfig.defaultPadding,
         child: Text(loc.comingSoonFeatures ?? "Future Features - Coming Soon"),
       ),
     );

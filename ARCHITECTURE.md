@@ -1,7 +1,7 @@
 # Architecture Documentation
-**Doughboys Pizzeria Franchise Platform**  
-**Last Updated**: July 19, 2026  
-**Status**: Preparing for P3 – Advanced Features & Production Readiness
+**Doughboys Pizzeria Franchise Platform**
+**Last Updated**: July 20, 2026
+**Status**: Phase 0 – Infrastructure & Documentation
 
 ## 1. High-Level Overview
 This is a **Flutter monorepo** consisting of:
@@ -18,6 +18,7 @@ This is a **Flutter monorepo** consisting of:
 - **Shared Core First**: All business logic lives in `shared_core`
 - **Small, Reviewable Changes**: Human review on every PR (especially payments, auth, security)
 - **Human-Readable Code**: Clear names + inline "why" comments
+- **Agent Governance**: Strict scope control, tool restrictions, and human approval gates
 
 ## 3. Dashboard Roles & Purposes
 - **Platform Owner**: Platform-level analytics, payments, subscriptions, error management, developer tools
@@ -37,11 +38,18 @@ This is a **Flutter monorepo** consisting of:
 - Location support via `location_ids` array and `franchise_locations`
 - Configs stored under `franchises/{franchiseId}/config/...` (branding, ui, features)
 
+**Schema Design Principles**:
+- Clear naming conventions and indexing strategy
+- Migration plan for future changes
+- Hybrid localization (hardcoded base + DB overrides)
+
 ## 5. State Management & Providers
 - Riverpod + Provider pattern
 - `FranchiseProvider`: Central source for current franchise, branding, location
 - `AdminUserProvider`: Role and permissions
 - FeatureGate for conditional features
+
+**Consistency Goal**: Unified patterns across web, mobile, and shared_core to avoid future refactors.
 
 ## 6. Mobile App Architecture
 - One published app serving all franchises
@@ -51,10 +59,11 @@ This is a **Flutter monorepo** consisting of:
 - Deep linking / QR for franchise claiming
 
 ## 7. Agent Workflow & Guardrails (for multi-agent development)
-- Orchestrator coordinates specialized agents
-- Human review on all changes (especially money/security)
-- Small PRs with clear acceptance criteria
-- Always respect shared_core, hybrid logic, dynamic configs
+- Orchestrator coordinates specialized agents with strict scoping rules.
+- Human review on all changes (especially money, security, architecture, config migrations).
+- Small PRs with clear acceptance criteria.
+- Tool restrictions: No direct Firestore writes or major config changes without approval.
+- Weekly resets: Orchestrator summarizes progress and flags scope creep.
 
 ## 8. Tech Stack
 - Flutter (Web + Mobile)
@@ -68,5 +77,17 @@ This is a **Flutter monorepo** consisting of:
 - Plugin/extension system
 - White-label scalability
 - Comprehensive testing & CI/CD
+
+## Risk Register (Top Risks)
+- Localization complexity and future multi-language support
+- Firestore schema migrations becoming painful
+- Agent hallucination or scope creep on code changes
+- State management inconsistency across web/mobile
+- Stripe integration security and webhook reliability
+- Mobile offline sync edge cases
+- Performance impact of dynamic UI on lower-end mobile devices
+
+## Version History
+- 2026-07-20: Initial comprehensive version with hybrid, dynamic UI, and risk register.
 
 ---

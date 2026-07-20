@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 
@@ -203,15 +202,15 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
         appBar: FranchiseAppBar(
           title: localizations.scheduledOrders,
           showLogo: true,
-          logoUrl: UiConfig.currentLogoUrl,
+          logoUrl: shared.UiConfig.currentLogoUrl,
           logoAsset: shared.BrandingConfig.appBarLogoAsset,
           centerTitle: true,
         ),
-        backgroundColor: UiConfig.backgroundColorDark,
+        backgroundColor: shared.UiConfig.backgroundColorDark,
         body: Center(
           child: Text(
             localizations.mustSignInForScheduledOrders,
-            style: UiConfig.bodyStyle,
+            style: shared.UiConfig.bodyStyle,
           ),
         ),
       );
@@ -224,16 +223,16 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
       appBar: FranchiseAppBar(
         title: localizations.scheduledOrders,
         showLogo: true,
-        logoUrl: UiConfig.currentLogoUrl,
+        logoUrl: shared.UiConfig.currentLogoUrl,
         logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
       ),
-      backgroundColor: UiConfig.backgroundColorDark,
+      backgroundColor: shared.UiConfig.backgroundColorDark,
       floatingActionButton: FloatingActionButton(
-        backgroundColor: UiConfig.primaryColor,
+        backgroundColor: shared.UiConfig.primaryColor,
         onPressed: () =>
             _showOrderEditorDialog(firestoreService: firestoreService),
-        child: Icon(Icons.add, color: UiConfig.onPrimaryColor),
+        child: Icon(Icons.add, color: shared.UiConfig.onPrimaryColor),
         tooltip: localizations.addScheduledOrder,
       ),
       body: StreamBuilder<List<shared.Order>>(
@@ -252,12 +251,12 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
             return Center(
               child: Text(
                 localizations.noScheduledOrders,
-                style: UiConfig.bodyStyle,
+                style: shared.UiConfig.bodyStyle,
               ),
             );
           }
           return Padding(
-            padding: UiConfig.defaultScreenPadding,
+            padding: shared.UiConfig.defaultScreenPadding,
             child: ListView.builder(
               itemCount: scheduledOrders.length,
               itemBuilder: (context, index) {
@@ -273,7 +272,7 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                     borderRadius:
                         BorderRadius.circular(shared.DesignTokens.cardRadius),
                   ),
-                  color: UiConfig.surfaceColor,
+                  color: shared.UiConfig.surfaceColor,
                   child: ListTile(
                     leading: firstItem != null
                         ? NetworkImageWidget(
@@ -288,11 +287,11 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                         : const SizedBox(width: 48, height: 48),
                     title: Text(
                       localizations.orderNumberWithId(order.id),
-                      style: UiConfig.bodyBoldStyle,
+                      style: shared.UiConfig.bodyBoldStyle,
                     ),
                     subtitle: Text(
                       "${order.frequency ?? 'weekly'} • ${order.nextDate.toString().substring(0, 16)}",
-                      style: UiConfig.captionStyle,
+                      style: shared.UiConfig.captionStyle,
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -300,7 +299,7 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                         IconButton(
                           icon: Icon(
                               order.isPaused ? Icons.play_arrow : Icons.pause),
-                          color: UiConfig.primaryColor,
+                          color: shared.UiConfig.primaryColor,
                           tooltip: order.isPaused ? 'Resume' : 'Pause',
                           onPressed: () async {
                             final updated =
@@ -311,7 +310,7 @@ class _ScheduledOrdersScreenState extends State<ScheduledOrdersScreen> {
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete),
-                          color: UiConfig.errorColor,
+                          color: shared.UiConfig.errorColor,
                           tooltip: localizations.delete,
                           onPressed: () async {
                             await firestoreService

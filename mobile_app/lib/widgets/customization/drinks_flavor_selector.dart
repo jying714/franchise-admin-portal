@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class DrinksFlavorSelector extends StatelessWidget {
@@ -48,8 +47,8 @@ class DrinksFlavorSelector extends StatelessWidget {
               Text(
                 "Size",
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: UiConfig.secondaryColor,
-                  fontWeight: UiConfig.bold,
+                  color: shared.UiConfig.secondaryColor,
+                  fontWeight: shared.UiConfig.bold,
                   fontFamily: shared.DesignTokens.fontFamily,
                 ),
               ),
@@ -60,10 +59,10 @@ class DrinksFlavorSelector extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Text(
-                UiConfig.currencyFormat(context, price),
+                shared.UiConfig.currencyFormat(price),
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: UiConfig.primaryColor,
-                  fontWeight: UiConfig.bold,
+                  color: shared.UiConfig.primaryColor,
+                  fontWeight: shared.UiConfig.bold,
                   fontFamily: shared.DesignTokens.fontFamily,
                 ),
               ),
@@ -73,8 +72,8 @@ class DrinksFlavorSelector extends StatelessWidget {
           Text(
             "Choose Flavors",
             style: theme.textTheme.titleMedium?.copyWith(
-              color: UiConfig.secondaryColor,
-              fontWeight: UiConfig.bold,
+              color: shared.UiConfig.secondaryColor,
+              fontWeight: shared.UiConfig.bold,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
@@ -100,7 +99,7 @@ class DrinksFlavorSelector extends StatelessWidget {
                     child: Text(
                       meta?.name ?? id,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: UiConfig.textColor,
+                        color: shared.UiConfig.textColor,
                         fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     ),
@@ -109,7 +108,7 @@ class DrinksFlavorSelector extends StatelessWidget {
                   Text(
                     'x$count',
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: UiConfig.bold,
+                      fontWeight: shared.UiConfig.bold,
                     ),
                   ),
                   const SizedBox(width: 8),

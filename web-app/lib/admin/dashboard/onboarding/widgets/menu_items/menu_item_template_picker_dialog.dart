@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/config/ui_config.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 
 class MenuItemTemplatePickerDialog extends StatelessWidget {

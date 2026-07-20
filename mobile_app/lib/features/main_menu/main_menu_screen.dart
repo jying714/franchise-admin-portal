@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:franchise_mobile_app/widgets/header/cart_icon_badge.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/category/category_screen.dart';
 import 'package:franchise_mobile_app/features/ordering/cart_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
@@ -14,8 +13,8 @@ import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/widgets/header/profile_icon_button.dart';
 import 'package:franchise_mobile_app/widgets/banner/banner_carousel.dart';
 import 'package:franchise_mobile_app/widgets/banner/banner_action_handler.dart';
-// P1 Batch 1 cross-ref updated: banner/ widgets now use shared.FranchiseProvider + UiConfig (no src/)
-// P1 Batch 2: header/ + categories/ updated (FranchiseProvider injection + UiConfig)
+// P1 Batch 1 cross-ref updated: banner/ widgets now use shared.FranchiseProvider + shared.UiConfig (no src/)
+// P1 Batch 2: header/ + categories/ updated (FranchiseProvider injection + shared.UiConfig)
 import 'package:franchise_mobile_app/widgets/categories/category_grid.dart';
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
 import 'package:franchise_mobile_app/widgets/loading_shimmer_widget.dart';
@@ -28,7 +27,7 @@ class MainMenuScreen extends material.StatelessWidget {
   material.Widget build(material.BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
-        statusBarColor: UiConfig.primaryColor,
+        statusBarColor: shared.UiConfig.primaryColor,
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness:
             Platform.isIOS ? Brightness.dark : Brightness.light,
@@ -70,7 +69,7 @@ class MainMenuScreen extends material.StatelessWidget {
           const material.SizedBox(width: shared.DesignTokens.gridSpacing),
         ],
       ),
-      backgroundColor: UiConfig.backgroundColor,
+      backgroundColor: shared.UiConfig.backgroundColor,
       body: material.SafeArea(
         child: Consumer<shared.FranchiseProvider>(
           builder: (context, provider, child) {
@@ -97,7 +96,8 @@ class MainMenuScreen extends material.StatelessWidget {
                 tooltip: 'Scan Franchise QR',
                 onPressed: () => material.Navigator.push(
                   context,
-                  material.MaterialPageRoute(builder: (_) => const QrScanScreen()),
+                  material.MaterialPageRoute(
+                      builder: (_) => const QrScanScreen()),
                 ),
               ),
               CartIconBadge(
@@ -115,7 +115,8 @@ class MainMenuScreen extends material.StatelessWidget {
               children: [
                 // Banner
                 material.StreamBuilder<List<shared.Banner>>(
-                  stream: firestoreService.getBanners(franchiseId: provider.currentFranchiseId),
+                  stream: firestoreService.getBanners(
+                      franchiseId: provider.currentFranchiseId),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState ==
                         material.ConnectionState.waiting) {

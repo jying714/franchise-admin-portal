@@ -3,12 +3,12 @@
 **Shared Core Package** – Single source of truth for the Doughboys Pizzeria Franchise Platform.
 
 ## Purpose
-Contains all shared models, services, providers, configs, and utilities used by both the **Web Admin Portal** and **Mobile Customer App**.
+Contains all shared models, providers, services, configs, and utilities used by both the **Web Admin Portal** and **Mobile Customer App**.
 
 ## Key Components
 
 ### Models (`lib/src/core/models/`)
-- `User`, `FranchiseInfo`, `MenuItem`, `Category`, `Order`, `AlertModel`, etc.
+- `User`, `FranchiseInfo`, `MenuItem`, `Category`, `Order`, `AlertModel`, `LocalizationOverride`, etc.
 - All business entities live here.
 
 ### Providers (`lib/src/core/providers/`)
@@ -18,21 +18,22 @@ Contains all shared models, services, providers, configs, and utilities used by 
 
 ### Configs (`lib/src/core/config/`)
 - `design_tokens.dart`, `app_config.dart`, `branding_config.dart`, `feature_config.dart`, `ui_config.dart`
-- Fully franchise-scoped and dynamic
+- Fully franchise-scoped and dynamic (Firestore-backed with runtime overrides)
 
 ### Services (`lib/src/core/services/`)
 - `FirestoreService` (Abstract + Impl)
-- `AuthService`, `InvoiceService`, `AnalyticsService`, etc.
+- `AuthService`, `InvoiceService`, `AnalyticsService`, `FranchiseOnboardingService`, etc.
 
 ### Utils
-- `ErrorLogger`, `LocalStorage`, `DesignTokens` base, FeatureGate
+- `ErrorLogger`, `LocalStorage`, `FeatureGate`, `LocalizationService` (hybrid hardcoded + DB)
 
 ## Architecture Rules (Strict)
 - All screens import via `package:shared_core/shared_core.dart` as `shared`
 - Franchise scoping enforced everywhere (`franchises/{franchiseId}/...`)
 - `FranchiseProvider` is the single source of truth for current franchise context, branding, and hybrid logic
 - Dynamic theming, FeatureGate, and config-driven UI are mandatory
-- Changes here affect both web and mobile — maintain backward compatibility
+- Changes here affect both web and mobile — maintain backward compatibility and test thoroughly
+- Agent work must follow `AGENT_SYSTEM.md` rules (scope control, human review on config/schema changes)
 
 ## Development
 ```bash
@@ -45,3 +46,7 @@ Related Documentation
 
 ARCHITECTURE.md
 MOBILE_DYNAMIC.md
+DASHBOARDS.md
+AGENT_SYSTEM.md (multi-agent governance and scope rules)
+
+Last Updated: July 20, 2026

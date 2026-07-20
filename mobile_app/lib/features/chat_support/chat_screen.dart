@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -98,7 +97,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to send message'),
-            backgroundColor: UiConfig.errorColor,
+            backgroundColor: shared.UiConfig.errorColor,
           ),
         );
       }
@@ -117,15 +116,15 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_userId == null) {
       return Scaffold(
         appBar: _buildAppBar(localize),
-        backgroundColor: UiConfig.backgroundColorDark,
+        backgroundColor: shared.UiConfig.backgroundColorDark,
         body: Center(
           child: Text(
             localize.mustSignInForChat,
             style: TextStyle(
               fontSize: shared.DesignTokens.bodyFontSize,
-              color: UiConfig.textColorDark,
+              color: shared.UiConfig.textColorDark,
               fontFamily: shared.DesignTokens.fontFamily,
-              fontWeight: UiConfig.fontWeightMedium,
+              fontWeight: shared.UiConfig.fontWeightMedium,
             ),
           ),
         ),
@@ -135,18 +134,18 @@ class _ChatScreenState extends State<ChatScreen> {
     if (_isLoading || _chatId == null) {
       return Scaffold(
         appBar: _buildAppBar(localize),
-        backgroundColor: UiConfig.backgroundColorDark,
+        backgroundColor: shared.UiConfig.backgroundColorDark,
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
       appBar: _buildAppBar(localize),
-      backgroundColor: UiConfig.backgroundColorDark,
+      backgroundColor: shared.UiConfig.backgroundColorDark,
       body: Column(
         children: [
           Padding(
-            padding: UiConfig.defaultPadding,
+            padding: shared.UiConfig.defaultPadding,
             child: Text(
               _isSupportOnline
                   ? localize.supportIsOnline('Doughboys Pizzeria')
@@ -154,9 +153,9 @@ class _ChatScreenState extends State<ChatScreen> {
               style: TextStyle(
                 fontSize: shared.DesignTokens.bodyFontSize,
                 color: _isSupportOnline
-                    ? UiConfig.successColor
-                    : UiConfig.disabledTextColor,
-                fontWeight: UiConfig.fontWeightMedium,
+                    ? shared.UiConfig.successColor
+                    : shared.UiConfig.disabledTextColor,
+                fontWeight: shared.UiConfig.fontWeightMedium,
                 fontFamily: shared.DesignTokens.fontFamily,
               ),
             ),
@@ -176,7 +175,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       localize.noMessages,
                       style: TextStyle(
                         fontSize: shared.DesignTokens.bodyFontSize,
-                        color: UiConfig.disabledTextColor,
+                        color: shared.UiConfig.disabledTextColor,
                         fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     ),
@@ -184,7 +183,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
                 return ListView.builder(
                   reverse: true,
-                  padding: UiConfig.defaultPadding,
+                  padding: shared.UiConfig.defaultPadding,
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final message = messages[index];
@@ -196,7 +195,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
           Padding(
-            padding: UiConfig.defaultPadding,
+            padding: shared.UiConfig.defaultPadding,
             child: Row(
               children: [
                 Expanded(
@@ -206,7 +205,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     maxLines: 3,
                     decoration: InputDecoration(
                       hintText: localize.typeYourMessage,
-                      hintStyle: TextStyle(color: UiConfig.hintTextColor),
+                      hintStyle:
+                          TextStyle(color: shared.UiConfig.hintTextColor),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(
                             shared.DesignTokens.formFieldRadius),
@@ -214,7 +214,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       counterText: '',
                     ),
                     style: TextStyle(
-                      color: UiConfig.textColorDark,
+                      color: shared.UiConfig.textColorDark,
                       fontSize: shared.DesignTokens.bodyFontSize,
                       fontFamily: shared.DesignTokens.fontFamily,
                     ),
@@ -224,7 +224,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 IconButton(
                   icon: Icon(
                     Icons.send,
-                    color: UiConfig.facebookColor,
+                    color: shared.UiConfig.facebookColor,
                     size: shared.DesignTokens.iconSize,
                   ),
                   onPressed: _sendMessage,
@@ -237,11 +237,12 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(AppLocalizations localize) => FranchiseAppBar(
+  PreferredSizeWidget _buildAppBar(AppLocalizations localize) =>
+      FranchiseAppBar(
         title: localize.chatSupportTitle,
         showLogo: false,
-        backgroundColor: UiConfig.facebookColor,
-        foregroundColor: UiConfig.foregroundColorDark,
+        backgroundColor: shared.UiConfig.facebookColor,
+        foregroundColor: shared.UiConfig.foregroundColorDark,
         centerTitle: true,
         elevation: 0,
       );
@@ -260,11 +261,11 @@ class _MessageBubble extends StatelessWidget {
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-        padding: UiConfig.defaultPadding,
+        padding: shared.UiConfig.defaultPadding,
         decoration: BoxDecoration(
           color: isUser
-              ? UiConfig.accentColor.withAlpha(51)
-              : UiConfig.surfaceColorDark,
+              ? shared.UiConfig.accentColor.withAlpha(51)
+              : shared.UiConfig.surfaceColorDark,
           borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
         ),
         child: Column(
@@ -275,7 +276,7 @@ class _MessageBubble extends StatelessWidget {
               message.content,
               style: TextStyle(
                 fontSize: shared.DesignTokens.bodyFontSize,
-                color: UiConfig.textColorDark,
+                color: shared.UiConfig.textColorDark,
                 fontFamily: shared.DesignTokens.fontFamily,
               ),
             ),
@@ -284,7 +285,7 @@ class _MessageBubble extends StatelessWidget {
               _formatTime(message.timestamp),
               style: TextStyle(
                 fontSize: shared.DesignTokens.captionFontSize,
-                color: UiConfig.hintTextColor,
+                color: shared.UiConfig.hintTextColor,
                 fontFamily: shared.DesignTokens.fontFamily,
               ),
             ),

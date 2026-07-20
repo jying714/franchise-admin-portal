@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/shared_core.dart' show DesignTokens;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
 import 'package:franchise_mobile_app/widgets/social_sign_in_buttons.dart';
@@ -161,23 +160,23 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = Provider.of<shared.AuthService>(context, listen: false);
 
     return Scaffold(
-      backgroundColor: UiConfig.backgroundColorDark,
+      backgroundColor: shared.UiConfig.backgroundColorDark,
       body: Center(
         child: SingleChildScrollView(
-          padding: UiConfig.defaultScreenPadding,
+          padding: shared.UiConfig.defaultScreenPadding,
           child: Card(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(DesignTokens.cardRadius),
             ),
             elevation: DesignTokens.cardElevation,
-            color: UiConfig.surfaceColor,
+            color: shared.UiConfig.surfaceColor,
             child: Padding(
-              padding: UiConfig.cardPadding,
+              padding: shared.UiConfig.cardPadding,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Image.asset(
-                    UiConfig.logoMain,
+                    shared.UiConfig.logoMain,
                     height: DesignTokens.logoHeightLarge,
                   ),
                   const SizedBox(height: DesignTokens.gridSpacing * 2),
@@ -185,9 +184,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     isLoginMode ? 'Sign In' : 'Register',
                     style: TextStyle(
                       fontSize: DesignTokens.titleFontSize,
-                      fontWeight: UiConfig.fontWeightBold,
+                      fontWeight: shared.UiConfig.fontWeightBold,
                       fontFamily: DesignTokens.fontFamily,
-                      color: UiConfig.primaryColor,
+                      color: shared.UiConfig.primaryColor,
                     ),
                   ),
                   const SizedBox(height: DesignTokens.gridSpacing * 2),
@@ -197,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       labelText: 'Email',
-                      prefixIcon: Icon(UiConfig.emailIcon),
+                      prefixIcon: Icon(shared.UiConfig.emailIcon),
                       border: OutlineInputBorder(
                         borderRadius:
                             BorderRadius.circular(DesignTokens.formFieldRadius),
@@ -206,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(
                       fontSize: DesignTokens.bodyFontSize,
                       fontFamily: DesignTokens.fontFamily,
-                      color: UiConfig.textColorDark,
+                      color: shared.UiConfig.textColorDark,
                     ),
                   ),
                   const SizedBox(height: DesignTokens.gridSpacing),
@@ -216,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: true,
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      prefixIcon: Icon(UiConfig.lockIcon),
+                      prefixIcon: Icon(shared.UiConfig.lockIcon),
                       border: OutlineInputBorder(
                         borderRadius:
                             BorderRadius.circular(DesignTokens.formFieldRadius),
@@ -225,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(
                       fontSize: DesignTokens.bodyFontSize,
                       fontFamily: DesignTokens.fontFamily,
-                      color: UiConfig.textColorDark,
+                      color: shared.UiConfig.textColorDark,
                     ),
                   ),
                   if (!isLoginMode) ...[
@@ -244,7 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(
                         fontSize: DesignTokens.bodyFontSize,
                         fontFamily: DesignTokens.fontFamily,
-                        color: UiConfig.textColorDark,
+                        color: shared.UiConfig.textColorDark,
                       ),
                     ),
                     const SizedBox(height: DesignTokens.gridSpacing),
@@ -263,7 +262,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(
                         fontSize: DesignTokens.bodyFontSize,
                         fontFamily: DesignTokens.fontFamily,
-                        color: UiConfig.textColorDark,
+                        color: shared.UiConfig.textColorDark,
                       ),
                     ),
                   ],
@@ -272,7 +271,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text(
                       error,
                       style: TextStyle(
-                        color: UiConfig.errorColor,
+                        color: shared.UiConfig.errorColor,
                         fontSize: DesignTokens.bodyFontSize,
                         fontFamily: DesignTokens.fontFamily,
                       ),
@@ -281,9 +280,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: DesignTokens.gridSpacing * 2),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: UiConfig.primaryColor,
-                      foregroundColor: UiConfig.foregroundColorDark,
-                      padding: UiConfig.defaultPadding,
+                      backgroundColor: shared.UiConfig.primaryColor,
+                      foregroundColor: shared.UiConfig.foregroundColorDark,
+                      padding: shared.UiConfig.defaultPadding,
                       shape: RoundedRectangleBorder(
                         borderRadius:
                             BorderRadius.circular(DesignTokens.buttonRadius),
@@ -295,15 +294,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: UiConfig.onPrimaryColor),
+                                strokeWidth: 2,
+                                color: shared.UiConfig.onPrimaryColor),
                           )
                         : Text(
                             isLoginMode ? 'Sign In' : 'Register',
                             style: TextStyle(
                               fontSize: DesignTokens.bodyFontSize,
                               fontFamily: DesignTokens.fontFamily,
-                              fontWeight: UiConfig.fontWeightBold,
-                              color: UiConfig.foregroundColorDark,
+                              fontWeight: shared.UiConfig.fontWeightBold,
+                              color: shared.UiConfig.foregroundColorDark,
                             ),
                           ),
                   ),
@@ -318,8 +318,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(
                           fontSize: DesignTokens.bodyFontSize,
                           fontFamily: DesignTokens.fontFamily,
-                          fontWeight: UiConfig.fontWeightNormal,
-                          color: UiConfig.textColorDark,
+                          fontWeight: shared.UiConfig.fontWeightNormal,
+                          color: shared.UiConfig.textColorDark,
                         ),
                       ),
                       TextButton(
@@ -329,8 +329,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(
                             fontSize: DesignTokens.bodyFontSize,
                             fontFamily: DesignTokens.fontFamily,
-                            fontWeight: UiConfig.fontWeightBold,
-                            color: UiConfig.accentColor,
+                            fontWeight: shared.UiConfig.fontWeightBold,
+                            color: shared.UiConfig.accentColor,
                           ),
                         ),
                       ),
@@ -358,8 +358,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     icon: const Icon(Icons.person_outline),
                     label: const Text("Continue as Guest"),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: UiConfig.primaryColor,
-                      side: BorderSide(color: UiConfig.primaryColor),
+                      foregroundColor: shared.UiConfig.primaryColor,
+                      side: BorderSide(color: shared.UiConfig.primaryColor),
                       shape: RoundedRectangleBorder(
                           borderRadius:
                               BorderRadius.circular(DesignTokens.buttonRadius)),
@@ -371,8 +371,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     icon: const Icon(Icons.visibility),
                     label: const Text("Try Demo Mode"),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: UiConfig.secondaryColor,
-                      side: BorderSide(color: UiConfig.secondaryColor),
+                      foregroundColor: shared.UiConfig.secondaryColor,
+                      side: BorderSide(color: shared.UiConfig.secondaryColor),
                       shape: RoundedRectangleBorder(
                           borderRadius:
                               BorderRadius.circular(DesignTokens.buttonRadius)),

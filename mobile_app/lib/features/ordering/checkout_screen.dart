@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/features/ordering/confirmation_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -29,7 +28,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _isPaying = false;
 
   // P2.3: Wired MockPaymentService (foundations for real gateway later)
-  late final shared.PaymentService _paymentService = shared.createPaymentService();
+  late final shared.PaymentService _paymentService =
+      shared.createPaymentService();
 
   static const String validPromoCode = "PIZZA10";
   static const double promoDiscount = 10.0;
@@ -75,7 +75,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(localizations.selectedTimeOutsideBusinessHours),
-          backgroundColor: UiConfig.errorColor,
+          backgroundColor: shared.UiConfig.errorColor,
         ),
       );
       return;
@@ -98,7 +98,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         currency: 'USD',
         paymentMethod: _selectedPayment?.name ?? 'posMock',
         metadata: {
-          'franchiseId': Provider.of<shared.FranchiseProvider>(context, listen: false).currentFranchiseId,
+          'franchiseId':
+              Provider.of<shared.FranchiseProvider>(context, listen: false)
+                  .currentFranchiseId,
           'userId': FirebaseAuth.instance.currentUser?.uid,
         },
       );
@@ -165,9 +167,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         SnackBar(
           content: Text(
             localizations.pleaseSelectTime,
-            style: TextStyle(color: UiConfig.textColor),
+            style: TextStyle(color: shared.UiConfig.textColor),
           ),
-          backgroundColor: UiConfig.surfaceColor,
+          backgroundColor: shared.UiConfig.surfaceColor,
           duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
           behavior: SnackBarBehavior.floating,
         ),
@@ -181,9 +183,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         SnackBar(
           content: Text(
             localizations.signInToOrder,
-            style: TextStyle(color: UiConfig.textColor),
+            style: TextStyle(color: shared.UiConfig.textColor),
           ),
-          backgroundColor: UiConfig.surfaceColor,
+          backgroundColor: shared.UiConfig.surfaceColor,
           duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
           behavior: SnackBarBehavior.floating,
         ),
@@ -206,9 +208,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         SnackBar(
           content: Text(
             localizations.cartEmpty,
-            style: TextStyle(color: UiConfig.textColor),
+            style: TextStyle(color: shared.UiConfig.textColor),
           ),
-          backgroundColor: UiConfig.surfaceColor,
+          backgroundColor: shared.UiConfig.surfaceColor,
           duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
           behavior: SnackBarBehavior.floating,
         ),
@@ -224,7 +226,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(localizations.paymentFailed),
-          backgroundColor: UiConfig.errorColor,
+          backgroundColor: shared.UiConfig.errorColor,
         ),
       );
       return;
@@ -262,7 +264,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(localizations.orderPlaced),
-          backgroundColor: UiConfig.successColor,
+          backgroundColor: shared.UiConfig.successColor,
         ),
       );
     } catch (e) {
@@ -270,7 +272,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${localizations.orderFailed}: $e'),
-          backgroundColor: UiConfig.errorColor,
+          backgroundColor: shared.UiConfig.errorColor,
         ),
       );
     }
@@ -356,229 +358,238 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 final showAllergenWarning = allAllergens.isNotEmpty;
 
                 return Scaffold(
-                  backgroundColor: UiConfig.backgroundColor,
+                  backgroundColor: shared.UiConfig.backgroundColor,
                   appBar: FranchiseAppBar(
                     title: localizations.checkout,
                     showLogo: true,
-                    logoUrl: UiConfig.currentLogoUrl,
+                    logoUrl: shared.UiConfig.currentLogoUrl,
                     logoAsset: shared.BrandingConfig.appBarLogoAsset,
                     centerTitle: true,
                   ),
                   body: SafeArea(
                     bottom: true,
                     child: SingleChildScrollView(
-                      padding: UiConfig.cardPadding,
+                      padding: shared.UiConfig.cardPadding,
                       child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (showAllergenWarning)
-                          Container(
-                            width: double.infinity,
-                            margin: const EdgeInsets.only(
-                                left: 4, right: 4, top: 2, bottom: 12),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: UiConfig.errorColor.withOpacity(0.12),
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (showAllergenWarning)
+                            Container(
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(
+                                  left: 4, right: 4, top: 2, bottom: 12),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: shared.UiConfig.errorColor
+                                    .withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(
+                                    shared.DesignTokens.cardRadius),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(Icons.warning_amber_rounded,
+                                      color: shared.UiConfig.errorColor,
+                                      size: 28),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      '${localizations.warning}: ${localizations.itemsInCartCouldContain}\n'
+                                      '${allAllergens.join(", ")}',
+                                      style: TextStyle(
+                                        color: shared.UiConfig.errorColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily:
+                                            shared.DesignTokens.fontFamily,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          Text(
+                            localizations.orderType,
+                            style: TextStyle(
+                              fontSize: shared.DesignTokens.bodyFontSize,
+                              fontWeight: shared.UiConfig.fontWeightBold,
+                              fontFamily: shared.DesignTokens.fontFamily,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: RadioListTile<DeliveryType>(
+                                  title: Text(localizations.pickup),
+                                  value: DeliveryType.pickup,
+                                  groupValue: _deliveryType,
+                                  onChanged: (v) {
+                                    setState(() => _deliveryType = v!);
+                                    _updateOrderTotals();
+                                  },
+                                ),
+                              ),
+                              Expanded(
+                                child: RadioListTile<DeliveryType>(
+                                  title: Text(localizations.delivery),
+                                  value: DeliveryType.delivery,
+                                  groupValue: _deliveryType,
+                                  onChanged: (v) {
+                                    setState(() => _deliveryType = v!);
+                                    _updateOrderTotals();
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          ListTile(
+                            leading: const Icon(Icons.access_time),
+                            title: Text(
+                              _selectedTime == null
+                                  ? localizations.selectTime
+                                  : '${localizations.time}: ${_selectedTime!.format(context)}',
+                              style: const TextStyle(
+                                  fontSize: shared.DesignTokens.bodyFontSize),
+                            ),
+                            subtitle: Text(
+                              '${localizations.businessHours}: ${_businessOpen.format(context)} - ${_businessClose.format(context)}',
+                              style: const TextStyle(
+                                  fontSize:
+                                      shared.DesignTokens.captionFontSize),
+                            ),
+                            trailing: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: shared.UiConfig.secondaryColor,
+                                foregroundColor:
+                                    shared.UiConfig.foregroundColorDark,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                      shared.DesignTokens.buttonRadius),
+                                ),
+                              ),
+                              onPressed: () =>
+                                  _selectTime(context, localizations),
+                              child: Text(localizations.pickTime),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: _promoController,
+                            decoration: InputDecoration(
+                              labelText: localizations.promoCode,
+                              errorText: _promoError,
+                              suffixIcon: _promoApplied
+                                  ? const Icon(Icons.check, color: Colors.green)
+                                  : IconButton(
+                                      icon: const Icon(Icons.local_offer),
+                                      onPressed: () =>
+                                          _applyPromo(localizations),
+                                      tooltip: localizations.applyPromo,
+                                    ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                    shared.DesignTokens.formFieldRadius),
+                              ),
+                            ),
+                            enabled: !_promoApplied,
+                          ),
+                          if (_promoApplied)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                '${localizations.promoApplied}: -\$${promoDiscount.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  color: shared.UiConfig.successColor,
+                                  fontSize: shared.DesignTokens.captionFontSize,
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 16),
+                          Text(
+                            localizations.paymentMethod,
+                            style: TextStyle(
+                              fontSize: shared.DesignTokens.bodyFontSize,
+                              fontWeight: shared.UiConfig.fontWeightBold,
+                              fontFamily: shared.DesignTokens.fontFamily,
+                            ),
+                          ),
+                          ...PaymentMethod.values.map(
+                            (pm) => RadioListTile<PaymentMethod>(
+                              title: Text(_paymentLabel(pm, localizations)),
+                              value: pm,
+                              groupValue: _selectedPayment,
+                              onChanged: (v) =>
+                                  setState(() => _selectedPayment = v),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Card(
+                            elevation: shared.DesignTokens.cardElevation,
+                            shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
                                   shared.DesignTokens.cardRadius),
                             ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(Icons.warning_amber_rounded,
-                                    color: UiConfig.errorColor, size: 28),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    '${localizations.warning}: ${localizations.itemsInCartCouldContain}\n'
-                                    '${allAllergens.join(", ")}',
-                                    style: TextStyle(
-                                      color: UiConfig.errorColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily:
-                                          shared.DesignTokens.fontFamily,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        Text(
-                          localizations.orderType,
-                          style: TextStyle(
-                            fontSize: shared.DesignTokens.bodyFontSize,
-                            fontWeight: UiConfig.fontWeightBold,
-                            fontFamily: shared.DesignTokens.fontFamily,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: RadioListTile<DeliveryType>(
-                                title: Text(localizations.pickup),
-                                value: DeliveryType.pickup,
-                                groupValue: _deliveryType,
-                                onChanged: (v) {
-                                  setState(() => _deliveryType = v!);
-                                  _updateOrderTotals();
-                                },
-                              ),
-                            ),
-                            Expanded(
-                              child: RadioListTile<DeliveryType>(
-                                title: Text(localizations.delivery),
-                                value: DeliveryType.delivery,
-                                groupValue: _deliveryType,
-                                onChanged: (v) {
-                                  setState(() => _deliveryType = v!);
-                                  _updateOrderTotals();
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        ListTile(
-                          leading: const Icon(Icons.access_time),
-                          title: Text(
-                            _selectedTime == null
-                                ? localizations.selectTime
-                                : '${localizations.time}: ${_selectedTime!.format(context)}',
-                            style: const TextStyle(
-                                fontSize: shared.DesignTokens.bodyFontSize),
-                          ),
-                          subtitle: Text(
-                            '${localizations.businessHours}: ${_businessOpen.format(context)} - ${_businessClose.format(context)}',
-                            style: const TextStyle(
-                                fontSize: shared.DesignTokens.captionFontSize),
-                          ),
-                          trailing: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: UiConfig.secondaryColor,
-                              foregroundColor: UiConfig.foregroundColorDark,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                    shared.DesignTokens.buttonRadius),
-                              ),
-                            ),
-                            onPressed: () =>
-                                _selectTime(context, localizations),
-                            child: Text(localizations.pickTime),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: _promoController,
-                          decoration: InputDecoration(
-                            labelText: localizations.promoCode,
-                            errorText: _promoError,
-                            suffixIcon: _promoApplied
-                                ? const Icon(Icons.check, color: Colors.green)
-                                : IconButton(
-                                    icon: const Icon(Icons.local_offer),
-                                    onPressed: () => _applyPromo(localizations),
-                                    tooltip: localizations.applyPromo,
-                                  ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                  shared.DesignTokens.formFieldRadius),
-                            ),
-                          ),
-                          enabled: !_promoApplied,
-                        ),
-                        if (_promoApplied)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              '${localizations.promoApplied}: -\$${promoDiscount.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                color: UiConfig.successColor,
-                                fontSize: shared.DesignTokens.captionFontSize,
-                              ),
-                            ),
-                          ),
-                        const SizedBox(height: 16),
-                        Text(
-                          localizations.paymentMethod,
-                          style: TextStyle(
-                            fontSize: shared.DesignTokens.bodyFontSize,
-                            fontWeight: UiConfig.fontWeightBold,
-                            fontFamily: shared.DesignTokens.fontFamily,
-                          ),
-                        ),
-                        ...PaymentMethod.values.map(
-                          (pm) => RadioListTile<PaymentMethod>(
-                            title: Text(_paymentLabel(pm, localizations)),
-                            value: pm,
-                            groupValue: _selectedPayment,
-                            onChanged: (v) =>
-                                setState(() => _selectedPayment = v),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Card(
-                          elevation: shared.DesignTokens.cardElevation,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                shared.DesignTokens.cardRadius),
-                          ),
-                          color: UiConfig.surfaceColor,
-                          child: Padding(
-                            padding: UiConfig.cardPadding,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _orderSummaryRow(
-                                    localizations.subtotal, _orderSubtotal),
-                                _orderSummaryRow(localizations.tax, _orderTax),
-                                if (_deliveryFee > 0)
+                            color: shared.UiConfig.surfaceColor,
+                            child: Padding(
+                              padding: shared.UiConfig.cardPadding,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
                                   _orderSummaryRow(
-                                      localizations.deliveryFee, _deliveryFee),
-                                if (_promoApplied)
-                                  _orderSummaryRow(localizations.promoDiscount,
-                                      -_promoValue),
-                                const Divider(),
-                                _orderSummaryRow(
-                                    localizations.total, _orderTotal,
-                                    bold: true),
-                              ],
+                                      localizations.subtotal, _orderSubtotal),
+                                  _orderSummaryRow(
+                                      localizations.tax, _orderTax),
+                                  if (_deliveryFee > 0)
+                                    _orderSummaryRow(localizations.deliveryFee,
+                                        _deliveryFee),
+                                  if (_promoApplied)
+                                    _orderSummaryRow(
+                                        localizations.promoDiscount,
+                                        -_promoValue),
+                                  const Divider(),
+                                  _orderSummaryRow(
+                                      localizations.total, _orderTotal,
+                                      bold: true),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 20),
-                        Padding(
-                          padding: EdgeInsets.only(
-                            bottom: MediaQuery.of(context).padding.bottom + 16,
-                          ),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                            backgroundColor: UiConfig.primaryColor,
-                            foregroundColor: UiConfig.foregroundColorDark,
-                            padding: UiConfig.defaultPadding,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  shared.DesignTokens.buttonRadius),
+                          const SizedBox(height: 20),
+                          Padding(
+                            padding: EdgeInsets.only(
+                              bottom:
+                                  MediaQuery.of(context).padding.bottom + 16,
                             ),
-                            elevation: shared.DesignTokens.buttonElevation,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: shared.UiConfig.primaryColor,
+                                foregroundColor:
+                                    shared.UiConfig.foregroundColorDark,
+                                padding: shared.UiConfig.defaultPadding,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                      shared.DesignTokens.buttonRadius),
+                                ),
+                                elevation: shared.DesignTokens.buttonElevation,
+                              ),
+                              onPressed: _isPaying
+                                  ? null
+                                  : () => _submitOrder(localizations),
+                              child: _isPaying
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Text(localizations.placeOrder),
+                            ),
                           ),
-                          onPressed: _isPaying
-                              ? null
-                              : () => _submitOrder(localizations),
-                          child: _isPaying
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Text(localizations.placeOrder),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
                   ), // SafeArea close
                 );
               },
@@ -591,11 +602,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Widget _emptyCheckout(AppLocalizations localizations) {
     return Scaffold(
-      backgroundColor: UiConfig.backgroundColor,
+      backgroundColor: shared.UiConfig.backgroundColor,
       appBar: FranchiseAppBar(
         title: localizations.checkout,
         showLogo: true,
-        logoUrl: UiConfig.currentLogoUrl,
+        logoUrl: shared.UiConfig.currentLogoUrl,
         logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
       ),
@@ -604,7 +615,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           localizations.cartEmpty,
           style: TextStyle(
             fontSize: shared.DesignTokens.bodyFontSize,
-            color: UiConfig.textColor,
+            color: shared.UiConfig.textColor,
             fontWeight: FontWeight.bold,
             fontFamily: shared.DesignTokens.fontFamily,
           ),
@@ -632,7 +643,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             '${value < 0 ? '-' : ''}\$${value.abs().toStringAsFixed(2)}',
             style: TextStyle(
               fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-              color: bold ? UiConfig.primaryColor : UiConfig.textColor,
+              color: bold
+                  ? shared.UiConfig.primaryColor
+                  : shared.UiConfig.textColor,
               fontSize: shared.DesignTokens.bodyFontSize,
             ),
           ),

@@ -3,7 +3,7 @@
 Customer-facing Flutter app (Android + iOS) for the multi-tenant white-label franchise platform.  
 **One published binary** that can serve unlimited franchises and restaurant types.
 
-## Current Status (July 19, 2026)
+## Current Status (July 20, 2026)
 
 **P2 – White-Label & Scalability: COMPLETE**  
 **P2.5 – Web-App Cleanup Sprint: COMPLETE**
@@ -17,7 +17,7 @@ Core ordering flow is stable and device-tested on Samsung S25. The app now share
 - Favorites & Loyalty system
 - QR Scanner + Deep Linking support for franchise claiming
 - Fully franchise-scoped data under `franchises/{franchiseId}/...`
-- **Dynamic UI** — transitioning from pizzeria-hardcoded to fully config-driven (restaurantType support)
+- **Dynamic UI** — transitioning from pizzeria-hardcoded to fully config-driven (restaurantType support, FeatureGate)
 
 ## Development
 
@@ -31,15 +31,16 @@ flutter run
 
 Architecture Notes
 
-All business logic and models come from shared_core
-UI is becoming fully dynamic based on configs, FeatureGate, and restaurantType
+All business logic, models, providers, and services come from shared_core
+UI is becoming fully dynamic based on configs, restaurantType, FeatureGate, and hybrid single/multi-location logic
 Offline support (menu cache + order queue) planned for MVP
-Hybrid single/multi-location behavior
+Agent work must follow strict scope rules (see AGENT_SYSTEM.md) with human review on major changes
 
 Related Documentation
 
 ARCHITECTURE.md
 MOBILE_DYNAMIC.md
 DASHBOARDS.md
+AGENT_SYSTEM.md (multi-agent governance)
 
-Last Updated: July 19, 2026
+Last Updated: July 20, 2026

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/features/ordering/cart_screen.dart';
 import 'package:franchise_mobile_app/widgets/customization/customization_modal.dart';
 import 'package:franchise_mobile_app/widgets/favorite_button.dart';
@@ -91,9 +90,9 @@ class _ItemScreenState extends State<ItemScreen> {
         SnackBar(
           content: Text(
             'Please select a franchise location to order.',
-            style: TextStyle(color: UiConfig.textColor),
+            style: TextStyle(color: shared.UiConfig.textColor),
           ),
-          backgroundColor: UiConfig.surfaceColor,
+          backgroundColor: shared.UiConfig.surfaceColor,
           duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
           behavior: SnackBarBehavior.floating,
         ),
@@ -107,11 +106,11 @@ class _ItemScreenState extends State<ItemScreen> {
           content: Text(
             loc.signInToOrderMessage,
             style: TextStyle(
-              color: UiConfig.textColor,
+              color: shared.UiConfig.textColor,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
-          backgroundColor: UiConfig.surfaceColor,
+          backgroundColor: shared.UiConfig.surfaceColor,
           duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
           behavior: SnackBarBehavior.floating,
         ),
@@ -143,11 +142,11 @@ class _ItemScreenState extends State<ItemScreen> {
           content: Text(
             loc.addedToCartMessage,
             style: TextStyle(
-              color: UiConfig.textColor,
+              color: shared.UiConfig.textColor,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
-          backgroundColor: UiConfig.surfaceColor,
+          backgroundColor: shared.UiConfig.surfaceColor,
           duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
           behavior: SnackBarBehavior.floating,
         ),
@@ -158,11 +157,11 @@ class _ItemScreenState extends State<ItemScreen> {
           content: Text(
             loc.cartAddError,
             style: TextStyle(
-              color: UiConfig.textColor,
+              color: shared.UiConfig.textColor,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
-          backgroundColor: UiConfig.surfaceColor,
+          backgroundColor: shared.UiConfig.surfaceColor,
           duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
           behavior: SnackBarBehavior.floating,
         ),
@@ -179,19 +178,19 @@ class _ItemScreenState extends State<ItemScreen> {
     return Scaffold(
       appBar: FranchiseAppBar(
         title: widget.menuItem.name,
-        titleStyle: UiConfig.titleStyle.copyWith(
-          color: UiConfig.foregroundColorDark,
+        titleStyle: shared.UiConfig.titleStyle.copyWith(
+          color: shared.UiConfig.foregroundColorDark,
           fontSize: 20,
         ),
         centerTitle: true,
         showLogo: true,
-        logoUrl: UiConfig.currentLogoUrl,
+        logoUrl: shared.UiConfig.currentLogoUrl,
         logoAsset: shared.BrandingConfig.appBarLogoAsset,
         logoHeight: 40,
         actions: [
           ProfileIconButton(
             tooltip: loc.profile,
-            iconColor: UiConfig.foregroundColorDark,
+            iconColor: shared.UiConfig.foregroundColorDark,
             iconSize: shared.DesignTokens.iconSize,
             onPressed: () {
               Navigator.pushNamed(context, '/profile');
@@ -200,7 +199,7 @@ class _ItemScreenState extends State<ItemScreen> {
           IconButton(
             icon: Icon(Icons.shopping_cart,
                 size: shared.DesignTokens.iconSize,
-                color: UiConfig.foregroundColorDark),
+                color: shared.UiConfig.foregroundColorDark),
             onPressed: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CartScreen()),
@@ -209,11 +208,11 @@ class _ItemScreenState extends State<ItemScreen> {
           ),
           FavoriteButton(itemId: widget.itemId, userId: _userId),
         ],
-        backgroundColor: UiConfig.primaryColor,
-        foregroundColor: UiConfig.foregroundColorDark,
+        backgroundColor: shared.UiConfig.primaryColor,
+        foregroundColor: shared.UiConfig.foregroundColorDark,
         elevation: 0,
       ),
-      backgroundColor: UiConfig.backgroundColor,
+      backgroundColor: shared.UiConfig.backgroundColor,
       body: Consumer<shared.FranchiseProvider>(
         builder: (context, provider, child) {
           if (!provider.hasValidFranchise) {
@@ -221,7 +220,7 @@ class _ItemScreenState extends State<ItemScreen> {
           }
 
           return SingleChildScrollView(
-            padding: UiConfig.defaultPadding,
+            padding: shared.UiConfig.defaultPadding,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -248,7 +247,7 @@ class _ItemScreenState extends State<ItemScreen> {
                 // ITEM NAME + PRICE
                 Text(
                   widget.menuItem.name,
-                  style: UiConfig.titleStyle.copyWith(
+                  style: shared.UiConfig.titleStyle.copyWith(
                     color: Colors.black,
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
@@ -258,7 +257,7 @@ class _ItemScreenState extends State<ItemScreen> {
                 ),
                 Text(
                   '\$${widget.menuItem.price.toStringAsFixed(2)}',
-                  style: UiConfig.bodyBoldStyle.copyWith(
+                  style: shared.UiConfig.bodyBoldStyle.copyWith(
                     color: Colors.black87,
                     fontWeight: FontWeight.w600,
                   ),
@@ -270,7 +269,7 @@ class _ItemScreenState extends State<ItemScreen> {
                   widget.menuItem.description,
                   style: TextStyle(
                     fontSize: shared.DesignTokens.captionFontSize,
-                    color: UiConfig.secondaryTextColor,
+                    color: shared.UiConfig.secondaryTextColor,
                     fontFamily: shared.DesignTokens.fontFamily,
                   ),
                 ),
@@ -317,7 +316,11 @@ class _ItemScreenState extends State<ItemScreen> {
                                         context,
                                         listen: false,
                                       ).getMenuItemById(widget.itemId,
-                                          franchiseId: Provider.of<shared.FranchiseProvider>(context, listen: false).currentFranchiseId);
+                                          franchiseId: Provider.of<
+                                                      shared.FranchiseProvider>(
+                                                  context,
+                                                  listen: false)
+                                              .currentFranchiseId);
 
                                       if (latestMenuItem == null) {
                                         ScaffoldMessenger.of(context)

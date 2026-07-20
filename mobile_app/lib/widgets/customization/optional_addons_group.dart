@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 typedef DoubleAddOnCallback = void Function(String ingId, bool value);
@@ -55,8 +54,8 @@ class OptionalAddOnsGroup extends StatelessWidget {
           Text(
             loc.optionalAddOnsLabel,
             style: theme.textTheme.titleMedium?.copyWith(
-              color: UiConfig.secondaryColor,
-              fontWeight: UiConfig.bold,
+              color: shared.UiConfig.secondaryColor,
+              fontWeight: shared.UiConfig.bold,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
@@ -90,7 +89,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
                       child: Text(
                         meta?.name ?? addOn['name'] ?? ingId,
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          color: UiConfig.textColor,
+                          color: shared.UiConfig.textColor,
                           fontFamily: shared.DesignTokens.fontFamily,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -103,10 +102,10 @@ class OptionalAddOnsGroup extends StatelessWidget {
                       child: Text(
                         'x$count',
                         style: theme.textTheme.bodyLarge?.copyWith(
-                          fontWeight: UiConfig.bold,
+                          fontWeight: shared.UiConfig.bold,
                           color: count > 0
-                              ? UiConfig.primaryColor
-                              : UiConfig.secondaryTextColor,
+                              ? shared.UiConfig.primaryColor
+                              : shared.UiConfig.secondaryTextColor,
                           fontFamily: shared.DesignTokens.fontFamily,
                         ),
                       ),
@@ -123,7 +122,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
               final checked = selectedAddOns.contains(ingId);
               final isDouble = doubleAddOns[ingId] == true;
               final priceDisplay = upcharge > 0
-                  ? '+${UiConfig.currencyFormat(context, upcharge * (isDouble ? 2 : 1))}'
+                  ? '+${shared.UiConfig.currencyFormat(upcharge * (isDouble ? 2 : 1))}'
                   : '';
               return Row(
                 children: [
@@ -137,7 +136,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
                     child: Text(
                       meta?.name ?? addOn['name'] ?? ingId,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: UiConfig.textColor,
+                        color: shared.UiConfig.textColor,
                         fontFamily: shared.DesignTokens.fontFamily,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -149,8 +148,8 @@ class OptionalAddOnsGroup extends StatelessWidget {
                       child: Text(
                         priceDisplay,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: UiConfig.secondaryColor,
-                          fontWeight: UiConfig.bold,
+                          color: shared.UiConfig.secondaryColor,
+                          fontWeight: shared.UiConfig.bold,
                           fontFamily: shared.DesignTokens.fontFamily,
                         ),
                       ),
@@ -177,9 +176,9 @@ class OptionalAddOnsGroup extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 6.0),
               child: Text(
-                "$maxFreeSauces free sauces, +${UiConfig.currencyFormat(context, extraSauceUpcharge)} each extra.",
+                "$maxFreeSauces free sauces, +${shared.UiConfig.currencyFormat(extraSauceUpcharge)} each extra.",
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: UiConfig.secondaryTextColor,
+                  color: shared.UiConfig.secondaryTextColor,
                   fontStyle: FontStyle.italic,
                   fontFamily: shared.DesignTokens.fontFamily,
                 ),

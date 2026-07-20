@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/portion_selector.dart';
 import 'package:franchise_mobile_app/widgets/customization/customization_modal.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -76,8 +75,8 @@ class SauceSelectorGroup extends StatelessWidget {
                   child: Text(
                     group['label'] ?? 'Sauces',
                     style: theme.textTheme.titleMedium?.copyWith(
-                      color: UiConfig.secondaryColor,
-                      fontWeight: UiConfig.bold,
+                      color: shared.UiConfig.secondaryColor,
+                      fontWeight: shared.UiConfig.bold,
                       fontFamily: shared.DesignTokens.fontFamily,
                     ),
                   ),
@@ -85,8 +84,8 @@ class SauceSelectorGroup extends StatelessWidget {
                 if (hasCustom)
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: UiConfig.primaryColor,
-                      side: BorderSide(color: UiConfig.primaryColor),
+                      foregroundColor: shared.UiConfig.primaryColor,
+                      side: BorderSide(color: shared.UiConfig.primaryColor),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 2),
                       minimumSize: const Size(0, 32),
@@ -188,8 +187,9 @@ class SauceSelectorGroup extends StatelessWidget {
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 4.0),
                 elevation: 0,
-                color:
-                    sauce.selected ? UiConfig.surfaceColor : UiConfig.cardColor.withValues(alpha: 0.0),
+                color: sauce.selected
+                    ? shared.UiConfig.surfaceColor
+                    : shared.UiConfig.cardColor.withValues(alpha: 0.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -205,8 +205,8 @@ class SauceSelectorGroup extends StatelessWidget {
                             sauce.name,
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: outOfStock
-                                  ? UiConfig.secondaryTextColor
-                                  : UiConfig.textColor,
+                                  ? shared.UiConfig.secondaryTextColor
+                                  : shared.UiConfig.textColor,
                               fontFamily: shared.DesignTokens.fontFamily,
                             ),
                           ),
@@ -215,7 +215,8 @@ class SauceSelectorGroup extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.only(left: 6.0),
                             child: Icon(Icons.block,
-                                color: UiConfig.errorTextColor, size: 18),
+                                color: shared.UiConfig.errorTextColor,
+                                size: 18),
                           ),
                       ],
                     ),
@@ -301,7 +302,7 @@ class SauceSelectorGroup extends StatelessWidget {
                 child: Text(
                   "For half & half, both sides must have a sauce (including 'No Sauce').",
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: UiConfig.errorTextColor,
+                    color: shared.UiConfig.errorTextColor,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -332,8 +333,8 @@ class SauceSelectorGroup extends StatelessWidget {
           Text(
             "$groupLabel ($freeSauces free, +${extraSauceUpcharge.toStringAsFixed(2)} each extra)",
             style: theme.textTheme.titleMedium?.copyWith(
-              color: UiConfig.secondaryColor,
-              fontWeight: UiConfig.bold,
+              color: shared.UiConfig.secondaryColor,
+              fontWeight: shared.UiConfig.bold,
               fontFamily: shared.DesignTokens.fontFamily,
             ),
           ),
@@ -358,7 +359,7 @@ class SauceSelectorGroup extends StatelessWidget {
                     child: Text(
                       meta?.name ?? ingId,
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: UiConfig.textColor,
+                        color: shared.UiConfig.textColor,
                         fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     ),
@@ -370,10 +371,10 @@ class SauceSelectorGroup extends StatelessWidget {
                     child: Text(
                       'x$count',
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        fontWeight: UiConfig.bold,
+                        fontWeight: shared.UiConfig.bold,
                         color: count > 0
-                            ? UiConfig.primaryColor
-                            : UiConfig.secondaryTextColor,
+                            ? shared.UiConfig.primaryColor
+                            : shared.UiConfig.secondaryTextColor,
                         fontFamily: shared.DesignTokens.fontFamily,
                       ),
                     ),

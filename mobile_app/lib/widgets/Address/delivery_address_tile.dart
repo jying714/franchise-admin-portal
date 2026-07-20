@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/Address/edit_address_dialog.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
@@ -30,14 +29,14 @@ class DeliveryAddressTile extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(shared.DesignTokens.cardRadius),
       ),
-      color: UiConfig.surfaceColor,
+      color: shared.UiConfig.surfaceColor,
       child: ListTile(
         title: Text(
           address.label,
           style: TextStyle(
             fontSize: shared.DesignTokens.bodyFontSize,
-            color: UiConfig.textColor,
-            fontWeight: UiConfig.fontWeightBold,
+            color: shared.UiConfig.textColor,
+            fontWeight: shared.UiConfig.fontWeightBold,
             fontFamily: shared.DesignTokens.fontFamily,
           ),
         ),
@@ -45,16 +44,16 @@ class DeliveryAddressTile extends StatelessWidget {
           '${address.street}, ${address.city}, ${address.state} ${address.zip}',
           style: TextStyle(
             fontSize: shared.DesignTokens.captionFontSize,
-            color: UiConfig.secondaryTextColor,
+            color: shared.UiConfig.secondaryTextColor,
             fontFamily: shared.DesignTokens.fontFamily,
-            fontWeight: UiConfig.fontWeightNormal,
+            fontWeight: shared.UiConfig.fontWeightNormal,
           ),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(Icons.edit, color: UiConfig.primaryColor),
+              icon: Icon(Icons.edit, color: shared.UiConfig.primaryColor),
               onPressed: () async {
                 // Batch 2: FranchiseProvider scoping for address ops
                 Provider.of<shared.FranchiseProvider>(context, listen: false);
@@ -76,12 +75,12 @@ class DeliveryAddressTile extends StatelessWidget {
                         content: Text(
                           loc.addressUpdated ?? 'Address updated',
                           style: TextStyle(
-                            color: UiConfig.textColor,
+                            color: shared.UiConfig.textColor,
                             fontFamily: shared.DesignTokens.fontFamily,
-                            fontWeight: UiConfig.fontWeightNormal,
+                            fontWeight: shared.UiConfig.fontWeightNormal,
                           ),
                         ),
-                        backgroundColor: UiConfig.surfaceColor,
+                        backgroundColor: shared.UiConfig.surfaceColor,
                         duration: Duration(
                             seconds: shared.DesignTokens.toastDuration),
                       ),
@@ -91,7 +90,7 @@ class DeliveryAddressTile extends StatelessWidget {
               },
             ),
             IconButton(
-              icon: Icon(Icons.delete, color: UiConfig.errorColor),
+              icon: Icon(Icons.delete, color: shared.UiConfig.errorColor),
               onPressed: onDelete,
             ),
           ],

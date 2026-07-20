@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/shared_core.dart' show DesignTokens;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/features/main_menu/main_menu_screen.dart';
 import 'package:franchise_mobile_app/features/user_accounts/profile_screen.dart';
@@ -184,11 +183,11 @@ class _SignInScreenState extends State<SignInScreen> {
     final loc = AppLocalizations.of(context)!;
 
     return Scaffold(
-      backgroundColor: UiConfig.backgroundColorDark,
+      backgroundColor: shared.UiConfig.backgroundColorDark,
       appBar: FranchiseAppBar(
         title: loc.signIn,
         showLogo: true,
-        logoUrl: UiConfig.currentLogoUrl,
+        logoUrl: shared.UiConfig.currentLogoUrl,
         logoAsset: shared.BrandingConfig.appBarLogoAsset,
         centerTitle: true,
       ),
@@ -198,7 +197,7 @@ class _SignInScreenState extends State<SignInScreen> {
           child: Card(
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(DesignTokens.cardRadius)),
-            color: UiConfig.surfaceColor,
+            color: shared.UiConfig.surfaceColor,
             child: Padding(
               padding: const EdgeInsets.all(24),
               child: Form(
@@ -206,7 +205,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Image.asset(UiConfig.logoMain, height: 120),
+                    Image.asset(shared.UiConfig.logoMain, height: 120),
                     const SizedBox(height: 32),
                     SocialSignInButtons(
                       onSuccess: _handleSocialSuccess, // Keep as-is
@@ -225,12 +224,12 @@ class _SignInScreenState extends State<SignInScreen> {
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(
                                 DesignTokens.formFieldRadius)),
-                        prefixIcon: Icon(UiConfig.emailIcon),
+                        prefixIcon: Icon(shared.UiConfig.emailIcon),
                       ),
                       validator: (value) => value != null && value.contains('@')
                           ? null
                           : loc.validEmailRequired,
-                      style: TextStyle(color: UiConfig.textColorDark),
+                      style: TextStyle(color: shared.UiConfig.textColorDark),
                     ),
                     const SizedBox(height: 32),
                     TextFormField(
@@ -241,11 +240,11 @@ class _SignInScreenState extends State<SignInScreen> {
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(
                                 DesignTokens.formFieldRadius)),
-                        prefixIcon: Icon(UiConfig.lockIcon),
+                        prefixIcon: Icon(shared.UiConfig.lockIcon),
                         suffixIcon: IconButton(
                           icon: Icon(_passwordVisible
-                              ? UiConfig.visibilityOffIcon
-                              : UiConfig.visibilityIcon),
+                              ? shared.UiConfig.visibilityOffIcon
+                              : shared.UiConfig.visibilityIcon),
                           onPressed: () => setState(
                               () => _passwordVisible = !_passwordVisible),
                         ),
@@ -253,7 +252,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       validator: (value) => value != null && value.length >= 6
                           ? null
                           : loc.passwordTooShort,
-                      style: TextStyle(color: UiConfig.textColorDark),
+                      style: TextStyle(color: shared.UiConfig.textColorDark),
                     ),
                     Align(
                       alignment: Alignment.centerRight,
@@ -264,7 +263,7 @@ class _SignInScreenState extends State<SignInScreen> {
                     ),
                     if (_error != null)
                       Text(_error!,
-                          style: TextStyle(color: UiConfig.errorColor)),
+                          style: TextStyle(color: shared.UiConfig.errorColor)),
                     Row(
                       children: [
                         Checkbox(
@@ -284,16 +283,16 @@ class _SignInScreenState extends State<SignInScreen> {
                                   _signIn();
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: UiConfig.primaryColor,
-                          foregroundColor: UiConfig.foregroundColorDark,
+                          backgroundColor: shared.UiConfig.primaryColor,
+                          foregroundColor: shared.UiConfig.foregroundColorDark,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
-                                  DesignTokens.buttonRadius)),
+                                  shared.DesignTokens.buttonRadius)),
                         ),
                         child: _loading
                             ? CircularProgressIndicator(
-                                color: UiConfig.onPrimaryColor)
+                                color: shared.UiConfig.onPrimaryColor)
                             : Text(loc.signIn),
                       ),
                     ),

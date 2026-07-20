@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 // P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)
@@ -80,16 +79,16 @@ class _AddressFormState extends State<AddressForm> {
                     BorderRadius.circular(shared.DesignTokens.formFieldRadius),
               ),
               hintStyle: TextStyle(
-                color: UiConfig.hintTextColor,
+                color: shared.UiConfig.hintTextColor,
               ),
             ),
             validator:
                 widget.fieldValidators?['label'] ?? defaultLabelValidator,
             onSaved: (value) => _label = value,
             style: TextStyle(
-              color: UiConfig.textColor,
+              color: shared.UiConfig.textColor,
               fontFamily: shared.DesignTokens.fontFamily,
-              fontWeight: UiConfig.fontWeightNormal,
+              fontWeight: shared.UiConfig.fontWeightNormal,
             ),
           ),
           const SizedBox(height: shared.DesignTokens.gridSpacing),
@@ -102,16 +101,16 @@ class _AddressFormState extends State<AddressForm> {
                     BorderRadius.circular(shared.DesignTokens.formFieldRadius),
               ),
               hintStyle: TextStyle(
-                color: UiConfig.hintTextColor,
+                color: shared.UiConfig.hintTextColor,
               ),
             ),
             validator:
                 widget.fieldValidators?['street'] ?? defaultStreetValidator,
             onSaved: (value) => _street = value,
             style: TextStyle(
-              color: UiConfig.textColor,
+              color: shared.UiConfig.textColor,
               fontFamily: shared.DesignTokens.fontFamily,
-              fontWeight: UiConfig.fontWeightNormal,
+              fontWeight: shared.UiConfig.fontWeightNormal,
             ),
           ),
           const SizedBox(height: shared.DesignTokens.gridSpacing),
@@ -124,15 +123,15 @@ class _AddressFormState extends State<AddressForm> {
                     BorderRadius.circular(shared.DesignTokens.formFieldRadius),
               ),
               hintStyle: TextStyle(
-                color: UiConfig.hintTextColor,
+                color: shared.UiConfig.hintTextColor,
               ),
             ),
             validator: widget.fieldValidators?['city'] ?? defaultCityValidator,
             onSaved: (value) => _city = value,
             style: TextStyle(
-              color: UiConfig.textColor,
+              color: shared.UiConfig.textColor,
               fontFamily: shared.DesignTokens.fontFamily,
-              fontWeight: UiConfig.fontWeightNormal,
+              fontWeight: shared.UiConfig.fontWeightNormal,
             ),
           ),
           const SizedBox(height: shared.DesignTokens.gridSpacing),
@@ -145,16 +144,16 @@ class _AddressFormState extends State<AddressForm> {
                     BorderRadius.circular(shared.DesignTokens.formFieldRadius),
               ),
               hintStyle: TextStyle(
-                color: UiConfig.hintTextColor,
+                color: shared.UiConfig.hintTextColor,
               ),
             ),
             validator:
                 widget.fieldValidators?['state'] ?? defaultStateValidator,
             onSaved: (value) => _state = value,
             style: TextStyle(
-              color: UiConfig.textColor,
+              color: shared.UiConfig.textColor,
               fontFamily: shared.DesignTokens.fontFamily,
-              fontWeight: UiConfig.fontWeightNormal,
+              fontWeight: shared.UiConfig.fontWeightNormal,
             ),
           ),
           const SizedBox(height: shared.DesignTokens.gridSpacing),
@@ -167,23 +166,23 @@ class _AddressFormState extends State<AddressForm> {
                     BorderRadius.circular(shared.DesignTokens.formFieldRadius),
               ),
               hintStyle: TextStyle(
-                color: UiConfig.hintTextColor,
+                color: shared.UiConfig.hintTextColor,
               ),
             ),
             validator: widget.fieldValidators?['zip'] ?? defaultZipValidator,
             onSaved: (value) => _zip = value,
             style: TextStyle(
-              color: UiConfig.textColor,
+              color: shared.UiConfig.textColor,
               fontFamily: shared.DesignTokens.fontFamily,
-              fontWeight: UiConfig.fontWeightNormal,
+              fontWeight: shared.UiConfig.fontWeightNormal,
             ),
           ),
           const SizedBox(height: shared.DesignTokens.gridSpacing * 2),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: UiConfig.primaryColor,
-              foregroundColor: UiConfig.foregroundColor,
-              padding: UiConfig.defaultPadding,
+              backgroundColor: shared.UiConfig.primaryColor,
+              foregroundColor: shared.UiConfig.foregroundColor,
+              padding: shared.UiConfig.defaultPadding,
               shape: RoundedRectangleBorder(
                 borderRadius:
                     BorderRadius.circular(shared.DesignTokens.buttonRadius),

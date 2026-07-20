@@ -2,7 +2,7 @@
 
 Flutter Web admin dashboard for franchise owners, HQ users, platform admins, and developers.
 
-## Current Status (July 19, 2026)
+## Current Status (July 20, 2026)
 
 **P2 – White-Label & Scalability: COMPLETE**  
 **P2.5 – Web-App Cleanup Sprint: COMPLETE**
@@ -14,9 +14,10 @@ Flutter Web admin dashboard for franchise owners, HQ users, platform admins, and
 - Large-scale cleanup of duplicated code, type issues, and UI problems
 - Dynamic theming, QR/deep linking, and core admin UI stabilized
 - Firestore security rules refined
+- 4-step onboarding flows stabilized
 
 ## Features
-- **Dynamic white-label branding** per franchise (via Design & Branding page)
+- **Dynamic white-label branding** per franchise (via dedicated Design & Branding page with live preview)
 - Menu, Category, Ingredient management with onboarding wizard
 - Orders, analytics, staff, and financial tools
 - Subscription & billing management
@@ -37,13 +38,15 @@ flutter run -d chrome
 Architecture Notes
 
 All business logic and models come from shared_core
-Design & Branding page allows franchise owners to manage their look & feel with live preview
-Role-based access and dashboard switching supported
+Design & Branding page allows franchise owners to manage their look & feel with live preview (franchise-scoped)
+Role-based access, dashboard switching, and FeatureGate supported
+Agent work must follow AGENT_SYSTEM.md rules with human review on architecture, config, and design changes
 
 Related Documentation
 
 ARCHITECTURE.md
 DASHBOARDS.md
 ROADMAP.md
+AGENT_SYSTEM.md (multi-agent governance)
 
-Last Updated: July 19, 2026
+Last Updated: July 20, 2026

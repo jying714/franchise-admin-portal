@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_mobile_app/config/ui_config.dart';
 
 /// Button for launching customization modal before adding to cart.
 /// Accepts loading state and a callback for tap.
@@ -20,16 +19,16 @@ class CustomizeAndAddToCartButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        backgroundColor: UiConfig.secondaryColor,
-        foregroundColor: UiConfig.foregroundColor,
-        padding: UiConfig.defaultPadding,
+        backgroundColor: shared.UiConfig.secondaryColor,
+        foregroundColor: shared.UiConfig.foregroundColor,
+        padding: shared.UiConfig.defaultPadding,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(shared.DesignTokens.buttonRadius),
         ),
         elevation: shared.DesignTokens.buttonElevation,
         textStyle: TextStyle(
           fontSize: shared.DesignTokens.bodyFontSize,
-          fontWeight: UiConfig.fontWeightBold,
+          fontWeight: shared.UiConfig.fontWeightBold,
           fontFamily: shared.DesignTokens.fontFamily,
         ),
       ),
