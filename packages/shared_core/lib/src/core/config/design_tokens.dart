@@ -1,5 +1,7 @@
-/// Pure Dart design tokens — Single source of truth across mobile, web, and functions.
-/// Only scalars, strings, hex colors, durations. No Flutter.
+// packages/shared_core/lib/src/core/config/design_tokens.dart
+
+/// Master Unified DesignTokens - Single source of truth for the entire platform.
+/// Pure Dart (no Flutter types). Used by web, mobile, and future functions.
 class DesignTokens {
   // ----------- Typography -----------
   static const String fontFamily = 'Montserrat';
@@ -44,7 +46,7 @@ class DesignTokens {
   static const double radiusLg = 16.0;
   static const double radius2xl = 32.0;
 
-  // ----------- Sizing -----------
+  // ----------- Sizing & Spacing -----------
   static const double iconSize = 24.0;
   static const double iconSizeLarge = 40.0;
   static const double iconSizeXLarge = 80.0;
@@ -65,7 +67,6 @@ class DesignTokens {
   static const double defaultPadding = 16.0;
   static const double buttonHeight = 56.0;
 
-  // ----------- Spacing & Padding -----------
   static const double gridSpacing = 8.0;
   static const double adminGridPadding = 16.0;
   static const double adminCardSpacing = 8.0;
@@ -76,11 +77,9 @@ class DesignTokens {
   static const double buttonPadding = 16.0;
   static const double gridPadding = 16.0;
 
-  // ----------- Borders -----------
+  // ----------- Borders & Elevation -----------
   static const double cardBorderWidth = 2.0;
   static const double categoryCardBorderWidth = 2.0;
-
-  // ----------- Elevation -----------
   static const double cardElevation = 4.0;
   static const double buttonElevation = 2.0;
   static const double adminCardElevation = 2.0;
@@ -93,22 +92,18 @@ class DesignTokens {
   static const int animationDurationMs = 300;
   static const int bannerAutoPlayIntervalSeconds = 5;
 
-  // Duration for new code
   static Duration get toastDurationAsDuration =>
       Duration(seconds: toastDurationSeconds);
   static Duration get animationDuration =>
       Duration(milliseconds: animationDurationMs);
 
-  // Int for legacy mobile code (toastDuration)
+  // Legacy compatibility (mobile code expects int)
   static int get toastDuration => toastDurationSeconds;
-
-  // Int for Carousel
   static int get bannerAutoPlayInterval => bannerAutoPlayIntervalSeconds;
 
-  // ----------- Overlay Opacity -----------
+  // ----------- Overlay & Shimmer -----------
   static const int bannerOverlayAlpha = 128;
   static const int gridCardOverlayAlpha = 80;
-  static const double bannerOverlayAlphaDouble = 0.5;
 
   // ----------- Icon Names (strings) -----------
   static const String favoriteIcon = 'favorite';
@@ -118,7 +113,6 @@ class DesignTokens {
   static const String refreshIcon = 'refresh';
   static const String addIcon = 'add';
   static const String removeIcon = 'remove';
-  static const String appleIcon = 'apple';
   static const String visibilityIcon = 'visibility';
   static const String visibilityOffIcon = 'visibility_off';
   static const String emailIcon = 'email';
@@ -149,11 +143,9 @@ class DesignTokens {
   static const String shimmerBaseColorHex = '#E0E0E0';
   static const String shimmerHighlightColorHex = '#F5F5F5';
 
-  // Direct string getters
-  static String get primaryColor => primaryColorHex;
-  static String get secondaryColor => secondaryColorHex;
-  // ... (all other hex getters already present)
-
-  // Fallbacks
-  static const String fallbackAppIcon = 'assets/images/logo_small.png';
+  // ----------- Helper Methods -----------
+  static String featureDisplayName(String featureKey) {
+    // Delegate to AppConfig if needed, or keep here for convenience
+    return featureKey; // can be expanded
+  }
 }
