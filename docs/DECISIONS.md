@@ -1,6 +1,6 @@
 # Architecture Decision Log (DECISIONS.md)
 
-**Last Updated**: July 19, 2026
+**Last Updated**: July 20, 2026
 
 This file records major architectural and design decisions for the Doughboys Pizzeria Franchise Platform.
 
@@ -13,19 +13,20 @@ This file records major architectural and design decisions for the Doughboys Piz
 **Rationale**: Matches predominant customer base (single owners) while future-proofing for franchises.  
 **Impact**: Affects UI, providers, Firestore queries, and dashboards.
 
-### 2. Dynamic Config System in shared_core
+### 2. Unified Config System in shared_core + Firestore
 **Date**: July 2026  
 **Status**: Approved  
-**Decision**: Consolidate all config files (`design_tokens.dart`, `app_config.dart`, `branding_config.dart`, `feature_config.dart`, `ui_config.dart`) into `shared_core` as the single source of truth. Runtime dynamic theming and UI.  
-**Rationale**: Eliminates duplication between web and mobile. Enables self-service branding.  
-**Impact**: Major refactoring in Phase 1.
+**Decision**: Consolidate all config files (`design_tokens.dart`, `app_config.dart`, `branding_config.dart`, `feature_config.dart`, `ui_config.dart`) into `shared_core` as the single source of truth. Make them fully franchise-scoped and dynamic via Firestore (`franchises/{franchiseId}/config/*`).  
+**Rationale**: Eliminates duplication between web and mobile. Enables self-service branding and white-labeling.  
+**Reference**: `/docs/architecture/firestore-per-franchise-config.md` (authoritative schema)  
+**Impact**: Major refactoring completed in P2.5 / Phase 1.
 
 ### 3. Design & Branding Management
 **Date**: July 2026  
 **Status**: Approved  
 **Decision**: Dedicated page in HQ Owner dashboard with live preview simulator. Franchise-scoped in Firestore. Warning for non-developer users.  
 **Rationale**: Gives owners control while maintaining safety and preview capability.  
-**Impact**: New feature in Phase 2.
+**Impact**: New feature in Phase 1/2.
 
 ### 4. Mobile App Dynamic UI
 **Date**: July 2026  
@@ -51,8 +52,8 @@ This file records major architectural and design decisions for the Doughboys Piz
 ---
 
 **How to Use This File**:
-- Add new decisions with date, status, rationale, and impact.
+- Add new decisions with date, status, rationale, impact, and references.
 - Reference this file in ARCHITECTURE.md when appropriate.
 - Review before major refactors.
 
-**Last Updated**: July 19, 2026
+**Last Updated**: July 20, 2026

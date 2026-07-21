@@ -72,14 +72,21 @@ This document defines the four main dashboards, their target users, key features
 - Live preview components shared with mobile app
 - Agent-assisted development with strict human review on config and design changes
 
+## Config & Branding Integration
+- All dashboards pull dynamic config from Firestore per franchise via `FranchiseProvider`
+- Design & Branding page is the primary interface for editing `ui_config` (see `/docs/architecture/firestore-per-franchise-config.md`)
+- Live preview must reflect real-time changes from Firestore
+- FeatureGate respected everywhere
+
 ## Future Enhancements
 - Version history for design changes
 - AI-assisted design suggestions
 - White-label template gallery
 
 ## Development Notes
-- All major config and design changes require human review.
+- All major config, design, and Firestore schema changes require human review.
 - Hybrid single/multi-location logic must be respected in all dashboards.
-- Agent work must stay within defined phase scope (see `AGENT_SYSTEM.md`).
+- Agent work must stay strictly within defined phase scope (see `AGENT_SYSTEM.md` and `ROADMAP.md`).
+- Reference `docs/architecture/firestore-per-franchise-config.md` for any theming/branding work.
 
 ---

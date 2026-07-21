@@ -18,6 +18,7 @@ Core ordering flow is stable and device-tested on Samsung S25. The app now share
 - QR Scanner + Deep Linking support for franchise claiming
 - Fully franchise-scoped data under `franchises/{franchiseId}/...`
 - **Dynamic UI** — transitioning from pizzeria-hardcoded to fully config-driven (restaurantType support, FeatureGate)
+- Configs are consumed directly from `shared_core` (no local config files).
 
 ## Development
 

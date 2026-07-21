@@ -18,7 +18,8 @@ Contains all shared models, providers, services, configs, and utilities used by 
 
 ### Configs (`lib/src/core/config/`)
 - `design_tokens.dart`, `app_config.dart`, `branding_config.dart`, `feature_config.dart`, `ui_config.dart`
-- Fully franchise-scoped and dynamic (Firestore-backed with runtime overrides)
+- **Fully franchise-scoped and dynamic** (Firestore-backed with strong defaults)
+- Authoritative reference: `/docs/architecture/firestore-per-franchise-config.md`
 
 ### Services (`lib/src/core/services/`)
 - `FirestoreService` (Abstract + Impl)
@@ -37,16 +38,17 @@ Contains all shared models, providers, services, configs, and utilities used by 
 
 ## Development
 ```bash
-cd shared_core
+cd packages/shared_core
 flutter clean
 flutter pub get
 flutter analyze
-
 Related Documentation
 
 ARCHITECTURE.md
 MOBILE_DYNAMIC.md
 DASHBOARDS.md
 AGENT_SYSTEM.md (multi-agent governance and scope rules)
+ROADMAP.md
+/docs/architecture/firestore-per-franchise-config.md ← Config & Firestore Schema Authority
 
 Last Updated: July 20, 2026

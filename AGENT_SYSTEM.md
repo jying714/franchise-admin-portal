@@ -60,6 +60,7 @@ At the beginning of every task or session, every agent **must** first read the f
 
 **Project Documentation**:
 - `/ARCHITECTURE.md`
+- `/docs/architecture/firestore-per-franchise-config.md`   ← **New: Authoritative config & Firestore schema reference**
 - `/DASHBOARDS.md`
 - `/MOBILE_DYNAMIC.md`
 - `/docs/comprehensive-project-analysis.md`

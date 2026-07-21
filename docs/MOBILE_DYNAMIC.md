@@ -6,13 +6,13 @@
 - Mobile app is currently pizzeria-specific (hardcoded UI elements, categories, customization flows).
 - Core ordering flow is stable and device-tested.
 - FranchiseProvider and shared_core unification is complete.
-- P1 cleanup (duplicated widgets, models) is done.
+- P1/P2.5 cleanup (duplicated widgets, models, configs) is done.
 
 ## Target Architecture (Dynamic & Generic)
 The mobile app must become **fully dynamic and restaurant-type agnostic** while remaining a **single published binary** that serves unlimited franchises.
 
 ### Core Principles
-- All UI driven by `shared_core` configs + Firestore (`franchises/{franchiseId}/config/...`)
+- All UI driven by `shared_core` configs + Firestore (`franchises/{franchiseId}/config/*`)
 - `restaurantType` field determines available UI models, components, and flows
 - FeatureGate controls visibility of advanced features
 - Hybrid single/multi-location support with automatic UI simplification
@@ -20,9 +20,10 @@ The mobile app must become **fully dynamic and restaurant-type agnostic** while 
 
 ## Key Dynamic Mechanisms
 1. **Config-Driven UI**
-   - `ui_config.dart`, `design_tokens.dart`, `branding_config.dart` in `shared_core`
-   - Runtime theming (colors, fonts, logos) applied after franchise resolution
+   - `ui_config.dart`, `design_tokens.dart`, `branding_config.dart`, `app_config.dart` in `shared_core`
+   - Runtime theming (colors, fonts, logos) applied after franchise resolution (see `FranchiseProvider`)
    - Component registry for show/hide sections, custom fields, layouts
+   - Authoritative reference: `/docs/architecture/firestore-per-franchise-config.md`
 
 2. **Restaurant Type Handling**
    - Support for Pizzeria, Mexican, Burger, Cafe, etc.
@@ -40,7 +41,7 @@ The mobile app must become **fully dynamic and restaurant-type agnostic** while 
    - Meets/exceeds industry standard for ordering apps
 
 ## Implementation Approach
-- **Phase 1**: Config scoping in shared_core (foundational)
+- **Phase 1**: Config scoping in shared_core (foundational) — **Completed**
 - **Phase 3 (Primary Focus)**: Mobile + Shared Core agents refactor UI to dynamic
 - **Agent Guardrails**: All changes must respect existing flows, use task files (`tasks/Phase3.md`), and receive human review on architecture decisions
 - **Testing**: Full regression on Samsung S25 + iPhone 15 before any phase is marked complete

@@ -38,6 +38,9 @@ This is a **Flutter monorepo** consisting of:
 - Location support via `location_ids` array and `franchise_locations`
 - Configs stored under `franchises/{franchiseId}/config/...` (branding, ui, features)
 
+**Detailed per-franchise config architecture (ui_config, branding, design_tokens, etc.) is defined in:**
+→ `/docs/architecture/firestore-per-franchise-config.md` (Single source of truth for all agents)
+
 **Schema Design Principles**:
 - Clear naming conventions and indexing strategy
 - Migration plan for future changes

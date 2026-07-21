@@ -33,6 +33,7 @@ Build a scalable, multi-tenant white-label Flutter platform that allows any rest
 - Docker Compose + Ollama + LangGraph environment fully operational with Orchestrator and specialized agents.
 - `AGENT_SYSTEM.md` created with strict scoping rules, tool restrictions, human approval gates, and weekly reset process.
 - `ARCHITECTURE.md` expanded with Firestore schema design, localization strategy, multi-agent orchestration, and risks section.
+- **`/docs/architecture/firestore-per-franchise-config.md`** created as the authoritative reference for all config and Firestore decisions (schema, migration, security rules, provider updates).
 - Per-phase task files (`tasks/Phase0.md`, `tasks/Phase1.md`, etc.) created with clear boundaries and acceptance criteria.
 - Weekly & PR review templates established.
 - Basic test agent run completed with successful PR and human review.
@@ -44,19 +45,20 @@ Build a scalable, multi-tenant white-label Flutter platform that allows any rest
 - Risk register for potential refactors (localization, state management).
 
 ### Phase 1: Core Config Scoping & Dynamic Branding (3–5 days)
-**Goals**: Make shared_core configs fully franchise-scoped and dynamic.
+**Goals**: Make shared_core configs fully franchise-scoped and dynamic via Firestore.
 
-**Acceptance Criteria**:
-- All config files (`design_tokens`, `app_config`, `branding_config`, `feature_config`, `ui_config`) updated to be franchise-scoped in Firestore.
-- All config files moved to shared_core and consumed by both web and mobile.
+**Acceptance Criteria** (Non-Negotiable):
+- All config files (`design_tokens`, `app_config`, `branding_config`, `feature_config`, `ui_config`) updated to be franchise-scoped in Firestore per `/docs/architecture/firestore-per-franchise-config.md`.
+- `FranchiseProvider` listens to and merges `config/ui_config`, `config/app_config`, and `config/features`.
 - Runtime theming/branding system implemented with live preview in owner_hq dashboard.
 - Design & Branding page with live preview functional.
 - Hybrid localization strategy (hardcoded base + DB overrides) documented and partially implemented.
 - Full human review on architecture decisions and testing on real devices.
+- No breaking changes to mobile app without testing.
 
 **Defensive Items**:
 - Schema migration plan for existing data.
-- No breaking changes to mobile app without testing.
+- Strong defaults in `shared_core` with Firestore overrides.
 
 ### Phase 2: Hybrid Single/Multi-Location + Dashboards (5–7 days)
 **Goals**: Full hybrid support.

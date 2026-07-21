@@ -25,6 +25,9 @@ Flutter Web admin dashboard for franchise owners, HQ users, platform admins, and
 - Real-time updates via Firestore
 - Hybrid single/multi-location support with automatic UI simplification
 
+## Config Delegation
+Web-app uses thin delegation layers (`branding_config.dart`, `design_tokens.dart`) that forward to `shared_core`. Do not add new config logic here.
+
 ## Development
 
 ```bash
