@@ -1,0 +1,27 @@
+{
+  "users": {
+    "mock_owner_liberty": {
+      "uid": "mock_owner_liberty",
+      "email": "alex.rivera@libertydiner.example",
+      "displayName": "Alex Rivera",
+      "firstName": "Alex",
+      "lastName": "Rivera",
+      "phone": "(555) 867-5309",
+      "role": "hq_owner",
+      "roles": ["hq_owner"],
+      "franchiseId": "liberty_diner",
+      "franchiseIds": ["liberty_diner"],
+      "primaryFranchiseId": "liberty_diner",
+      "locationIds": ["liberty_diner_main", "liberty_diner_eastside"],
+      "status": "active",
+      "isActive": true,
+      "emailVerified": true,
+      "createdAt": "2026-07-20T10:00:00.000Z",
+      "updatedAt": "2026-07-21T12:00:00.000Z",
+      "lastLoginAt": null,
+      "photoURL": null,
+      "notes": "Mock HQ Owner for Liberty Diner (non-pizzeria test franchise)",
+      "custom_fields": {}
+    }
+  }
+}

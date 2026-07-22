@@ -58,6 +58,7 @@ const db = admin.firestore();
 
 // ---------- Seed data ----------
 const seedPath = path.join(__dirname, 'seed_data.json');
+const userSeedPath = path.join(__dirname, 'seed_user.json');
 
 if (!fs.existsSync(seedPath)) {
   console.error('\n❌  seed_data.json not found at:', seedPath, '\n');
@@ -65,6 +66,9 @@ if (!fs.existsSync(seedPath)) {
 }
 
 const seed = JSON.parse(fs.readFileSync(seedPath, 'utf8'));
+const userSeed = fs.existsSync(userSeedPath)
+  ? JSON.parse(fs.readFileSync(userSeedPath, 'utf8'))
+  : { users: {} };
 
 // ---------- Helpers ----------
 function convertTimestamps(obj) {
@@ -151,10 +155,18 @@ async function run() {
     );
     console.log('  ✓ analytics_summaries/default_2026-07');
 
+    // ---- Mock Owner User ----
+    if (userSeed.users && Object.keys(userSeed.users).length > 0) {
+      console.log('Importing mock owner user...');
+      const userCount = await importCollection('users', userSeed.users);
+      console.log(`  ✓ ${userCount} user(s)  (Alex Rivera – hq_owner)`);
+    }
+
     console.log('\n=== Import complete ===');
     console.log('You can now switch to franchiseId "liberty_diner" in the app.');
     console.log('Locations: liberty_diner_main , liberty_diner_eastside');
-    console.log('restaurantType: "diner"\n');
+    console.log('restaurantType: "diner"');
+    console.log('Mock owner  : mock_owner_liberty  (Alex Rivera / hq_owner)\n');
   } catch (err) {
     console.error('\n❌  Import failed:');
     console.error(err);
