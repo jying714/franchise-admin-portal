@@ -1,89 +1,66 @@
 /**
- * Liberty Diner Seed Import Script (robust version)
+ * Liberty Diner Seed Import Script
  *
- * Imports the mock non-pizzeria franchise (liberty_diner) into Firestore.
+ * Uses the exact same firebase-admin loading pattern as
+ * scripts/dump_full_firestore_schema.js (which is known to work).
  *
- * Usage (from this folder or project root):
+ * Usage (from project root or this folder):
  *   node import_liberty_diner.js
  *
- * Credentials (pick one):
- *   1. Place serviceAccountKey.json in this folder or project root
- *   2. Set GOOGLE_APPLICATION_CREDENTIALS environment variable
- *   3. Use Application Default Credentials
+ * Requires:
+ *   web-app/serviceAccountKey.json
+ *   web-app/node_modules/firebase-admin
  */
 
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
 
-// ---------- Robust require of firebase-admin ----------
+// ---------- Load firebase-admin exactly like the working dump script ----------
+const firebaseAdminPath = path.join(__dirname, '..', '..', '..', 'web-app', 'node_modules', 'firebase-admin');
 let admin;
+
 try {
-  admin = require('firebase-admin');
+  admin = require(firebaseAdminPath);
 } catch (err) {
-  console.error('\n❌  firebase-admin is not installed or cannot be required.');
-  console.error('   Run this from the project root:');
-  console.error('   npm install firebase-admin');
-  console.error('\n   Then try again.\n');
+  console.error('\n❌  Could not load firebase-admin from web-app/node_modules.');
+  console.error('   Path tried:', firebaseAdminPath);
+  console.error('   Error:', err.message);
+  console.error('\n   Make sure you have run: cd web-app && npm install\n');
   process.exit(1);
 }
 
-if (!admin || !admin.apps) {
-  console.error('\n❌  firebase-admin loaded but is in an unexpected state.');
-  console.error('   Try deleting node_modules and package-lock.json, then reinstall.');
+if (!admin) {
+  console.error('\n❌  firebase-admin require returned undefined.\n');
   process.exit(1);
 }
 
-// ---------- Find service account key ----------
-function findServiceAccountKey() {
-  const candidates = [
-    path.join(__dirname, 'serviceAccountKey.json'),
-    path.join(__dirname, '..', '..', '..', 'serviceAccountKey.json'), // project root
-    path.join(process.cwd(), 'serviceAccountKey.json'),
-  ];
+// ---------- Service account (same location as dump script) ----------
+const SERVICE_ACCOUNT_PATH = path.join(__dirname, '..', '..', '..', 'web-app', 'serviceAccountKey.json');
 
-  for (const p of candidates) {
-    if (fs.existsSync(p)) {
-      console.log(`Using service account key: ${p}`);
-      return require(p);
-    }
-  }
-  return null;
+if (!fs.existsSync(SERVICE_ACCOUNT_PATH)) {
+  console.error('\n❌  serviceAccountKey.json not found at:');
+  console.error('   ', SERVICE_ACCOUNT_PATH);
+  console.error('\n   This is the same key used by your working dump script.\n');
+  process.exit(1);
 }
 
-// ---------- Initialize Firebase Admin ----------
-if (!admin.apps.length) {
-  try {
-    const serviceAccount = findServiceAccountKey();
+const serviceAccount = require(SERVICE_ACCOUNT_PATH);
 
-    if (serviceAccount) {
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
-    } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-      console.log(`Using GOOGLE_APPLICATION_CREDENTIALS: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
-      admin.initializeApp();
-    } else {
-      // Last resort – Application Default Credentials
-      console.log('No serviceAccountKey.json found. Trying Application Default Credentials...');
-      admin.initializeApp();
-    }
-  } catch (e) {
-    console.error('\n❌  Failed to initialize Firebase Admin.');
-    console.error('   Error:', e.message);
-    console.error('\n   Solutions:');
-    console.error('   1. Place a serviceAccountKey.json in this folder (scripts/seeds/liberty_diner/)');
-    console.error('   2. Or set the environment variable:');
-    console.error('      $env:GOOGLE_APPLICATION_CREDENTIALS = "C:\\path\\to\\serviceAccountKey.json"');
-    console.error('   3. Then run the script again.\n');
-    process.exit(1);
-  }
+// ---------- Initialize ----------
+if (!admin.apps || !admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    projectId: serviceAccount.project_id || 'doughboyspizzeria-2b3d2'
+  });
 }
 
 const db = admin.firestore();
+
+// ---------- Seed data ----------
 const seedPath = path.join(__dirname, 'seed_data.json');
 
 if (!fs.existsSync(seedPath)) {
-  console.error(`\n❌  seed_data.json not found at: ${seedPath}\n`);
+  console.error('\n❌  seed_data.json not found at:', seedPath, '\n');
   process.exit(1);
 }
 
@@ -107,8 +84,7 @@ function convertTimestamps(obj) {
   return result;
 }
 
-async function importCollection(collectionPath, docs, options = {}) {
-  const { merge = true } = options;
+async function importCollection(collectionPath, docs) {
   const batchSize = 400;
   const entries = Object.entries(docs);
   let count = 0;
@@ -120,7 +96,7 @@ async function importCollection(collectionPath, docs, options = {}) {
     for (const [id, data] of chunk) {
       const ref = db.doc(`${collectionPath}/${id}`);
       const cleaned = convertTimestamps(data);
-      batch.set(ref, cleaned, { merge });
+      batch.set(ref, cleaned, { merge: true });
       count++;
     }
     await batch.commit();
@@ -131,7 +107,7 @@ async function importCollection(collectionPath, docs, options = {}) {
 // ---------- Main ----------
 async function run() {
   console.log('\n=== Liberty Diner Seed Import ===');
-  console.log(`Franchise ID : ${seed.meta.franchiseId}`);
+  console.log(`Franchise ID  : ${seed.meta.franchiseId}`);
   console.log(`restaurantType: diner | Multi-location: yes\n`);
 
   try {
