@@ -1,0 +1,714 @@
+{
+  "meta": {
+    "description": "Liberty Diner mock franchise seed – non-pizzeria, multi-location, restaurantType: diner",
+    "generated": "2026-07-21",
+    "franchiseId": "liberty_diner",
+    "purpose": "Test multi-franchise, multi-location hybrid, dynamic UI, branding isolation, and non-pizza restaurantType"
+  },
+
+  "franchises": {
+    "liberty_diner": {
+      "franchiseId": "liberty_diner",
+      "name": "Liberty Diner",
+      "restaurantType": "diner",
+      "status": "active",
+      "onboardingStatus": "complete",
+      "onboardingCompletedAt": "2026-07-20T12:00:00.000Z",
+      "brandColor": "#1B4F72",
+      "logoUrl": "https://storage.googleapis.com/doughboyspizzeria-2b3d2.firebasestorage.app/logos/liberty_diner_placeholder.png",
+      "contactEmail": "hello@libertydiner.example",
+      "contactPhone": "(555) 867-5309",
+      "businessEmail": "owner@libertydiner.example",
+      "timezone": "America/Chicago",
+      "defaultCurrency": "USD",
+      "multi_currency": false,
+      "address": {
+        "street": "456 Freedom Blvd",
+        "city": "Springfield",
+        "state": "IL",
+        "zip": "62701"
+      },
+      "businessHours": {
+        "monday": "06:00-22:00",
+        "tuesday": "06:00-22:00",
+        "wednesday": "06:00-22:00",
+        "thursday": "06:00-22:00",
+        "friday": "06:00-23:00",
+        "saturday": "07:00-23:00",
+        "sunday": "07:00-21:00"
+      },
+      "billingInfo": {
+        "billingContact": "Alex Rivera",
+        "billingEmail": "billing@libertydiner.example"
+      },
+      "legalInfo": {
+        "EIN": "98-7654321",
+        "licenseNumber": "IL-DINER-2026"
+      },
+      "config": {
+        "currency": "USD",
+        "locale": "en_US"
+      },
+      "location_ids": [
+        "liberty_diner_main",
+        "liberty_diner_eastside"
+      ],
+      "ownerUserId": "mock_owner_liberty",
+      "primary_owner_id": "users/mock_owner_liberty",
+      "createdAt": "2026-07-20T10:00:00.000Z",
+      "updatedAt": "2026-07-21T12:00:00.000Z",
+      "createdBy": "seed_script",
+      "updatedBy": "seed_script",
+      "custom_fields": {},
+      "notes": "Mock American diner for multi-franchise and restaurantType testing"
+    }
+  },
+
+  "franchise_locations": {
+    "liberty_diner_main": {
+      "id": "liberty_diner_main",
+      "franchiseId": "liberty_diner",
+      "name": "Liberty Diner – Main Street",
+      "status": "active",
+      "isPrimary": true,
+      "address": {
+        "street": "456 Freedom Blvd",
+        "city": "Springfield",
+        "state": "IL",
+        "zip": "62701"
+      },
+      "phone": "(555) 867-5309",
+      "timezone": "America/Chicago",
+      "businessHours": {
+        "monday": "06:00-22:00",
+        "tuesday": "06:00-22:00",
+        "wednesday": "06:00-22:00",
+        "thursday": "06:00-22:00",
+        "friday": "06:00-23:00",
+        "saturday": "07:00-23:00",
+        "sunday": "07:00-21:00"
+      },
+      "coordinates": {
+        "lat": 39.7817,
+        "lng": -89.6501
+      },
+      "createdAt": "2026-07-20T10:05:00.000Z",
+      "updatedAt": "2026-07-20T10:05:00.000Z"
+    },
+    "liberty_diner_eastside": {
+      "id": "liberty_diner_eastside",
+      "franchiseId": "liberty_diner",
+      "name": "Liberty Diner – Eastside",
+      "status": "active",
+      "isPrimary": false,
+      "address": {
+        "street": "789 Liberty Ave",
+        "city": "Springfield",
+        "state": "IL",
+        "zip": "62703"
+      },
+      "phone": "(555) 867-5310",
+      "timezone": "America/Chicago",
+      "businessHours": {
+        "monday": "07:00-21:00",
+        "tuesday": "07:00-21:00",
+        "wednesday": "07:00-21:00",
+        "thursday": "07:00-21:00",
+        "friday": "07:00-22:00",
+        "saturday": "08:00-22:00",
+        "sunday": "08:00-20:00"
+      },
+      "coordinates": {
+        "lat": 39.7900,
+        "lng": -89.6200
+      },
+      "createdAt": "2026-07-20T10:10:00.000Z",
+      "updatedAt": "2026-07-20T10:10:00.000Z"
+    }
+  },
+
+  "categories": {
+    "liberty_diner": {
+      "cat_burgers": {
+        "id": "cat_burgers",
+        "name": "Burgers",
+        "description": "Hand-crafted burgers made with fresh ground beef",
+        "sortOrder": 0,
+        "image": "https://example.com/images/category_burgers.jpg",
+        "active": true,
+        "franchiseId": "liberty_diner"
+      },
+      "cat_sandwiches": {
+        "id": "cat_sandwiches",
+        "name": "Sandwiches & Wraps",
+        "description": "Classic sandwiches and fresh wraps",
+        "sortOrder": 1,
+        "image": "https://example.com/images/category_sandwiches.jpg",
+        "active": true,
+        "franchiseId": "liberty_diner"
+      },
+      "cat_sides": {
+        "id": "cat_sides",
+        "name": "Sides",
+        "description": "Perfect companions to any meal",
+        "sortOrder": 2,
+        "image": "https://example.com/images/category_sides.jpg",
+        "active": true,
+        "franchiseId": "liberty_diner"
+      },
+      "cat_drinks": {
+        "id": "cat_drinks",
+        "name": "Drinks",
+        "description": "Sodas, shakes, coffee and more",
+        "sortOrder": 3,
+        "image": "https://example.com/images/category_drinks.jpg",
+        "active": true,
+        "franchiseId": "liberty_diner"
+      },
+      "cat_desserts": {
+        "id": "cat_desserts",
+        "name": "Desserts",
+        "description": "Homestyle sweets",
+        "sortOrder": 4,
+        "image": "https://example.com/images/category_desserts.jpg",
+        "active": true,
+        "franchiseId": "liberty_diner"
+      },
+      "cat_breakfast": {
+        "id": "cat_breakfast",
+        "name": "Breakfast All Day",
+        "description": "Eggs, pancakes, and morning favorites served all day",
+        "sortOrder": 5,
+        "image": "https://example.com/images/category_breakfast.jpg",
+        "active": true,
+        "franchiseId": "liberty_diner"
+      }
+    }
+  },
+
+  "menu_items": {
+    "liberty_diner": {
+      "classic_cheeseburger": {
+        "id": "classic_cheeseburger",
+        "name": "Classic Cheeseburger",
+        "description": "Juicy beef patty, American cheese, lettuce, tomato, onion, and house sauce on a toasted bun.",
+        "category": "Burgers",
+        "categoryId": "cat_burgers",
+        "price": 11.99,
+        "sizePrices": {
+          "Single": 11.99,
+          "Double": 15.49
+        },
+        "sizes": ["Single", "Double"],
+        "image": "https://example.com/images/classic_cheeseburger.jpg",
+        "available": true,
+        "archived": false,
+        "hideInMenu": false,
+        "sortOrder": 0,
+        "prepTime": 12,
+        "dietaryTags": ["contains-dairy", "contains-gluten"],
+        "allergens": ["dairy", "gluten"],
+        "highlightTags": ["bestseller", "classic"],
+        "allowSpecialInstructions": true,
+        "customizationGroups": [
+          {
+            "label": "Cooking Preference",
+            "type": "single",
+            "required": true,
+            "options": ["Medium", "Medium-Well", "Well Done"]
+          },
+          {
+            "label": "Add-ons",
+            "type": "multi",
+            "required": false,
+            "options": [
+              { "name": "Bacon", "price": 1.75 },
+              { "name": "Avocado", "price": 1.50 },
+              { "name": "Fried Egg", "price": 1.25 },
+              { "name": "Extra Cheese", "price": 0.99 }
+            ]
+          }
+        ],
+        "franchiseId": "liberty_diner",
+        "createdAt": "2026-07-20T11:00:00.000Z",
+        "lastModifiedBy": "seed_script"
+      },
+      "bacon_bbq_burger": {
+        "id": "bacon_bbq_burger",
+        "name": "Bacon BBQ Burger",
+        "description": "Smoky BBQ sauce, crispy bacon, cheddar, onion rings, and pickles.",
+        "category": "Burgers",
+        "categoryId": "cat_burgers",
+        "price": 13.99,
+        "sizePrices": {
+          "Single": 13.99,
+          "Double": 17.49
+        },
+        "sizes": ["Single", "Double"],
+        "image": "https://example.com/images/bacon_bbq_burger.jpg",
+        "available": true,
+        "archived": false,
+        "hideInMenu": false,
+        "sortOrder": 1,
+        "prepTime": 14,
+        "dietaryTags": ["contains-dairy", "contains-gluten"],
+        "allergens": ["dairy", "gluten"],
+        "highlightTags": ["smoky", "indulgent"],
+        "allowSpecialInstructions": true,
+        "customizationGroups": [
+          {
+            "label": "Cooking Preference",
+            "type": "single",
+            "required": true,
+            "options": ["Medium", "Medium-Well", "Well Done"]
+          },
+          {
+            "label": "Add-ons",
+            "type": "multi",
+            "required": false,
+            "options": [
+              { "name": "Extra Bacon", "price": 1.75 },
+              { "name": "Jalapeños", "price": 0.75 },
+              { "name": "Extra BBQ Sauce", "price": 0.50 }
+            ]
+          }
+        ],
+        "franchiseId": "liberty_diner",
+        "createdAt": "2026-07-20T11:05:00.000Z",
+        "lastModifiedBy": "seed_script"
+      },
+      "veggie_burger": {
+        "id": "veggie_burger",
+        "name": "Garden Veggie Burger",
+        "description": "House-made veggie patty with lettuce, tomato, red onion, and chipotle aioli.",
+        "category": "Burgers",
+        "categoryId": "cat_burgers",
+        "price": 12.49,
+        "sizePrices": {
+          "Single": 12.49
+        },
+        "sizes": ["Single"],
+        "image": "https://example.com/images/veggie_burger.jpg",
+        "available": true,
+        "archived": false,
+        "hideInMenu": false,
+        "sortOrder": 2,
+        "prepTime": 11,
+        "dietaryTags": ["vegetarian", "contains-gluten"],
+        "allergens": ["gluten"],
+        "highlightTags": ["vegetarian", "healthy"],
+        "allowSpecialInstructions": true,
+        "customizationGroups": [
+          {
+            "label": "Add-ons",
+            "type": "multi",
+            "required": false,
+            "options": [
+              { "name": "Avocado", "price": 1.50 },
+              { "name": "Cheese", "price": 0.99 },
+              { "name": "Bacon", "price": 1.75 }
+            ]
+          }
+        ],
+        "franchiseId": "liberty_diner",
+        "createdAt": "2026-07-20T11:10:00.000Z",
+        "lastModifiedBy": "seed_script"
+      },
+      "club_sandwich": {
+        "id": "club_sandwich",
+        "name": "Classic Club Sandwich",
+        "description": "Triple-decker with turkey, ham, bacon, lettuce, tomato, and mayo on toasted bread.",
+        "category": "Sandwiches & Wraps",
+        "categoryId": "cat_sandwiches",
+        "price": 13.49,
+        "image": "https://example.com/images/club_sandwich.jpg",
+        "available": true,
+        "archived": false,
+        "hideInMenu": false,
+        "sortOrder": 0,
+        "prepTime": 10,
+        "dietaryTags": ["contains-dairy", "contains-gluten"],
+        "allergens": ["dairy", "gluten"],
+        "highlightTags": ["classic"],
+        "allowSpecialInstructions": true,
+        "customizationGroups": [
+          {
+            "label": "Bread",
+            "type": "single",
+            "required": true,
+            "options": ["White", "Wheat", "Sourdough"]
+          },
+          {
+            "label": "Add-ons",
+            "type": "multi",
+            "required": false,
+            "options": [
+              { "name": "Extra Bacon", "price": 1.75 },
+              { "name": "Avocado", "price": 1.50 },
+              { "name": "Cheese", "price": 0.99 }
+            ]
+          }
+        ],
+        "franchiseId": "liberty_diner",
+        "createdAt": "2026-07-20T11:15:00.000Z",
+        "lastModifiedBy": "seed_script"
+      },
+      "grilled_chicken_sandwich": {
+        "id": "grilled_chicken_sandwich",
+        "name": "Grilled Chicken Sandwich",
+        "description": "Marinated grilled chicken breast, lettuce, tomato, and honey mustard on a brioche bun.",
+        "category": "Sandwiches & Wraps",
+        "categoryId": "cat_sandwiches",
+        "price": 12.99,
+        "image": "https://example.com/images/grilled_chicken.jpg",
+        "available": true,
+        "archived": false,
+        "hideInMenu": false,
+        "sortOrder": 1,
+        "prepTime": 13,
+        "dietaryTags": ["contains-gluten"],
+        "allergens": ["gluten"],
+        "highlightTags": ["lighter"],
+        "allowSpecialInstructions": true,
+        "customizationGroups": [
+          {
+            "label": "Add-ons",
+            "type": "multi",
+            "required": false,
+            "options": [
+              { "name": "Bacon", "price": 1.75 },
+              { "name": "Cheese", "price": 0.99 },
+              { "name": "Avocado", "price": 1.50 }
+            ]
+          }
+        ],
+        "franchiseId": "liberty_diner",
+        "createdAt": "2026-07-20T11:20:00.000Z",
+        "lastModifiedBy": "seed_script"
+      },
+      "french_fries": {
+        "id": "french_fries",
+        "name": "French Fries",
+        "description": "Crispy golden fries seasoned with sea salt.",
+        "category": "Sides",
+        "categoryId": "cat_sides",
+        "price": 4.49,
+        "sizePrices": {
+          "Regular": 4.49,
+          "Large": 6.49
+        },
+        "sizes": ["Regular", "Large"],
+        "image": "https://example.com/images/french_fries.jpg",
+        "available": true,
+        "archived": false,
+        "hideInMenu": false,
+        "sortOrder": 0,
+        "prepTime": 8,
+        "dietaryTags": ["vegetarian"],
+        "allergens": [],
+        "highlightTags": ["classic"],
+        "allowSpecialInstructions": true,
+        "customizationGroups": [
+          {
+            "label": "Seasoning",
+            "type": "single",
+            "required": false,
+            "options": ["Regular Salt", "Cajun", "Garlic Parmesan (+$0.75)"]
+          }
+        ],
+        "franchiseId": "liberty_diner",
+        "createdAt": "2026-07-20T11:25:00.000Z",
+        "lastModifiedBy": "seed_script"
+      },
+      "onion_rings": {
+        "id": "onion_rings",
+        "name": "Onion Rings",
+        "description": "Beer-battered onion rings served with ranch.",
+        "category": "Sides",
+        "categoryId": "cat_sides",
+        "price": 5.99,
+        "image": "https://example.com/images/onion_rings.jpg",
+        "available": true,
+        "archived": false,
+        "hideInMenu": false,
+        "sortOrder": 1,
+        "prepTime": 9,
+        "dietaryTags": ["vegetarian", "contains-gluten"],
+        "allergens": ["gluten"],
+        "highlightTags": [],
+        "allowSpecialInstructions": true,
+        "franchiseId": "liberty_diner",
+        "createdAt": "2026-07-20T11:30:00.000Z",
+        "lastModifiedBy": "seed_script"
+      },
+      "mac_and_cheese": {
+        "id": "mac_and_cheese",
+        "name": "Mac & Cheese",
+        "description": "Creamy three-cheese macaroni topped with toasted breadcrumbs.",
+        "category": "Sides",
+        "categoryId": "cat_sides",
+        "price": 6.49,
+        "image": "https://example.com/images/mac_and_cheese.jpg",
+        "available": true,
+        "archived": false,
+        "hideInMenu": false,
+        "sortOrder": 2,
+        "prepTime": 10,
+        "dietaryTags": ["vegetarian", "contains-dairy", "contains-gluten"],
+        "allergens": ["dairy", "gluten"],
+        "highlightTags": ["comfort"],
+        "allowSpecialInstructions": true,
+        "franchiseId": "liberty_diner",
+        "createdAt": "2026-07-20T11:35:00.000Z",
+        "lastModifiedBy": "seed_script"
+      },
+      "soft_drink": {
+        "id": "soft_drink",
+        "name": "Soft Drink",
+        "description": "Coca-Cola, Diet Coke, Sprite, or Root Beer.",
+        "category": "Drinks",
+        "categoryId": "cat_drinks",
+        "price": 2.99,
+        "sizePrices": {
+          "Regular": 2.99,
+          "Large": 3.49
+        },
+        "sizes": ["Regular", "Large"],
+        "image": "https://example.com/images/soft_drink.jpg",
+        "available": true,
+        "archived": false,
+        "hideInMenu": false,
+        "sortOrder": 0,
+        "prepTime": 1,
+        "dietaryTags": [],
+        "allergens": [],
+        "highlightTags": [],
+        "allowSpecialInstructions": false,
+        "customizationGroups": [
+          {
+            "label": "Flavor",
+            "type": "single",
+            "required": true,
+            "options": ["Coca-Cola", "Diet Coke", "Sprite", "Root Beer"]
+          }
+        ],
+        "franchiseId": "liberty_diner",
+        "createdAt": "2026-07-20T11:40:00.000Z",
+        "lastModifiedBy": "seed_script"
+      },
+      "milkshake": {
+        "id": "milkshake",
+        "name": "Classic Milkshake",
+        "description": "Thick and creamy hand-spun milkshake.",
+        "category": "Drinks",
+        "categoryId": "cat_drinks",
+        "price": 5.99,
+        "image": "https://example.com/images/milkshake.jpg",
+        "available": true,
+        "archived": false,
+        "hideInMenu": false,
+        "sortOrder": 1,
+        "prepTime": 5,
+        "dietaryTags": ["contains-dairy"],
+        "allergens": ["dairy"],
+        "highlightTags": ["indulgent"],
+        "allowSpecialInstructions": true,
+        "customizationGroups": [
+          {
+            "label": "Flavor",
+            "type": "single",
+            "required": true,
+            "options": ["Vanilla", "Chocolate", "Strawberry", "Cookies & Cream"]
+          }
+        ],
+        "franchiseId": "liberty_diner",
+        "createdAt": "2026-07-20T11:45:00.000Z",
+        "lastModifiedBy": "seed_script"
+      },
+      "apple_pie": {
+        "id": "apple_pie",
+        "name": "Warm Apple Pie",
+        "description": "Homestyle apple pie served warm with optional vanilla ice cream.",
+        "category": "Desserts",
+        "categoryId": "cat_desserts",
+        "price": 5.49,
+        "image": "https://example.com/images/apple_pie.jpg",
+        "available": true,
+        "archived": false,
+        "hideInMenu": false,
+        "sortOrder": 0,
+        "prepTime": 3,
+        "dietaryTags": ["vegetarian", "contains-gluten", "contains-dairy"],
+        "allergens": ["gluten", "dairy"],
+        "highlightTags": ["classic"],
+        "allowSpecialInstructions": true,
+        "customizationGroups": [
+          {
+            "label": "Add-ons",
+            "type": "multi",
+            "required": false,
+            "options": [
+              { "name": "Vanilla Ice Cream", "price": 1.50 },
+              { "name": "Whipped Cream", "price": 0.75 }
+            ]
+          }
+        ],
+        "franchiseId": "liberty_diner",
+        "createdAt": "2026-07-20T11:50:00.000Z",
+        "lastModifiedBy": "seed_script"
+      },
+      "brownie_sundae": {
+        "id": "brownie_sundae",
+        "name": "Brownie Sundae",
+        "description": "Warm chocolate brownie topped with vanilla ice cream, chocolate sauce, and whipped cream.",
+        "category": "Desserts",
+        "categoryId": "cat_desserts",
+        "price": 6.99,
+        "image": "https://example.com/images/brownie_sundae.jpg",
+        "available": true,
+        "archived": false,
+        "hideInMenu": false,
+        "sortOrder": 1,
+        "prepTime": 4,
+        "dietaryTags": ["vegetarian", "contains-gluten", "contains-dairy"],
+        "allergens": ["gluten", "dairy"],
+        "highlightTags": ["indulgent"],
+        "allowSpecialInstructions": true,
+        "franchiseId": "liberty_diner",
+        "createdAt": "2026-07-20T11:55:00.000Z",
+        "lastModifiedBy": "seed_script"
+      },
+      "all_day_breakfast_plate": {
+        "id": "all_day_breakfast_plate",
+        "name": "All-Day Breakfast Plate",
+        "description": "Two eggs any style, choice of bacon or sausage, hash browns, and toast.",
+        "category": "Breakfast All Day",
+        "categoryId": "cat_breakfast",
+        "price": 10.99,
+        "image": "https://example.com/images/breakfast_plate.jpg",
+        "available": true,
+        "archived": false,
+        "hideInMenu": false,
+        "sortOrder": 0,
+        "prepTime": 12,
+        "dietaryTags": ["contains-gluten", "contains-dairy"],
+        "allergens": ["gluten", "dairy", "egg"],
+        "highlightTags": ["all-day"],
+        "allowSpecialInstructions": true,
+        "customizationGroups": [
+          {
+            "label": "Eggs",
+            "type": "single",
+            "required": true,
+            "options": ["Scrambled", "Over Easy", "Over Medium", "Sunny Side Up"]
+          },
+          {
+            "label": "Meat",
+            "type": "single",
+            "required": true,
+            "options": ["Bacon", "Sausage", "No Meat (-$1.50)"]
+          },
+          {
+            "label": "Toast",
+            "type": "single",
+            "required": true,
+            "options": ["White", "Wheat", "Sourdough", "English Muffin"]
+          }
+        ],
+        "franchiseId": "liberty_diner",
+        "createdAt": "2026-07-20T12:00:00.000Z",
+        "lastModifiedBy": "seed_script"
+      }
+    }
+  },
+
+  "banners": {
+    "liberty_banner_1": {
+      "id": "liberty_banner_1",
+      "title": "All-Day Breakfast!",
+      "subtitle": "Eggs, bacon & hash browns any time.",
+      "ctaText": "Order Breakfast",
+      "active": true,
+      "image": "https://example.com/images/banner_breakfast.jpg",
+      "startDate": "2026-07-01T00:00:00.000Z",
+      "endDate": "2026-12-31T23:59:59.000Z",
+      "action": {
+        "type": "linkCategory",
+        "value": "Breakfast All Day"
+      },
+      "franchiseId": "liberty_diner"
+    },
+    "liberty_banner_2": {
+      "id": "liberty_banner_2",
+      "title": "Burger Night Special",
+      "subtitle": "Any burger + fries for $14.99 after 5pm",
+      "ctaText": "View Burgers",
+      "active": true,
+      "image": "https://example.com/images/banner_burger.jpg",
+      "startDate": "2026-07-01T00:00:00.000Z",
+      "endDate": "2026-12-31T23:59:59.000Z",
+      "action": {
+        "type": "linkCategory",
+        "value": "Burgers"
+      },
+      "franchiseId": "liberty_diner"
+    }
+  },
+
+  "config": {
+    "liberty_diner": {
+      "features": {
+        "statusEnabled": true,
+        "inventoryEnabled": false,
+        "forceLogin": false,
+        "phoneAuthEnabled": true,
+        "dynamicPricingEnabled": false,
+        "recurrenceEnabled": false,
+        "enableGuestMode": true,
+        "enableDemoMode": false,
+        "googleAuthEnabled": true,
+        "appleAuthEnabled": false,
+        "supportEnabled": true,
+        "segmentationEnabled": false,
+        "languageEnabled": true,
+        "loyaltyEnabled": true,
+        "facebookAuthEnabled": true,
+        "nutritionEnabled": false,
+        "pizzaCustomizationConfig": null
+      },
+      "ui_config": {
+        "primaryColor": "#1B4F72",
+        "secondaryColor": "#F4D03F",
+        "accentColor": "#27AE60",
+        "fontFamily": "Roboto",
+        "logoUrl": "https://storage.googleapis.com/doughboyspizzeria-2b3d2.firebasestorage.app/logos/liberty_diner_placeholder.png",
+        "showNutrition": false,
+        "showAllergens": true
+      },
+      "branding": {
+        "displayName": "Liberty Diner",
+        "tagline": "Classic American Comfort Food",
+        "primaryColor": "#1B4F72",
+        "secondaryColor": "#F4D03F"
+      }
+    }
+  },
+
+  "analytics_summaries": {
+    "liberty_diner": {
+      "default_2026-07": {
+        "period": "2026-07",
+        "reportType": "monthly",
+        "totalOrders": 0,
+        "totalRevenue": 0,
+        "uniqueCustomers": 0,
+        "averageOrderValue": 0,
+        "mostPopularItem": null,
+        "franchiseId": "liberty_diner",
+        "createdAt": "2026-07-21T00:00:00.000Z",
+        "updatedAt": "2026-07-21T00:00:00.000Z",
+        "notes": "Seed placeholder – no real orders yet"
+      }
+    }
+  }
+}
