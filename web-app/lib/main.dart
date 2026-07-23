@@ -4,7 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter_localizations/flutter_localizations.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 // === SHARED_CORE BARREL ===
 import 'package:shared_core/shared_core.dart' as shared;
 
@@ -223,6 +223,23 @@ class _FranchiseAuthenticatedRootState
               adminUser.defaultFranchise ??
                   adminUser.franchiseIds.firstOrNull ??
                   'test');
+
+          try {
+            final currentFranchiseId = franchiseProvider.currentFranchiseId;
+            if (currentFranchiseId.isNotEmpty &&
+                currentFranchiseId != 'unknown') {
+              final docSnapshot = await FirebaseFirestore.instance
+                  .collection('franchises')
+                  .doc(currentFranchiseId)
+                  .get();
+              if (docSnapshot.exists) {
+                final brandingData = docSnapshot.data() as Map<String, dynamic>;
+                franchiseProvider.setBrandingFromFranchiseDoc(brandingData);
+              }
+            }
+          } catch (e) {
+            // Silent failure
+          }
         }
       });
 
