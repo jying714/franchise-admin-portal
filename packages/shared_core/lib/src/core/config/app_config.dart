@@ -144,7 +144,11 @@ class AppConfig {
 
   // Franchise-aware current instance (expand with Provider)
   static AppConfig get current {
-    // TODO: Pull from FranchiseProvider for dynamic branding/api
+    // AppConfig.current is still a static fallback.
+    // Runtime franchise-scoped branding/config should come from FranchiseProvider
+    // (currentPrimaryColorHex, currentBranding, setBrandingFromFranchiseDoc, etc.).
+    // Wiring AppConfig.current to FranchiseProvider is Phase 1 Workstream B work.
+    // Do not add fields here; extend the provider loading path instead.
     return const AppConfig(
       apiBaseUrl: 'https://api.yourdomain.com',
       brandingColorHex: '#E31837',
