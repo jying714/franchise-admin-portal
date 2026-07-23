@@ -8,6 +8,11 @@ Safety:
   - Never git push / never remote
   - Requires explicit /approve confirm
   - Path must stay inside allowed roots (same as file_reader)
+
+Match strategy for BEFORE → AFTER:
+  1. Exact substring
+  2. Indent-flexible (line sequence equal after lstrip)
+  3. Fuzzy difflib window (high threshold, unique winner)
 """
 
 from __future__ import annotations
@@ -17,6 +22,7 @@ import re
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
+from difflib import SequenceMatcher
 from pathlib import Path
 from typing import List, Optional, Tuple
 
@@ -25,6 +31,10 @@ from file_reader import ALLOWED_ROOTS, _is_allowed
 
 PROPOSALS_DIR_NAME = "orchestrator/proposals"
 LAST_POINTER = "last_id.txt"
+
+# Fuzzy match: require very high similarity and a clear margin over runner-up
+FUZZY_MIN_RATIO = 0.90
+FUZZY_MIN_MARGIN = 0.05
 
 
 @dataclass
@@ -212,11 +222,8 @@ def _flexible_span(
     Find a unique span in `original` whose lines match `before` after lstrip().
 
     Returns (start_char, end_char, base_indent) or None if not found uniquely.
-    Handles model output that dropped leading indentation or collapsed a
-    soft line-break, as long as the stripped line sequence still matches.
     """
     before_lines = [ln.rstrip("\r") for ln in before.strip("\n").splitlines()]
-    # Drop purely empty lines at the edges only
     while before_lines and before_lines[0].strip() == "":
         before_lines.pop(0)
     while before_lines and before_lines[-1].strip() == "":
@@ -226,11 +233,9 @@ def _flexible_span(
 
     before_stripped = [ln.strip() for ln in before_lines]
     orig_lines = original.splitlines(keepends=True)
-    # Build list of (line_index, stripped_content) skipping nothing — empty
-    # lines in the file must still align if before has an empty line.
     orig_stripped = [ln.rstrip("\r\n").strip() for ln in orig_lines]
 
-    matches: List[Tuple[int, int]] = []  # (start_line, end_line_exclusive)
+    matches: List[Tuple[int, int]] = []
     n = len(before_stripped)
     for i in range(len(orig_stripped) - n + 1):
         if orig_stripped[i : i + n] == before_stripped:
@@ -240,13 +245,83 @@ def _flexible_span(
         return None
 
     start_line, end_line = matches[0]
-    # Character offsets
     start_char = sum(len(orig_lines[k]) for k in range(start_line))
     end_char = sum(len(orig_lines[k]) for k in range(end_line))
-    # If original had a trailing newline after the block that we should keep,
-    # end_char already includes keepends from those lines.
     base_indent = _leading_ws(orig_lines[start_line].rstrip("\r\n"))
     return start_char, end_char, base_indent
+
+
+def _fuzzy_span(
+    original: str, before: str
+) -> Optional[Tuple[int, int, str, float]]:
+    """
+    Find a unique high-similarity window in `original` for `before`.
+
+    Compares stripped line sequences with difflib.SequenceMatcher over
+    sliding windows sized around the BEFORE line count. Requires ratio
+    >= FUZZY_MIN_RATIO and a clear margin over the second-best hit.
+
+    Returns (start_char, end_char, base_indent, ratio) or None.
+    """
+    before_lines = [ln.rstrip("\r") for ln in before.strip("\n").splitlines()]
+    while before_lines and before_lines[0].strip() == "":
+        before_lines.pop(0)
+    while before_lines and before_lines[-1].strip() == "":
+        before_lines.pop()
+    if not before_lines:
+        return None
+
+    before_stripped = [ln.strip() for ln in before_lines if ln.strip() != "" or True]
+    # Keep structure but normalize for comparison
+    before_norm = "\n".join(ln.strip() for ln in before_lines)
+    n = len(before_lines)
+    if n < 1:
+        return None
+
+    orig_lines = original.splitlines(keepends=True)
+    if not orig_lines:
+        return None
+
+    # Window sizes: exact n, and ±1/±2 for collapsed/expanded line breaks
+    window_sizes = sorted({max(1, n + d) for d in (-2, -1, 0, 1, 2, 3)})
+
+    scored: List[Tuple[float, int, int]] = []  # (ratio, start_line, end_line)
+
+    for win in window_sizes:
+        if win > len(orig_lines):
+            continue
+        for i in range(len(orig_lines) - win + 1):
+            window_text = "".join(orig_lines[i : i + win])
+            window_norm = "\n".join(
+                ln.rstrip("\r\n").strip() for ln in orig_lines[i : i + win]
+            )
+            ratio = SequenceMatcher(None, before_norm, window_norm).ratio()
+            if ratio >= FUZZY_MIN_RATIO - 0.02:  # collect near-misses for margin check
+                scored.append((ratio, i, i + win))
+
+    if not scored:
+        return None
+
+    scored.sort(key=lambda t: t[0], reverse=True)
+    best_ratio, start_line, end_line = scored[0]
+
+    if best_ratio < FUZZY_MIN_RATIO:
+        return None
+
+    # Unique winner: runner-up must be clearly worse (or non-overlapping same region)
+    second = 0.0
+    for ratio, s, e in scored[1:]:
+        # Ignore overlapping windows of the same region
+        if not (s < end_line and e > start_line):
+            second = max(second, ratio)
+
+    if second >= best_ratio - FUZZY_MIN_MARGIN and second >= FUZZY_MIN_RATIO:
+        return None  # ambiguous
+
+    start_char = sum(len(orig_lines[k]) for k in range(start_line))
+    end_char = sum(len(orig_lines[k]) for k in range(end_line))
+    base_indent = _leading_ws(orig_lines[start_line].rstrip("\r\n"))
+    return start_char, end_char, base_indent, best_ratio
 
 
 def _reindent_block(block: str, base_indent: str) -> str:
@@ -258,7 +333,6 @@ def _reindent_block(block: str, base_indent: str) -> str:
     if not lines:
         return block
 
-    # Find minimum leading indent among non-empty lines in the proposal block
     non_empty = [ln for ln in lines if ln.strip()]
     if not non_empty:
         return block
@@ -274,6 +348,22 @@ def _reindent_block(block: str, base_indent: str) -> str:
         content = ln.lstrip(" \t")
         out.append(base_indent + rel + content)
     return "\n".join(out)
+
+
+def _write_span(
+    original: str,
+    start_char: int,
+    end_char: int,
+    after: str,
+    base_indent: str,
+) -> str:
+    reindented_after = _reindent_block(after, base_indent)
+    # Preserve trailing newline if the replaced span had one
+    if original[start_char:end_char].endswith("\n") and not reindented_after.endswith(
+        "\n"
+    ):
+        reindented_after += "\n"
+    return original[:start_char] + reindented_after + original[end_char:]
 
 
 def apply_proposal(project_root: Path, prop: Proposal) -> Tuple[bool, str]:
@@ -321,28 +411,32 @@ def apply_proposal(project_root: Path, prop: Proposal) -> Tuple[bool, str]:
 
     # 2) Flexible indent match: line sequence equal after lstrip()
     span = _flexible_span(original, before)
-    if span is None:
+    if span is not None:
+        start_char, end_char, base_indent = span
+        updated = _write_span(original, start_char, end_char, after, base_indent)
+        full.write_text(updated, encoding="utf-8")
+        mark_status(project_root, prop, "applied")
         return (
-            False,
-            "BEFORE text not found in the file (exact and indent-flexible match failed). "
-            "Refusing apply to avoid corrupting source. Apply manually.",
+            True,
+            f"Applied to {prop.file_path} via indent-flexible match "
+            f"(local only — not committed, not pushed).",
         )
 
-    start_char, end_char, base_indent = span
-    reindented_after = _reindent_block(after, base_indent)
-    updated = original[:start_char] + reindented_after + original[end_char:]
-    # Preserve a trailing newline if the original file ended the span mid-file
-    # and the next char is not a newline but the replaced region had one.
-    if end_char < len(original) and not reindented_after.endswith("\n") and original[end_char : end_char + 1] != "\n":
-        # If we removed a newline that separated from the next line, add one back
-        if original[start_char:end_char].endswith("\n"):
-            reindented_after += "\n"
-            updated = original[:start_char] + reindented_after + original[end_char:]
+    # 3) Fuzzy match: model slightly rewrote BEFORE / collapsed lines
+    fuzzy = _fuzzy_span(original, before)
+    if fuzzy is not None:
+        start_char, end_char, base_indent, ratio = fuzzy
+        updated = _write_span(original, start_char, end_char, after, base_indent)
+        full.write_text(updated, encoding="utf-8")
+        mark_status(project_root, prop, "applied")
+        return (
+            True,
+            f"Applied to {prop.file_path} via fuzzy match (ratio={ratio:.2f}) "
+            f"(local only — not committed, not pushed).",
+        )
 
-    full.write_text(updated, encoding="utf-8")
-    mark_status(project_root, prop, "applied")
     return (
-        True,
-        f"Applied to {prop.file_path} via indent-flexible match "
-        f"(local only — not committed, not pushed).",
+        False,
+        "BEFORE text not found in the file (exact, indent-flexible, and fuzzy match failed). "
+        "Refusing apply to avoid corrupting source. Apply manually.",
     )
