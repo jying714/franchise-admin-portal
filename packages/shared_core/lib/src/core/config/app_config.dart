@@ -3,6 +3,11 @@
 // Franchise-aware via current getter (integrate FranchiseProvider as needed).
 // Pure Dart core; UI-specific (e.g., Color) can delegate to UiConfig if stricter separation required.
 
+/// This is the shared_core application config model.
+/// Values are currently static / default until franchise-scoped loading is wired.
+/// Franchise-scoped config is the responsibility of Phase 1 Workstream B.
+/// Do not add new fields in this file until scoping work is complete.
+
 class AppConfig {
   // ===== FIRESTORE COLLECTION NAMES =====
   static const String usersCollection = 'users';
