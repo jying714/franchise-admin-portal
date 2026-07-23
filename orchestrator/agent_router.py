@@ -3,6 +3,11 @@ agent_router.py
 ---------------
 Decides which specialized agent should handle a task and
 builds the final prompt that is sent to Ollama.
+
+Status / summary / progress tasks are specially handled:
+  - Forced to the reviewer agent
+  - Forced to the stronger 14b model
+  - Extra hard rules that make STATUS.md authoritative
 """
 
 from __future__ import annotations
@@ -16,13 +21,17 @@ from context_loader import build_system_prompt, load_mandatory_context
 
 
 # Simple keyword-based routing (good enough for Phase 0)
-# Later we can replace this with a small LLM classification step.
 ROUTING_RULES = [
     (r"\b(firestore|schema|config|provider|shared_core|backend|stripe|webhook|security.?rule)\b", "backend"),
     (r"\b(web.?app|dashboard|hq.?owner|design.?branding|flutter.?web|ui.?component)\b", "web_frontend"),
     (r"\b(mobile|android|ios|dynamic.?ui|restaurant.?type|offline|shared.?core)\b", "mobile_shared"),
     (r"\b(test|qa|analyze|regression|device)\b", "tester"),
     (r"\b(review|architecture|pr|quality|docs?)\b", "reviewer"),
+]
+
+# Patterns that indicate a status / summary / progress task
+STATUS_TASK_PATTERNS = [
+    r"\b(status|summarize|summary|progress|remaining|acceptance.?criteria|what.?is.?left|phase.?\d+.?status)\b",
 ]
 
 
@@ -36,13 +45,20 @@ class TaskResult:
     reason: str
 
 
+def is_status_task(task_text: str) -> bool:
+    """Return True if this looks like a status / summary / progress query."""
+    lower = task_text.lower()
+    return any(re.search(p, lower, re.IGNORECASE) for p in STATUS_TASK_PATTERNS)
+
+
 def detect_agent(task_text: str) -> str:
     """Return the best agent name for the given task description."""
+    if is_status_task(task_text):
+        return "reviewer"
     lower = task_text.lower()
     for pattern, agent in ROUTING_RULES:
         if re.search(pattern, lower, re.IGNORECASE):
             return agent
-    # Default: orchestrator itself (planning / clarification)
     return "orchestrator"
 
 
@@ -79,21 +95,24 @@ def prepare_task(
 ) -> TaskResult:
     """
     Full preparation pipeline:
-      1. Load mandatory context (once per process is enough, but safe to re-call)
-      2. Choose agent
+      1. Load mandatory context
+      2. Choose agent (status tasks forced to reviewer)
       3. Build system prompt
-      4. Decide human-approval flag
+      4. Force stronger model for status tasks
+      5. Decide human-approval flag
+      6. Build user prompt with extra status rules when needed
     """
     mandatory = load_mandatory_context(project_root)
 
+    status = is_status_task(task_text)
     agent = preferred_agent or detect_agent(task_text)
     system = build_system_prompt(project_root, agent, mandatory)
 
     requires_approval, reason = needs_human_approval(task_text, agent)
 
-    # Default model mapping (can be overridden by env or config)
+    # Default model mapping
     default_models = {
-        "orchestrator": "qwen2.5-coder:7b",      # light & always loaded
+        "orchestrator": "qwen2.5-coder:7b",
         "backend": "qwen2.5-coder:14b",
         "web_frontend": "qwen2.5-coder:14b",
         "mobile_shared": "qwen2.5-coder:14b",
@@ -101,17 +120,47 @@ def prepare_task(
         "reviewer": "qwen2.5-coder:7b",
     }
     models = model_map or default_models
-    model = models.get(agent, "qwen2.5-coder:14b")
 
-    user_prompt = f"""## TASK
-{task_text}
+    # Status tasks always get the stronger 14b model
+    if status:
+        model = "qwen2.5-coder:14b"
+    else:
+        model = models.get(agent, "qwen2.5-coder:14b")
 
-## INSTRUCTIONS
-- Stay strictly inside the current phase (Phase 0 right now).
+    # Base instructions
+    base_instructions = """- Stay strictly inside the current phase (Phase 0 right now).
 - Propose concrete, small, reviewable changes only.
 - Never invent file paths that do not exist.
 - If the task is out of scope, say so clearly and stop.
-- End your response with a short "Next steps for human" section.
+- End your response with a short "Next steps for human" section."""
+
+    # Extra hard rules for status / summary tasks
+    status_rules = """
+## STATUS-TASK RULES (mandatory — follow exactly)
+- STATUS.md is the single live source of truth for what is already done.
+- Prefer STATUS.md over any older language found in other documents.
+- Only mark an item as incomplete if STATUS.md (or the current phase task file) still lists it as open.
+- Do NOT re-open or re-list items that are already checked off in STATUS.md.
+- Do NOT invent missing work.
+- Produce a clean checklist of what is done vs what is still open.
+- Then list only the real remaining items that agents can safely propose under human review.
+- Keep the tone factual and concise.
+"""
+
+    if status:
+        user_prompt = f"""## TASK
+{task_text}
+
+## INSTRUCTIONS
+{base_instructions}
+{status_rules}
+"""
+    else:
+        user_prompt = f"""## TASK
+{task_text}
+
+## INSTRUCTIONS
+{base_instructions}
 """
 
     return TaskResult(

@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 22, 2026 (evening)  
+**Last Updated**: July 22, 2026 (late evening)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch**: `feat/onboarding-4step`
 
@@ -22,6 +22,7 @@
 - [x] Agent routing + human-approval gates implemented
 - [x] Interactive CLI working (`docker exec -it franchise-orchestrator python main.py`)
 - [x] Proposal-only safety (agents never write files or Firestore)
+- [x] `STATUS.md` live snapshot mechanism in place and used by agents
 - [x] Core documentation already present and substantial:
   - `AGENT_SYSTEM.md`
   - `ARCHITECTURE.md`
@@ -32,13 +33,12 @@
   - `tasks/Phase0.md` + `tasks/README.md`
   - All package/app READMEs
 
-### What is still open in Phase 0
+### What is still open in Phase 0 (only these two items)
 
-- [ ] Improve agent context quality (this STATUS.md is the first step)
-- [ ] Expand `ARCHITECTURE.md` with any remaining Risk Register / localization details if needed
-- [ ] Create simple weekly + PR review templates (if not already present)
-- [ ] Run one tiny, safe, fully human-reviewed test task in `shared_core` (e.g. comment or docstring cleanup)
-- [ ] Human sign-off that Phase 0 exit criteria are met
+- [ ] Run **one tiny, safe, fully human-reviewed test task** in `shared_core` (example: improve a comment or docstring)
+- [ ] Human Phase 0 exit sign-off
+
+Nothing else is open in Phase 0.
 
 ---
 
@@ -56,7 +56,7 @@
 
 ## Active Priorities (in order)
 
-1. Finish remaining Phase 0 items above (documentation polish + one safe test task)
+1. Finish the two remaining Phase 0 items above
 2. Human Phase 0 exit approval
 3. Begin Phase 1 – full dynamic config rollout + Design & Branding live preview
 
