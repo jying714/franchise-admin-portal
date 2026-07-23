@@ -16,8 +16,11 @@ from __future__ import annotations
 import logging
 import re
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
+from rich.console import Console
+
+console = Console()
 logger = logging.getLogger("orchestrator.file_reader")
 
 # Roots the agent is allowed to read from (relative to PROJECT_ROOT)
@@ -46,12 +49,13 @@ ALLOWED_ROOT_FILES = {
 # Max characters we inject per file (keeps context windows sane)
 MAX_CHARS_PER_FILE = 24_000
 
-# Regex that catches common project paths mentioned in a task
+# Regex that catches common project paths mentioned in a task.
+# Trailing punctuation (. , ; : ! ? ) is allowed and stripped.
 PATH_PATTERN = re.compile(
-    r"(?:^|[\s`\"'(])"                          # start or whitespace/quote
+    r"(?:^|[\s`\"'(])"  # start or whitespace/quote/paren
     r"((?:packages|mobile_app|web-app|functions|docs|tasks|orchestrator|prompts)"
     r"/[\w./\-]+\.(?:dart|ts|js|tsx|jsx|md|yaml|yml|json|txt|py))"
-    r"(?:$|[\s`\"')])",                         # end or whitespace/quote
+    r"(?=[\s`\"')\].,;:!?]|$)",  # lookahead: whitespace, quote, or common punctuation
     re.IGNORECASE,
 )
 
@@ -125,12 +129,16 @@ def load_mentioned_files(
     """
     paths = extract_mentioned_paths(task_text)[:max_files]
     if not paths:
+        console.print("[yellow]No source-file paths detected in task text.[/yellow]")
         return ""
 
+    console.print(f"[bold cyan]Loading {len(paths)} mentioned source file(s)...[/bold cyan]")
     blocks = []
     for rel in paths:
         content, ok = read_source_file(project_root, rel)
         status = "OK" if ok else "FAILED"
+        marker = "✓" if ok else "✗"
+        console.print(f"  {marker} {rel}  [{status}]  ({len(content)} chars)")
         blocks.append(
             f"### FILE: `{rel}`  [{status}]\n"
             f"```\n{content}\n```"
