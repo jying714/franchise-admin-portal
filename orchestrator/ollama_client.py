@@ -6,7 +6,7 @@ Uses the internal Docker network hostname (http://ollama:11434).
 
 Features:
   - Configurable num_ctx (default 8192 — safer for 14B models)
-  - Automatic fallback to 7B model on HTTP 500 (OOM / internal error)
+  - Automatic fallback to 7B model on HTTP 500 or persistent ReadTimeout
   - Retry decorator no longer swallows 500s before fallback can run
 """
 
@@ -28,14 +28,15 @@ def _is_retryable(exc: BaseException) -> bool:
     if isinstance(exc, httpx.HTTPStatusError):
         # 500 is usually OOM / model crash → fall through to fallback, do not retry same model
         return exc.response.status_code in (429, 502, 503, 504)
-    # Network blips are retryable
+    # Network blips and temporary read timeouts are retryable
     return isinstance(exc, (httpx.ConnectError, httpx.ReadTimeout, httpx.WriteTimeout))
 
 
 class OllamaClient:
     def __init__(self, base_url: str = "http://ollama:11434"):
         self.base_url = base_url.rstrip("/")
-        self._client = httpx.AsyncClient(timeout=180.0)  # longer timeout for large models
+        # 10-minute timeout — 14b under full mandatory context can think for several minutes
+        self._client = httpx.AsyncClient(timeout=600.0)
 
     async def close(self):
         await self._client.aclose()
@@ -58,8 +59,8 @@ class OllamaClient:
     ) -> str:
         """
         Non-streaming generation.
-        On HTTP 500 (typical OOM / internal error) automatically retries once
-        with the lighter 7B model and a safer context window.
+        On HTTP 500 (typical OOM / internal error) or persistent ReadTimeout,
+        automatically retries once with the lighter 7B model and a safer context window.
         """
         try:
             return await self._generate_once(
@@ -69,10 +70,16 @@ class OllamaClient:
                 temperature=temperature,
                 num_ctx=num_ctx,
             )
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 500 and model != FALLBACK_MODEL:
+        except (httpx.HTTPStatusError, httpx.ReadTimeout) as e:
+            should_fallback = False
+            if isinstance(e, httpx.HTTPStatusError) and e.response.status_code == 500:
+                should_fallback = True
+            elif isinstance(e, httpx.ReadTimeout):
+                should_fallback = True
+
+            if should_fallback and model != FALLBACK_MODEL:
                 logger.warning(
-                    f"Model {model} returned 500 — falling back to {FALLBACK_MODEL} with num_ctx=8192"
+                    f"Model {model} failed ({type(e).__name__}) — falling back to {FALLBACK_MODEL} with num_ctx=8192"
                 )
                 return await self._generate_once(
                     model=FALLBACK_MODEL,
