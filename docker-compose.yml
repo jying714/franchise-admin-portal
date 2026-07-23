@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   ollama:
     image: ollama/ollama:latest
@@ -29,6 +27,7 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
+    working_dir: /app/orchestrator
     environment:
       - OLLAMA_HOST=http://ollama:11434
       - PROJECT_ROOT=/app
