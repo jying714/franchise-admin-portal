@@ -315,7 +315,24 @@ class _FranchiseAuthenticatedRootState
               ),
               appBarTheme: const AppBarTheme(elevation: 2),
             ),
-            darkTheme: _darkTheme,
+            darkTheme: ThemeData(
+              brightness: Brightness.dark,
+              fontFamily: shared.DesignTokens.fontFamily,
+              primaryColor: DesignTokens.primaryColor,
+              scaffoldBackgroundColor: DesignTokens.backgroundColorDark,
+              colorScheme: ColorScheme.dark(
+                primary: DesignTokens.primaryColor,
+                onPrimary: Colors.white,
+                secondary: DesignTokens.secondaryColor,
+                onSecondary: Colors.white,
+                error: DesignTokens.errorColor,
+                onError: Colors.white,
+                background: DesignTokens.backgroundColorDark,
+                onBackground: DesignTokens.textColorDark,
+                surface: DesignTokens.surfaceColorDark,
+                onSurface: DesignTokens.textColorDark,
+              ),
+            ),
             themeMode:
                 Provider.of<ThemeProvider>(context, listen: true).themeMode ??
                     ThemeMode.system,
