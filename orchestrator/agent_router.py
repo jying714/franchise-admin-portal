@@ -6,7 +6,8 @@ builds the final prompt that is sent to Ollama.
 
 Status / summary / progress tasks are specially handled:
   - Forced to the reviewer agent
-  - Forced to the stronger 14b model
+  - Prefer the stronger 14b model (with automatic 7b fallback)
+  - Lower num_ctx (8192) to stay within memory limits
   - Extra hard rules that make STATUS.md authoritative
 """
 
@@ -43,6 +44,7 @@ class TaskResult:
     user_prompt: str
     requires_human_approval: bool
     reason: str
+    num_ctx: int = 8192
 
 
 def is_status_task(task_text: str) -> bool:
@@ -98,7 +100,7 @@ def prepare_task(
       1. Load mandatory context
       2. Choose agent (status tasks forced to reviewer)
       3. Build system prompt
-      4. Force stronger model for status tasks
+      4. Choose model + num_ctx
       5. Decide human-approval flag
       6. Build user prompt with extra status rules when needed
     """
@@ -121,11 +123,14 @@ def prepare_task(
     }
     models = model_map or default_models
 
-    # Status tasks always get the stronger 14b model
+    # Status tasks prefer the stronger 14b (client will fall back to 7b on 500)
+    # and use a safer context window.
     if status:
         model = "qwen2.5-coder:14b"
+        num_ctx = 8192
     else:
         model = models.get(agent, "qwen2.5-coder:14b")
+        num_ctx = 8192  # default safer value for all tasks
 
     # Base instructions
     base_instructions = """- Stay strictly inside the current phase (Phase 0 right now).
@@ -170,4 +175,5 @@ def prepare_task(
         user_prompt=user_prompt,
         requires_human_approval=requires_approval,
         reason=reason,
+        num_ctx=num_ctx,
     )

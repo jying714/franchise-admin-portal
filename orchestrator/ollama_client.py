@@ -3,6 +3,10 @@ ollama_client.py
 ----------------
 Thin async wrapper around the Ollama HTTP API.
 Uses the internal Docker network hostname (http://ollama:11434).
+
+Features:
+  - Configurable num_ctx (default 8192 — safer for 14B models)
+  - Automatic fallback to 7B model on HTTP 500 (OOM / internal error)
 """
 
 from __future__ import annotations
@@ -15,11 +19,13 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger("orchestrator.ollama")
 
+FALLBACK_MODEL = "qwen2.5-coder:7b"
+
 
 class OllamaClient:
     def __init__(self, base_url: str = "http://ollama:11434"):
         self.base_url = base_url.rstrip("/")
-        self._client = httpx.AsyncClient(timeout=120.0)
+        self._client = httpx.AsyncClient(timeout=180.0)  # longer timeout for large models
 
     async def close(self):
         await self._client.aclose()
@@ -31,19 +37,51 @@ class OllamaClient:
         data = resp.json()
         return [m["name"] for m in data.get("models", [])]
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=20))
     async def generate(
         self,
         model: str,
         system: str,
         prompt: str,
         temperature: float = 0.2,
+        num_ctx: int = 8192,
         stream: bool = False,
     ) -> str:
         """
-        Non-streaming generation (preferred for agent replies).
-        Returns the full response text.
+        Non-streaming generation.
+        On HTTP 500 (typical OOM / internal error) automatically retries once
+        with the lighter 7B model.
         """
+        try:
+            return await self._generate_once(
+                model=model,
+                system=system,
+                prompt=prompt,
+                temperature=temperature,
+                num_ctx=num_ctx,
+            )
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 500 and model != FALLBACK_MODEL:
+                logger.warning(
+                    f"Model {model} returned 500 — falling back to {FALLBACK_MODEL}"
+                )
+                return await self._generate_once(
+                    model=FALLBACK_MODEL,
+                    system=system,
+                    prompt=prompt,
+                    temperature=temperature,
+                    num_ctx=min(num_ctx, 8192),
+                )
+            raise
+
+    @retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=1, min=2, max=15))
+    async def _generate_once(
+        self,
+        model: str,
+        system: str,
+        prompt: str,
+        temperature: float,
+        num_ctx: int,
+    ) -> str:
         payload = {
             "model": model,
             "system": system,
@@ -51,11 +89,11 @@ class OllamaClient:
             "stream": False,
             "options": {
                 "temperature": temperature,
-                "num_ctx": 16384,          # generous context for docs + code
+                "num_ctx": num_ctx,
             },
         }
 
-        logger.info(f"Calling Ollama model={model}  temp={temperature}")
+        logger.info(f"Calling Ollama model={model}  temp={temperature}  num_ctx={num_ctx}")
         resp = await self._client.post(f"{self.base_url}/api/generate", json=payload)
         resp.raise_for_status()
         data = resp.json()
@@ -67,6 +105,7 @@ class OllamaClient:
         system: str,
         prompt: str,
         temperature: float = 0.2,
+        num_ctx: int = 8192,
     ) -> AsyncIterator[str]:
         """Streaming variant (useful for long responses)."""
         payload = {
@@ -76,7 +115,7 @@ class OllamaClient:
             "stream": True,
             "options": {
                 "temperature": temperature,
-                "num_ctx": 16384,
+                "num_ctx": num_ctx,
             },
         }
 
