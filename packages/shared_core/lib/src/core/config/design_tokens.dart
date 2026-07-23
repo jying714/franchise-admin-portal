@@ -2,6 +2,10 @@
 
 /// Master Unified DesignTokens - Single source of truth for the entire platform.
 /// Pure Dart (no Flutter types). Used by web, mobile, and future functions.
+/// This is the shared_core design tokens model.
+/// Values are currently static defaults.
+/// Franchise-scoped / dynamic theming is the responsibility of Phase 1 Workstream B.
+/// Do not add new fields in this file until scoping work is complete.
 class DesignTokens {
   // ----------- Typography -----------
   static const String fontFamily = 'Montserrat';
