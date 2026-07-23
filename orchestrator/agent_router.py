@@ -154,7 +154,7 @@ def prepare_task(
 
 ## BEFORE
 ```dart
-<paste the exact current lines you will replace — copy whitespace from the source>
+<paste the exact current lines you will replace>
 ```
 
 ## AFTER
@@ -162,8 +162,9 @@ def prepare_task(
 <paste the exact new lines for that same region only>
 ```
 
-3. Only include the region you change (usually the docstring or comment lines). Do not dump the whole file.
-4. Short "Next steps for human".
+3. CRITICAL for apply: In BEFORE, copy indentation and line breaks from the RELEVANT SOURCE FILES block byte-for-byte. Do not reformat, do not collapse multi-line statements onto one line, do not strip leading spaces.
+4. Only include the region you change (usually the docstring or comment lines). Do not dump the whole file.
+5. Short "Next steps for human".
 
 Only stop if the source file is missing/blocked. Do not refuse a pure docstring or comment improvement.
 
