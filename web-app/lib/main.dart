@@ -297,7 +297,24 @@ class _FranchiseAuthenticatedRootState
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'Franchise Admin Portal',
-            theme: _lightTheme,
+            theme: ThemeData(
+              fontFamily: shared.DesignTokens.fontFamily,
+              primaryColor: DesignTokens.primaryColor,
+              scaffoldBackgroundColor: DesignTokens.backgroundColor,
+              colorScheme: ColorScheme.light(
+                primary: DesignTokens.primaryColor,
+                onPrimary: Colors.white,
+                secondary: DesignTokens.secondaryColor,
+                onSecondary: Colors.white,
+                error: DesignTokens.errorColor,
+                onError: Colors.white,
+                background: DesignTokens.backgroundColor,
+                onBackground: DesignTokens.textColor,
+                surface: DesignTokens.surfaceColor,
+                onSurface: DesignTokens.textColor,
+              ),
+              appBarTheme: const AppBarTheme(elevation: 2),
+            ),
             darkTheme: _darkTheme,
             themeMode:
                 Provider.of<ThemeProvider>(context, listen: true).themeMode ??
