@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'dart:async' show Zone, runZonedGuarded;
 import 'package:franchise_mobile_app/core/widgets/global_error_boundary.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/generated/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_mobile_app/core/utils/app_local_storage.dart';
 import 'package:app_links/app_links.dart'; // P2 deep linking foundations

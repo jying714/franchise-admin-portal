@@ -13,7 +13,7 @@ import 'package:franchise_mobile_app/widgets/customize_and_add_to_cart_button.da
 import 'package:franchise_mobile_app/widgets/add_to_cart_button.dart';
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/widgets/header/profile_icon_button.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/generated/app_localizations.dart';
 
 class ItemScreen extends StatefulWidget {
   final String itemId;

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/features/loyalty/loyalty_screen.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/generated/app_localizations.dart';
 
 /// Reusable loyalty points summary widget for Profile and other screens.
 /// Franchise-scoped via FranchiseProvider. Taps through to full LoyaltyScreen.

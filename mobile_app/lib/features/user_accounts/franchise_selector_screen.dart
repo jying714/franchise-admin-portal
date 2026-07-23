@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/generated/app_localizations.dart';
 
 class FranchiseSelectorScreen extends StatefulWidget {
   const FranchiseSelectorScreen({super.key});

@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/shared_core.dart' show DesignTokens;
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/generated/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/sign_out_button.dart';
 import 'package:franchise_mobile_app/widgets/profile_nav_tile.dart';
 import 'package:franchise_mobile_app/widgets/info_tile.dart';

@@ -150,7 +150,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkBackSoon => 'Check back soon for more promotions.';
 
   @override
-  String get checkConnectionAndTryAgain => 'Check your connection and try again.';
+  String get checkConnectionAndTryAgain =>
+      'Check your connection and try again.';
 
   @override
   String get checkConnectionToReload => 'Check your connection to reload.';
@@ -177,7 +178,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirm => 'Confirm';
 
   @override
-  String get confirmDeleteAccount => 'Are you sure you want to delete your account?';
+  String get confirmDeleteAccount =>
+      'Are you sure you want to delete your account?';
 
   @override
   String get confirmPassword => 'Confirm Password';
@@ -310,7 +312,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedbackCommentsLabel => 'Additional comments (optional)';
 
   @override
-  String get feedbackOfflineBody => 'Feedback queued and will be submitted when online.';
+  String get feedbackOfflineBody =>
+      'Feedback queued and will be submitted when online.';
 
   @override
   String get feedbackOfflineTitle => 'Offline Mode';
@@ -457,7 +460,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get loyaltyNoActivitySubtitle => 'Order more to start earning points and rewards.';
+  String get loyaltyNoActivitySubtitle =>
+      'Order more to start earning points and rewards.';
 
   @override
   String get loyaltyNoActivityTitle => 'No loyalty activity yet!';
@@ -494,7 +498,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mainMenuTitle => 'Main Menu';
 
   @override
-  String get menuBeingUpdated => 'Our menu is being updated. Please check back soon.';
+  String get menuBeingUpdated =>
+      'Our menu is being updated. Please check back soon.';
 
   @override
   String menuCategoryLabel(Object categoryName) {
@@ -514,10 +519,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get message => 'Message';
 
   @override
-  String get mustAcceptTerms => 'You must accept the Terms & Privacy Policy to continue.';
+  String get mustAcceptTerms =>
+      'You must accept the Terms & Privacy Policy to continue.';
 
   @override
-  String get mustSignInForAddresses => 'You must be signed in to manage addresses.';
+  String get mustSignInForAddresses =>
+      'You must be signed in to manage addresses.';
 
   @override
   String get mustSignInForCart => 'You must be signed in to view your cart.';
@@ -526,10 +533,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mustSignInForChat => 'You must be signed in to use chat support.';
 
   @override
-  String get mustSignInForFavorites => 'You must be signed in to view favorites.';
+  String get mustSignInForFavorites =>
+      'You must be signed in to view favorites.';
 
   @override
-  String get mustSignInForScheduledOrders => 'You must be signed in to view scheduled orders.';
+  String get mustSignInForScheduledOrders =>
+      'You must be signed in to view scheduled orders.';
 
   @override
   String get myAccount => 'My Account';
@@ -803,7 +812,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get save => 'Save';
 
   @override
-  String scheduledOrderSubtitle(Object frequency, Object nextRun, Object items) {
+  String scheduledOrderSubtitle(
+      Object frequency, Object nextRun, Object items) {
     return 'Frequency: $frequency, Next: $nextRun\\nItems: $items';
   }
 
@@ -856,7 +866,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signInNow => 'Sign in now';
 
   @override
-  String get signInProfileError => 'Sign in succeeded but could not load profile. Try again.';
+  String get signInProfileError =>
+      'Sign in succeeded but could not load profile. Try again.';
 
   @override
   String get signInToFavoriteTooltip => 'Sign in to favorite';
@@ -880,7 +891,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signUpNowButton => 'Sign Up Now';
 
   @override
-  String get signUpProfileFailed => 'Sign up succeeded but profile setup failed. Try again.';
+  String get signUpProfileFailed =>
+      'Sign up succeeded but profile setup failed. Try again.';
 
   @override
   String get startShopping => 'Start Shopping';
@@ -923,7 +935,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tax => 'Tax';
 
   @override
-  String get termsAndPrivacyPolicy => 'By continuing, you agree to our Terms & Privacy Policy.';
+  String get termsAndPrivacyPolicy =>
+      'By continuing, you agree to our Terms & Privacy Policy.';
 
   @override
   String get termsOfService => 'Terms of Service';
@@ -974,7 +987,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcome => 'Welcome';
 
   @override
-  String get welcomeSubtitle => 'Order your favorite pizza or sign in for a full experience.';
+  String get welcomeSubtitle =>
+      'Order your favorite pizza or sign in for a full experience.';
 
   @override
   String welcomeTitle(Object franchiseName) {
@@ -1029,13 +1043,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearCart => 'Clear Cart';
 
   @override
-  String get clearCartConfirmation => 'Are you sure you want to clear your cart?';
+  String get clearCartConfirmation =>
+      'Are you sure you want to clear your cart?';
 
   @override
   String get removeItem => 'Remove item';
 
   @override
-  String get selectedTimeOutsideBusinessHours => 'Selected time is outside business hours.';
+  String get selectedTimeOutsideBusinessHours =>
+      'Selected time is outside business hours.';
 
   @override
   String get orderType => 'Order Type';
@@ -1113,7 +1129,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bulkUploadCategories => 'Bulk Upload Categories';
 
   @override
-  String get bulkUploadInstructions => 'Paste a CSV (name,image,description) with one category per line below. First line is header.';
+  String get bulkUploadInstructions =>
+      'Paste a CSV (name,image,description) with one category per line below. First line is header.';
 
   @override
   String get bulkUploadPasteCsv => 'Paste CSV data here';
@@ -1134,7 +1151,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noCategoriesFound => 'No categories found.';
 
   @override
-  String get noCategoriesAdminHint => 'Start by adding a new category or using bulk upload.';
+  String get noCategoriesAdminHint =>
+      'Start by adding a new category or using bulk upload.';
 
   @override
   String get loadError => 'Error loading categories.';
@@ -1164,7 +1182,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pleaseTryAgain => 'Please try again.';
 
   @override
-  String get noCategoriesMessage => 'No categories found. Add your first category to get started.';
+  String get noCategoriesMessage =>
+      'No categories found. Add your first category to get started.';
 
   @override
   String get menuEditorTitle => 'Menu Editor';
@@ -1249,7 +1268,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorLoadingMenu => 'Error loading menu items';
 
   @override
-  String get noCategoriesMsg => 'Create at least one category before adding menu items.';
+  String get noCategoriesMsg =>
+      'Create at least one category before adding menu items.';
 
   @override
   String get noMenuItems => 'No menu items yet';
@@ -1327,7 +1347,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportMenuTitle => 'Export Menu to CSV';
 
   @override
-  String get exportMenuInstructions => 'Export all menu items and categories to a CSV file for backup or audit.';
+  String get exportMenuInstructions =>
+      'Export all menu items and categories to a CSV file for backup or audit.';
 
   @override
   String get exportMenuSuccess => 'Menu exported successfully.';
@@ -1547,13 +1568,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminPromoItems => 'Applicable Items';
 
   @override
-  String get adminDeletePromoConfirm => 'Are you sure you want to delete this promotion?';
+  String get adminDeletePromoConfirm =>
+      'Are you sure you want to delete this promotion?';
 
   @override
-  String get adminDeleteChatConfirm => 'Are you sure you want to delete this chat thread?';
+  String get adminDeleteChatConfirm =>
+      'Are you sure you want to delete this chat thread?';
 
   @override
-  String get adminDeleteFeedbackConfirm => 'Are you sure you want to delete this feedback?';
+  String get adminDeleteFeedbackConfirm =>
+      'Are you sure you want to delete this feedback?';
 
   @override
   String get adminPreview => 'Preview';
@@ -1584,7 +1608,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminFieldRequired => 'Required';
 
   @override
-  String get adminPromoBulkUploadDesc => 'Import multiple promos from a JSON or CSV file.';
+  String get adminPromoBulkUploadDesc =>
+      'Import multiple promos from a JSON or CSV file.';
 
   @override
   String get adminPromoExportDesc => 'Export all active promos to CSV.';
@@ -1677,7 +1702,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get staffRemoveDialogTitle => 'Remove Staff';
 
   @override
-  String get staffRemoveDialogBody => 'Are you sure you want to remove this staff member?';
+  String get staffRemoveDialogBody =>
+      'Are you sure you want to remove this staff member?';
 
   @override
   String get staffRemoveButton => 'Remove';
@@ -1698,7 +1724,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminPanelTooltip => 'Go to Admin Dashboard';
 
   @override
-  String get unauthorizedAdminMessage => 'Unauthorized — You do not have permission to access this page.';
+  String get unauthorizedAdminMessage =>
+      'Unauthorized — You do not have permission to access this page.';
 
   @override
   String get returnToHomeButton => 'Return to Home';
@@ -1729,7 +1756,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get completeProfileTitle => 'Complete Your Profile';
 
   @override
-  String get completeProfileMessage => 'Please review and update your name and phone number before continuing. You only need to do this once.';
+  String get completeProfileMessage =>
+      'Please review and update your name and phone number before continuing. You only need to do this once.';
 
   @override
   String get saveAndContinue => 'Save & Continue';
@@ -1837,7 +1865,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unauthorizedPleaseLogin => 'Unauthorized — Please log in.';
 
   @override
-  String get unauthorizedNoPermission => 'Unauthorized — You do not have permission to access this page.';
+  String get unauthorizedNoPermission =>
+      'Unauthorized — You do not have permission to access this page.';
 
   @override
   String get noFeaturesFound => 'No features found.';
@@ -1846,7 +1875,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unauthorizedTitle => 'Unauthorized';
 
   @override
-  String get unauthorizedFeatureChange => 'You do not have permission to perform this action. This attempt has been logged.';
+  String get unauthorizedFeatureChange =>
+      'You do not have permission to perform this action. This attempt has been logged.';
 
   @override
   String featureDisplayName(String key) {
@@ -1887,7 +1917,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get signInToOrderMessage => 'Please sign in to add items to your cart.';
+  String get signInToOrderMessage =>
+      'Please sign in to add items to your cart.';
 
   @override
   String get cartAddError => 'Failed to add item to cart. Please try again.';
@@ -1979,13 +2010,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noPromotionsAvailable => 'No promotions are currently available.';
 
   @override
-  String get pleaseSignInToAccessProfile => 'Please sign in to access your profile.';
+  String get pleaseSignInToAccessProfile =>
+      'Please sign in to access your profile.';
 
   @override
   String get profileNotFound => 'Profile not found';
 
   @override
-  String get couldNotRetrieveProfile => 'We couldn\'t retrieve your profile data.';
+  String get couldNotRetrieveProfile =>
+      'We couldn\'t retrieve your profile data.';
 
   @override
   String get signOutConfirmationMessage => 'Are you sure you want to sign out?';
@@ -2003,7 +2036,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get all => 'All';
 
   @override
-  String get unauthorizedMessage => 'Unauthorized — You do not have permission to access this page.';
+  String get unauthorizedMessage =>
+      'Unauthorized — You do not have permission to access this page.';
 
   @override
   String get returnHome => 'Return to Home';
@@ -2027,7 +2061,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importCSVPlaceholder => 'File picker not implemented yet.';
 
   @override
-  String get unauthorizedDialogMessage => 'You do not have permission to perform this action. This attempt has been logged.';
+  String get unauthorizedDialogMessage =>
+      'You do not have permission to perform this action. This attempt has been logged.';
 
   @override
   String get exportSuccess => 'CSV download completed.';
@@ -2048,7 +2083,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addMenuItem => 'Add Menu Item';
 
   @override
-  String get lockedCustomizationGroupTooltip => 'This customization group is enforced by your restaurant’s menu template.';
+  String get lockedCustomizationGroupTooltip =>
+      'This customization group is enforced by your restaurant’s menu template.';
 
   @override
   String requiredCustomizationGroupMissing(Object groupLabel) {
@@ -2056,13 +2092,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get templateCustomizationResolved => 'Customization group loaded from template.';
+  String get templateCustomizationResolved =>
+      'Customization group loaded from template.';
 
   @override
   String get customizationGroupLocked => 'Locked Group';
 
   @override
-  String get customizationTemplateHint => 'This group follows a preset customization template.';
+  String get customizationTemplateHint =>
+      'This group follows a preset customization template.';
 
   @override
   String get sauces => 'Sauces';
@@ -2083,7 +2121,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get orderingFeedbackPromptTitle => 'How was your ordering experience?';
 
   @override
-  String get orderingFeedbackInstructions => 'Tell us about the app, checkout, or anything confusing or helpful!';
+  String get orderingFeedbackInstructions =>
+      'Tell us about the app, checkout, or anything confusing or helpful!';
 
   @override
   String get categoryEaseOfUse => 'Ease of use';
@@ -2140,7 +2179,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteFeedback => 'Delete Feedback';
 
   @override
-  String get deleteFeedbackConfirm => 'Are you sure you want to delete this feedback?';
+  String get deleteFeedbackConfirm =>
+      'Are you sure you want to delete this feedback?';
 
   @override
   String get orderIdLabel => 'Order ID';
@@ -2167,10 +2207,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminSignInTitle => 'Admin Sign-In';
 
   @override
-  String get adminSignInDescription => 'Sign in to manage orders, staff, and restaurant data.';
+  String get adminSignInDescription =>
+      'Sign in to manage orders, staff, and restaurant data.';
 
   @override
-  String get adminOnlyNotice => 'This portal is for authorized restaurant administrators only.';
+  String get adminOnlyNotice =>
+      'This portal is for authorized restaurant administrators only.';
 
   @override
   String get addMenuTab => 'Add Menus';
@@ -2209,7 +2251,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unauthorizedAccessTitle => 'Unauthorized';
 
   @override
-  String get unauthorizedAccessMessage => 'You do not have permission to access this page.';
+  String get unauthorizedAccessMessage =>
+      'You do not have permission to access this page.';
 
   @override
   String get errorLogManagementTitle => 'Error Log Management';
@@ -2239,13 +2282,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorLoadingTitle => 'Error Loading Logs';
 
   @override
-  String get errorLoadingMessage => 'There was a problem loading error logs. Please try again.';
+  String get errorLoadingMessage =>
+      'There was a problem loading error logs. Please try again.';
 
   @override
   String get noErrorLogsTitle => 'No Error Logs';
 
   @override
-  String get noErrorLogsMessage => 'No error logs were found matching your filters.';
+  String get noErrorLogsMessage =>
+      'No error logs were found matching your filters.';
 
   @override
   String get messageTooltip => 'The error message';
@@ -2442,7 +2487,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get export => 'Export';
 
   @override
-  String get failedToSaveCategory => 'Failed to save category. Please try again.';
+  String get failedToSaveCategory =>
+      'Failed to save category. Please try again.';
 
   @override
   String get sortByDescription => 'Sort by description';
@@ -2457,16 +2503,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reload => 'Reload';
 
   @override
-  String get failedToDeleteCategory => 'Failed to delete category. Please try again.';
+  String get failedToDeleteCategory =>
+      'Failed to delete category. Please try again.';
 
   @override
-  String get failedToRestoreCategory => 'Failed to restore category. Please try again.';
+  String get failedToRestoreCategory =>
+      'Failed to restore category. Please try again.';
 
   @override
-  String get paidFeatureAdminOnly => 'This is a paid feature and can only be toggled by a developer or platform admin.';
+  String get paidFeatureAdminOnly =>
+      'This is a paid feature and can only be toggled by a developer or platform admin.';
 
   @override
-  String get toggleUpdateFailed => 'Failed to update feature toggle. Please try again.';
+  String get toggleUpdateFailed =>
+      'Failed to update feature toggle. Please try again.';
 
   @override
   String get featureToggleLoadError => 'Failed to load feature toggles.';
@@ -2550,7 +2600,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get loadingPleaseWait => 'Loading please wait..';
 
   @override
-  String get failedToLoadFranchises => 'Failed to load franchises. Please try again.';
+  String get failedToLoadFranchises =>
+      'Failed to load franchises. Please try again.';
 
   @override
   String get allFranchisesLabel => 'All Franchises';
@@ -2559,19 +2610,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardOverview => 'Overview';
 
   @override
-  String get dashboardErrorLoadingStats => 'Failed to load dashboard statistics.';
+  String get dashboardErrorLoadingStats =>
+      'Failed to load dashboard statistics.';
 
   @override
   String get analyticsTrendsComingSoon => 'Analytics Trends (Coming Soon)';
 
   @override
-  String get analyticsTrendsDesc => 'Advanced business trends, customer segmentation, and growth predictions coming soon.';
+  String get analyticsTrendsDesc =>
+      'Advanced business trends, customer segmentation, and growth predictions coming soon.';
 
   @override
   String get aiInsightsComingSoon => 'AI Insights (Coming Soon)';
 
   @override
-  String get aiInsightsDesc => 'AI-powered suggestions, anomaly detection, and forecasts will appear here.';
+  String get aiInsightsDesc =>
+      'AI-powered suggestions, anomaly detection, and forecasts will appear here.';
 
   @override
   String get dashboardRevenue => 'Revenue';
@@ -2607,13 +2661,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get developerMetricsComingSoon => 'Developer Metrics (Coming Soon)';
 
   @override
-  String get developerMetricsDesc => 'Detailed system metrics and advanced developer tools will be shown here.';
+  String get developerMetricsDesc =>
+      'Detailed system metrics and advanced developer tools will be shown here.';
 
   @override
   String get impersonationToolsTitle => 'User Impersonation Tools';
 
   @override
-  String get impersonationToolsDesc => 'Search and impersonate users within this franchise for debugging and support. All actions are logged. Impersonation is only available for developer accounts.';
+  String get impersonationToolsDesc =>
+      'Search and impersonate users within this franchise for debugging and support. All actions are logged. Impersonation is only available for developer accounts.';
 
   @override
   String get impersonationToolsLoadError => 'Failed to load user list.';
@@ -2622,7 +2678,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get impersonationToolsSearchHint => 'Search by email or role...';
 
   @override
-  String get impersonationToolsNoUsersFound => 'No users found for this franchise.';
+  String get impersonationToolsNoUsersFound =>
+      'No users found for this franchise.';
 
   @override
   String get impersonationToolsRoleLabel => 'Role';
@@ -2637,28 +2694,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get impersonationToolsRecentImpersonations => 'Recent Impersonations';
 
   @override
-  String get impersonationToolsAuditTrailComingSoon => 'Audit Trail (Coming Soon)';
+  String get impersonationToolsAuditTrailComingSoon =>
+      'Audit Trail (Coming Soon)';
 
   @override
-  String get impersonationToolsAuditTrailDesc => 'Detailed history of impersonation activity for compliance and monitoring.';
+  String get impersonationToolsAuditTrailDesc =>
+      'Detailed history of impersonation activity for compliance and monitoring.';
 
   @override
-  String get impersonationToolsRolePreviewComingSoon => 'Role Preview (Coming Soon)';
+  String get impersonationToolsRolePreviewComingSoon =>
+      'Role Preview (Coming Soon)';
 
   @override
-  String get impersonationToolsRolePreviewDesc => 'Preview data access and permissions for the target user before impersonating.';
+  String get impersonationToolsRolePreviewDesc =>
+      'Preview data access and permissions for the target user before impersonating.';
 
   @override
   String get errorLogsSectionTitle => 'Error Logs';
 
   @override
-  String get errorLogsSectionDesc => 'Latest and most critical error logs for this franchise. Use filters to focus on specific severity levels. Switch to \'All Franchises\' to review system-wide issues.';
+  String get errorLogsSectionDesc =>
+      'Latest and most critical error logs for this franchise. Use filters to focus on specific severity levels. Switch to \'All Franchises\' to review system-wide issues.';
 
   @override
   String get errorLogsSectionError => 'Failed to load error logs.';
 
   @override
-  String get errorLogsSectionEmpty => 'No error logs found for the selected filters.';
+  String get errorLogsSectionEmpty =>
+      'No error logs found for the selected filters.';
 
   @override
   String get errorLogsSectionViewAll => 'View All';
@@ -2682,16 +2745,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorLogsSectionAt => 'At';
 
   @override
-  String get errorLogsSectionAnalyticsComingSoon => 'Error Analytics (Coming Soon)';
+  String get errorLogsSectionAnalyticsComingSoon =>
+      'Error Analytics (Coming Soon)';
 
   @override
-  String get errorLogsSectionAnalyticsDesc => 'Visualizations, charts, and error breakdowns coming soon.';
+  String get errorLogsSectionAnalyticsDesc =>
+      'Visualizations, charts, and error breakdowns coming soon.';
 
   @override
-  String get errorLogsSectionAIInsightsComingSoon => 'AI Error Insights (Coming Soon)';
+  String get errorLogsSectionAIInsightsComingSoon =>
+      'AI Error Insights (Coming Soon)';
 
   @override
-  String get errorLogsSectionAIInsightsDesc => 'AI-powered error clustering and root-cause suggestions are on the way.';
+  String get errorLogsSectionAIInsightsDesc =>
+      'AI-powered error clustering and root-cause suggestions are on the way.';
 
   @override
   String get comingSoon => 'Coming soon!';
@@ -2700,55 +2767,69 @@ class AppLocalizationsEn extends AppLocalizations {
   String get featureTogglesSectionTitle => 'Feature Toggles';
 
   @override
-  String get featureTogglesSectionDesc => 'Manage feature flags for this franchise. Only enabled features will be active for staff and users. Switch to \'All Franchises\' to review defaults.';
+  String get featureTogglesSectionDesc =>
+      'Manage feature flags for this franchise. Only enabled features will be active for staff and users. Switch to \'All Franchises\' to review defaults.';
 
   @override
   String get featureTogglesSectionError => 'Failed to load feature toggles.';
 
   @override
-  String get featureTogglesSectionEmpty => 'No feature toggles found for this franchise.';
+  String get featureTogglesSectionEmpty =>
+      'No feature toggles found for this franchise.';
 
   @override
-  String get featureTogglesSectionAuditTrailComingSoon => 'Audit Trail (Coming Soon)';
+  String get featureTogglesSectionAuditTrailComingSoon =>
+      'Audit Trail (Coming Soon)';
 
   @override
-  String get featureTogglesSectionAuditTrailDesc => 'Feature toggle change history for tracking and compliance.';
+  String get featureTogglesSectionAuditTrailDesc =>
+      'Feature toggle change history for tracking and compliance.';
 
   @override
-  String get featureTogglesSectionAIBasedComingSoon => 'AI-based Feature Suggestions (Coming Soon)';
+  String get featureTogglesSectionAIBasedComingSoon =>
+      'AI-based Feature Suggestions (Coming Soon)';
 
   @override
-  String get featureTogglesSectionAIBasedDesc => 'Smart, usage-driven suggestions for enabling features.';
+  String get featureTogglesSectionAIBasedDesc =>
+      'Smart, usage-driven suggestions for enabling features.';
 
   @override
-  String get featureTogglesSectionNoGlobalToggle => 'Cannot toggle features globally. Select a franchise to enable/disable.';
+  String get featureTogglesSectionNoGlobalToggle =>
+      'Cannot toggle features globally. Select a franchise to enable/disable.';
 
   @override
   String get pluginRegistrySectionTitle => 'Plugin Registry';
 
   @override
-  String get pluginRegistrySectionDesc => 'Manage integrations and plugins for this franchise. Enable, disable, or troubleshoot connections. Switch to \'All Franchises\' to view system-wide status.';
+  String get pluginRegistrySectionDesc =>
+      'Manage integrations and plugins for this franchise. Enable, disable, or troubleshoot connections. Switch to \'All Franchises\' to view system-wide status.';
 
   @override
   String get pluginRegistrySectionError => 'Failed to load plugin data.';
 
   @override
-  String get pluginRegistrySectionEmpty => 'No plugins registered for this franchise.';
+  String get pluginRegistrySectionEmpty =>
+      'No plugins registered for this franchise.';
 
   @override
-  String get pluginRegistrySectionMonitoringComingSoon => 'Plugin Monitoring (Coming Soon)';
+  String get pluginRegistrySectionMonitoringComingSoon =>
+      'Plugin Monitoring (Coming Soon)';
 
   @override
-  String get pluginRegistrySectionMonitoringDesc => 'Realtime plugin logs, uptime and error notifications coming soon.';
+  String get pluginRegistrySectionMonitoringDesc =>
+      'Realtime plugin logs, uptime and error notifications coming soon.';
 
   @override
-  String get pluginRegistrySectionMarketplaceComingSoon => 'Plugin Marketplace (Coming Soon)';
+  String get pluginRegistrySectionMarketplaceComingSoon =>
+      'Plugin Marketplace (Coming Soon)';
 
   @override
-  String get pluginRegistrySectionMarketplaceDesc => 'Discover, install, and manage new integrations from a curated plugin marketplace.';
+  String get pluginRegistrySectionMarketplaceDesc =>
+      'Discover, install, and manage new integrations from a curated plugin marketplace.';
 
   @override
-  String get pluginRegistrySectionNoGlobalToggle => 'Cannot change plugin status globally. Select a franchise to enable/disable.';
+  String get pluginRegistrySectionNoGlobalToggle =>
+      'Cannot change plugin status globally. Select a franchise to enable/disable.';
 
   @override
   String get pluginRegistrySectionStatusConnected => 'Connected';
@@ -2766,19 +2847,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get schemaBrowserSectionTitle => 'Schema Browser';
 
   @override
-  String get schemaBrowserSectionDesc => 'Browse, inspect, and manage menu/category/modifier schemas for this franchise. Select a schema to see version info and details. Switch to \'All Franchises\' to review shared schemas.';
+  String get schemaBrowserSectionDesc =>
+      'Browse, inspect, and manage menu/category/modifier schemas for this franchise. Select a schema to see version info and details. Switch to \'All Franchises\' to review shared schemas.';
 
   @override
   String get schemaBrowserSectionError => 'Failed to load schema metadata.';
 
   @override
-  String get schemaBrowserSectionEmpty => 'No schemas found for this franchise.';
+  String get schemaBrowserSectionEmpty =>
+      'No schemas found for this franchise.';
 
   @override
   String get schemaBrowserSectionSchemaDetails => 'Schema Details';
 
   @override
-  String get schemaBrowserSectionDetailsPlaceholder => 'Schema fields, validation state, and JSON preview will appear here.';
+  String get schemaBrowserSectionDetailsPlaceholder =>
+      'Schema fields, validation state, and JSON preview will appear here.';
 
   @override
   String get schemaBrowserSectionStatusActive => 'Active';
@@ -2787,16 +2871,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get schemaBrowserSectionStatusDeprecated => 'Deprecated';
 
   @override
-  String get schemaBrowserSectionDiffsComingSoon => 'Schema Diffs (Coming Soon)';
+  String get schemaBrowserSectionDiffsComingSoon =>
+      'Schema Diffs (Coming Soon)';
 
   @override
-  String get schemaBrowserSectionDiffsDesc => 'View schema diffs, compare versions, and see breaking changes across deployments.';
+  String get schemaBrowserSectionDiffsDesc =>
+      'View schema diffs, compare versions, and see breaking changes across deployments.';
 
   @override
-  String get schemaBrowserSectionValidationComingSoon => 'Schema Validation (Coming Soon)';
+  String get schemaBrowserSectionValidationComingSoon =>
+      'Schema Validation (Coming Soon)';
 
   @override
-  String get schemaBrowserSectionValidationDesc => 'Automated validation, problem highlighting, and quick fixes for schemas.';
+  String get schemaBrowserSectionValidationDesc =>
+      'Automated validation, problem highlighting, and quick fixes for schemas.';
 
   @override
   String get schemaBrowserSectionLastUpdated => 'Last Updated';
@@ -2808,13 +2896,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get auditTrailSectionTitle => 'Audit Trail';
 
   @override
-  String get auditTrailSectionDesc => 'Timeline of data changes (menu, franchise, settings, users). Filter by action type or user. Select \'All Franchises\' for a global view.';
+  String get auditTrailSectionDesc =>
+      'Timeline of data changes (menu, franchise, settings, users). Filter by action type or user. Select \'All Franchises\' for a global view.';
 
   @override
   String get auditTrailSectionError => 'Failed to load audit trail.';
 
   @override
-  String get auditTrailSectionEmpty => 'No audit entries found for the selected filters.';
+  String get auditTrailSectionEmpty =>
+      'No audit entries found for the selected filters.';
 
   @override
   String get auditTrailSectionTypeFilter => 'Type';
@@ -2832,16 +2922,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get auditTrailSectionBy => 'By';
 
   @override
-  String get auditTrailSectionRevertComingSoon => 'Revert/Restore (Coming Soon)';
+  String get auditTrailSectionRevertComingSoon =>
+      'Revert/Restore (Coming Soon)';
 
   @override
-  String get auditTrailSectionRevertDesc => 'Quickly undo changes or restore previous data states from the audit trail.';
+  String get auditTrailSectionRevertDesc =>
+      'Quickly undo changes or restore previous data states from the audit trail.';
 
   @override
   String get auditTrailSectionExplainComingSoon => 'Explain (Coming Soon)';
 
   @override
-  String get auditTrailSectionExplainDesc => 'Explain audit entries, highlight risks, and use AI for impact analysis.';
+  String get auditTrailSectionExplainDesc =>
+      'Explain audit entries, highlight risks, and use AI for impact analysis.';
 
   @override
   String get developerErrorLogsScreenTitle => 'Developer Error Logs';
@@ -2850,7 +2943,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get developerErrorLogsScreenError => 'Failed to load error logs.';
 
   @override
-  String get developerErrorLogsScreenEmpty => 'No error logs match the current filters.';
+  String get developerErrorLogsScreenEmpty =>
+      'No error logs match the current filters.';
 
   @override
   String get developerErrorLogsScreenFranchise => 'Franchise';
@@ -2880,16 +2974,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get developerErrorLogsScreenAllDates => 'All Dates';
 
   @override
-  String get developerErrorLogsScreenTrendsComingSoon => 'Trends & Analytics (Coming Soon)';
+  String get developerErrorLogsScreenTrendsComingSoon =>
+      'Trends & Analytics (Coming Soon)';
 
   @override
-  String get developerErrorLogsScreenTrendsDesc => 'Error type trends, top failing screens, and system anomaly detection.';
+  String get developerErrorLogsScreenTrendsDesc =>
+      'Error type trends, top failing screens, and system anomaly detection.';
 
   @override
-  String get developerErrorLogsScreenAIInsightsComingSoon => 'AI Root Cause Analysis (Coming Soon)';
+  String get developerErrorLogsScreenAIInsightsComingSoon =>
+      'AI Root Cause Analysis (Coming Soon)';
 
   @override
-  String get developerErrorLogsScreenAIInsightsDesc => 'Cluster similar errors, get likely causes and suggestions powered by AI.';
+  String get developerErrorLogsScreenAIInsightsDesc =>
+      'Cluster similar errors, get likely causes and suggestions powered by AI.';
 
   @override
   String get adminErrorLogsScreenTitle => 'Error Logs';
@@ -2898,7 +2996,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminErrorLogsScreenError => 'Failed to load error logs.';
 
   @override
-  String get adminErrorLogsScreenEmpty => 'No error logs for your location in the selected date range.';
+  String get adminErrorLogsScreenEmpty =>
+      'No error logs for your location in the selected date range.';
 
   @override
   String get adminErrorLogsScreenSeverity => 'Severity';
@@ -2916,16 +3015,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminErrorLogsScreenFilterAny => 'Any';
 
   @override
-  String get adminErrorLogsScreenSupportComingSoon => 'Support Actions (Coming Soon)';
+  String get adminErrorLogsScreenSupportComingSoon =>
+      'Support Actions (Coming Soon)';
 
   @override
-  String get adminErrorLogsScreenSupportDesc => 'Contact support, mark as resolved, or escalate issues directly from this screen.';
+  String get adminErrorLogsScreenSupportDesc =>
+      'Contact support, mark as resolved, or escalate issues directly from this screen.';
 
   @override
-  String get adminErrorLogsScreenTrendsComingSoon => 'Trends & Patterns (Coming Soon)';
+  String get adminErrorLogsScreenTrendsComingSoon =>
+      'Trends & Patterns (Coming Soon)';
 
   @override
-  String get adminErrorLogsScreenTrendsDesc => 'See frequent issues, system health, and actionable tips to reduce problems.';
+  String get adminErrorLogsScreenTrendsDesc =>
+      'See frequent issues, system health, and actionable tips to reduce problems.';
 
   @override
   String get impersonationDialogTitle => 'Impersonate User';
@@ -2937,7 +3040,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get impersonationDialogSearchHint => 'Search by email or name...';
 
   @override
-  String get impersonationDialogSelectUserFirst => 'Select a user to impersonate.';
+  String get impersonationDialogSelectUserFirst =>
+      'Select a user to impersonate.';
 
   @override
   String get impersonationDialogSuccessPrefix => 'Now impersonating';
@@ -2949,19 +3053,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get impersonationDialogNoUsersFound => 'No users found.';
 
   @override
-  String get impersonationDialogSecurityNotice => 'You are about to impersonate another user. All actions will be logged and audited. Do not share sensitive or personal customer data. Exiting impersonation restores your own access and context.';
+  String get impersonationDialogSecurityNotice =>
+      'You are about to impersonate another user. All actions will be logged and audited. Do not share sensitive or personal customer data. Exiting impersonation restores your own access and context.';
 
   @override
-  String get impersonationDialogAuditTrailComingSoon => 'Audit Trail (Coming Soon)';
+  String get impersonationDialogAuditTrailComingSoon =>
+      'Audit Trail (Coming Soon)';
 
   @override
-  String get impersonationDialogAuditTrailDesc => 'View impersonation history, export logs, and enforce audit controls.';
+  String get impersonationDialogAuditTrailDesc =>
+      'View impersonation history, export logs, and enforce audit controls.';
 
   @override
-  String get impersonationDialogAdvancedToolsComingSoon => 'Advanced Tools (Coming Soon)';
+  String get impersonationDialogAdvancedToolsComingSoon =>
+      'Advanced Tools (Coming Soon)';
 
   @override
-  String get impersonationDialogAdvancedToolsDesc => 'Session timeouts, role-limited impersonation, and support diagnostics.';
+  String get impersonationDialogAdvancedToolsDesc =>
+      'Session timeouts, role-limited impersonation, and support diagnostics.';
 
   @override
   String get closeButtonLabel => 'Close';
@@ -2970,13 +3079,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pluginConfigDialogTitle => 'Plugin Config';
 
   @override
-  String get pluginConfigDialogDesc => 'View and update configuration for this plugin. Changes will take effect immediately.';
+  String get pluginConfigDialogDesc =>
+      'View and update configuration for this plugin. Changes will take effect immediately.';
 
   @override
-  String get pluginConfigDialogError => 'Failed to load or save plugin configuration.';
+  String get pluginConfigDialogError =>
+      'Failed to load or save plugin configuration.';
 
   @override
-  String get pluginConfigDialogNoFields => 'This plugin has no configurable fields.';
+  String get pluginConfigDialogNoFields =>
+      'This plugin has no configurable fields.';
 
   @override
   String get pluginConfigDialogSaveButton => 'Save';
@@ -2988,13 +3100,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pluginConfigDialogHistoryComingSoon => 'History (Coming Soon)';
 
   @override
-  String get pluginConfigDialogHistoryDesc => 'View and restore previous configuration states.';
+  String get pluginConfigDialogHistoryDesc =>
+      'View and restore previous configuration states.';
 
   @override
-  String get pluginConfigDialogValidationComingSoon => 'Validation & Test (Coming Soon)';
+  String get pluginConfigDialogValidationComingSoon =>
+      'Validation & Test (Coming Soon)';
 
   @override
-  String get pluginConfigDialogValidationDesc => 'Run plugin-specific validation, test API keys, and get troubleshooting help.';
+  String get pluginConfigDialogValidationDesc =>
+      'Run plugin-specific validation, test API keys, and get troubleshooting help.';
 
   @override
   String get cancelButtonLabel => 'Cancel';
@@ -3096,37 +3211,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get announcements => 'HQ Announcements';
 
   @override
-  String get announcementsDesc => 'Coming soon: Company-wide bulletins and major updates.';
+  String get announcementsDesc =>
+      'Coming soon: Company-wide bulletins and major updates.';
 
   @override
   String get taxDocs => '1099/W-9 Export';
 
   @override
-  String get taxDocsDesc => 'Generate and export annual payout tax forms for all franchisees.';
+  String get taxDocsDesc =>
+      'Generate and export annual payout tax forms for all franchisees.';
 
   @override
   String get multiCurrency => 'Multi-Currency';
 
   @override
-  String get multiCurrencyDesc => 'Enable international/multi-currency payment support.';
+  String get multiCurrencyDesc =>
+      'Enable international/multi-currency payment support.';
 
   @override
   String get bulkOps => 'Bulk Operations';
 
   @override
-  String get bulkOpsDesc => 'Send invoices, set fees, or pause multiple stores at once.';
+  String get bulkOpsDesc =>
+      'Send invoices, set fees, or pause multiple stores at once.';
 
   @override
   String get integrations => 'Accounting/API Integrations';
 
   @override
-  String get integrationsDesc => 'Connect with QuickBooks, Xero, Sage, and more.';
+  String get integrationsDesc =>
+      'Connect with QuickBooks, Xero, Sage, and more.';
 
   @override
   String get scheduledReports => 'Scheduled Reports';
 
   @override
-  String get scheduledReportsDesc => 'Schedule, download, or auto-email custom finance reports.';
+  String get scheduledReportsDesc =>
+      'Schedule, download, or auto-email custom finance reports.';
 
   @override
   String get kpiFinancials => 'Financial KPIs';
@@ -3161,7 +3282,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get featureComingSoonCashFlow => 'Cash Flow Forecast (coming soon)';
 
   @override
-  String get featureComingSoonRevenueTrends => 'Per-Location Revenue Trends (coming soon)';
+  String get featureComingSoonRevenueTrends =>
+      'Per-Location Revenue Trends (coming soon)';
 
   @override
   String get noFranchisesAvailable => 'No Franchises Available.';
@@ -3179,16 +3301,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get projectedClosing => 'Projected Closing';
 
   @override
-  String get appLandingHeroHeadline => 'All-in-One Franchise & Restaurant Management';
+  String get appLandingHeroHeadline =>
+      'All-in-One Franchise & Restaurant Management';
 
   @override
-  String get appLandingHeroSubheadline => 'Mobile Ordering, Customization, Analytics, and Powerful Admin Tools for Modern Franchises.';
+  String get appLandingHeroSubheadline =>
+      'Mobile Ordering, Customization, Analytics, and Powerful Admin Tools for Modern Franchises.';
 
   @override
   String get appLandingAboutTitle => 'About Doughboys Franchise Admin Portal';
 
   @override
-  String get appLandingAboutBody => 'Doughboys Pizzeria empowers franchises with a unified platform for online ordering, menu management, analytics, inventory, staff management, and more.';
+  String get appLandingAboutBody =>
+      'Doughboys Pizzeria empowers franchises with a unified platform for online ordering, menu management, analytics, inventory, staff management, and more.';
 
   @override
   String get appLandingFeaturesTitle => 'Key Features';
@@ -3197,7 +3322,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get featureMobileOrdering => 'Mobile Ordering for Customers';
 
   @override
-  String get featureFranchiseManagement => 'Franchise Management for Owners and Admins';
+  String get featureFranchiseManagement =>
+      'Franchise Management for Owners and Admins';
 
   @override
   String get featureCustomMenus => 'Customizable Menus & Ingredients';
@@ -3248,7 +3374,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get futureFeaturesTitle => 'Future Features';
 
   @override
-  String get futureFeaturesBody => 'More advanced controls for platform owners coming soon.';
+  String get futureFeaturesBody =>
+      'More advanced controls for platform owners coming soon.';
 
   @override
   String get copyright => 'Copyright';
@@ -3257,31 +3384,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allRightsReserved => 'All rights reserved.';
 
   @override
-  String get noValidRoleFound => 'No valid role found for your account. Please contact support.';
+  String get noValidRoleFound =>
+      'No valid role found for your account. Please contact support.';
 
   @override
-  String get claimsRefreshFailed => 'Failed to refresh your access permissions. Please try again or contact support.';
+  String get claimsRefreshFailed =>
+      'Failed to refresh your access permissions. Please try again or contact support.';
 
   @override
   String get profileLoadTimeout => 'Profile loading timed out.';
 
   @override
-  String get tryAgainOrContactSupport => 'Please try again or contact support if the issue persists.';
+  String get tryAgainOrContactSupport =>
+      'Please try again or contact support if the issue persists.';
 
   @override
   String get profileLoadFailed => 'Failed to load your profile.';
 
   @override
-  String get syncingRolesPleaseWait => 'Syncing your access permissions, please wait...';
+  String get syncingRolesPleaseWait =>
+      'Syncing your access permissions, please wait...';
 
   @override
-  String get redirectingToDeveloperDashboard => 'Redirecting to developer dashboard...';
+  String get redirectingToDeveloperDashboard =>
+      'Redirecting to developer dashboard...';
 
   @override
   String get redirecting => 'Redirecting...';
 
   @override
-  String get loadingProfileAndPermissions => 'Loading your profile and permissions...';
+  String get loadingProfileAndPermissions =>
+      'Loading your profile and permissions...';
 
   @override
   String get developerMode => 'Developer Mode';
@@ -3314,7 +3447,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unauthorized_title => 'Access Denied';
 
   @override
-  String get unauthorized_default_reason => 'You do not have permission to view this section.';
+  String get unauthorized_default_reason =>
+      'You do not have permission to view this section.';
 
   @override
   String get alert_dismissed_success => 'Alert dismissed.';
@@ -3837,7 +3971,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noAnnouncements => 'No announcements yet.';
 
   @override
-  String get redirectingToPlatformOwnerDashboard => 'Redirecting To Platform Owner Dashboard';
+  String get redirectingToPlatformOwnerDashboard =>
+      'Redirecting To Platform Owner Dashboard';
 
   @override
   String get platformOwnerDashboardTitle => 'Platform Owner';
@@ -3861,7 +3996,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get revokeInvitation => 'Revoke Invitation';
 
   @override
-  String get confirmRevokeInvitation => 'Are you sure you want to revoke this invitation?';
+  String get confirmRevokeInvitation =>
+      'Are you sure you want to revoke this invitation?';
 
   @override
   String get revoke => 'Revoke';
@@ -3901,7 +4037,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invitationSent => 'Invitation sent successfully!';
 
   @override
-  String get inviteErrorGeneric => 'Failed to send invitation. Please try again.';
+  String get inviteErrorGeneric =>
+      'Failed to send invitation. Please try again.';
 
   @override
   String get platformKpiMrr => 'MRR';
@@ -3958,10 +4095,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get roles => 'Roles';
 
   @override
-  String get profileEditContactSupport => 'Need to update your profile? Contact support.';
+  String get profileEditContactSupport =>
+      'Need to update your profile? Contact support.';
 
   @override
-  String get platformOwnerDescription => 'You are the platform owner. Manage platform-wide settings, billing, and analytics from the platform dashboard.';
+  String get platformOwnerDescription =>
+      'You are the platform owner. Manage platform-wide settings, billing, and analytics from the platform dashboard.';
 
   @override
   String get goToPlatformAdmin => 'Go to Platform Admin';
@@ -3973,7 +4112,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get payments => 'Payments';
 
   @override
-  String get securityFeaturesComingSoon => 'More security features coming soon.';
+  String get securityFeaturesComingSoon =>
+      'More security features coming soon.';
 
   @override
   String get needHelpContact => 'Need help? Contact support below.';
@@ -3982,10 +4122,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contactSupport => 'Contact Support';
 
   @override
-  String get paymentMethodManagementComing => 'Payment method management coming soon.';
+  String get paymentMethodManagementComing =>
+      'Payment method management coming soon.';
 
   @override
-  String get downloadReceiptsExportComing => 'Download receipts/export coming soon.';
+  String get downloadReceiptsExportComing =>
+      'Download receipts/export coming soon.';
 
   @override
   String get upgradePlanAddOnsComing => 'Upgrade plan and add-ons coming soon.';
@@ -4003,7 +4145,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inviteRevoked => 'This invitation has been revoked.';
 
   @override
-  String get inviteAlreadyAccepted => 'This invitation has already been accepted.';
+  String get inviteAlreadyAccepted =>
+      'This invitation has already been accepted.';
 
   @override
   String inviteWelcome(Object email) {
@@ -4019,22 +4162,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inviteSetPassword => 'Set your password to activate your account.';
 
   @override
-  String get inviteAcceptExisting => 'Sign in with your account, then accept this invite.';
+  String get inviteAcceptExisting =>
+      'Sign in with your account, then accept this invite.';
 
   @override
   String get inviteAcceptedTitle => 'Invitation Accepted!';
 
   @override
-  String get inviteAcceptedDesc => 'Your invite is now active. Continue to your dashboard.';
+  String get inviteAcceptedDesc =>
+      'Your invite is now active. Continue to your dashboard.';
 
   @override
-  String get inviteAcceptFailed => 'Failed to accept invitation. Please try again.';
+  String get inviteAcceptFailed =>
+      'Failed to accept invitation. Please try again.';
 
   @override
   String get goToDashboard => 'Go to Dashboard';
 
   @override
-  String get signInRequiredToAcceptInvite => 'Please sign in to accept this invitation.';
+  String get signInRequiredToAcceptInvite =>
+      'Please sign in to accept this invitation.';
 
   @override
   String get loadingInvite => 'Loading invitation data...';
@@ -4067,7 +4214,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get setupBusinessHours => 'Setup business hours';
 
   @override
-  String get setupBusinessHoursDesc => 'Your business hours are used for calculating on-duty hours. Business hours are also advertised on your Mobile App and Webpage.';
+  String get setupBusinessHoursDesc =>
+      'Your business hours are used for calculating on-duty hours. Business hours are also advertised on your Mobile App and Webpage.';
 
   @override
   String get openAt => 'open at';
@@ -4088,7 +4236,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openMustBeforeClose => 'Open time must be before close time.';
 
   @override
-  String get daysOverlap => 'Overlapping days across intervals are not allowed.';
+  String get daysOverlap =>
+      'Overlapping days across intervals are not allowed.';
 
   @override
   String get streetAddress => 'Street Address';
@@ -4178,7 +4327,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get payInvoice => 'Pay Invoice';
 
   @override
-  String get noteDevOnlyPlaceholder => 'Placeholder – dev-only payment flow active';
+  String get noteDevOnlyPlaceholder =>
+      'Placeholder – dev-only payment flow active';
 
   @override
   String get statusUnpaid => 'Status Unpaid';
@@ -4253,7 +4403,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmDeleteTitle => 'Delete Subscription?';
 
   @override
-  String get confirmDeleteDescription => 'This will permanently remove the subscription from Firestore.';
+  String get confirmDeleteDescription =>
+      'This will permanently remove the subscription from Firestore.';
 
   @override
   String get deleteSubscription => 'Delete';
@@ -4300,7 +4451,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmPlanSubscriptionTitle => 'Subscribe to Plan';
 
   @override
-  String get confirmPlanSubscriptionPrompt => 'Do you want to subscribe to this plan?';
+  String get confirmPlanSubscriptionPrompt =>
+      'Do you want to subscribe to this plan?';
 
   @override
   String get subscriptionSuccessMessage => 'Successfully subscribed to plan.';
@@ -4315,7 +4467,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectThisPlan => 'Select This Plan';
 
   @override
-  String get onboardingRequiredBody => 'You must complete onboarding to access this screen.';
+  String get onboardingRequiredBody =>
+      'You must complete onboarding to access this screen.';
 
   @override
   String get viewPlatformPlans => 'View Platform Plans';
@@ -4359,10 +4512,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get startDateLabel => 'Start Date';
 
   @override
-  String get planCancelsAtPeriodEnd => 'Plan is set to cancel at the end of this billing cycle.';
+  String get planCancelsAtPeriodEnd =>
+      'Plan is set to cancel at the end of this billing cycle.';
 
   @override
-  String get subscriptionBillingInsights => 'Billing insights and usage coming soon';
+  String get subscriptionBillingInsights =>
+      'Billing insights and usage coming soon';
 
   @override
   String get ownerLabel => 'Owner';
@@ -4416,10 +4571,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancelAtPeriodEndToggle => 'Cancel at End of Billing Cycle';
 
   @override
-  String get cancelAtPeriodEndDescription => 'Plan will auto-cancel after the current billing cycle completes.';
+  String get cancelAtPeriodEndDescription =>
+      'Plan will auto-cancel after the current billing cycle completes.';
 
   @override
-  String get toggleLockedDueToStatus => 'Disabled due to current subscription status';
+  String get toggleLockedDueToStatus =>
+      'Disabled due to current subscription status';
 
   @override
   String get paymentOverdueWarning => '⚠️ Payment Overdue';
@@ -4440,7 +4597,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currentPlatformPlan => 'Your Current Platform Plan';
 
   @override
-  String get noActivePlatformPlan => 'You\'re not subscribed to a platform plan.';
+  String get noActivePlatformPlan =>
+      'You\'re not subscribed to a platform plan.';
 
   @override
   String nextBillingDate(Object date) {
@@ -4454,7 +4612,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mockPaymentHeader => 'Mock Payment Details';
 
   @override
-  String get mockPaymentDisclaimer => 'This is a test-only input form. No real charges will be made.';
+  String get mockPaymentDisclaimer =>
+      'This is a test-only input form. No real charges will be made.';
 
   @override
   String get nameOnCard => 'Name on Card';
@@ -4516,7 +4675,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get completePaymentToContinue => 'Complete payment to continue';
 
   @override
-  String get selectBillingIntervalFirst => 'Please select a billing interval first';
+  String get selectBillingIntervalFirst =>
+      'Please select a billing interval first';
 
   @override
   String get unnamedPlan => 'Unnamed Plan';
@@ -4533,7 +4693,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancelAtPeriodEndLabel => 'Cancel at Period End';
 
   @override
-  String get overduePaymentWarning => '⚠️ Your subscription has an overdue invoice.';
+  String get overduePaymentWarning =>
+      '⚠️ Your subscription has an overdue invoice.';
 
   @override
   String get unknownPlan => 'Unknown Plan';
@@ -4559,7 +4720,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get gracePeriodExpired => 'Payment overdue. Your access may be limited until resolved.';
+  String get gracePeriodExpired =>
+      'Payment overdue. Your access may be limited until resolved.';
 
   @override
   String get manageSubscription => 'Manage Subscription';
@@ -4586,13 +4748,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get injectSubscription => 'Inject Subscription';
 
   @override
-  String get subscriptionInjectionSuccess => 'Subscription injected successfully';
+  String get subscriptionInjectionSuccess =>
+      'Subscription injected successfully';
 
   @override
   String get subscriptionInjectionFailed => 'Failed to inject subscription';
 
   @override
-  String get pleaseSelectFranchiseAndPlan => 'Please select both a franchise and a plan';
+  String get pleaseSelectFranchiseAndPlan =>
+      'Please select both a franchise and a plan';
 
   @override
   String get genericSavedSuccess => 'Changes saved successfully';
@@ -4619,19 +4783,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stepIngredients => 'Ingredients';
 
   @override
-  String get stepIngredientsDesc => 'Define all ingredients like toppings, sauces, and sides.';
+  String get stepIngredientsDesc =>
+      'Define all ingredients like toppings, sauces, and sides.';
 
   @override
   String get stepCategories => 'Categories';
 
   @override
-  String get stepCategoriesDesc => 'Organize your menu into logical sections (e.g. Pizzas, Drinks).';
+  String get stepCategoriesDesc =>
+      'Organize your menu into logical sections (e.g. Pizzas, Drinks).';
 
   @override
   String get stepMenuItems => 'Step 5: Menu Items';
 
   @override
-  String get stepMenuItemsDesc => 'Create actual items customers can order, using ingredients and categories.';
+  String get stepMenuItemsDesc =>
+      'Create actual items customers can order, using ingredients and categories.';
 
   @override
   String get stepReview => 'Step 6: Final Review';
@@ -4640,7 +4807,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stepReviewDesc => 'Validate all required data before going live.';
 
   @override
-  String get progressComingSoon => 'Progress tracking and automation coming soon.';
+  String get progressComingSoon =>
+      'Progress tracking and automation coming soon.';
 
   @override
   String get stepMarkedComplete => 'Step marked complete!';
@@ -4652,7 +4820,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noIngredientsFound => 'No ingredients found';
 
   @override
-  String get noIngredientsMessage => 'Add ingredient types to continue with menu setup.';
+  String get noIngredientsMessage =>
+      'Add ingredient types to continue with menu setup.';
 
   @override
   String get ingredientName => 'Name';
@@ -4685,7 +4854,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteIngredient => 'Delete Ingredient';
 
   @override
-  String get confirmDeleteIngredient => 'Are you sure you want to delete this ingredient?';
+  String get confirmDeleteIngredient =>
+      'Are you sure you want to delete this ingredient?';
 
   @override
   String get errorDeletingIngredient => 'Error deleting ingredient';
@@ -4724,13 +4894,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageIngredientTypes => 'Manage Ingredient Types';
 
   @override
-  String get pleaseAddIngredientTypesFirst => 'Please add at least one ingredient with a type before marking this step complete.';
+  String get pleaseAddIngredientTypesFirst =>
+      'Please add at least one ingredient with a type before marking this step complete.';
 
   @override
   String get stepIngredientTypes => 'Ingredient Types';
 
   @override
-  String get stepIngredientTypesDesc => 'Create logical ingredient type tags like toppings, sauces, and sides.';
+  String get stepIngredientTypesDesc =>
+      'Create logical ingredient type tags like toppings, sauces, and sides.';
 
   @override
   String get errorGeneric => 'Something went wrong. Please try again.';
@@ -4745,13 +4917,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pizzaShopTemplateLabel => 'Pizza Shop Starter';
 
   @override
-  String get pizzaShopTemplateSubtitle => 'Includes cheeses, meats, sauces, and more';
+  String get pizzaShopTemplateSubtitle =>
+      'Includes cheeses, meats, sauces, and more';
 
   @override
   String get wingBarTemplateLabel => 'Wing Bar Starter (Coming Soon)';
 
   @override
-  String get wingBarTemplateSubtitle => 'Includes dips, sauces, and portion logic';
+  String get wingBarTemplateSubtitle =>
+      'Includes dips, sauces, and portion logic';
 
   @override
   String get loadDefaultTypes => 'Select Ingredient Type Template';
@@ -4760,7 +4934,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deletionBlocked => 'Deletion Blocked';
 
   @override
-  String get ingredientTypeInUseError => 'This ingredient type is currently used by one or more ingredients and cannot be deleted.';
+  String get ingredientTypeInUseError =>
+      'This ingredient type is currently used by one or more ingredients and cannot be deleted.';
 
   @override
   String get ingredientTypeName => 'Name';
@@ -4784,7 +4959,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get revertChanges => 'Revert Changes';
 
   @override
-  String get invalidJsonFormat => 'Invalid JSON format. Please ensure the input is a valid list of ingredient types.';
+  String get invalidJsonFormat =>
+      'Invalid JSON format. Please ensure the input is a valid list of ingredient types.';
 
   @override
   String get jsonParseError => 'Unable to parse JSON preview.';
@@ -4799,7 +4975,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importExportIngredientTypes => 'Import / Export Ingredient Types';
 
   @override
-  String get editJsonBelow => 'Edit the JSON below to import or adjust ingredient types.';
+  String get editJsonBelow =>
+      'Edit the JSON below to import or adjust ingredient types.';
 
   @override
   String get jsonInput => 'JSON Input';
@@ -4820,7 +4997,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmLoadTemplate => 'Confirm Template Load';
 
   @override
-  String get overwriteWarning => 'This will overwrite existing ingredients. Continue?';
+  String get overwriteWarning =>
+      'This will overwrite existing ingredients. Continue?';
 
   @override
   String get templateLoaded => 'Template loaded successfully!';
@@ -4835,7 +5013,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get none => 'None';
 
   @override
-  String get importExportIngredientMetadata => 'Import / Export Ingredient Metadata';
+  String get importExportIngredientMetadata =>
+      'Import / Export Ingredient Metadata';
 
   @override
   String get importChanges => 'Import';
@@ -4876,7 +5055,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidTypeIdError => 'Invalid typeId found for ingredients';
 
   @override
-  String get confirmDeleteCategory => 'Are you sure you want to delete this category?';
+  String get confirmDeleteCategory =>
+      'Are you sure you want to delete this category?';
 
   @override
   String get onboardingCategories => 'Categories';
@@ -4903,7 +5083,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importExportCategories => 'Import/Export Categories';
 
   @override
-  String get importExportInstruction => 'Paste JSON data to import or edit it before saving.';
+  String get importExportInstruction =>
+      'Paste JSON data to import or edit it before saving.';
 
   @override
   String get jsonData => 'JSON Data';
@@ -4961,13 +5142,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noTemplatesFound => 'No Templates Found';
 
   @override
-  String get toggleFeatureError => 'Failed to update feature toggle. Please try again.';
+  String get toggleFeatureError =>
+      'Failed to update feature toggle. Please try again.';
 
   @override
   String get featureSetupTitle => 'Select Enabled Features';
 
   @override
-  String get featureSetupDescription => 'Choose which optional features this franchise should have access to. These are constrained by their current platform plan.';
+  String get featureSetupDescription =>
+      'Choose which optional features this franchise should have access to. These are constrained by their current platform plan.';
 
   @override
   String get featureSetupToggleSection => 'Available Features';
@@ -4982,19 +5165,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saveErrorTitle => 'Save Failed';
 
   @override
-  String get saveErrorBody => 'Unable to save your feature selections. Please try again.';
+  String get saveErrorBody =>
+      'Unable to save your feature selections. Please try again.';
 
   @override
   String get stepFeatureSetup => 'Step 1: Feature Setup';
 
   @override
-  String get stepFeatureSetupDesc => 'Choose which modules and features this franchise will use.';
+  String get stepFeatureSetupDesc =>
+      'Choose which modules and features this franchise will use.';
 
   @override
   String get seedPlatformFeaturesTitle => 'Seed Platform Features';
 
   @override
-  String get seedPlatformFeaturesDescription => 'Paste a JSON array of feature objects below to overwrite or create entries in the /platform_features collection.';
+  String get seedPlatformFeaturesDescription =>
+      'Paste a JSON array of feature objects below to overwrite or create entries in the /platform_features collection.';
 
   @override
   String get jsonInputLabel => 'Feature JSON Array';
@@ -5009,13 +5195,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get seedSuccess => '✅ Successfully seeded platform features.';
 
   @override
-  String get seedFailure => '❌ Failed to seed features. Please check your JSON and try again.';
+  String get seedFailure =>
+      '❌ Failed to seed features. Please check your JSON and try again.';
 
   @override
   String get devtoolsSeedPlatformPlansTitle => 'Seed Platform Plans';
 
   @override
-  String get devtoolsSeedPlatformPlansDescription => 'Input a list of plan objects to store in the /platform_plans collection. Each plan must include a unique \'id\' field. Existing entries will be overwritten.';
+  String get devtoolsSeedPlatformPlansDescription =>
+      'Input a list of plan objects to store in the /platform_plans collection. Each plan must include a unique \'id\' field. Existing entries will be overwritten.';
 
   @override
   String get devtoolsJsonInputLabel => 'JSON Input';
@@ -5102,7 +5290,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get devtoolsSelectFeature => 'Select a feature to delete';
 
   @override
-  String get noIngredientsConfigured => 'No ingredients have been configured yet. Please add or import ingredients to continue.';
+  String get noIngredientsConfigured =>
+      'No ingredients have been configured yet. Please add or import ingredients to continue.';
 
   @override
   String get customizationGroupLabel => 'Group Label';
@@ -5150,7 +5339,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteChatTitle => 'Delete Chat';
 
   @override
-  String get deleteChatConfirmMessage => 'Are you sure you want to delete this chat thread?';
+  String get deleteChatConfirmMessage =>
+      'Are you sure you want to delete this chat thread?';
 
   @override
   String get deleteChatTooltip => 'Delete this chat';
@@ -5179,7 +5369,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get ingredientCreatedSuccessfullyTooltip => 'Confirm ingredient creation';
+  String get ingredientCreatedSuccessfullyTooltip =>
+      'Confirm ingredient creation';
 
   @override
   String ingredientStagedSuccessfully(Object name) {
@@ -5187,7 +5378,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get ingredientStagedSuccessfullyTooltip => 'This ingredient has been added temporarily. Remember to save changes to finalize it.';
+  String get ingredientStagedSuccessfullyTooltip =>
+      'This ingredient has been added temporarily. Remember to save changes to finalize it.';
 
   @override
   String get createNewIngredientType => 'Create New Ingredient Type';
@@ -5251,16 +5443,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingReviewPublishTitle => 'Review & Publish';
 
   @override
-  String get onboardingReviewPublishDesc => 'Check for any missing information or schema issues before going live. All critical issues must be resolved.';
+  String get onboardingReviewPublishDesc =>
+      'Check for any missing information or schema issues before going live. All critical issues must be resolved.';
 
   @override
   String get onboardingReviewFailed => 'Review Failed';
 
   @override
-  String get onboardingReviewReadyToPublish => 'All required information is complete. Ready to publish.';
+  String get onboardingReviewReadyToPublish =>
+      'All required information is complete. Ready to publish.';
 
   @override
-  String get onboardingReviewFixErrors => 'Resolve all blocking issues before you can publish.';
+  String get onboardingReviewFixErrors =>
+      'Resolve all blocking issues before you can publish.';
 
   @override
   String onboardingStepLabel(Object step, Object total) {
@@ -5268,10 +5463,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get tagDairyDescription => 'Contains dairy products such as milk, cheese, or butter.';
+  String get tagDairyDescription =>
+      'Contains dairy products such as milk, cheese, or butter.';
 
   @override
-  String get tagGlutenDescription => 'Contains gluten from wheat, barley, rye, or related grains.';
+  String get tagGlutenDescription =>
+      'Contains gluten from wheat, barley, rye, or related grains.';
 
   @override
   String get tagNutsDescription => 'Contains tree nuts or peanuts.';
@@ -5286,19 +5483,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tagFishDescription => 'Contains fish or fish-derived ingredients.';
 
   @override
-  String get tagShellfishDescription => 'Contains shellfish such as crab, shrimp, or lobster.';
+  String get tagShellfishDescription =>
+      'Contains shellfish such as crab, shrimp, or lobster.';
 
   @override
-  String get tagVeganDescription => 'Suitable for a vegan diet; contains no animal products.';
+  String get tagVeganDescription =>
+      'Suitable for a vegan diet; contains no animal products.';
 
   @override
-  String get tagVegetarianDescription => 'Suitable for a vegetarian diet; contains no meat or fish.';
+  String get tagVegetarianDescription =>
+      'Suitable for a vegetarian diet; contains no meat or fish.';
 
   @override
-  String get tagHalalDescription => 'Prepared according to Halal dietary guidelines.';
+  String get tagHalalDescription =>
+      'Prepared according to Halal dietary guidelines.';
 
   @override
-  String get tagKosherDescription => 'Prepared according to Kosher dietary guidelines.';
+  String get tagKosherDescription =>
+      'Prepared according to Kosher dietary guidelines.';
 
   @override
   String get tagSugarFreeDescription => 'Contains no added sugars.';
@@ -5319,7 +5521,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stepFeatures => 'Features';
 
   @override
-  String get stepFeaturesDesc => 'Enable core platform features for your franchise';
+  String get stepFeaturesDesc =>
+      'Enable core platform features for your franchise';
 
   @override
   String get coreMenuFoundationTitle => 'Step 2: Core Menu Foundation';
@@ -5328,10 +5531,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get templateImportTitle => 'Quick Start with Template';
 
   @override
-  String get templateImportSubtitle => 'Select what to import for Classic Pizzeria template:';
+  String get templateImportSubtitle =>
+      'Select what to import for Classic Pizzeria template:';
 
   @override
-  String get previewEmptyState => 'Add categories and items in the tabs to see live preview';
+  String get previewEmptyState =>
+      'Add categories and items in the tabs to see live preview';
 
   @override
   String get coreMenuFoundation => 'Core Menu Foundation';

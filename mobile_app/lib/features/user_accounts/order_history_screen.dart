@@ -4,7 +4,7 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:shared_core/shared_core.dart' show DesignTokens;
 import 'package:shared_core/shared_core.dart' show BrandingConfig;
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/generated/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/network_image_widget.dart';
 import 'package:franchise_mobile_app/widgets/feedback/feedback_submission_dialog.dart';
 import 'package:franchise_mobile_app/widgets/status_chip.dart';

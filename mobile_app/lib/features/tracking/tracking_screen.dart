@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/generated/app_localizations.dart';
 
 class TrackingScreen extends StatelessWidget {
   final String orderId;

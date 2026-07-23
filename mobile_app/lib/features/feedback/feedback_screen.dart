@@ -5,7 +5,7 @@ import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/core/services/offline_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:uuid/uuid.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/generated/app_localizations.dart';
 
 class FeedbackScreen extends StatefulWidget {
   final String orderId;

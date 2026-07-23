@@ -19,7 +19,7 @@ import 'package:franchise_mobile_app/widgets/customization/size_dropdown.dart';
 import 'package:franchise_mobile_app/widgets/customization/topping_cost_label.dart';
 import 'package:franchise_mobile_app/widgets/customization/header.dart';
 import 'package:franchise_mobile_app/widgets/customization/bottom_bar.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/generated/app_localizations.dart';
 
 const MAX_DOUBLES = 4;
 const DOUGH_IDS = {'dough_calzone', 'dough_pizza', 'dough'};

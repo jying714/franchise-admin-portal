@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/portion_selector.dart';
 import 'package:franchise_mobile_app/widgets/customization/portion_pill_toggle.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/generated/app_localizations.dart';
 
 typedef CurrencyFormat = String Function(BuildContext context, num value);
 typedef GetSaladToppingUpcharge = double Function();

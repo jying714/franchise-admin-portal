@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_mobile_app/widgets/header/franchise_app_bar.dart';
 import 'package:franchise_mobile_app/features/tracking/tracking_screen.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/generated/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/feedback/feedback_submission_dialog.dart';
 import 'package:franchise_mobile_app/core/services/notification_service.dart';
 

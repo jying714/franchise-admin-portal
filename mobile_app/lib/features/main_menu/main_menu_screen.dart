@@ -18,7 +18,7 @@ import 'package:franchise_mobile_app/widgets/banner/banner_action_handler.dart';
 import 'package:franchise_mobile_app/widgets/categories/category_grid.dart';
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
 import 'package:franchise_mobile_app/widgets/loading_shimmer_widget.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/generated/app_localizations.dart';
 
 class MainMenuScreen extends material.StatelessWidget {
   const MainMenuScreen({super.key});

@@ -5,7 +5,7 @@ import 'package:franchise_mobile_app/widgets/Address/address_form.dart';
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
 import 'package:franchise_mobile_app/widgets/confirmation_dialog.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/generated/app_localizations.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
 // P1 Batch 2: Duplicated widgets cleanup (Address/ + categories/ + header/)

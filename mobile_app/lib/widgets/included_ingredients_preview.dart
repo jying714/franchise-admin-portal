@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:franchise_mobile_app/generated/app_localizations.dart';
 
 /// Displays a list of included ingredients for a menu item as labeled chips.
 /// If the list is empty or null, shows nothing.

@@ -78,5 +78,3 @@ class AppLocalizationDelegate extends LocalizationsDelegate<S> {
     return false;
   }
 }
-
-
