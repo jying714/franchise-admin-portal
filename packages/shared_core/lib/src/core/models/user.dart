@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'address.dart';
 
+/// Represents a user within the Doughboys Franchise Platform.
 class User {
   static const String roleHqOwner = 'hq_owner';
   static const String roleHqManager = 'hq_manager';
