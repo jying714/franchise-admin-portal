@@ -16,6 +16,7 @@ class DesignTokens {
   /// AppConfig.current / static BrandingConfig remain fallbacks and must not construct FranchiseProvider.
   /// Real FranchiseProvider construction requires LocalStorage / app bootstrap — never invent FranchiseProvider().
   /// Call once early (e.g. main.dart after MultiProvider) so all static getters see live branding.
+  /// Bridge: call once after MultiProvider so DesignTokens getters see live FranchiseProvider branding.
   static void setFranchiseProvider(shared.FranchiseProvider? provider) {
     _fp = provider;
   }
