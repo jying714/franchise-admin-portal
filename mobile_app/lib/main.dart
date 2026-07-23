@@ -237,6 +237,9 @@ class MyApp extends StatelessWidget {
           // and downstream ThemeData become dynamic immediately.
           final fp =
               Provider.of<shared.FranchiseProvider>(context, listen: false);
+          // This is the live branding path: FranchiseProvider → UiConfig (colors, appName, theme).                                                                                                   │
+          // AppConfig.current remains a static fallback and must not construct FranchiseProvider.                                                                                                    │
+          // Do not invent a zero-arg FranchiseProvider() — real construction requires AppLocalStorage.
           shared.UiConfig.setFranchiseProvider(fp);
 
           return Provider<Map<String, shared.IngredientMetadata>>.value(
