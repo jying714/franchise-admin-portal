@@ -201,6 +201,81 @@ def mark_status(project_root: Path, prop: Proposal, status: str) -> Proposal:
     return prop
 
 
+def _leading_ws(line: str) -> str:
+    return line[: len(line) - len(line.lstrip(" \t"))]
+
+
+def _flexible_span(
+    original: str, before: str
+) -> Optional[Tuple[int, int, str]]:
+    """
+    Find a unique span in `original` whose lines match `before` after lstrip().
+
+    Returns (start_char, end_char, base_indent) or None if not found uniquely.
+    Handles model output that dropped leading indentation or collapsed a
+    soft line-break, as long as the stripped line sequence still matches.
+    """
+    before_lines = [ln.rstrip("\r") for ln in before.strip("\n").splitlines()]
+    # Drop purely empty lines at the edges only
+    while before_lines and before_lines[0].strip() == "":
+        before_lines.pop(0)
+    while before_lines and before_lines[-1].strip() == "":
+        before_lines.pop()
+    if not before_lines:
+        return None
+
+    before_stripped = [ln.strip() for ln in before_lines]
+    orig_lines = original.splitlines(keepends=True)
+    # Build list of (line_index, stripped_content) skipping nothing — empty
+    # lines in the file must still align if before has an empty line.
+    orig_stripped = [ln.rstrip("\r\n").strip() for ln in orig_lines]
+
+    matches: List[Tuple[int, int]] = []  # (start_line, end_line_exclusive)
+    n = len(before_stripped)
+    for i in range(len(orig_stripped) - n + 1):
+        if orig_stripped[i : i + n] == before_stripped:
+            matches.append((i, i + n))
+
+    if len(matches) != 1:
+        return None
+
+    start_line, end_line = matches[0]
+    # Character offsets
+    start_char = sum(len(orig_lines[k]) for k in range(start_line))
+    end_char = sum(len(orig_lines[k]) for k in range(end_line))
+    # If original had a trailing newline after the block that we should keep,
+    # end_char already includes keepends from those lines.
+    base_indent = _leading_ws(orig_lines[start_line].rstrip("\r\n"))
+    return start_char, end_char, base_indent
+
+
+def _reindent_block(block: str, base_indent: str) -> str:
+    """
+    Re-indent `block` so its first non-empty line uses `base_indent`, and
+    relative indentation between lines is preserved.
+    """
+    lines = block.strip("\n").splitlines()
+    if not lines:
+        return block
+
+    # Find minimum leading indent among non-empty lines in the proposal block
+    non_empty = [ln for ln in lines if ln.strip()]
+    if not non_empty:
+        return block
+    min_pad = min(len(_leading_ws(ln)) for ln in non_empty)
+
+    out: List[str] = []
+    for ln in lines:
+        if not ln.strip():
+            out.append("")
+            continue
+        pad = _leading_ws(ln)
+        rel = pad[min_pad:] if len(pad) >= min_pad else ""
+        content = ln.lstrip(" \t")
+        out.append(base_indent + rel + content)
+    return "\n".join(out)
+
+
 def apply_proposal(project_root: Path, prop: Proposal) -> Tuple[bool, str]:
     """
     Apply before→after replacement in the target file.
@@ -231,21 +306,43 @@ def apply_proposal(project_root: Path, prop: Proposal) -> Tuple[bool, str]:
     before = prop.before.strip("\n")
     after = prop.after.strip("\n")
 
-    if before not in original:
+    # 1) Exact match (preferred)
+    if before in original:
+        if original.count(before) > 1:
+            return (
+                False,
+                "BEFORE text matches multiple places in the file. "
+                "Refusing apply to avoid ambiguous edits.",
+            )
+        updated = original.replace(before, after, 1)
+        full.write_text(updated, encoding="utf-8")
+        mark_status(project_root, prop, "applied")
+        return True, f"Applied to {prop.file_path} (local only — not committed, not pushed)."
+
+    # 2) Flexible indent match: line sequence equal after lstrip()
+    span = _flexible_span(original, before)
+    if span is None:
         return (
             False,
-            "BEFORE text not found exactly in the file. "
+            "BEFORE text not found in the file (exact and indent-flexible match failed). "
             "Refusing apply to avoid corrupting source. Apply manually.",
         )
 
-    if original.count(before) > 1:
-        return (
-            False,
-            "BEFORE text matches multiple places in the file. "
-            "Refusing apply to avoid ambiguous edits.",
-        )
+    start_char, end_char, base_indent = span
+    reindented_after = _reindent_block(after, base_indent)
+    updated = original[:start_char] + reindented_after + original[end_char:]
+    # Preserve a trailing newline if the original file ended the span mid-file
+    # and the next char is not a newline but the replaced region had one.
+    if end_char < len(original) and not reindented_after.endswith("\n") and original[end_char : end_char + 1] != "\n":
+        # If we removed a newline that separated from the next line, add one back
+        if original[start_char:end_char].endswith("\n"):
+            reindented_after += "\n"
+            updated = original[:start_char] + reindented_after + original[end_char:]
 
-    updated = original.replace(before, after, 1)
     full.write_text(updated, encoding="utf-8")
     mark_status(project_root, prop, "applied")
-    return True, f"Applied to {prop.file_path} (local only — not committed, not pushed)."
+    return (
+        True,
+        f"Applied to {prop.file_path} via indent-flexible match "
+        f"(local only — not committed, not pushed).",
+    )
