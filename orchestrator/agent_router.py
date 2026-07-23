@@ -9,6 +9,10 @@ Status / summary / progress tasks are specially handled:
   - Prefer the stronger 14b model (with automatic 7b fallback)
   - Lower num_ctx (8192) to stay within memory limits
   - Extra hard rules that make STATUS.md authoritative
+
+Source-file awareness:
+  - Any path mentioned in the task is auto-loaded via file_reader
+  - Real file contents are injected so agents stop inventing code
 """
 
 from __future__ import annotations
@@ -19,6 +23,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from context_loader import build_system_prompt, load_mandatory_context
+from file_reader import load_mentioned_files
 
 
 # Simple keyword-based routing (good enough for Phase 0)
@@ -100,15 +105,19 @@ def prepare_task(
       1. Load mandatory context
       2. Choose agent (status tasks forced to reviewer)
       3. Build system prompt
-      4. Choose model + num_ctx
-      5. Decide human-approval flag
-      6. Build user prompt with extra status rules when needed
+      4. Auto-load any source files mentioned in the task
+      5. Choose model + num_ctx
+      6. Decide human-approval flag
+      7. Build user prompt with extra status rules when needed
     """
     mandatory = load_mandatory_context(project_root)
 
     status = is_status_task(task_text)
     agent = preferred_agent or detect_agent(task_text)
     system = build_system_prompt(project_root, agent, mandatory)
+
+    # --- Real source files (the key fix for hallucinations) ---
+    source_block = load_mentioned_files(project_root, task_text)
 
     requires_approval, reason = needs_human_approval(task_text, agent)
 
@@ -130,13 +139,16 @@ def prepare_task(
         num_ctx = 8192
     else:
         model = models.get(agent, "qwen2.5-coder:14b")
-        num_ctx = 8192  # default safer value for all tasks
+        # Give coding tasks a bit more room when source files are present
+        num_ctx = 16384 if source_block else 8192
 
-    # Base instructions
+    # Base instructions — strengthened anti-hallucination rules
     base_instructions = """- Stay strictly inside the current phase (Phase 0 right now).
 - Propose concrete, small, reviewable changes only.
-- Never invent file paths that do not exist.
-- If the task is out of scope, say so clearly and stop.
+- NEVER invent file paths, class fields, or method signatures that are not present in the provided source.
+- If a required source file is missing from the context (or marked MISSING/BLOCKED), say so clearly and stop. Do not invent its contents.
+- When proposing a code change, quote the exact current lines you are modifying (before) and the exact new lines (after).
+- Flag any potential scope creep immediately.
 - End your response with a short "Next steps for human" section."""
 
     # Extra hard rules for status / summary tasks
@@ -152,6 +164,8 @@ def prepare_task(
 - Keep the tone factual and concise.
 """
 
+    source_section = f"\n{source_block}\n" if source_block else ""
+
     if status:
         user_prompt = f"""## TASK
 {task_text}
@@ -159,6 +173,7 @@ def prepare_task(
 ## INSTRUCTIONS
 {base_instructions}
 {status_rules}
+{source_section}
 """
     else:
         user_prompt = f"""## TASK
@@ -166,6 +181,7 @@ def prepare_task(
 
 ## INSTRUCTIONS
 {base_instructions}
+{source_section}
 """
 
     return TaskResult(
