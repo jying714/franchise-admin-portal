@@ -4,10 +4,12 @@ context_loader.py
 Loads the mandatory reference documents required by every agent
 (see AGENT_SYSTEM.md "Mandatory Reference Rules").
 
-These files form the "constitution" that is prepended to every LLM call.
-
-STATUS.md is always injected in full (never truncated) so agents always
-see an accurate live snapshot of the project.
+Two modes:
+  - full   : STATUS + personality + excerpts of all mandatory docs
+             (used for status / planning / review tasks)
+  - minimal: short role + STATUS + hard rules only
+             (used when real source files are injected so the task
+              and code dominate the context window)
 """
 
 from __future__ import annotations
@@ -41,10 +43,8 @@ MANDATORY_FILES: List[str] = [
     "tasks/Phase0.md",
 ]
 
-# Files that must be injected in full (no truncation)
 FULL_LOAD_FILES = {"STATUS.md"}
 
-# Agent personality prompts
 PROMPT_DIR = Path("prompts")
 AGENT_PROMPTS = {
     "orchestrator": "orchestrator.md",
@@ -57,7 +57,6 @@ AGENT_PROMPTS = {
 
 
 def _safe_read(path: Path) -> str:
-    """Read a file; return a clear error message if missing."""
     try:
         return path.read_text(encoding="utf-8")
     except FileNotFoundError:
@@ -71,10 +70,6 @@ def _safe_read(path: Path) -> str:
 
 
 def load_mandatory_context(project_root: Path) -> Dict[str, str]:
-    """
-    Load every mandatory document relative to the monorepo root.
-    Returns a dict: filename → content
-    """
     context: Dict[str, str] = {}
     console.print("\n[bold cyan]Loading mandatory reference documents...[/bold cyan]")
 
@@ -91,10 +86,8 @@ def load_mandatory_context(project_root: Path) -> Dict[str, str]:
 
 
 def load_agent_prompt(project_root: Path, agent_name: str) -> str:
-    """Load the personality prompt for a specialized agent."""
     if agent_name not in AGENT_PROMPTS:
         raise ValueError(f"Unknown agent: {agent_name}. Valid: {list(AGENT_PROMPTS)}")
-
     prompt_path = project_root / PROMPT_DIR / AGENT_PROMPTS[agent_name]
     return _safe_read(prompt_path)
 
@@ -103,58 +96,85 @@ def build_system_prompt(
     project_root: Path,
     agent_name: str,
     mandatory_context: Dict[str, str],
+    *,
+    minimal: bool = False,
 ) -> str:
     """
-    Construct the full system prompt that is sent to Ollama.
-    Order:
-      1. Agent personality (from prompts/*.md)
-      2. STATUS.md in full (live truth)
-      3. Condensed excerpts of the other mandatory docs
-      4. Explicit non-negotiable rules
+    Construct the system prompt.
+
+    minimal=True  → lean prompt for precise source-file edits
+                    (role + STATUS + hard rules only — no 15-doc dump)
+    minimal=False → full constitution for status / planning / review
     """
     personality = load_agent_prompt(project_root, agent_name)
 
-    # --- STATUS.md always goes in full and first ---
     status_block = ""
     if "STATUS.md" in mandatory_context:
-        status_block = f"### STATUS.md (live project snapshot — always authoritative)\n{mandatory_context['STATUS.md']}"
+        status_block = mandatory_context["STATUS.md"]
 
-    # --- Remaining docs: short excerpts ---
+    hard_rules = """
+## HARD RULES (never break these)
+- Propose only. Never write files, never push, never touch Firestore.
+- When RELEVANT SOURCE FILES are provided, they are the ONLY ground truth.
+- NEVER invent fields, methods, imports, or file structure not in the provided source.
+- If the task says "ONLY allowed change is X", do exactly X and nothing else.
+- If the task asks for a docstring, add only the docstring — no new fields, no logic changes.
+- Quote exact before/after lines from the real source.
+- If you cannot find the requested location, say so and stop.
+"""
+
+    if minimal:
+        # Keep personality short: first ~600 chars only
+        short_role = personality[:600].strip()
+        if len(personality) > 600:
+            short_role += "\n...[role truncated for edit mode]"
+
+        return f"""{short_role}
+
+---
+# LIVE STATUS (authoritative)
+{status_block}
+
+{hard_rules}
+"""
+
+    # ---- full mode (status / planning / review) ----
     summary_parts = []
     for name, content in mandatory_context.items():
         if name == "STATUS.md":
-            continue  # already handled
+            continue
         excerpt = content[:800].strip()
         if len(content) > 800:
-            excerpt += "\n...[truncated — full document available in repo]"
+            excerpt += "\n...[truncated]"
         summary_parts.append(f"### {name}\n{excerpt}")
 
     context_block = "\n\n".join(summary_parts)
 
     non_negotiables = """
 ## NON-NEGOTIABLE RULES (enforced by Orchestrator)
-- STATUS.md is the live source of truth for current project state. Prefer it over older documents when they conflict.
-- All work MUST stay inside the current phase acceptance criteria (see ROADMAP.md + tasks/PhaseX.md).
+- STATUS.md is the live source of truth for current project state.
+- All work MUST stay inside the current phase acceptance criteria.
 - shared_core is the single source of truth.
 - All customer data lives under franchises/{franchiseId}/...
 - Hybrid single/multi-location logic must be respected.
-- Dynamic config / branding / UI is mandatory (see firestore-per-franchise-config.md).
+- Dynamic config / branding / UI is mandatory.
 - NEVER perform direct Firestore writes or production changes.
 - Propose changes only → human reviews → merge via PR.
 - Flag any potential scope creep immediately.
 - Human review is mandatory for: architecture, config, schema, payments, security, design/branding.
 
-## SOURCE-CODE RULES (critical — prevents hallucinations)
+## SOURCE-CODE RULES
 - When source files are provided under "RELEVANT SOURCE FILES", treat them as the only ground truth.
 - NEVER invent fields, methods, imports, or file structure that is not present in the provided source.
-- If a file you need is missing from the context, explicitly say "I do not have the real contents of <path>" and stop.
+- If a file you need is missing from the context, explicitly say so and stop.
 - When proposing an edit, always show the exact current lines (before) and the exact new lines (after).
 """
 
-    full = f"""{personality}
+    return f"""{personality}
 
 ---
 # LIVE PROJECT STATUS (always authoritative)
+### STATUS.md
 {status_block}
 
 ---
@@ -163,4 +183,3 @@ def build_system_prompt(
 
 {non_negotiables}
 """
-    return full

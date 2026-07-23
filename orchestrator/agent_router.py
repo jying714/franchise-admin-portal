@@ -4,16 +4,8 @@ agent_router.py
 Decides which specialized agent should handle a task and
 builds the final prompt that is sent to Ollama.
 
-Status / summary / progress tasks are specially handled:
-  - Forced to the reviewer agent
-  - Prefer the stronger 14b model (with automatic 7b fallback)
-  - Lower num_ctx (8192) to stay within memory limits
-  - Extra hard rules that make STATUS.md authoritative
-
-Source-file awareness:
-  - Any path mentioned in the task is auto-loaded via file_reader
-  - Real file contents are injected so agents stop inventing code
-  - When source is present, a rigid output template is forced
+When real source files are loaded, switches to minimal-context mode
+so the task + source dominate and the model stops inventing fields.
 """
 
 from __future__ import annotations
@@ -27,16 +19,14 @@ from context_loader import build_system_prompt, load_mandatory_context
 from file_reader import load_mentioned_files
 
 
-# Simple keyword-based routing (good enough for Phase 0)
 ROUTING_RULES = [
     (r"\b(firestore|schema|config|provider|shared_core|backend|stripe|webhook|security.?rule)\b", "backend"),
     (r"\b(web.?app|dashboard|hq.?owner|design.?branding|flutter.?web|ui.?component)\b", "web_frontend"),
     (r"\b(mobile|android|ios|dynamic.?ui|restaurant.?type|offline|shared.?core)\b", "mobile_shared"),
-    (r"\b(test|qa|analyze|regression|device)\b", "tester"),
+    (r"\b(test|qa|analyze|regression|coverage)\b", "tester"),
     (r"\b(review|architecture|pr|quality|docs?)\b", "reviewer"),
 ]
 
-# Patterns that indicate a status / summary / progress task
 STATUS_TASK_PATTERNS = [
     r"\b(status|summarize|summary|progress|remaining|acceptance.?criteria|what.?is.?left|phase.?\d+.?status)\b",
 ]
@@ -51,16 +41,15 @@ class TaskResult:
     requires_human_approval: bool
     reason: str
     num_ctx: int = 8192
+    temperature: float = 0.15
 
 
 def is_status_task(task_text: str) -> bool:
-    """Return True if this looks like a status / summary / progress query."""
     lower = task_text.lower()
     return any(re.search(p, lower, re.IGNORECASE) for p in STATUS_TASK_PATTERNS)
 
 
 def detect_agent(task_text: str) -> str:
-    """Return the best agent name for the given task description."""
     if is_status_task(task_text):
         return "reviewer"
     lower = task_text.lower()
@@ -71,10 +60,6 @@ def detect_agent(task_text: str) -> str:
 
 
 def needs_human_approval(task_text: str, agent: str) -> tuple[bool, str]:
-    """
-    Enforce the human-approval gates defined in AGENT_SYSTEM.md.
-    Returns (requires_approval, reason).
-    """
     lower = task_text.lower()
 
     high_risk_keywords = [
@@ -101,28 +86,22 @@ def prepare_task(
     preferred_agent: Optional[str] = None,
     model_map: Optional[Dict[str, str]] = None,
 ) -> TaskResult:
-    """
-    Full preparation pipeline:
-      1. Load mandatory context
-      2. Choose agent (status tasks forced to reviewer)
-      3. Build system prompt
-      4. Auto-load any source files mentioned in the task
-      5. Choose model + num_ctx
-      6. Decide human-approval flag
-      7. Build user prompt with extra status rules when needed
-    """
     mandatory = load_mandatory_context(project_root)
 
     status = is_status_task(task_text)
     agent = preferred_agent or detect_agent(task_text)
-    system = build_system_prompt(project_root, agent, mandatory)
 
-    # --- Real source files (the key fix for hallucinations) ---
+    # --- Real source files ---
     source_block = load_mentioned_files(project_root, task_text)
+    has_source = bool(source_block)
+
+    # Minimal context when editing real source — this is the key fix
+    system = build_system_prompt(
+        project_root, agent, mandatory, minimal=has_source and not status
+    )
 
     requires_approval, reason = needs_human_approval(task_text, agent)
 
-    # Default model mapping
     default_models = {
         "orchestrator": "qwen2.5-coder:7b",
         "backend": "qwen2.5-coder:14b",
@@ -133,89 +112,70 @@ def prepare_task(
     }
     models = model_map or default_models
 
-    # Always keep num_ctx at 8192. 16384 + 14b reliably OOMs when the
-    # prompt already contains source files + mandatory docs.
     num_ctx = 8192
+    temperature = 0.05 if has_source else 0.15  # colder for precise edits
 
     if status:
         model = "qwen2.5-coder:14b"
     else:
         model = models.get(agent, "qwen2.5-coder:14b")
 
-    # Base instructions — strengthened anti-hallucination rules
-    base_instructions = """- Stay strictly inside the current phase (Phase 0 right now).
-- Propose concrete, small, reviewable changes only.
-- NEVER invent file paths, class fields, or method signatures that are not present in the provided source.
-- If a required source file is missing from the context (or marked MISSING/BLOCKED), say so clearly and stop. Do not invent its contents.
-- When proposing a code change, quote the exact current lines you are modifying (before) and the exact new lines (after).
-- Flag any potential scope creep immediately.
-- End your response with a short "Next steps for human" section."""
-
-    # Extra hard rules for status / summary tasks
-    status_rules = """
-## STATUS-TASK RULES (mandatory — follow exactly)
-- STATUS.md is the single live source of truth for what is already done.
-- Prefer STATUS.md over any older language found in other documents.
-- Only mark an item as incomplete if STATUS.md (or the current phase task file) still lists it as open.
-- Do NOT re-open or re-list items that are already checked off in STATUS.md.
-- Do NOT invent missing work.
-- Produce a clean checklist of what is done vs what is still open.
-- Then list only the real remaining items that agents can safely propose under human review.
-- Keep the tone factual and concise.
-"""
-
-    # When real source is present, force a rigid output format so the model
-    # cannot ignore the task and invent a different change.
-    source_output_rules = """
-## REQUIRED OUTPUT FORMAT (mandatory when source files are provided)
-You MUST structure your entire response exactly like this:
-
-### 1. Exact first 12 lines of the loaded file
-Copy-paste the first 12 lines from the RELEVANT SOURCE FILES section above. Do not paraphrase.
-
-### 2. Exact before (only the lines you will change)
-Show the precise current lines from the real file.
-
-### 3. Exact after (only those same lines with your tiny change)
-Show the precise new lines. Change nothing else.
-
-### 4. Next steps for human
-One short bullet list.
-
-HARD RULES:
-- Do exactly what the TASK asks. Nothing more.
-- If the task says "class-level docstring above class User", do ONLY that.
-- Do not improve getters, fix mapping, rename fields, or touch any other code.
-- If you cannot find the requested location in the provided source, say so and stop.
-"""
-
-    source_section = f"\n{source_block}\n" if source_block else ""
-
+    # ---- user prompt ----
     if status:
         user_prompt = f"""## TASK
 {task_text}
 
 ## INSTRUCTIONS
-{base_instructions}
-{status_rules}
-{source_section}
+- STATUS.md is the single live source of truth.
+- Prefer STATUS.md over older documents.
+- Only mark items incomplete if STATUS.md still lists them open.
+- Do not invent missing work.
+- Produce a clean done vs open checklist, then list only real remaining agent-safe items.
+- End with "Next steps for human".
 """
-    elif source_block:
-        user_prompt = f"""## TASK
+    elif has_source:
+        # Task first, source second, required format last (sandwich)
+        user_prompt = f"""## TASK (do exactly this — nothing more)
 {task_text}
 
-## INSTRUCTIONS
-{base_instructions}
-{source_output_rules}
-{source_section}
+## HARD CONSTRAINTS
+- Do ONLY what the task asks.
+- If the task says the ONLY allowed change is a docstring above `class User {{`, then:
+  - Quote the real first lines from the source below.
+  - Show before = `class User {{`
+  - Show after = the docstring + `class User {{`
+  - Do NOT add fields, getters, methods, or change any logic.
+- Never invent code that is not in the source below.
+
+{source_block}
+
+## REQUIRED OUTPUT FORMAT (follow exactly)
+
+### 1. Exact first 8–12 lines of the loaded file
+(copy-paste from RELEVANT SOURCE FILES above)
+
+### 2. Exact before
+(only the lines you change)
+
+### 3. Exact after
+(those same lines with the tiny allowed change only)
+
+### 4. Next steps for human
+(short bullets)
+
+If you cannot comply, say "I cannot apply the requested change safely" and stop.
 """
     else:
         user_prompt = f"""## TASK
 {task_text}
 
 ## INSTRUCTIONS
-{base_instructions}
-{source_section}
+- Stay inside the current phase.
+- Propose concrete, small, reviewable changes only.
+- NEVER invent file paths or code not present in context.
+- If source is missing, say so and stop.
+- Quote exact before/after.
+- End with "Next steps for human".
 """
 
     return TaskResult(
@@ -226,4 +186,5 @@ HARD RULES:
         requires_human_approval=requires_approval,
         reason=reason,
         num_ctx=num_ctx,
+        temperature=temperature,
     )

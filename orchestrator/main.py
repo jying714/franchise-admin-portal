@@ -33,14 +33,9 @@ from rich.prompt import Prompt
 from agent_router import prepare_task
 from ollama_client import OllamaClient
 
-# ---------------------------------------------------------------------------
-# Configuration
-# ---------------------------------------------------------------------------
-
 PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", "/app"))
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://ollama:11434")
 
-# Model overrides (can be set via env)
 MODEL_MAP = {
     "orchestrator": os.getenv("MODEL_ORCHESTRATOR", "qwen2.5-coder:7b"),
     "backend": os.getenv("MODEL_BACKEND", "qwen2.5-coder:14b"),
@@ -56,16 +51,11 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message
 logger = logging.getLogger("orchestrator")
 
 
-# ---------------------------------------------------------------------------
-# Core execution
-# ---------------------------------------------------------------------------
-
 async def run_task(
     client: OllamaClient,
     task_text: str,
     preferred_agent: Optional[str] = None,
 ) -> None:
-    """Prepare → call Ollama → pretty-print the proposal."""
     console.rule("[bold blue]Preparing task")
 
     result = prepare_task(
@@ -79,6 +69,7 @@ async def run_task(
         f"[bold]Agent[/bold]: {result.agent}\n"
         f"[bold]Model[/bold]: {result.model}\n"
         f"[bold]num_ctx[/bold]: {result.num_ctx}\n"
+        f"[bold]temperature[/bold]: {result.temperature}\n"
         f"[bold]Human approval[/bold]: {'YES — ' + result.reason if result.requires_human_approval else 'No (still proposal-only)'}",
         title="Routing Decision",
         border_style="cyan",
@@ -97,17 +88,13 @@ async def run_task(
             model=result.model,
             system=result.system_prompt,
             prompt=result.user_prompt,
-            temperature=0.15,
+            temperature=result.temperature,
             num_ctx=result.num_ctx,
         )
 
     console.print(Panel(Markdown(response), title=f"Proposal from {result.agent}", border_style="green"))
     console.print("\n[dim]Remember: this is a proposal only. Human review is required before any code is changed.[/dim]\n")
 
-
-# ---------------------------------------------------------------------------
-# Interactive loop (shared)
-# ---------------------------------------------------------------------------
 
 async def _interactive_loop(preferred_agent: Optional[str] = None):
     console.print(Panel.fit(
@@ -165,15 +152,10 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
     await client.close()
 
 
-# ---------------------------------------------------------------------------
-# CLI commands
-# ---------------------------------------------------------------------------
-
 @app.command()
 def interactive(
     agent: Optional[str] = typer.Option(None, help="Force a specific agent"),
 ):
-    """Interactive REPL mode."""
     preferred = agent if isinstance(agent, str) else None
     asyncio.run(_interactive_loop(preferred))
 
@@ -183,7 +165,6 @@ def task(
     text: str = typer.Argument(..., help="The task description"),
     agent: Optional[str] = typer.Option(None, help="Force a specific agent"),
 ):
-    """One-shot task execution."""
     preferred = agent if isinstance(agent, str) else None
     asyncio.run(_one_shot(text, preferred))
 
@@ -198,7 +179,6 @@ async def _one_shot(text: str, agent: Optional[str]):
 
 @app.command()
 def status():
-    """Print environment & model status."""
     asyncio.run(_status())
 
 
@@ -220,10 +200,6 @@ async def _status():
     finally:
         await client.close()
 
-
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:
