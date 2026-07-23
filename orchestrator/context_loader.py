@@ -143,6 +143,12 @@ def build_system_prompt(
 - Propose changes only → human reviews → merge via PR.
 - Flag any potential scope creep immediately.
 - Human review is mandatory for: architecture, config, schema, payments, security, design/branding.
+
+## SOURCE-CODE RULES (critical — prevents hallucinations)
+- When source files are provided under "RELEVANT SOURCE FILES", treat them as the only ground truth.
+- NEVER invent fields, methods, imports, or file structure that is not present in the provided source.
+- If a file you need is missing from the context, explicitly say "I do not have the real contents of <path>" and stop.
+- When proposing an edit, always show the exact current lines (before) and the exact new lines (after).
 """
 
     full = f"""{personality}
