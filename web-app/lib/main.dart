@@ -240,6 +240,8 @@ class _FranchiseAuthenticatedRootState
           } catch (e) {
             // Silent failure
           }
+
+          if (mounted) setState(() {});
         }
       });
 
