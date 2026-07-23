@@ -63,32 +63,70 @@ def _extract_file_path(task: str, response: str) -> Optional[str]:
 
 def _extract_before_after(response: str) -> Tuple[Optional[str], Optional[str]]:
     """Pull code from fenced blocks under before/after headings when possible."""
-    before = _code_after_heading(response, ["before", "exact before", "current"])
-    after = _code_after_heading(response, ["after", "exact after", "proposed"])
+    before = _code_after_heading(
+        response,
+        [
+            "before",
+            "exact before",
+            "before lines",
+            "current",
+            "before \(parsed\)",
+        ],
+    )
+    after = _code_after_heading(
+        response,
+        [
+            "after",
+            "exact after",
+            "after lines",
+            "proposed",
+            "after \(parsed\)",
+        ],
+    )
     return before, after
 
 
 def _code_after_heading(text: str, headings: List[str]) -> Optional[str]:
+    """
+    Find a fenced code block that follows a before/after-style heading.
+
+    Accepts:
+      ## BEFORE
+      ### Before Lines
+      BEFORE
+      Before Lines (Class-level docstring):
+    followed by ```dart ... ``` or ``` ... ```.
+    """
     for h in headings:
-        # Heading then optional prose then ``` ... ```
+        # Preferred: markdown heading then fenced block
         pat = (
-            rf"(?:^|\n)#{{1,3}}\s*\d*\.?\s*{re.escape(h)}[^\n]*\n"
-            rf"(?:[^`]*?)```(?:\w+)?\n(.*?)```"
+            rf"(?:^|\n)#{{0,3}}\s*\d*\.?\s*{h}\b[^\n]*\n"
+            rf"(?:[^`]*?)```(?:dart|swift|python|py|js|ts|yaml|yml|json|text)?\s*\n"
+            rf"(.*?)```"
         )
         m = re.search(pat, text, re.IGNORECASE | re.DOTALL)
         if m:
             return m.group(1).strip("\n")
-        # Unfenced: lines after heading until blank+heading
+
+        # Fallback: heading then indented/plain lines until next heading or fence end
         pat2 = (
-            rf"(?:^|\n)#{{1,3}}\s*\d*\.?\s*{re.escape(h)}[^\n]*\n"
-            rf"(.*?)(?=\n#{{1,3}}\s|\Z)"
+            rf"(?:^|\n)#{{0,3}}\s*\d*\.?\s*{h}\b[^\n]*\n"
+            rf"(.*?)(?=\n#{{1,3}}\s|\n##\s|\Z)"
         )
         m2 = re.search(pat2, text, re.IGNORECASE | re.DOTALL)
         if m2:
             block = m2.group(1).strip()
-            # strip markdown noise
-            block = re.sub(r"^```\w*\n|\n```$", "", block).strip()
-            if block and "class " in block or "///" in block or "final " in block:
+            block = re.sub(r"^```\w*\s*\n|\n```\s*$", "", block).strip()
+            # Only accept if it looks like code/docstring, not pure prose
+            if block and (
+                "class " in block
+                or "///" in block
+                or "// " in block
+                or "final " in block
+                or "static " in block
+                or "void " in block
+                or "return " in block
+            ):
                 return block
     return None
 
@@ -194,7 +232,6 @@ def apply_proposal(project_root: Path, prop: Proposal) -> Tuple[bool, str]:
     after = prop.after.strip("\n")
 
     if before not in original:
-        # try relaxed whitespace match on first line of before only as safety fail
         return (
             False,
             "BEFORE text not found exactly in the file. "
