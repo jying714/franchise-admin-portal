@@ -1,3 +1,4 @@
+/// Represents an address with optional recipient name and a label.
 class Address {
   final String id;
   final String street;
