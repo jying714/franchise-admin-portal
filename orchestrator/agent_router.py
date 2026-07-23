@@ -134,6 +134,7 @@ def prepare_task(
 """
     elif has_source:
         # A1: allow docstring/comment edits; forbid field invention; no over-refusal
+        # Strict BEFORE/AFTER fences are required so /approve confirm can apply locally.
         user_prompt = f"""## TASK
 {task_text}
 
@@ -147,10 +148,21 @@ def prepare_task(
 - Do NOT invent code that is not in the source below.
 - Do NOT change business logic unless the task explicitly requests it.
 
-## HOW TO RESPOND
+## HOW TO RESPOND (format is mandatory — apply will fail otherwise)
 1. Quote the exact first 8–12 lines of the loaded file (copy from the source block).
-2. Show exact BEFORE lines (only what you change).
-3. Show exact AFTER lines (same region with the allowed documentation change only).
+2. Show the change using EXACTLY these two headings and fenced blocks:
+
+## BEFORE
+```dart
+<paste the exact current lines you will replace — copy whitespace from the source>
+```
+
+## AFTER
+```dart
+<paste the exact new lines for that same region only>
+```
+
+3. Only include the region you change (usually the docstring or comment lines). Do not dump the whole file.
 4. Short "Next steps for human".
 
 Only stop if the source file is missing/blocked. Do not refuse a pure docstring or comment improvement.
@@ -166,7 +178,7 @@ Only stop if the source file is missing/blocked. Do not refuse a pure docstring 
 - Propose concrete, small, reviewable changes only.
 - NEVER invent file paths or code not present in context.
 - If source is missing, say so and stop.
-- Quote exact before/after.
+- Quote exact before/after using ## BEFORE / ## AFTER fenced blocks.
 - End with "Next steps for human".
 """
 
