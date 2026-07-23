@@ -11,8 +11,8 @@ Always-running process that:
 
 Usage inside the container:
   python main.py                  # interactive mode
-  python main.py --task "..."     # one-shot
-  python main.py --watch          # watch /app/tasks/inbox for new .md files
+  python main.py task "..."       # one-shot
+  python main.py status           # environment check
 """
 
 from __future__ import annotations
@@ -104,18 +104,10 @@ async def run_task(
 
 
 # ---------------------------------------------------------------------------
-# CLI commands
+# Interactive loop (shared)
 # ---------------------------------------------------------------------------
 
-@app.command()
-def interactive(
-    agent: Optional[str] = typer.Option(None, help="Force a specific agent"),
-):
-    """Interactive REPL mode (default)."""
-    asyncio.run(_interactive_loop(agent))
-
-
-async def _interactive_loop(preferred_agent: Optional[str]):
+async def _interactive_loop(preferred_agent: Optional[str] = None):
     console.print(Panel.fit(
         "[bold]Franchise Platform Orchestrator[/bold]\n"
         f"Project root : {PROJECT_ROOT}\n"
@@ -128,7 +120,6 @@ async def _interactive_loop(preferred_agent: Optional[str]):
 
     client = OllamaClient(OLLAMA_HOST)
     try:
-        # Quick health check
         models = await client.list_models()
         console.print(f"[green]Ollama reachable — {len(models)} models available[/green]\n")
     except Exception as e:
@@ -136,7 +127,7 @@ async def _interactive_loop(preferred_agent: Optional[str]):
         console.print("Make sure the ollama service is healthy: docker compose ps")
         return
 
-    current_agent = preferred_agent
+    current_agent: Optional[str] = preferred_agent
 
     while True:
         try:
@@ -172,13 +163,28 @@ async def _interactive_loop(preferred_agent: Optional[str]):
     await client.close()
 
 
+# ---------------------------------------------------------------------------
+# CLI commands
+# ---------------------------------------------------------------------------
+
+@app.command()
+def interactive(
+    agent: Optional[str] = typer.Option(None, help="Force a specific agent"),
+):
+    """Interactive REPL mode."""
+    # Typer may pass OptionInfo when called incorrectly; coerce to None
+    preferred = agent if isinstance(agent, str) else None
+    asyncio.run(_interactive_loop(preferred))
+
+
 @app.command()
 def task(
     text: str = typer.Argument(..., help="The task description"),
     agent: Optional[str] = typer.Option(None, help="Force a specific agent"),
 ):
     """One-shot task execution."""
-    asyncio.run(_one_shot(text, agent))
+    preferred = agent if isinstance(agent, str) else None
+    asyncio.run(_one_shot(text, preferred))
 
 
 async def _one_shot(text: str, agent: Optional[str]):
@@ -219,8 +225,8 @@ async def _status():
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    # If no sub-command is given, default to interactive
+    # No arguments → start interactive mode cleanly
     if len(sys.argv) == 1:
-        interactive()
+        asyncio.run(_interactive_loop(None))
     else:
         app()
