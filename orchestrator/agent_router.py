@@ -132,15 +132,15 @@ def prepare_task(
     }
     models = model_map or default_models
 
-    # Status tasks prefer the stronger 14b (client will fall back to 7b on 500)
-    # and use a safer context window.
+    # Always keep num_ctx at 8192. 16384 + 14b reliably OOMs when the
+    # prompt already contains source files + mandatory docs.
+    # The ollama_client will still fall back to 7b on any remaining 500.
+    num_ctx = 8192
+
     if status:
         model = "qwen2.5-coder:14b"
-        num_ctx = 8192
     else:
         model = models.get(agent, "qwen2.5-coder:14b")
-        # Give coding tasks a bit more room when source files are present
-        num_ctx = 16384 if source_block else 8192
 
     # Base instructions — strengthened anti-hallucination rules
     base_instructions = """- Stay strictly inside the current phase (Phase 0 right now).

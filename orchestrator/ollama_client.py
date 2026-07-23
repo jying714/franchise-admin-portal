@@ -7,6 +7,7 @@ Uses the internal Docker network hostname (http://ollama:11434).
 Features:
   - Configurable num_ctx (default 8192 — safer for 14B models)
   - Automatic fallback to 7B model on HTTP 500 (OOM / internal error)
+  - Retry decorator no longer swallows 500s before fallback can run
 """
 
 from __future__ import annotations
@@ -15,11 +16,20 @@ import logging
 from typing import AsyncIterator, Optional
 
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception
 
 logger = logging.getLogger("orchestrator.ollama")
 
 FALLBACK_MODEL = "qwen2.5-coder:7b"
+
+
+def _is_retryable(exc: BaseException) -> bool:
+    """Only retry transient network / 429 / 503 errors — never retry 500 (OOM)."""
+    if isinstance(exc, httpx.HTTPStatusError):
+        # 500 is usually OOM / model crash → fall through to fallback, do not retry same model
+        return exc.response.status_code in (429, 502, 503, 504)
+    # Network blips are retryable
+    return isinstance(exc, (httpx.ConnectError, httpx.ReadTimeout, httpx.WriteTimeout))
 
 
 class OllamaClient:
@@ -49,7 +59,7 @@ class OllamaClient:
         """
         Non-streaming generation.
         On HTTP 500 (typical OOM / internal error) automatically retries once
-        with the lighter 7B model.
+        with the lighter 7B model and a safer context window.
         """
         try:
             return await self._generate_once(
@@ -62,18 +72,23 @@ class OllamaClient:
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 500 and model != FALLBACK_MODEL:
                 logger.warning(
-                    f"Model {model} returned 500 — falling back to {FALLBACK_MODEL}"
+                    f"Model {model} returned 500 — falling back to {FALLBACK_MODEL} with num_ctx=8192"
                 )
                 return await self._generate_once(
                     model=FALLBACK_MODEL,
                     system=system,
                     prompt=prompt,
                     temperature=temperature,
-                    num_ctx=min(num_ctx, 8192),
+                    num_ctx=8192,
                 )
             raise
 
-    @retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=1, min=2, max=15))
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=15),
+        retry=retry_if_exception(_is_retryable),
+        reraise=True,
+    )
     async def _generate_once(
         self,
         model: str,
