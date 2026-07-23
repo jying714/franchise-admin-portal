@@ -1,14 +1,15 @@
 # Franchise Platform Orchestrator
 
-Minimal but functional multi-agent coordinator that runs 24/7 on the MINISFORUM AI X1 Pro-470.
+Multi-agent coordinator that runs 24/7 on the MINISFORUM AI X1 Pro-470.
 
 ## What it does
 
-- Loads the **mandatory governance documents** defined in `AGENT_SYSTEM.md` at startup and for every task.
-- Routes natural-language tasks to the correct specialized agent (backend, web_frontend, mobile_shared, tester, reviewer, or itself).
-- Calls the appropriate Ollama model (light 7B for orchestration / review / test, 14B for heavy coding work).
-- **Never** writes to the repo or Firestore. It only produces proposals.
-- Explicitly flags tasks that require human approval (config, schema, payments, security, branding, architecture).
+- Loads mandatory governance docs (`STATUS.md`, `AGENT_SYSTEM.md`, …)
+- Loads **real source files** when a path appears in the task
+- Routes tasks to specialized agents and calls Ollama
+- Validates proposals for scope drift (A3)
+- Saves proposals; applies **only** after explicit `/approve confirm [id]`
+- **Never** auto-pushes to git; **never** writes Firestore
 
 ## Directory layout
 
@@ -16,66 +17,102 @@ Minimal but functional multi-agent coordinator that runs 24/7 on the MINISFORUM 
 orchestrator/
 ├── Dockerfile
 ├── requirements.txt
-├── main.py              ← entrypoint (CLI + interactive)
-├── context_loader.py    ← loads mandatory .md files
-├── agent_router.py      ← routing + human-approval gates
-├── ollama_client.py     ← thin async Ollama wrapper
+├── main.py                 ← CLI + interactive
+├── context_loader.py       ← mandatory docs (full vs minimal mode)
+├── agent_router.py         ← routing + prompts
+├── file_reader.py          ← safe source-file load
+├── ollama_client.py        ← Ollama client + 14b→7b fallback
+├── proposal_validator.py   ← A3 drift checks
+├── proposal_store.py       ← save / approve / local apply
+├── proposals/              ← saved proposal JSON (runtime)
 └── README.md
 ```
 
-The monorepo is volume-mounted at `/app`, so the real `prompts/`, `AGENT_SYSTEM.md`, `ROADMAP.md`, etc. are always live.
+Monorepo is volume-mounted at `/app`.
 
 ## Quick start
 
 ```bash
-# From the monorepo root
 docker compose up -d --build
 
-# Interactive session
 docker exec -it franchise-orchestrator python main.py
 
-# One-shot task
-docker exec -it franchise-orchestrator python main.py task \
-  "Summarize current Phase 0 status against the acceptance criteria in tasks/Phase0.md"
-
-# Check environment
 docker exec -it franchise-orchestrator python main.py status
 ```
 
+## Preferred coding task prompts (A2)
+
+See also `AGENT_SYSTEM.md` → **Preferred Coding Task Prompt Style**.
+
+**Template that works well:**
+
+```text
+Using packages/shared_core/lib/src/core/models/address.dart:
+
+1. Quote the exact first 8–12 lines of the real file.
+2. Propose ONLY a short class-level docstring above the main class declaration.
+3. Do not add fields, getters, methods, or change any logic or serialization.
+4. Show exact before/after for that small region only (fenced code blocks preferred).
+```
+
+**Rules of thumb**
+
+- Always include the full file path
+- One file, one small change per task
+- Explicit forbid list (no fields / no logic)
+- Prefer natural constrained wording over ultra-rigid copy-paste-only prompts
+- Do not press Enter on empty prompts (creates junk proposals)
+
+## Review & apply workflow
+
+```text
+1. Run task → proposal saved with an id
+2. /proposals
+3. /approve <id>              # inspect parsed before/after
+4. /approve confirm <id>      # local file write only
+5. git diff on the host → you commit & push
+```
+
+| Command | Effect |
+|---------|--------|
+| `/proposals` | List recent ids |
+| `/approve` | Show last proposal |
+| `/approve <id>` | Show proposal by id |
+| `/approve confirm` | Apply last locally |
+| `/approve confirm <id>` | Apply that id locally |
+| `/reject [id]` | Mark rejected |
+
+Apply refuses if before-text is missing, matches multiple places, or path is outside allowed roots.
+
 ## Model configuration
 
-Defaults (override with environment variables in `docker-compose.yml`):
-
-| Agent          | Default model          | Env var              |
-|----------------|------------------------|----------------------|
-| orchestrator   | qwen2.5-coder:7b       | MODEL_ORCHESTRATOR   |
-| backend        | qwen2.5-coder:14b      | MODEL_BACKEND        |
-| web_frontend   | qwen2.5-coder:14b      | MODEL_WEB            |
-| mobile_shared  | qwen2.5-coder:14b      | MODEL_MOBILE         |
-| tester         | qwen2.5-coder:7b       | MODEL_TESTER         |
-| reviewer       | qwen2.5-coder:7b       | MODEL_REVIEWER       |
-
-Make sure the models are already pulled in the `ollama` container:
+| Agent | Default | Env var |
+|-------|---------|---------|
+| orchestrator | qwen2.5-coder:7b | MODEL_ORCHESTRATOR |
+| backend | qwen2.5-coder:14b | MODEL_BACKEND |
+| web_frontend | qwen2.5-coder:14b | MODEL_WEB |
+| mobile_shared | qwen2.5-coder:14b | MODEL_MOBILE |
+| tester | qwen2.5-coder:7b | MODEL_TESTER |
+| reviewer | qwen2.5-coder:7b | MODEL_REVIEWER |
 
 ```bash
 docker exec -it ollama ollama pull qwen2.5-coder:7b
 docker exec -it ollama ollama pull qwen2.5-coder:14b
-# (and any other models you prefer)
 ```
 
-## Safety guarantees (Phase 0)
+## Safety
 
-- Tool surface is intentionally tiny: read docs + call Ollama.
-- No git write, no Firestore write, no file mutation.
-- High-risk keywords automatically raise the human-approval flag.
-- Every response ends with a clear “Next steps for human” section.
+- Proposal-first; local apply only after `/approve confirm`
+- No git push from the orchestrator
+- No Firestore / production writes
+- High-risk keywords raise human-approval flags
+- A3 warnings when a "no new fields" task still looks like it added API surface
 
-## Next improvements (after Phase 0 is green)
+## Next improvements
 
-- File-drop inbox (`tasks/inbox/*.md`)
-- Simple FastAPI endpoint for remote task submission
-- LangGraph state machine for multi-step tickets
-- Automatic PR draft creation (still requiring human merge)
+- Structured unified-diff proposals for more reliable apply
+- Optional second gate for `git commit` / draft PR
+- File-drop inbox / HTTP task submission
 
 ---
-Last updated: 2026-07-22
+Last updated: 2026-07-23

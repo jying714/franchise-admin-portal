@@ -18,14 +18,15 @@ Phase 0 complete (July 23, 2026).
 
 - [x] **A1** Soften over-refusal on docstring/comment-only edits
 - [x] **A4** Human-merged class docstring on `user.dart`
-- [x] **A3** Proposal validator (flags new fields/methods when task forbade them)
-- [x] **Approve-to-apply skeleton** — save proposal; `/approve` → `/approve confirm` applies **locally only** (no git push)
-- [ ] **A2** Preferred coding-task prompt style documented
+- [x] **A3** Proposal validator (field/method drift warnings)
+- [x] **Approve-to-apply skeleton** + `/approve <id>` / `/approve confirm <id>`
+- [x] **A2** Preferred coding-task prompt style documented (`AGENT_SYSTEM.md` + `orchestrator/README.md`)
+- [x] End-to-end proof: address.dart docstring proposed → reviewed by id → local apply succeeded
 - [ ] **A5** (Optional) Model A/B
-- [ ] Reduce residual scope drift further (validator helps; prompts still improve)
-- [ ] Harden apply: structured patches / unified diffs for more reliable before→after
+- [ ] Structured unified-diff proposals (more reliable apply)
+- [ ] Optional: don’t persist empty/junk proposals
 
-### B. Product (after A quality is steady)
+### B. Product (when A quality feels steady)
 
 - [ ] Franchise-scoped config
 - [ ] HQ Design & Branding + live preview
@@ -36,18 +37,18 @@ Phase 0 complete (July 23, 2026).
 ## Target workflow
 
 1. Agent proposes (real source)  
-2. Human reviews (CLI; warnings from A3)  
-3. `/approve` then `/approve confirm` → **local apply only**  
-4. Human commits/pushes (or future second gate)  
+2. Human reviews (`/approve <id>`, validation warnings)  
+3. `/approve confirm <id>` → local apply only  
+4. Human commits/pushes  
 5. Never Firestore/production from agents  
 
-Commands: `/approve` `/approve confirm` `/reject` `/proposals`
+Prompt style: see **AGENT_SYSTEM.md → Preferred Coding Task Prompt Style**.
 
 ---
 
 ## Hard Rules
 
-- Propose first; apply only after explicit `/approve confirm`
+- Propose first; apply only after `/approve confirm`
 - Apply = local files only — not push
 - `shared_core` source of truth; franchise-scoped data paths
 - Stay in current phase acceptance criteria
