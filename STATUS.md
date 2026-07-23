@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 23, 2026 (early morning)  
+**Last Updated**: July 23, 2026  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch**: `feat/onboarding-4step`
 
@@ -13,70 +13,70 @@
 
 **Phase 1 – Agent Hardening → Core Config Scoping & Dynamic Branding**
 
-Phase 0 (Infrastructure & Documentation) is **complete** as of July 23, 2026.
+Phase 0 is **complete** (exited July 23, 2026).
 
 ### Phase 0 — Done
 
-- [x] Docker Compose + Ollama running 24/7 on the MINISFORUM
-- [x] Multi-agent Orchestrator container operational (`franchise-orchestrator`)
-- [x] Models pulled and verified: `qwen2.5-coder:7b` + `qwen2.5-coder:14b`
-- [x] Orchestrator loads mandatory governance documents on every task
-- [x] Agent routing + human-approval gates implemented
-- [x] Interactive CLI working
-- [x] Proposal-only safety (agents never write files or Firestore)
-- [x] `STATUS.md` live snapshot used by agents
-- [x] Real source-file loading (`file_reader.py`) — agents can quote real Dart code
-- [x] Minimal-context mode for source-file edits + 14b→7b OOM fallback
-- [x] Core documentation present (AGENT_SYSTEM, ARCHITECTURE, ROADMAP, HANDOFF, firestore-per-franchise-config, etc.)
-- [x] `tasks/Phase0.md` + `tasks/README.md`
-- [x] Human Phase 0 exit sign-off (July 23, 2026)
+- [x] Docker + Ollama + Orchestrator operational
+- [x] Models: `qwen2.5-coder:7b` + `qwen2.5-coder:14b`
+- [x] Mandatory docs, routing, human-approval gates
+- [x] Proposal-only safety
+- [x] Real source-file loading + minimal-context edit mode
+- [x] Human Phase 0 exit sign-off
 
 ---
 
-## Phase 1 — Active workstreams (in order)
+## Phase 1 — Active workstreams
 
-### A. Agent hardening (must complete before product coding tickets)
+### A. Agent hardening
 
-- [x] **A1** Soften over-refusal on safe docstring/comment-only edits *(pushed July 23 — retest pending)*
-- [ ] Prefer natural constrained tasks over ultra-rigid copy-paste prompts
-- [ ] Optional post-generation check: reject proposals that add fields when the task forbade them
-- [ ] **Prove**: one clean, human-approved docstring or comment improvement on real `shared_core` source
-- [ ] (Optional) Evaluate `deepseek-coder-v2` or other local models for edit tasks
+- [x] **A1** Soften over-refusal on safe docstring/comment-only edits
+- [x] **A4** One clean docstring on real `shared_core` source — human merged  
+  (`packages/shared_core/lib/src/core/models/user.dart` class-level docstring)
+- [ ] **A2** Preferred coding-task prompt style documented
+- [ ] **A3** Optional post-check: flag proposals that add fields when task forbade them
+- [ ] **A5** (Optional) Model A/B for edit quality
+- [ ] Reduce residual scope drift (agent still sometimes adds extra comments beyond “ONLY class docstring”)
+- [ ] Design gated **approve-to-apply** flow (proposal → human review → explicit approve → apply patch locally; push still human or second gate)
 
-### B. Product (after A)
+### B. Product (after remaining A items that block quality)
 
-- [ ] Franchise-scoped config rollout per `firestore-per-franchise-config.md`
-- [ ] HQ Owner Design & Branding dashboard with live preview
-- [ ] Hybrid localization (hardcoded base + DB overrides) — partial
+- [ ] Franchise-scoped config per `firestore-per-franchise-config.md`
+- [ ] HQ Owner Design & Branding + live preview
+- [ ] Hybrid localization (partial)
 
-See `tasks/Phase1.md` for full acceptance criteria and tickets.
+See `tasks/Phase1.md`.
+
+---
+
+## Target agent workflow (goal)
+
+1. Agent produces a **proposal** (exact before/after or unified diff) from real source  
+2. Human **reviews** (CLI / PR)  
+3. Human **approves apply** explicitly  
+4. Orchestrator applies the approved patch **locally** (and optionally commits)  
+5. **Push / remote PR** remains human-controlled or a separate explicit gate  
+
+Agents still never write Firestore or production systems.
 
 ---
 
 ## Higher-Level Project State
 
-- **P1** (Core Ordering Flow) — COMPLETE
-- **P2** (White-Label & Scalability) — COMPLETE
-- **P2.5** (Web-App Cleanup) — COMPLETE
-- Config unification complete (`shared_core` is single source of truth)
-- Franchise-scoped Firestore config architecture is the law
-- Hybrid single/multi-location foundations in place
-- Dynamic branding / FeatureGate direction is locked
+- P1 / P2 / P2.5 — COMPLETE
+- `shared_core` single source of truth
+- Franchise-scoped Firestore config is the law
+- Hybrid location + dynamic branding direction locked
 
 ---
 
-## Hard Rules Agents Must Never Forget
+## Hard Rules
 
-- `shared_core` is the single source of truth
-- Everything customer-related lives under `franchises/{franchiseId}/...`
-- Hybrid single/multi-location logic is mandatory
-- Dynamic config / branding / UI is mandatory
-- Agents produce **proposals only** — never apply changes themselves
-- Human review is required for architecture, config, schema, payments, security, branding
-- Stay strictly inside the current phase acceptance criteria
-- Docstring/comment-only edits are SAFE when requested — do not refuse them
+- Propose first; apply only after explicit human approval (once apply-gate exists)
+- No Firestore / production writes from agents
+- `shared_core` is source of truth; data under `franchises/{franchiseId}/...`
+- Stay inside current phase acceptance criteria
 
 ---
 
-**How to update this file**  
-At the end of any session that changes the real state of the project, edit the checkboxes and the “Last Updated” line. Keep it under ~100 lines.
+**How to update**: edit checkboxes + Last Updated after each significant session. Keep under ~100 lines.
