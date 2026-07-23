@@ -11,10 +11,13 @@ Always-running process that:
   • Saves proposals; applies ONLY after explicit /approve confirm
 
 Commands:
-  /approve          show last proposal + require /approve confirm to apply
-  /approve confirm  apply last proposal locally (no git push)
-  /reject           mark last proposal rejected
-  /proposals        list recent proposals
+  /approve                 show last proposal
+  /approve <id>            show a specific proposal by id
+  /approve confirm         apply last proposal locally (no git push)
+  /approve confirm <id>    apply a specific proposal locally
+  /reject                  mark last proposal rejected
+  /reject <id>             mark a specific proposal rejected
+  /proposals               list recent proposals
   /quit /models /agent /help
 """
 
@@ -35,7 +38,14 @@ from rich.prompt import Prompt
 
 from agent_router import prepare_task
 from ollama_client import OllamaClient
-from proposal_store import apply_proposal, list_recent, load_last, mark_status, save_proposal
+from proposal_store import (
+    apply_proposal,
+    list_recent,
+    load_by_id,
+    load_last,
+    mark_status,
+    save_proposal,
+)
 from proposal_validator import validate_proposal
 
 PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", "/app"))
@@ -95,7 +105,6 @@ async def run_task(
             num_ctx=result.num_ctx,
         )
 
-    # A3 — scope drift check
     validation = validate_proposal(task_text, response)
     if validation.has_warnings:
         for w in validation.warnings:
@@ -115,18 +124,30 @@ async def run_task(
         validation_warnings=validation.warnings,
     )
     console.print(
-        f"[dim]Saved proposal {prop.id} "
-        f"(file={prop.file_path or 'unknown'}, status={prop.status}). "
-        f"Review, then /approve confirm to apply locally — never auto-pushes.[/dim]\n"
+        f"[dim]Saved proposal [bold]{prop.id}[/bold] "
+        f"(file={prop.file_path or 'unknown'}, status={prop.status}).\n"
+        f"Review: /approve {prop.id}\n"
+        f"Apply locally: /approve confirm {prop.id}\n"
+        f"(never auto-pushes)[/dim]\n"
     )
 
 
-def _cmd_approve(confirm: bool = False) -> None:
+def _resolve_proposal(proposal_id: Optional[str] = None):
+    if proposal_id:
+        prop = load_by_id(PROJECT_ROOT, proposal_id)
+        if not prop:
+            console.print(f"[red]No proposal with id: {proposal_id}[/red]")
+            console.print("[dim]Use /proposals to list ids.[/dim]")
+            return None
+        return prop
     prop = load_last(PROJECT_ROOT)
     if not prop:
         console.print("[yellow]No saved proposal.[/yellow]")
-        return
+        return None
+    return prop
 
+
+def _show_proposal(prop) -> None:
     console.print(Panel.fit(
         f"[bold]id[/bold]: {prop.id}\n"
         f"[bold]status[/bold]: {prop.status}\n"
@@ -134,53 +155,101 @@ def _cmd_approve(confirm: bool = False) -> None:
         f"[bold]file[/bold]: {prop.file_path or '(not detected)'}\n"
         f"[bold]warnings[/bold]: {len(prop.validation_warnings)}\n"
         f"[bold]before parsed[/bold]: {'yes' if prop.before else 'no'}\n"
-        f"[bold]after parsed[/bold]: {'yes' if prop.after else 'no'}",
-        title="Last proposal",
+        f"[bold]after parsed[/bold]: {'yes' if prop.after else 'no'}\n"
+        f"[bold]task[/bold]: {prop.task[:120]}{'…' if len(prop.task) > 120 else ''}",
+        title="Proposal",
         border_style="cyan",
     ))
     if prop.validation_warnings:
         for w in prop.validation_warnings:
             console.print(f"  [yellow]• {w}[/yellow]")
+    if prop.before and prop.after:
+        console.print("\n[bold]BEFORE (parsed)[/bold]")
+        console.print(Panel(prop.before, border_style="red"))
+        console.print("[bold]AFTER (parsed)[/bold]")
+        console.print(Panel(prop.after, border_style="green"))
+    else:
+        console.print(
+            "\n[dim]Could not parse before/after blocks — full response below.[/dim]"
+        )
+        console.print(Panel(Markdown(prop.response), border_style="dim"))
+
+
+def _cmd_approve(confirm: bool = False, proposal_id: Optional[str] = None) -> None:
+    prop = _resolve_proposal(proposal_id)
+    if not prop:
+        return
+
+    _show_proposal(prop)
 
     if not confirm:
         console.print(
-            "\n[bold]Review the proposal above in history.[/bold]\n"
-            "To apply [underline]locally only[/underline] (no git push): type [green]/approve confirm[/green]\n"
-            "To discard: [red]/reject[/red]\n"
+            f"\nTo apply [underline]locally only[/underline] (no git push):\n"
+            f"  [green]/approve confirm {prop.id}[/green]\n"
+            f"To discard:\n"
+            f"  [red]/reject {prop.id}[/red]\n"
         )
         return
 
     if prop.status == "rejected":
         console.print("[red]Proposal was rejected — not applying.[/red]")
         return
+    if prop.status == "applied":
+        console.print("[yellow]Proposal already applied.[/yellow]")
+        return
 
     ok, msg = apply_proposal(PROJECT_ROOT, prop)
     if ok:
         console.print(f"[green]{msg}[/green]")
-        console.print("[dim]Commit and push remain your responsibility (or a future second gate).[/dim]")
+        console.print("[dim]Commit and push remain your responsibility.[/dim]")
     else:
         console.print(f"[red]Apply failed: {msg}[/red]")
 
 
-def _cmd_reject() -> None:
-    prop = load_last(PROJECT_ROOT)
+def _cmd_reject(proposal_id: Optional[str] = None) -> None:
+    prop = _resolve_proposal(proposal_id)
     if not prop:
-        console.print("[yellow]No saved proposal.[/yellow]")
         return
     mark_status(PROJECT_ROOT, prop, "rejected")
     console.print(f"[red]Proposal {prop.id} marked rejected.[/red]")
 
 
 def _cmd_proposals() -> None:
-    items = list_recent(PROJECT_ROOT, limit=10)
+    items = list_recent(PROJECT_ROOT, limit=15)
     if not items:
         console.print("[dim]No proposals yet.[/dim]")
         return
+    console.print("[bold]Recent proposals[/bold] (use /approve <id> or /approve confirm <id>)")
     for p in items:
         warn = f" warnings={len(p.validation_warnings)}" if p.validation_warnings else ""
         console.print(
-            f"  {p.id}  [{p.status}]  {p.agent}  {p.file_path or '-'}{warn}"
+            f"  [cyan]{p.id}[/cyan]  [{p.status}]  {p.agent}  {p.file_path or '-'}{warn}"
         )
+
+
+def _parse_approve_cmd(cmd: str) -> tuple[bool, Optional[str]]:
+    """
+    /approve
+    /approve <id>
+    /approve confirm
+    /approve confirm <id>
+    """
+    parts = cmd.split()
+    # parts[0] == '/approve'
+    if len(parts) == 1:
+        return False, None
+    if parts[1] == "confirm":
+        pid = parts[2] if len(parts) >= 3 else None
+        return True, pid
+    # /approve <id>
+    return False, parts[1]
+
+
+def _parse_reject_cmd(cmd: str) -> Optional[str]:
+    parts = cmd.split()
+    if len(parts) >= 2:
+        return parts[1]
+    return None
 
 
 async def _interactive_loop(preferred_agent: Optional[str] = None):
@@ -189,8 +258,9 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
         f"Project root : {PROJECT_ROOT}\n"
         f"Ollama       : {OLLAMA_HOST}\n"
         "Type a task and press Enter.\n"
-        "Commands: /quit /models /agent /help\n"
-        "          /approve  /approve confirm  /reject  /proposals",
+        "Commands: /quit /models /agent /help /proposals\n"
+        "          /approve [id]   /approve confirm [id]\n"
+        "          /reject [id]",
         title="Ready",
         border_style="blue",
     ))
@@ -229,22 +299,22 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
             continue
         if cmd == "/help":
             console.print("Tasks: natural language with file paths when editing code.")
-            console.print("/approve          — show last proposal")
-            console.print("/approve confirm — apply last proposal locally (no push)")
-            console.print("/reject            — discard last proposal")
-            console.print("/proposals         — list recent")
+            console.print("/proposals              — list recent proposal ids")
+            console.print("/approve                — show last proposal")
+            console.print("/approve <id>           — show proposal by id")
+            console.print("/approve confirm        — apply last locally (no push)")
+            console.print("/approve confirm <id>   — apply that id locally")
+            console.print("/reject [id]            — mark rejected")
             continue
-        if cmd == "/approve":
-            _cmd_approve(confirm=False)
-            continue
-        if cmd == "/approve confirm":
-            _cmd_approve(confirm=True)
-            continue
-        if cmd == "/reject":
-            _cmd_reject()
-            continue
-        if cmd == "/proposals":
+        if cmd == "/proposals" or cmd.startswith("/proposals "):
             _cmd_proposals()
+            continue
+        if cmd == "/approve" or cmd.startswith("/approve "):
+            confirm, pid = _parse_approve_cmd(cmd)
+            _cmd_approve(confirm=confirm, proposal_id=pid)
+            continue
+        if cmd == "/reject" or cmd.startswith("/reject "):
+            _cmd_reject(_parse_reject_cmd(cmd))
             continue
 
         await run_task(client, task, preferred_agent=current_agent)
