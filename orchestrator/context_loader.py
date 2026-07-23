@@ -7,7 +7,7 @@ Loads the mandatory reference documents required by every agent
 Two modes:
   - full   : STATUS + personality + excerpts of all mandatory docs
              (used for status / planning / review tasks)
-  - minimal: short role + short STATUS excerpt + hard rules only
+  - minimal: short role + short STATUS excerpt + SCOPE_CARD + hard rules only
              (used when real source files are injected so the task
               and code dominate the context window)
 """
@@ -42,6 +42,9 @@ MANDATORY_FILES: List[str] = [
     "tasks/Phase0.md",
     "tasks/Phase1.md",
 ]
+
+# Always-on short constraint card (high leverage, low token cost)
+SCOPE_CARD_PATH = "orchestrator/SCOPE_CARD.md"
 
 FULL_LOAD_FILES = {"STATUS.md"}
 
@@ -93,6 +96,13 @@ def load_mandatory_context(project_root: Path) -> Dict[str, str]:
         full_marker = " (full)" if rel_path in FULL_LOAD_FILES else ""
         console.print(f"  {status} {rel_path}{full_marker}")
 
+    # Always load SCOPE_CARD (short, high-leverage constraints)
+    scope_full = project_root / SCOPE_CARD_PATH
+    scope_content = _safe_read(scope_full)
+    context[SCOPE_CARD_PATH] = scope_content
+    scope_status = "✓" if not scope_content.startswith("[") else "✗"
+    console.print(f"  {scope_status} {SCOPE_CARD_PATH} (always-on)")
+
     console.print(f"[green]Loaded {len(context)} mandatory documents.[/green]\n")
     return context
 
@@ -117,6 +127,8 @@ def build_system_prompt(
     if "STATUS.md" in mandatory_context:
         status_block = mandatory_context["STATUS.md"]
 
+    scope_card = mandatory_context.get(SCOPE_CARD_PATH, "")
+
     # A1: docstring/comment-only edits are explicitly SAFE and expected
     hard_rules = """
 ## HARD RULES (never break these)
@@ -136,7 +148,7 @@ def build_system_prompt(
 """
 
     if minimal:
-        console.print("[dim]Context mode: MINIMAL (source-file task — short STATUS + hard rules only)[/dim]")
+        console.print("[dim]Context mode: MINIMAL (source-file task — short STATUS + SCOPE_CARD + hard rules only)[/dim]")
         short_role = personality[:600].strip()
         if len(personality) > 600:
             short_role += "\n...[role truncated for edit mode]"
@@ -149,12 +161,16 @@ def build_system_prompt(
 # LIVE STATUS (authoritative, truncated for coding task)
 {short_status}
 
+---
+# SCOPE CARD (hard constraints — obey these)
+{scope_card}
+
 {hard_rules}
 """
 
     summary_parts = []
     for name, content in mandatory_context.items():
-        if name == "STATUS.md":
+        if name == "STATUS.md" or name == SCOPE_CARD_PATH:
             continue
         excerpt = content[:800].strip()
         if len(content) > 800:
@@ -190,6 +206,10 @@ def build_system_prompt(
 # LIVE PROJECT STATUS (always authoritative)
 ### STATUS.md
 {status_block}
+
+---
+# SCOPE CARD (hard constraints — obey these)
+{scope_card}
 
 ---
 # MANDATORY PROJECT CONTEXT (excerpts)

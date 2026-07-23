@@ -5,6 +5,9 @@ A3: lightweight post-generation checks for scope drift.
 
 When the task clearly forbids new fields / logic, flag proposals that
 look like they introduce new members anyway.
+
+Also applies a hard ban list for recurring inventions (FranchiseProvider()
+zero-arg, invented DesignTokens getters, FirestoreService.collection, etc.).
 """
 
 from __future__ import annotations
@@ -38,6 +41,25 @@ NEW_METHOD_PATTERNS = [
     r"\bstatic\s+\w+\s+\w+\s*\(",
 ]
 
+# Hard ban list — recurring inventions that should never appear in proposals
+# for Phase 1 Workstream B micro-tasks. On hit → warning (and ideally auto-reject
+# by the caller when ok=False).
+HARD_BAN_PATTERNS = [
+    # Zero-arg or invented FranchiseProvider construction
+    (r"FranchiseProvider\s*\(\s*\)", "FranchiseProvider() zero-arg constructor is forbidden"),
+    (r"ChangeNotifierProvider\s*\(\s*create:\s*\(_\)\s*=>\s*FranchiseProvider",
+     "Invented FranchiseProvider construction inside ChangeNotifierProvider is forbidden"),
+    # Invented Firestore APIs
+    (r"FirestoreService\.collection\b", "FirestoreService.collection is not a real API — forbidden"),
+    (r"\.collection\s*\(\s*['\"]franchises['\"]", "Do not invent franchise collection access in proposals"),
+    # Invented DesignTokens surface
+    (r"DesignTokens\.onPrimary\b", "DesignTokens.onPrimary does not exist — invented getter"),
+    (r"DesignTokens\.onSecondary\b", "DesignTokens.onSecondary does not exist — invented getter"),
+    # Hard-coded theme placeholders when live path is required
+    (r"primaryColor:\s*Colors\.blue\b", "Hard-coded Colors.blue theme placeholder is forbidden for live branding tasks"),
+    (r"Color\(0xFF2196F3\)", "Hard-coded Material blue placeholder is forbidden for live branding tasks"),
+]
+
 
 @dataclass
 class ValidationResult:
@@ -60,15 +82,29 @@ def _count_matches(text: str, patterns: List[str]) -> int:
         n += len(re.findall(p, text))
     return n
 
+def _check_hard_bans(proposal_text: str) -> List[str]:
+    """Return warning messages for any hard-ban pattern hits."""
+    hits: List[str] = []
+    for pattern, message in HARD_BAN_PATTERNS:
+        if re.search(pattern, proposal_text, re.IGNORECASE):
+            hits.append(f"HARD BAN: {message}")
+    return hits
+
+
 def validate_proposal(task_text: str, proposal_text: str) -> ValidationResult:
     """
-    Return warnings when the proposal likely violates task constraints.
-    Does not block display — only flags for the human.
+    Return warnings when the proposal likely violates task constraints
+    or hits a hard ban. Does not block display — only flags for the human
+    (caller may treat ok=False as auto-reject if desired).
     """
     warnings: List[str] = []
 
+    # Always run hard bans (independent of task wording)
+    warnings.extend(_check_hard_bans(proposal_text))
+
     if not task_forbids_new_fields(task_text):
-        return ValidationResult(ok=True, warnings=warnings)
+        # Still return hard-ban results even if the task did not forbid new fields
+        return ValidationResult(ok=len(warnings) == 0, warnings=warnings)
 
     # Prefer comparing AFTER vs BEFORE sections when present
     after = _extract_section(proposal_text, ["after", "exact after", "proposed"])
