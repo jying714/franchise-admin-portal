@@ -12,6 +12,9 @@ class DesignTokens {
   /// Public getter for other delegation layers (AppConfig, etc.).
   static shared.FranchiseProvider? get franchiseProvider => _fp;
 
+  /// This is the web live branding bridge: shared.FranchiseProvider → DesignTokens (dynamic colors, appName, logo).
+  /// AppConfig.current / static BrandingConfig remain fallbacks and must not construct FranchiseProvider.
+  /// Real FranchiseProvider construction requires LocalStorage / app bootstrap — never invent FranchiseProvider().
   /// Call once early (e.g. main.dart after MultiProvider) so all static getters see live branding.
   static void setFranchiseProvider(shared.FranchiseProvider? provider) {
     _fp = provider;
