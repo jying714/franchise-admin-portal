@@ -78,6 +78,7 @@ async def run_task(
     console.print(Panel.fit(
         f"[bold]Agent[/bold]: {result.agent}\n"
         f"[bold]Model[/bold]: {result.model}\n"
+        f"[bold]num_ctx[/bold]: {result.num_ctx}\n"
         f"[bold]Human approval[/bold]: {'YES — ' + result.reason if result.requires_human_approval else 'No (still proposal-only)'}",
         title="Routing Decision",
         border_style="cyan",
@@ -97,6 +98,7 @@ async def run_task(
             system=result.system_prompt,
             prompt=result.user_prompt,
             temperature=0.15,
+            num_ctx=result.num_ctx,
         )
 
     console.print(Panel(Markdown(response), title=f"Proposal from {result.agent}", border_style="green"))
@@ -172,7 +174,6 @@ def interactive(
     agent: Optional[str] = typer.Option(None, help="Force a specific agent"),
 ):
     """Interactive REPL mode."""
-    # Typer may pass OptionInfo when called incorrectly; coerce to None
     preferred = agent if isinstance(agent, str) else None
     asyncio.run(_interactive_loop(preferred))
 
@@ -225,7 +226,6 @@ async def _status():
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    # No arguments → start interactive mode cleanly
     if len(sys.argv) == 1:
         asyncio.run(_interactive_loop(None))
     else:
