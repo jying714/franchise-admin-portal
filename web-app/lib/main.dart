@@ -201,6 +201,8 @@ class _FranchiseAuthenticatedRootState
           Provider.of<shared.AdminUserProvider>(context, listen: false);
       final franchiseProvider =
           Provider.of<shared.FranchiseProvider>(context, listen: false);
+      // Mirrors mobile UiConfig.setFranchiseProvider and enables DesignTokens live getters.
+      DesignTokens.setFranchiseProvider(franchiseProvider);
       final firestoreService =
           Provider.of<shared.FirestoreService>(context, listen: false);
 
