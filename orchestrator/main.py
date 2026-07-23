@@ -4,15 +4,18 @@ main.py — Franchise Platform Orchestrator
 -----------------------------------------
 Always-running process that:
   • Loads the mandatory governance documents
-  • Accepts tasks (interactive CLI or file drop)
-  • Routes them to the correct specialized agent
+  • Accepts tasks (interactive CLI)
+  • Routes them to specialized agents
   • Calls Ollama and returns a proposal
-  • Enforces human-approval gates
+  • Validates proposals for scope drift (A3)
+  • Saves proposals; applies ONLY after explicit /approve confirm
 
-Usage inside the container:
-  python main.py                  # interactive mode
-  python main.py task "..."       # one-shot
-  python main.py status           # environment check
+Commands:
+  /approve          show last proposal + require /approve confirm to apply
+  /approve confirm  apply last proposal locally (no git push)
+  /reject           mark last proposal rejected
+  /proposals        list recent proposals
+  /quit /models /agent /help
 """
 
 from __future__ import annotations
@@ -32,6 +35,8 @@ from rich.prompt import Prompt
 
 from agent_router import prepare_task
 from ollama_client import OllamaClient
+from proposal_store import apply_proposal, list_recent, load_last, mark_status, save_proposal
+from proposal_validator import validate_proposal
 
 PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", "/app"))
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://ollama:11434")
@@ -77,9 +82,7 @@ async def run_task(
 
     if result.requires_human_approval:
         console.print(
-            "[bold yellow]⚠  This task touches a protected area. "
-            "The agent will only produce a proposal. "
-            "Do NOT apply anything until you have reviewed it.[/bold yellow]\n"
+            "[bold yellow]⚠  Protected area — proposal only until you review.[/bold yellow]\n"
         )
 
     console.rule(f"[bold green]Calling {result.model}")
@@ -92,8 +95,92 @@ async def run_task(
             num_ctx=result.num_ctx,
         )
 
+    # A3 — scope drift check
+    validation = validate_proposal(task_text, response)
+    if validation.has_warnings:
+        for w in validation.warnings:
+            console.print(f"[bold yellow]⚠ VALIDATION: {w}[/bold yellow]")
+        console.print(
+            "[yellow]Proposal shown below — review carefully before /approve.[/yellow]\n"
+        )
+
     console.print(Panel(Markdown(response), title=f"Proposal from {result.agent}", border_style="green"))
-    console.print("\n[dim]Remember: this is a proposal only. Human review is required before any code is changed.[/dim]\n")
+
+    prop = save_proposal(
+        PROJECT_ROOT,
+        task=task_text,
+        agent=result.agent,
+        model=result.model,
+        response=response,
+        validation_warnings=validation.warnings,
+    )
+    console.print(
+        f"[dim]Saved proposal {prop.id} "
+        f"(file={prop.file_path or 'unknown'}, status={prop.status}). "
+        f"Review, then /approve confirm to apply locally — never auto-pushes.[/dim]\n"
+    )
+
+
+def _cmd_approve(confirm: bool = False) -> None:
+    prop = load_last(PROJECT_ROOT)
+    if not prop:
+        console.print("[yellow]No saved proposal.[/yellow]")
+        return
+
+    console.print(Panel.fit(
+        f"[bold]id[/bold]: {prop.id}\n"
+        f"[bold]status[/bold]: {prop.status}\n"
+        f"[bold]agent[/bold]: {prop.agent} / {prop.model}\n"
+        f"[bold]file[/bold]: {prop.file_path or '(not detected)'}\n"
+        f"[bold]warnings[/bold]: {len(prop.validation_warnings)}\n"
+        f"[bold]before parsed[/bold]: {'yes' if prop.before else 'no'}\n"
+        f"[bold]after parsed[/bold]: {'yes' if prop.after else 'no'}",
+        title="Last proposal",
+        border_style="cyan",
+    ))
+    if prop.validation_warnings:
+        for w in prop.validation_warnings:
+            console.print(f"  [yellow]• {w}[/yellow]")
+
+    if not confirm:
+        console.print(
+            "\n[bold]Review the proposal above in history.[/bold]\n"
+            "To apply [underline]locally only[/underline] (no git push): type [green]/approve confirm[/green]\n"
+            "To discard: [red]/reject[/red]\n"
+        )
+        return
+
+    if prop.status == "rejected":
+        console.print("[red]Proposal was rejected — not applying.[/red]")
+        return
+
+    ok, msg = apply_proposal(PROJECT_ROOT, prop)
+    if ok:
+        console.print(f"[green]{msg}[/green]")
+        console.print("[dim]Commit and push remain your responsibility (or a future second gate).[/dim]")
+    else:
+        console.print(f"[red]Apply failed: {msg}[/red]")
+
+
+def _cmd_reject() -> None:
+    prop = load_last(PROJECT_ROOT)
+    if not prop:
+        console.print("[yellow]No saved proposal.[/yellow]")
+        return
+    mark_status(PROJECT_ROOT, prop, "rejected")
+    console.print(f"[red]Proposal {prop.id} marked rejected.[/red]")
+
+
+def _cmd_proposals() -> None:
+    items = list_recent(PROJECT_ROOT, limit=10)
+    if not items:
+        console.print("[dim]No proposals yet.[/dim]")
+        return
+    for p in items:
+        warn = f" warnings={len(p.validation_warnings)}" if p.validation_warnings else ""
+        console.print(
+            f"  {p.id}  [{p.status}]  {p.agent}  {p.file_path or '-'}{warn}"
+        )
 
 
 async def _interactive_loop(preferred_agent: Optional[str] = None):
@@ -101,8 +188,9 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
         "[bold]Franchise Platform Orchestrator[/bold]\n"
         f"Project root : {PROJECT_ROOT}\n"
         f"Ollama       : {OLLAMA_HOST}\n"
-        "Type a task description and press Enter.\n"
-        "Commands: /quit  /models  /agent <name>  /help",
+        "Type a task and press Enter.\n"
+        "Commands: /quit /models /agent /help\n"
+        "          /approve  /approve confirm  /reject  /proposals",
         title="Ready",
         border_style="blue",
     ))
@@ -113,7 +201,6 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
         console.print(f"[green]Ollama reachable — {len(models)} models available[/green]\n")
     except Exception as e:
         console.print(f"[bold red]Cannot reach Ollama at {OLLAMA_HOST}: {e}[/bold red]")
-        console.print("Make sure the ollama service is healthy: docker compose ps")
         return
 
     current_agent: Optional[str] = preferred_agent
@@ -128,23 +215,36 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
         if not task.strip():
             continue
 
-        if task.strip() in ("/quit", "/exit", "quit", "exit"):
+        cmd = task.strip()
+        if cmd in ("/quit", "/exit", "quit", "exit"):
             break
-        if task.strip() == "/models":
+        if cmd == "/models":
             models = await client.list_models()
-            console.print("Available models:")
             for m in models:
                 console.print(f"  • {m}")
             continue
-        if task.strip().startswith("/agent "):
-            current_agent = task.strip().split(maxsplit=1)[1]
+        if cmd.startswith("/agent "):
+            current_agent = cmd.split(maxsplit=1)[1]
             console.print(f"Forced agent → {current_agent}")
             continue
-        if task.strip() == "/help":
-            console.print("Just type a natural-language task. Examples:")
-            console.print('  "Summarize current Phase 0 status against the acceptance criteria"')
-            console.print('  "Propose a tiny safe cleanup in shared_core that improves a comment"')
-            console.print('  "Review the firestore-per-franchise-config.md for any gaps"')
+        if cmd == "/help":
+            console.print("Tasks: natural language with file paths when editing code.")
+            console.print("/approve          — show last proposal")
+            console.print("/approve confirm — apply last proposal locally (no push)")
+            console.print("/reject            — discard last proposal")
+            console.print("/proposals         — list recent")
+            continue
+        if cmd == "/approve":
+            _cmd_approve(confirm=False)
+            continue
+        if cmd == "/approve confirm":
+            _cmd_approve(confirm=True)
+            continue
+        if cmd == "/reject":
+            _cmd_reject()
+            continue
+        if cmd == "/proposals":
+            _cmd_proposals()
             continue
 
         await run_task(client, task, preferred_agent=current_agent)
@@ -185,14 +285,12 @@ def status():
 async def _status():
     console.print(f"PROJECT_ROOT = {PROJECT_ROOT}")
     console.print(f"OLLAMA_HOST  = {OLLAMA_HOST}")
-    console.print("Model mapping:")
     for k, v in MODEL_MAP.items():
         console.print(f"  {k:15} → {v}")
-
     client = OllamaClient(OLLAMA_HOST)
     try:
         models = await client.list_models()
-        console.print(f"\n[green]Ollama OK — models:[/green]")
+        console.print("[green]Ollama OK[/green]")
         for m in models:
             console.print(f"  • {m}")
     except Exception as e:
