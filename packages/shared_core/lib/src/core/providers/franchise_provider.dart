@@ -5,6 +5,10 @@ import 'package:shared_core/src/core/models/franchise_info.dart';
 import 'package:shared_core/src/core/utils/local_storage.dart';
 
 /// Pure business logic for franchise selection and user context
+/// Phase 1 Workstream B: this provider is the runtime source of franchise-scoped
+/// branding and config. Static classes in config/ (BrandingConfig, DesignTokens,
+/// AppConfig, FeatureConfig) remain defaults/fallbacks until fully wired here.
+/// Do not invent new fields on those config classes; extend loading/apply paths instead.
 class FranchiseProvider {
   Function()? onFranchiseChanged;
 
