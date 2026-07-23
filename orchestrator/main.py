@@ -257,7 +257,7 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
         "[bold]Franchise Platform Orchestrator[/bold]\n"
         f"Project root : {PROJECT_ROOT}\n"
         f"Ollama       : {OLLAMA_HOST}\n"
-        "Paste a multi-line task, then press Enter on an empty line.\n"
+        "Paste a multi-line task, then type END on its own line.\n"
         "Commands: /quit /models /agent /help /proposals\n"
         "          /approve [id]   /approve confirm [id]\n"
         "          /reject [id]",
@@ -277,16 +277,16 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
 
     while True:
         try:
-            console.print("\n[bold cyan]Task[/bold cyan] (paste multi-line, finish with an empty line):")
+            console.print("\n[bold cyan]Task[/bold cyan] (paste multi-line, then type END on its own line):")
             lines = []
             while True:
                 try:
-                    line = Prompt.ask("", default="")
+                    line = console.input("[dim]…[/dim] ")
                 except (EOFError, KeyboardInterrupt):
                     if not lines:
                         raise
                     break
-                if line.strip() == "":
+                if line.strip().upper() == "END":
                     break
                 lines.append(line)
             task = "\n".join(lines).strip()
