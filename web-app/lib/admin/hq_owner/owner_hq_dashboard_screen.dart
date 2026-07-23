@@ -177,16 +177,34 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            color: DesignTokens.primaryColor,
+                          Column(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                color: DesignTokens.primaryColor,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Primary',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
                           ),
                           const SizedBox(width: 12),
-                          Container(
-                            width: 48,
-                            height: 48,
-                            color: DesignTokens.secondaryColor,
+                          Column(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                color: DesignTokens.secondaryColor,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Secondary',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
                           ),
                         ],
                       ),
