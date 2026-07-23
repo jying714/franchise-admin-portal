@@ -178,6 +178,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                       Row(
                         children: [
                           Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Container(
                                 width: 48,
@@ -193,6 +194,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 12),
                           Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Container(
                                 width: 48,
