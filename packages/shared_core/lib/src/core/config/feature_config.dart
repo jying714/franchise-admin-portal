@@ -1,6 +1,11 @@
 /// Pure Dart feature configuration — Single source of truth across mobile, web, admin, and functions.
 /// Contains defaults, apply logic from Firestore, and mapping.
 /// No Firebase, no Logger, no platform-specific imports.
+///
+/// This is the shared_core feature config model.
+/// Values are currently static defaults with an apply() path from Firestore.
+/// Franchise-scoped feature loading is the responsibility of Phase 1 Workstream B.
+/// Do not add new fields in this file until scoping work is complete.
 
 class FeatureConfig {
   // Singleton
