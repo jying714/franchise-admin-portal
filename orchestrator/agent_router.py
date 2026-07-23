@@ -13,6 +13,7 @@ Status / summary / progress tasks are specially handled:
 Source-file awareness:
   - Any path mentioned in the task is auto-loaded via file_reader
   - Real file contents are injected so agents stop inventing code
+  - When source is present, a rigid output template is forced
 """
 
 from __future__ import annotations
@@ -134,7 +135,6 @@ def prepare_task(
 
     # Always keep num_ctx at 8192. 16384 + 14b reliably OOMs when the
     # prompt already contains source files + mandatory docs.
-    # The ollama_client will still fall back to 7b on any remaining 500.
     num_ctx = 8192
 
     if status:
@@ -164,6 +164,31 @@ def prepare_task(
 - Keep the tone factual and concise.
 """
 
+    # When real source is present, force a rigid output format so the model
+    # cannot ignore the task and invent a different change.
+    source_output_rules = """
+## REQUIRED OUTPUT FORMAT (mandatory when source files are provided)
+You MUST structure your entire response exactly like this:
+
+### 1. Exact first 12 lines of the loaded file
+Copy-paste the first 12 lines from the RELEVANT SOURCE FILES section above. Do not paraphrase.
+
+### 2. Exact before (only the lines you will change)
+Show the precise current lines from the real file.
+
+### 3. Exact after (only those same lines with your tiny change)
+Show the precise new lines. Change nothing else.
+
+### 4. Next steps for human
+One short bullet list.
+
+HARD RULES:
+- Do exactly what the TASK asks. Nothing more.
+- If the task says "class-level docstring above class User", do ONLY that.
+- Do not improve getters, fix mapping, rename fields, or touch any other code.
+- If you cannot find the requested location in the provided source, say so and stop.
+"""
+
     source_section = f"\n{source_block}\n" if source_block else ""
 
     if status:
@@ -173,6 +198,15 @@ def prepare_task(
 ## INSTRUCTIONS
 {base_instructions}
 {status_rules}
+{source_section}
+"""
+    elif source_block:
+        user_prompt = f"""## TASK
+{task_text}
+
+## INSTRUCTIONS
+{base_instructions}
+{source_output_rules}
 {source_section}
 """
     else:
