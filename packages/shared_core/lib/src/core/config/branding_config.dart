@@ -1,5 +1,9 @@
 /// Pure Dart branding configuration — Single source of truth across mobile, web, admin, and functions.
 /// Asset paths kept generic; apps can override locally if needed.
+/// This is the shared_core branding model (single source of truth).
+/// Values are currently static defaults.
+/// Franchise-scoped / dynamic loading is the responsibility of Phase 1 Workstream B.
+/// Do not add new fields in this file until scoping work is complete.
 class BrandingConfig {
   // --------- Franchise Details (Shared) ---------
   static const String franchiseName = "Doughboys Pizzeria";
