@@ -5,6 +5,9 @@ Loads the mandatory reference documents required by every agent
 (see AGENT_SYSTEM.md "Mandatory Reference Rules").
 
 These files form the "constitution" that is prepended to every LLM call.
+
+STATUS.md is always injected in full (never truncated) so agents always
+see an accurate live snapshot of the project.
 """
 
 from __future__ import annotations
@@ -18,8 +21,9 @@ from rich.console import Console
 console = Console()
 logger = logging.getLogger("orchestrator.context")
 
-# Exact list from AGENT_SYSTEM.md (keep in sync)
+# Exact list from AGENT_SYSTEM.md + STATUS.md (keep in sync)
 MANDATORY_FILES: List[str] = [
+    "STATUS.md",                                          # always full — live truth
     "AGENT_SYSTEM.md",
     "ROADMAP.md",
     "ARCHITECTURE.md",
@@ -34,8 +38,11 @@ MANDATORY_FILES: List[str] = [
     "mobile_app/README.md",
     "web-app/README.md",
     "tasks/README.md",
-    "tasks/Phase0.md",          # current phase — update when phase changes
+    "tasks/Phase0.md",
 ]
+
+# Files that must be injected in full (no truncation)
+FULL_LOAD_FILES = {"STATUS.md"}
 
 # Agent personality prompts
 PROMPT_DIR = Path("prompts")
@@ -76,7 +83,8 @@ def load_mandatory_context(project_root: Path) -> Dict[str, str]:
         content = _safe_read(full)
         context[rel_path] = content
         status = "✓" if not content.startswith("[") else "✗"
-        console.print(f"  {status} {rel_path}")
+        full_marker = " (full)" if rel_path in FULL_LOAD_FILES else ""
+        console.print(f"  {status} {rel_path}{full_marker}")
 
     console.print(f"[green]Loaded {len(context)} mandatory documents.[/green]\n")
     return context
@@ -100,17 +108,22 @@ def build_system_prompt(
     Construct the full system prompt that is sent to Ollama.
     Order:
       1. Agent personality (from prompts/*.md)
-      2. Condensed mandatory context (key excerpts)
-      3. Explicit reminder of non-negotiable rules
+      2. STATUS.md in full (live truth)
+      3. Condensed excerpts of the other mandatory docs
+      4. Explicit non-negotiable rules
     """
     personality = load_agent_prompt(project_root, agent_name)
 
-    # We do not dump the entire 50+ KB of docs into every prompt
-    # (context window + cost). Instead we inject a structured summary
-    # and tell the model the full files are available if needed.
+    # --- STATUS.md always goes in full and first ---
+    status_block = ""
+    if "STATUS.md" in mandatory_context:
+        status_block = f"### STATUS.md (live project snapshot — always authoritative)\n{mandatory_context['STATUS.md']}"
+
+    # --- Remaining docs: short excerpts ---
     summary_parts = []
     for name, content in mandatory_context.items():
-        # Keep first ~800 chars of each doc as a high-signal summary
+        if name == "STATUS.md":
+            continue  # already handled
         excerpt = content[:800].strip()
         if len(content) > 800:
             excerpt += "\n...[truncated — full document available in repo]"
@@ -120,6 +133,7 @@ def build_system_prompt(
 
     non_negotiables = """
 ## NON-NEGOTIABLE RULES (enforced by Orchestrator)
+- STATUS.md is the live source of truth for current project state. Prefer it over older documents when they conflict.
 - All work MUST stay inside the current phase acceptance criteria (see ROADMAP.md + tasks/PhaseX.md).
 - shared_core is the single source of truth.
 - All customer data lives under franchises/{franchiseId}/...
@@ -132,6 +146,10 @@ def build_system_prompt(
 """
 
     full = f"""{personality}
+
+---
+# LIVE PROJECT STATUS (always authoritative)
+{status_block}
 
 ---
 # MANDATORY PROJECT CONTEXT (excerpts)
