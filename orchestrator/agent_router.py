@@ -6,6 +6,8 @@ builds the final prompt that is sent to Ollama.
 
 When real source files are loaded, switches to minimal-context mode
 so the task + source dominate and the model stops inventing fields.
+
+A1: docstring/comment-only edits are explicitly allowed (no over-refusal).
 """
 
 from __future__ import annotations
@@ -91,11 +93,9 @@ def prepare_task(
     status = is_status_task(task_text)
     agent = preferred_agent or detect_agent(task_text)
 
-    # --- Real source files ---
     source_block = load_mentioned_files(project_root, task_text)
     has_source = bool(source_block)
 
-    # Minimal context when editing real source — this is the key fix
     system = build_system_prompt(
         project_root, agent, mandatory, minimal=has_source and not status
     )
@@ -113,14 +113,13 @@ def prepare_task(
     models = model_map or default_models
 
     num_ctx = 8192
-    temperature = 0.05 if has_source else 0.15  # colder for precise edits
+    temperature = 0.05 if has_source else 0.15
 
     if status:
         model = "qwen2.5-coder:14b"
     else:
         model = models.get(agent, "qwen2.5-coder:14b")
 
-    # ---- user prompt ----
     if status:
         user_prompt = f"""## TASK
 {task_text}
@@ -134,36 +133,29 @@ def prepare_task(
 - End with "Next steps for human".
 """
     elif has_source:
-        # Task first, source second, required format last (sandwich)
-        user_prompt = f"""## TASK (do exactly this — nothing more)
+        # A1: allow docstring/comment edits; forbid field invention; no over-refusal
+        user_prompt = f"""## TASK
 {task_text}
 
-## HARD CONSTRAINTS
-- Do ONLY what the task asks.
-- If the task says the ONLY allowed change is a docstring above `class User {{`, then:
-  - Quote the real first lines from the source below.
-  - Show before = `class User {{`
-  - Show after = the docstring + `class User {{`
-  - Do NOT add fields, getters, methods, or change any logic.
-- Never invent code that is not in the source below.
+## WHAT IS ALLOWED
+- Class-level docstrings (/// ...) above an existing class — SAFE. Propose them when asked.
+- Improving an existing comment — SAFE when asked.
+- Documentation-only changes must be proposed with exact before/after from the real source.
+
+## WHAT IS FORBIDDEN
+- Do NOT add new fields, getters, methods, or change Firestore mapping.
+- Do NOT invent code that is not in the source below.
+- Do NOT change business logic unless the task explicitly requests it.
+
+## HOW TO RESPOND
+1. Quote the exact first 8–12 lines of the loaded file (copy from the source block).
+2. Show exact BEFORE lines (only what you change).
+3. Show exact AFTER lines (same region with the allowed documentation change only).
+4. Short "Next steps for human".
+
+Only stop if the source file is missing/blocked. Do not refuse a pure docstring or comment improvement.
 
 {source_block}
-
-## REQUIRED OUTPUT FORMAT (follow exactly)
-
-### 1. Exact first 8–12 lines of the loaded file
-(copy-paste from RELEVANT SOURCE FILES above)
-
-### 2. Exact before
-(only the lines you change)
-
-### 3. Exact after
-(those same lines with the tiny allowed change only)
-
-### 4. Next steps for human
-(short bullets)
-
-If you cannot comply, say "I cannot apply the requested change safely" and stop.
 """
     else:
         user_prompt = f"""## TASK

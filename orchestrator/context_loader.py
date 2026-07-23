@@ -23,9 +23,8 @@ from rich.console import Console
 console = Console()
 logger = logging.getLogger("orchestrator.context")
 
-# Exact list from AGENT_SYSTEM.md + STATUS.md (keep in sync)
 MANDATORY_FILES: List[str] = [
-    "STATUS.md",                                          # always full — live truth
+    "STATUS.md",
     "AGENT_SYSTEM.md",
     "ROADMAP.md",
     "ARCHITECTURE.md",
@@ -41,6 +40,7 @@ MANDATORY_FILES: List[str] = [
     "web-app/README.md",
     "tasks/README.md",
     "tasks/Phase0.md",
+    "tasks/Phase1.md",
 ]
 
 FULL_LOAD_FILES = {"STATUS.md"}
@@ -99,32 +99,31 @@ def build_system_prompt(
     *,
     minimal: bool = False,
 ) -> str:
-    """
-    Construct the system prompt.
-
-    minimal=True  → lean prompt for precise source-file edits
-                    (role + STATUS + hard rules only — no 15-doc dump)
-    minimal=False → full constitution for status / planning / review
-    """
     personality = load_agent_prompt(project_root, agent_name)
 
     status_block = ""
     if "STATUS.md" in mandatory_context:
         status_block = mandatory_context["STATUS.md"]
 
+    # A1: docstring/comment-only edits are explicitly SAFE and expected
     hard_rules = """
 ## HARD RULES (never break these)
 - Propose only. Never write files, never push, never touch Firestore.
 - When RELEVANT SOURCE FILES are provided, they are the ONLY ground truth.
 - NEVER invent fields, methods, imports, or file structure not in the provided source.
-- If the task says "ONLY allowed change is X", do exactly X and nothing else.
-- If the task asks for a docstring, add only the docstring — no new fields, no logic changes.
-- Quote exact before/after lines from the real source.
-- If you cannot find the requested location, say so and stop.
+- NEVER add new class fields, change Firestore mapping, or change business logic unless the task explicitly asks for that (and even then, propose only).
+
+## SAFE EDITS (always allowed when the task asks for them)
+- Adding or improving a class-level docstring (/// ...) is SAFE. Do it when asked.
+- Adding or improving a short comment above an existing member is SAFE when asked.
+- These documentation-only changes do NOT require refusal. Propose them with exact before/after.
+
+## WHEN TO STOP
+- Stop only if the required source file is missing/blocked, or the task asks for schema/security/payment changes without human-approval context.
+- Do not refuse a pure docstring or comment improvement.
 """
 
     if minimal:
-        # Keep personality short: first ~600 chars only
         short_role = personality[:600].strip()
         if len(personality) > 600:
             short_role += "\n...[role truncated for edit mode]"
@@ -138,7 +137,6 @@ def build_system_prompt(
 {hard_rules}
 """
 
-    # ---- full mode (status / planning / review) ----
     summary_parts = []
     for name, content in mandatory_context.items():
         if name == "STATUS.md":
@@ -166,6 +164,7 @@ def build_system_prompt(
 ## SOURCE-CODE RULES
 - When source files are provided under "RELEVANT SOURCE FILES", treat them as the only ground truth.
 - NEVER invent fields, methods, imports, or file structure that is not present in the provided source.
+- Adding a class-level docstring or improving a comment is SAFE and expected when the task asks for it.
 - If a file you need is missing from the context, explicitly say so and stop.
 - When proposing an edit, always show the exact current lines (before) and the exact new lines (after).
 """

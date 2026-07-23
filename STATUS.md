@@ -31,19 +31,16 @@ Phase 0 (Infrastructure & Documentation) is **complete** as of July 23, 2026.
 - [x] `tasks/Phase0.md` + `tasks/README.md`
 - [x] Human Phase 0 exit sign-off (July 23, 2026)
 
-**Deferred from Phase 0 → Phase 1 hardening**  
-Precise “only do exactly this one-line edit” instruction-following is not yet reliable on `qwen2.5-coder:14b`. Agents can read real code; constrained docstring-only edits still over-refuse or drift. This is the first Phase 1 workstream.
-
 ---
 
 ## Phase 1 — Active workstreams (in order)
 
 ### A. Agent hardening (must complete before product coding tickets)
 
-- [ ] Soften over-refusal on safe docstring/comment-only edits
+- [x] **A1** Soften over-refusal on safe docstring/comment-only edits *(pushed July 23 — retest pending)*
 - [ ] Prefer natural constrained tasks over ultra-rigid copy-paste prompts
 - [ ] Optional post-generation check: reject proposals that add fields when the task forbade them
-- [ ] Prove one clean, human-approved docstring/comment edit on real `shared_core` source
+- [ ] **Prove**: one clean, human-approved docstring or comment improvement on real `shared_core` source
 - [ ] (Optional) Evaluate `deepseek-coder-v2` or other local models for edit tasks
 
 ### B. Product (after A)
@@ -77,6 +74,7 @@ See `tasks/Phase1.md` for full acceptance criteria and tickets.
 - Agents produce **proposals only** — never apply changes themselves
 - Human review is required for architecture, config, schema, payments, security, branding
 - Stay strictly inside the current phase acceptance criteria
+- Docstring/comment-only edits are SAFE when requested — do not refuse them
 
 ---
 
