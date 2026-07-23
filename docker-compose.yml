@@ -11,8 +11,8 @@ services:
     restart: unless-stopped
     environment:
       - OLLAMA_KEEP_ALIVE=24h
-      - OLLAMA_NUM_PARALLEL=6              # higher concurrency for multiple agents
-      - OLLAMA_MAX_LOADED_MODELS=4         # keep more models warm (Orchestrator always running)
+      - OLLAMA_NUM_PARALLEL=6
+      - OLLAMA_MAX_LOADED_MODELS=4
       - OLLAMA_HOST=0.0.0.0
     healthcheck:
       test: ["CMD", "ollama", "list"]
@@ -20,9 +20,31 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    # Dedicated machine → give Ollama most of the RAM
     mem_limit: 56g
     mem_reservation: 12g
+
+  orchestrator:
+    build: ./orchestrator
+    container_name: franchise-orchestrator
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - PROJECT_ROOT=/app
+      - PYTHONUNBUFFERED=1
+      # Optional model overrides (uncomment & change if desired)
+      # - MODEL_ORCHESTRATOR=qwen2.5-coder:7b
+      # - MODEL_BACKEND=qwen2.5-coder:14b
+      # - MODEL_WEB=qwen2.5-coder:14b
+      # - MODEL_MOBILE=qwen2.5-coder:14b
+    volumes:
+      - .:/app                    # full monorepo — agents can read all docs & code
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    mem_limit: 4g
+    mem_reservation: 1g
 
 volumes:
   ollama_data:
