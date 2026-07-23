@@ -174,6 +174,11 @@ class FranchiseProvider {
 
   /// Update from full franchises/{id} document snapshot data.
   /// Safe to call any time; bumps version so listeners (theme) can react.
+  /// Expected useful keys (read by currentPrimaryColorHex / currentSecondaryColorHex /
+  /// currentAppName / currentLogoUrl): primaryColorHex, secondaryColorHex,
+  /// branding.primaryColorHex, branding.secondaryColorHex, appName, name, logoUrl, logo.
+  /// Other keys are stored but not yet surfaced. Phase 1 Workstream B may extend
+  /// loading; do not add fields on static config classes for this.
   void setBrandingFromFranchiseDoc(Map<String, dynamic> docData) {
     _brandingData = Map<String, dynamic>.from(docData);
     _configVersion++;
