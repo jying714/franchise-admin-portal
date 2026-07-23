@@ -7,7 +7,7 @@ Loads the mandatory reference documents required by every agent
 Two modes:
   - full   : STATUS + personality + excerpts of all mandatory docs
              (used for status / planning / review tasks)
-  - minimal: short role + STATUS + hard rules only
+  - minimal: short role + short STATUS excerpt + hard rules only
              (used when real source files are injected so the task
               and code dominate the context window)
 """
@@ -45,6 +45,9 @@ MANDATORY_FILES: List[str] = [
 
 FULL_LOAD_FILES = {"STATUS.md"}
 
+# How many lines of STATUS.md to keep in minimal (coding) mode
+MINIMAL_STATUS_LINES = 35
+
 PROMPT_DIR = Path("prompts")
 AGENT_PROMPTS = {
     "orchestrator": "orchestrator.md",
@@ -67,6 +70,15 @@ def _safe_read(path: Path) -> str:
         msg = f"[ERROR reading {path}] {e}"
         logger.error(msg)
         return msg
+
+
+def _short_status(full_status: str, max_lines: int = MINIMAL_STATUS_LINES) -> str:
+    """Return the first max_lines of STATUS.md for minimal coding context."""
+    lines = full_status.splitlines()
+    if len(lines) <= max_lines:
+        return full_status
+    excerpt = "\n".join(lines[:max_lines])
+    return excerpt + "\n\n...[STATUS truncated for coding-task context — full STATUS used only for status/planning tasks]"
 
 
 def load_mandatory_context(project_root: Path) -> Dict[str, str]:
@@ -124,15 +136,18 @@ def build_system_prompt(
 """
 
     if minimal:
+        console.print("[dim]Context mode: MINIMAL (source-file task — short STATUS + hard rules only)[/dim]")
         short_role = personality[:600].strip()
         if len(personality) > 600:
             short_role += "\n...[role truncated for edit mode]"
 
+        short_status = _short_status(status_block)
+
         return f"""{short_role}
 
 ---
-# LIVE STATUS (authoritative)
-{status_block}
+# LIVE STATUS (authoritative, truncated for coding task)
+{short_status}
 
 {hard_rules}
 """
