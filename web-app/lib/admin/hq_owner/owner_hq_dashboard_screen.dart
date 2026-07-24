@@ -459,7 +459,14 @@ class FutureFeaturePlaceholderPanel extends StatelessWidget {
       ),
       child: Padding(
         padding: shared.UiConfig.defaultPadding,
-        child: Text(loc.comingSoonFeatures ?? "Future Features - Coming Soon"),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.star, color: DesignTokens.primaryColor),
+            SizedBox(width: 8),
+            Text(loc.comingSoonFeatures ?? "Future Features - Coming Soon", style: TextStyle(color: DesignTokens.secondaryTextColor)),
+          ],
+        ),
       ),
     );
   }
