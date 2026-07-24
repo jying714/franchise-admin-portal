@@ -1,0 +1,12 @@
+# id: branding-appname-logo-getters
+# agent: web_frontend
+# priority: 25
+
+Using web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 8 lines of the real file.
+2. Quote the currentAppName and currentLogoUrl getters including nearby comments.
+3. One sentence: how does the Live Branding Preview obtain app name and optional logo?
+4. No edits. End with: No change needed.
+
+Real source only.
