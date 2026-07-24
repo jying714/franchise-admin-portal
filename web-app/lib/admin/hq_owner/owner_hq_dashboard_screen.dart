@@ -167,12 +167,17 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Live Branding Preview',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                      Row(
+                        children: [
+                          Icon(Icons.palette, color: DesignTokens.primaryColor, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Live Branding Preview',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 12),
                       Text(
