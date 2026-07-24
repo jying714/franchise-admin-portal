@@ -10,7 +10,7 @@ class RoleBadge extends StatelessWidget {
     Color badgeColor;
     switch (role) {
       case 'Owner':
-        badgeColor = colorScheme.primary;
+        badgeColor = DesignTokens.primaryColor;
         break;
       case 'Admin':
         badgeColor = colorScheme.secondary;

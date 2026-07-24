@@ -24,7 +24,9 @@ class BrandedLoadingScreen extends StatelessWidget {
               fit: BoxFit.contain,
             ),
             const SizedBox(height: 24),
-            const CircularProgressIndicator(),
+            CircularProgressIndicator(
+              color: DesignTokens.primaryColor,
+            ),
             const SizedBox(height: 24),
             if (loc != null)
               Text(

@@ -12,7 +12,7 @@ class HelpIconButton extends StatelessWidget {
       tooltip: 'Help & Support',
       icon: Icon(
         Icons.help_outline,
-        color: isDark ? Colors.white : Colors.black,
+        color: DesignTokens.primaryColor,
       ),
       onPressed: () => showDialog(
         context: context,

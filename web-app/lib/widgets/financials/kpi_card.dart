@@ -28,7 +28,7 @@ class KpiCard extends StatelessWidget {
             Row(
               children: [
                 if (icon != null) ...[
-                  Icon(icon, color: colorScheme.primary, size: 28),
+                  Icon(icon, color: DesignTokens.primaryColor, size: 28),
                   SizedBox(width: 8),
                 ],
                 Expanded(

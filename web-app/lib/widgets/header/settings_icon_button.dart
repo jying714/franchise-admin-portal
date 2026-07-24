@@ -12,7 +12,7 @@ class SettingsIconButton extends StatelessWidget {
       tooltip: 'Settings',
       icon: Icon(
         Icons.settings,
-        color: isDark ? Colors.white : Colors.black,
+        color: DesignTokens.primaryColor,
       ),
       onPressed: () => showDialog(
         context: context,

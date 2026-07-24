@@ -18,11 +18,11 @@ class ClearFiltersButton extends StatelessWidget {
       label: const Text("Clear All Filters"),
       style: OutlinedButton.styleFrom(
         foregroundColor: enabled
-            ? Theme.of(context).colorScheme.primary
+            ? DesignTokens.primaryColor
             : Theme.of(context).disabledColor,
         side: BorderSide(
           color: enabled
-              ? Theme.of(context).colorScheme.primary.withOpacity(0.6)
+              ? DesignTokens.primaryColor.withOpacity(0.6)
               : Theme.of(context).disabledColor.withOpacity(0.3),
         ),
       ),
