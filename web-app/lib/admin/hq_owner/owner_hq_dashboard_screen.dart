@@ -281,6 +281,10 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           Text(
+                            'Foundation: ${(onboardingProgress.getFoundationProgress() * 100).round()}%',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          Text(
                             'Ingredient Types: ${onboardingProgress.isStepComplete('ingredientTypes') ? 'Completed' : 'Pending'}',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
