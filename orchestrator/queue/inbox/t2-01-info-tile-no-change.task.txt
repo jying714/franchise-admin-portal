@@ -1,0 +1,12 @@
+# id: t2-01-info-tile-no-change
+# agent: web_frontend
+# priority: 10
+
+Using web-app/lib/widgets/info_tile.dart and web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. Propose ONLY one small change so that the leading Icon color uses an existing DesignTokens Color getter (primaryColor or secondaryColor — the Color getters, NEVER *ColorHex strings treated as Color).
+3. BEFORE must be a contiguous region copied EXACTLY from the injected source. If you cannot find an exact match → reply only: FAILED TO LOAD.
+4. If the region already uses DesignTokens.primaryColor or DesignTokens.secondaryColor → reply ONLY with: No change needed.
+5. Do not add fields, getters, methods, or change any other logic.
+6. Show exact ## BEFORE / ## AFTER for that tiny region only (fences must differ, or No change needed).

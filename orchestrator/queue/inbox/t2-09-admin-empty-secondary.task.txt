@@ -1,0 +1,12 @@
+# id: t2-09-admin-empty-secondary
+# agent: web_frontend
+# priority: 18
+
+Using web-app/lib/widgets/admin/admin_empty_state_widget.dart and web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. Propose ONLY one small change so that the fallback Icon color uses DesignTokens.secondaryColor (the Color getter — NEVER *ColorHex strings treated as Color).
+3. BEFORE must be a contiguous region copied EXACTLY from the injected source (e.g. Icon(icon, size: 72, color: colorScheme.secondary)). If you cannot find an exact match → reply only: FAILED TO LOAD.
+4. If that Icon already uses DesignTokens.secondaryColor → reply ONLY with: No change needed.
+5. Do not add fields, getters, methods, or change any other logic. Do not rewrite the whole widget.
+6. Show exact ## BEFORE / ## AFTER for that tiny region only (fences must differ, or No change needed).

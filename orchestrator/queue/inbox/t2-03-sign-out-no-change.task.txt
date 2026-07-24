@@ -1,0 +1,12 @@
+# id: t2-03-sign-out-no-change
+# agent: web_frontend
+# priority: 12
+
+Using web-app/lib/widgets/sign_out_button.dart and web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. Propose ONLY one small change so that the ElevatedButton backgroundColor uses an existing DesignTokens Color getter (primaryColor, secondaryColor, or errorColor — the Color getters, NEVER *ColorHex strings treated as Color).
+3. BEFORE must be a contiguous region copied EXACTLY from the injected source. If you cannot find an exact match → reply only: FAILED TO LOAD.
+4. If the region already uses a real DesignTokens Color getter (e.g. DesignTokens.errorColor for destructive sign-out) → reply ONLY with: No change needed.
+5. Do not add fields, getters, methods, or change any other logic. Do not change error semantics to primary.
+6. Show exact ## BEFORE / ## AFTER for that tiny region only (fences must differ, or No change needed).

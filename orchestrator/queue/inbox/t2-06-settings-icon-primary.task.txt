@@ -1,0 +1,12 @@
+# id: t2-06-settings-icon-primary
+# agent: web_frontend
+# priority: 15
+
+Using web-app/lib/widgets/header/settings_icon_button.dart and web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. Propose ONLY one small change so that the Icon color uses DesignTokens.primaryColor (the Color getter — NEVER *ColorHex strings treated as Color).
+3. BEFORE must be a contiguous region copied EXACTLY from the injected source. If you cannot find an exact match → reply only: FAILED TO LOAD.
+4. If the Icon already uses DesignTokens.primaryColor → reply ONLY with: No change needed.
+5. Do not add fields, getters, methods, or change any other logic. Keep the change to the color expression only.
+6. Show exact ## BEFORE / ## AFTER for that tiny region only (fences must differ, or No change needed).
