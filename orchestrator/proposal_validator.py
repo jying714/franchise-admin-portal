@@ -17,6 +17,9 @@ Path allowlist (2026-07-24):
 BEFORE/AFTER required (2026-07-24):
   If the task names source file paths, the proposal must contain extractable
   BEFORE and AFTER regions. Prose-only / essay responses are HARD BAN.
+
+No-op BEFORE≈AFTER (2026-07-24):
+  If BEFORE and AFTER normalize to the same text, HARD BAN (no real edit).
 """
 
 from __future__ import annotations
@@ -26,7 +29,6 @@ from dataclasses import dataclass, field
 from typing import List, Set
 
 
-# Task language that means "docs only / no new API surface"
 FORBIDDEN_FIELD_TASK_PATTERNS = [
     r"\bdo not add fields?\b",
     r"\bdon't add fields?\b",
@@ -38,10 +40,9 @@ FORBIDDEN_FIELD_TASK_PATTERNS = [
     r"\bwithout changing (any )?logic\b",
 ]
 
-# Heuristics in the proposal body
 NEW_FIELD_PATTERNS = [
     r"\bfinal\s+(?:bool|String|int|double|List|Map|DateTime|dynamic)\??\s+\w+",
-    r"\b(?:bool|String|int|double)\??\s+\w+\s*;",  # non-final fields
+    r"\b(?:bool|String|int|double)\??\s+\w+\s*;",
 ]
 
 NEW_METHOD_PATTERNS = [
@@ -50,29 +51,22 @@ NEW_METHOD_PATTERNS = [
     r"\bstatic\s+\w+\s+\w+\s*\(",
 ]
 
-# Hard ban list — recurring inventions that should never appear in proposals
-# for Phase 1 Workstream B micro-tasks. On hit → ok=False (auto-reject by caller).
 HARD_BAN_PATTERNS = [
-    # Zero-arg or invented FranchiseProvider construction
     (r"FranchiseProvider\s*\(\s*\)", "FranchiseProvider() zero-arg constructor is forbidden"),
     (r"ChangeNotifierProvider\s*\(\s*create:\s*\(_\)\s*=>\s*FranchiseProvider",
      "Invented FranchiseProvider construction inside ChangeNotifierProvider is forbidden"),
-    # Invented Firestore APIs
     (r"FirestoreService\.collection\b", "FirestoreService.collection is not a real API — forbidden"),
     (r"\.collection\s*\(\s*['\"]franchises['\"]", "Do not invent franchise collection access in proposals"),
-    # Invented DesignTokens surface
     (r"DesignTokens\.onPrimary\b", "DesignTokens.onPrimary does not exist — invented getter"),
     (r"DesignTokens\.onSecondary\b", "DesignTokens.onSecondary does not exist — invented getter"),
     (r"DesignTokens\.onSurface(?:Color)?\b",
      "DesignTokens.onSurface / onSurfaceColor does not exist — invented getter"),
     (r"DesignTokens\.on(?:Primary|Secondary|Surface|Background|Error)(?:Color)?\b",
      "Invented DesignTokens.on* color getter — use real tokens or Theme.of(context).colorScheme"),
-    # Hard-coded theme placeholders when live path is required
     (r"primaryColor:\s*Colors\.blue\b", "Hard-coded Colors.blue theme placeholder is forbidden for live branding tasks"),
     (r"Color\(0xFF2196F3\)", "Hard-coded Material blue placeholder is forbidden for live branding tasks"),
 ]
 
-# Same family as file_reader.PATH_PATTERN — project-relative source paths
 PATH_PATTERN = re.compile(
     r"(?:^|[\s`\"'(])"
     r"((?:packages|mobile_app|web-app|functions|docs|tasks|orchestrator|prompts)"
@@ -81,7 +75,6 @@ PATH_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-# Loose detection of BEFORE / AFTER markers (headings or labels)
 BEFORE_MARKER = re.compile(
     r"(?:^|\n)\s*(?:#+\s*)?(?:\d+\.?\s*)?(?:\*\*)?(?:exact\s+)?before(?:\*\*)?\b",
     re.IGNORECASE,
@@ -108,7 +101,6 @@ def task_forbids_new_fields(task_text: str) -> bool:
 
 
 def extract_paths(text: str) -> List[str]:
-    """Return unique project-relative paths found in text (order preserved)."""
     found = PATH_PATTERN.findall(text)
     seen: Set[str] = set()
     unique: List[str] = []
@@ -127,8 +119,16 @@ def _count_matches(text: str, patterns: List[str]) -> int:
     return n
 
 
+def _normalize_code(text: str) -> str:
+    """Strip fences, comments-only noise, and collapse whitespace for comparison."""
+    t = text.strip()
+    t = re.sub(r"^```[\w]*\n?", "", t)
+    t = re.sub(r"\n?```$", "", t)
+    t = re.sub(r"\s+", " ", t).strip()
+    return t
+
+
 def _check_hard_bans(proposal_text: str) -> List[str]:
-    """Return warning messages for any hard-ban pattern hits."""
     hits: List[str] = []
     for pattern, message in HARD_BAN_PATTERNS:
         if re.search(pattern, proposal_text, re.IGNORECASE):
@@ -137,12 +137,6 @@ def _check_hard_bans(proposal_text: str) -> List[str]:
 
 
 def _check_path_allowlist(task_text: str, proposal_text: str) -> List[str]:
-    """
-    If the task names specific file paths, the proposal may only target
-    those paths. Any other path mentioned as an edit target is a HARD BAN.
-
-    Soft rule: if the task names no paths, skip (status/docs tasks).
-    """
     allowed = set(extract_paths(task_text))
     if not allowed:
         return []
@@ -164,15 +158,9 @@ def _check_path_allowlist(task_text: str, proposal_text: str) -> List[str]:
 
 
 def _check_before_after_required(task_text: str, proposal_text: str) -> List[str]:
-    """
-    Coding tasks that name source files must produce BEFORE and AFTER regions.
-
-    Catches prose-only / essay collapses (common under multi-file injection).
-    """
     if not extract_paths(task_text):
         return []
 
-    # Skip pure status/planning tasks that mention paths only as context
     lower_task = task_text.lower()
     if re.search(r"\b(status only|planning only|no code change|read-?only)\b", lower_task):
         return []
@@ -180,7 +168,6 @@ def _check_before_after_required(task_text: str, proposal_text: str) -> List[str
     has_before = bool(BEFORE_MARKER.search(proposal_text))
     has_after = bool(AFTER_MARKER.search(proposal_text))
 
-    # Also accept extracted sections via the same helper used for field heuristics
     before_body = _extract_section(proposal_text, ["before", "exact before", "current"])
     after_body = _extract_section(proposal_text, ["after", "exact after", "proposed"])
     if before_body.strip():
@@ -202,25 +189,36 @@ def _check_before_after_required(task_text: str, proposal_text: str) -> List[str
     ]
 
 
-def validate_proposal(task_text: str, proposal_text: str) -> ValidationResult:
-    """
-    Return warnings when the proposal likely violates task constraints
-    or hits a hard ban / path allowlist / missing BEFORE-AFTER.
+def _check_noop_before_after(task_text: str, proposal_text: str) -> List[str]:
+    """HARD BAN when BEFORE and AFTER are effectively identical (no-op)."""
+    if not extract_paths(task_text):
+        return []
 
-    ok=False means the caller SHOULD auto-reject (status=rejected, no apply).
-    """
+    lower_task = task_text.lower()
+    if re.search(r"\b(status only|planning only|no code change|read-?only)\b", lower_task):
+        return []
+
+    before_body = _extract_section(proposal_text, ["before", "exact before", "current"])
+    after_body = _extract_section(proposal_text, ["after", "exact after", "proposed"])
+    if not before_body.strip() or not after_body.strip():
+        return []  # missing handled elsewhere
+
+    if _normalize_code(before_body) == _normalize_code(after_body):
+        return [
+            "HARD BAN: BEFORE and AFTER are identical (no-op proposal). "
+            "Provide a real surgical change or FAILED TO LOAD."
+        ]
+    return []
+
+
+def validate_proposal(task_text: str, proposal_text: str) -> ValidationResult:
     warnings: List[str] = []
 
-    # Always run hard bans (independent of task wording)
     warnings.extend(_check_hard_bans(proposal_text))
-
-    # Path allowlist — only when the task named specific files
     warnings.extend(_check_path_allowlist(task_text, proposal_text))
-
-    # File-path coding tasks must include BEFORE + AFTER
     warnings.extend(_check_before_after_required(task_text, proposal_text))
+    warnings.extend(_check_noop_before_after(task_text, proposal_text))
 
-    # Field/method heuristics only when the task forbids new surface
     if task_forbids_new_fields(task_text):
         after = _extract_section(proposal_text, ["after", "exact after", "proposed"])
         before = _extract_section(proposal_text, ["before", "exact before", "current"])
@@ -260,7 +258,6 @@ def validate_proposal(task_text: str, proposal_text: str) -> ValidationResult:
 
 
 def _extract_section(text: str, headings: List[str]) -> str:
-    """Best-effort extract of a markdown section by heading keywords."""
     for h in headings:
         pattern = rf"(?:^|\n)#{{1,3}}\s*\d*\.?\s*{re.escape(h)}[^\n]*\n(.*?)(?=\n#{{1,3}}\s|\Z)"
         m = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
