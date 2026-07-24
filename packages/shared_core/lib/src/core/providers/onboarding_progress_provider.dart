@@ -1,6 +1,7 @@
 // packages/shared_core/lib/src/core/providers/onboarding_progress_provider.dart
 // PURE DART INTERFACE ONLY
 
+/// Pure interface for franchise onboarding step progress (stepStatus, loading, completion helpers).
 abstract class OnboardingProgressProvider {
   Map<String, bool> get stepStatus;
   bool get loading;
