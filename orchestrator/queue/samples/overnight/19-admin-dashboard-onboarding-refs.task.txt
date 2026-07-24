@@ -1,0 +1,11 @@
+# id: admin-onboarding-entry-audit
+# agent: web_frontend
+# priority: 55
+
+Using web-app/lib/admin/dashboard/admin_dashboard_screen.dart:
+
+1. Quote the exact first 12 lines of the real file.
+2. Search the real file for onboarding-related identifiers (OnboardingProgress, onboarding, section keys). Quote up to 3 short real regions that show how Admin surfaces or navigates to onboarding. If none found, say so explicitly from the load.
+3. No edits. End with: No change needed.
+
+Do not invent navigation. Real source only. Prefer FAILED TO LOAD over invention.
