@@ -1,0 +1,11 @@
+# id: scope-card-constraints-quote
+# agent: backend
+# priority: 70
+
+Using orchestrator/SCOPE_CARD.md:
+
+1. Quote the full real file contents.
+2. List the explicit OUT / forbidden items from the real file only.
+3. No edits. End with: No change needed.
+
+This is documentation grounding for Decision 7 / Phase 1 work — do not invent constraints.
