@@ -1,0 +1,10 @@
+# id: hq-live-branding-card-quote
+# agent: web_frontend
+# priority: 60
+
+Using web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart:
+
+1. Quote the exact first 8 lines of the real file.
+2. Quote the full Live Branding Preview Card widget region (title, app name, optional logo, color swatches).
+3. Confirm from the quote whether currentAppName and currentLogoUrl are used.
+4. No edits. End with: No change needed.
