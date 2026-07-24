@@ -230,6 +230,54 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                 ),
               ),
               SizedBox(height: gap),
+
+              // Onboarding Progress Card
+              Consumer<shared.OnboardingProgressProvider>(
+                builder: (context, onboardingProgress, child) {
+                  if (onboardingProgress.loading) {
+                    return const CircularProgressIndicator();
+                  }
+                  return Card(
+                    elevation: DesignTokens.adminCardElevation,
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(DesignTokens.adminCardRadius),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Onboarding Progress',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const SizedBox(height: 12),
+                          LinearProgressIndicator(
+                            value: onboardingProgress.getFoundationProgress(),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Ingredient Types: ${onboardingProgress.isStepComplete('ingredientTypes') ? 'Completed' : 'Pending'}',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          Text(
+                            'Ingredients: ${onboardingProgress.isStepComplete('ingredients') ? 'Completed' : 'Pending'}',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          Text(
+                            'Categories: ${onboardingProgress.isStepComplete('categories') ? 'Completed' : 'Pending'}',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+              SizedBox(height: gap),
             ],
           ),
         ),
