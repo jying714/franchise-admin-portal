@@ -13,6 +13,10 @@ Path allowlist (2026-07-24):
   If the task names one or more project file paths, the proposal's edit
   target must be one of those paths. Any other path is a HARD BAN and
   sets ok=False so the caller can auto-reject.
+
+BEFORE/AFTER required (2026-07-24):
+  If the task names source file paths, the proposal must contain extractable
+  BEFORE and AFTER regions. Prose-only / essay responses are HARD BAN.
 """
 
 from __future__ import annotations
@@ -77,6 +81,16 @@ PATH_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# Loose detection of BEFORE / AFTER markers (headings or labels)
+BEFORE_MARKER = re.compile(
+    r"(?:^|\n)\s*(?:#+\s*)?(?:\d+\.?\s*)?(?:\*\*)?(?:exact\s+)?before(?:\*\*)?\b",
+    re.IGNORECASE,
+)
+AFTER_MARKER = re.compile(
+    r"(?:^|\n)\s*(?:#+\s*)?(?:\d+\.?\s*)?(?:\*\*)?(?:exact\s+)?after(?:\*\*)?\b",
+    re.IGNORECASE,
+)
+
 
 @dataclass
 class ValidationResult:
@@ -133,7 +147,6 @@ def _check_path_allowlist(task_text: str, proposal_text: str) -> List[str]:
     if not allowed:
         return []
 
-    # Paths that appear in the proposal (often in "FILE:" headers or code fences)
     proposed = extract_paths(proposal_text)
     if not proposed:
         return []
@@ -150,10 +163,49 @@ def _check_path_allowlist(task_text: str, proposal_text: str) -> List[str]:
     ]
 
 
+def _check_before_after_required(task_text: str, proposal_text: str) -> List[str]:
+    """
+    Coding tasks that name source files must produce BEFORE and AFTER regions.
+
+    Catches prose-only / essay collapses (common under multi-file injection).
+    """
+    if not extract_paths(task_text):
+        return []
+
+    # Skip pure status/planning tasks that mention paths only as context
+    lower_task = task_text.lower()
+    if re.search(r"\b(status only|planning only|no code change|read-?only)\b", lower_task):
+        return []
+
+    has_before = bool(BEFORE_MARKER.search(proposal_text))
+    has_after = bool(AFTER_MARKER.search(proposal_text))
+
+    # Also accept extracted sections via the same helper used for field heuristics
+    before_body = _extract_section(proposal_text, ["before", "exact before", "current"])
+    after_body = _extract_section(proposal_text, ["after", "exact after", "proposed"])
+    if before_body.strip():
+        has_before = True
+    if after_body.strip():
+        has_after = True
+
+    if has_before and has_after:
+        return []
+
+    missing = []
+    if not has_before:
+        missing.append("BEFORE")
+    if not has_after:
+        missing.append("AFTER")
+    return [
+        f"HARD BAN: coding proposal missing {' and '.join(missing)} region(s). "
+        f"Prose-only / essay responses are not valid. Provide surgical BEFORE and AFTER."
+    ]
+
+
 def validate_proposal(task_text: str, proposal_text: str) -> ValidationResult:
     """
     Return warnings when the proposal likely violates task constraints
-    or hits a hard ban / path allowlist.
+    or hits a hard ban / path allowlist / missing BEFORE-AFTER.
 
     ok=False means the caller SHOULD auto-reject (status=rejected, no apply).
     """
@@ -164,6 +216,9 @@ def validate_proposal(task_text: str, proposal_text: str) -> ValidationResult:
 
     # Path allowlist — only when the task named specific files
     warnings.extend(_check_path_allowlist(task_text, proposal_text))
+
+    # File-path coding tasks must include BEFORE + AFTER
+    warnings.extend(_check_before_after_required(task_text, proposal_text))
 
     # Field/method heuristics only when the task forbids new surface
     if task_forbids_new_fields(task_text):
@@ -192,7 +247,6 @@ def validate_proposal(task_text: str, proposal_text: str) -> ValidationResult:
                 f"Task may have forbidden logic/API changes."
             )
 
-        # Docstring-only tasks: many /// on members can be scope drift
         if re.search(r"\bonly\b.*\b(class[- ]level\s+)?docstring\b", task_text, re.I):
             doc_lines = len(re.findall(r"^\s*///", target, re.M))
             if doc_lines > 3:
@@ -200,7 +254,6 @@ def validate_proposal(task_text: str, proposal_text: str) -> ValidationResult:
                     f"Many doc-comment lines ({doc_lines}) for a class-level-docstring-only task — possible scope drift."
                 )
 
-    # Any HARD BAN makes ok=False; soft heuristic warnings alone leave ok=True
     hard = [w for w in warnings if w.startswith("HARD BAN:")]
     ok = len(hard) == 0
     return ValidationResult(ok=ok, warnings=warnings)
@@ -209,12 +262,10 @@ def validate_proposal(task_text: str, proposal_text: str) -> ValidationResult:
 def _extract_section(text: str, headings: List[str]) -> str:
     """Best-effort extract of a markdown section by heading keywords."""
     for h in headings:
-        # match ### 2. Exact after  or **After** etc.
         pattern = rf"(?:^|\n)#{{1,3}}\s*\d*\.?\s*{re.escape(h)}[^\n]*\n(.*?)(?=\n#{{1,3}}\s|\Z)"
         m = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
         if m:
             return m.group(1)
-        # fallback: line starting with After:
         pattern2 = rf"(?:^|\n)\*?\*?{re.escape(h)}\*?\*?\s*:?\s*\n(.*?)(?=\n\*?\*?(?:before|after|next steps)|\Z)"
         m2 = re.search(pattern2, text, re.IGNORECASE | re.DOTALL)
         if m2:
