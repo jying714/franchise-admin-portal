@@ -11,6 +11,7 @@ Multi-agent coordinator that runs 24/7 on the MINISFORUM AI X1 Pro-470.
 - Validates proposals for scope drift (A3) + **hard ban list**
 - Saves proposals; applies **only** after explicit `/approve confirm [id]`
 - **Never** auto-pushes to git; **never** writes Firestore
+- Optional **overnight queue**: drop task files in `queue/inbox/` and drain sequentially
 
 ## Directory layout
 
@@ -19,14 +20,24 @@ orchestrator/
 ├── Dockerfile
 ├── requirements.txt
 ├── main.py                 ← CLI + interactive
-├── context_loader.py       ← mandatory docs (full vs minimal) + SCOPE_CARD
-├── SCOPE_CARD.md           ← always-on IN/OUT constraints (Phase 1)
+├── queue_runner.py         ← drain inbox overnight
+├── feedback.py             ← approve/reject JSONL logging
+├── context_loader.py       ← mandatory docs + SCOPE_CARD
+├── SCOPE_CARD.md           ← always-on IN/OUT constraints
 ├── agent_router.py         ← routing + prompts
 ├── file_reader.py          ← safe source-file load
 ├── ollama_client.py        ← Ollama client + 14b→7b fallback
 ├── proposal_validator.py   ← A3 drift checks + hard bans
 ├── proposal_store.py       ← save / approve / local apply
 ├── proposals/              ← saved proposal JSON (runtime)
+├── queue/
+│   ├── inbox/              ← drop *.task.txt here
+│   ├── running/            ← in-flight task file
+│   ├── done/               ← finished + .meta.json
+│   └── run_log.md          ← append-only run log (runtime)
+├── feedback/
+│   ├── rejects.jsonl       ← /reject reason=… (runtime)
+│   └── approves.jsonl      ← successful applies (runtime)
 └── README.md
 ```
 
@@ -42,16 +53,54 @@ docker exec -it franchise-orchestrator python main.py
 docker exec -it franchise-orchestrator python main.py status
 ```
 
+## Overnight queue
+
+### Task file format (`orchestrator/queue/inbox/my-task.task.txt`)
+
+```text
+# id: optional-slug
+# agent: backend
+# priority: 10
+
+Using web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 12 lines of the real file.
+2. No edits. End with: No change needed.
+```
+
+Lower `priority` numbers run first. Default priority is 100.
+
+### Drain commands
+
+```bash
+# Interactive CLI
+/queue status
+/queue run --once
+/queue run
+
+# Detached overnight (no TTY required)
+docker exec -d franchise-orchestrator python queue_runner.py --drain
+
+# One task then exit
+docker exec -it franchise-orchestrator python queue_runner.py --once
+```
+
+**Rules:** sequential only; never auto-apply; on failure continue to next task; sleep 15s between tasks by default (`--sleep N`).
+
+### End-of-day review
+
+```text
+/proposals
+/approve <id>
+/approve confirm <id>     # winners only
+/reject <id> reason=...   # logs orchestrator/feedback/rejects.jsonl
+```
+
+Learning is **governance**, not model fine-tuning: use reject reasons to update `SCOPE_CARD.md` / hard bans / task templates.
+
 ## SCOPE_CARD (always-on)
 
 `orchestrator/SCOPE_CARD.md` is injected on every coding task (especially minimal mode).
-
-It states:
-
-- IN: Phase 1 micro-edits, quote-first, live DesignTokens / FranchiseProvider paths
-- OUT: new config fields, `FranchiseProvider()` zero-arg, `FirestoreService.collection`, invented getters, multi-file “while you’re at it”
-
-Keep it short. Update it when new recurring invention classes appear.
 
 ## Preferred coding task prompts (A2)
 
@@ -73,16 +122,15 @@ Using packages/shared_core/lib/src/core/models/address.dart:
 - Always include the full file path
 - One file, one small change per task
 - Explicit forbid list (no fields / no logic)
-- Prefer natural constrained wording over ultra-rigid copy-paste-only prompts
-- Do not press Enter on empty prompts (creates junk proposals)
 - Multi-file tasks: require quote blocks first or `FAILED TO LOAD`
+- Prefer small read-only quote tasks for overnight until timeouts are rare
 
 ## Review & apply workflow
 
 ```text
-1. Run task → proposal saved with an id
+1. Run task (interactive or queue) → proposal saved with an id
 2. /proposals
-3. /approve <id>              # inspect parsed before/after
+3. /approve <id>
 4. /approve confirm <id>      # local file write only
 5. git diff on the host → you commit & push
 ```
@@ -94,11 +142,12 @@ Using packages/shared_core/lib/src/core/models/address.dart:
 | `/approve <id>` | Show proposal by id |
 | `/approve confirm` | Apply last locally |
 | `/approve confirm <id>` | Apply that id locally |
-| `/reject [id]` | Mark rejected |
+| `/reject [id] reason=...` | Mark rejected + feedback log |
+| `/queue status` | Inbox / running / done |
+| `/queue run` | Drain inbox |
+| `/queue run --once` | One task |
 
-Apply refuses if before-text is missing, matches multiple places, or path is outside allowed roots.
-
-Treat **HARD BAN** validator warnings as reject candidates (FranchiseProvider() zero-arg, FirestoreService.collection, invented DesignTokens getters, hard-coded blue placeholders).
+Treat **HARD BAN** validator warnings as reject candidates.
 
 ## Model configuration
 
@@ -111,27 +160,20 @@ Treat **HARD BAN** validator warnings as reject candidates (FranchiseProvider() 
 | tester | qwen2.5-coder:7b | MODEL_TESTER |
 | reviewer | qwen2.5-coder:7b | MODEL_REVIEWER |
 
-```bash
-docker exec -it ollama ollama pull qwen2.5-coder:7b
-docker exec -it ollama ollama pull qwen2.5-coder:14b
-```
-
 ## Safety
 
 - Proposal-first; local apply only after `/approve confirm`
+- Queue never applies
 - No git push from the orchestrator
 - No Firestore / production writes
-- High-risk keywords raise human-approval flags
-- A3 warnings when a "no new fields" task still looks like it added API surface
-- Hard ban list for recurring inventions (see `proposal_validator.py`)
+- Source injection always wins over status-only prompts when paths are present
 
 ## Next improvements
 
 - Path allowlist per task type
 - Auto-reject when validator `ok=False`
 - Structured unified-diff proposals for more reliable apply
-- Optional second gate for `git commit` / draft PR
-- File-drop inbox / HTTP task submission
+- Feedback → SCOPE_CARD refresh checklist (human-gated)
 
 ---
-Last updated: 2026-07-23
+Last updated: 2026-07-24
