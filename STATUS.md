@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 23, 2026 (evening)  
+**Last Updated**: July 24, 2026 (early morning)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch**: `feat/onboarding-4step`
 
@@ -32,11 +32,12 @@ Phase 0 complete (July 23, 2026).
 - [x] **SCOPE_CARD.md** — short always-on IN/OUT constraints for Phase 1 Workstream B (`orchestrator/SCOPE_CARD.md`)
 - [x] **SCOPE_CARD injected** in minimal + full context (`context_loader.py`)
 - [x] **Hard ban list** in proposal validator — FranchiseProvider() zero-arg, FirestoreService.collection, invented DesignTokens getters, hard-coded blue placeholders (`proposal_validator.py`)
+- [x] **2-file Stage-C** quote discipline proven reliable on live-branding path (design_tokens + owner_hq_dashboard / franchise_provider)
 - [ ] **A5** (Optional) Model A/B
 - [ ] Structured unified-diff proposals (optional; fences + fuzzy match cover many small edits)
 - [ ] Optional: don’t persist empty/junk proposals
 - [ ] Optional: path allowlist per task type + auto-reject when validator `ok=False`
-- [ ] Multi-file quote discipline still weak — single-file surgical edits are reliable; Stage-C quotes often omitted
+- [ ] 3-file Stage-C still unreliable (timeouts / format collapse under full source injection)
 
 ### B. Product — Core config scoping & dynamic branding
 
@@ -56,8 +57,8 @@ Phase 0 complete (July 23, 2026).
 - [x] `DesignTokens.setFranchiseProvider(franchiseProvider)` at authenticated bootstrap (`web-app/lib/main.dart`)
 - [x] After `initializeWithUser` / `forceRefreshFranchiseId`, best-effort `FirebaseFirestore` fetch of `franchises/{id}` → `setBrandingFromFranchiseDoc`
 - [x] `if (mounted) setState(() {})` after branding load so tree can rebuild
-- [x] Authenticated **light** `MaterialApp.theme` built at runtime from web `DesignTokens` (not frozen `_lightTheme`)
-- [ ] Authenticated **dark** `MaterialApp.darkTheme` built at runtime from web `DesignTokens` (STATUS still treats as open — verify against current `main.dart` before next edit)
+- [x] Authenticated **light** `MaterialApp.theme` built at runtime from web `DesignTokens`
+- [x] Authenticated **dark** `MaterialApp.darkTheme` uses live `DesignTokens.primaryColor` / `secondaryColor` (verified July 24, 2026 against real `main.dart`)
 - [ ] Unauth `MaterialApp` themes still use top-level `_lightTheme` / `_darkTheme` (acceptable for landing/sign-in)
 - [ ] Optional: remove unused top-level theme constants once both auth themes are inlined
 
@@ -69,15 +70,26 @@ Phase 0 complete (July 23, 2026).
 
 **HQ live preview (partial):**
 
-- [x] First live branding color-swatch card on `OwnerHQDashboardScreen` (primary + secondary from `DesignTokens`, labels, centered)
-- [ ] Full HQ Design & Branding page (not just the swatch)
-- [ ] Live preview of app name / logo from existing `DesignTokens.currentAppName` / `currentLogoUrl` (no new fields)
+- [x] First live branding color-swatch card on `OwnerHQDashboardScreen` (primary + secondary from `DesignTokens`, labels)
+- [x] Live app name on the same card via `DesignTokens.currentAppName` (local apply July 24; confirm remote after human push)
+- [ ] Optional logo via `DesignTokens.currentLogoUrl` when non-null (Stage-C in flight / next)
+- [ ] Full HQ Design & Branding page (not just the preview card)
+
+**Onboarding placement (Decision 7 — July 24, 2026):**
+
+- [ ] **Target**: Franchise/menu onboarding lives on **HQ Owner** dashboard, not Admin
+- [ ] Add conditional Onboarding progress tile on `OwnerHQDashboardScreen` (visible while incomplete; reuse existing onboarding screens)
+- [ ] Wire tile → existing onboarding route/section
+- [ ] Demote Admin primary onboarding entry after HQ entry works
+- [ ] Reflect completed migration in DASHBOARDS.md / web-app README / STATUS
+- See `docs/DECISIONS.md` Decision 7 for full rationale and sequence
 
 **Still open (product):**
 
-- [ ] Finish / verify web dark theme runtime wiring
+- [ ] Finish logo on Live Branding Preview card (existing getter only)
 - [ ] Full HQ Design & Branding dashboard + richer live preview
 - [ ] Broader franchise-scoped config beyond branding colors (features, app config loaders)
+- [ ] Onboarding migration to HQ Owner (tile first)
 - [ ] Hybrid localization (partial)
 
 **Ground truth (do not regress):**
@@ -88,6 +100,7 @@ Phase 0 complete (July 23, 2026).
 - Web live colors: `FranchiseProvider` → `DesignTokens.setFranchiseProvider` → `DesignTokens.*` getters
 - Mobile live colors: `FranchiseProvider` → `UiConfig.setFranchiseProvider` → `UiConfig.*`
 - Do not invent new fields on BrandingConfig / AppConfig / DesignTokens / FeatureConfig for scoping
+- Onboarding home = HQ Owner (Decision 7); Admin is not the long-term home
 - See also `orchestrator/SCOPE_CARD.md` for the short always-on constraint list
 
 ---
