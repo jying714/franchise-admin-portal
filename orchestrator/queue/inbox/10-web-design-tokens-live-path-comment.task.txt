@@ -1,0 +1,11 @@
+# id: 10-web-design-tokens-live-path-comment
+# agent: web_frontend
+# priority: 100
+
+Using web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 10–12 lines of the real file.
+2. Propose ONLY a clarifying comment (or short doc comment) near setFranchiseProvider or the primaryColor/secondaryColor getters that restates the live path: FranchiseProvider → DesignTokens.setFranchiseProvider → live primaryColor / secondaryColor. No code changes, no new members, no hard-coded colors.
+3. Do not add fields, getters, or methods.
+4. Show exact ## BEFORE / ## AFTER for that comment region only.
+5. If the file cannot be quoted → reply only: FAILED TO LOAD

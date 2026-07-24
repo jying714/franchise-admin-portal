@@ -1,0 +1,11 @@
+# id: 04-platform-plan-tile-radius
+# agent: web_frontend
+# priority: 40
+
+Using web-app/lib/admin/hq_owner/widgets/platform_plan_tile.dart and web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. Propose ONLY one small change: any BorderRadius or Card shape should use DesignTokens.adminCardRadius (existing). No hard-coded radius values, no new tokens, no logic changes.
+3. Do not add fields, getters, or methods.
+4. Show exact ## BEFORE / ## AFTER for that small region only.
+5. If either file cannot be quoted → reply only: FAILED TO LOAD

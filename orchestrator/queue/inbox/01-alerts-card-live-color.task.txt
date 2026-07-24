@@ -1,0 +1,11 @@
+# id: 01-alerts-card-live-color
+# agent: web_frontend
+# priority: 10
+
+Using web-app/lib/admin/hq_owner/widgets/alerts_card.dart and web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. Propose ONLY one small visual polish on the alerts Card: ensure its elevation or borderRadius (or both) comes from existing DesignTokens.adminCardElevation / DesignTokens.adminCardRadius (no hard-coded numbers, no new tokens).
+3. Do not add fields, getters, methods, or change logic / serialization / Firestore.
+4. Show exact ## BEFORE / ## AFTER for the surgical region only (fenced code blocks required).
+5. If either file cannot be quoted → reply only: FAILED TO LOAD
