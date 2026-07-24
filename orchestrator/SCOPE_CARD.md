@@ -9,6 +9,7 @@ Keep this short. Loaded on every coding task (especially minimal mode).
 - FranchiseProvider.setBrandingFromFranchiseDoc / currentPrimaryColorHex / currentSecondaryColorHex
 - Tiny UI additions that consume existing DesignTokens (e.g. live color swatch)
 - Docstrings and clarifying comments when the task explicitly asks
+- Onboarding progress UI that only reads existing OnboardingProgressProvider API
 
 ## OUT OF SCOPE (auto-reject if proposed)
 - New fields or getters on BrandingConfig, AppConfig, DesignTokens, FeatureConfig
@@ -19,6 +20,7 @@ Keep this short. Loaded on every coding task (especially minimal mode).
 - Multi-file "while you're at it" expansions
 - Invented DesignTokens members (onPrimary, invented color getters, etc.)
 - Hard-coded Colors.blue / theme placeholders when the task is about live branding
+- Editing any file not explicitly named in the task (path allowlist)
 
 ## LIVE PATHS (do not invent alternatives)
 - WEB: FranchiseProvider → DesignTokens.setFranchiseProvider → DesignTokens.primaryColor / secondaryColor
@@ -28,3 +30,7 @@ Keep this short. Loaded on every coding task (especially minimal mode).
 - Always quote exact first 10–12 lines of every named file before proposing an edit
 - BEFORE/AFTER must be surgical (small region only)
 - If required source cannot be quoted → reply only: FAILED TO LOAD
+
+## PATH ALLOWLIST + AUTO-REJECT
+- Only edit files the task explicitly names.
+- HARD BAN and path-allowlist hits are auto-rejected (status=rejected; no apply).
