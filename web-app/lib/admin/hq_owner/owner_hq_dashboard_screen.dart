@@ -175,6 +175,21 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                                 ),
                       ),
                       const SizedBox(height: 12),
+                      Text(
+                        DesignTokens.currentAppName,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      if (DesignTokens.currentLogoUrl != null &&
+                          DesignTokens.currentLogoUrl!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Image.network(
+                            DesignTokens.currentLogoUrl!,
+                            width: 100,
+                            height: 50,
+                          ),
+                        ),
+                      const SizedBox(height: 6),
                       Row(
                         children: [
                           Column(
