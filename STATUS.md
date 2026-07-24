@@ -33,11 +33,14 @@ Phase 0 complete (July 23, 2026).
 - [x] **SCOPE_CARD injected** in minimal + full context (`context_loader.py`)
 - [x] **Hard ban list** in proposal validator — FranchiseProvider() zero-arg, FirestoreService.collection, invented DesignTokens getters, hard-coded blue placeholders (`proposal_validator.py`)
 - [x] **2-file Stage-C** quote discipline proven reliable on live-branding path (design_tokens + owner_hq_dashboard / franchise_provider)
+- [x] **agent_router fix** — source files always injected when paths load; bare "progress" no longer forces status-only prompt (July 24)
+- [x] **Overnight queue skeleton** — `queue/inbox|running|done`, `queue_runner.py`, `/queue status|run`, feedback JSONL on reject/apply (July 24)
 - [ ] **A5** (Optional) Model A/B
 - [ ] Structured unified-diff proposals (optional; fences + fuzzy match cover many small edits)
 - [ ] Optional: don’t persist empty/junk proposals
 - [ ] Optional: path allowlist per task type + auto-reject when validator `ok=False`
 - [ ] 3-file Stage-C still unreliable (timeouts / format collapse under full source injection)
+- [ ] Feedback → SCOPE_CARD refresh checklist (human-gated; no auto fine-tune)
 
 ### B. Product — Core config scoping & dynamic branding
 
@@ -71,14 +74,14 @@ Phase 0 complete (July 23, 2026).
 **HQ live preview (partial):**
 
 - [x] First live branding color-swatch card on `OwnerHQDashboardScreen` (primary + secondary from `DesignTokens`, labels)
-- [x] Live app name on the same card via `DesignTokens.currentAppName` (local apply July 24; confirm remote after human push)
-- [ ] Optional logo via `DesignTokens.currentLogoUrl` when non-null (Stage-C in flight / next)
+- [x] Live app name on the same card via `DesignTokens.currentAppName`
+- [x] Conditional logo via `DesignTokens.currentLogoUrl` when non-null
 - [ ] Full HQ Design & Branding page (not just the preview card)
 
 **Onboarding placement (Decision 7 — July 24, 2026):**
 
 - [ ] **Target**: Franchise/menu onboarding lives on **HQ Owner** dashboard, not Admin
-- [ ] Add conditional Onboarding progress tile on `OwnerHQDashboardScreen` (visible while incomplete; reuse existing onboarding screens)
+- [ ] Add conditional Onboarding progress tile on `OwnerHQDashboardScreen` (use `stepStatus` / `loading` / `getFoundationProgress()` — not invented `isOnboardingComplete`)
 - [ ] Wire tile → existing onboarding route/section
 - [ ] Demote Admin primary onboarding entry after HQ entry works
 - [ ] Reflect completed migration in DASHBOARDS.md / web-app README / STATUS
@@ -86,7 +89,6 @@ Phase 0 complete (July 23, 2026).
 
 **Still open (product):**
 
-- [ ] Finish logo on Live Branding Preview card (existing getter only)
 - [ ] Full HQ Design & Branding dashboard + richer live preview
 - [ ] Broader franchise-scoped config beyond branding colors (features, app config loaders)
 - [ ] Onboarding migration to HQ Owner (tile first)
@@ -107,14 +109,16 @@ Phase 0 complete (July 23, 2026).
 
 ## Target workflow
 
-1. Agent proposes (real source, strict `## BEFORE` / `## AFTER` fences)  
+1. Agent proposes (real source, strict `## BEFORE` / `## AFTER` fences) — interactive **or** `queue/inbox` drain  
 2. Human reviews (`/approve <id>`, validation warnings / HARD BAN hits)  
 3. `/approve confirm <id>` → local apply only  
 4. Human commits/pushes  
 5. Never Firestore/production from agents  
+6. `/reject <id> reason=...` → `orchestrator/feedback/rejects.jsonl` (governance learning only)
 
 Prompt style: see **AGENT_SYSTEM.md → Preferred Coding Task Prompt Style**.  
-Interactive CLI: paste multi-line task, type `END` on its own line.
+Interactive CLI: paste multi-line task, type `END` on its own line.  
+Overnight: drop tasks in `orchestrator/queue/inbox/` → `python queue_runner.py --drain`.
 
 ---
 
@@ -122,6 +126,7 @@ Interactive CLI: paste multi-line task, type `END` on its own line.
 
 - Propose first; apply only after `/approve confirm`
 - Apply = local files only — not push
+- Queue never auto-applies
 - `shared_core` source of truth; franchise-scoped data paths
 - Stay in current phase acceptance criteria
 - Never invent fields on BrandingConfig / AppConfig / DesignTokens / FeatureConfig for scoping work
