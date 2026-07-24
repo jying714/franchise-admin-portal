@@ -9,15 +9,16 @@ Always-running process that:
   • Calls Ollama and returns a proposal
   • Validates proposals for scope drift (A3)
   • Saves proposals; applies ONLY after explicit /approve confirm
+  • Optional overnight queue: drop tasks in orchestrator/queue/inbox/
 
 Commands:
   /approve                 show last proposal
   /approve <id>            show a specific proposal by id
   /approve confirm         apply last proposal locally (no git push)
   /approve confirm <id>    apply a specific proposal locally
-  /reject                  mark last proposal rejected
-  /reject <id>             mark a specific proposal rejected
+  /reject [id] reason=...  mark rejected + log feedback
   /proposals               list recent proposals
+  /queue status|run|run --once
   /quit /models /agent /help
 """
 
@@ -34,11 +35,12 @@ import typer
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
-from rich.prompt import Prompt
 
 from agent_router import prepare_task
+from feedback import append_feedback
 from ollama_client import OllamaClient
 from proposal_store import (
+    Proposal,
     apply_proposal,
     list_recent,
     load_by_id,
@@ -70,7 +72,9 @@ async def run_task(
     client: OllamaClient,
     task_text: str,
     preferred_agent: Optional[str] = None,
-) -> None:
+    *,
+    return_proposal: bool = False,
+) -> Optional[Proposal]:
     console.rule("[bold blue]Preparing task")
 
     result = prepare_task(
@@ -130,6 +134,9 @@ async def run_task(
         f"Apply locally: /approve confirm {prop.id}\n"
         f"(never auto-pushes)[/dim]\n"
     )
+    if return_proposal:
+        return prop
+    return None
 
 
 def _resolve_proposal(proposal_id: Optional[str] = None):
@@ -187,7 +194,7 @@ def _cmd_approve(confirm: bool = False, proposal_id: Optional[str] = None) -> No
             f"\nTo apply [underline]locally only[/underline] (no git push):\n"
             f"  [green]/approve confirm {prop.id}[/green]\n"
             f"To discard:\n"
-            f"  [red]/reject {prop.id}[/red]\n"
+            f"  [red]/reject {prop.id} reason=...[/red]\n"
         )
         return
 
@@ -202,16 +209,42 @@ def _cmd_approve(confirm: bool = False, proposal_id: Optional[str] = None) -> No
     if ok:
         console.print(f"[green]{msg}[/green]")
         console.print("[dim]Commit and push remain your responsibility.[/dim]")
+        try:
+            append_feedback(
+                PROJECT_ROOT,
+                kind="apply",
+                proposal_id=prop.id,
+                reason="applied",
+                extra={"file_path": prop.file_path or "", "agent": prop.agent},
+            )
+        except Exception as e:
+            logger.warning("feedback log failed: %s", e)
     else:
         console.print(f"[red]Apply failed: {msg}[/red]")
 
 
-def _cmd_reject(proposal_id: Optional[str] = None) -> None:
+def _cmd_reject(proposal_id: Optional[str] = None, reason: str = "") -> None:
     prop = _resolve_proposal(proposal_id)
     if not prop:
         return
     mark_status(PROJECT_ROOT, prop, "rejected")
+    try:
+        append_feedback(
+            PROJECT_ROOT,
+            kind="reject",
+            proposal_id=prop.id,
+            reason=reason or "(no reason given)",
+            extra={
+                "file_path": prop.file_path or "",
+                "agent": prop.agent,
+                "task_preview": prop.task[:200],
+            },
+        )
+    except Exception as e:
+        logger.warning("feedback log failed: %s", e)
     console.print(f"[red]Proposal {prop.id} marked rejected.[/red]")
+    if reason:
+        console.print(f"[dim]reason: {reason}[/dim]")
 
 
 def _cmd_proposals() -> None:
@@ -227,29 +260,58 @@ def _cmd_proposals() -> None:
         )
 
 
+def _cmd_queue(args: str) -> None:
+    """
+    /queue status
+    /queue run
+    /queue run --once
+    """
+    from queue_runner import drain, status as queue_status
+
+    parts = args.split()
+    if not parts or parts[0] == "status":
+        queue_status()
+        return
+    if parts[0] == "run":
+        once = "--once" in parts or "once" in parts
+        asyncio.get_event_loop().create_task  # noqa: keep import side quiet
+        asyncio.run(drain(once=once))
+        return
+    console.print("[yellow]Usage: /queue status | /queue run | /queue run --once[/yellow]")
+
+
 def _parse_approve_cmd(cmd: str) -> tuple[bool, Optional[str]]:
-    """
-    /approve
-    /approve <id>
-    /approve confirm
-    /approve confirm <id>
-    """
     parts = cmd.split()
-    # parts[0] == '/approve'
     if len(parts) == 1:
         return False, None
     if parts[1] == "confirm":
         pid = parts[2] if len(parts) >= 3 else None
         return True, pid
-    # /approve <id>
     return False, parts[1]
 
 
-def _parse_reject_cmd(cmd: str) -> Optional[str]:
-    parts = cmd.split()
-    if len(parts) >= 2:
-        return parts[1]
-    return None
+def _parse_reject_cmd(cmd: str) -> tuple[Optional[str], str]:
+    """
+    /reject
+    /reject <id>
+    /reject reason=...
+    /reject <id> reason=...
+    """
+    parts = cmd.split(maxsplit=2)
+    if len(parts) == 1:
+        return None, ""
+    # /reject reason=foo
+    if parts[1].startswith("reason="):
+        return None, parts[1][len("reason="):] + ((" " + parts[2]) if len(parts) > 2 else "")
+    pid = parts[1]
+    reason = ""
+    if len(parts) >= 3:
+        rest = parts[2]
+        if rest.startswith("reason="):
+            reason = rest[len("reason="):]
+        else:
+            reason = rest
+    return pid, reason
 
 
 async def _interactive_loop(preferred_agent: Optional[str] = None):
@@ -260,7 +322,8 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
         "Paste a multi-line task, then type END on its own line.\n"
         "Commands: /quit /models /agent /help /proposals\n"
         "          /approve [id]   /approve confirm [id]\n"
-        "          /reject [id]",
+        "          /reject [id] reason=...\n"
+        "          /queue status | /queue run | /queue run --once",
         title="Ready",
         border_style="blue",
     ))
@@ -316,7 +379,11 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
             console.print("/approve <id>           — show proposal by id")
             console.print("/approve confirm        — apply last locally (no push)")
             console.print("/approve confirm <id>   — apply that id locally")
-            console.print("/reject [id]            — mark rejected")
+            console.print("/reject [id] reason=... — mark rejected + log feedback")
+            console.print("/queue status           — inbox/running/done counts")
+            console.print("/queue run              — drain inbox until empty")
+            console.print("/queue run --once       — one inbox task then stop")
+            console.print("Overnight: docker exec -d franchise-orchestrator python queue_runner.py --drain")
             continue
         if cmd == "/proposals" or cmd.startswith("/proposals "):
             _cmd_proposals()
@@ -326,7 +393,26 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
             _cmd_approve(confirm=confirm, proposal_id=pid)
             continue
         if cmd == "/reject" or cmd.startswith("/reject "):
-            _cmd_reject(_parse_reject_cmd(cmd))
+            pid, reason = _parse_reject_cmd(cmd)
+            _cmd_reject(pid, reason=reason)
+            continue
+        if cmd == "/queue" or cmd.startswith("/queue "):
+            # run queue commands without holding the interactive client's event loop conflict:
+            # drain() creates its own Ollama client
+            rest = cmd[len("/queue"):].strip()
+            await client.close()
+            try:
+                if not rest or rest == "status":
+                    from queue_runner import status as queue_status
+                    queue_status()
+                elif rest.startswith("run"):
+                    once = "--once" in rest or rest.endswith(" once")
+                    from queue_runner import drain
+                    await drain(once=once)
+                else:
+                    console.print("[yellow]Usage: /queue status | /queue run | /queue run --once[/yellow]")
+            finally:
+                client = OllamaClient(OLLAMA_HOST)
             continue
 
         await run_task(client, task, preferred_agent=current_agent)
