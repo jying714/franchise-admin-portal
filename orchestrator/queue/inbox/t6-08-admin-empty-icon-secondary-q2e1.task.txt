@@ -1,0 +1,12 @@
+# id: t6-08-admin-empty-icon-secondary-q2e1
+# agent: web_frontend
+# priority: 57
+
+Using web-app/lib/widgets/admin/admin_empty_state_widget.dart and web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. You may change ONLY ONE region in admin_empty_state_widget.dart. Do not edit design_tokens.dart. Do not edit any other file.
+3. Propose ONLY one small change so the fallback Icon color uses DesignTokens.secondaryColor (the Color getter — NEVER currentSecondaryColor, NEVER *ColorHex as Color).
+4. BEFORE must be a contiguous region copied EXACTLY from the injected source (Icon(icon, size: 72, color: colorScheme.secondary)). If you cannot find an exact match → reply only: FAILED TO LOAD.
+5. If that Icon already uses DesignTokens.secondaryColor → reply ONLY with: No change needed.
+6. Show exact ## BEFORE / ## AFTER for that one region only (fences must differ), or No change needed. Do not rewrite the widget. Do not change the button in the same proposal.

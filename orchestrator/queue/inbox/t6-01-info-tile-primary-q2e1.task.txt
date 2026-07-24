@@ -1,0 +1,12 @@
+# id: t6-01-info-tile-primary-q2e1
+# agent: web_frontend
+# priority: 50
+
+Using web-app/lib/widgets/info_tile.dart and web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. You may change ONLY ONE region in info_tile.dart. Do not edit design_tokens.dart. Do not edit any other file.
+3. Check the leading Icon color. If it already uses DesignTokens.primaryColor → reply ONLY with: No change needed.
+4. If it does not, set it to DesignTokens.primaryColor (Color getter — NEVER currentPrimaryColor, NEVER *ColorHex as Color).
+5. BEFORE must be a contiguous region copied EXACTLY from the injected source. If you cannot find an exact match → reply only: FAILED TO LOAD.
+6. Show exact ## BEFORE / ## AFTER for that one region only (fences must differ), or No change needed. Do not invent members.
