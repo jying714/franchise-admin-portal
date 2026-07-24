@@ -214,6 +214,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              SizedBox(height: gap),
             ],
           ),
         ),
