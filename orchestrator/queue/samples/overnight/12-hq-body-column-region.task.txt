@@ -1,0 +1,12 @@
+# id: hq-body-column-for-onboarding-tile
+# agent: web_frontend
+# priority: 20
+
+Using web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart:
+
+1. Quote the exact first 8 lines of the real file.
+2. Quote the body Column children region that lists grids/cards (include Live Branding Preview Card location).
+3. One sentence: where could a conditional Onboarding progress Card be inserted without restructuring the whole screen?
+4. No edits. End with: No change needed.
+
+Real source only. Do not invent widgets.
