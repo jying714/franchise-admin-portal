@@ -10,6 +10,7 @@ Keep this short. Loaded on every coding task (especially minimal mode).
 - Tiny UI additions that consume existing DesignTokens (e.g. live color swatch)
 - Docstrings and clarifying comments when the task explicitly asks
 - Onboarding progress UI that only reads existing OnboardingProgressProvider API
+- Prefer **new surfaces** over further micro-polish of the same HQ DesignTokens consumers (diminishing returns observed July 24)
 
 ## OUT OF SCOPE (auto-reject if proposed)
 - New fields or getters on BrandingConfig, AppConfig, DesignTokens, FeatureConfig
@@ -18,9 +19,10 @@ Keep this short. Loaded on every coding task (especially minimal mode).
 - FirestoreService.collection or any new Firestore query API
 - Schema changes, migrations, or any Firestore writes
 - Multi-file "while you're at it" expansions
-- Invented DesignTokens members (onPrimary, invented color getters, etc.)
+- Invented DesignTokens members (onPrimary, invented color getters, currentPrimaryColorHex-as-Color, etc.)
 - Hard-coded Colors.blue / theme placeholders when the task is about live branding
 - Editing any file not explicitly named in the task (path allowlist)
+- Identical BEFORE/AFTER (no-op) — if the region already satisfies the request, reply only: **No change needed**
 
 ## LIVE PATHS (do not invent alternatives)
 - WEB: FranchiseProvider → DesignTokens.setFranchiseProvider → DesignTokens.primaryColor / secondaryColor
@@ -28,9 +30,11 @@ Keep this short. Loaded on every coding task (especially minimal mode).
 
 ## QUOTE DISCIPLINE
 - Always quote exact first 10–12 lines of every named file before proposing an edit
-- BEFORE/AFTER must be surgical (small region only)
+- BEFORE/AFTER must be surgical (small region only) and must **differ**
+- If the requested token/usage is already present → reply only: **No change needed** (do not emit identical fences)
 - If required source cannot be quoted → reply only: FAILED TO LOAD
 
 ## PATH ALLOWLIST + AUTO-REJECT
 - Only edit files the task explicitly names.
 - HARD BAN and path-allowlist hits are auto-rejected (status=rejected; no apply).
+- Identical BEFORE/AFTER is a reject candidate (no-op).
