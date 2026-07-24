@@ -1,0 +1,17 @@
+# id: t8-03-collapsible-title-admin-empty-button
+# agent: web_frontend
+# priority: 72
+
+Using web-app/lib/widgets/collapsible_panel.dart and web-app/lib/widgets/admin/admin_empty_state_widget.dart:
+
+DUAL-EDIT PILOT — change exactly ONE region in EACH file (two independent micro-edits).
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. In collapsible_panel.dart ONLY: set the title Text color to DesignTokens.primaryColor (never currentPrimaryColor, never *ColorHex as Color). If already DesignTokens.primaryColor → that file needs no change.
+3. In admin_empty_state_widget.dart ONLY: set ElevatedButton backgroundColor to DesignTokens.primaryColor (never currentPrimaryColor, never *ColorHex as Color). If already DesignTokens.primaryColor → that file needs no change.
+4. Do not rewrite whole widgets. Do not change collapsible Icon, admin empty Icon, or any other region in the same edit.
+5. Show labeled pairs:
+   ## BEFORE collapsible_panel.dart / ## AFTER collapsible_panel.dart
+   ## BEFORE admin_empty_state_widget.dart / ## AFTER admin_empty_state_widget.dart
+   Or for a file that is already correct, write: No change needed for <path>.
+6. BEFORE regions must be contiguous copies from injected source. If either file cannot be quoted → reply only: FAILED TO LOAD.
