@@ -3,30 +3,16 @@ proposal_validator.py
 ---------------------
 A3: lightweight post-generation checks for scope drift.
 
-When the task clearly forbids new fields / logic, flag proposals that
-look like they introduce new members anyway.
-
-Also applies a hard ban list for recurring inventions (FranchiseProvider()
-zero-arg, invented DesignTokens getters, FirestoreService.collection, etc.).
-
-Path allowlist (2026-07-24):
-  If the task names one or more project file paths, the proposal's edit
-  target must be one of those paths. Any other path is a HARD BAN and
-  sets ok=False so the caller can auto-reject.
-
-BEFORE/AFTER required (2026-07-24):
-  If the task names source file paths, the proposal must contain extractable
-  BEFORE and AFTER regions. Prose-only / essay responses are HARD BAN.
-
-No-op BEFORE≈AFTER (2026-07-24):
-  If BEFORE and AFTER normalize to the same text, HARD BAN (no real edit).
+Path allowlist, BEFORE/AFTER required, no-op BEFORE≈AFTER, hard bans,
+and (when project_root is provided) BEFORE-must-exist-on-disk.
 """
 
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import List, Set
+from pathlib import Path
+from typing import List, Optional, Set
 
 
 FORBIDDEN_FIELD_TASK_PATTERNS = [
@@ -120,7 +106,6 @@ def _count_matches(text: str, patterns: List[str]) -> int:
 
 
 def _normalize_code(text: str) -> str:
-    """Strip fences, comments-only noise, and collapse whitespace for comparison."""
     t = text.strip()
     t = re.sub(r"^```[\w]*\n?", "", t)
     t = re.sub(r"\n?```$", "", t)
@@ -190,7 +175,6 @@ def _check_before_after_required(task_text: str, proposal_text: str) -> List[str
 
 
 def _check_noop_before_after(task_text: str, proposal_text: str) -> List[str]:
-    """HARD BAN when BEFORE and AFTER are effectively identical (no-op)."""
     if not extract_paths(task_text):
         return []
 
@@ -201,7 +185,7 @@ def _check_noop_before_after(task_text: str, proposal_text: str) -> List[str]:
     before_body = _extract_section(proposal_text, ["before", "exact before", "current"])
     after_body = _extract_section(proposal_text, ["after", "exact after", "proposed"])
     if not before_body.strip() or not after_body.strip():
-        return []  # missing handled elsewhere
+        return []
 
     if _normalize_code(before_body) == _normalize_code(after_body):
         return [
@@ -211,13 +195,61 @@ def _check_noop_before_after(task_text: str, proposal_text: str) -> List[str]:
     return []
 
 
-def validate_proposal(task_text: str, proposal_text: str) -> ValidationResult:
+def _check_before_on_disk(
+    task_text: str,
+    proposal_text: str,
+    project_root: Optional[Path],
+) -> List[str]:
+    """HARD BAN if BEFORE cannot be located in the real target file."""
+    if project_root is None:
+        return []
+
+    if not extract_paths(task_text):
+        return []
+
+    lower_task = task_text.lower()
+    if re.search(r"\b(status only|planning only|no code change|read-?only)\b", lower_task):
+        return []
+
+    before_body = _extract_section(proposal_text, ["before", "exact before", "current"])
+    if not before_body.strip():
+        return []  # missing BEFORE handled elsewhere
+
+    paths = extract_paths(task_text)
+    if not paths:
+        return []
+
+    # Primary edit target = first path named in the task (matches Stage-C convention)
+    file_path = paths[0]
+
+    try:
+        from proposal_store import before_matches_on_disk
+
+        ok, detail = before_matches_on_disk(project_root, file_path, before_body)
+    except Exception as e:
+        return [f"HARD BAN: BEFORE on-disk check failed ({e})"]
+
+    if ok:
+        return []
+
+    return [
+        f"HARD BAN: BEFORE text not found in {file_path} ({detail}). "
+        f"Proposal would fail apply — copy a contiguous region from the injected source."
+    ]
+
+
+def validate_proposal(
+    task_text: str,
+    proposal_text: str,
+    project_root: Optional[Path] = None,
+) -> ValidationResult:
     warnings: List[str] = []
 
     warnings.extend(_check_hard_bans(proposal_text))
     warnings.extend(_check_path_allowlist(task_text, proposal_text))
     warnings.extend(_check_before_after_required(task_text, proposal_text))
     warnings.extend(_check_noop_before_after(task_text, proposal_text))
+    warnings.extend(_check_before_on_disk(task_text, proposal_text, project_root))
 
     if task_forbids_new_fields(task_text):
         after = _extract_section(proposal_text, ["after", "exact after", "proposed"])
