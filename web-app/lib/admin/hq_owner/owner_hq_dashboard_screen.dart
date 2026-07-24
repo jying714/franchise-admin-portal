@@ -177,7 +177,10 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                       const SizedBox(height: 12),
                       Text(
                         DesignTokens.currentAppName,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: DesignTokens.primaryColor,
+                        ),
                       ),
                       if (DesignTokens.currentLogoUrl != null &&
                           DesignTokens.currentLogoUrl!.isNotEmpty)
