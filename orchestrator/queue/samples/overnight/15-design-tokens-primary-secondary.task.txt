@@ -1,0 +1,10 @@
+# id: branding-primary-secondary-getters
+# agent: web_frontend
+# priority: 35
+
+Using web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 8 lines of the real file.
+2. Quote the primaryColor and secondaryColor getters including comments.
+3. One sentence: how do live colors reach DesignTokens from FranchiseProvider?
+4. No edits. End with: No change needed.
