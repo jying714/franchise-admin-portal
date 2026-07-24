@@ -235,7 +235,28 @@ class OwnerHQDashboardScreen extends StatelessWidget {
               Consumer<shared.OnboardingProgressProvider>(
                 builder: (context, onboardingProgress, child) {
                   if (onboardingProgress.loading) {
-                    return const CircularProgressIndicator();
+                    return Card(
+                      elevation: DesignTokens.adminCardElevation,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Loading onboarding…',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: DesignTokens.textColor,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
                   }
                   return Card(
                     elevation: DesignTokens.adminCardElevation,
