@@ -1,0 +1,12 @@
+# id: onb-foundation-progress-api
+# agent: backend
+# priority: 10
+
+Using web-app/lib/core/providers/onboarding_progress_provider_impl.dart:
+
+1. Quote the exact first 10 lines of the real file.
+2. Quote the full getFoundationProgress() method and any comment above it.
+3. List the step keys referenced inside that method (from the real source only).
+4. No edits. End with: No change needed.
+
+If load fails: FAILED TO LOAD only. Do not invent methods.
