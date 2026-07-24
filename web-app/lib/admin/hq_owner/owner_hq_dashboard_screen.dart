@@ -363,10 +363,11 @@ class MultiBrandOverviewPanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(loc.multiBrandSnapshot ?? "Multi-Brand Overview",
-                style: Theme.of(context).textTheme.titleMedium),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: DesignTokens.primaryColor, fontWeight: FontWeight.w600)),
             const SizedBox(height: 12),
             // TODO: Replace with real multi-brand data from provider
-            const Text("Additional brands coming soon..."),
+            const Text("Additional brands coming soon...",
+                style: TextStyle(color: DesignTokens.secondaryTextColor)),
           ],
         ),
       ),
