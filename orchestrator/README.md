@@ -28,7 +28,7 @@ orchestrator/
 ├── file_reader.py          ← safe source-file load
 ├── ollama_client.py        ← Ollama client + 14b→7b fallback
 ├── proposal_validator.py   ← A3 drift checks + hard bans
-├── proposal_store.py       ← save / approve / local apply
+├── proposal_store.py       ← save / approve / local apply + list_by_status
 ├── proposals/              ← saved proposal JSON (runtime)
 ├── queue/
 │   ├── inbox/              ← drop *.task.txt here
@@ -91,9 +91,11 @@ docker exec -it franchise-orchestrator python queue_runner.py --once
 
 ```text
 /proposals
+/proposals pending
+/proposals full                 # full context dump of every pending proposal
 /approve <id>
-/approve confirm <id>     # winners only
-/reject <id> reason=...   # logs orchestrator/feedback/rejects.jsonl
+/approve confirm <id>           # winners only
+/reject <id> reason=...         # logs orchestrator/feedback/rejects.jsonl
 ```
 
 Learning is **governance**, not model fine-tuning: use reject reasons to update `SCOPE_CARD.md` / hard bans / task templates.
@@ -129,15 +131,20 @@ Using packages/shared_core/lib/src/core/models/address.dart:
 
 ```text
 1. Run task (interactive or queue) → proposal saved with an id
-2. /proposals
-3. /approve <id>
-4. /approve confirm <id>      # local file write only
-5. git diff on the host → you commit & push
+2. /proposals  or  /proposals pending
+3. /proposals full          # see every pending proposal with full task + response
+4. /approve <id>
+5. /approve confirm <id>    # local file write only
+6. git diff on the host → you commit & push
 ```
 
 | Command | Effect |
 |---------|--------|
-| `/proposals` | List recent ids |
+| `/proposals` | List recent ids (all statuses) |
+| `/proposals pending` | List only pending (un-accepted / un-rejected) |
+| `/proposals rejected` | List rejected |
+| `/proposals applied` | List applied |
+| `/proposals full` | **Fully print** every pending proposal (task + response + parsed before/after) |
 | `/approve` | Show last proposal |
 | `/approve <id>` | Show proposal by id |
 | `/approve confirm` | Apply last locally |
@@ -170,8 +177,6 @@ Treat **HARD BAN** validator warnings as reject candidates.
 
 ## Next improvements
 
-- Path allowlist per task type
-- Auto-reject when validator `ok=False`
 - Structured unified-diff proposals for more reliable apply
 - Feedback → SCOPE_CARD refresh checklist (human-gated)
 
