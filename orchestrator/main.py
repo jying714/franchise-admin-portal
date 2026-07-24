@@ -8,6 +8,7 @@ Always-running process that:
   • Routes them to specialized agents
   • Calls Ollama and returns a proposal
   • Validates proposals for scope drift (A3)
+  • Auto-rejects on HARD BAN / path-allowlist hits (ok=False)
   • Saves proposals; applies ONLY after explicit /approve confirm
   • Optional overnight queue: drop tasks in orchestrator/queue/inbox/
 
@@ -110,14 +111,26 @@ async def run_task(
         )
 
     validation = validate_proposal(task_text, response)
+
+    # Always show validation output
     if validation.has_warnings:
         for w in validation.warnings:
-            console.print(f"[bold yellow]⚠ VALIDATION: {w}[/bold yellow]")
+            style = "bold red" if w.startswith("HARD BAN:") else "bold yellow"
+            console.print(f"[{style}]⚠ VALIDATION: {w}[/{style}]")
+
+    # Auto-reject on HARD BAN / path allowlist (ok=False)
+    auto_rejected = not validation.ok
+    if auto_rejected:
         console.print(
-            "[yellow]Proposal shown below — review carefully before /approve.[/yellow]\n"
+            "[bold red]AUTO-REJECTED — HARD BAN or path allowlist violation. "
+            "Proposal saved as rejected; /approve confirm will refuse.[/bold red]\n"
+        )
+    elif validation.has_warnings:
+        console.print(
+            "[yellow]Soft warnings only — proposal shown below for human review.[/yellow]\n"
         )
 
-    console.print(Panel(Markdown(response), title=f"Proposal from {result.agent}", border_style="green"))
+    console.print(Panel(Markdown(response), title=f"Proposal from {result.agent}", border_style="red" if auto_rejected else "green"))
 
     prop = save_proposal(
         PROJECT_ROOT,
@@ -127,13 +140,38 @@ async def run_task(
         response=response,
         validation_warnings=validation.warnings,
     )
-    console.print(
-        f"[dim]Saved proposal [bold]{prop.id}[/bold] "
-        f"(file={prop.file_path or 'unknown'}, status={prop.status}).\n"
-        f"Review: /approve {prop.id}\n"
-        f"Apply locally: /approve confirm {prop.id}\n"
-        f"(never auto-pushes)[/dim]\n"
-    )
+
+    if auto_rejected:
+        mark_status(PROJECT_ROOT, prop, "rejected")
+        prop.status = "rejected"
+        try:
+            append_feedback(
+                PROJECT_ROOT,
+                kind="auto_reject",
+                proposal_id=prop.id,
+                reason="; ".join(validation.warnings)[:500] or "validator.ok=False",
+                extra={
+                    "file_path": prop.file_path or "",
+                    "agent": prop.agent,
+                    "hard_bans": [w for w in validation.warnings if w.startswith("HARD BAN:")],
+                },
+            )
+        except Exception as e:
+            logger.warning("auto_reject feedback log failed: %s", e)
+        console.print(
+            f"[dim]Saved proposal [bold]{prop.id}[/bold] "
+            f"(file={prop.file_path or 'unknown'}, status=[bold red]rejected[/bold red]).\n"
+            f"Not eligible for /approve confirm. Use /proposals to inspect.[/dim]\n"
+        )
+    else:
+        console.print(
+            f"[dim]Saved proposal [bold]{prop.id}[/bold] "
+            f"(file={prop.file_path or 'unknown'}, status={prop.status}).\n"
+            f"Review: /approve {prop.id}\n"
+            f"Apply locally: /approve confirm {prop.id}\n"
+            f"(never auto-pushes)[/dim]\n"
+        )
+
     if return_proposal:
         return prop
     return None
@@ -199,7 +237,7 @@ def _cmd_approve(confirm: bool = False, proposal_id: Optional[str] = None) -> No
         return
 
     if prop.status == "rejected":
-        console.print("[red]Proposal was rejected — not applying.[/red]")
+        console.print("[red]Proposal was rejected (manual or auto) — not applying.[/red]")
         return
     if prop.status == "applied":
         console.print("[yellow]Proposal already applied.[/yellow]")
@@ -384,6 +422,7 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
             console.print("/queue run              — drain inbox until empty")
             console.print("/queue run --once       — one inbox task then stop")
             console.print("Overnight: docker exec -d franchise-orchestrator python queue_runner.py --drain")
+            console.print("Auto-reject: HARD BAN / path-allowlist hits are saved as rejected.")
             continue
         if cmd == "/proposals" or cmd.startswith("/proposals "):
             _cmd_proposals()
