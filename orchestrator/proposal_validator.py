@@ -59,6 +59,10 @@ HARD_BAN_PATTERNS = [
     # Invented DesignTokens surface
     (r"DesignTokens\.onPrimary\b", "DesignTokens.onPrimary does not exist — invented getter"),
     (r"DesignTokens\.onSecondary\b", "DesignTokens.onSecondary does not exist — invented getter"),
+    (r"DesignTokens\.onSurface(?:Color)?\b",
+     "DesignTokens.onSurface / onSurfaceColor does not exist — invented getter"),
+    (r"DesignTokens\.on(?:Primary|Secondary|Surface|Background|Error)(?:Color)?\b",
+     "Invented DesignTokens.on* color getter — use real tokens or Theme.of(context).colorScheme"),
     # Hard-coded theme placeholders when live path is required
     (r"primaryColor:\s*Colors\.blue\b", "Hard-coded Colors.blue theme placeholder is forbidden for live branding tasks"),
     (r"Color\(0xFF2196F3\)", "Hard-coded Material blue placeholder is forbidden for live branding tasks"),
