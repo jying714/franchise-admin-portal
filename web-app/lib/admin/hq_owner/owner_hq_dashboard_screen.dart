@@ -198,12 +198,15 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                               Container(
                                 width: 48,
                                 height: 48,
-                                color: DesignTokens.primaryColor,
+                                decoration: BoxDecoration(
+                                  color: DesignTokens.primaryColor,
+                                  border: Border.all(color: DesignTokens.cardBorderColor, width: 1),
+                                ),
                               ),
                               const SizedBox(height: 6),
                               Text(
                                 'Primary',
-                                style: Theme.of(context).textTheme.bodySmall,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: DesignTokens.secondaryTextColor),
                               ),
                             ],
                           ),
@@ -214,12 +217,15 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                               Container(
                                 width: 48,
                                 height: 48,
-                                color: DesignTokens.secondaryColor,
+                                decoration: BoxDecoration(
+                                  color: DesignTokens.secondaryColor,
+                                  border: Border.all(color: DesignTokens.cardBorderColor, width: 1),
+                                ),
                               ),
                               const SizedBox(height: 6),
                               Text(
                                 'Secondary',
-                                style: Theme.of(context).textTheme.bodySmall,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: DesignTokens.secondaryTextColor),
                               ),
                             ],
                           ),
