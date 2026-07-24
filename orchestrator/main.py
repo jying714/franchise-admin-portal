@@ -10,6 +10,7 @@ Always-running process that:
   • Validates proposals for scope drift (A3)
   • Auto-rejects on HARD BAN / path-allowlist / BEFORE-on-disk misses (ok=False)
   • Saves proposals; applies ONLY after explicit /approve confirm
+  • Treats "No change needed" as first-class success (status=no_change)
   • Optional overnight queue: drop tasks in orchestrator/queue/inbox/
 
 Commands:
@@ -20,9 +21,11 @@ Commands:
   /reject [id] reason=...  mark rejected + log feedback
   /proposals               list recent proposals (all statuses)
   /proposals pending       list only pending (un-accepted / un-rejected)
+  /proposals no_change     list escape-hatch successes
   /proposals rejected      list rejected
   /proposals applied       list applied
   /proposals full          fully print ALL pending proposals with full context
+  /metrics                 lightweight training metrics (last 50)
   /queue status|run|run --once
   /quit /models /agent /help
 """
@@ -47,6 +50,7 @@ from ollama_client import OllamaClient
 from proposal_store import (
     Proposal,
     apply_proposal,
+    compute_metrics,
     list_by_status,
     list_recent,
     load_by_id,
@@ -166,6 +170,23 @@ async def run_task(
             f"(file={prop.file_path or 'unknown'}, status=[bold red]rejected[/bold red]).\n"
             f"Not eligible for /approve confirm. Use /proposals to inspect.[/dim]\n"
         )
+    elif prop.status == "no_change":
+        console.print(
+            f"[bold green]✓ No change needed[/bold green] — escape hatch used correctly.\n"
+            f"[dim]Saved proposal [bold]{prop.id}[/bold] (status=no_change). "
+            f"This is a success outcome, not pending work.\n"
+            f"View: /proposals no_change[/dim]\n"
+        )
+        try:
+            append_feedback(
+                PROJECT_ROOT,
+                kind="no_change",
+                proposal_id=prop.id,
+                reason="No change needed",
+                extra={"file_path": prop.file_path or "", "agent": prop.agent},
+            )
+        except Exception as e:
+            logger.warning("no_change feedback log failed: %s", e)
     else:
         console.print(
             f"[dim]Saved proposal [bold]{prop.id}[/bold] "
@@ -197,9 +218,16 @@ def _resolve_proposal(proposal_id: Optional[str] = None):
 
 def _show_proposal(prop, *, full: bool = False) -> None:
     """Print proposal summary. When full=True, always include complete task + response."""
+    status_style = {
+        "no_change": "bold green",
+        "applied": "green",
+        "rejected": "red",
+        "pending": "yellow",
+    }.get(prop.status, "cyan")
+
     console.print(Panel.fit(
         f"[bold]id[/bold]: {prop.id}\n"
-        f"[bold]status[/bold]: {prop.status}\n"
+        f"[bold]status[/bold]: [{status_style}]{prop.status}[/{status_style}]\n"
         f"[bold]created[/bold]: {prop.created_at}\n"
         f"[bold]agent[/bold]: {prop.agent} / {prop.model}\n"
         f"[bold]file[/bold]: {prop.file_path or '(not detected)'}\n"
@@ -226,7 +254,10 @@ def _show_proposal(prop, *, full: bool = False) -> None:
         return
 
     # Compact view (default)
-    console.print(f"[bold]task[/bold]: {prop.task[:120]}{'…' if len(prop.task) > 120 else ''}")
+    console.print(f"[bold]task[/bold]: {prop.task[:120]}{'\u2026' if len(prop.task) > 120 else ''}")
+    if prop.status == "no_change":
+        console.print("[bold green]No change needed — escape hatch used.[/bold green]")
+        return
     if prop.before and prop.after:
         console.print("\n[bold]BEFORE (parsed)[/bold]")
         console.print(Panel(prop.before, border_style="red"))
@@ -247,6 +278,11 @@ def _cmd_approve(confirm: bool = False, proposal_id: Optional[str] = None) -> No
     _show_proposal(prop)
 
     if not confirm:
+        if prop.status == "no_change":
+            console.print(
+                "\n[dim]This is a No change needed success. Nothing to apply.[/dim]\n"
+            )
+            return
         console.print(
             f"\nTo apply [underline]locally only[/underline] (no git push):\n"
             f"  [green]/approve confirm {prop.id}[/green]\n"
@@ -260,6 +296,9 @@ def _cmd_approve(confirm: bool = False, proposal_id: Optional[str] = None) -> No
         return
     if prop.status == "applied":
         console.print("[yellow]Proposal already applied.[/yellow]")
+        return
+    if prop.status == "no_change":
+        console.print("[yellow]No change needed — nothing to apply.[/yellow]")
         return
 
     ok, msg = apply_proposal(PROJECT_ROOT, prop)
@@ -308,7 +347,7 @@ def _cmd_proposals(status_filter: Optional[str] = None, full: bool = False) -> N
     """
     List proposals.
     - No args: recent (all statuses)
-    - status_filter: pending | rejected | applied
+    - status_filter: pending | rejected | applied | no_change
     - full=True: dump every pending proposal with complete context
     """
     if full:
@@ -339,13 +378,45 @@ def _cmd_proposals(status_filter: Optional[str] = None, full: bool = False) -> N
 
     console.print(
         f"[bold]Proposals — {label}[/bold]  "
-        f"(use /approve <id> | /approve confirm <id> | /proposals full)"
+        f"(use /approve <id> | /approve confirm <id> | /proposals full | /metrics)"
     )
     for p in items:
         warn = f" warnings={len(p.validation_warnings)}" if p.validation_warnings else ""
+        status_col = {
+            "no_change": "green",
+            "applied": "green",
+            "rejected": "red",
+            "pending": "yellow",
+        }.get(p.status, "white")
         console.print(
-            f"  [cyan]{p.id}[/cyan]  [{p.status}]  {p.agent}  {p.file_path or '-'}{warn}"
+            f"  [cyan]{p.id}[/cyan]  [{status_col}]{p.status}[/{status_col}]  "
+            f"{p.agent}  {p.file_path or '-'}{warn}"
         )
+
+
+def _cmd_metrics(limit: int = 50) -> None:
+    """Print lightweight training metrics over recent proposals."""
+    m = compute_metrics(PROJECT_ROOT, limit=limit)
+    if m.get("total", 0) == 0:
+        console.print("[dim]No proposals found for metrics.[/dim]")
+        return
+
+    console.print(Panel.fit(
+        f"[bold]Training metrics[/bold] (last {m['total']} proposals)\n\n"
+        f"[green]No change needed[/green]     {m['no_change']:3}  ({m['no_change_pct']}%)\n"
+        f"Real differing BEFORE/AFTER {m['real_diff']:3}  ({m['real_diff_pct']}%)\n"
+        f"Quote-first signal          {m['quote_signal']:3}  ({m['quote_signal_pct']}%)\n"
+        f"[red]HARD BAN hits[/red]            {m['hard_ban']:3}  ({m['hard_ban_pct']}%)\n"
+        f"Applied                     {m['applied']:3}  ({m['applied_pct']}%)\n"
+        f"Rejected                    {m['rejected']:3}  ({m['rejected_pct']}%)\n"
+        f"Still pending               {m['pending']:3}  ({m['pending_pct']}%)",
+        title="/metrics",
+        border_style="cyan",
+    ))
+    console.print(
+        "[dim]Targets for high 2-file effectiveness: "
+        "no_change_pct rising, hard_ban_pct falling, real_diff clean applies.[/dim]"
+    )
 
 
 def _parse_approve_cmd(cmd: str) -> tuple[bool, Optional[str]]:
@@ -381,8 +452,8 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
         f"Project root : {PROJECT_ROOT}\n"
         f"Ollama       : {OLLAMA_HOST}\n"
         "Paste a multi-line task, then type END on its own line.\n"
-        "Commands: /quit /models /agent /help /proposals\n"
-        "          /proposals pending | rejected | applied\n"
+        "Commands: /quit /models /agent /help /proposals /metrics\n"
+        "          /proposals pending | no_change | rejected | applied\n"
         "          /proposals full          (dump all pending fully)\n"
         "          /approve [id]   /approve confirm [id]\n"
         "          /reject [id] reason=...\n"
@@ -439,9 +510,11 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
             console.print("Tasks: natural language with file paths when editing code.")
             console.print("/proposals              — list recent proposal ids (all statuses)")
             console.print("/proposals pending      — list only pending (un-accepted)")
+            console.print("/proposals no_change    — list escape-hatch successes")
             console.print("/proposals rejected     — list rejected")
             console.print("/proposals applied      — list applied")
             console.print("/proposals full         — FULL dump of every pending proposal")
+            console.print("/metrics                — training metrics (last 50)")
             console.print("/approve                — show last proposal")
             console.print("/approve <id>           — show proposal by id")
             console.print("/approve confirm        — apply last locally (no push)")
@@ -452,6 +525,10 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
             console.print("/queue run --once       — one inbox task then stop")
             console.print("Overnight: docker exec -d franchise-orchestrator python queue_runner.py --drain")
             console.print("Auto-reject: HARD BAN / path / BEFORE-on-disk hits are saved as rejected.")
+            console.print("No change needed: first-class success (status=no_change).")
+            continue
+        if cmd == "/metrics" or cmd.startswith("/metrics "):
+            _cmd_metrics()
             continue
         if cmd == "/proposals" or cmd.startswith("/proposals "):
             parts = cmd.split()
@@ -461,10 +538,10 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
                 arg = parts[1].lower()
                 if arg == "full":
                     full = True
-                elif arg in ("pending", "rejected", "applied", "approved"):
+                elif arg in ("pending", "rejected", "applied", "approved", "no_change"):
                     status_filter = arg
                 else:
-                    console.print("[yellow]Usage: /proposals [pending|rejected|applied|full][/yellow]")
+                    console.print("[yellow]Usage: /proposals [pending|no_change|rejected|applied|full][/yellow]")
                     continue
             _cmd_proposals(status_filter=status_filter, full=full)
             continue

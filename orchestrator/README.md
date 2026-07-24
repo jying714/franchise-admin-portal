@@ -10,8 +10,10 @@ Multi-agent coordinator that runs 24/7 on the MINISFORUM AI X1 Pro-470.
 - Routes tasks to specialized agents and calls Ollama
 - Validates proposals for scope drift (A3) + **hard ban list** + **identical BEFORE/AFTER no-op ban**
 - Saves proposals; applies **only** after explicit `/approve confirm [id]`
+- Treats **"No change needed"** as a first-class success (`status=no_change`)
 - **Never** auto-pushes to git; **never** writes Firestore
 - Optional **overnight queue**: drop task files in `queue/inbox/` and drain sequentially
+- Lightweight **`/metrics`** for training measurement
 
 ## Directory layout
 
@@ -28,7 +30,7 @@ orchestrator/
 ├── file_reader.py          ← safe source-file load
 ├── ollama_client.py        ← Ollama client + 14b→7b fallback
 ├── proposal_validator.py   ← A3 drift checks + hard bans + no-op ban
-├── proposal_store.py       ← save / approve / local apply + list_by_status
+├── proposal_store.py       ← save / approve / local apply + list_by_status + metrics
 ├── proposals/              ← saved proposal JSON (runtime)
 ├── queue/
 │   ├── inbox/              ← drop *.task.txt here
@@ -92,7 +94,9 @@ docker exec -it franchise-orchestrator python queue_runner.py --once
 ```text
 /proposals
 /proposals pending
+/proposals no_change            # escape-hatch successes
 /proposals full                 # full context dump of every pending proposal
+/metrics                        # training rates (last 50)
 /approve <id>
 /approve confirm <id>           # winners only
 /reject <id> reason=...         # logs orchestrator/feedback/rejects.jsonl
@@ -140,20 +144,23 @@ Using packages/shared_core/lib/src/core/models/address.dart:
 
 ```text
 1. Run task (interactive or queue) → proposal saved with an id
-2. /proposals  or  /proposals pending
-3. /proposals full          # see every pending proposal with full task + response
-4. /approve <id>
-5. /approve confirm <id>    # local file write only
-6. git diff on the host → you commit & push
+2. /proposals  or  /proposals pending  or  /proposals no_change
+3. /metrics                     # see training rates
+4. /proposals full              # see every pending proposal with full task + response
+5. /approve <id>
+6. /approve confirm <id>        # local file write only
+7. git diff on the host → you commit & push
 ```
 
 | Command | Effect |
 |---------|--------|
 | `/proposals` | List recent ids (all statuses) |
 | `/proposals pending` | List only pending (un-accepted / un-rejected) |
+| `/proposals no_change` | List escape-hatch successes |
 | `/proposals rejected` | List rejected |
 | `/proposals applied` | List applied |
 | `/proposals full` | **Fully print** every pending proposal (task + response + parsed before/after) |
+| `/metrics` | Training metrics (quote / no_change / real-diff / HARD BAN / applied rates) |
 | `/approve` | Show last proposal |
 | `/approve <id>` | Show proposal by id |
 | `/approve confirm` | Apply last locally |
@@ -163,7 +170,8 @@ Using packages/shared_core/lib/src/core/models/address.dart:
 | `/queue run` | Drain inbox |
 | `/queue run --once` | One task |
 
-Treat **HARD BAN** validator warnings as reject candidates.
+Treat **HARD BAN** validator warnings as reject candidates.  
+**No change needed** is a success — it is not pending work.
 
 ## Model configuration
 
@@ -184,6 +192,7 @@ Treat **HARD BAN** validator warnings as reject candidates.
 - No Firestore / production writes
 - Source injection always wins over status-only prompts when paths are present
 - Identical BEFORE/AFTER → HARD BAN (no-op)
+- "No change needed" → status=`no_change` (success, nothing to apply)
 
 ## Next improvements
 
