@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 
+/// Franchise-scoped onboarding step progress, implements shared.OnboardingProgressProvider, loads via Firestore.
 class OnboardingProgressProviderImpl extends ChangeNotifier
     implements shared.OnboardingProgressProvider {
   final shared.FirestoreService _firestore;
