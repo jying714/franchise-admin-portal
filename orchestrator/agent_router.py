@@ -29,8 +29,13 @@ ROUTING_RULES = [
     (r"\b(review|architecture|pr|quality|docs?)\b", "reviewer"),
 ]
 
+# Intentional project-status questions only — do NOT match product words like
+# "onboarding progress", "progress tile", "progress provider".
 STATUS_TASK_PATTERNS = [
-    r"\b(status|summarize|summary|progress|remaining|acceptance.?criteria|what.?is.?left|phase.?\d+.?status)\b",
+    r"\b(status\.?md|project status|phase status|what.?is.?left|acceptance.?criteria)\b",
+    r"\b(summarize|summary)\b.*\b(phase|status|progress|remaining)\b",
+    r"\b(remaining|open)\b.*\b(phase|acceptance|STATUS)\b",
+    r"\bphase.?\d+.?status\b",
 ]
 
 
@@ -96,8 +101,15 @@ def prepare_task(
     source_block = load_mentioned_files(project_root, task_text)
     has_source = bool(source_block)
 
+    # Coding/source tasks always get minimal context + source injection.
+    # Status-only prompts are used only when there is no source to ground on.
+    use_status_prompt = status and not has_source
+
     system = build_system_prompt(
-        project_root, agent, mandatory, minimal=has_source and not status
+        project_root,
+        agent,
+        mandatory,
+        minimal=has_source and not use_status_prompt,
     )
 
     requires_approval, reason = needs_human_approval(task_text, agent)
@@ -115,12 +127,12 @@ def prepare_task(
     num_ctx = 8192
     temperature = 0.05 if has_source else 0.15
 
-    if status:
+    if use_status_prompt:
         model = "qwen2.5-coder:14b"
     else:
         model = models.get(agent, "qwen2.5-coder:14b")
 
-    if status:
+    if use_status_prompt:
         user_prompt = f"""## TASK
 {task_text}
 
