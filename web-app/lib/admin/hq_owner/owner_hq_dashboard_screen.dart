@@ -278,6 +278,8 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                           const SizedBox(height: 12),
                           LinearProgressIndicator(
                             value: onboardingProgress.getFoundationProgress(),
+                            color: DesignTokens.primaryColor,
+                            backgroundColor: DesignTokens.primaryColor.withOpacity(0.2),
                           ),
                           const SizedBox(height: 12),
                           Text(
