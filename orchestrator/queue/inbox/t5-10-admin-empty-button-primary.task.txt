@@ -1,0 +1,12 @@
+# id: t5-10-admin-empty-button-primary
+# agent: web_frontend
+# priority: 49
+
+Using web-app/lib/widgets/admin/admin_empty_state_widget.dart and web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. Propose ONLY one small change so that the ElevatedButton backgroundColor uses DesignTokens.primaryColor (the Color getter — NEVER currentPrimaryColor, NEVER *ColorHex as Color).
+3. BEFORE must be a contiguous region copied EXACTLY from the injected source (backgroundColor: colorScheme.primary). If you cannot find an exact match → reply only: FAILED TO LOAD.
+4. If backgroundColor already uses DesignTokens.primaryColor → reply ONLY with: No change needed.
+5. Do not invent members. Do not change foregroundColor/onPrimary in the same edit unless it is the single contiguous region.
+6. Show exact ## BEFORE / ## AFTER for that tiny region only (fences must differ, or No change needed).

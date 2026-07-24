@@ -1,0 +1,11 @@
+# id: t5-05-kpi-icon-already
+# agent: web_frontend
+# priority: 44
+
+Using web-app/lib/widgets/financials/kpi_card.dart and web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. Check whether the optional Icon already uses DesignTokens.primaryColor.
+3. If it already uses DesignTokens.primaryColor → reply ONLY with: No change needed.
+4. Do not invent getters. Do not emit BEFORE/AFTER if already correct.
+5. If either file cannot be quoted → reply only: FAILED TO LOAD.

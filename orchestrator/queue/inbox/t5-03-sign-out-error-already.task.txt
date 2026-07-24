@@ -1,0 +1,11 @@
+# id: t5-03-sign-out-error-already
+# agent: web_frontend
+# priority: 42
+
+Using web-app/lib/widgets/sign_out_button.dart and web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. Check whether the ElevatedButton backgroundColor already uses DesignTokens.errorColor.
+3. If it already uses DesignTokens.errorColor → reply ONLY with: No change needed.
+4. Do not change errorColor to primaryColor. Do not emit BEFORE/AFTER if already correct.
+5. If either file cannot be quoted → reply only: FAILED TO LOAD.
