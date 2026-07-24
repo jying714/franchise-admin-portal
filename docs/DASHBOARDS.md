@@ -1,6 +1,6 @@
 # Dashboards Overview
 **Doughboys Pizzeria Franchise Platform**
-**Last Updated**: July 20, 2026
+**Last Updated**: July 24, 2026
 
 ## Purpose
 This document defines the four main dashboards, their target users, key features, and flows. All dashboards are built with Flutter Web and respect franchise scoping, hybrid single/multi-location logic, dynamic theming, FeatureGate, and agent-assisted development with strict human review.
@@ -30,7 +30,12 @@ This document defines the four main dashboards, their target users, key features
   - Edit design tokens, colors, fonts, logos
   - Warning for non-developer users
   - Franchise-scoped Firestore storage and publish changes
-- Menu, categories, ingredients management (onboarding flows)
+- **Franchise / menu onboarding** (target home — see Decision 7 in `docs/DECISIONS.md`)
+  - Categories, ingredients, menu items, feature setup, review/publish
+  - Progress tile on `OwnerHQDashboardScreen` while incomplete
+  - Reuses existing onboarding screens under `web-app/lib/admin/dashboard/onboarding/`
+  - **Current**: still launched primarily from Admin dashboard; migration to HQ Owner is planned
+- Menu, categories, ingredients management (post-onboarding)
 - Orders, analytics, staff management
 - Subscription & billing for their franchise
 - Location management (single vs multi)
@@ -38,7 +43,7 @@ This document defines the four main dashboards, their target users, key features
 **Hybrid Behavior**: Simplified view for single-location owners; full franchise tools for multi-location.
 
 ## 3. Admin / Staff Dashboard
-**Location in Code**: `web-app/lib/admin/staff/`
+**Location in Code**: `web-app/lib/admin/staff/` (and related admin ops screens)
 
 **Primary Users**: Store managers, kitchen staff, delivery team.
 
@@ -49,6 +54,8 @@ This document defines the four main dashboards, their target users, key features
 - Location-specific analytics
 
 **Access**: Scoped to assigned location(s) via roles.
+
+**Note**: Admin is **not** the long-term home for franchise/menu onboarding. Onboarding belongs on HQ Owner (Decision 7). Until migration completes, onboarding may still be reachable from Admin paths for continuity.
 
 ## 4. Developer Dashboard
 **Location in Code**: `web-app/lib/admin/developer/`
@@ -82,11 +89,13 @@ This document defines the four main dashboards, their target users, key features
 - Version history for design changes
 - AI-assisted design suggestions
 - White-label template gallery
+- Complete onboarding migration to HQ Owner (tile → demote Admin entry)
 
 ## Development Notes
 - All major config, design, and Firestore schema changes require human review.
 - Hybrid single/multi-location logic must be respected in all dashboards.
 - Agent work must stay strictly within defined phase scope (see `AGENT_SYSTEM.md` and `ROADMAP.md`).
 - Reference `docs/architecture/firestore-per-franchise-config.md` for any theming/branding work.
+- Onboarding placement: see `docs/DECISIONS.md` Decision 7.
 
 ---
