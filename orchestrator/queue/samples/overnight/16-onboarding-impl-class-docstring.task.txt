@@ -1,0 +1,13 @@
+# id: onb-impl-class-docstring
+# agent: backend
+# priority: 40
+
+Using web-app/lib/core/providers/onboarding_progress_provider_impl.dart:
+
+1. Quote the exact first 12 lines of the real file.
+2. If the class OnboardingProgressProviderImpl has no class-level /// docstring immediately above it, propose ONLY a short 2–4 line class docstring describing: franchise-scoped onboarding step progress, implements shared.OnboardingProgressProvider, loads via Firestore.
+3. Do not add fields, methods, or change logic.
+4. Show ## BEFORE / ## AFTER for the class declaration region only.
+5. If a sufficient class docstring already exists, respond No change needed.
+
+SCOPE_CARD applies.
