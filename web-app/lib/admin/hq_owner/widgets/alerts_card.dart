@@ -222,7 +222,9 @@ class _AlertEmpty extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               message,
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: DesignTokens.secondaryTextColor,
+                  ),
             ),
           ],
         ),
