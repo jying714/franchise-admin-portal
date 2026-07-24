@@ -1,0 +1,12 @@
+# id: t7-04-clear-filters-cart-escape
+# agent: web_frontend
+# priority: 63
+
+Using web-app/lib/widgets/clear_filters_button.dart and web-app/lib/widgets/header/cart_icon_badge.dart:
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. You may change ONLY ONE region in clear_filters_button.dart. Do NOT edit cart_icon_badge.dart at all.
+3. Check whether the enabled foregroundColor already uses DesignTokens.primaryColor.
+4. If it already uses DesignTokens.primaryColor → reply ONLY with: No change needed.
+5. If it does not, set enabled foregroundColor to DesignTokens.primaryColor (never currentPrimaryColor). BEFORE must be contiguous from injected source.
+6. Show exact ## BEFORE / ## AFTER for that one region only, or No change needed. Do not invent members. Do not touch the sibling file.
