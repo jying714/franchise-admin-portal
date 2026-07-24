@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 25, 2026 (morning checkpoint)  
+**Last Updated**: July 24, 2026 (afternoon — post inbox-batch cleanup)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch**: `feat/onboarding-4step`
 
@@ -38,6 +38,8 @@ Phase 0 complete (July 23, 2026).
 - [x] **Path allowlist** — proposals may only target files named in the task; violations are HARD BAN (`proposal_validator.py`, July 24)
 - [x] **Auto-reject** — when validator `ok=False` (HARD BAN / path allowlist), proposal saved as `rejected`, feedback `auto_reject`, `/approve confirm` refused (`main.py`, July 24)
 - [x] **Stage A volume** — ~8–10 clean 2-file product applies + 2 useful rejects in one session (July 24); diminishing returns on further micro-polish of the same cards
+- [x] **`/proposals pending|rejected|applied|full`** — status filter + full dump of pending (July 24)
+- [x] **July 24 inbox batch (10 tasks)** — mostly no-ops / invents / type errors on already-polished HQ DesignTokens consumers; **0 product applies**. Confirmed failure modes: identical BEFORE/AFTER, inventing `currentPrimaryColorHex` as Color, inventing constructor args, 3-file format collapse. SCOPE_CARD updated with **No change needed** escape hatch + prefer new surfaces (July 24 afternoon).
 - [ ] **A5** (Optional) Model A/B
 - [ ] Structured unified-diff proposals (optional; fences + fuzzy match cover many small edits)
 - [ ] Optional: don’t persist empty/junk proposals
@@ -102,7 +104,7 @@ Phase 0 complete (July 23, 2026).
 - [ ] Broader franchise-scoped config beyond branding colors (features, app config loaders)
 - [ ] Onboarding navigation CTA from HQ card + Admin demotion
 - [ ] Hybrid localization (partial)
-- [ ] Next agent training frontier: harder 2-file surfaces beyond the same HQ cards; then controlled 3-file
+- [ ] Next agent training frontier: **new surfaces** (not more HQ card micro-polish); controlled 3-file quote+comment only; train **No change needed** escape hatch
 
 **Ground truth (do not regress):**
 
@@ -144,6 +146,7 @@ Overnight: drop tasks in `orchestrator/queue/inbox/` → `python queue_runner.py
 - Never invent FirestoreService.collection or zero-arg FranchiseProvider()
 - Treat validator HARD BAN hits as reject candidates (now auto-rejected)
 - Edit only files named in the task (path allowlist)
+- If region already satisfies the request → **No change needed** (do not emit identical BEFORE/AFTER)
 
 ---
 
