@@ -1,0 +1,12 @@
+# id: t3-07-role-badge-primary
+# agent: web_frontend
+# priority: 26
+
+Using web-app/lib/widgets/dashboard/role_badge.dart and web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. Propose ONLY one small change: for the 'Owner' case, set badgeColor to DesignTokens.primaryColor (the Color getter — NEVER currentPrimaryColor, NEVER *ColorHex as Color).
+3. BEFORE must be a contiguous region copied EXACTLY from the injected source (the case 'Owner': badgeColor = colorScheme.primary region). If you cannot find an exact match → reply only: FAILED TO LOAD.
+4. If Owner already uses DesignTokens.primaryColor → reply ONLY with: No change needed.
+5. Do not invent members. Do not rewrite the whole switch. Keep Admin/default as-is unless the single-region edit requires them.
+6. Show exact ## BEFORE / ## AFTER for that tiny region only (fences must differ, or No change needed).

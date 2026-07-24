@@ -1,0 +1,12 @@
+# id: t3-05-cart-badge-error-no-change
+# agent: web_frontend
+# priority: 24
+
+Using web-app/lib/widgets/header/cart_icon_badge.dart and web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. Propose ONLY one small change so that the badge Container decoration color uses DesignTokens.errorColor (existing Color getter — NEVER current*Color).
+3. BEFORE must be a contiguous region copied EXACTLY from the injected source (the badgeColor ?? DesignTokens.errorColor region). If you cannot find an exact match → reply only: FAILED TO LOAD.
+4. If the badge already uses DesignTokens.errorColor → reply ONLY with: No change needed.
+5. Do not add fields, getters, methods, or change any other logic.
+6. Show exact ## BEFORE / ## AFTER for that tiny region only (fences must differ, or No change needed).

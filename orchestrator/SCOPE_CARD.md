@@ -5,8 +5,8 @@ Keep this short. Loaded on every coding task (especially minimal mode).
 ## IN SCOPE
 - Phase 1 Workstream B micro-edits only
 - Quote real source first (first 10–12 lines + relevant region)
-- DesignTokens.setFranchiseProvider / current*Color getters
-- FranchiseProvider.setBrandingFromFranchiseDoc / currentPrimaryColorHex / currentSecondaryColorHex
+- DesignTokens.setFranchiseProvider / live Color getters
+- FranchiseProvider.setBrandingFromFranchiseDoc / currentPrimaryColorHex / currentSecondaryColorHex (hex Strings only)
 - Tiny UI additions that consume existing DesignTokens (e.g. live color swatch)
 - Docstrings and clarifying comments when the task explicitly asks
 - Onboarding progress UI that only reads existing OnboardingProgressProvider API
@@ -19,14 +19,18 @@ Keep this short. Loaded on every coding task (especially minimal mode).
 - FirestoreService.collection or any new Firestore query API
 - Schema changes, migrations, or any Firestore writes
 - Multi-file "while you're at it" expansions
-- Invented DesignTokens members (onPrimary, invented color getters, currentPrimaryColorHex-as-Color, etc.)
+- Invented DesignTokens members:
+  - onPrimary / onSecondary / onSurface / on*
+  - **currentPrimaryColor / currentSecondaryColor** (do not invent current*Color)
+  - treating currentPrimaryColorHex / currentSecondaryColorHex as Color
 - Hard-coded Colors.blue / theme placeholders when the task is about live branding
 - Editing any file not explicitly named in the task (path allowlist)
 - Identical BEFORE/AFTER (no-op) — if the region already satisfies the request, reply only: **No change needed**
 
 ## LIVE PATHS (do not invent alternatives)
-- WEB: FranchiseProvider → DesignTokens.setFranchiseProvider → DesignTokens.primaryColor / secondaryColor
-- MOBILE: FranchiseProvider → UiConfig.setFranchiseProvider → UiConfig.*
+- WEB: FranchiseProvider → DesignTokens.setFranchiseProvider → **DesignTokens.primaryColor / secondaryColor** (Color getters)
+- MOBILE: FranchiseProvider → UiConfig.setFranchiseProvider → **UiConfig.primaryColor / secondaryColor**
+- Hex strings live only on FranchiseProvider: currentPrimaryColorHex / currentSecondaryColorHex — never use those names as Color on DesignTokens/UiConfig
 
 ## QUOTE DISCIPLINE
 - Always quote exact first 10–12 lines of every named file before proposing an edit

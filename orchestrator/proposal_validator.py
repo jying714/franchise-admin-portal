@@ -10,6 +10,11 @@ and (when project_root is provided) BEFORE-must-exist-on-disk.
   When the response is a correct use of the escape hatch, skip the
   BEFORE/AFTER required, no-op, and on-disk checks so it is not
   HARD BAN'd for missing fences.
+
+Invented current*Color getters (2026-07-24 afternoon):
+  DesignTokens.currentPrimaryColor / currentSecondaryColor do not exist.
+  Real Color getters are primaryColor / secondaryColor (and errorColor, etc.).
+  Hex strings live on FranchiseProvider as currentPrimaryColorHex / currentSecondaryColorHex.
 """
 
 from __future__ import annotations
@@ -54,6 +59,17 @@ HARD_BAN_PATTERNS = [
      "DesignTokens.onSurface / onSurfaceColor does not exist — invented getter"),
     (r"DesignTokens\.on(?:Primary|Secondary|Surface|Background|Error)(?:Color)?\b",
      "Invented DesignTokens.on* color getter — use real tokens or Theme.of(context).colorScheme"),
+    # Invented current*Color (without Hex) — real Color getters are primaryColor / secondaryColor
+    (r"DesignTokens\.currentPrimaryColor\b",
+     "DesignTokens.currentPrimaryColor does not exist — use DesignTokens.primaryColor (Color getter)"),
+    (r"DesignTokens\.currentSecondaryColor\b",
+     "DesignTokens.currentSecondaryColor does not exist — use DesignTokens.secondaryColor (Color getter)"),
+    (r"DesignTokens\.current(?:Primary|Secondary|Accent|Error|Warning)Color\b",
+     "Invented DesignTokens.current*Color — real Color getters are primaryColor / secondaryColor / errorColor (no current* prefix)"),
+    (r"UiConfig\.currentPrimaryColor\b",
+     "UiConfig.currentPrimaryColor does not exist — use UiConfig.primaryColor"),
+    (r"UiConfig\.currentSecondaryColor\b",
+     "UiConfig.currentSecondaryColor does not exist — use UiConfig.secondaryColor"),
     (r"primaryColor:\s*Colors\.blue\b", "Hard-coded Colors.blue theme placeholder is forbidden for live branding tasks"),
     (r"Color\(0xFF2196F3\)", "Hard-coded Material blue placeholder is forbidden for live branding tasks"),
 ]
