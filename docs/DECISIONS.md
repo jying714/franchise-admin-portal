@@ -1,6 +1,6 @@
 # Architecture Decision Log (DECISIONS.md)
 
-**Last Updated**: July 20, 2026
+**Last Updated**: July 24, 2026
 
 This file records major architectural and design decisions for the Doughboys Pizzeria Franchise Platform.
 
@@ -49,6 +49,20 @@ This file records major architectural and design decisions for the Doughboys Piz
 **Rationale**: Supports different user needs and assisted onboarding.  
 **Impact**: Documented in DASHBOARDS.md.
 
+### 7. Onboarding Home = HQ Owner Dashboard (not Admin)
+**Date**: July 24, 2026  
+**Status**: Approved (migration pending)  
+**Decision**: Franchise/menu onboarding steps (categories, ingredients, menu items, feature setup, review/publish) belong on the **HQ Owner** dashboard (`OwnerHQDashboardScreen` / `web-app/lib/admin/hq_owner/`), not the Admin/Staff dashboard.  
+**Current state**: Onboarding UI still lives under `web-app/lib/admin/dashboard/onboarding/` and is launched from the Admin dashboard.  
+**Target state**:
+1. Add a conditional Onboarding progress tile/card on `OwnerHQDashboardScreen` (visible while onboarding incomplete; uses existing `OnboardingProgressProvider`).
+2. Tile navigates into the existing onboarding screens (reuse, do not rewrite step UIs).
+3. After HQ entry works, demote or remove the Admin primary entry point.
+4. Update STATUS.md, DASHBOARDS.md, web-app/README.md when migration lands.  
+**Rationale**: HQ Owners own franchise setup (menu foundation, branding, features). Admin/Staff dashboards are for day-to-day operations, not initial franchise configuration.  
+**Impact**: Navigation, section registry, dashboard home composition; no new onboarding schema. Small surgical steps preferred.  
+**Reference**: `docs/DASHBOARDS.md`, `STATUS.md`, `tasks/Phase1.md`.
+
 ---
 
 **How to Use This File**:
@@ -56,4 +70,4 @@ This file records major architectural and design decisions for the Doughboys Piz
 - Reference this file in ARCHITECTURE.md when appropriate.
 - Review before major refactors.
 
-**Last Updated**: July 20, 2026
+**Last Updated**: July 24, 2026
