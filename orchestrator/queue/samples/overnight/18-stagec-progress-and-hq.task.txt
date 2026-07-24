@@ -1,0 +1,22 @@
+# id: stagec-onb-progress-hq-readonly
+# agent: web_frontend
+# priority: 50
+
+Stage-C multi-file — READ-ONLY. Use only these two files:
+
+File 1: web-app/lib/core/providers/onboarding_progress_provider_impl.dart
+File 2: web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart
+
+YOUR RESPONSE MUST START WITH THESE FOUR FENCED BLOCKS.
+
+1. Exact first 8 lines of File 1.
+2. Exact first 8 lines of File 2.
+3. From File 1: stepStatus, loading, isStepComplete, getFoundationProgress (real regions only).
+4. From File 2: the Column children region where dashboard cards are composed.
+
+Then one sentence only:
+"How would OwnerHQDashboardScreen decide whether to show an Onboarding tile using the real OnboardingProgressProviderImpl API?"
+
+Then exactly: No change needed.
+
+Do not invent isOnboardingComplete. Real source only.
