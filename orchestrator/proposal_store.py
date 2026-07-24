@@ -17,6 +17,10 @@ Match strategy for BEFORE → AFTER:
 before_matches_on_disk (2026-07-24):
   Same three strategies, read-only — used by proposal_validator to
   HARD BAN proposals that would fail apply.
+
+list_by_status (2026-07-24):
+  Filter proposals by status (pending | applied | rejected) for
+  /proposals pending and full dump of un-accepted work.
 """
 
 from __future__ import annotations
@@ -192,6 +196,28 @@ def list_recent(project_root: Path, limit: int = 10) -> List[Proposal]:
     for f in files[:limit]:
         try:
             out.append(Proposal(**json.loads(f.read_text(encoding="utf-8"))))
+        except Exception:
+            continue
+    return out
+
+
+def list_by_status(
+    project_root: Path,
+    status: str,
+    limit: int = 50,
+) -> List[Proposal]:
+    """Return proposals matching the given status, newest first."""
+    d = _proposals_dir(project_root)
+    files = sorted(d.glob("*.json"), reverse=True)
+    out: List[Proposal] = []
+    status = status.strip().lower()
+    for f in files:
+        if len(out) >= limit:
+            break
+        try:
+            p = Proposal(**json.loads(f.read_text(encoding="utf-8")))
+            if p.status == status:
+                out.append(p)
         except Exception:
             continue
     return out
