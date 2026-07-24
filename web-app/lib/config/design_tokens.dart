@@ -22,6 +22,7 @@ class DesignTokens {
   }
 
   // === DYNAMIC BRANDING (shared.FranchiseProvider wins) ===
+  // Reads FranchiseProvider.currentPrimaryColorHex (set via setBrandingFromFranchiseDoc).
   static Color get primaryColor {
     final hex =
         _fp?.currentPrimaryColorHex ?? shared.DesignTokens.primaryColorHex;
