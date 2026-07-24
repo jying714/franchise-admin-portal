@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 24, 2026 (mid-morning)  
+**Last Updated**: July 25, 2026 (morning checkpoint)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch**: `feat/onboarding-4step`
 
@@ -32,15 +32,16 @@ Phase 0 complete (July 23, 2026).
 - [x] **SCOPE_CARD.md** — short always-on IN/OUT constraints for Phase 1 Workstream B (`orchestrator/SCOPE_CARD.md`)
 - [x] **SCOPE_CARD injected** in minimal + full context (`context_loader.py`)
 - [x] **Hard ban list** in proposal validator — FranchiseProvider() zero-arg, FirestoreService.collection, invented DesignTokens getters (incl. onPrimary/onSecondary/onSurface*), hard-coded blue placeholders (`proposal_validator.py`)
-- [x] **2-file Stage-C** quote discipline proven reliable on live-branding path (design_tokens + owner_hq_dashboard / franchise_provider)
+- [x] **2-file Stage-C** quote discipline + **product edits** proven on Owner HQ path (onboarding card + live branding polish stack, July 24)
 - [x] **agent_router fix** — source files always injected when paths load; bare "progress" no longer forces status-only prompt (July 24)
 - [x] **Overnight queue skeleton** — `queue/inbox|running|done`, `queue_runner.py`, `/queue status|run`, feedback JSONL on reject/apply (July 24)
 - [x] **Path allowlist** — proposals may only target files named in the task; violations are HARD BAN (`proposal_validator.py`, July 24)
 - [x] **Auto-reject** — when validator `ok=False` (HARD BAN / path allowlist), proposal saved as `rejected`, feedback `auto_reject`, `/approve confirm` refused (`main.py`, July 24)
+- [x] **Stage A volume** — ~8–10 clean 2-file product applies + 2 useful rejects in one session (July 24); diminishing returns on further micro-polish of the same cards
 - [ ] **A5** (Optional) Model A/B
 - [ ] Structured unified-diff proposals (optional; fences + fuzzy match cover many small edits)
 - [ ] Optional: don’t persist empty/junk proposals
-- [ ] 3-file Stage-C still unreliable (timeouts / format collapse under full source injection)
+- [ ] 3-file Stage-C still unreliable (timeouts / format collapse under full source injection) — next training frontier
 - [ ] Feedback → SCOPE_CARD refresh checklist (human-gated; no auto fine-tune)
 - [ ] Quote-first still inconsistently shown in human-facing proposals (process soft fail; product edits can still be correct)
 
@@ -73,21 +74,26 @@ Phase 0 complete (July 23, 2026).
 - [x] `setBrandingFromFranchiseDoc` from franchise doc / deep links
 - [x] Theme shell reacts via `Selector` + `UiConfig` colors
 
-**HQ live preview (partial):**
+**HQ live preview (partial → polished card):**
 
 - [x] First live branding color-swatch card on `OwnerHQDashboardScreen` (primary + secondary from `DesignTokens`, labels)
-- [x] Live app name on the same card via `DesignTokens.currentAppName`
-- [x] Conditional logo via `DesignTokens.currentLogoUrl` when non-null
+- [x] Live app name on the same card via `DesignTokens.currentAppName` (accented with primaryColor, July 24)
+- [x] Conditional logo via `DesignTokens.currentLogoUrl` when non-null (ClipRRect + adminCardRadius, July 24)
+- [x] Swatch borders via `cardBorderColor` + caption labels via `secondaryTextColor` (July 24)
+- [x] Palette icon on card title (July 24)
 - [ ] Full HQ Design & Branding page (not just the preview card)
 
 **Onboarding placement (Decision 7 — July 24, 2026):**
 
 - [x] **Target documented**: Franchise/menu onboarding lives on **HQ Owner** dashboard, not Admin
-- [x] **B-ONB-2** Conditional Onboarding progress card on `OwnerHQDashboardScreen` using real API only (`loading`, `getFoundationProgress()`, `isStepComplete` for ingredientTypes / ingredients / categories) — no invented `isOnboardingComplete` (July 24)
-- [x] Loading state polished (Card + centered indicator + text; real DesignTokens only) (July 24)
-- [ ] Wire card → existing onboarding route/section (navigation CTA)
+- [x] **B-ONB-2** Onboarding progress card on `OwnerHQDashboardScreen` using real API only (`loading`, `getFoundationProgress()`, `isStepComplete` for ingredientTypes / ingredients / categories) — no invented `isOnboardingComplete` (July 24)
+- [x] Loading state polished (Card + centered indicator + text; real DesignTokens only)
+- [x] Foundation percent label from `getFoundationProgress()`
+- [x] Completed vs Pending step line styles (primaryColor / secondaryTextColor)
+- [x] LinearProgressIndicator colored with live `DesignTokens.primaryColor`
+- [ ] Wire card → existing onboarding route/section (navigation CTA; Admin onboarding is sidebar-index based — no clean named route yet)
 - [ ] Demote Admin primary onboarding entry after HQ entry works
-- [ ] Reflect completed migration in DASHBOARDS.md / web-app README / STATUS
+- [ ] Reflect completed migration in DASHBOARDS.md / web-app README
 - See `docs/DECISIONS.md` Decision 7 for full rationale and sequence
 
 **Still open (product):**
@@ -96,6 +102,7 @@ Phase 0 complete (July 23, 2026).
 - [ ] Broader franchise-scoped config beyond branding colors (features, app config loaders)
 - [ ] Onboarding navigation CTA from HQ card + Admin demotion
 - [ ] Hybrid localization (partial)
+- [ ] Next agent training frontier: harder 2-file surfaces beyond the same HQ cards; then controlled 3-file
 
 **Ground truth (do not regress):**
 
