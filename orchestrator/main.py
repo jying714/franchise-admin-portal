@@ -8,7 +8,7 @@ Always-running process that:
   • Routes them to specialized agents
   • Calls Ollama and returns a proposal
   • Validates proposals for scope drift (A3)
-  • Auto-rejects on HARD BAN / path-allowlist hits (ok=False)
+  • Auto-rejects on HARD BAN / path-allowlist / BEFORE-on-disk misses (ok=False)
   • Saves proposals; applies ONLY after explicit /approve confirm
   • Optional overnight queue: drop tasks in orchestrator/queue/inbox/
 
@@ -110,19 +110,17 @@ async def run_task(
             num_ctx=result.num_ctx,
         )
 
-    validation = validate_proposal(task_text, response)
+    validation = validate_proposal(task_text, response, project_root=PROJECT_ROOT)
 
-    # Always show validation output
     if validation.has_warnings:
         for w in validation.warnings:
             style = "bold red" if w.startswith("HARD BAN:") else "bold yellow"
             console.print(f"[{style}]⚠ VALIDATION: {w}[/{style}]")
 
-    # Auto-reject on HARD BAN / path allowlist (ok=False)
     auto_rejected = not validation.ok
     if auto_rejected:
         console.print(
-            "[bold red]AUTO-REJECTED — HARD BAN or path allowlist violation. "
+            "[bold red]AUTO-REJECTED — HARD BAN / path allowlist / BEFORE-on-disk. "
             "Proposal saved as rejected; /approve confirm will refuse.[/bold red]\n"
         )
     elif validation.has_warnings:
@@ -298,26 +296,6 @@ def _cmd_proposals() -> None:
         )
 
 
-def _cmd_queue(args: str) -> None:
-    """
-    /queue status
-    /queue run
-    /queue run --once
-    """
-    from queue_runner import drain, status as queue_status
-
-    parts = args.split()
-    if not parts or parts[0] == "status":
-        queue_status()
-        return
-    if parts[0] == "run":
-        once = "--once" in parts or "once" in parts
-        asyncio.get_event_loop().create_task  # noqa: keep import side quiet
-        asyncio.run(drain(once=once))
-        return
-    console.print("[yellow]Usage: /queue status | /queue run | /queue run --once[/yellow]")
-
-
 def _parse_approve_cmd(cmd: str) -> tuple[bool, Optional[str]]:
     parts = cmd.split()
     if len(parts) == 1:
@@ -329,16 +307,9 @@ def _parse_approve_cmd(cmd: str) -> tuple[bool, Optional[str]]:
 
 
 def _parse_reject_cmd(cmd: str) -> tuple[Optional[str], str]:
-    """
-    /reject
-    /reject <id>
-    /reject reason=...
-    /reject <id> reason=...
-    """
     parts = cmd.split(maxsplit=2)
     if len(parts) == 1:
         return None, ""
-    # /reject reason=foo
     if parts[1].startswith("reason="):
         return None, parts[1][len("reason="):] + ((" " + parts[2]) if len(parts) > 2 else "")
     pid = parts[1]
@@ -422,7 +393,7 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
             console.print("/queue run              — drain inbox until empty")
             console.print("/queue run --once       — one inbox task then stop")
             console.print("Overnight: docker exec -d franchise-orchestrator python queue_runner.py --drain")
-            console.print("Auto-reject: HARD BAN / path-allowlist hits are saved as rejected.")
+            console.print("Auto-reject: HARD BAN / path / BEFORE-on-disk hits are saved as rejected.")
             continue
         if cmd == "/proposals" or cmd.startswith("/proposals "):
             _cmd_proposals()
@@ -436,8 +407,6 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
             _cmd_reject(pid, reason=reason)
             continue
         if cmd == "/queue" or cmd.startswith("/queue "):
-            # run queue commands without holding the interactive client's event loop conflict:
-            # drain() creates its own Ollama client
             rest = cmd[len("/queue"):].strip()
             await client.close()
             try:
