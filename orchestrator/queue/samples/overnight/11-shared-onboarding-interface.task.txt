@@ -1,0 +1,11 @@
+# id: onb-shared-interface
+# agent: backend
+# priority: 15
+
+Using packages/shared_core/lib/src/core/providers/onboarding_progress_provider.dart:
+
+1. Quote the entire real file (it is a small interface file).
+2. List every member on the abstract interface from the real source.
+3. No edits. End with: No change needed.
+
+If load fails: FAILED TO LOAD only. Do not invent members.
