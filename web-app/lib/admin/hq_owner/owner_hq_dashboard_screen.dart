@@ -439,6 +439,7 @@ class _QuickLinkTile extends StatelessWidget {
         avatar: Icon(icon, color: DesignTokens.primaryColor),
         label: Text(label),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        side: BorderSide(color: DesignTokens.primaryColor.withOpacity(0.5)),
       ),
     );
   }
