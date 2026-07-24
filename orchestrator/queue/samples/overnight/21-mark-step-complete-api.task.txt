@@ -1,0 +1,10 @@
+# id: onb-mark-step-complete-api
+# agent: backend
+# priority: 65
+
+Using web-app/lib/core/providers/onboarding_progress_provider_impl.dart:
+
+1. Quote the exact first 8 lines of the real file.
+2. Quote markStepComplete and markStepIncomplete methods in full from the real source.
+3. One sentence: how does step completion persist (from the real method bodies only)?
+4. No edits. End with: No change needed.
