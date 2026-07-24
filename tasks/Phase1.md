@@ -3,7 +3,7 @@
 **Status**: In Progress  
 **Estimated Duration**: Agent hardening 1–2 days, then product 3–5 days  
 **Owner**: Human (with agent support)  
-**Last Updated**: July 23, 2026
+**Last Updated**: July 24, 2026
 
 ## Goals
 
@@ -18,24 +18,25 @@
 
 ### Acceptance criteria (Workstream A)
 
-- [ ] Safe docstring/comment-only edits no longer over-refuse when the change is clearly harmless.
-- [ ] Natural constrained prompts preferred over ultra-rigid copy-paste-only prompts in agent task guidance.
-- [ ] Optional guard: if the task forbids new fields and the proposal adds `final …` / new properties, flag or reject before showing as success.
-- [ ] **Prove**: one clean, human-approved docstring or comment improvement on real `packages/shared_core/...` source (agent proposal matches real file; human merges).
-- [ ] (Optional) Pull and A/B test another local coding model (e.g. `deepseek-coder-v2`) for edit tasks.
+- [x] Safe docstring/comment-only edits no longer over-refuse when the change is clearly harmless.
+- [x] Natural constrained prompts preferred over ultra-rigid copy-paste-only prompts in agent task guidance.
+- [x] Optional guard: if the task forbids new fields and the proposal adds `final …` / new properties, flag or reject before showing as success.
+- [x] **Prove**: one clean, human-approved docstring or comment improvement on real `packages/shared_core/...` source (agent proposal matches real file; human merges).
+- [x] SCOPE_CARD + hard bans + 2-file Stage-C process reliable on live-branding path.
+- [ ] (Optional) Pull and A/B test another local coding model for edit tasks.
+- [ ] 3-file Stage-C reliable without timeout/format collapse.
 - [ ] Update `STATUS.md` when Workstream A is done.
 
 ### Tickets (A)
 
 | ID | Task | Owner | Notes |
 |----|------|-------|-------|
-| A1 | Soften refuse path in edit-mode prompts — allow class-level docstrings/comments when source is present and task asks only for that | Human + orchestrator prompt tweak | Avoid “I cannot apply safely” on pure docstring adds |
-| A2 | Document preferred task style for coding agents (natural + constrained, always include file path) in `AGENT_SYSTEM.md` or orchestrator README | Human / agent proposal | |
-| A3 | Optional proposal validator for “no new fields” tasks | Orchestrator | Lightweight string/heuristic check is enough for now |
-| A4 | Run one end-to-end docstring/comment test on `user.dart` (or similar); human reviews and merges | Human | Phase 0 tiny-test, redone correctly |
-| A5 | (Optional) Model comparison on the same edit task | Human | Only if A1–A4 still weak |
-
-**Do not start Workstream B product tickets until A4 is merged.**
+| A1 | Soften refuse path in edit-mode prompts — allow class-level docstrings/comments when source is present and task asks only for that | Human + orchestrator prompt tweak | Done |
+| A2 | Document preferred task style for coding agents in `AGENT_SYSTEM.md` / orchestrator README | Human / agent proposal | Done |
+| A3 | Optional proposal validator for “no new fields” tasks | Orchestrator | Done + hard bans |
+| A4 | Run one end-to-end docstring/comment test; human reviews and merges | Human | Done |
+| A5 | (Optional) Model comparison on the same edit task | Human | Only if needed |
+| A6 | Multi-file quote discipline (2-file proven; 3-file still open) | Human + training | In progress |
 
 ---
 
@@ -44,9 +45,9 @@
 ### Acceptance criteria (Workstream B)
 
 - [ ] Config files (`design_tokens`, `app_config`, `branding_config`, `feature_config`, `ui_config`) franchise-scoped in Firestore per `docs/architecture/firestore-per-franchise-config.md`.
-- [ ] Configs owned in `shared_core` and consumed by web + mobile.
-- [ ] Runtime theming/branding with live preview in HQ Owner dashboard.
-- [ ] Design & Branding page with live preview functional.
+- [x] Configs owned in `shared_core` and consumed by web + mobile.
+- [x] Runtime theming/branding with live preview card in HQ Owner dashboard (colors + app name path).
+- [ ] Design & Branding page with full live preview functional.
 - [ ] Hybrid localization (hardcoded base + DB overrides) documented and partially implemented.
 - [ ] Full human review on architecture decisions and device testing.
 
@@ -61,11 +62,25 @@
 7. Integration tests on web and mobile.
 8. Human review and Phase 1 exit approval.
 
+### Onboarding migration (Decision 7 — tracked here)
+
+Franchise/menu onboarding must move to **HQ Owner** dashboard (not remain primarily on Admin).
+
+| ID | Task | Owner | Notes |
+|----|------|-------|-------|
+| B-ONB-1 | Read-only audit: how Admin launches onboarding + `OnboardingProgressProvider` surface | Human + agent | Quote real source first |
+| B-ONB-2 | Add conditional Onboarding progress tile on `OwnerHQDashboardScreen` (incomplete only) | Agent proposal → human | Reuse existing progress state |
+| B-ONB-3 | Wire tile navigation to existing onboarding screens/routes | Agent proposal → human | Do not rewrite step UIs |
+| B-ONB-4 | Demote Admin primary onboarding entry; update DASHBOARDS / web-app README / STATUS | Human | After HQ entry works |
+
+**Reference**: `docs/DECISIONS.md` Decision 7, `docs/DASHBOARDS.md`.
+
 ### Defensive items
 
 - Schema migration plan for existing data documented.
 - No breaking mobile changes without testing.
 - Human approval required for all config schema and Firestore structure decisions.
+- Onboarding migration is surgical (tile + navigation), not a second onboarding system.
 
 ### Risks
 
@@ -73,6 +88,7 @@
 - Firestore migration complexity.
 - Theming inconsistencies web vs mobile.
 - Scope creep into Phase 2 (hybrid location logic).
+- Large-file / multi-file agent timeouts on `main.dart` and 3-file tasks.
 
 ---
 
@@ -82,6 +98,7 @@
 - Merge the proving docstring/comment PR (A4).
 - Approve final config schema and Firestore structure (B).
 - Review Design & Branding UI/UX.
+- Approve onboarding tile design and Admin demotion (B-ONB-*).
 - Sign off Phase 1 completion before Phase 2.
 
 **Approval required to exit Phase 1**: Human sign-off after A proven and B reviewed/tested.
