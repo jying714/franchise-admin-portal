@@ -5,9 +5,10 @@ Multi-agent coordinator that runs 24/7 on the MINISFORUM AI X1 Pro-470.
 ## What it does
 
 - Loads mandatory governance docs (`STATUS.md`, `AGENT_SYSTEM.md`, …)
+- Always loads **SCOPE_CARD.md** (short Phase 1 hard constraints)
 - Loads **real source files** when a path appears in the task
 - Routes tasks to specialized agents and calls Ollama
-- Validates proposals for scope drift (A3)
+- Validates proposals for scope drift (A3) + **hard ban list**
 - Saves proposals; applies **only** after explicit `/approve confirm [id]`
 - **Never** auto-pushes to git; **never** writes Firestore
 
@@ -18,11 +19,12 @@ orchestrator/
 ├── Dockerfile
 ├── requirements.txt
 ├── main.py                 ← CLI + interactive
-├── context_loader.py       ← mandatory docs (full vs minimal mode)
+├── context_loader.py       ← mandatory docs (full vs minimal) + SCOPE_CARD
+├── SCOPE_CARD.md           ← always-on IN/OUT constraints (Phase 1)
 ├── agent_router.py         ← routing + prompts
 ├── file_reader.py          ← safe source-file load
 ├── ollama_client.py        ← Ollama client + 14b→7b fallback
-├── proposal_validator.py   ← A3 drift checks
+├── proposal_validator.py   ← A3 drift checks + hard bans
 ├── proposal_store.py       ← save / approve / local apply
 ├── proposals/              ← saved proposal JSON (runtime)
 └── README.md
@@ -39,6 +41,17 @@ docker exec -it franchise-orchestrator python main.py
 
 docker exec -it franchise-orchestrator python main.py status
 ```
+
+## SCOPE_CARD (always-on)
+
+`orchestrator/SCOPE_CARD.md` is injected on every coding task (especially minimal mode).
+
+It states:
+
+- IN: Phase 1 micro-edits, quote-first, live DesignTokens / FranchiseProvider paths
+- OUT: new config fields, `FranchiseProvider()` zero-arg, `FirestoreService.collection`, invented getters, multi-file “while you’re at it”
+
+Keep it short. Update it when new recurring invention classes appear.
 
 ## Preferred coding task prompts (A2)
 
@@ -62,6 +75,7 @@ Using packages/shared_core/lib/src/core/models/address.dart:
 - Explicit forbid list (no fields / no logic)
 - Prefer natural constrained wording over ultra-rigid copy-paste-only prompts
 - Do not press Enter on empty prompts (creates junk proposals)
+- Multi-file tasks: require quote blocks first or `FAILED TO LOAD`
 
 ## Review & apply workflow
 
@@ -83,6 +97,8 @@ Using packages/shared_core/lib/src/core/models/address.dart:
 | `/reject [id]` | Mark rejected |
 
 Apply refuses if before-text is missing, matches multiple places, or path is outside allowed roots.
+
+Treat **HARD BAN** validator warnings as reject candidates (FranchiseProvider() zero-arg, FirestoreService.collection, invented DesignTokens getters, hard-coded blue placeholders).
 
 ## Model configuration
 
@@ -107,9 +123,12 @@ docker exec -it ollama ollama pull qwen2.5-coder:14b
 - No Firestore / production writes
 - High-risk keywords raise human-approval flags
 - A3 warnings when a "no new fields" task still looks like it added API surface
+- Hard ban list for recurring inventions (see `proposal_validator.py`)
 
 ## Next improvements
 
+- Path allowlist per task type
+- Auto-reject when validator `ok=False`
 - Structured unified-diff proposals for more reliable apply
 - Optional second gate for `git commit` / draft PR
 - File-drop inbox / HTTP task submission

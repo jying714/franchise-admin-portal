@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 23, 2026  
+**Last Updated**: July 23, 2026 (evening)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch**: `feat/onboarding-4step`
 
@@ -29,9 +29,14 @@ Phase 0 complete (July 23, 2026).
 - [x] **Proposal parser hardened** for BEFORE/AFTER extraction (`proposal_store.py`)
 - [x] **Apply-path verified end-to-end** — propose → parse → `/approve confirm` → local file write succeeded
 - [x] **Fuzzy BEFORE match** for local apply when model reformats whitespace/line breaks (`proposal_store.py`)
+- [x] **SCOPE_CARD.md** — short always-on IN/OUT constraints for Phase 1 Workstream B (`orchestrator/SCOPE_CARD.md`)
+- [x] **SCOPE_CARD injected** in minimal + full context (`context_loader.py`)
+- [x] **Hard ban list** in proposal validator — FranchiseProvider() zero-arg, FirestoreService.collection, invented DesignTokens getters, hard-coded blue placeholders (`proposal_validator.py`)
 - [ ] **A5** (Optional) Model A/B
 - [ ] Structured unified-diff proposals (optional; fences + fuzzy match cover many small edits)
 - [ ] Optional: don’t persist empty/junk proposals
+- [ ] Optional: path allowlist per task type + auto-reject when validator `ok=False`
+- [ ] Multi-file quote discipline still weak — single-file surgical edits are reliable; Stage-C quotes often omitted
 
 ### B. Product — Core config scoping & dynamic branding
 
@@ -46,13 +51,13 @@ Phase 0 complete (July 23, 2026).
 - [x] Mobile `main.dart` — live path comment: FranchiseProvider → UiConfig
 - [x] Web `design_tokens.dart` — live path comment: FranchiseProvider → DesignTokens
 
-**Web branding path (logic — landed this session):**
+**Web branding path (logic):**
 
 - [x] `DesignTokens.setFranchiseProvider(franchiseProvider)` at authenticated bootstrap (`web-app/lib/main.dart`)
 - [x] After `initializeWithUser` / `forceRefreshFranchiseId`, best-effort `FirebaseFirestore` fetch of `franchises/{id}` → `setBrandingFromFranchiseDoc`
 - [x] `if (mounted) setState(() {})` after branding load so tree can rebuild
 - [x] Authenticated **light** `MaterialApp.theme` built at runtime from web `DesignTokens` (not frozen `_lightTheme`)
-- [ ] Authenticated **dark** `MaterialApp.darkTheme` built at runtime from web `DesignTokens` (still uses frozen `_darkTheme`)
+- [ ] Authenticated **dark** `MaterialApp.darkTheme` built at runtime from web `DesignTokens` (STATUS still treats as open — verify against current `main.dart` before next edit)
 - [ ] Unauth `MaterialApp` themes still use top-level `_lightTheme` / `_darkTheme` (acceptable for landing/sign-in)
 - [ ] Optional: remove unused top-level theme constants once both auth themes are inlined
 
@@ -62,10 +67,16 @@ Phase 0 complete (July 23, 2026).
 - [x] `setBrandingFromFranchiseDoc` from franchise doc / deep links
 - [x] Theme shell reacts via `Selector` + `UiConfig` colors
 
+**HQ live preview (partial):**
+
+- [x] First live branding color-swatch card on `OwnerHQDashboardScreen` (primary + secondary from `DesignTokens`, labels, centered)
+- [ ] Full HQ Design & Branding page (not just the swatch)
+- [ ] Live preview of app name / logo from existing `DesignTokens.currentAppName` / `currentLogoUrl` (no new fields)
+
 **Still open (product):**
 
-- [ ] Finish web dark theme runtime wiring (next micro-task)
-- [ ] HQ Design & Branding dashboard + live preview
+- [ ] Finish / verify web dark theme runtime wiring
+- [ ] Full HQ Design & Branding dashboard + richer live preview
 - [ ] Broader franchise-scoped config beyond branding colors (features, app config loaders)
 - [ ] Hybrid localization (partial)
 
@@ -77,13 +88,14 @@ Phase 0 complete (July 23, 2026).
 - Web live colors: `FranchiseProvider` → `DesignTokens.setFranchiseProvider` → `DesignTokens.*` getters
 - Mobile live colors: `FranchiseProvider` → `UiConfig.setFranchiseProvider` → `UiConfig.*`
 - Do not invent new fields on BrandingConfig / AppConfig / DesignTokens / FeatureConfig for scoping
+- See also `orchestrator/SCOPE_CARD.md` for the short always-on constraint list
 
 ---
 
 ## Target workflow
 
 1. Agent proposes (real source, strict `## BEFORE` / `## AFTER` fences)  
-2. Human reviews (`/approve <id>`, validation warnings)  
+2. Human reviews (`/approve <id>`, validation warnings / HARD BAN hits)  
 3. `/approve confirm <id>` → local apply only  
 4. Human commits/pushes  
 5. Never Firestore/production from agents  
@@ -101,6 +113,7 @@ Interactive CLI: paste multi-line task, type `END` on its own line.
 - Stay in current phase acceptance criteria
 - Never invent fields on BrandingConfig / AppConfig / DesignTokens / FeatureConfig for scoping work
 - Never invent FirestoreService.collection or zero-arg FranchiseProvider()
+- Treat validator HARD BAN hits as reject candidates
 
 ---
 
