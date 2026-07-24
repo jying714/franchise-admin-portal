@@ -5,6 +5,11 @@ A3: lightweight post-generation checks for scope drift.
 
 Path allowlist, BEFORE/AFTER required, no-op BEFORE≈AFTER, hard bans,
 and (when project_root is provided) BEFORE-must-exist-on-disk.
+
+"No change needed" escape hatch (2026-07-24):
+  When the response is a correct use of the escape hatch, skip the
+  BEFORE/AFTER required, no-op, and on-disk checks so it is not
+  HARD BAN'd for missing fences.
 """
 
 from __future__ import annotations
@@ -70,6 +75,8 @@ AFTER_MARKER = re.compile(
     re.IGNORECASE,
 )
 
+NO_CHANGE_RE = re.compile(r"\bno\s+change\s+needed\b", re.IGNORECASE)
+
 
 @dataclass
 class ValidationResult:
@@ -113,6 +120,20 @@ def _normalize_code(text: str) -> str:
     return t
 
 
+def _is_no_change_response(proposal_text: str) -> bool:
+    """True when the agent used the escape hatch (skip fence requirements)."""
+    if not proposal_text:
+        return False
+    if not NO_CHANGE_RE.search(proposal_text):
+        return False
+    # If there is a real differing BEFORE/AFTER, treat as normal proposal
+    before = _extract_section(proposal_text, ["before", "exact before", "current"])
+    after = _extract_section(proposal_text, ["after", "exact after", "proposed"])
+    if before.strip() and after.strip() and _normalize_code(before) != _normalize_code(after):
+        return False
+    return True
+
+
 def _check_hard_bans(proposal_text: str) -> List[str]:
     hits: List[str] = []
     for pattern, message in HARD_BAN_PATTERNS:
@@ -146,6 +167,9 @@ def _check_before_after_required(task_text: str, proposal_text: str) -> List[str
     if not extract_paths(task_text):
         return []
 
+    if _is_no_change_response(proposal_text):
+        return []
+
     lower_task = task_text.lower()
     if re.search(r"\b(status only|planning only|no code change|read-?only)\b", lower_task):
         return []
@@ -170,12 +194,16 @@ def _check_before_after_required(task_text: str, proposal_text: str) -> List[str
         missing.append("AFTER")
     return [
         f"HARD BAN: coding proposal missing {' and '.join(missing)} region(s). "
-        f"Prose-only / essay responses are not valid. Provide surgical BEFORE and AFTER."
+        f"Prose-only / essay responses are not valid. Provide surgical BEFORE and AFTER "
+        f"or reply only: No change needed."
     ]
 
 
 def _check_noop_before_after(task_text: str, proposal_text: str) -> List[str]:
     if not extract_paths(task_text):
+        return []
+
+    if _is_no_change_response(proposal_text):
         return []
 
     lower_task = task_text.lower()
@@ -190,7 +218,7 @@ def _check_noop_before_after(task_text: str, proposal_text: str) -> List[str]:
     if _normalize_code(before_body) == _normalize_code(after_body):
         return [
             "HARD BAN: BEFORE and AFTER are identical (no-op proposal). "
-            "Provide a real surgical change or FAILED TO LOAD."
+            "Provide a real surgical change or reply only: No change needed."
         ]
     return []
 
@@ -207,6 +235,9 @@ def _check_before_on_disk(
     if not extract_paths(task_text):
         return []
 
+    if _is_no_change_response(proposal_text):
+        return []
+
     lower_task = task_text.lower()
     if re.search(r"\b(status only|planning only|no code change|read-?only)\b", lower_task):
         return []
@@ -219,7 +250,6 @@ def _check_before_on_disk(
     if not paths:
         return []
 
-    # Primary edit target = first path named in the task (matches Stage-C convention)
     file_path = paths[0]
 
     try:
@@ -251,7 +281,7 @@ def validate_proposal(
     warnings.extend(_check_noop_before_after(task_text, proposal_text))
     warnings.extend(_check_before_on_disk(task_text, proposal_text, project_root))
 
-    if task_forbids_new_fields(task_text):
+    if task_forbids_new_fields(task_text) and not _is_no_change_response(proposal_text):
         after = _extract_section(proposal_text, ["after", "exact after", "proposed"])
         before = _extract_section(proposal_text, ["before", "exact before", "current"])
 

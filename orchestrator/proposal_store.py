@@ -19,8 +19,13 @@ before_matches_on_disk (2026-07-24):
   HARD BAN proposals that would fail apply.
 
 list_by_status (2026-07-24):
-  Filter proposals by status (pending | applied | rejected) for
-  /proposals pending and full dump of un-accepted work.
+  Filter proposals by status (pending | applied | rejected | no_change)
+  for /proposals pending and full dump of un-accepted work.
+
+no_change status (2026-07-24):
+  Exact phrase "No change needed" is a first-class success outcome.
+  Saved with status=no_change so it is visible, countable, and not
+  treated as ordinary pending work.
 """
 
 from __future__ import annotations
@@ -32,7 +37,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from difflib import SequenceMatcher
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from file_reader import ALLOWED_ROOTS, _is_allowed
 
@@ -42,6 +47,16 @@ LAST_POINTER = "last_id.txt"
 
 FUZZY_MIN_RATIO = 0.90
 FUZZY_MIN_MARGIN = 0.05
+
+# Exact escape-hatch phrase (case-insensitive).
+NO_CHANGE_PATTERN = re.compile(
+    r"^\s*no\s+change\s+needed\.?\s*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+NO_CHANGE_LOOSE = re.compile(
+    r"\bno\s+change\s+needed\b",
+    re.IGNORECASE,
+)
 
 
 @dataclass
@@ -56,7 +71,38 @@ class Proposal:
     before: Optional[str] = None
     after: Optional[str] = None
     validation_warnings: List[str] = field(default_factory=list)
-    status: str = "pending"  # pending | approved | applied | rejected
+    status: str = "pending"  # pending | approved | applied | rejected | no_change
+
+
+def is_no_change_needed(response: str) -> bool:
+    """
+    True when the agent correctly used the escape hatch.
+
+    Accepts:
+      - response that is essentially only "No change needed"
+      - response that contains the phrase and has no usable differing BEFORE/AFTER
+    """
+    if not response or not response.strip():
+        return False
+    text = response.strip()
+    if NO_CHANGE_PATTERN.search(text):
+        return True
+    if NO_CHANGE_LOOSE.search(text):
+        before, after = _extract_before_after(text)
+        if not before and not after:
+            return True
+        if before and after and _normalize_for_compare(before) != _normalize_for_compare(after):
+            return False
+        return True
+    return False
+
+
+def _normalize_for_compare(text: str) -> str:
+    t = text.strip()
+    t = re.sub(r"^```[\w]*\n?", "", t)
+    t = re.sub(r"\n?```$", "", t)
+    t = re.sub(r"\s+", " ", t).strip()
+    return t
 
 
 def _proposals_dir(project_root: Path) -> Path:
@@ -86,7 +132,7 @@ def _extract_before_after(response: str) -> Tuple[Optional[str], Optional[str]]:
             "exact before",
             "before lines",
             "current",
-            "before \(parsed\)",
+            "before \\(parsed\\)",
         ],
     )
     after = _code_after_heading(
@@ -96,7 +142,7 @@ def _extract_before_after(response: str) -> Tuple[Optional[str], Optional[str]]:
             "exact after",
             "after lines",
             "proposed",
-            "after \(parsed\)",
+            "after \\(parsed\\)",
         ],
     )
     return before, after
@@ -151,6 +197,8 @@ def save_proposal(
     file_path = _extract_file_path(task, response)
     before, after = _extract_before_after(response)
 
+    initial_status = "no_change" if is_no_change_needed(response) else "pending"
+
     prop = Proposal(
         id=pid,
         created_at=datetime.now(timezone.utc).isoformat(),
@@ -162,7 +210,7 @@ def save_proposal(
         before=before,
         after=after,
         validation_warnings=list(validation_warnings or []),
-        status="pending",
+        status=initial_status,
     )
 
     d = _proposals_dir(project_root)
@@ -228,6 +276,65 @@ def mark_status(project_root: Path, prop: Proposal, status: str) -> Proposal:
     path = _proposals_dir(project_root) / f"{prop.id}.json"
     path.write_text(json.dumps(asdict(prop), indent=2), encoding="utf-8")
     return prop
+
+
+def compute_metrics(project_root: Path, limit: int = 50) -> Dict[str, float | int | str]:
+    """
+    Lightweight training metrics over the most recent `limit` proposals.
+    """
+    items = list_recent(project_root, limit=limit)
+    n = len(items)
+    if n == 0:
+        return {"total": 0, "note": "No proposals found"}
+
+    no_change = sum(1 for p in items if p.status == "no_change")
+    applied = sum(1 for p in items if p.status == "applied")
+    rejected = sum(1 for p in items if p.status == "rejected")
+    pending = sum(1 for p in items if p.status == "pending")
+
+    hard_ban = 0
+    real_diff = 0
+    quote_signals = 0
+
+    for p in items:
+        if any(w.startswith("HARD BAN:") for w in (p.validation_warnings or [])):
+            hard_ban += 1
+
+        if p.before and p.after:
+            if _normalize_for_compare(p.before) != _normalize_for_compare(p.after):
+                real_diff += 1
+
+        resp = (p.response or "").lower()
+        if (
+            "quote the exact first" in resp
+            or "first 10" in resp
+            or "first 12" in resp
+            or "first 8" in resp
+            or re.search(r"^\s*1\.\s*quote", resp, re.M)
+            or ("```" in resp and ("import " in resp or "class " in resp))
+        ):
+            quote_signals += 1
+
+    def pct(count: int) -> float:
+        return round(100.0 * count / n, 1)
+
+    return {
+        "total": n,
+        "no_change": no_change,
+        "no_change_pct": pct(no_change),
+        "real_diff": real_diff,
+        "real_diff_pct": pct(real_diff),
+        "hard_ban": hard_ban,
+        "hard_ban_pct": pct(hard_ban),
+        "quote_signal": quote_signals,
+        "quote_signal_pct": pct(quote_signals),
+        "applied": applied,
+        "applied_pct": pct(applied),
+        "rejected": rejected,
+        "rejected_pct": pct(rejected),
+        "pending": pending,
+        "pending_pct": pct(pending),
+    }
 
 
 def _leading_ws(line: str) -> str:
@@ -330,7 +437,6 @@ def before_matches_on_disk(
 ) -> Tuple[bool, str]:
     """
     Return (ok, detail) using the same match strategy as apply_proposal.
-
     ok=True means apply would find a unique span (exact, flexible, or fuzzy).
     """
     if not file_path or not before or not before.strip():
@@ -403,6 +509,9 @@ def _write_span(
 def apply_proposal(project_root: Path, prop: Proposal) -> Tuple[bool, str]:
     if prop.status == "applied":
         return False, "Proposal already applied."
+
+    if prop.status == "no_change":
+        return False, "Proposal is 'No change needed' — nothing to apply."
 
     if not prop.file_path:
         return False, "No file path detected in proposal — cannot apply automatically."
