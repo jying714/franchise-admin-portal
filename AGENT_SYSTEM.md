@@ -1,7 +1,7 @@
 # AGENT_SYSTEM.md
 **Multi-Agent AI Development System**  
 **Doughboys Pizzeria Franchise Platform**  
-**Last Updated**: July 23, 2026
+**Last Updated**: July 24, 2026
 
 ## Purpose
 This document defines the governance, roles, rules, and workflows for the 24/7 local multi-agent AI coding system running on the MINISFORUM AI X1 Pro-470.
@@ -36,6 +36,7 @@ Use this style whenever asking an agent to change code. It is what works best wi
 2. **What to verify** — quote the first ~8–12 real lines (proves the agent read the file)
 3. **Scope boundary** — what is allowed and what is forbidden
 4. **Output shape** — exact before/after for a small region (fenced code blocks preferred)
+5. **Escape hatch** — if the region already satisfies the request, the agent must reply only: **No change needed**
 
 ### Preferred template
 
@@ -45,7 +46,9 @@ Using <path/to/file.ext>:
 1. Quote the exact first 8–12 lines of the real file.
 2. Propose ONLY <one small change> (e.g. a class-level docstring above `class Foo {`).
 3. Do not add fields, getters, methods, or change logic / serialization / Firestore mapping.
-4. Show exact before/after for that small region only (fenced code blocks preferred).
+4. If the named region already satisfies the request, reply ONLY with: No change needed.
+5. Show exact before/after for that small region only (fenced code blocks preferred).
+   BEFORE and AFTER must differ. Identical fences = invalid (no-op).
 ```
 
 ### Good vs weak prompts
@@ -55,7 +58,8 @@ Using <path/to/file.ext>:
 | Natural + constrained ("ONLY a class-level docstring…") | Ultra-rigid "paste this exact string only" (can cause over-refusal) |
 | One file path, one change | Multiple files or vague "improve the models" |
 | Explicit forbid list (no fields, no logic) | Open-ended "clean up" / "improve" |
-| Fenced before/after | Prose-only descriptions of the edit |
+| Fenced before/after **or** "No change needed" | Prose-only descriptions of the edit |
+| New surfaces (files not recently polished) | Re-touching the same HQ DesignTokens cards repeatedly |
 | Single task, wait for result | Empty Enter / accidental follow-up tasks |
 
 ### After the proposal
@@ -71,6 +75,7 @@ Using <path/to/file.ext>:
 - Never invent fields, methods, or file contents.
 - Docstring/comment-only edits are **safe** when requested — do not refuse them.
 - Stay inside the stated "ONLY" boundary; do not expand to related members.
+- If the region already uses the requested DesignTokens / pattern → **No change needed** (do not invent a different token or emit identical BEFORE/AFTER).
 - End with short "Next steps for human".
 
 ## Agent Roles & Responsibilities
@@ -118,6 +123,7 @@ At the beginning of every task or session, every agent **must** first read the f
 - `/AGENT_SYSTEM.md`
 - `/ROADMAP.md`
 - `/tasks/PhaseX.md` (current phase)
+- `/orchestrator/SCOPE_CARD.md` (always-on short constraints)
 
 **Project Documentation**:
 - `/ARCHITECTURE.md`
