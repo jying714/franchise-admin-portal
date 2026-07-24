@@ -8,7 +8,7 @@ Multi-agent coordinator that runs 24/7 on the MINISFORUM AI X1 Pro-470.
 - Always loads **SCOPE_CARD.md** (short Phase 1 hard constraints)
 - Loads **real source files** when a path appears in the task
 - Routes tasks to specialized agents and calls Ollama
-- Validates proposals for scope drift (A3) + **hard ban list**
+- Validates proposals for scope drift (A3) + **hard ban list** + **identical BEFORE/AFTER no-op ban**
 - Saves proposals; applies **only** after explicit `/approve confirm [id]`
 - **Never** auto-pushes to git; **never** writes Firestore
 - Optional **overnight queue**: drop task files in `queue/inbox/` and drain sequentially
@@ -27,7 +27,7 @@ orchestrator/
 ├── agent_router.py         ← routing + prompts
 ├── file_reader.py          ← safe source-file load
 ├── ollama_client.py        ← Ollama client + 14b→7b fallback
-├── proposal_validator.py   ← A3 drift checks + hard bans
+├── proposal_validator.py   ← A3 drift checks + hard bans + no-op ban
 ├── proposal_store.py       ← save / approve / local apply + list_by_status
 ├── proposals/              ← saved proposal JSON (runtime)
 ├── queue/
@@ -104,6 +104,11 @@ Learning is **governance**, not model fine-tuning: use reject reasons to update 
 
 `orchestrator/SCOPE_CARD.md` is injected on every coding task (especially minimal mode).
 
+Key rules (see full file):
+- Prefer **new surfaces** over re-polishing the same HQ DesignTokens consumers
+- If the region already satisfies the request → reply only: **No change needed**
+- Identical BEFORE/AFTER is a HARD BAN (no-op)
+
 ## Preferred coding task prompts (A2)
 
 See also `AGENT_SYSTEM.md` → **Preferred Coding Task Prompt Style**.
@@ -116,16 +121,20 @@ Using packages/shared_core/lib/src/core/models/address.dart:
 1. Quote the exact first 8–12 lines of the real file.
 2. Propose ONLY a short class-level docstring above the main class declaration.
 3. Do not add fields, getters, methods, or change any logic or serialization.
-4. Show exact before/after for that small region only (fenced code blocks preferred).
+4. If the named region already satisfies the request, reply ONLY with: No change needed.
+5. Show exact before/after for that small region only (fenced code blocks preferred).
+   BEFORE and AFTER must differ. Identical fences = invalid (no-op).
 ```
 
 **Rules of thumb**
 
 - Always include the full file path
-- One file, one small change per task
+- One file (or explicit 2-file), one small change per task
 - Explicit forbid list (no fields / no logic)
+- Prefer **new surfaces** (files not recently micro-polished)
 - Multi-file tasks: require quote blocks first or `FAILED TO LOAD`
 - Prefer small read-only quote tasks for overnight until timeouts are rare
+- Reward honesty: **No change needed** is a correct outcome when already done
 
 ## Review & apply workflow
 
@@ -174,11 +183,13 @@ Treat **HARD BAN** validator warnings as reject candidates.
 - No git push from the orchestrator
 - No Firestore / production writes
 - Source injection always wins over status-only prompts when paths are present
+- Identical BEFORE/AFTER → HARD BAN (no-op)
 
 ## Next improvements
 
-- Structured unified-diff proposals for more reliable apply
+- Structured unified-diff proposals for more reliable apply (optional)
 - Feedback → SCOPE_CARD refresh checklist (human-gated)
+- Systematic 7b vs 14b A/B on Stage-A tasks (optional)
 
 ---
 Last updated: 2026-07-24
