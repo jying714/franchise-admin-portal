@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 24, 2026 (afternoon — post inbox-batch cleanup)  
+**Last Updated**: July 24, 2026 (evening — no_change + metrics hardening)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch**: `feat/onboarding-4step`
 
@@ -39,7 +39,9 @@ Phase 0 complete (July 23, 2026).
 - [x] **Auto-reject** — when validator `ok=False` (HARD BAN / path allowlist), proposal saved as `rejected`, feedback `auto_reject`, `/approve confirm` refused (`main.py`, July 24)
 - [x] **Stage A volume** — ~8–10 clean 2-file product applies + 2 useful rejects in one session (July 24); diminishing returns on further micro-polish of the same cards
 - [x] **`/proposals pending|rejected|applied|full`** — status filter + full dump of pending (July 24)
-- [x] **July 24 inbox batch (10 tasks)** — mostly no-ops / invents / type errors on already-polished HQ DesignTokens consumers; **0 product applies**. Confirmed failure modes: identical BEFORE/AFTER, inventing `currentPrimaryColorHex` as Color, inventing constructor args, 3-file format collapse. SCOPE_CARD updated with **No change needed** escape hatch + prefer new surfaces (July 24 afternoon).
+- [x] **July 24 inbox batch (10 + 20 tasks)** — mostly no-ops / invents / type errors (`*ColorHex` treated as Color). Confirmed failure modes: identical BEFORE/AFTER, inventing hex-as-Color, private `_fp` access, 3-file format collapse. SCOPE_CARD updated with **No change needed** escape hatch + prefer new surfaces.
+- [x] **First-class `no_change` status** (July 24 evening) — exact "No change needed" saved as `status=no_change` (success, not pending). Validator skips BEFORE/AFTER HARD BANs for the escape hatch. CLI: `/proposals no_change`.
+- [x] **`/metrics`** (July 24 evening) — lightweight training metrics over last 50 proposals (no_change %, real-diff %, quote signal %, HARD BAN %, applied/rejected/pending).
 - [ ] **A5** (Optional) Model A/B
 - [ ] Structured unified-diff proposals (optional; fences + fuzzy match cover many small edits)
 - [ ] Optional: don’t persist empty/junk proposals
@@ -104,7 +106,7 @@ Phase 0 complete (July 23, 2026).
 - [ ] Broader franchise-scoped config beyond branding colors (features, app config loaders)
 - [ ] Onboarding navigation CTA from HQ card + Admin demotion
 - [ ] Hybrid localization (partial)
-- [ ] Next agent training frontier: **new surfaces** (not more HQ card micro-polish); controlled 3-file quote+comment only; train **No change needed** escape hatch
+- [ ] Next agent training frontier: **new surfaces** + force real Color getters (`primaryColor` / `secondaryColor`, never `*ColorHex` as Color); train **No change needed** escape hatch; measure with `/metrics`
 
 **Ground truth (do not regress):**
 
@@ -128,6 +130,8 @@ Phase 0 complete (July 23, 2026).
 5. Never Firestore/production from agents  
 6. `/reject <id> reason=...` → `orchestrator/feedback/rejects.jsonl` (governance learning only)
 7. HARD BAN / path-allowlist → auto-reject (`status=rejected`, no apply)
+8. "No change needed" → `status=no_change` (success; nothing to apply)
+9. `/metrics` → training rates over last 50 proposals
 
 Prompt style: see **AGENT_SYSTEM.md → Preferred Coding Task Prompt Style**.  
 Interactive CLI: paste multi-line task, type `END` on its own line.  
