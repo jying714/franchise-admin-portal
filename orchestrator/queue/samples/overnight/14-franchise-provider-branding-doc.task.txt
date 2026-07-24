@@ -1,0 +1,12 @@
+# id: fp-set-branding-from-doc
+# agent: backend
+# priority: 30
+
+Using packages/shared_core/lib/src/core/providers/franchise_provider.dart:
+
+1. Quote the exact first 10 lines of the real file.
+2. Quote the setBrandingFromFranchiseDoc method including its doc comment.
+3. List the branding keys mentioned in that comment or method body (real source only).
+4. No edits. End with: No change needed.
+
+If load fails: FAILED TO LOAD only.
