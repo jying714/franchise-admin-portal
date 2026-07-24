@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 24, 2026 (early morning)  
+**Last Updated**: July 24, 2026 (mid-morning)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch**: `feat/onboarding-4step`
 
@@ -31,16 +31,18 @@ Phase 0 complete (July 23, 2026).
 - [x] **Fuzzy BEFORE match** for local apply when model reformats whitespace/line breaks (`proposal_store.py`)
 - [x] **SCOPE_CARD.md** — short always-on IN/OUT constraints for Phase 1 Workstream B (`orchestrator/SCOPE_CARD.md`)
 - [x] **SCOPE_CARD injected** in minimal + full context (`context_loader.py`)
-- [x] **Hard ban list** in proposal validator — FranchiseProvider() zero-arg, FirestoreService.collection, invented DesignTokens getters, hard-coded blue placeholders (`proposal_validator.py`)
+- [x] **Hard ban list** in proposal validator — FranchiseProvider() zero-arg, FirestoreService.collection, invented DesignTokens getters (incl. onPrimary/onSecondary/onSurface*), hard-coded blue placeholders (`proposal_validator.py`)
 - [x] **2-file Stage-C** quote discipline proven reliable on live-branding path (design_tokens + owner_hq_dashboard / franchise_provider)
 - [x] **agent_router fix** — source files always injected when paths load; bare "progress" no longer forces status-only prompt (July 24)
 - [x] **Overnight queue skeleton** — `queue/inbox|running|done`, `queue_runner.py`, `/queue status|run`, feedback JSONL on reject/apply (July 24)
+- [x] **Path allowlist** — proposals may only target files named in the task; violations are HARD BAN (`proposal_validator.py`, July 24)
+- [x] **Auto-reject** — when validator `ok=False` (HARD BAN / path allowlist), proposal saved as `rejected`, feedback `auto_reject`, `/approve confirm` refused (`main.py`, July 24)
 - [ ] **A5** (Optional) Model A/B
 - [ ] Structured unified-diff proposals (optional; fences + fuzzy match cover many small edits)
 - [ ] Optional: don’t persist empty/junk proposals
-- [ ] Optional: path allowlist per task type + auto-reject when validator `ok=False`
 - [ ] 3-file Stage-C still unreliable (timeouts / format collapse under full source injection)
 - [ ] Feedback → SCOPE_CARD refresh checklist (human-gated; no auto fine-tune)
+- [ ] Quote-first still inconsistently shown in human-facing proposals (process soft fail; product edits can still be correct)
 
 ### B. Product — Core config scoping & dynamic branding
 
@@ -80,9 +82,10 @@ Phase 0 complete (July 23, 2026).
 
 **Onboarding placement (Decision 7 — July 24, 2026):**
 
-- [ ] **Target**: Franchise/menu onboarding lives on **HQ Owner** dashboard, not Admin
-- [ ] Add conditional Onboarding progress tile on `OwnerHQDashboardScreen` (use `stepStatus` / `loading` / `getFoundationProgress()` — not invented `isOnboardingComplete`)
-- [ ] Wire tile → existing onboarding route/section
+- [x] **Target documented**: Franchise/menu onboarding lives on **HQ Owner** dashboard, not Admin
+- [x] **B-ONB-2** Conditional Onboarding progress card on `OwnerHQDashboardScreen` using real API only (`loading`, `getFoundationProgress()`, `isStepComplete` for ingredientTypes / ingredients / categories) — no invented `isOnboardingComplete` (July 24)
+- [x] Loading state polished (Card + centered indicator + text; real DesignTokens only) (July 24)
+- [ ] Wire card → existing onboarding route/section (navigation CTA)
 - [ ] Demote Admin primary onboarding entry after HQ entry works
 - [ ] Reflect completed migration in DASHBOARDS.md / web-app README / STATUS
 - See `docs/DECISIONS.md` Decision 7 for full rationale and sequence
@@ -91,7 +94,7 @@ Phase 0 complete (July 23, 2026).
 
 - [ ] Full HQ Design & Branding dashboard + richer live preview
 - [ ] Broader franchise-scoped config beyond branding colors (features, app config loaders)
-- [ ] Onboarding migration to HQ Owner (tile first)
+- [ ] Onboarding navigation CTA from HQ card + Admin demotion
 - [ ] Hybrid localization (partial)
 
 **Ground truth (do not regress):**
@@ -115,6 +118,7 @@ Phase 0 complete (July 23, 2026).
 4. Human commits/pushes  
 5. Never Firestore/production from agents  
 6. `/reject <id> reason=...` → `orchestrator/feedback/rejects.jsonl` (governance learning only)
+7. HARD BAN / path-allowlist → auto-reject (`status=rejected`, no apply)
 
 Prompt style: see **AGENT_SYSTEM.md → Preferred Coding Task Prompt Style**.  
 Interactive CLI: paste multi-line task, type `END` on its own line.  
@@ -131,7 +135,8 @@ Overnight: drop tasks in `orchestrator/queue/inbox/` → `python queue_runner.py
 - Stay in current phase acceptance criteria
 - Never invent fields on BrandingConfig / AppConfig / DesignTokens / FeatureConfig for scoping work
 - Never invent FirestoreService.collection or zero-arg FranchiseProvider()
-- Treat validator HARD BAN hits as reject candidates
+- Treat validator HARD BAN hits as reject candidates (now auto-rejected)
+- Edit only files named in the task (path allowlist)
 
 ---
 
