@@ -18,7 +18,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    mem_limit: 56g
+    # Tuned for host .wslconfig memory=40GB (leaves headroom for Windows + orchestrator)
+    mem_limit: 36g
     mem_reservation: 12g
 
   orchestrator:
