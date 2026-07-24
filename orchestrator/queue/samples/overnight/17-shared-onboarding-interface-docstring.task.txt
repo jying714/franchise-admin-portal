@@ -1,0 +1,12 @@
+# id: onb-shared-interface-docstring
+# agent: backend
+# priority: 45
+
+Using packages/shared_core/lib/src/core/providers/onboarding_progress_provider.dart:
+
+1. Quote the full real file.
+2. Propose ONLY a short class-level /// docstring above abstract class OnboardingProgressProvider if missing: pure interface for franchise onboarding step progress (stepStatus, loading, completion helpers).
+3. No new members. ## BEFORE / ## AFTER for that region only.
+4. If docstring already adequate: No change needed.
+
+SCOPE_CARD applies.
