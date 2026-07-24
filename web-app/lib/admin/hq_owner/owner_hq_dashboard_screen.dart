@@ -286,15 +286,27 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                           ),
                           Text(
                             'Ingredient Types: ${onboardingProgress.isStepComplete('ingredientTypes') ? 'Completed' : 'Pending'}',
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            style: onboardingProgress.isStepComplete('ingredientTypes')
+                                ? TextStyle(color: DesignTokens.primaryColor, fontWeight: FontWeight.w600)
+                                : Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: DesignTokens.secondaryTextColor,
+                                  ),
                           ),
                           Text(
                             'Ingredients: ${onboardingProgress.isStepComplete('ingredients') ? 'Completed' : 'Pending'}',
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            style: onboardingProgress.isStepComplete('ingredients')
+                                ? TextStyle(color: DesignTokens.primaryColor, fontWeight: FontWeight.w600)
+                                : Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: DesignTokens.secondaryTextColor,
+                                  ),
                           ),
                           Text(
                             'Categories: ${onboardingProgress.isStepComplete('categories') ? 'Completed' : 'Pending'}',
-                            style: Theme.of(context).textTheme.bodyMedium,
+                            style: onboardingProgress.isStepComplete('categories')
+                                ? TextStyle(color: DesignTokens.primaryColor, fontWeight: FontWeight.w600)
+                                : Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: DesignTokens.secondaryTextColor,
+                                  ),
                           ),
                         ],
                       ),
