@@ -63,7 +63,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
           children: [
             const SizedBox(width: 8),
             Icon(Icons.business_center_rounded,
-                color: DesignTokens.primaryColor),
+                color: DesignTokens.primaryColor, size: 22),
             const SizedBox(width: 12),
             Text(
               loc.ownerHQDashboardTitle ?? "Franchise HQ Dashboard",
@@ -169,11 +169,15 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.palette, color: DesignTokens.primaryColor, size: 20),
+                          Icon(Icons.palette,
+                              color: DesignTokens.primaryColor, size: 20),
                           const SizedBox(width: 8),
                           Text(
                             'Live Branding Preview',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
                           ),
@@ -183,15 +187,17 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                       Text(
                         DesignTokens.currentAppName,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: DesignTokens.primaryColor,
-                        ),
+                              fontWeight: FontWeight.w600,
+                              color: DesignTokens.primaryColor,
+                            ),
                       ),
-                      if (DesignTokens.currentLogoUrl != null && DesignTokens.currentLogoUrl!.isNotEmpty)
+                      if (DesignTokens.currentLogoUrl != null &&
+                          DesignTokens.currentLogoUrl!.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.only(top: 8.0),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
+                            borderRadius: BorderRadius.circular(
+                                DesignTokens.adminCardRadius),
                             child: Image.network(
                               DesignTokens.currentLogoUrl!,
                               width: 100,
@@ -210,13 +216,19 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                                 height: 48,
                                 decoration: BoxDecoration(
                                   color: DesignTokens.primaryColor,
-                                  border: Border.all(color: DesignTokens.cardBorderColor, width: 1),
+                                  border: Border.all(
+                                      color: DesignTokens.cardBorderColor,
+                                      width: 1),
                                 ),
                               ),
                               const SizedBox(height: 6),
                               Text(
                                 'Primary',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: DesignTokens.secondaryTextColor),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                        color: DesignTokens.secondaryTextColor),
                               ),
                             ],
                           ),
@@ -229,13 +241,19 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                                 height: 48,
                                 decoration: BoxDecoration(
                                   color: DesignTokens.secondaryColor,
-                                  border: Border.all(color: DesignTokens.cardBorderColor, width: 1),
+                                  border: Border.all(
+                                      color: DesignTokens.cardBorderColor,
+                                      width: 1),
                                 ),
                               ),
                               const SizedBox(height: 6),
                               Text(
                                 'Secondary',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: DesignTokens.secondaryTextColor),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                        color: DesignTokens.secondaryTextColor),
                               ),
                             ],
                           ),
@@ -254,7 +272,8 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                     return Card(
                       elevation: DesignTokens.adminCardElevation,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
+                        borderRadius:
+                            BorderRadius.circular(DesignTokens.adminCardRadius),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -265,7 +284,10 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                             const SizedBox(height: 8),
                             Text(
                               'Loading onboarding…',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
                                     color: DesignTokens.textColor,
                                   ),
                             ),
@@ -287,7 +309,10 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                         children: [
                           Text(
                             'Onboarding Progress',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
                           ),
@@ -295,7 +320,8 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                           LinearProgressIndicator(
                             value: onboardingProgress.getFoundationProgress(),
                             color: DesignTokens.primaryColor,
-                            backgroundColor: DesignTokens.primaryColor.withOpacity(0.2),
+                            backgroundColor:
+                                DesignTokens.primaryColor.withOpacity(0.2),
                           ),
                           const SizedBox(height: 12),
                           Text(
@@ -304,27 +330,45 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                           ),
                           Text(
                             'Ingredient Types: ${onboardingProgress.isStepComplete('ingredientTypes') ? 'Completed' : 'Pending'}',
-                            style: onboardingProgress.isStepComplete('ingredientTypes')
-                                ? TextStyle(color: DesignTokens.primaryColor, fontWeight: FontWeight.w600)
-                                : Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: DesignTokens.secondaryTextColor,
-                                  ),
+                            style: onboardingProgress
+                                    .isStepComplete('ingredientTypes')
+                                ? TextStyle(
+                                    color: DesignTokens.primaryColor,
+                                    fontWeight: FontWeight.w600)
+                                : Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: DesignTokens.secondaryTextColor,
+                                    ),
                           ),
                           Text(
                             'Ingredients: ${onboardingProgress.isStepComplete('ingredients') ? 'Completed' : 'Pending'}',
-                            style: onboardingProgress.isStepComplete('ingredients')
-                                ? TextStyle(color: DesignTokens.primaryColor, fontWeight: FontWeight.w600)
-                                : Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: DesignTokens.secondaryTextColor,
-                                  ),
+                            style: onboardingProgress
+                                    .isStepComplete('ingredients')
+                                ? TextStyle(
+                                    color: DesignTokens.primaryColor,
+                                    fontWeight: FontWeight.w600)
+                                : Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: DesignTokens.secondaryTextColor,
+                                    ),
                           ),
                           Text(
                             'Categories: ${onboardingProgress.isStepComplete('categories') ? 'Completed' : 'Pending'}',
-                            style: onboardingProgress.isStepComplete('categories')
-                                ? TextStyle(color: DesignTokens.primaryColor, fontWeight: FontWeight.w600)
-                                : Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: DesignTokens.secondaryTextColor,
-                                  ),
+                            style: onboardingProgress
+                                    .isStepComplete('categories')
+                                ? TextStyle(
+                                    color: DesignTokens.primaryColor,
+                                    fontWeight: FontWeight.w600)
+                                : Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: DesignTokens.secondaryTextColor,
+                                    ),
                           ),
                         ],
                       ),
@@ -363,7 +407,9 @@ class MultiBrandOverviewPanel extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(loc.multiBrandSnapshot ?? "Multi-Brand Overview",
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: DesignTokens.primaryColor, fontWeight: FontWeight.w600)),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: DesignTokens.primaryColor,
+                    fontWeight: FontWeight.w600)),
             const SizedBox(height: 12),
             // TODO: Replace with real multi-brand data from provider
             const Text("Additional brands coming soon...",
@@ -464,7 +510,8 @@ class FutureFeaturePlaceholderPanel extends StatelessWidget {
           children: [
             Icon(Icons.star, color: DesignTokens.primaryColor),
             SizedBox(width: 8),
-            Text(loc.comingSoonFeatures ?? "Future Features - Coming Soon", style: TextStyle(color: DesignTokens.secondaryTextColor)),
+            Text(loc.comingSoonFeatures ?? "Future Features - Coming Soon",
+                style: TextStyle(color: DesignTokens.secondaryTextColor)),
           ],
         ),
       ),
