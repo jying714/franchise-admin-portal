@@ -1,0 +1,12 @@
+# id: t4-04-cart-badge-error-already
+# agent: web_frontend
+# priority: 33
+
+Using web-app/lib/widgets/header/cart_icon_badge.dart and web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. Check whether the badge decoration color already uses DesignTokens.errorColor.
+3. If it already uses DesignTokens.errorColor → reply ONLY with: No change needed.
+4. Do not swap to primaryColor. Do not invent getters. Do not emit BEFORE/AFTER if already correct.
+5. Only if errorColor is missing, show exact ## BEFORE / ## AFTER for that decoration line only.
+6. If either file cannot be quoted → reply only: FAILED TO LOAD.

@@ -1,0 +1,12 @@
+# id: t4-01-info-tile-primary-already
+# agent: web_frontend
+# priority: 30
+
+Using web-app/lib/widgets/info_tile.dart and web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. Check whether the leading Icon already uses DesignTokens.primaryColor.
+3. If it already uses DesignTokens.primaryColor → reply ONLY with: No change needed.
+4. Do not propose any other Color, do not invent getters, do not emit BEFORE/AFTER if already correct.
+5. If the Icon does not use DesignTokens.primaryColor, show exact ## BEFORE / ## AFTER for that one line only — using DesignTokens.primaryColor (never currentPrimaryColor, never *ColorHex as Color).
+6. If either file cannot be quoted → reply only: FAILED TO LOAD.

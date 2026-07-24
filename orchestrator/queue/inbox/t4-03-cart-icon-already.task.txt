@@ -1,0 +1,12 @@
+# id: t4-03-cart-icon-already
+# agent: web_frontend
+# priority: 32
+
+Using web-app/lib/widgets/header/cart_icon_badge.dart and web-app/lib/config/design_tokens.dart:
+
+1. Quote the exact first 10–12 lines of BOTH real files.
+2. Check whether the cart Icon color already uses a real DesignTokens Color getter (e.g. DesignTokens.foregroundColor).
+3. If it already uses any real DesignTokens Color getter → reply ONLY with: No change needed.
+4. Do not swap to primaryColor. Do not invent getters. Do not emit BEFORE/AFTER if already correct.
+5. Only if no DesignTokens Color is used, show exact ## BEFORE / ## AFTER using DesignTokens.foregroundColor.
+6. If either file cannot be quoted → reply only: FAILED TO LOAD.
