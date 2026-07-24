@@ -13,6 +13,10 @@ Match strategy for BEFORE → AFTER:
   1. Exact substring
   2. Indent-flexible (line sequence equal after lstrip)
   3. Fuzzy difflib window (high threshold, unique winner)
+
+before_matches_on_disk (2026-07-24):
+  Same three strategies, read-only — used by proposal_validator to
+  HARD BAN proposals that would fail apply.
 """
 
 from __future__ import annotations
@@ -32,7 +36,6 @@ from file_reader import ALLOWED_ROOTS, _is_allowed
 PROPOSALS_DIR_NAME = "orchestrator/proposals"
 LAST_POINTER = "last_id.txt"
 
-# Fuzzy match: require very high similarity and a clear margin over runner-up
 FUZZY_MIN_RATIO = 0.90
 FUZZY_MIN_MARGIN = 0.05
 
@@ -72,7 +75,6 @@ def _extract_file_path(task: str, response: str) -> Optional[str]:
 
 
 def _extract_before_after(response: str) -> Tuple[Optional[str], Optional[str]]:
-    """Pull code from fenced blocks under before/after headings when possible."""
     before = _code_after_heading(
         response,
         [
@@ -97,18 +99,7 @@ def _extract_before_after(response: str) -> Tuple[Optional[str], Optional[str]]:
 
 
 def _code_after_heading(text: str, headings: List[str]) -> Optional[str]:
-    """
-    Find a fenced code block that follows a before/after-style heading.
-
-    Accepts:
-      ## BEFORE
-      ### Before Lines
-      BEFORE
-      Before Lines (Class-level docstring):
-    followed by ```dart ... ``` or ``` ... ```.
-    """
     for h in headings:
-        # Preferred: markdown heading then fenced block
         pat = (
             rf"(?:^|\n)#{{0,3}}\s*\d*\.?\s*{h}\b[^\n]*\n"
             rf"(?:[^`]*?)```(?:dart|swift|python|py|js|ts|yaml|yml|json|text)?\s*\n"
@@ -118,7 +109,6 @@ def _code_after_heading(text: str, headings: List[str]) -> Optional[str]:
         if m:
             return m.group(1).strip("\n")
 
-        # Fallback: heading then indented/plain lines until next heading or fence end
         pat2 = (
             rf"(?:^|\n)#{{0,3}}\s*\d*\.?\s*{h}\b[^\n]*\n"
             rf"(.*?)(?=\n#{{1,3}}\s|\n##\s|\Z)"
@@ -127,7 +117,6 @@ def _code_after_heading(text: str, headings: List[str]) -> Optional[str]:
         if m2:
             block = m2.group(1).strip()
             block = re.sub(r"^```\w*\s*\n|\n```\s*$", "", block).strip()
-            # Only accept if it looks like code/docstring, not pure prose
             if block and (
                 "class " in block
                 or "///" in block
@@ -136,6 +125,10 @@ def _code_after_heading(text: str, headings: List[str]) -> Optional[str]:
                 or "static " in block
                 or "void " in block
                 or "return " in block
+                or "Icon(" in block
+                or "Widget " in block
+                or "appBar:" in block
+                or "Text(" in block
             ):
                 return block
     return None
@@ -218,11 +211,6 @@ def _leading_ws(line: str) -> str:
 def _flexible_span(
     original: str, before: str
 ) -> Optional[Tuple[int, int, str]]:
-    """
-    Find a unique span in `original` whose lines match `before` after lstrip().
-
-    Returns (start_char, end_char, base_indent) or None if not found uniquely.
-    """
     before_lines = [ln.rstrip("\r") for ln in before.strip("\n").splitlines()]
     while before_lines and before_lines[0].strip() == "":
         before_lines.pop(0)
@@ -254,15 +242,6 @@ def _flexible_span(
 def _fuzzy_span(
     original: str, before: str
 ) -> Optional[Tuple[int, int, str, float]]:
-    """
-    Find a unique high-similarity window in `original` for `before`.
-
-    Compares stripped line sequences with difflib.SequenceMatcher over
-    sliding windows sized around the BEFORE line count. Requires ratio
-    >= FUZZY_MIN_RATIO and a clear margin over the second-best hit.
-
-    Returns (start_char, end_char, base_indent, ratio) or None.
-    """
     before_lines = [ln.rstrip("\r") for ln in before.strip("\n").splitlines()]
     while before_lines and before_lines[0].strip() == "":
         before_lines.pop(0)
@@ -271,8 +250,6 @@ def _fuzzy_span(
     if not before_lines:
         return None
 
-    before_stripped = [ln.strip() for ln in before_lines if ln.strip() != "" or True]
-    # Keep structure but normalize for comparison
     before_norm = "\n".join(ln.strip() for ln in before_lines)
     n = len(before_lines)
     if n < 1:
@@ -282,21 +259,19 @@ def _fuzzy_span(
     if not orig_lines:
         return None
 
-    # Window sizes: exact n, and ±1/±2 for collapsed/expanded line breaks
     window_sizes = sorted({max(1, n + d) for d in (-2, -1, 0, 1, 2, 3)})
 
-    scored: List[Tuple[float, int, int]] = []  # (ratio, start_line, end_line)
+    scored: List[Tuple[float, int, int]] = []
 
     for win in window_sizes:
         if win > len(orig_lines):
             continue
         for i in range(len(orig_lines) - win + 1):
-            window_text = "".join(orig_lines[i : i + win])
             window_norm = "\n".join(
                 ln.rstrip("\r\n").strip() for ln in orig_lines[i : i + win]
             )
             ratio = SequenceMatcher(None, before_norm, window_norm).ratio()
-            if ratio >= FUZZY_MIN_RATIO - 0.02:  # collect near-misses for margin check
+            if ratio >= FUZZY_MIN_RATIO - 0.02:
                 scored.append((ratio, i, i + win))
 
     if not scored:
@@ -308,15 +283,13 @@ def _fuzzy_span(
     if best_ratio < FUZZY_MIN_RATIO:
         return None
 
-    # Unique winner: runner-up must be clearly worse (or non-overlapping same region)
     second = 0.0
     for ratio, s, e in scored[1:]:
-        # Ignore overlapping windows of the same region
         if not (s < end_line and e > start_line):
             second = max(second, ratio)
 
     if second >= best_ratio - FUZZY_MIN_MARGIN and second >= FUZZY_MIN_RATIO:
-        return None  # ambiguous
+        return None
 
     start_char = sum(len(orig_lines[k]) for k in range(start_line))
     end_char = sum(len(orig_lines[k]) for k in range(end_line))
@@ -324,11 +297,47 @@ def _fuzzy_span(
     return start_char, end_char, base_indent, best_ratio
 
 
+def before_matches_on_disk(
+    project_root: Path,
+    file_path: str,
+    before: str,
+) -> Tuple[bool, str]:
+    """
+    Return (ok, detail) using the same match strategy as apply_proposal.
+
+    ok=True means apply would find a unique span (exact, flexible, or fuzzy).
+    """
+    if not file_path or not before or not before.strip():
+        return False, "missing file_path or before text"
+
+    if not _is_allowed(file_path):
+        return False, f"path not allowed: {file_path}"
+
+    full = project_root / file_path
+    if not full.exists():
+        return False, f"file does not exist: {file_path}"
+
+    try:
+        original = full.read_text(encoding="utf-8")
+    except Exception as e:
+        return False, f"could not read {file_path}: {e}"
+
+    b = before.strip("\n")
+    if b in original:
+        if original.count(b) > 1:
+            return False, "BEFORE matches multiple places (ambiguous)"
+        return True, "exact"
+
+    if _flexible_span(original, b) is not None:
+        return True, "indent-flexible"
+
+    if _fuzzy_span(original, b) is not None:
+        return True, "fuzzy"
+
+    return False, "BEFORE not found (exact/flexible/fuzzy all failed)"
+
+
 def _reindent_block(block: str, base_indent: str) -> str:
-    """
-    Re-indent `block` so its first non-empty line uses `base_indent`, and
-    relative indentation between lines is preserved.
-    """
     lines = block.strip("\n").splitlines()
     if not lines:
         return block
@@ -358,7 +367,6 @@ def _write_span(
     base_indent: str,
 ) -> str:
     reindented_after = _reindent_block(after, base_indent)
-    # Preserve trailing newline if the replaced span had one
     if original[start_char:end_char].endswith("\n") and not reindented_after.endswith(
         "\n"
     ):
@@ -367,11 +375,6 @@ def _write_span(
 
 
 def apply_proposal(project_root: Path, prop: Proposal) -> Tuple[bool, str]:
-    """
-    Apply before→after replacement in the target file.
-    Returns (success, message).
-    Does NOT git commit or push.
-    """
     if prop.status == "applied":
         return False, "Proposal already applied."
 
@@ -396,7 +399,6 @@ def apply_proposal(project_root: Path, prop: Proposal) -> Tuple[bool, str]:
     before = prop.before.strip("\n")
     after = prop.after.strip("\n")
 
-    # 1) Exact match (preferred)
     if before in original:
         if original.count(before) > 1:
             return (
@@ -409,7 +411,6 @@ def apply_proposal(project_root: Path, prop: Proposal) -> Tuple[bool, str]:
         mark_status(project_root, prop, "applied")
         return True, f"Applied to {prop.file_path} (local only — not committed, not pushed)."
 
-    # 2) Flexible indent match: line sequence equal after lstrip()
     span = _flexible_span(original, before)
     if span is not None:
         start_char, end_char, base_indent = span
@@ -422,7 +423,6 @@ def apply_proposal(project_root: Path, prop: Proposal) -> Tuple[bool, str]:
             f"(local only — not committed, not pushed).",
         )
 
-    # 3) Fuzzy match: model slightly rewrote BEFORE / collapsed lines
     fuzzy = _fuzzy_span(original, before)
     if fuzzy is not None:
         start_char, end_char, base_indent, ratio = fuzzy
