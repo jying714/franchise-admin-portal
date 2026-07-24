@@ -18,7 +18,11 @@ Commands:
   /approve confirm         apply last proposal locally (no git push)
   /approve confirm <id>    apply a specific proposal locally
   /reject [id] reason=...  mark rejected + log feedback
-  /proposals               list recent proposals
+  /proposals               list recent proposals (all statuses)
+  /proposals pending       list only pending (un-accepted / un-rejected)
+  /proposals rejected      list rejected
+  /proposals applied       list applied
+  /proposals full          fully print ALL pending proposals with full context
   /queue status|run|run --once
   /quit /models /agent /help
 """
@@ -43,6 +47,7 @@ from ollama_client import OllamaClient
 from proposal_store import (
     Proposal,
     apply_proposal,
+    list_by_status,
     list_recent,
     load_by_id,
     load_last,
@@ -190,22 +195,38 @@ def _resolve_proposal(proposal_id: Optional[str] = None):
     return prop
 
 
-def _show_proposal(prop) -> None:
+def _show_proposal(prop, *, full: bool = False) -> None:
+    """Print proposal summary. When full=True, always include complete task + response."""
     console.print(Panel.fit(
         f"[bold]id[/bold]: {prop.id}\n"
         f"[bold]status[/bold]: {prop.status}\n"
+        f"[bold]created[/bold]: {prop.created_at}\n"
         f"[bold]agent[/bold]: {prop.agent} / {prop.model}\n"
         f"[bold]file[/bold]: {prop.file_path or '(not detected)'}\n"
         f"[bold]warnings[/bold]: {len(prop.validation_warnings)}\n"
         f"[bold]before parsed[/bold]: {'yes' if prop.before else 'no'}\n"
-        f"[bold]after parsed[/bold]: {'yes' if prop.after else 'no'}\n"
-        f"[bold]task[/bold]: {prop.task[:120]}{'…' if len(prop.task) > 120 else ''}",
+        f"[bold]after parsed[/bold]: {'yes' if prop.after else 'no'}",
         title="Proposal",
         border_style="cyan",
     ))
     if prop.validation_warnings:
         for w in prop.validation_warnings:
             console.print(f"  [yellow]• {w}[/yellow]")
+
+    if full:
+        console.print("\n[bold]FULL TASK[/bold]")
+        console.print(Panel(prop.task, border_style="blue"))
+        console.print("[bold]FULL RESPONSE[/bold]")
+        console.print(Panel(Markdown(prop.response), border_style="green"))
+        if prop.before and prop.after:
+            console.print("[bold]BEFORE (parsed)[/bold]")
+            console.print(Panel(prop.before, border_style="red"))
+            console.print("[bold]AFTER (parsed)[/bold]")
+            console.print(Panel(prop.after, border_style="green"))
+        return
+
+    # Compact view (default)
+    console.print(f"[bold]task[/bold]: {prop.task[:120]}{'…' if len(prop.task) > 120 else ''}")
     if prop.before and prop.after:
         console.print("\n[bold]BEFORE (parsed)[/bold]")
         console.print(Panel(prop.before, border_style="red"))
@@ -283,12 +304,43 @@ def _cmd_reject(proposal_id: Optional[str] = None, reason: str = "") -> None:
         console.print(f"[dim]reason: {reason}[/dim]")
 
 
-def _cmd_proposals() -> None:
-    items = list_recent(PROJECT_ROOT, limit=15)
-    if not items:
-        console.print("[dim]No proposals yet.[/dim]")
+def _cmd_proposals(status_filter: Optional[str] = None, full: bool = False) -> None:
+    """
+    List proposals.
+    - No args: recent (all statuses)
+    - status_filter: pending | rejected | applied
+    - full=True: dump every pending proposal with complete context
+    """
+    if full:
+        items = list_by_status(PROJECT_ROOT, "pending", limit=100)
+        if not items:
+            console.print("[dim]No pending (un-accepted) proposals.[/dim]")
+            return
+        console.print(
+            f"[bold green]Pending proposals — full dump ({len(items)})[/bold green]\n"
+            "[dim]These have not been accepted or rejected yet.[/dim]\n"
+        )
+        for i, p in enumerate(items, 1):
+            console.rule(f"[bold]{i}/{len(items)}  {p.id}")
+            _show_proposal(p, full=True)
+            console.print()
         return
-    console.print("[bold]Recent proposals[/bold] (use /approve <id> or /approve confirm <id>)")
+
+    if status_filter:
+        items = list_by_status(PROJECT_ROOT, status_filter, limit=50)
+        label = status_filter
+    else:
+        items = list_recent(PROJECT_ROOT, limit=20)
+        label = "recent (all statuses)"
+
+    if not items:
+        console.print(f"[dim]No {label} proposals.[/dim]")
+        return
+
+    console.print(
+        f"[bold]Proposals — {label}[/bold]  "
+        f"(use /approve <id> | /approve confirm <id> | /proposals full)"
+    )
     for p in items:
         warn = f" warnings={len(p.validation_warnings)}" if p.validation_warnings else ""
         console.print(
@@ -330,6 +382,8 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
         f"Ollama       : {OLLAMA_HOST}\n"
         "Paste a multi-line task, then type END on its own line.\n"
         "Commands: /quit /models /agent /help /proposals\n"
+        "          /proposals pending | rejected | applied\n"
+        "          /proposals full          (dump all pending fully)\n"
         "          /approve [id]   /approve confirm [id]\n"
         "          /reject [id] reason=...\n"
         "          /queue status | /queue run | /queue run --once",
@@ -383,7 +437,11 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
             continue
         if cmd == "/help":
             console.print("Tasks: natural language with file paths when editing code.")
-            console.print("/proposals              — list recent proposal ids")
+            console.print("/proposals              — list recent proposal ids (all statuses)")
+            console.print("/proposals pending      — list only pending (un-accepted)")
+            console.print("/proposals rejected     — list rejected")
+            console.print("/proposals applied      — list applied")
+            console.print("/proposals full         — FULL dump of every pending proposal")
             console.print("/approve                — show last proposal")
             console.print("/approve <id>           — show proposal by id")
             console.print("/approve confirm        — apply last locally (no push)")
@@ -396,7 +454,19 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
             console.print("Auto-reject: HARD BAN / path / BEFORE-on-disk hits are saved as rejected.")
             continue
         if cmd == "/proposals" or cmd.startswith("/proposals "):
-            _cmd_proposals()
+            parts = cmd.split()
+            status_filter = None
+            full = False
+            if len(parts) >= 2:
+                arg = parts[1].lower()
+                if arg == "full":
+                    full = True
+                elif arg in ("pending", "rejected", "applied", "approved"):
+                    status_filter = arg
+                else:
+                    console.print("[yellow]Usage: /proposals [pending|rejected|applied|full][/yellow]")
+                    continue
+            _cmd_proposals(status_filter=status_filter, full=full)
             continue
         if cmd == "/approve" or cmd.startswith("/approve "):
             confirm, pid = _parse_approve_cmd(cmd)
