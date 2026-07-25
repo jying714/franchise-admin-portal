@@ -1,0 +1,23 @@
+# Rename to *.task.txt and remove .example to enqueue.
+# id: sample-xai-product
+# agent: web_frontend
+# backend: xai
+# priority: 10
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/widgets/review/review_summary_table.dart
+
+Task: Quote first 10–12 lines.
+
+Product decision: Summary table keeps Section / Status / Issues only.
+Remove the Action column entirely (header + cells + Fix Now).
+Do not change expansion panels.
+If Action column already gone → No change needed.
+
+Rules:
+1. Quote-first.
+2. Edit only the named file.
+3. Proposal only — human /approve confirm applies locally.
