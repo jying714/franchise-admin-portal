@@ -1,0 +1,36 @@
+# id: xai-multibrand-placeholder
+# agent: web_frontend
+# backend: xai
+# priority: 8
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+In MultiBrandOverviewPanel, locate:
+```dart
+// TODO: Replace with real multi-brand data from provider
+const Text("Additional brands coming soon...",
+    style: TextStyle(color: DesignTokens.secondaryTextColor)),
+```
+
+Replace with clearer MVP copy (no new providers):
+```dart
+Text(
+  'Single-franchise view for this HQ. Multi-brand rollup is planned.',
+  style: TextStyle(color: DesignTokens.secondaryTextColor),
+),
+```
+
+Prefer one region.
+If copy already clear → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.

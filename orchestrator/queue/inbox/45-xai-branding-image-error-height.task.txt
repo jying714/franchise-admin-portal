@@ -1,0 +1,27 @@
+# id: xai-branding-image-error-height
+# agent: web_frontend
+# backend: xai
+# priority: 9
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/screens/design_branding_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+On the draft logo Image.network, ensure errorBuilder returns the existing _logoFallback and keep width/height consistent (120x60). If already correct → reply only: No change needed.
+
+If the network image lacks `fit: BoxFit.contain`, add it only:
+```dart
+fit: BoxFit.contain,
+```
+
+Prefer one region. No new DesignTokens fields.
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.

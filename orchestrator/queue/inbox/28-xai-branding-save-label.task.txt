@@ -1,0 +1,33 @@
+# id: xai-branding-save-label
+# agent: web_frontend
+# backend: xai
+# priority: 6
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/screens/design_branding_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Save is already wired (v1.1). Locate the stale label:
+```dart
+Text(
+  'Draft (local only — Save not wired yet)',
+```
+
+Replace the string only with:
+```dart
+Text(
+  'Draft fields (Save writes franchise + config/ui_config)',
+```
+
+Prefer one region. Do not change save logic.
+If label already accurate → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.

@@ -1,0 +1,27 @@
+# id: xai-menu-debug-prints
+# agent: web_frontend
+# backend: xai
+# priority: 7
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_items_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Remove noisy production debug prints only:
+- `print('[DEBUG][FAB] FloatingActionButton pressed.');`
+- `print('[OnboardingMenuItemsScreen] checkForSchemaIssues called for item: ...');`
+- `print('[OnboardingMenuItemsScreen] handleSidebarRepair called (legacy) ...');`
+
+Do not remove shared.ErrorLogger.log calls. Do not change logic.
+Prefer one or two regions max.
+If those print() calls are already gone → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.

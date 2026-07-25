@@ -1,0 +1,38 @@
+# id: xai-branding-preview-draft-swatch
+# agent: web_frontend
+# backend: xai
+# priority: 6
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/screens/design_branding_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Live preview swatches currently pass DesignTokens.primaryColor / secondaryColor even when draft hex fields are filled. Improve _swatchColumn call sites only so the Color comes from a valid draft hex when present.
+
+Add a private helper in this State class if needed:
+```dart
+Color? _colorFromHex(String raw) {
+  final n = _normalizeHex(raw);
+  if (!_isValidHex(n)) return null;
+  final v = int.tryParse(n.substring(1), radix: 16);
+  if (v == null) return null;
+  return Color(0xFF000000 | v);
+}
+```
+
+Then when calling _swatchColumn for Primary/Secondary, use:
+`color: _colorFromHex(draftPrimaryHex) ?? DesignTokens.primaryColor`
+(and same for secondary).
+
+Do not add fields to DesignTokens / BrandingConfig. Prefer ≤2 regions.
+If swatches already follow draft hex → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.

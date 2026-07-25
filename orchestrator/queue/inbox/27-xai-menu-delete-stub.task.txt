@@ -1,0 +1,69 @@
+# id: xai-menu-delete-stub
+# agent: web_frontend
+# backend: xai
+# priority: 5
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_items_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Locate the list tile onDelete stub:
+```dart
+onDelete: () async {
+  /* your exact delete dialog unchanged */
+},
+```
+
+Replace with a minimal confirmation + provider delete using APIs already in this file:
+```dart
+onDelete: () async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Delete menu item?'),
+      content: Text('Remove "${item.name}"?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: const Text('Delete'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !mounted) return;
+  final menuProvider =
+      Provider.of<shared.MenuItemProvider>(context, listen: false);
+  try {
+    menuProvider.removeMenuItem(item.id);
+    await menuProvider.persistChanges();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Item deleted')),
+      );
+    }
+  } catch (e) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Delete failed: $e')),
+      );
+    }
+  }
+},
+```
+
+If MenuItemProvider has no removeMenuItem, use the closest existing delete/remove API already present on the provider in this codebase (do not invent fields). Prefer one region.
+If onDelete already has real dialog + delete logic → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.

@@ -1,0 +1,33 @@
+# id: xai-overview-coming-soon
+# agent: web_frontend
+# backend: xai
+# priority: 6
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+4-step onboarding is complete. Remove the trailing "More steps coming soon" chrome:
+```dart
+const SizedBox(height: 16),
+Text(
+  loc?.progressComingSoon ?? 'More steps coming soon',
+  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: colorScheme.onSurfaceVariant,
+      ),
+),
+```
+
+Delete that SizedBox + Text only (keep the four OnboardingStepCards).
+Prefer one region.
+If already removed → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.

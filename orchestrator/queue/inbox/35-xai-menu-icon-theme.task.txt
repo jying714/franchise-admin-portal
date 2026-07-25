@@ -1,0 +1,31 @@
+# id: xai-menu-icon-theme
+# agent: web_frontend
+# backend: xai
+# priority: 7
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_items_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Locate AppBar iconTheme hard-code:
+```dart
+iconTheme: const IconThemeData(color: Colors.black),
+```
+
+Replace with theme-aware:
+```dart
+iconTheme: IconThemeData(color: colorScheme.onSurface),
+```
+
+Prefer one region. Do not invent DesignTokens fields.
+If already theme-aware → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.

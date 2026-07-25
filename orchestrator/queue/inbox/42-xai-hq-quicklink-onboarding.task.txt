@@ -1,0 +1,38 @@
+# id: xai-hq-quicklink-onboarding
+# agent: web_frontend
+# backend: xai
+# priority: 6
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+In QuickLinksPanel Wrap children, add one more _QuickLinkTile for onboarding after the existing Invoices/Payouts tiles:
+```dart
+_QuickLinkTile(
+  icon: Icons.checklist_outlined,
+  label: 'Onboarding',
+  onTap: () {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const HqOnboardingShellScreen(
+          initialSectionKey: 'onboardingMenu',
+        ),
+      ),
+    );
+  },
+),
+```
+
+HqOnboardingShellScreen is already imported in this file. Prefer one region.
+If an Onboarding quick link already exists → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.

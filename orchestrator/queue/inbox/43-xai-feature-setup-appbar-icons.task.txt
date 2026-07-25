@@ -1,0 +1,26 @@
+# id: xai-feature-setup-appbar-icons
+# agent: web_frontend
+# backend: xai
+# priority: 8
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_feature_setup_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Replace hard-coded AppBar iconTheme Colors.black with theme-aware onSurface in each AppBar in this file (loading / error / main scaffolds):
+```dart
+iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
+```
+
+Prefer one region if possible, max 2. Do not invent DesignTokens fields.
+If already theme-aware → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.

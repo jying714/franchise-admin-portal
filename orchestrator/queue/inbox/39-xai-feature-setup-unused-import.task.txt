@@ -1,0 +1,23 @@
+# id: xai-feature-setup-unused-import
+# agent: web_frontend
+# backend: xai
+# priority: 9
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_feature_setup_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+If `import 'package:franchise_admin_portal/config/branding_config.dart';` is unused in this file (no BrandingConfig / branding_config symbols), remove that single import line only.
+
+Do not remove other imports. Prefer one region.
+If branding_config is used → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.
