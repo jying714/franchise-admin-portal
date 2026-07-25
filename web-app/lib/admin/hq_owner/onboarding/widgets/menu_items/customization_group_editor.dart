@@ -1,6 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/multi_ingredient_selector.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/multi_ingredient_selector.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 

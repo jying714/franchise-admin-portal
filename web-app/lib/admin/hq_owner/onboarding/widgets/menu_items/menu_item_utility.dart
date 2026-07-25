@@ -1,4 +1,4 @@
-﻿// lib/admin/dashboard/onboarding/widgets/menu_items/menu_item_utility.dart
+// lib/admin/hq_owner/onboarding/widgets/menu_items/menu_item_utility.dart
 
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:collection/collection.dart';

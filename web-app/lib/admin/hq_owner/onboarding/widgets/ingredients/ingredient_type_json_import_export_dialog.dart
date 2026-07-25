@@ -1,4 +1,4 @@
-﻿// lib/admin/dashboard/onboarding/widgets/ingredients/ingredient_type_json_import_export_dialog.dart
+// lib/admin/hq_owner/onboarding/widgets/ingredients/ingredient_type_json_import_export_dialog.dart
 
 import 'dart:convert';
 

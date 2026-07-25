@@ -1,4 +1,4 @@
-﻿// File: lib/admin/dashboard/onboarding/widgets/feature_toggle_tile.dart
+// File: lib/admin/hq_owner/onboarding/widgets/feature_toggle_tile.dart
 
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';

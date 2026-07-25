@@ -1,10 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/onboarding_step_card.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/onboarding_step_card.dart';
 import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.dart';
 import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.dart';
 

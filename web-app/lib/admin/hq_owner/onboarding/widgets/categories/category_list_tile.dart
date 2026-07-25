@@ -1,4 +1,4 @@
-﻿// lib/admin/dashboard/onboarding/widgets/categories/category_list_tile.dart
+// lib/admin/hq_owner/onboarding/widgets/categories/category_list_tile.dart
 
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';

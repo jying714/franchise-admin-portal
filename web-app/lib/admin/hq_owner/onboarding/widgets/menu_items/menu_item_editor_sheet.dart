@@ -1,4 +1,4 @@
-﻿// web-app/lib/admin/dashboard/onboarding/widgets/menu_items/menu_item_editor_sheet.dart
+// web-app/lib/admin/hq_owner/onboarding/widgets/menu_items/menu_item_editor_sheet.dart
 // FIXED VERSION – Step 1 of CLI Roadmap – Single Source of Truth + No Stale Refresh
 
 import 'package:flutter/material.dart';
@@ -7,14 +7,14 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:uuid/uuid.dart';
 import 'package:collection/collection.dart'; // For DeepCollectionEquality
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/size_pricing_editor.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/image_upload_field.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/multi_ingredient_selector.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/customization_group_editor.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/nutrition_editor_dialog.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/preview_menu_item_card.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_template_dropdown.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/menu_items/menu_item_utility.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/size_pricing_editor.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/image_upload_field.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/multi_ingredient_selector.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/customization_group_editor.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/nutrition_editor_dialog.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/preview_menu_item_card.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/menu_item_template_dropdown.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/menu_item_utility.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 // ===================== NEW COORDINATOR (Single Source of Truth) =====================

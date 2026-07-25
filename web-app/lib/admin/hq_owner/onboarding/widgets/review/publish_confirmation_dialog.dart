@@ -1,4 +1,4 @@
-﻿// File: lib/admin/dashboard/onboarding/widgets/review/publish_confirmation_dialog.dart
+// File: lib/admin/hq_owner/onboarding/widgets/review/publish_confirmation_dialog.dart
 
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';

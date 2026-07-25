@@ -1,4 +1,4 @@
-﻿// File: lib/admin/dashboard/onboarding/widgets/onboarding_progress_indicator.dart
+// File: lib/admin/hq_owner/onboarding/widgets/onboarding_progress_indicator.dart
 
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';

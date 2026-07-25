@@ -1,4 +1,4 @@
-﻿// lib/admin/dashboard/onboarding/widgets/ingredients/missing_type_resolution_dialog.dart
+// lib/admin/hq_owner/onboarding/widgets/ingredients/missing_type_resolution_dialog.dart
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

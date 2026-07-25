@@ -1,4 +1,4 @@
-﻿// File: lib/admin/dashboard/onboarding/screens/onboarding_review_screen.dart
+// File: lib/admin/hq_owner/onboarding/screens/onboarding_review_screen.dart
 
 import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
@@ -6,13 +6,13 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/onboarding_progress_indicator.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/onboarding_progress_indicator.dart';
 // Import future widgets here as they are implemented
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/review/review_summary_table.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/review/issue_details_expansion.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/review/onboarding_data_export_button.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/review/publish_onboarding_button.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/review/onboarding_audit_trail.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/review/review_summary_table.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/review/issue_details_expansion.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/review/onboarding_data_export_button.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/review/publish_onboarding_button.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/review/onboarding_audit_trail.dart';
 import 'package:franchise_admin_portal/core/providers/onboarding_review_provider_impl.dart';
 
 class OnboardingReviewScreen extends StatefulWidget {
