@@ -5,8 +5,7 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/onboarding_step_card.dart';
-import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.dart';
-import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
 
 class OnboardingMenuScreen extends StatefulWidget {
   const OnboardingMenuScreen({Key? key}) : super(key: key);
@@ -174,26 +173,16 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
   void _navigateToSection(BuildContext context, String sectionKey) {
     debugPrint('[OnboardingMenuScreen] Navigating to section: $sectionKey');
 
-    // Try in-place switch first (preferred)
-    final dashboardState =
-        context.findAncestorStateOfType<State<AdminDashboardScreen>>();
-    if (dashboardState != null) {
-      // Call the public method we just added
-      (dashboardState as dynamic).switchToSection(sectionKey);
-      debugPrint('[OnboardingMenuScreen] ✅ Switched via public method');
+    final hqShell =
+        context.findAncestorStateOfType<HqOnboardingShellScreenState>();
+    if (hqShell != null) {
+      hqShell.switchToSection(sectionKey);
+      debugPrint('[OnboardingMenuScreen] ✅ Switched via HQ shell');
       return;
     }
 
-    // Fallback: named route
-    final route = OnboardingNavigationUtils.resolveRoute(sectionKey, null);
-    if (route.isNotEmpty) {
-      Navigator.pushNamed(context, route).then((_) {
-        debugPrint('[OnboardingMenuScreen] Navigation to $route completed');
-      }).catchError((e) {
-        debugPrint('[OnboardingMenuScreen] Navigation error: $e');
-      });
-    } else {
-      Navigator.pushNamed(context, '/admin/dashboard');
-    }
+    debugPrint(
+      '[OnboardingMenuScreen] ⚠️ No HQ shell ancestor; section=$sectionKey',
+    );
   }
 }

@@ -5567,4 +5567,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addSize => 'Add Size';
+
+  @override
+  String get onboardingTitle => 'Franchise Onboarding';
 }

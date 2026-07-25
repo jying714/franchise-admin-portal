@@ -10413,6 +10413,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add Size'**
   String get addSize;
+
+  /// AppBar title for the HQ onboarding shell
+  ///
+  /// In en, this message translates to:
+  /// **'Franchise Onboarding'**
+  String get onboardingTitle;
 }
 
 class _AppLocalizationsDelegate

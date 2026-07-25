@@ -18,6 +18,7 @@ import 'package:franchise_admin_portal/widgets/header/help_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/screens/design_branding_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
 
 class OwnerHQDashboardScreen extends StatelessWidget {
   final String currentScreen;
@@ -397,9 +398,9 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                               onPressed: () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute<void>(
-                                    builder: (_) => const AdminDashboardScreen(
+                                    builder: (_) =>
+                                        const HqOnboardingShellScreen(
                                       initialSectionKey: 'onboardingMenu',
-                                      currentScreen: '/admin/dashboard',
                                     ),
                                   ),
                                 );

@@ -2038,10 +2038,10 @@
   "addSize": "Add Size",
   "@addSize": {
     "description": "Button label to add new size"
-  }
-
-
-
-
+  },
+  "onboardingTitle": "Franchise Onboarding",
+"@onboardingTitle": {
+  "description": "AppBar title for the HQ onboarding shell"
+}
 
   }

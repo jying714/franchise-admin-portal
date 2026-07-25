@@ -8,8 +8,7 @@ import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/onboard
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/onboarding_categories_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/foundation/template_import_dialog.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/foundation/mobile_menu_preview_card.dart';
-import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.dart';
-import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
 
 class OnboardingMenuFoundationScreen extends StatefulWidget {
   const OnboardingMenuFoundationScreen({super.key});
@@ -173,23 +172,22 @@ class _OnboardingMenuFoundationScreenState
                     progressProvider
                         .markStepComplete('onboarding_menu_foundation');
 
-                    // Safe navigation
-                    final route = OnboardingNavigationUtils.resolveRoute(
-                        'onboardingMenuItems', null);
-                    Navigator.of(context).pushReplacementNamed(route);
-
-                    // Fallback to dashboard switch
-                    final dashboardState = context
-                        .findAncestorStateOfType<State<AdminDashboardScreen>>();
-                    if (dashboardState != null) {
-                      (dashboardState as dynamic)
-                          .switchToSection('onboardingMenuItems');
+                    final hqShell = context.findAncestorStateOfType<
+                        HqOnboardingShellScreenState>();
+                    if (hqShell != null) {
+                      hqShell.switchToSection('onboardingMenuItems');
+                      return;
                     }
+
+                    debugPrint(
+                      '[OnboardingMenuFoundationScreen] ⚠️ No HQ shell; stay on foundation',
+                    );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                            'Complete minimum requirements (3 categories, 10+ ingredients)'),
+                          'Complete minimum requirements (3 categories, 10+ ingredients)',
+                        ),
                       ),
                     );
                   }
