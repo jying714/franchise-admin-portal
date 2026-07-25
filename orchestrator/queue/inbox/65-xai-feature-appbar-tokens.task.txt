@@ -1,0 +1,42 @@
+# id: xai-feature-appbar-tokens
+# agent: web_frontend
+# backend: xai
+# priority: 5
+# max_regions: 1
+# context: coding_min
+
+backend: xai
+Role: web_frontend
+max_regions: 1
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_feature_setup_screen.dart
+
+Goal: Feature Setup success-path AppBar uses DesignTokens for background/icons (HQ polish).
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+Respond ONLY with FILE / BEFORE / AFTER. Prefer multi-line BEFORE.
+
+Locate the main (non-loading, non-error) Scaffold AppBar:
+```dart
+      appBar: AppBar(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0,
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
+        title: Text(loc.featureSetupTitle),
+        actions: [
+```
+
+AFTER:
+```dart
+      appBar: AppBar(
+        backgroundColor: DesignTokens.appBarBackgroundColor,
+        elevation: DesignTokens.appBarElevation,
+        iconTheme: IconThemeData(color: DesignTokens.appBarIconColor),
+        title: Text(loc.featureSetupTitle),
+        actions: [
+```
+
+DesignTokens is already imported. Do not change `_handleSave` or `_markComplete`.
+If AppBar already uses DesignTokens.appBar* → No change needed

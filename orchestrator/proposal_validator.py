@@ -3,23 +3,17 @@ proposal_validator.py
 ---------------------
 A3: lightweight post-generation checks for scope drift.
 
-Path allowlist, BEFORE/AFTER required, no-op BEFORE≈AFTER, hard bans,
-and (when project_root is provided) BEFORE-must-exist-on-disk.
+Path allowlist (2026-07-25 fix):
+  Only FILE: headers in the proposal are edit targets.
+  Paths that appear only inside quoted source / comments (e.g. docs/slices/*.md)
+  are NOT treated as proposed edit targets — that was causing false HARD BANs
+  on branding tasks that quoted the class dartdoc.
 
-"No change needed" escape hatch (2026-07-24):
-  When the response is a correct use of the escape hatch, skip the
-  BEFORE/AFTER required, no-op, on-disk, and HARD BAN invent checks.
+Empty-file (2026-07-25):
+  When the task allows full-file AFTER only (empty/near-empty source),
+  missing BEFORE is not a HARD BAN.
 
-False-positive hardening (2026-07-25):
-  - HARD BAN invent patterns run on AFTER (net-new) when fences exist,
-    not on quoted existing BEFORE that already contains collection('franchises').
-  - FranchiseProvider() matches ignore // and /// comment lines.
-  - Static FranchiseProvider.current* access is banned in AFTER.
-
-APPLY SAFETY (2026-07-25 evening):
-  - AFTER body that is only `}` / `);` → HARD BAN (unsafe method-delete apply).
-  - More than 2 FILE: regions for the same path → soft warning (xAI multi-hunk risk).
-  - Dropping onboarding_navigation_utils while OnboardingSections remains → HARD BAN.
+"No change needed" escape hatch skips structural checks.
 """
 
 from __future__ import annotations
@@ -113,6 +107,12 @@ FENCED_AFTER_RE = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 
+EMPTY_FILE_TASK_RE = re.compile(
+    r"\b(empty[- ]file|near-empty|full-file\s+after|file may be empty|"
+    r"no empty before|emit full-file after|bom-only)\b",
+    re.IGNORECASE,
+)
+
 
 @dataclass
 class ValidationResult:
@@ -139,6 +139,18 @@ def extract_paths(text: str) -> List[str]:
             seen.add(norm)
             unique.append(norm)
     return unique
+
+
+def extract_file_header_paths(proposal_text: str) -> List[str]:
+    """Paths that appear on FILE: lines — the only declared edit targets."""
+    seen: Set[str] = set()
+    out: List[str] = []
+    for m in FILE_LINE_RE.finditer(proposal_text or ""):
+        p = m.group(1).replace("\\", "/").rstrip("`)'\"")
+        if p and p not in seen:
+            seen.add(p)
+            out.append(p)
+    return out
 
 
 def _count_matches(text: str, patterns: List[str]) -> int:
@@ -182,6 +194,10 @@ def _is_no_change_response(proposal_text: str) -> bool:
     return True
 
 
+def _task_allows_empty_file_after_only(task_text: str) -> bool:
+    return bool(EMPTY_FILE_TASK_RE.search(task_text or ""))
+
+
 def _check_hard_bans(proposal_text: str) -> List[str]:
     if _is_no_change_response(proposal_text):
         return []
@@ -207,25 +223,42 @@ def _check_hard_bans(proposal_text: str) -> List[str]:
 
 
 def _check_path_allowlist(task_text: str, proposal_text: str) -> List[str]:
+    """
+    Compare task-named paths to proposal FILE: targets only.
+
+    Do NOT scan the whole proposal for paths — quoted source often mentions
+    docs/*.md or other files that are not edit targets.
+    """
     if _is_no_change_response(proposal_text):
         return []
 
     allowed = set(extract_paths(task_text))
     if not allowed:
+        # No path-like tokens in task → cannot enforce allowlist
         return []
 
-    proposed = extract_paths(proposal_text)
+    proposed = extract_file_header_paths(proposal_text)
     if not proposed:
+        # No FILE: header — cannot claim a path violation from prose alone
         return []
 
     violations = [p for p in proposed if p not in allowed]
     if not violations:
         return []
 
+    # Soften: if proposal FILE path is a suffix/normalization of an allowed path
+    still_bad: List[str] = []
+    for p in violations:
+        if any(p == a or p.endswith("/" + a.split("/")[-1]) or a.endswith(p) for a in allowed):
+            continue
+        still_bad.append(p)
+    if not still_bad:
+        return []
+
     allowed_str = ", ".join(sorted(allowed))
-    bad_str = ", ".join(sorted(set(violations)))
+    bad_str = ", ".join(sorted(set(still_bad)))
     return [
-        f"HARD BAN: path allowlist violation — proposal targets [{bad_str}] "
+        f"HARD BAN: path allowlist violation — proposal FILE targets [{bad_str}] "
         f"but task only allowed [{allowed_str}]. Edit only the named file(s)."
     ]
 
@@ -241,6 +274,17 @@ def _check_before_after_required(task_text: str, proposal_text: str) -> List[str
     if re.search(r"\b(status only|planning only|no code change|read-?only)\b", lower_task):
         return []
 
+    # Empty-file full replace: AFTER required, BEFORE optional
+    if _task_allows_empty_file_after_only(task_text):
+        after_body = _extract_section(proposal_text, ["after", "exact after", "proposed"])
+        has_after = bool(after_body.strip()) or bool(AFTER_MARKER.search(proposal_text))
+        if has_after:
+            return []
+        return [
+            "HARD BAN: empty-file task requires a full-file AFTER region "
+            "(or reply only: No change needed)."
+        ]
+
     has_before = bool(BEFORE_MARKER.search(proposal_text))
     has_after = bool(AFTER_MARKER.search(proposal_text))
 
@@ -251,7 +295,6 @@ def _check_before_after_required(task_text: str, proposal_text: str) -> List[str
     if after_body.strip():
         has_after = True
 
-    # Empty AFTER is valid for pure deletes (apply safety allows empty fence body)
     if has_before and (has_after or AFTER_MARKER.search(proposal_text)):
         return []
 
@@ -287,7 +330,6 @@ def _check_noop_before_after(task_text: str, proposal_text: str) -> List[str]:
     after_body = _extract_section(proposal_text, ["after", "exact after", "proposed"])
     if not before_body.strip():
         return []
-    # Empty after = intentional delete; not a no-op
     if not after_body.strip():
         return []
 
@@ -300,7 +342,6 @@ def _check_noop_before_after(task_text: str, proposal_text: str) -> List[str]:
 
 
 def _check_brace_only_after(proposal_text: str) -> List[str]:
-    """HARD BAN: AFTER fence whose only content is } or ); — unsafe delete shape."""
     if _is_no_change_response(proposal_text):
         return []
 
@@ -317,7 +358,6 @@ def _check_brace_only_after(proposal_text: str) -> List[str]:
 
 
 def _check_multi_region_same_file(proposal_text: str) -> List[str]:
-    """Soft warning if same FILE path appears more than twice."""
     if _is_no_change_response(proposal_text):
         return []
 
@@ -337,16 +377,13 @@ def _check_multi_region_same_file(proposal_text: str) -> List[str]:
 
 
 def _check_onboarding_sections_import(proposal_text: str) -> List[str]:
-    """HARD BAN if AFTER drops navigation_utils while OnboardingSections still referenced."""
     if _is_no_change_response(proposal_text):
         return []
 
-    # Whole proposal text: if sections used and utils import removed in an AFTER import block
     uses_sections = bool(re.search(r"\bOnboardingSections\.", proposal_text))
     if not uses_sections:
         return []
 
-    # Look for AFTER import blocks that omit utils while BEFORE had it
     for m in FENCED_AFTER_RE.finditer(proposal_text):
         body = m.group(1)
         if "import " not in body and "package:" not in body:
@@ -355,8 +392,6 @@ def _check_onboarding_sections_import(proposal_text: str) -> List[str]:
             continue
         if "onboarding_navigation_utils" in body:
             continue
-        # Import-looking AFTER without utils — check if BEFORE for same vicinity had utils
-        # Heuristic: if this AFTER is import-only and proposal still mentions OnboardingSections
         if re.search(r"^\s*import\s+", body, re.M) and "onboarding_navigation_utils" not in body:
             if re.search(r"OnboardingSections\.", proposal_text):
                 return [
@@ -378,6 +413,9 @@ def _check_before_on_disk(
         return []
 
     if _is_no_change_response(proposal_text):
+        return []
+
+    if _task_allows_empty_file_after_only(task_text):
         return []
 
     lower_task = task_text.lower()

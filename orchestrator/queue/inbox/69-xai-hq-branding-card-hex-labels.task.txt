@@ -1,0 +1,39 @@
+# id: xai-hq-branding-card-hex-labels
+# agent: web_frontend
+# backend: xai
+# priority: 7
+# max_regions: 1
+# context: coding_min
+
+backend: xai
+Role: web_frontend
+max_regions: 1
+
+Files:
+- web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart
+
+Goal: Live Branding Preview card shows primary/secondary hex under the swatches (from FranchiseProvider instance).
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+Respond ONLY with FILE / BEFORE / AFTER. Prefer multi-line BEFORE for the Primary swatch Column.
+
+In the Live Branding Preview Card, Primary column currently ends with label Text 'Primary' only (no hex). Same for Secondary.
+
+AFTER each of those two Columns, under the existing label Text, add a monospace hex Text using the already-available `franchiseProvider` in outer build:
+- Primary: `franchiseProvider.currentPrimaryColorHex`
+- Secondary: `franchiseProvider.currentSecondaryColorHex`
+
+Example shape under Primary label:
+```dart
+                              Text(
+                                franchiseProvider.currentPrimaryColorHex,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: DesignTokens.secondaryTextColor,
+                                      fontFamily: 'monospace',
+                                    ),
+                              ),
+```
+
+Use instance `franchiseProvider` already in `OwnerHQDashboardScreen.build` — never static FranchiseProvider.current*.
+If hex labels already present under both swatches → No change needed

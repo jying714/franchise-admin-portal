@@ -1,0 +1,42 @@
+# id: xai-shell-section-error-theme
+# agent: web_frontend
+# backend: xai
+# priority: 6
+# max_regions: 1
+# context: coding_min
+
+backend: xai
+Role: web_frontend
+max_regions: 1
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart
+
+Goal: Section failure Text uses theme error color instead of hard-coded Colors.red.
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+Respond ONLY with FILE / BEFORE / AFTER. Prefer multi-line BEFORE.
+
+Locate in IndexedStack builder catch:
+```dart
+                            return Center(
+                              child: Text(
+                                'Section failed: $e',
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                            );
+```
+
+AFTER:
+```dart
+                            return Center(
+                              child: Text(
+                                'Section failed: $e',
+                                style: TextStyle(color: colorScheme.error),
+                              ),
+                            );
+```
+
+`colorScheme` is already defined in the outer `build` method of this State class.
+If the catch already uses colorScheme.error → No change needed
