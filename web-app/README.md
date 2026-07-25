@@ -6,7 +6,7 @@ Flutter Web admin dashboard for franchise owners, HQ users, platform admins, and
 
 **P2 – White-Label & Scalability: COMPLETE**  
 **P2.5 – Web-App Cleanup Sprint: COMPLETE**  
-**Phase 1 Workstream B**: Live branding path wired; HQ Live Branding card (colors + app name); dark theme verified
+**Phase 1 Workstream B**: Live branding path wired; HQ Design & Branding v1 complete (local draft + Save snackbar)
 
 ### Major Achievements
 - Critical login flow & auth handoff stabilized
@@ -17,21 +17,22 @@ Flutter Web admin dashboard for franchise owners, HQ users, platform admins, and
 - Firestore security rules refined
 - 4-step onboarding flows stabilized (currently still launched from Admin paths)
 - Web live branding: `FranchiseProvider` → `DesignTokens.setFranchiseProvider` → live primary/secondary
+- **HQ Design & Branding v1**: dashboard card CTA → dedicated screen with live preview, draft fields (name/logo/primary/secondary hex), Save snackbar only, Cancel reset — no Firestore write until v1.1
 
 ## Features
-- **Dynamic white-label branding** per franchise (HQ Live Branding preview card; full Design & Branding page still open)
+- **Dynamic white-label branding** per franchise (HQ Live Branding preview card + Design & Branding screen)
 - Menu, Category, Ingredient management with onboarding wizard
 - Orders, analytics, staff, and financial tools
 - Subscription & billing management
-- Franchise picker and role-based dashboards (HQ Owner, Admin/Staff, Developer)
+- Franchise picker and role-based dashboards (HQ Owner, Admin/Staff, Developer, Platform Owner)
 - Real-time updates via Firestore
 - Hybrid single/multi-location support with automatic UI simplification
 
 ## Onboarding placement (Decision 7)
 
 - **Target home**: HQ Owner dashboard (`OwnerHQDashboardScreen`)
-- **Current code**: onboarding screens still under `web-app/lib/admin/dashboard/onboarding/` and primarily reached from Admin
-- **Plan**: conditional Onboarding progress tile on HQ Owner → existing screens → demote Admin entry
+- **Current code**: onboarding screens still under `web-app/lib/admin/dashboard/onboarding/` and primarily reached from Admin; progress card already on HQ Owner
+- **Plan**: navigation CTA from HQ progress card → existing screens → demote Admin entry
 - See `docs/DECISIONS.md` Decision 7 and `docs/DASHBOARDS.md`
 
 ## Config Delegation
@@ -51,9 +52,9 @@ flutter run -d chrome
 ## Architecture Notes
 
 - All business logic and models come from `shared_core`
-- Design & Branding allows franchise owners to manage look & feel with live preview (franchise-scoped)
+- Design & Branding allows franchise owners to manage look & feel with live preview (franchise-scoped); v1 is local draft only
 - Role-based access, dashboard switching, and FeatureGate supported
-- Agent work must follow `AGENT_SYSTEM.md` rules with human review on architecture, config, and design changes
+- Agent work must follow `AGENT_SYSTEM.md` + `orchestrator/SCOPE_CARD.md` with human review on architecture, config, and design changes
 - Onboarding belongs on HQ Owner long-term (not Admin)
 
 ## Related Documentation
@@ -61,6 +62,7 @@ flutter run -d chrome
 - `ARCHITECTURE.md`
 - `docs/DASHBOARDS.md`
 - `docs/DECISIONS.md`
+- `docs/slices/hq-design-branding-v1.md`
 - `ROADMAP.md`
 - `STATUS.md`
 - `AGENT_SYSTEM.md` (multi-agent governance)

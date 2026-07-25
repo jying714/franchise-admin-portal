@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 24, 2026 (evening — HQ Design & Branding v1 slice locked)  
+**Last Updated**: July 24, 2026 (evening — HQ Design & Branding v1 complete)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch**: `feat/onboarding-4step`
 
@@ -42,14 +42,16 @@ Phase 0 complete (July 23, 2026).
 - [x] **July 24 inbox batch (10 + 20 tasks)** — mostly no-ops / invents / type errors (`*ColorHex` treated as Color). Confirmed failure modes: identical BEFORE/AFTER, inventing hex-as-Color, private `_fp` access, 3-file format collapse. SCOPE_CARD updated with **No change needed** escape hatch + prefer new surfaces.
 - [x] **First-class `no_change` status** (July 24 evening) — exact "No change needed" saved as `status=no_change` (success, not pending). Validator skips BEFORE/AFTER HARD BANs for the escape hatch. CLI: `/proposals no_change`.
 - [x] **`/metrics`** (July 24 evening) — lightweight training metrics over last 50 proposals (no_change %, real-diff %, quote signal %, HARD BAN %, applied/rejected/pending).
-- [x] **Escape-hatch rate ~50–56%** on mixed/already-correct batches; HARD BAN ~6% (July 24 evening training arc)
+- [x] **Escape-hatch rate ~50–56%** on mixed/already-correct batches; HARD BAN ~6–8% (July 24 evening training arc)
 - [x] **Quote sibling / edit-1** proven; **true dual-edit on dirty pairs** not proven (t8 hit already-clean surfaces)
+- [x] **SCOPE_CARD refresh (July 24 late)** — ban static `FranchiseProvider.current*` access; ban partial completion / "Next steps for human" on required wiring; ban cosmetic-only when escape hatch applies
 - [ ] **A5** (Optional) Model A/B
 - [ ] Structured unified-diff proposals (optional; fences + fuzzy match cover many small edits)
 - [ ] Optional: don’t persist empty/junk proposals
 - [ ] 3-file Stage-C still unreliable (timeouts / format collapse under full source injection) — optional training only
 - [ ] Feedback → SCOPE_CARD refresh checklist (human-gated; no auto fine-tune)
 - [ ] Quote-first still inconsistently shown in human-facing proposals (process soft fail; product edits can still be correct)
+- [ ] Deliberate 2-file dirty-pair training (next: STATUS sync + product CTA tasks)
 
 ### B. Product — Core config scoping & dynamic branding
 
@@ -80,20 +82,26 @@ Phase 0 complete (July 23, 2026).
 - [x] `setBrandingFromFranchiseDoc` from franchise doc / deep links
 - [x] Theme shell reacts via `Selector` + `UiConfig` colors
 
-**HQ live preview + Design & Branding v1 (Decision 8 — locked July 24, 2026):**
+**HQ live preview + Design & Branding v1 (Decision 8 — complete July 24, 2026):**
 
 - [x] First live branding color-swatch card on `OwnerHQDashboardScreen` (primary + secondary from `DesignTokens`, labels)
-- [x] Live app name on the same card via `DesignTokens.currentAppName` (accented with primaryColor, July 24)
-- [x] Conditional logo via `DesignTokens.currentLogoUrl` when non-null (ClipRRect + adminCardRadius, July 24)
-- [x] Swatch borders via `cardBorderColor` + caption labels via `secondaryTextColor` (July 24)
-- [x] Palette icon on card title (July 24)
+- [x] Live app name on the same card via `DesignTokens.currentAppName` (accented with primaryColor)
+- [x] Conditional logo via `DesignTokens.currentLogoUrl` when non-null (ClipRRect + adminCardRadius)
+- [x] Swatch borders via `cardBorderColor` + caption labels via `secondaryTextColor`
+- [x] Palette icon on card title
 - [x] **Slice locked**: `docs/slices/hq-design-branding-v1.md` + Decision 8
-- [ ] Card button **Open Design & Branding** → `Navigator.push` dedicated screen
-- [ ] New screen `web-app/lib/admin/hq_owner/screens/design_branding_screen.dart` (AppBar Back, franchise context)
-- [ ] Screen live preview: name, logo **Image with fallback**, swatches, hex labels
-- [ ] Screen draft fields: app name, logo URL, primary, secondary (local state only)
-- [ ] Save → SnackBar **“Save not wired yet”** (no Firestore write)
+- [x] Card button **Open Design & Branding** → `Navigator.push` dedicated screen
+- [x] New screen `web-app/lib/admin/hq_owner/screens/design_branding_screen.dart` (AppBar Back, franchise context)
+- [x] Screen live preview: name, logo **Image with fallback**, swatches, hex labels
+- [x] Screen draft fields: app name, logo URL, primary, secondary (local state only)
+- [x] Save → SnackBar **“Save not wired yet”** (no Firestore write); Cancel resets to live values
 - [ ] v1.1 (later): real write to existing `franchises/{id}` branding keys + `setBrandingFromFranchiseDoc`
+
+**Platform Owner Provider wiring (July 24 evening):**
+
+- [x] Abstract alias `FranchiseeInvitationProviderImpl` → `shared.FranchiseeInvitationProvider` on invite card
+- [x] `Provider<shared.FranchiseSubscriptionService>` registered in authenticated MultiProvider (PlatformPlansSummaryCard)
+- [x] `PlatformFinancialsProviderImpl` injects `AdminFirestoreService` (fixes UnimplementedError on platform revenue/KPIs)
 
 **Onboarding placement (Decision 7 — July 24, 2026):**
 
@@ -110,17 +118,19 @@ Phase 0 complete (July 23, 2026).
 
 **Still open (product):**
 
-- [ ] **HQ Design & Branding v1 implementation** (shell → CTA → screen) — see `docs/slices/hq-design-branding-v1.md`
+- [ ] HQ Design & Branding **v1.1** persistence write path
 - [ ] Broader franchise-scoped config beyond branding colors (features, app config loaders)
 - [ ] Onboarding navigation CTA from HQ card + Admin demotion
 - [ ] Hybrid localization (partial)
 - [ ] Optional agent dual-edit drills only on known-dirty pairs (not default volume training)
+- [ ] Color picker UI (downstream of v1.1)
 
 **Ground truth (do not regress):**
 
 - Branding model exists at `packages/shared_core/lib/src/core/config/branding_config.dart`
 - `FranchiseProvider` owns runtime branding; static config classes are defaults/fallbacks
 - Never invent `FranchiseProvider()` zero-arg or `FirestoreService.collection(...)`
+- Never use static `FranchiseProvider.current*` — instance only
 - Web live colors: `FranchiseProvider` → `DesignTokens.setFranchiseProvider` → `DesignTokens.*` getters
 - Mobile live colors: `FranchiseProvider` → `UiConfig.setFranchiseProvider` → `UiConfig.*`
 - Do not invent new fields on BrandingConfig / AppConfig / DesignTokens / FeatureConfig for scoping
@@ -158,6 +168,7 @@ Overnight: drop tasks in `orchestrator/queue/inbox/` → `python queue_runner.py
 - Stay in current phase acceptance criteria
 - Never invent fields on BrandingConfig / AppConfig / DesignTokens / FeatureConfig for scoping work
 - Never invent FirestoreService.collection or zero-arg FranchiseProvider()
+- Never static `FranchiseProvider.current*` access
 - Treat validator HARD BAN hits as reject candidates (now auto-rejected)
 - Edit only files named in the task (path allowlist)
 - If region already satisfies the request → **No change needed** (do not emit identical BEFORE/AFTER)
