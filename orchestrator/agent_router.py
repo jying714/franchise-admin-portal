@@ -8,6 +8,8 @@ When real source files are loaded, switches to minimal-context mode
 so the task + source dominate and the model stops inventing fields.
 
 A1: docstring/comment-only edits are explicitly allowed (no over-refusal).
+
+2026-07-25: Honor explicit Role: line in task text over path heuristics.
 """
 
 from __future__ import annotations
@@ -29,6 +31,15 @@ ROUTING_RULES = [
     (r"\b(review|architecture|pr|quality|docs?)\b", "reviewer"),
 ]
 
+VALID_AGENTS = {
+    "backend",
+    "web_frontend",
+    "mobile_shared",
+    "tester",
+    "reviewer",
+    "orchestrator",
+}
+
 # Intentional project-status questions only — do NOT match product words like
 # "onboarding progress", "progress tile", "progress provider".
 STATUS_TASK_PATTERNS = [
@@ -37,6 +48,11 @@ STATUS_TASK_PATTERNS = [
     r"\b(remaining|open)\b.*\b(phase|acceptance|STATUS)\b",
     r"\bphase.?\d+.?status\b",
 ]
+
+ROLE_LINE_RE = re.compile(
+    r"(?:^|\n)\s*Role\s*:\s*([\w_]+)",
+    re.IGNORECASE,
+)
 
 
 @dataclass
@@ -57,6 +73,23 @@ def is_status_task(task_text: str) -> bool:
 
 
 def detect_agent(task_text: str) -> str:
+    # Explicit Role: in the task wins over keyword heuristics
+    m = ROLE_LINE_RE.search(task_text)
+    if m:
+        role = m.group(1).strip().lower()
+        if role in VALID_AGENTS:
+            return role
+        # common aliases
+        aliases = {
+            "web": "web_frontend",
+            "frontend": "web_frontend",
+            "mobile": "mobile_shared",
+            "qa": "tester",
+            "test": "tester",
+        }
+        if role in aliases:
+            return aliases[role]
+
     if is_status_task(task_text):
         return "reviewer"
     lower = task_text.lower()
@@ -159,14 +192,20 @@ def prepare_task(
 - Do NOT add new fields, getters, methods, or change Firestore mapping.
 - Do NOT invent code that is not in the source below.
 - Do NOT change business logic unless the task explicitly requests it.
+- Do NOT use static FranchiseProvider.current* — instance only.
 
 ## HOW TO RESPOND (format is mandatory — apply will fail otherwise)
+A) If the named file(s) already satisfy the task → reply with a single line only:
+No change needed
+Do NOT emit full-class BEFORE/AFTER for verify-only tasks.
+
+B) Else:
 1. Quote the exact first 8–12 lines of the loaded file (copy from the source block).
 2. Show the change using EXACTLY these two headings and fenced blocks:
 
 ## BEFORE
 ```dart
-<paste the exact current lines you will replace>
+<paste the exact current lines you will replace — small region only>
 ```
 
 ## AFTER
@@ -175,8 +214,8 @@ def prepare_task(
 ```
 
 3. CRITICAL for apply: In BEFORE, copy indentation and line breaks from the RELEVANT SOURCE FILES block byte-for-byte. Do not reformat, do not collapse multi-line statements onto one line, do not strip leading spaces.
-4. Only include the region you change (usually the docstring or comment lines). Do not dump the whole file.
-5. Short "Next steps for human".
+4. Only include the region you change. Do not dump the whole file.
+5. Short "Next steps for human" only if something remains out of scope.
 
 Only stop if the source file is missing/blocked. Do not refuse a pure docstring or comment improvement.
 
@@ -191,7 +230,8 @@ Only stop if the source file is missing/blocked. Do not refuse a pure docstring 
 - Propose concrete, small, reviewable changes only.
 - NEVER invent file paths or code not present in context.
 - If source is missing, say so and stop.
-- Quote exact before/after using ## BEFORE / ## AFTER fenced blocks.
+- If already correct → reply only: No change needed
+- Else quote exact before/after using ## BEFORE / ## AFTER fenced blocks.
 - End with "Next steps for human".
 """
 

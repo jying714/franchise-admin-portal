@@ -15,10 +15,10 @@ Keep this short. Loaded on every coding task (especially minimal mode).
 
 ## OUT OF SCOPE (auto-reject if proposed)
 - New fields or getters on BrandingConfig, AppConfig, DesignTokens, FeatureConfig
-- FranchiseProvider() zero-arg constructor
+- FranchiseProvider() zero-arg constructor (executable code — not ban phrases inside comments)
 - ChangeNotifierProvider(create: (_) => FranchiseProvider(...)) inventing construction
 - **Static access on FranchiseProvider instance API** — never `FranchiseProvider.currentPrimaryColorHex` / `currentSecondaryColorHex` / `currentAppName` / `currentLogoUrl`; must use the local instance from `Provider.of` / `franchiseProvider`
-- FirestoreService.collection or any new Firestore query API
+- FirestoreService.collection or any **new** Firestore query API not already in the region
 - Schema changes, migrations, or any Firestore writes (including branding Save in v1)
 - Multi-file "while you're at it" expansions
 - Invented DesignTokens members:
@@ -32,6 +32,11 @@ Keep this short. Loaded on every coding task (especially minimal mode).
 - **Partial completion** — if the task requires wiring A to B (e.g. controllers + preview), both must appear in AFTER; do not leave "Next steps for human" for required work
 - Registering HQ Design & Branding in `section_registry.dart` (Admin-only)
 - Inventing branding write/save APIs or Storage upload in v1
+
+## HARD BAN SCOPE (read carefully)
+- HARD BAN applies to **net-new proposed code** (typically AFTER), not to quoting existing source that already contains `.collection('franchises')` or the words `FranchiseProvider()` in comments.
+- If the live file already satisfies the task → reply **only**: **No change needed** (do not re-emit the whole class as BEFORE/AFTER).
+- Verify-only tasks: never rewrite bootstrap branding fetch or the DesignTokens bridge.
 
 ## LIVE PATHS (do not invent alternatives)
 - WEB: FranchiseProvider → DesignTokens.setFranchiseProvider → **DesignTokens.primaryColor / secondaryColor** (Color getters)
@@ -51,6 +56,7 @@ Keep this short. Loaded on every coding task (especially minimal mode).
 - If the requested token/usage is already present → reply only: **No change needed** (do not emit identical fences)
 - If required source cannot be quoted → reply only: FAILED TO LOAD
 - For 2-file tasks: separate ## BEFORE / ## AFTER per file; No change needed allowed on the clean file
+- Verify tasks: prefer single-line **No change needed** over full-file dumps
 
 ## PATH ALLOWLIST + AUTO-REJECT
 - Only edit files the task explicitly names.

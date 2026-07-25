@@ -8,8 +8,13 @@ and (when project_root is provided) BEFORE-must-exist-on-disk.
 
 "No change needed" escape hatch (2026-07-24):
   When the response is a correct use of the escape hatch, skip the
-  BEFORE/AFTER required, no-op, and on-disk checks so it is not
-  HARD BAN'd for missing fences.
+  BEFORE/AFTER required, no-op, on-disk, and HARD BAN invent checks.
+
+False-positive hardening (2026-07-25):
+  - HARD BAN invent patterns run on AFTER (net-new) when fences exist,
+    not on quoted existing BEFORE that already contains collection('franchises').
+  - FranchiseProvider() matches ignore // and /// comment lines.
+  - Static FranchiseProvider.current* access is banned in AFTER.
 
 Invented current*Color getters (2026-07-24 afternoon):
   DesignTokens.currentPrimaryColor / currentSecondaryColor do not exist.
@@ -22,7 +27,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional, Set
+from typing import List, Optional, Set, Tuple
 
 
 FORBIDDEN_FIELD_TASK_PATTERNS = [
@@ -47,31 +52,37 @@ NEW_METHOD_PATTERNS = [
     r"\bstatic\s+\w+\s+\w+\s*\(",
 ]
 
-HARD_BAN_PATTERNS = [
-    (r"FranchiseProvider\s*\(\s*\)", "FranchiseProvider() zero-arg constructor is forbidden"),
+# (pattern, message, net_new_only)
+# net_new_only=True → only flag if match in AFTER and not in BEFORE
+HARD_BAN_PATTERNS: List[Tuple[str, str, bool]] = [
+    (r"FranchiseProvider\s*\(\s*\)", "FranchiseProvider() zero-arg constructor is forbidden", True),
     (r"ChangeNotifierProvider\s*\(\s*create:\s*\(_\)\s*=>\s*FranchiseProvider",
-     "Invented FranchiseProvider construction inside ChangeNotifierProvider is forbidden"),
-    (r"FirestoreService\.collection\b", "FirestoreService.collection is not a real API — forbidden"),
-    (r"\.collection\s*\(\s*['\"]franchises['\"]", "Do not invent franchise collection access in proposals"),
-    (r"DesignTokens\.onPrimary\b", "DesignTokens.onPrimary does not exist — invented getter"),
-    (r"DesignTokens\.onSecondary\b", "DesignTokens.onSecondary does not exist — invented getter"),
+     "Invented FranchiseProvider construction inside ChangeNotifierProvider is forbidden", True),
+    (r"FirestoreService\.collection\b", "FirestoreService.collection is not a real API — forbidden", True),
+    (r"\.collection\s*\(\s*['\"]franchises['\"]",
+     "Do not invent franchise collection access in proposals", True),
+    (r"FranchiseProvider\.(currentPrimaryColorHex|currentSecondaryColorHex|currentAppName|currentLogoUrl)\b",
+     "Static FranchiseProvider.current* access is forbidden — use instance from Provider.of / franchiseProvider", True),
+    (r"DesignTokens\.onPrimary\b", "DesignTokens.onPrimary does not exist — invented getter", True),
+    (r"DesignTokens\.onSecondary\b", "DesignTokens.onSecondary does not exist — invented getter", True),
     (r"DesignTokens\.onSurface(?:Color)?\b",
-     "DesignTokens.onSurface / onSurfaceColor does not exist — invented getter"),
+     "DesignTokens.onSurface / onSurfaceColor does not exist — invented getter", True),
     (r"DesignTokens\.on(?:Primary|Secondary|Surface|Background|Error)(?:Color)?\b",
-     "Invented DesignTokens.on* color getter — use real tokens or Theme.of(context).colorScheme"),
-    # Invented current*Color (without Hex) — real Color getters are primaryColor / secondaryColor
+     "Invented DesignTokens.on* color getter — use real tokens or Theme.of(context).colorScheme", True),
     (r"DesignTokens\.currentPrimaryColor\b",
-     "DesignTokens.currentPrimaryColor does not exist — use DesignTokens.primaryColor (Color getter)"),
+     "DesignTokens.currentPrimaryColor does not exist — use DesignTokens.primaryColor (Color getter)", True),
     (r"DesignTokens\.currentSecondaryColor\b",
-     "DesignTokens.currentSecondaryColor does not exist — use DesignTokens.secondaryColor (Color getter)"),
+     "DesignTokens.currentSecondaryColor does not exist — use DesignTokens.secondaryColor (Color getter)", True),
     (r"DesignTokens\.current(?:Primary|Secondary|Accent|Error|Warning)Color\b",
-     "Invented DesignTokens.current*Color — real Color getters are primaryColor / secondaryColor / errorColor (no current* prefix)"),
+     "Invented DesignTokens.current*Color — real Color getters are primaryColor / secondaryColor / errorColor (no current* prefix)", True),
     (r"UiConfig\.currentPrimaryColor\b",
-     "UiConfig.currentPrimaryColor does not exist — use UiConfig.primaryColor"),
+     "UiConfig.currentPrimaryColor does not exist — use UiConfig.primaryColor", True),
     (r"UiConfig\.currentSecondaryColor\b",
-     "UiConfig.currentSecondaryColor does not exist — use UiConfig.secondaryColor"),
-    (r"primaryColor:\s*Colors\.blue\b", "Hard-coded Colors.blue theme placeholder is forbidden for live branding tasks"),
-    (r"Color\(0xFF2196F3\)", "Hard-coded Material blue placeholder is forbidden for live branding tasks"),
+     "UiConfig.currentSecondaryColor does not exist — use UiConfig.secondaryColor", True),
+    (r"primaryColor:\s*Colors\.blue\b",
+     "Hard-coded Colors.blue theme placeholder is forbidden for live branding tasks", False),
+    (r"Color\(0xFF2196F3\)",
+     "Hard-coded Material blue placeholder is forbidden for live branding tasks", False),
 ]
 
 PATH_PATTERN = re.compile(
@@ -136,6 +147,22 @@ def _normalize_code(text: str) -> str:
     return t
 
 
+def _strip_dart_comments(text: str) -> str:
+    """Remove // line and /// doc comments so bans don't hit quoted warnings."""
+    out_lines: List[str] = []
+    for line in text.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith("///") or stripped.startswith("//"):
+            continue
+        # strip trailing // comment on code lines
+        if "//" in line:
+            code, _, _ = line.partition("//")
+            out_lines.append(code)
+        else:
+            out_lines.append(line)
+    return "\n".join(out_lines)
+
+
 def _is_no_change_response(proposal_text: str) -> bool:
     """True when the agent used the escape hatch (skip fence requirements)."""
     if not proposal_text:
@@ -151,14 +178,42 @@ def _is_no_change_response(proposal_text: str) -> bool:
 
 
 def _check_hard_bans(proposal_text: str) -> List[str]:
+    """HARD BAN invent checks.
+
+    - Pure No change needed → skip invent bans (quoted existing code is not a proposal).
+    - When BEFORE/AFTER fences exist, net_new_only patterns must appear in AFTER
+      and not in BEFORE (avoids banning existing collection('franchises') quotes).
+    - FranchiseProvider() checked on comment-stripped text.
+    """
+    if _is_no_change_response(proposal_text):
+        return []
+
+    before = _extract_section(proposal_text, ["before", "exact before", "current"])
+    after = _extract_section(proposal_text, ["after", "exact after", "proposed"])
+    has_fences = bool(before.strip() and after.strip())
+
+    # Prefer AFTER-only scan for invents; fall back to full text if no fences
+    target_raw = after if has_fences else proposal_text
+    baseline_raw = before if has_fences else ""
+
+    target = _strip_dart_comments(target_raw)
+    baseline = _strip_dart_comments(baseline_raw) if baseline_raw else ""
+
     hits: List[str] = []
-    for pattern, message in HARD_BAN_PATTERNS:
-        if re.search(pattern, proposal_text, re.IGNORECASE):
-            hits.append(f"HARD BAN: {message}")
+    for pattern, message, net_new_only in HARD_BAN_PATTERNS:
+        if not re.search(pattern, target, re.IGNORECASE):
+            continue
+        if net_new_only and baseline and re.search(pattern, baseline, re.IGNORECASE):
+            # Already present in BEFORE — quoting existing code, not inventing
+            continue
+        hits.append(f"HARD BAN: {message}")
     return hits
 
 
 def _check_path_allowlist(task_text: str, proposal_text: str) -> List[str]:
+    if _is_no_change_response(proposal_text):
+        return []
+
     allowed = set(extract_paths(task_text))
     if not allowed:
         return []
