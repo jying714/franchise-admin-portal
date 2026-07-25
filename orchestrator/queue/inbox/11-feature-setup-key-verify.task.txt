@@ -1,0 +1,12 @@
+Role: web_frontend
+
+File: web-app/lib/admin/hq_owner/onboarding/screens/onboarding_feature_setup_screen.dart
+
+Task: Quote first 10–12 lines. Find markStepComplete calls.
+
+Required key: onboarding_feature_setup only.
+
+If already correct → No change needed.
+If wrong key string → fix to onboarding_feature_setup only (no other logic changes).
+
+Rules: quote-first; this file only.
