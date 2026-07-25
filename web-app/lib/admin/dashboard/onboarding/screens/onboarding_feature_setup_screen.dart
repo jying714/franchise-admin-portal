@@ -6,7 +6,6 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/admin/dashboard/onboarding/widgets/feature_toggle_tile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:franchise_admin_portal/generated/app_localizations.dart';
 
 class OnboardingFeatureSetupScreen extends StatefulWidget {
   const OnboardingFeatureSetupScreen({super.key});
