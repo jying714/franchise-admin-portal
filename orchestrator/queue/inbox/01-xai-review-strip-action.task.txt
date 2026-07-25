@@ -1,0 +1,41 @@
+# id: xai-review-strip-action
+# agent: web_frontend
+# backend: xai
+# priority: 5
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/widgets/review/review_summary_table.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Product decision (locked): Onboarding Progress **summary table** shows Section, Status, Issues only.
+
+Required edits (same file):
+1. Remove the **Action** column completely (columnWidths index 3, header 'Action', row actionWidget).
+2. Remove `_buildActionWidget` and `_actionButton` entirely.
+3. Import rules (APPLY SAFETY):
+   - **KEEP** `import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.dart';`
+     because `_sectionOrder` uses `OnboardingSections.*`.
+   - You may remove only imports that become unused after Action removal
+     (e.g. ingredient_type_provider_impl, ingredient_metadata_provider_impl,
+     hq_onboarding_shell_screen) — only if no remaining reference.
+   - Do **not** remove onboarding_navigation_utils.
+
+Format constraints (mandatory):
+- Prefer **one** BEFORE/AFTER region, or at most **two**.
+- Do **not** emit 5 separate FILE blocks for the same path.
+- Method delete: AFTER fence body must be **empty** (not a lone `}`).
+- Do not change expansion panels, publish flow, or progress keys.
+- Do not reintroduce Admin onboarding paths.
+
+If Action column and action methods are already fully gone → reply only: No change needed
+
+Rules:
+1. Quote-first from real source.
+2. Edit only the named file.
+3. Proposal only — human /approve confirm.
+4. No new providers, fields, or Firestore paths.
