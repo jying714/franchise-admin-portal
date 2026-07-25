@@ -30,6 +30,7 @@ Keep this short. Loaded on every coding task (especially minimal/smart mode).
 - Reintroducing Admin onboarding host (`admin/dashboard/onboarding/**` is **deleted**)
 - Top-level `onboarding_progress/{id}` path — use `franchises/{id}/onboarding_progress/progress` only
 - Using AdminDashboardScreen.switchToSection for HQ onboarding navigation (use HqOnboardingShellScreenState)
+- **Invented** `import '.../onboarding_progress_provider.dart'` — progress type is **`shared.OnboardingProgressProvider`** (from shared_core / existing alias)
 
 ## HARD BAN SCOPE
 - HARD BAN applies to **net-new proposed code**, not quoting existing source.
@@ -50,6 +51,7 @@ Keep this short. Loaded on every coding task (especially minimal/smart mode).
 - Hex: franchiseProvider instance only
 - Onboarding host: HqOnboardingShellScreen + in-shell switchToSection
 - Progress Firestore: franchises/{franchiseId}/onboarding_progress/progress
+- Progress provider in UI: `Provider.of<shared.OnboardingProgressProvider>(context, listen: false)` — **not** a new web-app progress_provider import
 
 ## HQ DESIGN & BRANDING
 - v1 UI landed; v1.1 Save may write existing franchise branding keys when task explicitly says so
@@ -61,6 +63,7 @@ Keep this short. Loaded on every coding task (especially minimal/smart mode).
 - Step 2 product key only via foundation Save & Continue / explicit foundation complete
 - `onboardingReview` only on successful Publish (not summary-table validation)
 - Menu complete/incomplete must use key **`onboardingMenuItems`** (not `menu_items`)
+- markStepComplete / markStepIncomplete / isStepComplete via **shared.OnboardingProgressProvider** only
 
 ## QUOTE DISCIPLINE
 - Quote exact first 10–12 lines of every named file before edit
