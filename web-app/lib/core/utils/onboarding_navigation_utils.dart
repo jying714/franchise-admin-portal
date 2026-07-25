@@ -61,8 +61,8 @@ const Map<String, String> _sectionKeyMap = {
   'overview': 'onboardingMenu',
 };
 
-String _dashboardSectionRoute(String sectionKey) =>
-    '/dashboard?section=$sectionKey';
+String _hqOnboardingSectionRoute(String sectionKey) =>
+    '/hq/onboarding?section=$sectionKey';
 
 /// Container for parsed onboarding navigation context (unchanged).
 class OnboardingNavContext {
@@ -163,23 +163,24 @@ class OnboardingNavigationUtils {
         '[OnboardingNavigationUtils] resolveRoute: input="$section" → normalized="$normalized"');
 
     if (normalized.contains('feature') || normalized.contains('setup')) {
-      return _dashboardSectionRoute('onboarding_feature_setup');
+      return _hqOnboardingSectionRoute('onboarding_feature_setup');
     }
     if (normalized.contains('foundation') || normalized.contains('core menu')) {
-      return _dashboardSectionRoute('onboarding_menu_foundation');
+      return _hqOnboardingSectionRoute('onboarding_menu_foundation');
     }
     if (normalized.contains('menuitem') || normalized.contains('items')) {
-      return _dashboardSectionRoute('onboardingMenuItems');
+      return _hqOnboardingSectionRoute('onboardingMenuItems');
     }
     if (normalized.contains('review')) {
-      return _dashboardSectionRoute('onboardingReview');
+      return _hqOnboardingSectionRoute('onboardingReview');
     }
     if (normalized.contains('menu') || normalized.contains('overview')) {
-      return _dashboardSectionRoute('onboardingMenu');
+      return _hqOnboardingSectionRoute('onboardingMenu');
     }
 
-    debugPrint('[WARN] No mapping for $normalized - falling back');
-    return '/dashboard?section=$normalized';
+    debugPrint(
+        '[WARN] No mapping for $normalized - falling back to HQ overview');
+    return _hqOnboardingSectionRoute('onboardingMenu');
   }
 
   static String normalizeForRouting(String section) {

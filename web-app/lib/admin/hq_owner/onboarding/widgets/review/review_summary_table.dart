@@ -6,6 +6,7 @@ import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.da
 import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_impl.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider_impl.dart';
 import 'package:franchise_admin_portal/core/providers/onboarding_review_provider_impl.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
 
 class ReviewSummaryTable extends StatelessWidget {
   // Updated for 4-Step Onboarding
@@ -254,12 +255,14 @@ class ReviewSummaryTable extends StatelessWidget {
         return;
       }
 
+      final sectionKey =
+          Uri.tryParse(route)?.queryParameters['section'] ?? 'onboardingMenu';
+
       final args = OnboardingNavigationUtils.buildOnboardingNavArgs(
         section: normalizedSection,
         issue: issue,
       );
 
-      // 3) Pre-load prerequisites
       try {
         if (normalizedSection == 'onboardingIngredients' ||
             normalizedSection == 'onboardingIngredientTypes') {
@@ -268,7 +271,7 @@ class ReviewSummaryTable extends StatelessWidget {
 
           String fid = typeProvider.franchiseId;
           if (fid.isEmpty || fid == 'unknown') {
-            fid = ''; // No direct franchiseId in StatelessWidget
+            fid = '';
           }
 
           if (typeProvider.ingredientTypes.isEmpty) {
@@ -279,8 +282,15 @@ class ReviewSummaryTable extends StatelessWidget {
         debugPrint('[ReviewSummaryTable][ERROR] Preload failed: $e');
       }
 
-      // 4) Navigate safely
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        final hqShell =
+            context.findAncestorStateOfType<HqOnboardingShellScreenState>();
+        if (hqShell != null) {
+          hqShell.switchToSection(sectionKey);
+          debugPrint('[ReviewSummaryTable] ✅ HQ shell → $sectionKey');
+          return;
+        }
+
         Navigator.of(context).pushNamed(route, arguments: args);
       });
     }

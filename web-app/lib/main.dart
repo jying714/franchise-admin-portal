@@ -46,6 +46,7 @@ import 'package:franchise_admin_portal/admin/platform_owner/platform_owner_dashb
 import 'package:franchise_admin_portal/widgets/profile_gate_screen.dart';
 import 'package:franchise_admin_portal/widgets/auth_profile_listener.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart'; // Web-specific DesignTokens (returns Color)
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -365,6 +366,19 @@ class _FranchiseAuthenticatedRootState
               }
               // === END NEW ===
 
+              // HQ onboarding shell (must run before generic "hq" match)
+              if (name.contains('/hq/onboarding') ||
+                  name.startsWith('/hq/onboarding')) {
+                final section = uri?.queryParameters['section'] ??
+                    initialSectionKey ??
+                    'onboardingMenu';
+                return MaterialPageRoute(
+                  builder: (_) => HqOnboardingShellScreen(
+                    initialSectionKey: section,
+                    currentScreen: 'hq-owner/onboarding',
+                  ),
+                );
+              }
               if (name.contains('hq-owner') || name.contains('hq')) {
                 return MaterialPageRoute(
                     builder: (_) => const OwnerHQDashboardScreen(

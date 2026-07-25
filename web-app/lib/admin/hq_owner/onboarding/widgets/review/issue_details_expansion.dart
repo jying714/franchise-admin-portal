@@ -4,6 +4,7 @@ import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.da
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 import 'package:franchise_admin_portal/core/providers/onboarding_review_provider_impl.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
 
 /// Displays an expandable issue detail panel for each onboarding section.
 /// - Groups by severity (critical, warning, info)
@@ -383,38 +384,29 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
                         const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   ),
                   onPressed: () {
-                    // debugPrint(
-                    //     '[IssueDetailsExpansion] Attempting navigation...');
-                    // debugPrint('  Section (raw): "$section"');
-                    // debugPrint('  Issue.itemId: "${issue.itemId}"');
-                    // debugPrint('  Issue.itemLocator: "${issue.itemLocator}"');
-                    // debugPrint('  Issue.actionLabel: "${issue.actionLabel}"');
-                    // debugPrint(
-                    //     '  Issue.affectedFields: ${issue.affectedFields}');
-
-                    // âœ… Normalize section before navigation (fix)
                     final normalizedSection =
                         OnboardingNavigationUtils.normalizeForRouting(section);
-                    // debugPrint('  Normalized section: "$normalizedSection"');
-
                     final route = OnboardingNavigationUtils.resolveRoute(
                         normalizedSection, issue);
-                    debugPrint('  Resolved route: "$route"');
-
-                    if (route.isEmpty) {
-                      // debugPrint(
-                      //     '[IssueDetailsExpansion][WARN] Route is empty â€” navigation aborted.');
-                      return;
-                    }
-
-                    final args =
-                        OnboardingNavigationUtils.buildOnboardingNavArgs(
-                      section: normalizedSection,
-                      issue: issue,
-                    );
-                    // debugPrint('  Nav args: $args');
+                    final sectionKey =
+                        Uri.tryParse(route)?.queryParameters['section'] ??
+                            'onboardingMenu';
 
                     WidgetsBinding.instance.addPostFrameCallback((_) {
+                      final hqShell = context.findAncestorStateOfType<
+                          HqOnboardingShellScreenState>();
+                      if (hqShell != null) {
+                        hqShell.switchToSection(sectionKey);
+                        debugPrint(
+                            '[IssueDetailsExpansion] ✅ HQ shell → $sectionKey');
+                        return;
+                      }
+
+                      final args =
+                          OnboardingNavigationUtils.buildOnboardingNavArgs(
+                        section: normalizedSection,
+                        issue: issue,
+                      );
                       Navigator.of(context).pushNamed(route, arguments: args);
                     });
                   },
