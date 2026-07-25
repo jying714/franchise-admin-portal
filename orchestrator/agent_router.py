@@ -2,14 +2,14 @@
 agent_router.py
 ---------------
 Decides which specialized agent should handle a task and
-builds the final prompt that is sent to Ollama.
+builds the final prompt that is sent to Ollama or xAI.
 
-When real source files are loaded, switches to minimal-context mode
+When real source files are loaded, switches to minimal/smart context
 so the task + source dominate and the model stops inventing fields.
 
 A1: docstring/comment-only edits are explicitly allowed (no over-refusal).
 
-2026-07-25: Honor explicit Role: line in task text over path heuristics.
+2026-07-25: Honor explicit Role: line; backend: xai|ollama; SMART context for xAI.
 """
 
 from __future__ import annotations
@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Optional
 
+from backend_config import detect_backend, load_backends_config
 from context_loader import build_system_prompt, load_mandatory_context
 from file_reader import load_mentioned_files
 
@@ -40,8 +41,6 @@ VALID_AGENTS = {
     "orchestrator",
 }
 
-# Intentional project-status questions only — do NOT match product words like
-# "onboarding progress", "progress tile", "progress provider".
 STATUS_TASK_PATTERNS = [
     r"\b(status\.?md|project status|phase status|what.?is.?left|acceptance.?criteria)\b",
     r"\b(summarize|summary)\b.*\b(phase|status|progress|remaining)\b",
@@ -65,6 +64,7 @@ class TaskResult:
     reason: str
     num_ctx: int = 8192
     temperature: float = 0.15
+    backend: str = "ollama"  # ollama | xai
 
 
 def is_status_task(task_text: str) -> bool:
@@ -73,13 +73,11 @@ def is_status_task(task_text: str) -> bool:
 
 
 def detect_agent(task_text: str) -> str:
-    # Explicit Role: in the task wins over keyword heuristics
     m = ROLE_LINE_RE.search(task_text)
     if m:
         role = m.group(1).strip().lower()
         if role in VALID_AGENTS:
             return role
-        # common aliases
         aliases = {
             "web": "web_frontend",
             "frontend": "web_frontend",
@@ -126,6 +124,9 @@ def prepare_task(
     preferred_agent: Optional[str] = None,
     model_map: Optional[Dict[str, str]] = None,
 ) -> TaskResult:
+    cfg = load_backends_config(project_root)
+    backend = detect_backend(task_text, cfg)
+
     mandatory = load_mandatory_context(project_root)
 
     status = is_status_task(task_text)
@@ -134,15 +135,27 @@ def prepare_task(
     source_block = load_mentioned_files(project_root, task_text)
     has_source = bool(source_block)
 
-    # Coding/source tasks always get minimal context + source injection.
-    # Status-only prompts are used only when there is no source to ground on.
     use_status_prompt = status and not has_source
+
+    # xAI product coding: SMART (SCOPE_CARD + short STATUS + hard rules)
+    # Ollama source: MINIMAL (same shape historically)
+    # Status-only / no source: FULL
+    if use_status_prompt:
+        context_mode = "full"
+    elif has_source and backend == "xai":
+        context_mode = "smart"
+    elif has_source:
+        context_mode = "minimal"
+    else:
+        context_mode = "full"
 
     system = build_system_prompt(
         project_root,
         agent,
         mandatory,
-        minimal=has_source and not use_status_prompt,
+        minimal=(context_mode == "minimal"),
+        smart=(context_mode == "smart"),
+        backend=backend,
     )
 
     requires_approval, reason = needs_human_approval(task_text, agent)
@@ -156,11 +169,19 @@ def prepare_task(
         "reviewer": "qwen2.5-coder:7b",
     }
     models = model_map or default_models
+    ollama_cfg = (cfg.get("ollama") or {}).get("models") or {}
+    for k, v in ollama_cfg.items():
+        models[k] = v
 
     num_ctx = 8192
     temperature = 0.05 if has_source else 0.15
 
-    if use_status_prompt:
+    if backend == "xai":
+        xai_cfg = cfg.get("xai") or {}
+        model = str(xai_cfg.get("model") or "grok-4.5")
+        temperature = float(xai_cfg.get("temperature", 0.1))
+        num_ctx = 0  # not used by xAI client
+    elif use_status_prompt:
         model = "qwen2.5-coder:14b"
     else:
         model = models.get(agent, "qwen2.5-coder:14b")
@@ -178,21 +199,25 @@ def prepare_task(
 - End with "Next steps for human".
 """
     elif has_source:
-        # A1: allow docstring/comment edits; forbid field invention; no over-refusal
-        # Strict BEFORE/AFTER fences are required so /approve confirm can apply locally.
         user_prompt = f"""## TASK
 {task_text}
+
+## BACKEND
+{backend} (proposal only — human applies via /approve confirm; never auto-push)
 
 ## WHAT IS ALLOWED
 - Class-level docstrings (/// ...) above an existing class — SAFE. Propose them when asked.
 - Improving an existing comment — SAFE when asked.
 - Documentation-only changes must be proposed with exact before/after from the real source.
+- Surgical product fixes on named files only.
 
 ## WHAT IS FORBIDDEN
-- Do NOT add new fields, getters, methods, or change Firestore mapping.
+- Do NOT add new fields, getters, methods, or change Firestore mapping unless the task explicitly requires it.
 - Do NOT invent code that is not in the source below.
 - Do NOT change business logic unless the task explicitly requests it.
 - Do NOT use static FranchiseProvider.current* — instance only.
+- Do NOT reintroduce Admin onboarding paths (admin/dashboard/onboarding is deleted).
+- Do NOT use top-level onboarding_progress/{{id}} — progress lives under franchises/{{id}}/onboarding_progress/progress.
 
 ## HOW TO RESPOND (format is mandatory — apply will fail otherwise)
 A) If the named file(s) already satisfy the task → reply with a single line only:
@@ -201,7 +226,9 @@ Do NOT emit full-class BEFORE/AFTER for verify-only tasks.
 
 B) Else:
 1. Quote the exact first 8–12 lines of the loaded file (copy from the source block).
-2. Show the change using EXACTLY these two headings and fenced blocks:
+2. Show the change using EXACTLY these two headings and fenced blocks (repeat per file for multi-file):
+
+FILE: path/to/file.dart
 
 ## BEFORE
 ```dart
@@ -213,7 +240,7 @@ B) Else:
 <paste the exact new lines for that same region only>
 ```
 
-3. CRITICAL for apply: In BEFORE, copy indentation and line breaks from the RELEVANT SOURCE FILES block byte-for-byte. Do not reformat, do not collapse multi-line statements onto one line, do not strip leading spaces.
+3. CRITICAL for apply: In BEFORE, copy indentation and line breaks from the RELEVANT SOURCE FILES block byte-for-byte.
 4. Only include the region you change. Do not dump the whole file.
 5. Short "Next steps for human" only if something remains out of scope.
 
@@ -244,4 +271,5 @@ Only stop if the source file is missing/blocked. Do not refuse a pure docstring 
         reason=reason,
         num_ctx=num_ctx,
         temperature=temperature,
+        backend=backend,
     )
