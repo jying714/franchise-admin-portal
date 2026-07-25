@@ -5,18 +5,11 @@ queue_runner.py
 Drain orchestrator/queue/inbox sequentially (overnight-safe).
 
 Behavior:
-  - Pick oldest *.task.txt (or any non-hidden file) in inbox/
-  - Parse optional headers: # id: # agent: # priority:
-  - Call the same run_task path as interactive CLI
-  - Move file to done/ with a .meta.json sidecar (proposal_id, ok/fail)
+  - Pick oldest *.task.txt only (skip README.md and other non-task files)
+  - Parse optional headers: # id: # agent: # priority: # backend:
+  - Call the same run_task path as interactive CLI (ollama or xai)
+  - Move file to done/ with a .meta.json sidecar
   - NEVER apply, NEVER git push, NEVER Firestore
-  - On timeout/crash: mark failed, continue
-  - Sleep between tasks (default 15s)
-
-Usage:
-  python queue_runner.py --drain
-  python queue_runner.py --once
-  python queue_runner.py --status
 """
 
 from __future__ import annotations
@@ -29,7 +22,6 @@ import os
 import re
 import shutil
 import sys
-import time
 import traceback
 from datetime import datetime, timezone
 from pathlib import Path
@@ -37,13 +29,13 @@ from typing import Optional, Tuple
 
 from rich.console import Console
 
-# Allow running as `python queue_runner.py` from /app/orchestrator or /app
 _HERE = Path(__file__).resolve().parent
 if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
 
 from ollama_client import OllamaClient  # noqa: E402
-from main import MODEL_MAP, PROJECT_ROOT, run_task  # noqa: E402
+from xai_client import XaiClient  # noqa: E402
+from main import PROJECT_ROOT, run_task  # noqa: E402
 
 console = Console()
 logger = logging.getLogger("orchestrator.queue")
@@ -64,11 +56,14 @@ def _ensure_dirs() -> None:
 
 
 def _list_inbox() -> list[Path]:
-    """Oldest first. Skip hidden and .gitkeep."""
+    """Oldest first. Only *.task.txt — never README or random md."""
     files = [
         p
         for p in INBOX.iterdir()
-        if p.is_file() and not p.name.startswith(".") and p.name != ".gitkeep"
+        if p.is_file()
+        and not p.name.startswith(".")
+        and p.name != ".gitkeep"
+        and p.name.endswith(".task.txt")
     ]
     return sorted(files, key=lambda p: p.stat().st_mtime)
 
@@ -76,15 +71,18 @@ def _list_inbox() -> list[Path]:
 def parse_task_file(path: Path) -> Tuple[str, Optional[str], int, str]:
     """
     Returns (task_body, preferred_agent, priority, task_id_slug).
-    Headers (optional, lines starting with # key: value at top):
+    Headers (optional):
       # id: my-slug
       # agent: backend
       # priority: 10
+      # backend: xai
+    Body may also contain `backend: xai` for agent_router.
     """
     text = path.read_text(encoding="utf-8")
     agent: Optional[str] = None
     priority = 100
     slug = path.stem
+    backend_header: Optional[str] = None
     body_lines: list[str] = []
     header_mode = True
 
@@ -102,6 +100,8 @@ def parse_task_file(path: Path) -> Tuple[str, Optional[str], int, str]:
                         pass
                 elif key == "id":
                     slug = val
+                elif key == "backend":
+                    backend_header = val.lower()
                 continue
             if line.strip() == "" or line.startswith("#"):
                 continue
@@ -113,6 +113,9 @@ def parse_task_file(path: Path) -> Tuple[str, Optional[str], int, str]:
     body = "\n".join(body_lines).strip()
     if not body:
         body = text.strip()
+    # Inject backend into body if only in # header and not already in body
+    if backend_header and not re.search(r"(?i)\bbackend\s*:\s*(xai|ollama)\b", body):
+        body = f"backend: {backend_header}\n\n{body}"
     return body, agent, priority, slug
 
 
@@ -140,7 +143,12 @@ def _write_meta(done_path: Path, meta: dict) -> None:
     meta_path.write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
 
-async def _run_one(client: OllamaClient, path: Path) -> bool:
+async def _run_one(
+    path: Path,
+    *,
+    ollama: OllamaClient,
+    xai: XaiClient,
+) -> bool:
     body, agent, priority, slug = parse_task_file(path)
     console.rule(f"[bold]Queue task: {path.name}")
     console.print(f"[dim]slug={slug} agent={agent or '(auto)'} priority={priority}[/dim]")
@@ -156,7 +164,14 @@ async def _run_one(client: OllamaClient, path: Path) -> bool:
     ok = False
     detail = ""
     try:
-        prop = await run_task(client, body, preferred_agent=agent, return_proposal=True)
+        prop = await run_task(
+            ollama,
+            body,
+            preferred_agent=agent,
+            return_proposal=True,
+            ollama=ollama,
+            xai=xai,
+        )
         if prop is not None:
             proposal_id = prop.id
             ok = True
@@ -175,7 +190,6 @@ async def _run_one(client: OllamaClient, path: Path) -> bool:
     try:
         shutil.move(str(running_path), str(done_path))
     except Exception:
-        # leave in running if move fails
         done_path = running_path
 
     _write_meta(
@@ -198,46 +212,63 @@ async def _run_one(client: OllamaClient, path: Path) -> bool:
     return ok
 
 
-async def drain(*, once: bool = False, sleep_sec: int = DEFAULT_SLEEP_SEC) -> None:
+async def drain(
+    *,
+    once: bool = False,
+    sleep_sec: int = DEFAULT_SLEEP_SEC,
+    ollama: Optional[OllamaClient] = None,
+    xai: Optional[XaiClient] = None,
+) -> None:
     _ensure_dirs()
-    client = OllamaClient(os.getenv("OLLAMA_HOST", "http://ollama:11434"))
+    own_ollama = ollama is None
+    own_xai = xai is None
+    if ollama is None:
+        ollama = OllamaClient(os.getenv("OLLAMA_HOST", "http://ollama:11434"))
+    if xai is None:
+        xai = XaiClient()
+
     try:
-        models = await client.list_models()
-        console.print(f"[green]Ollama OK — {len(models)} models[/green]")
-    except Exception as e:
-        console.print(f"[bold red]Cannot reach Ollama: {e}[/bold red]")
-        await client.close()
-        return
+        try:
+            models = await ollama.list_models()
+            console.print(f"[green]Ollama OK — {len(models)} models[/green]")
+        except Exception as e:
+            console.print(f"[yellow]Ollama unreachable: {e}[/yellow]")
+        if xai.configured:
+            console.print("[green]xAI key present[/green]")
+        else:
+            console.print("[dim]XAI_API_KEY not set — backend: xai tasks will fail[/dim]")
 
-    processed = 0
-    while True:
-        inbox = _list_inbox()
-        if not inbox:
-            if processed == 0:
-                console.print("[dim]Inbox empty.[/dim]")
-            else:
-                console.print(f"[green]Inbox drained ({processed} task(s)).[/green]")
-            break
+        processed = 0
+        while True:
+            inbox = _list_inbox()
+            if not inbox:
+                if processed == 0:
+                    console.print("[dim]Inbox empty (only *.task.txt are processed).[/dim]")
+                else:
+                    console.print(f"[green]Inbox drained ({processed} task(s)).[/green]")
+                break
 
-        # Priority: lower number first, then oldest mtime (already sorted by mtime)
-        def sort_key(p: Path):
-            try:
-                _, _, pri, _ = parse_task_file(p)
-            except Exception:
-                pri = 100
-            return (pri, p.stat().st_mtime)
+            def sort_key(p: Path):
+                try:
+                    _, _, pri, _ = parse_task_file(p)
+                except Exception:
+                    pri = 100
+                return (pri, p.stat().st_mtime)
 
-        inbox = sorted(inbox, key=sort_key)
-        await _run_one(client, inbox[0])
-        processed += 1
+            inbox = sorted(inbox, key=sort_key)
+            await _run_one(inbox[0], ollama=ollama, xai=xai)
+            processed += 1
 
-        if once:
-            break
-        if sleep_sec > 0 and _list_inbox():
-            console.print(f"[dim]Sleeping {sleep_sec}s before next task…[/dim]")
-            await asyncio.sleep(sleep_sec)
-
-    await client.close()
+            if once:
+                break
+            if sleep_sec > 0 and _list_inbox():
+                console.print(f"[dim]Sleeping {sleep_sec}s before next task…[/dim]")
+                await asyncio.sleep(sleep_sec)
+    finally:
+        if own_ollama:
+            await ollama.close()
+        if own_xai:
+            await xai.close()
 
 
 def status() -> None:
@@ -245,7 +276,7 @@ def status() -> None:
     inbox = _list_inbox()
     running = [p for p in RUNNING.iterdir() if p.is_file() and p.name != ".gitkeep"]
     done = [p for p in DONE.iterdir() if p.is_file() and p.suffix != ".json" and p.name != ".gitkeep"]
-    console.print(f"inbox   : {len(inbox)}")
+    console.print(f"inbox   : {len(inbox)} (*.task.txt only)")
     for p in inbox[:10]:
         console.print(f"  • {p.name}")
     console.print(f"running : {len(running)}")
