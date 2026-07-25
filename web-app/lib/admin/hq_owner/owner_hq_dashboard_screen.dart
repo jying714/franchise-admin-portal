@@ -406,11 +406,20 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                             alignment: Alignment.centerLeft,
                             child: FilledButton.icon(
                               onPressed: () {
+                                final String initialKey = !step1
+                                    ? 'onboarding_feature_setup'
+                                    : !step2
+                                        ? 'onboarding_menu_foundation'
+                                        : !step3
+                                            ? 'onboardingMenuItems'
+                                            : !step4
+                                                ? 'onboardingReview'
+                                                : 'onboardingMenu';
                                 Navigator.of(context).push(
                                   MaterialPageRoute<void>(
                                     builder: (_) =>
-                                        const HqOnboardingShellScreen(
-                                      initialSectionKey: 'onboardingMenu',
+                                        HqOnboardingShellScreen(
+                                      initialSectionKey: initialKey,
                                     ),
                                   ),
                                 );

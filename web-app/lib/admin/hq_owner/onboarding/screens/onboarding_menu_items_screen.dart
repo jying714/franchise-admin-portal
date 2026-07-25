@@ -670,7 +670,29 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                             children: [
                               ElevatedButton(
                                   onPressed: () async {
-                                    /* your exact persistChanges code */
+                                    final menuProvider =
+                                        Provider.of<shared.MenuItemProvider>(
+                                            context,
+                                            listen: false);
+                                    try {
+                                      await menuProvider.persistChanges();
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text('Changes saved')),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                              content:
+                                                  Text('Save failed: $e')),
+                                        );
+                                      }
+                                    }
                                   },
                                   child: Text(loc.saveChanges)),
                               const SizedBox(width: 12),
@@ -738,7 +760,64 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                       },
                                       onEdit: () => openEditor(item),
                                       onDelete: () async {
-                                        /* your exact delete dialog unchanged */
+                                        final confirmed = await showDialog<bool>(
+                                          context: context,
+                                          builder: (dialogContext) => AlertDialog(
+                                            title: const Text('Delete menu item?'),
+                                            content: Text(
+                                              'Are you sure you want to delete "${item.name}"?',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.of(
+                                                        dialogContext)
+                                                    .pop(false),
+                                                child: const Text('Cancel'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () => Navigator.of(
+                                                        dialogContext)
+                                                    .pop(true),
+                                                child: const Text('Delete'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirmed != true) return;
+                                        final menuProvider =
+                                            Provider.of<shared.MenuItemProvider>(
+                                          context,
+                                          listen: false,
+                                        );
+                                        try {
+                                          menuProvider.removeMenuItem(item.id);
+                                          await menuProvider.persistChanges();
+                                          if (!mounted) return;
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text('✅ Item deleted'),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
+                                        } catch (e, stack) {
+                                          shared.ErrorLogger.log(
+                                            message: 'delete_menu_item_failed',
+                                            stack: stack.toString(),
+                                            source:
+                                                'onboarding_menu_items_screen',
+                                            severity: 'error',
+                                          );
+                                          if (!mounted) return;
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                  '❌ Delete failed: $e'),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                        }
                                       },
                                     ),
                                 ],
