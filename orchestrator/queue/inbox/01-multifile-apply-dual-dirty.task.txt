@@ -1,0 +1,30 @@
+Role: web_frontend
+Mode: multi-file apply proof (primary)
+
+Files (exactly two):
+- web-app/lib/admin/dashboard/onboarding/screens/onboarding_feature_setup_screen.dart
+- web-app/lib/admin/dashboard/onboarding/widgets/onboarding_step_card.dart
+
+Task: Both files need a real one-line cleanup. This is a dual-file apply smoke test after multi-file proposal_store support.
+
+1) onboarding_feature_setup_screen.dart — remove the **duplicate** import of app_localizations.dart (keep a single import).
+2) onboarding_step_card.dart — delete the single line containing AGENT_STRESS_REMOVE. Do not change widget logic.
+
+Response format (mandatory for multi-file apply):
+FILE: web-app/lib/admin/dashboard/onboarding/screens/onboarding_feature_setup_screen.dart
+## BEFORE
+(small region with duplicate import)
+## AFTER
+(same region without duplicate)
+
+FILE: web-app/lib/admin/dashboard/onboarding/widgets/onboarding_step_card.dart
+## BEFORE
+(small region with AGENT_STRESS_REMOVE line)
+## AFTER
+(same region without that line)
+
+Rules:
+1. Quote first 10–12 lines of EACH file.
+2. Edit only these two files.
+3. Both changes required — no partial completion.
+4. No new fields, no Firestore changes.
