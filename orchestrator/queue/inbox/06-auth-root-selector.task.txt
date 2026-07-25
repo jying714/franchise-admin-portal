@@ -1,0 +1,12 @@
+Role: web_frontend
+
+File: web-app/lib/main.dart
+
+Task: In FranchiseAuthenticatedRoot, verify shell uses Selector (or equivalent) keyed on user id|roles so MaterialApp is not rebuilt on every AdminUserProvider notify. If already present, reply only: No change needed.
+
+Rules:
+1. Quote first 10–12 lines of main.dart AND the FranchiseAuthenticatedRoot build region.
+2. Do not change provider registration lists.
+3. No new FranchiseProvider() zero-arg.
+4. If already satisfies → No change needed.
+5. Edit only this file.

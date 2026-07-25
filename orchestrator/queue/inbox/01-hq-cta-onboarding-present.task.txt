@@ -1,0 +1,13 @@
+Role: web_frontend
+
+File: web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart
+
+Task: Verify the Onboarding Progress card has a Continue onboarding control that navigates to AdminDashboardScreen with initialSectionKey 'onboardingMenu'. If already present and correct, reply only: No change needed.
+
+Rules:
+1. Quote exact first 10–12 lines of the named file.
+2. Instance getters only; never FranchiseProvider.current* static.
+3. If region already satisfies → No change needed.
+4. Do not leave required wiring as Next steps for human.
+5. Edit only files named in this task.
+6. No new fields; no Firestore; no section_registry.

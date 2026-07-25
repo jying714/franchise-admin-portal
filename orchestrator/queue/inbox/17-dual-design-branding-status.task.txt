@@ -1,0 +1,16 @@
+Role: web_frontend
+
+Files (exactly two):
+- web-app/lib/admin/hq_owner/screens/design_branding_screen.dart
+- docs/slices/hq-design-branding-v1.md
+
+Task: Two-file discipline.
+1) design_branding_screen.dart — if Save snackbar and draft fields already present, No change needed.
+2) hq-design-branding-v1.md — if acceptance checklist already all [x], No change needed. Do not invent new slice scope.
+
+Separate BEFORE/AFTER or No change needed per file.
+
+Rules:
+1. Quote first 10–12 lines of EACH file.
+2. Edit only these two files.
+3. No Firestore v1.1 invents.

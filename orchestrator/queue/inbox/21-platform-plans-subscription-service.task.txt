@@ -1,0 +1,11 @@
+Role: web_frontend
+
+File: web-app/lib/admin/platform_owner/sections/platform_plans_summary_card.dart
+
+Task: Verify card reads Provider.of shared.FranchiseSubscriptionService (not inventing a new service type). If already correct, reply only: No change needed.
+
+Rules:
+1. Quote first 10–12 lines.
+2. No new service classes.
+3. If already satisfies → No change needed.
+4. Edit only this file.

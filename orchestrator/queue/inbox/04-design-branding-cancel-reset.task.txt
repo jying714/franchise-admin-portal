@@ -1,0 +1,11 @@
+Role: web_frontend
+
+File: web-app/lib/admin/hq_owner/screens/design_branding_screen.dart
+
+Task: Verify Cancel/reset restores draft controllers from live DesignTokens.currentAppName, DesignTokens.currentLogoUrl, and franchiseProvider instance currentPrimaryColorHex / currentSecondaryColorHex. If already correct, reply only: No change needed.
+
+Rules:
+1. Quote first 10–12 lines.
+2. Never FranchiseProvider.current* as static.
+3. If already satisfies → No change needed.
+4. Edit only this file.

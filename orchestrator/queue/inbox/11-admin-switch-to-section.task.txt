@@ -1,0 +1,11 @@
+Role: web_frontend
+
+File: web-app/lib/admin/dashboard/admin_dashboard_screen.dart
+
+Task: Verify public switchToSection(String sectionKey) exists and updates _selectedIndex when key is found. If already present, reply only: No change needed.
+
+Rules:
+1. Quote first 10–12 lines.
+2. No schema/Firestore changes.
+3. If already satisfies → No change needed.
+4. Edit only this file.

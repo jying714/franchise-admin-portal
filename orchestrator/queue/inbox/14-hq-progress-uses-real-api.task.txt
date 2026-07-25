@@ -1,0 +1,11 @@
+Role: web_frontend
+
+File: web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart
+
+Task: Verify Onboarding Progress card uses only existing OnboardingProgressProvider API: loading, getFoundationProgress(), isStepComplete for ingredientTypes, ingredients, categories. No invented isOnboardingComplete. If already correct, reply only: No change needed.
+
+Rules:
+1. Quote first 10–12 lines.
+2. No new provider methods.
+3. If already satisfies → No change needed.
+4. Edit only this file.

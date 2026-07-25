@@ -1,0 +1,11 @@
+Role: backend
+
+File: packages/shared_core/lib/src/core/providers/onboarding_progress_provider.dart
+
+Task: Verify abstract OnboardingProgressProvider exposes stepStatus, loading, isStepComplete, markStepComplete, markStepIncomplete, getFoundationProgress. If interface is complete, reply only: No change needed. Do not add methods.
+
+Rules:
+1. Quote entire short file or first 12 lines.
+2. No new methods or fields.
+3. If already satisfies → No change needed.
+4. Edit only this file.

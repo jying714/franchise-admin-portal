@@ -1,0 +1,12 @@
+Role: web_frontend
+
+File: web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart
+
+Task: Verify Live Branding card has Open Design & Branding FilledButton that Navigator.push MaterialPageRoute to DesignBrandingScreen. If already correct, reply only: No change needed.
+
+Rules:
+1. Quote exact first 10–12 lines.
+2. No new DesignTokens members.
+3. If already satisfies → No change needed.
+4. Edit only this file.
+5. No section_registry.

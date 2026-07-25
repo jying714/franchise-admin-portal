@@ -1,0 +1,10 @@
+Role: reviewer
+
+File: orchestrator/SCOPE_CARD.md
+
+Task: Confirm FranchiseProvider() zero-arg is listed under OUT OF SCOPE / auto-reject. If present, reply only: No change needed.
+
+Rules:
+1. Quote first 10–12 lines.
+2. If already satisfies → No change needed.
+3. Edit only this file.

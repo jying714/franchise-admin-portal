@@ -1,0 +1,11 @@
+Role: web_frontend
+
+File: web-app/lib/core/utils/onboarding_navigation_utils.dart
+
+Task: Verify resolveRoute maps foundation/features/menu items/review/overview to /dashboard?section= with correct registry keys. If already correct, reply only: No change needed.
+
+Rules:
+1. Quote first 10–12 lines.
+2. Do not invent new keys outside existing map.
+3. If already satisfies → No change needed.
+4. Edit only this file.

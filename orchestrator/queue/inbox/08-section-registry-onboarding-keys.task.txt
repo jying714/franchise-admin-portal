@@ -1,0 +1,11 @@
+Role: web_frontend
+
+File: web-app/lib/core/section_registry.dart
+
+Task: Verify onboarding sections include keys onboardingMenu, onboarding_feature_setup, onboarding_menu_foundation, onboardingMenuItems, onboardingReview with builders pointing at existing screens. If already correct, reply only: No change needed. Do not add HQ registry entries.
+
+Rules:
+1. Quote first 10–12 lines.
+2. No new DashboardSection for HQ Design & Branding.
+3. If already satisfies → No change needed.
+4. Edit only this file.
