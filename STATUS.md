@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 24, 2026 (late evening — HQ onboarding Phase 1 entry + Admin shell stability)  
+**Last Updated**: July 25, 2026 (HQ onboarding sole host; progress path + Feature Setup → card verified)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch**: `feat/onboarding-4step`
 
@@ -16,152 +16,99 @@ Phase 0 complete (July 23, 2026).
 
 ### A. Agent hardening
 
-- [x] **A1** Soften over-refusal on docstring/comment-only edits
-- [x] **A4** Human-merged class docstring on `user.dart`
-- [x] **A3** Proposal validator (field/method drift warnings)
-- [x] **Approve-to-apply skeleton** + `/approve <id>` / `/approve confirm <id>`
-- [x] **A2** Preferred coding-task prompt style documented (`AGENT_SYSTEM.md` + `orchestrator/README.md`)
-- [x] End-to-end proof: address.dart docstring proposed → reviewed by id → local apply succeeded
-- [x] **Multi-line task input** — paste full task, finish with `END` on its own line (`orchestrator/main.py`)
-- [x] **Ollama client timeout** raised to 600s + fallback to 7b on ReadTimeout/HTTP 500
-- [x] **Minimal context mode** for source-file tasks — short STATUS excerpt + hard rules only (`context_loader.py`)
-- [x] **Strict `## BEFORE` / `## AFTER` fenced blocks** required in coding prompts (`agent_router.py`)
-- [x] **Proposal parser hardened** for BEFORE/AFTER extraction (`proposal_store.py`)
-- [x] **Apply-path verified end-to-end** — propose → parse → `/approve confirm` → local file write succeeded
-- [x] **Fuzzy BEFORE match** for local apply when model reformats whitespace/line breaks (`proposal_store.py`)
-- [x] **SCOPE_CARD.md** — short always-on IN/OUT constraints for Phase 1 Workstream B (`orchestrator/SCOPE_CARD.md`)
-- [x] **SCOPE_CARD injected** in minimal + full context (`context_loader.py`)
-- [x] **Hard ban list** in proposal validator — FranchiseProvider() zero-arg, FirestoreService.collection, invented DesignTokens getters (incl. onPrimary/onSecondary/onSurface*), hard-coded blue placeholders (`proposal_validator.py`)
-- [x] **2-file Stage-C** quote discipline + **product edits** proven on Owner HQ path (onboarding card + live branding polish stack, July 24)
-- [x] **agent_router fix** — source files always injected when paths load; bare "progress" no longer forces status-only prompt (July 24)
-- [x] **Overnight queue skeleton** — `queue/inbox|running|done`, `queue_runner.py`, `/queue status|run`, feedback JSONL on reject/apply (July 24)
-- [x] **Path allowlist** — proposals may only target files named in the task; violations are HARD BAN (`proposal_validator.py`, July 24)
-- [x] **Auto-reject** — when validator `ok=False` (HARD BAN / path allowlist), proposal saved as `rejected`, feedback `auto_reject`, `/approve confirm` refused (`main.py`, July 24)
-- [x] **Stage A volume** — ~8–10 clean 2-file product applies + 2 useful rejects in one session (July 24); diminishing returns on further micro-polish of the same cards
-- [x] **`/proposals pending|rejected|applied|full`** — status filter + full dump of pending (July 24)
-- [x] **July 24 inbox batch (10 + 20 tasks)** — mostly no-ops / invents / type errors (`*ColorHex` treated as Color). Confirmed failure modes: identical BEFORE/AFTER, inventing hex-as-Color, private `_fp` access, 3-file format collapse. SCOPE_CARD updated with **No change needed** escape hatch + prefer new surfaces.
-- [x] **First-class `no_change` status** (July 24 evening) — exact "No change needed" saved as `status=no_change` (success, not pending). Validator skips BEFORE/AFTER HARD BANs for the escape hatch. CLI: `/proposals no_change`.
-- [x] **`/metrics`** (July 24 evening) — lightweight training metrics over last 50 proposals (no_change %, real-diff %, quote signal %, HARD BAN %, applied/rejected/pending).
-- [x] **Escape-hatch rate ~50–56%** on mixed/already-correct batches; HARD BAN ~6–8% (July 24 evening training arc)
-- [x] **Quote sibling / edit-1** proven; **true dual-edit on dirty pairs** not proven (t8 hit already-clean surfaces)
-- [x] **SCOPE_CARD refresh (July 24 late)** — ban static `FranchiseProvider.current*` access; ban partial completion / "Next steps for human" on required wiring; ban cosmetic-only when escape hatch applies
-- [ ] **A5** (Optional) Model A/B
-- [ ] Structured unified-diff proposals (optional; fences + fuzzy match cover many small edits)
-- [ ] Optional: don’t persist empty/junk proposals
-- [ ] 3-file Stage-C still unreliable (timeouts / format collapse under full source injection) — optional training only
-- [ ] Feedback → SCOPE_CARD refresh checklist (human-gated; no auto fine-tune)
-- [ ] Quote-first still inconsistently shown in human-facing proposals (process soft fail; product edits can still be correct)
-- [ ] Deliberate 2-file dirty-pair training (next: product tasks only on known-dirty pairs)
+- [x] Soften over-refusal, validator, SCOPE_CARD, hard bans, path allowlist, auto-reject, `no_change`, `/metrics`
+- [x] 2-file surgical reliable; dual-edit on dirty pairs improved
+- [x] **Multi-file parse/apply** in `proposal_store.py` + main.py messaging (July 25) — FILE: path + BEFORE/AFTER pairs; apply smoke proven
+- [x] Validator: net-new checks AFTER bans; skip HARD BAN on pure no_change; Role: line routing
+- [ ] Optional model A/B; structured unified-diff; 3-file volume training (optional only)
 
 ### B. Product — Core config scoping & dynamic branding
 
-**Documentation foundation:**
-
-- [x] `branding_config.dart` — static defaults; Phase 1 Workstream B owns scoping
-- [x] `app_config.dart` — class docstring + `AppConfig.current` points at FranchiseProvider surface
-- [x] `design_tokens.dart` (shared_core) — static defaults; dynamic theming = Workstream B
-- [x] `feature_config.dart` — static defaults + apply() path
-- [x] `franchise_provider.dart` — runtime owner of franchise-scoped branding/config
-- [x] `setBrandingFromFranchiseDoc` — documented keys already read by getters
-- [x] Mobile `main.dart` — live path comment: FranchiseProvider → UiConfig
-- [x] Web `design_tokens.dart` — live path comment: FranchiseProvider → DesignTokens
-
 **Web branding path (logic):**
 
-- [x] `DesignTokens.setFranchiseProvider(franchiseProvider)` at authenticated bootstrap (`web-app/lib/main.dart`)
-- [x] After `initializeWithUser` / `forceRefreshFranchiseId`, best-effort `FirebaseFirestore` fetch of `franchises/{id}` → `setBrandingFromFranchiseDoc`
-- [x] `if (mounted) setState(() {})` after branding load so tree can rebuild
-- [x] Authenticated **light** `MaterialApp.theme` built at runtime from web `DesignTokens`
-- [x] Authenticated **dark** `MaterialApp.darkTheme` uses live `DesignTokens.primaryColor` / `secondaryColor` (verified July 24, 2026 against real `main.dart`)
-- [ ] Unauth `MaterialApp` themes still use top-level `_lightTheme` / `_darkTheme` (acceptable for landing/sign-in)
-- [ ] Optional: remove unused top-level theme constants once both auth themes are inlined
+- [x] `DesignTokens.setFranchiseProvider` at authenticated bootstrap
+- [x] Franchise doc → `setBrandingFromFranchiseDoc`; live primary/secondary getters
+- [x] Authenticated MaterialApp themes from live DesignTokens
 
-**Mobile branding path (already present; documented):**
+**HQ Design & Branding**
 
-- [x] `FranchiseProvider(AppLocalStorage())` + `UiConfig.setFranchiseProvider(fp)`
-- [x] `setBrandingFromFranchiseDoc` from franchise doc / deep links
-- [x] Theme shell reacts via `Selector` + `UiConfig` colors
+- [x] **v1** (Decision 8): Live Branding card + Open Design & Branding → `design_branding_screen.dart`; draft fields; Save snackbar; Cancel reset
+- [x] **v1.1** (July 25): Save merges `primaryColorHex` / `secondaryColorHex` / `appName` / `logoUrl` to `franchises/{id}` + `config/ui_config`; then `setBrandingFromFranchiseDoc`. Screen-owned Firestore for now; extract to Admin/FirestoreService when editor expands
+- [ ] Color picker UI (downstream)
+- [ ] Broader design tokens / more HQ-editable fields (later)
 
-**HQ live preview + Design & Branding v1 (Decision 8 — complete July 24, 2026):**
+**Platform Owner Provider wiring (July 24–25):**
 
-- [x] First live branding color-swatch card on `OwnerHQDashboardScreen` (primary + secondary from `DesignTokens`, labels)
-- [x] Live app name on the same card via `DesignTokens.currentAppName` (accented with primaryColor)
-- [x] Conditional logo via `DesignTokens.currentLogoUrl` when non-null (ClipRRect + adminCardRadius)
-- [x] Swatch borders via `cardBorderColor` + caption labels via `secondaryTextColor`
-- [x] Palette icon on card title
-- [x] **Slice locked**: `docs/slices/hq-design-branding-v1.md` + Decision 8
-- [x] Card button **Open Design & Branding** → `Navigator.push` dedicated screen
-- [x] New screen `web-app/lib/admin/hq_owner/screens/design_branding_screen.dart` (AppBar Back, franchise context)
-- [x] Screen live preview: name, logo **Image with fallback**, swatches, hex labels
-- [x] Screen draft fields: app name, logo URL, primary, secondary (local state only)
-- [x] Save → SnackBar **“Save not wired yet”** (no Firestore write); Cancel resets to live values
-- [ ] v1.1 (later): real write to existing `franchises/{id}` branding keys + `setBrandingFromFranchiseDoc`
+- [x] FranchiseeInvitation abstract alias; `FranchiseSubscriptionService` in MultiProvider; PlatformFinancials uses AdminFirestoreService
 
-**Platform Owner Provider wiring (July 24 evening):**
+**Onboarding — Decision 7 migration (July 25 complete for host move)**
 
-- [x] Abstract alias `FranchiseeInvitationProviderImpl` → `shared.FranchiseeInvitationProvider` on invite card
-- [x] `Provider<shared.FranchiseSubscriptionService>` registered in authenticated MultiProvider (PlatformPlansSummaryCard)
-- [x] `PlatformFinancialsProviderImpl` injects `AdminFirestoreService` (fixes UnimplementedError on platform revenue/KPIs)
+Copy-first then Admin removal. HQ is the **sole product host** for franchise/menu onboarding.
 
-**Onboarding placement (Decision 7 — Phase 1 entry complete July 24, 2026 late evening):**
+| Phase | Status | Notes |
+|-------|--------|--------|
+| 1 Copy tree + rewrite imports | Done | `web-app/lib/admin/hq_owner/onboarding/**` |
+| 2 HQ shell + Continue | Done | `HqOnboardingShellScreen`; overview/foundation in-shell `switchToSection`; smoke 1–17 pass |
+| 3 Deep links + review Fix | Done | `resolveRoute` → `/hq/onboarding?section=…`; main.dart HQ route before generic `hq`; review Fix prefers shell |
+| 4 Admin removal | Done | Admin onboarding tree **deleted**; `section_registry` ops-only; Admin sidebar no Franchise Onboarding group |
+| 5 Progress keys + tracking | Partial | Card shows 4 product steps; Feature Setup → card verified |
 
-- [x] **Target documented**: Franchise/menu onboarding lives on **HQ Owner** dashboard, not Admin
-- [x] **B-ONB-2** Onboarding progress card on `OwnerHQDashboardScreen` using real API only (`loading`, `getFoundationProgress()`, `isStepComplete` for ingredientTypes / ingredients / categories) — no invented `isOnboardingComplete`
-- [x] Loading state polished (Card + centered indicator + text; real DesignTokens only)
-- [x] Foundation percent label from `getFoundationProgress()`
-- [x] Completed vs Pending step line styles (primaryColor / secondaryTextColor)
-- [x] LinearProgressIndicator colored with live `DesignTokens.primaryColor`
-- [x] **Wire card → existing onboarding** — **Continue onboarding** CTA → `AdminDashboardScreen(initialSectionKey: 'onboardingMenu')` (reuse Admin 4-step screens; no HQ section_registry; no new HQ onboarding screen)
-- [x] **DashboardSwitcherDropdown** match by route key (admin vs hq), not trailing path segment `dashboard`
-- [x] **FranchiseAuthenticatedRoot** — `Selector` on user id|roles so authenticated `MaterialApp` is not recreated on every `AdminUserProvider` notify (fixes hq_owner sidebar bounce back to HQ)
-- [ ] Demote Admin primary onboarding entry after HQ is the expected home
-- [ ] Align HQ progress step keys vs overview keys (`ingredientTypes`/`ingredients`/`categories` vs `onboarding_feature_setup` / `onboarding_menu_foundation` / …) if Pending is wrong after real data
-- [ ] Reflect completed entry path in DASHBOARDS.md / web-app README / DECISIONS.md Decision 7 status
-- See `docs/DECISIONS.md` Decision 7 for full rationale and sequence
+**Progress tracking ground truth (July 25):**
+
+- Firestore path: `franchises/{franchiseId}/onboarding_progress/progress` (not top-level `onboarding_progress/{id}`)
+- Rules: franchise subcollection + explicit `onboarding_progress/{docId}` under franchise
+- `OnboardingProgressProviderImpl`: mutable franchiseId via `updateFranchiseId`; ProxyProvider must sync when `FranchiseProvider.franchiseId` loads
+- HQ progress **card must** `Consumer`/`watch` **`OnboardingProgressProviderImpl`** (abstract `ProxyProvider` alias is not listenable)
+- Product step keys: `onboarding_feature_setup`, `onboarding_menu_foundation`, `onboardingMenuItems`, `onboardingReview`
+- Foundation **detail** % uses sub-keys only: `ingredientTypes`, `ingredients`, `categories` via `getFoundationProgress()`
+- Step 2 product key **only** via foundation Save & Continue / explicit foundation complete — **not** tab-level marks
+- `onboardingReview` progress key **only** on successful Publish (summary table “Complete” = validation only)
+- Menu complete/incomplete must use **`onboardingMenuItems`** (not `menu_items`)
+- [x] Feature Setup mark complete → HQ card step 1 + overall % **verified**
+- [ ] Menu Items unmark incomplete (same key)
+- [ ] Foundation Save & Continue → card step 2 reliably
+- [ ] Publish → `markStepComplete('onboardingReview')` → card step 4
+- [ ] Review UX: remove summary **Action / Fix Now** column; keep expansion detail; expansion Fix = **section-only** in-shell switch (no field highlight yet)
 
 **Still open (product):**
 
-- [ ] HQ Design & Branding **v1.1** persistence write path
-- [ ] Broader franchise-scoped config beyond branding colors (features, app config loaders)
-- [ ] Demote Admin primary onboarding entry (Decision 7 Phase 3)
-- [ ] Onboarding progress key alignment + Start/Continue/Review CTA label polish
+- [ ] Finish progress writers for steps 2–4 + menu unmark
+- [ ] Review summary strip Action column; expansion section-only nav polish
+- [ ] Stale “Step 6 of 6” chrome on review (4-step product)
+- [ ] Broader franchise-scoped config beyond branding
 - [ ] Hybrid localization (partial)
-- [ ] Optional agent dual-edit drills only on known-dirty pairs (not default volume training)
-- [ ] Color picker UI (downstream of v1.1)
 
 **Ground truth (do not regress):**
 
-- Branding model exists at `packages/shared_core/lib/src/core/config/branding_config.dart`
-- `FranchiseProvider` owns runtime branding; static config classes are defaults/fallbacks
+- Branding model exists at `packages/shared_core/.../branding_config.dart`
 - Never invent `FranchiseProvider()` zero-arg or `FirestoreService.collection(...)`
-- Never use static `FranchiseProvider.current*` — instance only
-- Web live colors: `FranchiseProvider` → `DesignTokens.setFranchiseProvider` → `DesignTokens.*` getters
-- Mobile live colors: `FranchiseProvider` → `UiConfig.setFranchiseProvider` → `UiConfig.*`
+- Never static `FranchiseProvider.current*` — instance only
+- Web live colors: FranchiseProvider → DesignTokens.setFranchiseProvider → getters
+- Mobile live colors: FranchiseProvider → UiConfig.setFranchiseProvider → UiConfig.*
 - Do not invent new fields on BrandingConfig / AppConfig / DesignTokens / FeatureConfig for scoping
-- Onboarding home = HQ Owner (Decision 7); Admin is not the long-term home
-- HQ onboarding entry reuses Admin screens via `initialSectionKey: 'onboardingMenu'` — do not invent HQ section_registry for onboarding
-- HQ Design & Branding v1: no Firestore branding writes; Save = snackbar only until v1.1
-- `section_registry.dart` is Admin-only — do not use for HQ Design & Branding entry
-- Authenticated `MaterialApp` must not rebuild on every `AdminUserProvider` notify (use identity/roles Selector)
-- See also `orchestrator/SCOPE_CARD.md` for the short always-on constraint list
+- **Onboarding home = HQ Owner only** (Decision 7). Admin onboarding tree removed; do not re-add Admin onboarding host
+- HQ entry: `HqOnboardingShellScreen` under `web-app/lib/admin/hq_owner/onboarding/`
+- `section_registry.dart` is Admin **ops** only — no onboarding sections
+- Design & Branding v1.1 may write franchise branding keys; expand via service when editor grows
+- Onboarding progress path: `franchises/{id}/onboarding_progress/progress`
+- Card watches **Impl**, not abstract-only ProxyProvider
+- Authenticated MaterialApp must not rebuild on every AdminUserProvider notify (identity/roles Selector)
+- See `orchestrator/SCOPE_CARD.md` for short always-on constraints
 
 ---
 
 ## Target workflow
 
-1. Agent proposes (real source, strict `## BEFORE` / `## AFTER` fences) — interactive **or** `queue/inbox` drain  
-2. Human reviews (`/approve <id>`, validation warnings / HARD BAN hits)  
+1. Agent proposes (real source, strict BEFORE/AFTER; multi-file FILE: headers supported)  
+2. Human reviews (`/approve <id>`, HARD BAN hits)  
 3. `/approve confirm <id>` → local apply only  
 4. Human commits/pushes  
 5. Never Firestore/production from agents  
-6. `/reject <id> reason=...` → `orchestrator/feedback/rejects.jsonl` (governance learning only)
-7. HARD BAN / path-allowlist → auto-reject (`status=rejected`, no apply)
-8. "No change needed" → `status=no_change` (success; nothing to apply)
-9. `/metrics` → training rates over last 50 proposals
+6. `/reject` → feedback JSONL; HARD BAN → auto-reject  
+7. "No change needed" → `status=no_change`  
+8. `/metrics` → training rates over last 50
 
-Prompt style: see **AGENT_SYSTEM.md → Preferred Coding Task Prompt Style**.  
-Interactive CLI: paste multi-line task, type `END` on its own line.  
-Overnight: drop tasks in `orchestrator/queue/inbox/` → `python queue_runner.py --drain`.
+Prompt style: **AGENT_SYSTEM.md**. Interactive: paste task, `END`. Queue: `orchestrator/queue/inbox/`.
 
 ---
 
@@ -175,10 +122,10 @@ Overnight: drop tasks in `orchestrator/queue/inbox/` → `python queue_runner.py
 - Never invent fields on BrandingConfig / AppConfig / DesignTokens / FeatureConfig for scoping work
 - Never invent FirestoreService.collection or zero-arg FranchiseProvider()
 - Never static `FranchiseProvider.current*` access
-- Treat validator HARD BAN hits as reject candidates (now auto-rejected)
+- Treat validator HARD BAN hits as reject candidates (auto-rejected)
 - Edit only files named in the task (path allowlist)
-- If region already satisfies the request → **No change needed** (do not emit identical BEFORE/AFTER)
-- HQ Design & Branding v1: no branding Firestore writes; no section_registry for HQ entry
+- If region already satisfies the request → **No change needed**
+- Do not reintroduce Admin onboarding host or top-level `onboarding_progress/{id}` path
 
 ---
 
