@@ -1,0 +1,42 @@
+# id: xai-menu-items-toggle-v2
+# agent: web_frontend
+# backend: xai
+# priority: 7
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_items_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Goal: Make `_markComplete()` a toggle for product key **`onboardingMenuItems`**:
+
+```dart
+final onboarding =
+    Provider.of<shared.OnboardingProgressProvider>(context, listen: false);
+final isComplete = onboarding.isStepComplete('onboardingMenuItems');
+if (isComplete) {
+  await onboarding.markStepIncomplete('onboardingMenuItems');
+  // snackbar incomplete
+} else {
+  await onboarding.markStepComplete('onboardingMenuItems');
+  // snackbar complete
+}
+```
+
+Hard rules:
+- Key must be exactly `onboardingMenuItems` (never `menu_items`).
+- Provider must be **shared.OnboardingProgressProvider** (already how this file reads progress) — do not add new imports for progress.
+- Prefer **exactly one** BEFORE/AFTER region: the full `_markComplete` method only.
+- Do not change AppBar wiring, lists, or navigation.
+
+If `_markComplete` already toggles incomplete/complete with key `onboardingMenuItems` → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. One region preferred.
+4. Proposal only.
