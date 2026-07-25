@@ -5,6 +5,10 @@ import 'package:shared_core/shared_core.dart' as shared;
 
 class PlatformFinancialsProviderImpl extends ChangeNotifier
     implements shared.PlatformFinancialsProvider {
+  final shared.FirestoreService _firestore;
+
+  PlatformFinancialsProviderImpl({required shared.FirestoreService firestore})
+      : _firestore = firestore;
   shared.PlatformRevenueOverview? _overview;
   shared.PlatformFinancialKpis? _kpis;
   bool _loading = false;
@@ -26,12 +30,9 @@ class PlatformFinancialsProviderImpl extends ChangeNotifier
     if (!_disposed) notifyListeners();
 
     try {
-      // TODO: Properly inject FirestoreService in constructor (recommended for future)
-      final firestoreService = shared.FirestoreServiceImpl();
-
       final results = await Future.wait([
-        firestoreService.fetchPlatformRevenueOverview(),
-        firestoreService.fetchPlatformFinancialKpis(),
+        _firestore.fetchPlatformRevenueOverview(),
+        _firestore.fetchPlatformFinancialKpis(),
       ]);
 
       _overview = results[0] as shared.PlatformRevenueOverview?;

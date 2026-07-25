@@ -100,7 +100,9 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
     final vPadding = isWide ? 28.0 : 14.0;
 
     return ChangeNotifierProvider<PlatformFinancialsProviderImpl>(
-      create: (_) => PlatformFinancialsProviderImpl()..loadFinancials(),
+      create: (context) => PlatformFinancialsProviderImpl(
+        firestore: Provider.of<shared.FirestoreService>(context, listen: false),
+      )..loadFinancials(),
       child: Scaffold(
         backgroundColor: colorScheme.surface,
         appBar: AppBar(
@@ -152,8 +154,12 @@ class PlatformOwnerDashboardScreen extends StatelessWidget {
                         listen: false),
                   ),
                 )..fetchInvitations(),
-                child: FranchiseInvitationPanel(
-                    loc: loc, colorScheme: colorScheme),
+                child: ProxyProvider<FranchiseeInvitationProviderImpl,
+                    shared.FranchiseeInvitationProvider>(
+                  update: (_, impl, __) => impl,
+                  child: FranchiseInvitationPanel(
+                      loc: loc, colorScheme: colorScheme),
+                ),
               ),
               const SizedBox(height: 36),
               FranchiseListPanel(loc: loc, colorScheme: colorScheme),

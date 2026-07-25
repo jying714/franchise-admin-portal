@@ -497,6 +497,11 @@ class FranchiseAppRootSplit extends StatelessWidget {
               update: (_, impl, __) => impl,
             ),
 
+            // === Franchise Subscription Service (required by PlatformPlansSummaryCard, plan tiles, etc.) ===
+            Provider<shared.FranchiseSubscriptionService>(
+              create: (_) => FranchiseSubscriptionServiceImpl(),
+            ),
+
             // === Onboarding Progress ===
             ChangeNotifierProxyProvider2<shared.FirestoreService,
                 shared.FranchiseProvider, OnboardingProgressProviderImpl>(

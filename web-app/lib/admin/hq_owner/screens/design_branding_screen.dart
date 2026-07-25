@@ -80,12 +80,51 @@ class DesignBrandingScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      // Live Preview (S4) — reads only existing DesignTokens + FranchiseProvider instance getters
                       Text(
-                        'Configuration UI will appear here '
-                        '(live preview, draft fields, Save).',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: DesignTokens.secondaryTextColor,
-                            ),
+                        DesignTokens.currentAppName,
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: DesignTokens.primaryColor,
+                                ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Logo with fallback
+                      if (DesignTokens.currentLogoUrl != null &&
+                          DesignTokens.currentLogoUrl!.isNotEmpty)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(
+                              DesignTokens.adminCardRadius),
+                          child: Image.network(
+                            DesignTokens.currentLogoUrl!,
+                            width: 120,
+                            height: 60,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) =>
+                                _logoFallback(context),
+                          ),
+                        )
+                      else
+                        _logoFallback(context),
+                      const SizedBox(height: 16),
+                      // Color swatches + hex labels (hex from FranchiseProvider instance)
+                      Row(
+                        children: [
+                          _swatchColumn(
+                            context,
+                            color: DesignTokens.primaryColor,
+                            label: 'Primary',
+                            hex: franchiseProvider.currentPrimaryColorHex,
+                          ),
+                          const SizedBox(width: 16),
+                          _swatchColumn(
+                            context,
+                            color: DesignTokens.secondaryColor,
+                            label: 'Secondary',
+                            hex: franchiseProvider.currentSecondaryColorHex,
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -95,6 +134,68 @@ class DesignBrandingScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _logoFallback(BuildContext context) {
+    return Container(
+      width: 120,
+      height: 60,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        border: Border.all(color: DesignTokens.cardBorderColor),
+        borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.image_not_supported_outlined,
+              size: 22, color: DesignTokens.secondaryTextColor),
+          const SizedBox(height: 4),
+          Text(
+            'No logo',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: DesignTokens.secondaryTextColor,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _swatchColumn(
+    BuildContext context, {
+    required Color color,
+    required String label,
+    required String hex,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: color,
+            border: Border.all(color: DesignTokens.cardBorderColor, width: 1),
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: DesignTokens.secondaryTextColor,
+              ),
+        ),
+        Text(
+          hex,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: DesignTokens.secondaryTextColor,
+                fontFamily: 'monospace',
+              ),
+        ),
+      ],
     );
   }
 }
