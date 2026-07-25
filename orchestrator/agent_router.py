@@ -1,17 +1,12 @@
 """
 agent_router.py
 ---------------
-Decides which specialized agent should handle a task and
-builds the final prompt that is sent to Ollama or xAI.
+Routes tasks and builds prompts for Ollama or xAI.
 
-When real source files are loaded, switches to minimal/smart context
-so the task + source dominate and the model stops inventing fields.
-
-A1: docstring/comment-only edits are explicitly allowed (no over-refusal).
-
-2026-07-25: Honor explicit Role: line; backend: xai|ollama; SMART context for xAI.
-2026-07-25 evening: APPLY SAFETY (import keep, max regions, empty AFTER for deletes).
-2026-07-25: Progress provider = shared.OnboardingProgressProvider only (no invented import path).
+Context modes:
+  - coding_min (default for backend:xai + source): STATUS+SCOPE only, compact system
+  - full: all mandatory docs (status/planning)
+  - explicit via task header: # context: coding_min|coding_std|full|source_only
 """
 
 from __future__ import annotations
@@ -22,7 +17,11 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from backend_config import detect_backend, load_backends_config
-from context_loader import build_system_prompt, load_mandatory_context
+from context_loader import (
+    build_system_prompt,
+    load_mandatory_context,
+    parse_context_mode,
+)
 from file_reader import load_mentioned_files
 
 
@@ -67,6 +66,7 @@ class TaskResult:
     num_ctx: int = 8192
     temperature: float = 0.15
     backend: str = "ollama"  # ollama | xai
+    context_mode: str = "full"
 
 
 def is_status_task(task_text: str) -> bool:
@@ -120,6 +120,26 @@ def needs_human_approval(task_text: str, agent: str) -> tuple[bool, str]:
     return False, "Low-risk task — still propose only, never auto-apply"
 
 
+def resolve_context_mode(
+    task_text: str,
+    *,
+    backend: str,
+    has_source: bool,
+    is_status: bool,
+) -> str:
+    """Explicit header wins; else defaults that preserve task clarity at lower token cost."""
+    explicit = parse_context_mode(task_text)
+    if explicit:
+        return explicit
+    if is_status and not has_source:
+        return "full"
+    if has_source and backend == "xai":
+        return "coding_min"
+    if has_source:
+        return "minimal"
+    return "full"
+
+
 def prepare_task(
     project_root: Path,
     task_text: str,
@@ -129,32 +149,32 @@ def prepare_task(
     cfg = load_backends_config(project_root)
     backend = detect_backend(task_text, cfg)
 
-    mandatory = load_mandatory_context(project_root)
-
     status = is_status_task(task_text)
     agent = preferred_agent or detect_agent(task_text)
 
     source_block = load_mentioned_files(project_root, task_text)
     has_source = bool(source_block)
 
-    use_status_prompt = status and not has_source
+    context_mode = resolve_context_mode(
+        task_text,
+        backend=backend,
+        has_source=has_source,
+        is_status=status,
+    )
 
-    if use_status_prompt:
-        context_mode = "full"
-    elif has_source and backend == "xai":
-        context_mode = "smart"
-    elif has_source:
-        context_mode = "minimal"
-    else:
-        context_mode = "full"
+    mandatory = load_mandatory_context(project_root, context_mode=context_mode)
+
+    use_status_prompt = status and not has_source
+    use_compact = context_mode in ("coding_min", "smart", "minimal", "source_only")
 
     system = build_system_prompt(
         project_root,
         agent,
         mandatory,
         minimal=(context_mode == "minimal"),
-        smart=(context_mode == "smart"),
+        smart=(context_mode in ("smart", "coding_min", "source_only")),
         backend=backend,
+        context_mode=context_mode,
     )
 
     requires_approval, reason = needs_human_approval(task_text, agent)
@@ -185,19 +205,15 @@ def prepare_task(
     else:
         model = models.get(agent, "qwen2.5-coder:14b")
 
+    # Slim apply-safety for source tasks (full detail lives in SCOPE_CARD)
     apply_safety = """
-## APPLY SAFETY (mandatory — broken apply is a failed proposal)
-- Prefer **one** BEFORE/AFTER region per file. Maximum **two** regions per file unless the task explicitly allows more.
-- **Never remove an import** unless every symbol from that import is unused in the file **after** your edit.
-- If the file uses `OnboardingSections`, you **must keep**
-  `import '.../onboarding_navigation_utils.dart';`
-- Deleting a method: BEFORE = the full method; AFTER fence body must be **completely empty** (zero lines inside the fence). Do **not** put only `}` in AFTER.
-- Do not use import cleanup as a side quest.
-- Multi-region on the same path: each BEFORE must still match the file **after** prior regions would apply (order top-to-bottom).
-- Onboarding progress in UI: use ONLY
-  `Provider.of<shared.OnboardingProgressProvider>(context, listen: false)`
-  (requires existing `import ... shared_core ... as shared`).
-  Do **NOT** invent `import '.../onboarding_progress_provider.dart'` or bare `OnboardingProgressProvider` without the `shared.` prefix.
+## APPLY SAFETY
+- Prefer one BEFORE/AFTER region (max two unless task allows more).
+- Never remove imports still needed after your edit.
+- Keep OnboardingSections import if UI still references it.
+- Method delete: AFTER fence body empty (not only `}`).
+- Progress: shared.OnboardingProgressProvider only; deleteMenuItem(id) for menu delete.
+- One FILE path once. Multi-line BEFORE. Fences only — no truncation prose.
 """
 
     if use_status_prompt:
@@ -206,10 +222,8 @@ def prepare_task(
 
 ## INSTRUCTIONS
 - STATUS.md is the single live source of truth.
-- Prefer STATUS.md over older documents.
-- Only mark items incomplete if STATUS.md still lists them open.
-- Do not invent missing work.
-- Produce a clean done vs open checklist, then list only real remaining agent-safe items.
+- Only mark items incomplete if STATUS still lists them open.
+- Clean done vs open checklist; real remaining items only.
 - End with "Next steps for human".
 """
     elif has_source:
@@ -217,51 +231,32 @@ def prepare_task(
 {task_text}
 
 ## BACKEND
-{backend} (proposal only — human applies via /approve confirm; never auto-push)
+{backend} — proposal only (human /approve confirm)
 
-## WHAT IS ALLOWED
-- Class-level docstrings (/// ...) above an existing class — SAFE. Propose them when asked.
-- Improving an existing comment — SAFE when asked.
-- Documentation-only changes must be proposed with exact before/after from the real source.
-- Surgical product fixes on named files only.
+## CONTEXT
+mode={context_mode} (SCOPE_CARD + STATUS in system; source below is edit ground truth)
 
-## WHAT IS FORBIDDEN
-- Do NOT add new fields, getters, methods, or change Firestore mapping unless the task explicitly requires it.
-- Do NOT invent code that is not in the source below.
-- Do NOT change business logic unless the task explicitly requests it.
-- Do NOT use static FranchiseProvider.current* — instance only.
-- Do NOT reintroduce Admin onboarding paths (admin/dashboard/onboarding is deleted).
-- Do NOT use top-level onboarding_progress/{{id}} — progress lives under franchises/{{id}}/onboarding_progress/progress.
-- Do NOT invent import paths for OnboardingProgressProvider.
-{apply_safety}
-## HOW TO RESPOND (format is mandatory — apply will fail otherwise)
-A) If the named file(s) already satisfy the task → reply with a single line only:
-No change needed
-Do NOT emit full-class BEFORE/AFTER for verify-only tasks.
-
+## RESPONSE FORMAT (mandatory)
+A) Already satisfied → single line: No change needed
 B) Else:
-1. Quote the exact first 8–12 lines of the loaded file (copy from the source block).
-2. Prefer **one** FILE block with one BEFORE/AFTER. If you must use two regions, stop at two.
-3. Show the change using EXACTLY these headings and fenced blocks:
+1. Quote first 8–12 lines of the loaded file from source.
+2. One FILE block preferred:
 
 FILE: path/to/file.dart
 
 ## BEFORE
 ```dart
-<paste the exact current lines you will replace — contiguous region from source>
+<exact contiguous region from source>
 ```
 
 ## AFTER
 ```dart
-<paste the exact new lines for that same region only; empty fence body = delete region>
+<exact replacement; empty body = delete region>
 ```
 
-4. CRITICAL for apply: In BEFORE, copy indentation and line breaks from the RELEVANT SOURCE FILES block byte-for-byte.
-5. Only include the region you change. Do not dump the whole file.
-6. Short "Next steps for human" only if something remains out of scope.
-
-Only stop if the source file is missing/blocked. Do not refuse a pure docstring or comment improvement.
-
+3. Copy indentation from RELEVANT SOURCE FILES byte-for-byte.
+4. Only the changed region — not the whole file.
+{apply_safety}
 {source_block}
 """
     else:
@@ -269,13 +264,10 @@ Only stop if the source file is missing/blocked. Do not refuse a pure docstring 
 {task_text}
 
 ## INSTRUCTIONS
-- Stay inside the current phase.
-- Propose concrete, small, reviewable changes only.
-- NEVER invent file paths or code not present in context.
-- If source is missing, say so and stop.
-- If already correct → reply only: No change needed
-- Else quote exact before/after using ## BEFORE / ## AFTER fenced blocks.
-- End with "Next steps for human".
+- Stay in current phase. Propose small reviewable changes only.
+- Never invent paths/code not in context.
+- If already correct → No change needed
+- Else ## BEFORE / ## AFTER fences.
 """
 
     return TaskResult(
@@ -288,4 +280,5 @@ Only stop if the source file is missing/blocked. Do not refuse a pure docstring 
         num_ctx=num_ctx,
         temperature=temperature,
         backend=backend,
+        context_mode=context_mode,
     )

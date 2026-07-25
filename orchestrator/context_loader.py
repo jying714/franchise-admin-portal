@@ -1,21 +1,24 @@
 """
 context_loader.py
 -----------------
-Loads the mandatory reference documents required by every agent
-(see AGENT_SYSTEM.md "Mandatory Reference Rules").
+Loads reference documents for agent prompts.
 
-Modes:
-  - full   : STATUS + personality + excerpts of all mandatory docs
-             (status / planning / review tasks)
-  - minimal: short role + short STATUS + SCOPE_CARD + hard rules
-             (Ollama source-file tasks)
-  - smart  : same compact pack as minimal + explicit xAI proposal-only note
-             (xAI product tasks — avoids 18-doc token burn)
+Modes (system prompt packing):
+  - full        : STATUS + personality + excerpts of all mandatory docs
+  - minimal     : short role + short STATUS + SCOPE_CARD + hard rules (Ollama source)
+  - smart       : same compact pack as minimal + xAI proposal-only note
+  - coding_min  : alias of smart packing; **disk load** only STATUS + SCOPE_CARD
+
+Task header (optional):
+  # context: coding_min | coding_std | full | source_only
+
+Default for backend:xai + source files → coding_min (token-efficient, task stays clear).
 """
 
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -46,9 +49,15 @@ MANDATORY_FILES: List[str] = [
 
 SCOPE_CARD_PATH = "orchestrator/SCOPE_CARD.md"
 
+# coding_min / smart / minimal: only these governance files hit the prompt
+CODING_MIN_FILES: List[str] = [
+    "STATUS.md",
+    SCOPE_CARD_PATH,
+]
+
 FULL_LOAD_FILES = {"STATUS.md"}
 
-MINIMAL_STATUS_LINES = 35
+MINIMAL_STATUS_LINES = 28
 
 PROMPT_DIR = Path("prompts")
 AGENT_PROMPTS = {
@@ -60,12 +69,38 @@ AGENT_PROMPTS = {
     "reviewer": "reviewer.md",
 }
 
+CONTEXT_HEADER_RE = re.compile(
+    r"(?:^|\n)\s*#\s*context\s*:\s*([\w_]+)",
+    re.IGNORECASE,
+)
+
+VALID_CONTEXT_MODES = {
+    "coding_min",
+    "coding_std",
+    "smart",
+    "minimal",
+    "full",
+    "source_only",
+}
+
+
+def parse_context_mode(task_text: str) -> Optional[str]:
+    """Return explicit # context: value from task header, or None."""
+    m = CONTEXT_HEADER_RE.search(task_text or "")
+    if not m:
+        return None
+    mode = m.group(1).strip().lower()
+    if mode in VALID_CONTEXT_MODES:
+        return mode
+    logger.warning("Unknown # context: %s — ignoring", mode)
+    return None
+
 
 def _safe_read(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8")
     except FileNotFoundError:
-        msg = f"[MISSING] {path} — this file is required by AGENT_SYSTEM.md"
+        msg = f"[MISSING] {path} — required governance file"
         logger.warning(msg)
         return msg
     except Exception as e:
@@ -78,29 +113,78 @@ def _short_status(full_status: str, max_lines: int = MINIMAL_STATUS_LINES) -> st
     lines = full_status.splitlines()
     if len(lines) <= max_lines:
         return full_status
-    excerpt = "\n".join(lines[:max_lines])
-    return excerpt + "\n\n...[STATUS truncated for coding-task context — full STATUS used only for status/planning tasks]"
+
+    # Prefer open + ground-truth sections when present
+    preferred_markers = (
+        "Still open",
+        "Ground truth",
+        "Progress tracking",
+        "Current Phase",
+        "Agent mode",
+        "xAI",
+    )
+    picked: List[str] = []
+    # Always keep header lines
+    picked.extend(lines[:12])
+    for i, line in enumerate(lines):
+        if any(m in line for m in preferred_markers):
+            # take from marker through next ~15 lines
+            chunk = lines[i : i + 16]
+            for c in chunk:
+                if c not in picked:
+                    picked.append(c)
+            if len(picked) >= max_lines:
+                break
+    if len(picked) < 16:
+        picked = lines[:max_lines]
+    else:
+        picked = picked[:max_lines]
+    return (
+        "\n".join(picked)
+        + "\n\n...[STATUS truncated for coding_min — open items + ground truth retained]"
+    )
 
 
-def load_mandatory_context(project_root: Path) -> Dict[str, str]:
+def load_mandatory_context(
+    project_root: Path,
+    *,
+    context_mode: str = "full",
+) -> Dict[str, str]:
+    """
+    Load governance docs from disk.
+
+    coding_min / smart / minimal / source_only → STATUS + SCOPE only.
+    full / coding_std → full MANDATORY_FILES + SCOPE.
+    """
     context: Dict[str, str] = {}
-    console.print("\n[bold cyan]Loading mandatory reference documents...[/bold cyan]")
+    mode = (context_mode or "full").lower()
 
-    for rel_path in MANDATORY_FILES:
+    if mode in ("coding_min", "smart", "minimal", "source_only"):
+        rels = list(CODING_MIN_FILES)
+        console.print(
+            f"\n[bold cyan]Loading coding context ({mode}) — STATUS + SCOPE_CARD only...[/bold cyan]"
+        )
+    else:
+        rels = list(MANDATORY_FILES) + [SCOPE_CARD_PATH]
+        console.print("\n[bold cyan]Loading mandatory reference documents (full)...[/bold cyan]")
+
+    for rel_path in rels:
+        if rel_path in context:
+            continue
         full = project_root / rel_path
         content = _safe_read(full)
         context[rel_path] = content
         status = "✓" if not content.startswith("[") else "✗"
         full_marker = " (full)" if rel_path in FULL_LOAD_FILES else ""
-        console.print(f"  {status} {rel_path}{full_marker}")
+        always = " (always-on)" if rel_path == SCOPE_CARD_PATH else ""
+        console.print(f"  {status} {rel_path}{full_marker}{always}")
 
-    scope_full = project_root / SCOPE_CARD_PATH
-    scope_content = _safe_read(scope_full)
-    context[SCOPE_CARD_PATH] = scope_content
-    scope_status = "✓" if not scope_content.startswith("[") else "✗"
-    console.print(f"  {scope_status} {SCOPE_CARD_PATH} (always-on)")
+    # Ensure SCOPE always present
+    if SCOPE_CARD_PATH not in context:
+        scope_content = _safe_read(project_root / SCOPE_CARD_PATH)
+        context[SCOPE_CARD_PATH] = scope_content
 
-    console.print(f"[green]Loaded {len(context)} mandatory documents.[/green]\n")
+    console.print(f"[green]Loaded {len(context)} document(s) for mode={mode}.[/green]\n")
     return context
 
 
@@ -119,64 +203,64 @@ def build_system_prompt(
     minimal: bool = False,
     smart: bool = False,
     backend: Optional[str] = None,
+    context_mode: Optional[str] = None,
 ) -> str:
     personality = load_agent_prompt(project_root, agent_name)
 
-    status_block = ""
-    if "STATUS.md" in mandatory_context:
-        status_block = mandatory_context["STATUS.md"]
-
+    status_block = mandatory_context.get("STATUS.md", "")
     scope_card = mandatory_context.get(SCOPE_CARD_PATH, "")
 
     hard_rules = """
-## HARD RULES (never break these)
+## HARD RULES
 - Propose only. Never write files, never push, never touch Firestore.
-- When RELEVANT SOURCE FILES are provided, they are the ONLY ground truth.
-- NEVER invent fields, methods, imports, or file structure not in the provided source.
-- NEVER add new class fields, change Firestore mapping, or change business logic unless the task explicitly asks for that (and even then, propose only).
+- RELEVANT SOURCE FILES are the only ground truth for edits.
+- Never invent fields/methods/imports not in provided source.
+- Docstring/comment-only edits are SAFE when asked.
+- Stop if required source is missing; else propose exact BEFORE/AFTER.
+"""
 
-## SAFE EDITS (always allowed when the task asks for them)
-- Adding or improving a class-level docstring (/// ...) is SAFE. Do it when asked.
-- Adding or improving a short comment above an existing member is SAFE when asked.
-- These documentation-only changes do NOT require refusal. Propose them with exact before/after.
-
-## WHEN TO STOP
-- Stop only if the required source file is missing/blocked, or the task asks for schema/security/payment changes without human-approval context.
-- Do not refuse a pure docstring or comment improvement.
+    api_truth = """
+## API TRUTHS (do not invent alternatives)
+- Menu delete: `deleteMenuItem(String id)` then usually `persistChanges()` — not removeMenuItem.
+- Progress marks: `Provider.of<shared.OnboardingProgressProvider>(context, listen: false)`.
+- Listenable progress in shell: `ChangeNotifierProvider<OnboardingProgressProviderImpl>` + ProxyProvider to abstract — never ChangeNotifierProvider of abstract.
+- One FILE path once per proposal; prefer multi-line BEFORE; fences only.
 """
 
     backend_note = ""
     if backend == "xai":
         backend_note = (
-            "\n## BACKEND: xAI API\n"
-            "- Your output is saved as a **proposal** only.\n"
-            "- A human will /approve confirm or apply via git. Do not assume files were written.\n"
+            "\n## BACKEND: xAI\n"
+            "- Output is a **proposal** only. Human /approve confirm applies.\n"
         )
 
-    if minimal or smart:
-        mode_label = "SMART (xAI — SCOPE_CARD + short STATUS)" if smart else (
-            "MINIMAL (source-file task — short STATUS + SCOPE_CARD + hard rules only)"
-        )
-        console.print(f"[dim]Context mode: {mode_label}[/dim]")
-        short_role = personality[:600].strip()
-        if len(personality) > 600:
-            short_role += "\n...[role truncated for edit mode]"
+    # Compact modes share the same system packing
+    use_compact = minimal or smart or (context_mode in ("coding_min", "source_only", "minimal", "smart"))
+
+    if use_compact:
+        label = context_mode or ("smart" if smart else "minimal")
+        console.print(f"[dim]Context mode: {label} (SCOPE_CARD + short STATUS)[/dim]")
+        short_role = personality[:500].strip()
+        if len(personality) > 500:
+            short_role += "\n...[role truncated]"
 
         short_status = _short_status(status_block)
 
         return f"""{short_role}
 
 ---
-# LIVE STATUS (authoritative, truncated for coding task)
+# LIVE STATUS (truncated)
 {short_status}
 
 ---
-# SCOPE CARD (hard constraints — obey these)
+# SCOPE CARD (obey)
 {scope_card}
 {backend_note}
+{api_truth}
 {hard_rules}
 """
 
+    # Full / coding_std
     summary_parts = []
     for name, content in mandatory_context.items():
         if name == "STATUS.md" or name == SCOPE_CARD_PATH:
@@ -189,40 +273,28 @@ def build_system_prompt(
     context_block = "\n\n".join(summary_parts)
 
     non_negotiables = """
-## NON-NEGOTIABLE RULES (enforced by Orchestrator)
-- STATUS.md is the live source of truth for current project state.
-- All work MUST stay inside the current phase acceptance criteria.
-- shared_core is the single source of truth.
-- All customer data lives under franchises/{franchiseId}/...
-- Hybrid single/multi-location logic must be respected.
-- Dynamic config / branding / UI is mandatory.
-- NEVER perform direct Firestore writes or production changes.
-- Propose changes only → human reviews → merge via PR or /approve confirm.
-- Flag any potential scope creep immediately.
-- Human review is mandatory for: architecture, config, schema, payments, security, design/branding.
-
-## SOURCE-CODE RULES
-- When source files are provided under "RELEVANT SOURCE FILES", treat them as the only ground truth.
-- NEVER invent fields, methods, imports, or file structure that is not present in the provided source.
-- Adding a class-level docstring or improving a comment is SAFE and expected when the task asks for it.
-- If a file you need is missing from the context, explicitly say so and stop.
-- When proposing an edit, always show the exact current lines (before) and the exact new lines (after).
+## NON-NEGOTIABLE RULES
+- STATUS.md is live truth for phase state.
+- shared_core is single source of domain models.
+- Propose only; human merge gate.
+- When RELEVANT SOURCE FILES provided, never invent symbols not in them.
 """
 
     return f"""{personality}
 
 ---
-# LIVE PROJECT STATUS (always authoritative)
+# LIVE PROJECT STATUS
 ### STATUS.md
 {status_block}
 
 ---
-# SCOPE CARD (hard constraints — obey these)
+# SCOPE CARD
 {scope_card}
 
 ---
 # MANDATORY PROJECT CONTEXT (excerpts)
 {context_block}
 
+{api_truth}
 {non_negotiables}
 """

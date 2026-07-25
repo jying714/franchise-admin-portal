@@ -5,7 +5,7 @@ Async client for the xAI API (OpenAI-compatible chat completions).
 
 - Reads XAI_API_KEY from the environment (never commit the key).
 - Returns model text only — does NOT touch git, Firestore, or disk apply.
-- Used when a task declares backend: xai (or routing selects xai).
+- Optional x-grok-conv-id for prompt-cache affinity (stable prefix per agent).
 
 Docs: https://docs.x.ai
 """
@@ -41,7 +41,6 @@ class XaiClient:
         self.api_key = (api_key or os.getenv("XAI_API_KEY", "")).strip()
         self.base_url = (base_url or os.getenv("XAI_BASE_URL", DEFAULT_BASE_URL)).rstrip("/")
         self.default_model = default_model or DEFAULT_MODEL
-        # Long timeout for large coding contexts
         self._client = httpx.AsyncClient(timeout=600.0)
 
     @property
@@ -52,7 +51,6 @@ class XaiClient:
         await self._client.aclose()
 
     async def ping(self) -> bool:
-        """Lightweight check: key present (optional models list if supported)."""
         if not self.api_key:
             return False
         return True
@@ -71,6 +69,7 @@ class XaiClient:
         model: Optional[str] = None,
         temperature: float = 0.1,
         max_tokens: Optional[int] = None,
+        conv_id: Optional[str] = None,
     ) -> str:
         if not self.api_key:
             raise RuntimeError(
@@ -78,6 +77,7 @@ class XaiClient:
             )
 
         use_model = model or self.default_model
+        # Stable message order: system (SCOPE/STATUS) first → better prefix cache hits
         messages = [
             {"role": "system", "content": system},
             {"role": "user", "content": prompt},
@@ -90,32 +90,36 @@ class XaiClient:
         if max_tokens is not None:
             payload["max_tokens"] = max_tokens
 
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        # Prompt-cache affinity: same agent → prefer same route when platform supports it
+        if conv_id:
+            headers["x-grok-conv-id"] = conv_id
+
         logger.info(
-            "Calling xAI model=%s temp=%s base=%s",
+            "Calling xAI model=%s temp=%s base=%s conv_id=%s",
             use_model,
             temperature,
             self.base_url,
+            conv_id or "-",
         )
 
         resp = await self._client.post(
             f"{self.base_url}/chat/completions",
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-            },
+            headers=headers,
             json=payload,
         )
         resp.raise_for_status()
         data = resp.json()
 
-        # OpenAI-compatible shape
         choices = data.get("choices") or []
         if not choices:
             return ""
         message = choices[0].get("message") or {}
         content = message.get("content") or ""
         if isinstance(content, list):
-            # Some APIs return content parts
             texts = []
             for part in content:
                 if isinstance(part, dict) and part.get("type") == "text":

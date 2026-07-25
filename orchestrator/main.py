@@ -3,18 +3,14 @@
 main.py — Franchise Platform Orchestrator
 -----------------------------------------
 Always-running process that:
-  • Loads the mandatory governance documents
+  • Loads governance documents (coding_min = STATUS+SCOPE only for xAI source tasks)
   • Accepts tasks (interactive CLI)
-  • Routes them to specialized agents + backend (ollama | xai)
-  • Calls Ollama or xAI API and returns a proposal
-  • Validates proposals for scope drift
-  • Auto-rejects on HARD BAN / path-allowlist / BEFORE-on-disk misses
-  • Saves proposals; applies ONLY after explicit /approve confirm
-  • Treats "No change needed" as first-class success (status=no_change)
-  • Multi-file BEFORE/AFTER apply
-  • Optional overnight queue: drop *.task.txt in orchestrator/queue/inbox/
+  • Routes to specialized agents + backend (ollama | xai)
+  • Validates proposals; auto-rejects HARD BAN
+  • Saves proposals; applies ONLY after /approve confirm
+  • Optional overnight queue
 
-Never auto-pushes. xAI never talks to git — proposal only.
+Never auto-pushes. xAI is proposal only.
 """
 
 from __future__ import annotations
@@ -85,9 +81,6 @@ async def run_task(
     ollama: Optional[OllamaClient] = None,
     xai: Optional[XaiClient] = None,
 ) -> Optional[Proposal]:
-    """
-    client: legacy single-client arg (Ollama). Prefer ollama= / xai= for dual backend.
-    """
     console.rule("[bold blue]Preparing task")
 
     result = prepare_task(
@@ -103,6 +96,7 @@ async def run_task(
     console.print(Panel.fit(
         f"[bold]Agent[/bold]: {result.agent}\n"
         f"[bold]Backend[/bold]: {result.backend}\n"
+        f"[bold]Context[/bold]: {getattr(result, 'context_mode', 'n/a')}\n"
         f"[bold]Model[/bold]: {result.model}\n"
         f"[bold]num_ctx[/bold]: {result.num_ctx if result.backend == 'ollama' else 'n/a (xAI)'}\n"
         f"[bold]temperature[/bold]: {result.temperature}\n"
@@ -127,12 +121,15 @@ async def run_task(
                 "Export XAI_API_KEY on the host/container, then retry.[/bold red]"
             )
             return None
+        # Stable conv id per agent → prompt-cache affinity for shared SCOPE prefix
+        conv_id = f"franchise-orch-{result.agent}-xai"
         with console.status(f"[bold]Thinking with xAI {result.model}…"):
             response = await xai_client.generate(
                 system=result.system_prompt,
                 prompt=result.user_prompt,
                 model=result.model,
                 temperature=result.temperature,
+                conv_id=conv_id,
             )
     else:
         if ollama_client is None:
@@ -506,8 +503,8 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
         f"Project root : {PROJECT_ROOT}\n"
         f"Ollama       : {OLLAMA_HOST}\n"
         f"xAI API key  : {'set' if xai_set else 'NOT SET (backend: xai will fail)'}\n"
-        "Paste a multi-line task, then type END on its own line.\n"
-        "Add line: backend: xai   for Grok API (proposal only).\n"
+        "Paste multi-line task, then END.\n"
+        "backend: xai | # context: coding_min (default for xAI+source)\n"
         "Commands: /quit /models /agent /help /proposals /metrics\n"
         "          /approve [id]   /approve confirm [id]\n"
         "          /reject [id] reason=...\n"
@@ -523,7 +520,6 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
         console.print(f"[green]Ollama reachable — {len(models)} models available[/green]")
     except Exception as e:
         console.print(f"[yellow]Ollama not reachable at {OLLAMA_HOST}: {e}[/yellow]")
-        console.print("[dim]backend: xai can still run if XAI_API_KEY is set.[/dim]")
 
     if xai.configured:
         console.print("[green]xAI API key present — backend: xai enabled[/green]\n")
@@ -571,11 +567,11 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
             console.print(f"Forced agent → {current_agent}")
             continue
         if cmd == "/help":
-            console.print("Tasks: natural language with file paths when editing code.")
-            console.print("backend: xai | ollama   — first line or in body selects model backend")
-            console.print("xAI returns a proposal only; /approve confirm applies locally (no git push).")
+            console.print("backend: xai | ollama")
+            console.print("# context: coding_min | coding_std | full | source_only")
+            console.print("Default: coding_min for backend:xai + source files (STATUS+SCOPE only).")
             console.print("/proposals [pending|no_change|rejected|applied|full]")
-            console.print("/metrics | /approve [confirm] [id] | /reject [id] reason=...")
+            console.print("/metrics | /approve confirm [id] | /reject [id] reason=...")
             console.print("/queue status | run | run --once")
             continue
         if cmd == "/metrics" or cmd.startswith("/metrics "):
