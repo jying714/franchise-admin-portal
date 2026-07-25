@@ -4,6 +4,7 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/feature_toggle_tile.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OnboardingFeatureSetupScreen extends StatefulWidget {
@@ -203,7 +204,13 @@ class _OnboardingFeatureSetupScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(loc.saveSuccess)),
         );
-        Navigator.of(context).maybePop();
+        final hqShell =
+            context.findAncestorStateOfType<HqOnboardingShellScreenState>();
+        if (hqShell != null) {
+          hqShell.switchToSection('onboarding_menu_foundation');
+        } else {
+          Navigator.of(context).maybePop();
+        }
       }
     } catch (e, st) {
       shared.ErrorLogger.log(

@@ -525,10 +525,22 @@ class QuickLinksPanel extends StatelessWidget {
                   icon: Icons.checklist_outlined,
                   label: 'Onboarding',
                   onTap: () {
+                    final p = Provider.of<OnboardingProgressProviderImpl>(
+                        context,
+                        listen: false);
+                    final initialKey = !p.isStepComplete('onboarding_feature_setup')
+                        ? 'onboarding_feature_setup'
+                        : !p.isStepComplete('onboarding_menu_foundation')
+                            ? 'onboarding_menu_foundation'
+                            : !p.isStepComplete('onboardingMenuItems')
+                                ? 'onboardingMenuItems'
+                                : !p.isStepComplete('onboardingReview')
+                                    ? 'onboardingReview'
+                                    : 'onboardingMenu';
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => const HqOnboardingShellScreen(
-                          initialSectionKey: 'onboardingMenu',
+                        builder: (_) => HqOnboardingShellScreen(
+                          initialSectionKey: initialKey,
                         ),
                       ),
                     );

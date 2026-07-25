@@ -349,7 +349,7 @@ class _OnboardingReviewContent extends StatelessWidget {
                                       child: Row(
                                         children: [
                                           Icon(Icons.check_circle,
-                                              color: Colors.green[700],
+                                              color: colorScheme.primary,
                                               size: 22),
                                           const SizedBox(width: 10),
                                           Flexible(
@@ -357,7 +357,7 @@ class _OnboardingReviewContent extends StatelessWidget {
                                               loc.onboardingReviewReadyToPublish ??
                                                   "All required information is complete. Ready to publish.",
                                               style: TextStyle(
-                                                color: Colors.green[700],
+                                                color: colorScheme.primary,
                                                 fontWeight: FontWeight.w600,
                                                 fontSize: 16,
                                               ),
