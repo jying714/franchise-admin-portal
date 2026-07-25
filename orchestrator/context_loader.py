@@ -4,19 +4,20 @@ context_loader.py
 Loads the mandatory reference documents required by every agent
 (see AGENT_SYSTEM.md "Mandatory Reference Rules").
 
-Two modes:
+Modes:
   - full   : STATUS + personality + excerpts of all mandatory docs
-             (used for status / planning / review tasks)
-  - minimal: short role + short STATUS excerpt + SCOPE_CARD + hard rules only
-             (used when real source files are injected so the task
-              and code dominate the context window)
+             (status / planning / review tasks)
+  - minimal: short role + short STATUS + SCOPE_CARD + hard rules
+             (Ollama source-file tasks)
+  - smart  : same compact pack as minimal + explicit xAI proposal-only note
+             (xAI product tasks — avoids 18-doc token burn)
 """
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from rich.console import Console
 
@@ -43,12 +44,10 @@ MANDATORY_FILES: List[str] = [
     "tasks/Phase1.md",
 ]
 
-# Always-on short constraint card (high leverage, low token cost)
 SCOPE_CARD_PATH = "orchestrator/SCOPE_CARD.md"
 
 FULL_LOAD_FILES = {"STATUS.md"}
 
-# How many lines of STATUS.md to keep in minimal (coding) mode
 MINIMAL_STATUS_LINES = 35
 
 PROMPT_DIR = Path("prompts")
@@ -76,7 +75,6 @@ def _safe_read(path: Path) -> str:
 
 
 def _short_status(full_status: str, max_lines: int = MINIMAL_STATUS_LINES) -> str:
-    """Return the first max_lines of STATUS.md for minimal coding context."""
     lines = full_status.splitlines()
     if len(lines) <= max_lines:
         return full_status
@@ -96,7 +94,6 @@ def load_mandatory_context(project_root: Path) -> Dict[str, str]:
         full_marker = " (full)" if rel_path in FULL_LOAD_FILES else ""
         console.print(f"  {status} {rel_path}{full_marker}")
 
-    # Always load SCOPE_CARD (short, high-leverage constraints)
     scope_full = project_root / SCOPE_CARD_PATH
     scope_content = _safe_read(scope_full)
     context[SCOPE_CARD_PATH] = scope_content
@@ -120,6 +117,8 @@ def build_system_prompt(
     mandatory_context: Dict[str, str],
     *,
     minimal: bool = False,
+    smart: bool = False,
+    backend: Optional[str] = None,
 ) -> str:
     personality = load_agent_prompt(project_root, agent_name)
 
@@ -129,7 +128,6 @@ def build_system_prompt(
 
     scope_card = mandatory_context.get(SCOPE_CARD_PATH, "")
 
-    # A1: docstring/comment-only edits are explicitly SAFE and expected
     hard_rules = """
 ## HARD RULES (never break these)
 - Propose only. Never write files, never push, never touch Firestore.
@@ -147,8 +145,19 @@ def build_system_prompt(
 - Do not refuse a pure docstring or comment improvement.
 """
 
-    if minimal:
-        console.print("[dim]Context mode: MINIMAL (source-file task — short STATUS + SCOPE_CARD + hard rules only)[/dim]")
+    backend_note = ""
+    if backend == "xai":
+        backend_note = (
+            "\n## BACKEND: xAI API\n"
+            "- Your output is saved as a **proposal** only.\n"
+            "- A human will /approve confirm or apply via git. Do not assume files were written.\n"
+        )
+
+    if minimal or smart:
+        mode_label = "SMART (xAI — SCOPE_CARD + short STATUS)" if smart else (
+            "MINIMAL (source-file task — short STATUS + SCOPE_CARD + hard rules only)"
+        )
+        console.print(f"[dim]Context mode: {mode_label}[/dim]")
         short_role = personality[:600].strip()
         if len(personality) > 600:
             short_role += "\n...[role truncated for edit mode]"
@@ -164,7 +173,7 @@ def build_system_prompt(
 ---
 # SCOPE CARD (hard constraints — obey these)
 {scope_card}
-
+{backend_note}
 {hard_rules}
 """
 
@@ -188,7 +197,7 @@ def build_system_prompt(
 - Hybrid single/multi-location logic must be respected.
 - Dynamic config / branding / UI is mandatory.
 - NEVER perform direct Firestore writes or production changes.
-- Propose changes only → human reviews → merge via PR.
+- Propose changes only → human reviews → merge via PR or /approve confirm.
 - Flag any potential scope creep immediately.
 - Human review is mandatory for: architecture, config, schema, payments, security, design/branding.
 
