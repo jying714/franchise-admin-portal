@@ -11,6 +11,7 @@ A1: docstring/comment-only edits are explicitly allowed (no over-refusal).
 
 2026-07-25: Honor explicit Role: line; backend: xai|ollama; SMART context for xAI.
 2026-07-25 evening: APPLY SAFETY (import keep, max regions, empty AFTER for deletes).
+2026-07-25: Progress provider = shared.OnboardingProgressProvider only (no invented import path).
 """
 
 from __future__ import annotations
@@ -193,6 +194,10 @@ def prepare_task(
 - Deleting a method: BEFORE = the full method; AFTER fence body must be **completely empty** (zero lines inside the fence). Do **not** put only `}` in AFTER.
 - Do not use import cleanup as a side quest.
 - Multi-region on the same path: each BEFORE must still match the file **after** prior regions would apply (order top-to-bottom).
+- Onboarding progress in UI: use ONLY
+  `Provider.of<shared.OnboardingProgressProvider>(context, listen: false)`
+  (requires existing `import ... shared_core ... as shared`).
+  Do **NOT** invent `import '.../onboarding_progress_provider.dart'` or bare `OnboardingProgressProvider` without the `shared.` prefix.
 """
 
     if use_status_prompt:
@@ -227,6 +232,7 @@ def prepare_task(
 - Do NOT use static FranchiseProvider.current* — instance only.
 - Do NOT reintroduce Admin onboarding paths (admin/dashboard/onboarding is deleted).
 - Do NOT use top-level onboarding_progress/{{id}} — progress lives under franchises/{{id}}/onboarding_progress/progress.
+- Do NOT invent import paths for OnboardingProgressProvider.
 {apply_safety}
 ## HOW TO RESPOND (format is mandatory — apply will fail otherwise)
 A) If the named file(s) already satisfy the task → reply with a single line only:
