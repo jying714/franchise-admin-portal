@@ -11,8 +11,48 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 ///
 /// S1: scaffold + AppBar + placeholder only.
 /// Later steps fill preview, draft fields, and Save snackbar.
-class DesignBrandingScreen extends StatelessWidget {
+class DesignBrandingScreen extends StatefulWidget {
   const DesignBrandingScreen({super.key});
+
+  @override
+  State<DesignBrandingScreen> createState() => _DesignBrandingScreenState();
+}
+
+class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
+  late final TextEditingController _appNameController;
+  late final TextEditingController _logoUrlController;
+  late final TextEditingController _primaryHexController;
+  late final TextEditingController _secondaryHexController;
+
+  @override
+  void initState() {
+    super.initState();
+    final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    _appNameController =
+        TextEditingController(text: DesignTokens.currentAppName);
+    _logoUrlController =
+        TextEditingController(text: DesignTokens.currentLogoUrl ?? '');
+    _primaryHexController =
+        TextEditingController(text: fp.currentPrimaryColorHex);
+    _secondaryHexController =
+        TextEditingController(text: fp.currentSecondaryColorHex);
+
+    // Rebuild preview when any draft field changes
+    void listener() => setState(() {});
+    _appNameController.addListener(listener);
+    _logoUrlController.addListener(listener);
+    _primaryHexController.addListener(listener);
+    _secondaryHexController.addListener(listener);
+  }
+
+  @override
+  void dispose() {
+    _appNameController.dispose();
+    _logoUrlController.dispose();
+    _primaryHexController.dispose();
+    _secondaryHexController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +60,14 @@ class DesignBrandingScreen extends StatelessWidget {
         Provider.of<shared.FranchiseProvider>(context, listen: true);
     final franchiseId = franchiseProvider.franchiseId;
     final hasFranchise = franchiseId.isNotEmpty && franchiseId != 'unknown';
+
+    // Draft values used by the live preview (local only — no Firestore)
+    final draftName = _appNameController.text.trim().isEmpty
+        ? DesignTokens.currentAppName
+        : _appNameController.text.trim();
+    final draftLogoUrl = _logoUrlController.text.trim();
+    final draftPrimaryHex = _primaryHexController.text.trim();
+    final draftSecondaryHex = _secondaryHexController.text.trim();
 
     return Scaffold(
       backgroundColor: DesignTokens.backgroundColor,
@@ -81,8 +129,9 @@ class DesignBrandingScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       // Live Preview (S4) — reads only existing DesignTokens + FranchiseProvider instance getters
+                      // Live Preview driven by local draft state (v1 — no write)
                       Text(
-                        DesignTokens.currentAppName,
+                        draftName,
                         style:
                             Theme.of(context).textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w600,
@@ -90,14 +139,12 @@ class DesignBrandingScreen extends StatelessWidget {
                                 ),
                       ),
                       const SizedBox(height: 12),
-                      // Logo with fallback
-                      if (DesignTokens.currentLogoUrl != null &&
-                          DesignTokens.currentLogoUrl!.isNotEmpty)
+                      if (draftLogoUrl.isNotEmpty)
                         ClipRRect(
                           borderRadius: BorderRadius.circular(
                               DesignTokens.adminCardRadius),
                           child: Image.network(
-                            DesignTokens.currentLogoUrl!,
+                            draftLogoUrl,
                             width: 120,
                             height: 60,
                             fit: BoxFit.contain,
@@ -108,23 +155,72 @@ class DesignBrandingScreen extends StatelessWidget {
                       else
                         _logoFallback(context),
                       const SizedBox(height: 16),
-                      // Color swatches + hex labels (hex from FranchiseProvider instance)
                       Row(
                         children: [
                           _swatchColumn(
                             context,
                             color: DesignTokens.primaryColor,
                             label: 'Primary',
-                            hex: franchiseProvider.currentPrimaryColorHex,
+                            hex: draftPrimaryHex.isEmpty
+                                ? franchiseProvider.currentPrimaryColorHex
+                                : draftPrimaryHex,
                           ),
                           const SizedBox(width: 16),
                           _swatchColumn(
                             context,
                             color: DesignTokens.secondaryColor,
                             label: 'Secondary',
-                            hex: franchiseProvider.currentSecondaryColorHex,
+                            hex: draftSecondaryHex.isEmpty
+                                ? franchiseProvider.currentSecondaryColorHex
+                                : draftSecondaryHex,
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Draft (local only — Save not wired yet)',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: DesignTokens.secondaryTextColor,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _appNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'App name',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _logoUrlController,
+                        decoration: const InputDecoration(
+                          labelText: 'Logo URL',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _primaryHexController,
+                        decoration: const InputDecoration(
+                          labelText: 'Primary hex',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                          hintText: '#RRGGBB',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _secondaryHexController,
+                        decoration: const InputDecoration(
+                          labelText: 'Secondary hex',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                          hintText: '#RRGGBB',
+                        ),
                       ),
                     ],
                   ),
