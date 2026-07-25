@@ -2,38 +2,39 @@
 
 Flutter Web admin dashboard for franchise owners, HQ users, platform admins, and developers.
 
-## Current Status (July 24, 2026)
+## Current Status (July 25, 2026)
 
 **P2 – White-Label & Scalability: COMPLETE**  
 **P2.5 – Web-App Cleanup Sprint: COMPLETE**  
-**Phase 1 Workstream B**: Live branding path wired; HQ Design & Branding v1 complete (local draft + Save snackbar)
+**Phase 1**: Live branding; HQ Design & Branding **v1.1**; onboarding **HQ-only host**
 
 ### Major Achievements
-- Critical login flow & auth handoff stabilized
-- `hq_owner` dashboard loads correctly with proper `franchiseId` resolution
-- Franchise-aware providers (`FranchiseProvider`, `AdminUserProvider`) unified
-- Large-scale cleanup of duplicated code, type issues, and UI problems
-- Dynamic theming, QR/deep linking, and core admin UI stabilized
-- Firestore security rules refined
-- 4-step onboarding flows stabilized (currently still launched from Admin paths)
-- Web live branding: `FranchiseProvider` → `DesignTokens.setFranchiseProvider` → live primary/secondary
-- **HQ Design & Branding v1**: dashboard card CTA → dedicated screen with live preview, draft fields (name/logo/primary/secondary hex), Save snackbar only, Cancel reset — no Firestore write until v1.1
+- Auth handoff + role dashboards stabilized
+- Franchise-aware providers unified (`FranchiseProvider`, `AdminUserProvider`)
+- Web live branding: `FranchiseProvider` → `DesignTokens.setFranchiseProvider` → live colors
+- **HQ Design & Branding v1.1**: card CTA → screen; Save writes franchise branding + `config/ui_config`
+- **Onboarding (Decision 7)**: full migration under HQ Owner
+  - Host: `web-app/lib/admin/hq_owner/onboarding/` + `HqOnboardingShellScreen`
+  - Admin onboarding tree removed; Admin sidebar is ops-only
+  - Deep link: `/hq/onboarding?section=…`
+  - Progress: `franchises/{id}/onboarding_progress/progress`; HQ card watches `OnboardingProgressProviderImpl`
+  - Feature Setup → progress card verified; steps 2–4 writers still being hardened
 
 ## Features
-- **Dynamic white-label branding** per franchise (HQ Live Branding preview card + Design & Branding screen)
-- Menu, Category, Ingredient management with onboarding wizard
-- Orders, analytics, staff, and financial tools
-- Subscription & billing management
-- Franchise picker and role-based dashboards (HQ Owner, Admin/Staff, Developer, Platform Owner)
-- Real-time updates via Firestore
-- Hybrid single/multi-location support with automatic UI simplification
+- Dynamic white-label branding per franchise (HQ Design & Branding)
+- Menu / category / ingredient management via **HQ onboarding shell**
+- Orders, analytics, staff, financial tools (Admin ops)
+- Subscription & billing; franchise picker; role switcher
+- Hybrid single/multi-location support
 
-## Onboarding placement (Decision 7)
+## Onboarding placement (Decision 7 — implemented)
 
-- **Target home**: HQ Owner dashboard (`OwnerHQDashboardScreen`)
-- **Current code**: onboarding screens still under `web-app/lib/admin/dashboard/onboarding/` and primarily reached from Admin; progress card already on HQ Owner
-- **Plan**: navigation CTA from HQ progress card → existing screens → demote Admin entry
-- See `docs/DECISIONS.md` Decision 7 and `docs/DASHBOARDS.md`
+- **Home**: HQ Owner → Onboarding Progress card → **Continue** → `HqOnboardingShellScreen`
+- **Code**: `web-app/lib/admin/hq_owner/onboarding/**` (Admin onboarding tree deleted)
+- **Registry**: `section_registry.dart` has no onboarding sections
+- **Progress keys**: `onboarding_feature_setup`, `onboarding_menu_foundation`, `onboardingMenuItems`, `onboardingReview`
+- Foundation tab marks update **detail %** only; product step 2 via foundation continue
+- See `docs/DECISIONS.md` Decision 7 and `STATUS.md`
 
 ## Config Delegation
 Web-app uses thin delegation layers (`branding_config.dart`, `design_tokens.dart`) that forward to `shared_core`. Do not add new config logic here.
@@ -51,11 +52,10 @@ flutter run -d chrome
 
 ## Architecture Notes
 
-- All business logic and models come from `shared_core`
-- Design & Branding allows franchise owners to manage look & feel with live preview (franchise-scoped); v1 is local draft only
-- Role-based access, dashboard switching, and FeatureGate supported
-- Agent work must follow `AGENT_SYSTEM.md` + `orchestrator/SCOPE_CARD.md` with human review on architecture, config, and design changes
-- Onboarding belongs on HQ Owner long-term (not Admin)
+- Business logic and models from `shared_core`
+- Role-based access, dashboard switching, FeatureGate
+- Agent work: `AGENT_SYSTEM.md` + `orchestrator/SCOPE_CARD.md`; human merge gate
+- Do not reintroduce Admin onboarding host or top-level `onboarding_progress/{id}`
 
 ## Related Documentation
 
@@ -65,6 +65,6 @@ flutter run -d chrome
 - `docs/slices/hq-design-branding-v1.md`
 - `ROADMAP.md`
 - `STATUS.md`
-- `AGENT_SYSTEM.md` (multi-agent governance)
+- `AGENT_SYSTEM.md`
 
-**Last Updated**: July 24, 2026
+**Last Updated**: July 25, 2026
