@@ -10,6 +10,7 @@ so the task + source dominate and the model stops inventing fields.
 A1: docstring/comment-only edits are explicitly allowed (no over-refusal).
 
 2026-07-25: Honor explicit Role: line; backend: xai|ollama; SMART context for xAI.
+2026-07-25 evening: APPLY SAFETY (import keep, max regions, empty AFTER for deletes).
 """
 
 from __future__ import annotations
@@ -137,9 +138,6 @@ def prepare_task(
 
     use_status_prompt = status and not has_source
 
-    # xAI product coding: SMART (SCOPE_CARD + short STATUS + hard rules)
-    # Ollama source: MINIMAL (same shape historically)
-    # Status-only / no source: FULL
     if use_status_prompt:
         context_mode = "full"
     elif has_source and backend == "xai":
@@ -180,11 +178,22 @@ def prepare_task(
         xai_cfg = cfg.get("xai") or {}
         model = str(xai_cfg.get("model") or "grok-4.5")
         temperature = float(xai_cfg.get("temperature", 0.1))
-        num_ctx = 0  # not used by xAI client
+        num_ctx = 0
     elif use_status_prompt:
         model = "qwen2.5-coder:14b"
     else:
         model = models.get(agent, "qwen2.5-coder:14b")
+
+    apply_safety = """
+## APPLY SAFETY (mandatory — broken apply is a failed proposal)
+- Prefer **one** BEFORE/AFTER region per file. Maximum **two** regions per file unless the task explicitly allows more.
+- **Never remove an import** unless every symbol from that import is unused in the file **after** your edit.
+- If the file uses `OnboardingSections`, you **must keep**
+  `import '.../onboarding_navigation_utils.dart';`
+- Deleting a method: BEFORE = the full method; AFTER fence body must be **completely empty** (zero lines inside the fence). Do **not** put only `}` in AFTER.
+- Do not use import cleanup as a side quest.
+- Multi-region on the same path: each BEFORE must still match the file **after** prior regions would apply (order top-to-bottom).
+"""
 
     if use_status_prompt:
         user_prompt = f"""## TASK
@@ -218,7 +227,7 @@ def prepare_task(
 - Do NOT use static FranchiseProvider.current* — instance only.
 - Do NOT reintroduce Admin onboarding paths (admin/dashboard/onboarding is deleted).
 - Do NOT use top-level onboarding_progress/{{id}} — progress lives under franchises/{{id}}/onboarding_progress/progress.
-
+{apply_safety}
 ## HOW TO RESPOND (format is mandatory — apply will fail otherwise)
 A) If the named file(s) already satisfy the task → reply with a single line only:
 No change needed
@@ -226,23 +235,24 @@ Do NOT emit full-class BEFORE/AFTER for verify-only tasks.
 
 B) Else:
 1. Quote the exact first 8–12 lines of the loaded file (copy from the source block).
-2. Show the change using EXACTLY these two headings and fenced blocks (repeat per file for multi-file):
+2. Prefer **one** FILE block with one BEFORE/AFTER. If you must use two regions, stop at two.
+3. Show the change using EXACTLY these headings and fenced blocks:
 
 FILE: path/to/file.dart
 
 ## BEFORE
 ```dart
-<paste the exact current lines you will replace — small region only>
+<paste the exact current lines you will replace — contiguous region from source>
 ```
 
 ## AFTER
 ```dart
-<paste the exact new lines for that same region only>
+<paste the exact new lines for that same region only; empty fence body = delete region>
 ```
 
-3. CRITICAL for apply: In BEFORE, copy indentation and line breaks from the RELEVANT SOURCE FILES block byte-for-byte.
-4. Only include the region you change. Do not dump the whole file.
-5. Short "Next steps for human" only if something remains out of scope.
+4. CRITICAL for apply: In BEFORE, copy indentation and line breaks from the RELEVANT SOURCE FILES block byte-for-byte.
+5. Only include the region you change. Do not dump the whole file.
+6. Short "Next steps for human" only if something remains out of scope.
 
 Only stop if the source file is missing/blocked. Do not refuse a pure docstring or comment improvement.
 
