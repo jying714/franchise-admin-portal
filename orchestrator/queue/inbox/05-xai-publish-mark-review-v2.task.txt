@@ -1,0 +1,36 @@
+# id: xai-publish-mark-review-v2
+# agent: web_frontend
+# backend: xai
+# priority: 7
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/widgets/review/publish_onboarding_button.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Goal: After **successful** `publishOnboarding(...)` only, mark progress key `onboardingReview`.
+
+Exact pattern to use (copy this shape — do not invent imports):
+```dart
+await Provider.of<shared.OnboardingProgressProvider>(context, listen: false)
+    .markStepComplete('onboardingReview');
+```
+The file already has `import 'package:shared_core/shared_core.dart' as shared;` — **keep it**.
+Do **NOT** add `import '.../onboarding_progress_provider.dart'`.
+Do **NOT** use bare `OnboardingProgressProvider` without the `shared.` prefix.
+
+Place the mark **inside** the existing success `try` block, **after** `await provider.publishOnboarding(...)` succeeds and **before** or with the success snackbar. Do not mark on catch/failure.
+
+Prefer **exactly one** BEFORE/AFTER region (the try-success block only). No import region unless `shared` import is missing (it is not).
+
+If success path already calls markStepComplete('onboardingReview') via shared.OnboardingProgressProvider → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Max 1 region preferred (2 max).
+4. Proposal only.
