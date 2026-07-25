@@ -17,6 +17,7 @@ import 'package:franchise_admin_portal/widgets/header/settings_icon_button.dart'
 import 'package:franchise_admin_portal/widgets/header/help_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/screens/design_branding_screen.dart';
+import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.dart';
 
 class OwnerHQDashboardScreen extends StatelessWidget {
   final String currentScreen;
@@ -388,6 +389,29 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                                     ?.copyWith(
                                       color: DesignTokens.secondaryTextColor,
                                     ),
+                          ),
+                          const SizedBox(height: 16),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: FilledButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => const AdminDashboardScreen(
+                                      initialSectionKey: 'onboardingMenu',
+                                      currentScreen: '/admin/dashboard',
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.checklist_outlined,
+                                  size: 18),
+                              label: const Text('Continue onboarding'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: DesignTokens.primaryColor,
+                                foregroundColor: DesignTokens.foregroundColor,
+                              ),
+                            ),
                           ),
                         ],
                       ),
