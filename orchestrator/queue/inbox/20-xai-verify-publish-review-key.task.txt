@@ -1,0 +1,28 @@
+# id: xai-verify-publish-review-key
+# agent: web_frontend
+# backend: xai
+# priority: 4
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/widgets/review/publish_onboarding_button.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+VERIFY-ONLY:
+After successful `publishOnboarding(...)`, confirm success path calls:
+```dart
+await Provider.of<shared.OnboardingProgressProvider>(context, listen: false)
+    .markStepComplete('onboardingReview');
+```
+
+If present → reply only: No change needed
+If missing → add it inside the success try, after publish succeeds, before snackbar. Keep existing `as shared` import; do not invent progress_provider imports.
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.

@@ -1,0 +1,34 @@
+# id: xai-status-progress-checkboxes
+# agent: web_frontend
+# backend: xai
+# priority: 5
+
+backend: xai
+Role: web_frontend
+
+Files:
+- STATUS.md
+
+Task:
+Quote the exact first 10–12 lines of STATUS.md.
+
+Update only the progress-tracking checklist under **Progress tracking ground truth** to match disk truth after the July 25 apply batch:
+
+Change these lines from open to done (use `[x]`):
+- Menu Items unmark incomplete (same key)
+- Foundation Save & Continue → card step 2 reliably
+- Publish → `markStepComplete('onboardingReview')` → card step 4
+- Review UX: remove summary **Action / Fix Now** column; keep expansion detail; expansion Fix = **section-only** in-shell switch (no field highlight yet)
+- Stale “Step 6 of 6” chrome on review (4-step product)
+
+Also under **Still open (product)** remove or mark done the items that are now complete (progress writers 2–4 + menu unmark; Action column; Step 6 chrome).
+
+Do not rewrite the whole file. Prefer one or two BEFORE/AFTER regions on the checklist only.
+Do not invent new architecture claims.
+
+If STATUS already marks all of the above as `[x]` → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only STATUS.md.
+3. Proposal only.

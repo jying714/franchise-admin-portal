@@ -1,0 +1,24 @@
+# id: xai-verify-action-stripped
+# agent: web_frontend
+# backend: xai
+# priority: 4
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/widgets/review/review_summary_table.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+VERIFY-ONLY:
+Confirm the summary table has only Section / Status / Issues columns and that `_buildActionWidget` / `_actionButton` are fully gone.
+
+If Action is already removed → reply only: No change needed
+If Action column or methods remain → strip them (keep onboarding_navigation_utils import if `_sectionOrder` still uses OnboardingSections).
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.

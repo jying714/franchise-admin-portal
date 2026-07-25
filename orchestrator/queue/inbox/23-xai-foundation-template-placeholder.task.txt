@@ -1,0 +1,35 @@
+# id: xai-foundation-template-placeholder
+# agent: web_frontend
+# backend: xai
+# priority: 5
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_foundation_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Locate the template import snackbar that says Phase 3 wiring:
+```dart
+const SnackBar(
+  content: Text('Template import triggered (Phase 3 wiring)'),
+),
+```
+
+Update the message only to a clearer MVP placeholder (no new import logic):
+```dart
+const SnackBar(
+  content: Text('Template import is not wired yet — use tabs to add types, ingredients, and categories.'),
+),
+```
+
+Do not invent Firestore template import. Prefer one region.
+If message is already clear / non-Phase-3 → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.

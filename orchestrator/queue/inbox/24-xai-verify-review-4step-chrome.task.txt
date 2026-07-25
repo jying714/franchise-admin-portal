@@ -1,0 +1,24 @@
+# id: xai-verify-review-4step-chrome
+# agent: web_frontend
+# backend: xai
+# priority: 4
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_review_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+VERIFY-ONLY:
+Confirm OnboardingProgressIndicator uses currentStep: 4 and totalSteps: 4 (not 6).
+
+If already 4/4 → reply only: No change needed
+If still 6/6 → change to 4/4 with matching stepLabel args.
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.

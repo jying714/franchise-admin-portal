@@ -1,0 +1,42 @@
+# id: xai-menu-live-dependency-counts
+# agent: web_frontend
+# backend: xai
+# priority: 7
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_items_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Product polish: the green status bar hard-codes fake counts:
+```dart
+Text(
+  '✅ Dependencies loaded • 18 ingredients • 6 categories • 17 types',
+  style: shared.UiConfig.bodyStyle),
+```
+
+Required: replace with live provider counts already available in `build`:
+- `context.watch<shared.IngredientMetadataProvider>().allIngredients.length` (or `.ingredients` if that is the list used elsewhere in this file)
+- `context.watch<shared.CategoryProvider>().categories.length`
+- `context.watch<shared.IngredientTypeProvider>().ingredientTypes.length`
+
+Example shape (adapt to exact getters present in this file):
+```dart
+Text(
+  '✅ Dependencies loaded • ${ingredientsCount} ingredients • ${categoriesCount} categories • ${typesCount} types',
+  style: shared.UiConfig.bodyStyle),
+```
+
+Do not invent new providers. Do not change navigation, progress keys, or editor.
+Prefer one BEFORE/AFTER region only.
+
+If the status bar already uses live provider lengths → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.

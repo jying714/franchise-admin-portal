@@ -1,0 +1,53 @@
+# id: xai-menu-fab-hq-path
+# agent: web_frontend
+# backend: xai
+# priority: 8
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_items_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Product rule (Decision 7): do not navigate to Admin dashboard routes from HQ onboarding.
+
+Locate the FloatingActionButton.extended `onPressed` that does:
+```dart
+Navigator.pushNamed(
+  context,
+  '/dashboard?section=menuItemEditor',
+).then((result) { ... });
+```
+
+Replace the navigation with the existing in-screen editor path already used elsewhere in this file:
+```dart
+openEditor(shared.MenuItem(
+  id: const Uuid().v4(),
+  name: 'New Item',
+  price: 0.0,
+  categoryId: '',
+  category: '',
+  available: true,
+  availability: true,
+  description: '',
+  customizationGroups: [],
+  customizations: [],
+  taxCategory: 'standard',
+  includedIngredients: [],
+  optionalAddOns: [],
+));
+```
+
+Keep error logging structure if useful; remove the Admin route entirely.
+Do not change progress keys or other UI.
+Prefer one BEFORE/AFTER region.
+
+If FAB already calls `openEditor(...)` and does not push `/dashboard?...` → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.
