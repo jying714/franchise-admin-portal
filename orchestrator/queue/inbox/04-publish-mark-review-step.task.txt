@@ -1,0 +1,15 @@
+Role: web_frontend
+
+File: web-app/lib/admin/hq_owner/onboarding/widgets/review/publish_onboarding_button.dart
+
+Task: Quote first 10–12 lines.
+
+After successful provider.publishOnboarding(...), also mark progress step complete:
+- Provider.of shared.OnboardingProgressProvider (listen: false)
+- await markStepComplete('onboardingReview')
+- Only on success path (after publish succeeds), not on failure
+- Do not change publish confirmation or canPublish logic
+
+If already calls markStepComplete('onboardingReview') after success → No change needed.
+
+Rules: quote-first; this file only; key must be onboardingReview.
