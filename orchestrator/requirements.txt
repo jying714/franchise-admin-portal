@@ -1,10 +1,11 @@
 # Minimal dependencies for the Franchise Orchestrator
 # Keep this lean — we run on the same machine as Ollama
 
-httpx>=0.27.0          # async HTTP client for Ollama API
+httpx>=0.27.0          # async HTTP client for Ollama + xAI API
 pydantic>=2.7.0        # data validation & settings
 rich>=13.7.0           # beautiful terminal output
 typer>=0.12.0          # CLI interface
 python-dotenv>=1.0.0   # optional .env support
 aiofiles>=23.2.1       # async file reading for context loading
-tenacity>=8.3.0        # retries when Ollama is still loading a model
+tenacity>=8.3.0        # retries when Ollama / xAI is transient
+PyYAML>=6.0            # orchestrator/config/backends.yaml
