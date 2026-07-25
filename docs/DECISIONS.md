@@ -1,6 +1,6 @@
 # Architecture Decision Log (DECISIONS.md)
 
-**Last Updated**: July 24, 2026
+**Last Updated**: July 24, 2026 (Decision 8 — HQ Design & Branding v1 slice locked)
 
 This file records major architectural and design decisions for the Doughboys Pizzeria Franchise Platform.
 
@@ -23,10 +23,11 @@ This file records major architectural and design decisions for the Doughboys Piz
 
 ### 3. Design & Branding Management
 **Date**: July 2026  
-**Status**: Approved  
+**Status**: Approved (refined by Decision 8 for v1 delivery)  
 **Decision**: Dedicated page in HQ Owner dashboard with live preview simulator. Franchise-scoped in Firestore. Warning for non-developer users.  
 **Rationale**: Gives owners control while maintaining safety and preview capability.  
-**Impact**: New feature in Phase 1/2.
+**Impact**: New feature in Phase 1/2.  
+**See also**: Decision 8 for locked v1 scope (preview + draft UI; Save not wired).
 
 ### 4. Mobile App Dynamic UI
 **Date**: July 2026  
@@ -62,6 +63,23 @@ This file records major architectural and design decisions for the Doughboys Piz
 **Rationale**: HQ Owners own franchise setup (menu foundation, branding, features). Admin/Staff dashboards are for day-to-day operations, not initial franchise configuration.  
 **Impact**: Navigation, section registry, dashboard home composition; no new onboarding schema. Small surgical steps preferred.  
 **Reference**: `docs/DASHBOARDS.md`, `STATUS.md`, `tasks/Phase1.md`.
+
+### 8. HQ Design & Branding v1 — Card + Dedicated Screen (preview/draft; Save not wired)
+**Date**: July 24, 2026  
+**Status**: Approved (implementation pending)  
+**Decision**:
+1. Keep the **Live Branding Preview** card on `OwnerHQDashboardScreen` (name, logo, primary/secondary) and add button **Open Design & Branding**.
+2. Open a **new dedicated HQ Owner screen** (`web-app/lib/admin/hq_owner/screens/design_branding_screen.dart`) via `Navigator.push` + `MaterialPageRoute` with AppBar **Back** to the dashboard.
+3. Screen v1 includes: franchise context label; live preview (name, **logo Image with fallback**, swatches, hex labels); draft fields (app name, logo URL, primary, secondary); **Save** enabled but only shows SnackBar **“Save not wired yet”** (no Firestore write); Cancel/Back.
+4. **Do not** use `section_registry.dart` (Admin-only). HQ `onGenerateRoute` currently collapses many `hq*` paths to the dashboard — do not depend on it for this entry.
+5. **No** new BrandingConfig/DesignTokens/AppConfig/FeatureConfig fields; **no** new Firestore collections in v1.
+6. Persistence write to existing `franchises/{id}` branding keys is **v1.1** (follow-up), after UI lands.
+7. Delivery: human/Grok **shell first** (screen file + card CTA); agents only surgical fill-in on named files.
+
+**Rationale**: Delivers Decision 3’s dedicated HQ Design & Branding surface without inventing write APIs or schema. Local draft + honest Save messaging avoids fake persistence. Push navigation matches real HQ patterns better than Admin section registry.
+
+**Impact**: New HQ screen; dashboard card CTA; STATUS product checklist; agent tasks after shell.  
+**Reference**: `docs/slices/hq-design-branding-v1.md` (authoritative slice detail), `STATUS.md`, `OwnerHQDashboardScreen`, `FranchiseProvider.setBrandingFromFranchiseDoc`.
 
 ---
 
