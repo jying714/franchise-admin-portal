@@ -1,0 +1,37 @@
+# id: xai-foundation-complete-key
+# agent: web_frontend
+# backend: xai
+# priority: 6
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_foundation_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Product rules (SCOPE_CARD):
+- Tab-level marks for types/ingredients/categories may set **sub-keys only**.
+- Product step 2 key **`onboarding_menu_foundation`** is set only via foundation Save & Continue / explicit foundation complete — not from a single tab.
+
+Required:
+1. Locate Save Foundation & Continue (and any explicit foundation complete control).
+2. Ensure it calls `markStepComplete('onboarding_menu_foundation')` when foundation progress threshold is met (existing ≥0.8 logic if present).
+3. Ensure it does **not** invent AdminDashboardScreen.switchToSection — stay in HQ shell / existing HQ navigation only.
+4. Do not change tab screens to mark `onboarding_menu_foundation` on tab-only complete.
+5. Do not invent new Firestore paths or provider APIs.
+
+APPLY SAFETY:
+- Max **2** BEFORE/AFTER regions.
+- Keep imports still referenced (e.g. navigation utils if used).
+- Prefer smallest surgical region.
+
+If foundation continue already marks `onboarding_menu_foundation` correctly and uses HQ-only nav → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.
+4. No Admin onboarding reintroduction.
