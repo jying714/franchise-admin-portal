@@ -6,59 +6,60 @@ Keep this short. Loaded on every coding task (especially minimal mode).
 - Phase 1 Workstream B micro-edits only
 - Quote real source first (first 10–12 lines + relevant region)
 - DesignTokens.setFranchiseProvider / live Color getters
-- FranchiseProvider.setBrandingFromFranchiseDoc / currentPrimaryColorHex / currentSecondaryColorHex (hex Strings only — **instance**)
-- Tiny UI additions that consume existing DesignTokens (e.g. live color swatch)
-- Docstrings and clarifying comments when the task explicitly asks
-- Onboarding progress UI that only reads existing OnboardingProgressProvider API
-- HQ Design & Branding v1 surgical UI on named files only (`docs/slices/hq-design-branding-v1.md`) — v1 UI is landed; further edits only if task names the file
-- Prefer **product slice tasks** over further DesignTokens color-swap training on the same widgets
+- FranchiseProvider instance hex getters only (never static)
+- Tiny UI that consumes existing DesignTokens / OnboardingProgressProvider API
+- HQ onboarding under `web-app/lib/admin/hq_owner/onboarding/**` only
+- Progress keys (product): `onboarding_feature_setup`, `onboarding_menu_foundation`, `onboardingMenuItems`, `onboardingReview`
+- Foundation sub-keys only for detail %: `ingredientTypes`, `ingredients`, `categories`
+- Prefer **product slice tasks** over color-swap drills
 
 ## OUT OF SCOPE (auto-reject if proposed)
-- New fields or getters on BrandingConfig, AppConfig, DesignTokens, FeatureConfig
-- FranchiseProvider() zero-arg constructor (executable code — not ban phrases inside comments)
-- ChangeNotifierProvider(create: (_) => FranchiseProvider(...)) inventing construction
-- **Static access on FranchiseProvider instance API** — never `FranchiseProvider.currentPrimaryColorHex` / `currentSecondaryColorHex` / `currentAppName` / `currentLogoUrl`; must use the local instance from `Provider.of` / `franchiseProvider`
-- FirestoreService.collection or any **new** Firestore query API not already in the region
-- Schema changes, migrations, or any Firestore writes (including branding Save in v1)
+- New fields/getters on BrandingConfig, AppConfig, DesignTokens, FeatureConfig
+- FranchiseProvider() zero-arg / invented ChangeNotifierProvider FranchiseProvider
+- **Static** FranchiseProvider.current* access
+- FirestoreService.collection or **new** Firestore query APIs not in the region
+- Schema changes / new collections
 - Multi-file "while you're at it" expansions
-- Invented DesignTokens members:
-  - onPrimary / onSecondary / onSurface / on*
-  - **currentPrimaryColor / currentSecondaryColor** (do not invent current*Color)
-  - treating currentPrimaryColorHex / currentSecondaryColorHex as Color
-- Hard-coded Colors.blue / theme placeholders when the task is about live branding
-- Editing any file not explicitly named in the task (path allowlist)
-- Identical BEFORE/AFTER (no-op) — if the region already satisfies the request, reply only: **No change needed**
-- Cosmetic-only wording changes when the task allows **No change needed**
-- **Partial completion** — if the task requires wiring A to B (e.g. controllers + preview), both must appear in AFTER; do not leave "Next steps for human" for required work
-- Registering HQ Design & Branding in `section_registry.dart` (Admin-only)
-- Inventing branding write/save APIs or Storage upload in v1
+- Invented DesignTokens on* / current*Color
+- Hard-coded Colors.blue on live-branding tasks
+- Editing any file not named in the task
+- Identical BEFORE/AFTER — reply only: **No change needed**
+- Partial completion / "Next steps for human" on required wiring
+- Registering onboarding or Design & Branding in `section_registry.dart`
+- Reintroducing Admin onboarding host (`admin/dashboard/onboarding/**` is **deleted**)
+- Top-level `onboarding_progress/{id}` path — use `franchises/{id}/onboarding_progress/progress` only
+- Using AdminDashboardScreen.switchToSection for HQ onboarding navigation (use HqOnboardingShellScreenState)
 
-## HARD BAN SCOPE (read carefully)
-- HARD BAN applies to **net-new proposed code** (typically AFTER), not to quoting existing source that already contains `.collection('franchises')` or the words `FranchiseProvider()` in comments.
-- If the live file already satisfies the task → reply **only**: **No change needed** (do not re-emit the whole class as BEFORE/AFTER).
-- Verify-only tasks: never rewrite bootstrap branding fetch or the DesignTokens bridge.
+## HARD BAN SCOPE
+- HARD BAN applies to **net-new proposed code**, not quoting existing source.
+- If live file already satisfies task → **only**: **No change needed**
+- Verify-only tasks: never rewrite bootstrap branding or DesignTokens bridge.
 
 ## LIVE PATHS (do not invent alternatives)
-- WEB: FranchiseProvider → DesignTokens.setFranchiseProvider → **DesignTokens.primaryColor / secondaryColor** (Color getters)
-- MOBILE: FranchiseProvider → UiConfig.setFranchiseProvider → **UiConfig.primaryColor / secondaryColor**
-- Hex strings live only on FranchiseProvider **instance**: `franchiseProvider.currentPrimaryColorHex` / `currentSecondaryColorHex` — never static `FranchiseProvider.current*` and never use those names as Color on DesignTokens/UiConfig
+- WEB: FranchiseProvider → DesignTokens.setFranchiseProvider → DesignTokens.primaryColor / secondaryColor
+- MOBILE: FranchiseProvider → UiConfig.setFranchiseProvider → UiConfig.*
+- Hex: franchiseProvider instance only
+- Onboarding host: HqOnboardingShellScreen + in-shell switchToSection
+- Progress Firestore: franchises/{franchiseId}/onboarding_progress/progress
 
-## HQ DESIGN & BRANDING v1 (product)
-- Card CTA: **Open Design & Branding** → `Navigator.push` dedicated screen (not section_registry) — **landed**
-- Screen: live preview + draft fields + Save snackbar + Cancel reset — **landed**
-- Save = SnackBar **Save not wired yet** only — no Firestore write
-- Logo = Image when URL present, fallback when missing
-- v1.1 persistence write path = later (human-designed)
+## HQ DESIGN & BRANDING
+- v1 UI landed; v1.1 Save may write existing franchise branding keys when task explicitly says so
+- No section_registry for HQ entry
+- No new BrandingConfig/DesignTokens fields
+
+## ONBOARDING PROGRESS (product rules)
+- Tab marks (types/ingredients/categories) → sub-keys only — do **not** mark `onboarding_menu_foundation` from tab-only complete
+- Step 2 product key only via foundation Save & Continue / explicit foundation complete
+- `onboardingReview` only on successful Publish (not summary-table validation)
+- Menu complete/incomplete must use key **`onboardingMenuItems`** (not `menu_items`)
 
 ## QUOTE DISCIPLINE
-- Always quote exact first 10–12 lines of every named file before proposing an edit
-- BEFORE/AFTER must be surgical (small region only) and must **differ**
-- If the requested token/usage is already present → reply only: **No change needed** (do not emit identical fences)
-- If required source cannot be quoted → reply only: FAILED TO LOAD
-- For 2-file tasks: separate ## BEFORE / ## AFTER per file; No change needed allowed on the clean file
-- Verify tasks: prefer single-line **No change needed** over full-file dumps
+- Quote exact first 10–12 lines of every named file before edit
+- BEFORE/AFTER surgical and must **differ**
+- Already correct → **No change needed** only
+- Cannot load source → FAILED TO LOAD
+- 2-file: separate BEFORE/AFTER per file; No change needed OK on clean file
 
 ## PATH ALLOWLIST + AUTO-REJECT
 - Only edit files the task explicitly names.
-- HARD BAN and path-allowlist hits are auto-rejected (status=rejected; no apply).
-- Identical BEFORE/AFTER is a reject candidate (no-op).
+- HARD BAN / path-allowlist → auto-rejected.
