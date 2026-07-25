@@ -36,6 +36,8 @@ Keep this short. Loaded on every coding task (especially minimal/smart mode).
 - Top-level `onboarding_progress/{id}` path — use `franchises/{id}/onboarding_progress/progress` only
 - Using AdminDashboardScreen.switchToSection for HQ onboarding navigation (use HqOnboardingShellScreenState)
 - **Invented** `import '.../onboarding_progress_provider.dart'` — progress type is **`shared.OnboardingProgressProvider`** (from shared_core / existing alias)
+- **Invented** `removeMenuItem` — MenuItemProvider API is **`deleteMenuItem(String id)`**
+- **`ChangeNotifierProvider<shared.OnboardingProgressProvider>`** — abstract is pure Dart (not ChangeNotifier)
 
 ## HARD BAN SCOPE
 - HARD BAN applies to **net-new proposed code**, not quoting existing source.
@@ -45,7 +47,11 @@ Keep this short. Loaded on every coding task (especially minimal/smart mode).
 
 ## APPLY SAFETY (mandatory — all backends)
 - **xAI default**: up to **2** BEFORE/AFTER regions per file; task may set `max_regions: 3` for one coherent outcome
+- **Prefer max_regions: 1** when wiring a single stub/callback
 - **Ollama default**: prefer **1** region; max 2 only when task says so
+- **One FILE path once** per proposal (do not emit two FILE headers for the same path — allowlist HARD BAN)
+- Respond with FILE/BEFORE/AFTER fences only when editing — **no prose about truncation**
+- Prefer **multi-line** BEFORE windows (parent widget context), not isolated single lines (whitespace match fails)
 - **Never remove an import** unless every symbol from that import is unused **after** your change.
 - `OnboardingSections` lives in `onboarding_navigation_utils.dart` — if `_sectionOrder` / UI still references it, **keep** that import.
 - Method delete: BEFORE = full method body; AFTER must be **empty** (no lines). **Forbidden**: AFTER that is only `}` or `);`.
@@ -60,7 +66,11 @@ Keep this short. Loaded on every coding task (especially minimal/smart mode).
 - Onboarding host: HqOnboardingShellScreen + in-shell switchToSection
 - Progress Firestore: franchises/{franchiseId}/onboarding_progress/progress
 - Progress provider in UI: `Provider.of<shared.OnboardingProgressProvider>(context, listen: false)` — **not** a new web-app progress_provider import
-- HQ shell listenable progress: prefer `ChangeNotifierProvider<shared.OnboardingProgressProvider>.value` when exposing Impl to children that `watch`
+- HQ shell listenable progress:
+  - `ChangeNotifierProvider<OnboardingProgressProviderImpl>.value(...)`
+  - `ProxyProvider<OnboardingProgressProviderImpl, shared.OnboardingProgressProvider>(update: (_, impl, __) => impl)`
+  - **Never** `ChangeNotifierProvider<shared.OnboardingProgressProvider>` (abstract does not extend ChangeNotifier)
+- MenuItemProvider delete: **`deleteMenuItem(String id)`** then usually `await persistChanges()`
 
 ## HQ DESIGN & BRANDING
 - v1 UI landed; v1.1 Save may write existing franchise branding keys when task explicitly says so
@@ -88,12 +98,12 @@ Keep this short. Loaded on every coding task (especially minimal/smart mode).
 ## TASK DESIGN
 
 ### xAI (primary) — outcome tasks
-- **Unit of work**: one **product outcome** in one sentence (e.g. “dirty menu Save and Delete work end-to-end on this screen”).
-- **Shape**: `backend: xai` + optional `max_regions: 2` (or 3) + one primary file.
-- **Win pattern**: paste **exact on-disk BEFORE** for each region + clear AFTER (or precise description of AFTER using only APIs already in the file).
+- **Unit of work**: one **product outcome** in one sentence.
+- **Shape**: `backend: xai` + optional `max_regions: 1|2` + one primary file.
+- **Win pattern**: paste **exact on-disk BEFORE** + clear AFTER using only real APIs (`deleteMenuItem`, progress keys, etc.).
 - Prefer **real fix** when goal is unmet; **No change needed** only when already on disk.
 - Batch size: **4–8 outcome tasks** per AFK run (not 20 micro-chores).
-- Secondary polish (prints, unused imports, theme-only) is fine as low-priority fillers — not the main load.
+- Secondary polish is fine as low-priority fillers — not the main load.
 
 ### Ollama (secondary) — surgical / verify
 - Prefer 1 region, one tiny change, escape-hatch no_change when ambiguous.

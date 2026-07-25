@@ -1,0 +1,59 @@
+# id: xai-quicklink-first-incomplete
+# agent: web_frontend
+# backend: xai
+# priority: 4
+# max_regions: 1
+
+backend: xai
+Role: web_frontend
+max_regions: 1
+
+Files:
+- web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart
+
+Goal: Quick Links "Onboarding" opens first incomplete product step (same rules as Continue).
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+Respond ONLY with FILE / BEFORE / AFTER. One region.
+
+Locate QuickLinksPanel Onboarding tile (exact on-disk):
+```dart
+                _QuickLinkTile(
+                  icon: Icons.checklist_outlined,
+                  label: 'Onboarding',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const HqOnboardingShellScreen(
+                          initialSectionKey: 'onboardingMenu',
+                        ),
+                      ),
+                    );
+                  },
+                ),
+```
+
+AFTER: read progress via existing import `OnboardingProgressProviderImpl`:
+```dart
+final p = Provider.of<OnboardingProgressProviderImpl>(context, listen: false);
+final initialKey = !p.isStepComplete('onboarding_feature_setup')
+    ? 'onboarding_feature_setup'
+    : !p.isStepComplete('onboarding_menu_foundation')
+        ? 'onboarding_menu_foundation'
+        : !p.isStepComplete('onboardingMenuItems')
+            ? 'onboardingMenuItems'
+            : !p.isStepComplete('onboardingReview')
+                ? 'onboardingReview'
+                : 'onboardingMenu';
+Navigator.of(context).push(
+  MaterialPageRoute<void>(
+    builder: (_) => HqOnboardingShellScreen(
+      initialSectionKey: initialKey,
+    ),
+  ),
+);
+```
+
+Do not invent imports — Impl is already imported in this file.
+If Quick Link already uses first-incomplete → No change needed

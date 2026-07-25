@@ -59,22 +59,19 @@ Monorepo is volume-mounted at `/app`.
 
 ```bash
 docker compose up -d --build
-
 docker exec -it franchise-orchestrator python main.py
-
-docker exec -it franchise-orchestrator python main.py status
 ```
 
 ## Overnight queue
 
-### Task file format (`orchestrator/queue/inbox/my-task.task.txt`)
+### Task file format
 
 ```text
 # id: optional-slug
 # agent: web_frontend
 # priority: 5
 # backend: xai
-# max_regions: 2
+# max_regions: 1
 
 backend: xai
 Role: web_frontend
@@ -86,42 +83,26 @@ Goal: <one sentence product outcome>
 
 Task:
 Quote the exact first 10–12 lines of the loaded file.
-
-Locate this exact region:
-```dart
-<paste real on-disk BEFORE>
+Respond ONLY with FILE / BEFORE / AFTER fences (no truncation prose).
+Locate exact on-disk BEFORE (prefer multi-line window).
+AFTER: <outcome using real APIs only>.
+If already done → No change needed
 ```
 
-Replace / extend so that <outcome>. Use only APIs already in this file.
-Prefer ≤2 BEFORE/AFTER regions (or max_regions from header).
-If already done → reply only: No change needed
-```
+Lower `priority` numbers run first.
 
-Lower `priority` numbers run first. Default priority is 100.
-
-### Drain commands
+### Drain
 
 ```bash
-# Interactive CLI
 /queue status
-/queue run --once
 /queue run
-
-# Detached overnight (no TTY required)
+/queue run --once
 docker exec -d franchise-orchestrator python queue_runner.py --drain
-
-# One task then exit
-docker exec -it franchise-orchestrator python queue_runner.py --once
 ```
-
-**Rules:** sequential only; never auto-apply; on failure continue to next task; sleep 15s between tasks by default (`--sleep N`).
 
 ### End-of-day review
 
 ```text
-/proposals
-/proposals pending
-/proposals no_change
 /proposals full
 /metrics
 /approve <id>
@@ -129,129 +110,45 @@ docker exec -it franchise-orchestrator python queue_runner.py --once
 /reject <id> reason=...
 ```
 
-Learning is **governance**, not model fine-tuning: use reject reasons to update `SCOPE_CARD.md` / hard bans / task templates.
+## SCOPE_CARD highlights (July 25)
 
-## SCOPE_CARD (always-on)
+- **xAI-first** outcome tasks; paste exact on-disk BEFORE
+- **One FILE path once** — dual FILE headers for same path → allowlist HARD BAN
+- Prefer **multi-line** BEFORE; fences only (no truncation essay)
+- Progress listenable: `ChangeNotifierProvider<OnboardingProgressProviderImpl>` + ProxyProvider to abstract — **never** CNP of abstract
+- Menu delete: **`deleteMenuItem(id)`** not `removeMenuItem`
+- Empty BEFORE on empty file → HARD BAN
+- `after parsed: no` → reject
 
-`orchestrator/SCOPE_CARD.md` is injected on every coding task.
+## Preferred coding task prompts
 
-Key rules:
-- **xAI-first**: one product **outcome** per task; ≤2 regions default (3 if `max_regions: 3`)
-- Paste **exact on-disk BEFORE** strings
-- Field/path HARD BANs unchanged (no new DesignTokens/BrandingConfig fields, no invented progress imports)
-- If region already satisfies the request → **No change needed**
-- Empty-file BEFORE → HARD BAN
-- `after parsed: no` → reject; do not apply
+**Rules of thumb**
 
-## Preferred coding task prompts (xAI outcome style)
-
-See also `AGENT_SYSTEM.md` and **SCOPE_CARD → TASK DESIGN**.
-
-**Outcome template (preferred):**
-
-```text
-backend: xai
-Role: web_frontend
-max_regions: 2
-
-Files:
-- path/to/file.dart
-
-Goal: <one product outcome>
-
-Task:
-Quote the exact first 10–12 lines of the loaded file.
-
-Region 1 — locate exact on-disk:
-```dart
-BEFORE…
-```
-AFTER should …
-
-Region 2 (optional) — …
-
-Constraints:
-- Use only APIs already imported or used in this file
-- No new fields on BrandingConfig / DesignTokens / FeatureConfig
-- shared.OnboardingProgressProvider only (no invented progress import)
-- If already satisfied → No change needed
-```
-
-**Rules of thumb (xAI-first, July 25)**
-
-- Always include full file path(s)
-- **One outcome** per task; one file preferred; explicit 2-file only when both paths listed
+- One outcome, one file preferred, `max_regions: 1` when wiring one stub
 - Paste exact on-disk BEFORE — highest apply rate
-- Prefer real fix over no_change when the goal is unmet
-- Batch **4–8 outcome tasks** per AFK run (not 20 micro-chores)
-- Verify-only: sparse post-apply smoke; do not fill the main queue
-- Empty files: human full-file or special wording — never empty BEFORE
-- STATUS.md: prefer human edit
-- Treat `after parsed: no` like HARD BAN — reject
-
-**Ollama (secondary):** keep 1-region surgical prompts if used at all.
+- Name real APIs from injected interfaces
+- Batch **4–8** outcome tasks per AFK run
+- Verify-only sparse; STATUS.md prefer human edit
 
 ## Review & apply workflow
 
-```text
-1. Run task (interactive or queue) → proposal saved with an id
-2. /proposals  or  /proposals pending  or  /proposals no_change
-3. /metrics
-4. /proposals full
-5. /approve <id>
-6. /approve confirm <id>        # local file write only
-7. git diff on the host → you commit & push
-```
-
-| Command | Effect |
-|---------|--------|
-| `/proposals` | List recent ids (all statuses) |
-| `/proposals pending` | List only pending |
-| `/proposals no_change` | Escape-hatch successes |
-| `/proposals rejected` | Rejected |
-| `/proposals applied` | Applied |
-| `/proposals full` | Full dump of every pending proposal |
-| `/metrics` | Training metrics (last 50) |
-| `/approve` / `/approve <id>` | Show proposal |
-| `/approve confirm` / `/approve confirm <id>` | Apply locally |
-| `/reject [id] reason=...` | Reject + feedback log |
-| `/queue status` / `/queue run` / `/queue run --once` | Queue control |
-
-Treat **HARD BAN** as reject candidates.  
-**No change needed** is success.  
-**`after parsed: no`** → reject; do not apply.
-
-## Model configuration
-
-| Agent | Default | Env var |
-|-------|---------|---------|
-| xAI (primary) | grok-4.5 | XAI_MODEL / backends.yaml |
-| orchestrator | qwen2.5-coder:7b | MODEL_ORCHESTRATOR |
-| backend | qwen2.5-coder:14b | MODEL_BACKEND |
-| web_frontend | qwen2.5-coder:14b | MODEL_WEB |
-| mobile_shared | qwen2.5-coder:14b | MODEL_MOBILE |
-| tester | qwen2.5-coder:7b | MODEL_TESTER |
-| reviewer | qwen2.5-coder:7b | MODEL_REVIEWER |
+1. Run task → proposal id  
+2. `/proposals full`  
+3. `/approve confirm <id>` local only  
+4. Host `git diff` → commit & push  
 
 ## Safety
 
-- Proposal-first; local apply only after `/approve confirm`
-- Queue never applies
-- No git push from the orchestrator
-- No Firestore / production writes
-- Source injection always wins over status-only prompts when paths are present
-- Identical BEFORE/AFTER → HARD BAN (no-op)
-- "No change needed" → status=`no_change`
-- Empty BEFORE on empty file → HARD BAN
-- Field/schema HARD BANs apply to **xAI and Ollama**
+- Proposal-first; no git push; no Firestore from agents
+- HARD BAN / no-op / empty BEFORE / after parse fail → reject
+- Field/schema HARD BANs apply to xAI and Ollama
 
 ## Next improvements
 
 - Auto-reject when AFTER fails to parse
 - Empty-file / full-file replace apply path
-- Optional structured unified-diff proposals
-- Metrics split by backend (xAI vs Ollama)
-- Validator: honor `max_regions` from task header for xAI without HARD BAN
+- Metrics split by backend
+- Validator: honor `max_regions`; same-path multi-pair allowlist
 
 ---
-Last updated: 2026-07-25 (xAI-first)
+Last updated: 2026-07-25 (xAI API lessons)
