@@ -1,0 +1,12 @@
+Role: web_frontend
+
+File: web-app/lib/admin/hq_owner/onboarding/screens/onboarding_categories_screen.dart
+
+Task: Quote first 10–12 lines. Find markStepComplete calls.
+
+Required: mark complete must use key exactly 'categories' only.
+Must NOT call markStepComplete('onboarding_menu_foundation') from this tab screen.
+
+If already only 'categories' → No change needed.
+
+Rules: quote-first; this file only.
