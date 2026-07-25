@@ -16,10 +16,10 @@ False-positive hardening (2026-07-25):
   - FranchiseProvider() matches ignore // and /// comment lines.
   - Static FranchiseProvider.current* access is banned in AFTER.
 
-Invented current*Color getters (2026-07-24 afternoon):
-  DesignTokens.currentPrimaryColor / currentSecondaryColor do not exist.
-  Real Color getters are primaryColor / secondaryColor (and errorColor, etc.).
-  Hex strings live on FranchiseProvider as currentPrimaryColorHex / currentSecondaryColorHex.
+APPLY SAFETY (2026-07-25 evening):
+  - AFTER body that is only `}` / `);` → HARD BAN (unsafe method-delete apply).
+  - More than 2 FILE: regions for the same path → soft warning (xAI multi-hunk risk).
+  - Dropping onboarding_navigation_utils while OnboardingSections remains → HARD BAN.
 """
 
 from __future__ import annotations
@@ -52,8 +52,6 @@ NEW_METHOD_PATTERNS = [
     r"\bstatic\s+\w+\s+\w+\s*\(",
 ]
 
-# (pattern, message, net_new_only)
-# net_new_only=True → only flag if match in AFTER and not in BEFORE
 HARD_BAN_PATTERNS: List[Tuple[str, str, bool]] = [
     (r"FranchiseProvider\s*\(\s*\)", "FranchiseProvider() zero-arg constructor is forbidden", True),
     (r"ChangeNotifierProvider\s*\(\s*create:\s*\(_\)\s*=>\s*FranchiseProvider",
@@ -104,6 +102,17 @@ AFTER_MARKER = re.compile(
 
 NO_CHANGE_RE = re.compile(r"\bno\s+change\s+needed\b", re.IGNORECASE)
 
+FILE_LINE_RE = re.compile(
+    r"(?:^|\n)\s*FILE\s*:\s*(\S+)",
+    re.IGNORECASE,
+)
+
+FENCED_AFTER_RE = re.compile(
+    r"(?:^|\n)\s*(?:#+\s*)?(?:\d+\.?\s*)?(?:\*\*)?(?:exact\s+)?after(?:\*\*)?[^\n]*\n"
+    r"\s*```(?:dart|ts|js)?\s*\n(.*?)\n\s*```",
+    re.IGNORECASE | re.DOTALL,
+)
+
 
 @dataclass
 class ValidationResult:
@@ -148,13 +157,11 @@ def _normalize_code(text: str) -> str:
 
 
 def _strip_dart_comments(text: str) -> str:
-    """Remove // line and /// doc comments so bans don't hit quoted warnings."""
     out_lines: List[str] = []
     for line in text.splitlines():
         stripped = line.lstrip()
         if stripped.startswith("///") or stripped.startswith("//"):
             continue
-        # strip trailing // comment on code lines
         if "//" in line:
             code, _, _ = line.partition("//")
             out_lines.append(code)
@@ -164,12 +171,10 @@ def _strip_dart_comments(text: str) -> str:
 
 
 def _is_no_change_response(proposal_text: str) -> bool:
-    """True when the agent used the escape hatch (skip fence requirements)."""
     if not proposal_text:
         return False
     if not NO_CHANGE_RE.search(proposal_text):
         return False
-    # If there is a real differing BEFORE/AFTER, treat as normal proposal
     before = _extract_section(proposal_text, ["before", "exact before", "current"])
     after = _extract_section(proposal_text, ["after", "exact after", "proposed"])
     if before.strip() and after.strip() and _normalize_code(before) != _normalize_code(after):
@@ -178,13 +183,6 @@ def _is_no_change_response(proposal_text: str) -> bool:
 
 
 def _check_hard_bans(proposal_text: str) -> List[str]:
-    """HARD BAN invent checks.
-
-    - Pure No change needed → skip invent bans (quoted existing code is not a proposal).
-    - When BEFORE/AFTER fences exist, net_new_only patterns must appear in AFTER
-      and not in BEFORE (avoids banning existing collection('franchises') quotes).
-    - FranchiseProvider() checked on comment-stripped text.
-    """
     if _is_no_change_response(proposal_text):
         return []
 
@@ -192,7 +190,6 @@ def _check_hard_bans(proposal_text: str) -> List[str]:
     after = _extract_section(proposal_text, ["after", "exact after", "proposed"])
     has_fences = bool(before.strip() and after.strip())
 
-    # Prefer AFTER-only scan for invents; fall back to full text if no fences
     target_raw = after if has_fences else proposal_text
     baseline_raw = before if has_fences else ""
 
@@ -204,7 +201,6 @@ def _check_hard_bans(proposal_text: str) -> List[str]:
         if not re.search(pattern, target, re.IGNORECASE):
             continue
         if net_new_only and baseline and re.search(pattern, baseline, re.IGNORECASE):
-            # Already present in BEFORE — quoting existing code, not inventing
             continue
         hits.append(f"HARD BAN: {message}")
     return hits
@@ -255,14 +251,20 @@ def _check_before_after_required(task_text: str, proposal_text: str) -> List[str
     if after_body.strip():
         has_after = True
 
+    # Empty AFTER is valid for pure deletes (apply safety allows empty fence body)
+    if has_before and (has_after or AFTER_MARKER.search(proposal_text)):
+        return []
+
     if has_before and has_after:
         return []
 
     missing = []
     if not has_before:
         missing.append("BEFORE")
-    if not has_after:
+    if not has_after and not AFTER_MARKER.search(proposal_text):
         missing.append("AFTER")
+    if not missing:
+        return []
     return [
         f"HARD BAN: coding proposal missing {' and '.join(missing)} region(s). "
         f"Prose-only / essay responses are not valid. Provide surgical BEFORE and AFTER "
@@ -283,7 +285,10 @@ def _check_noop_before_after(task_text: str, proposal_text: str) -> List[str]:
 
     before_body = _extract_section(proposal_text, ["before", "exact before", "current"])
     after_body = _extract_section(proposal_text, ["after", "exact after", "proposed"])
-    if not before_body.strip() or not after_body.strip():
+    if not before_body.strip():
+        return []
+    # Empty after = intentional delete; not a no-op
+    if not after_body.strip():
         return []
 
     if _normalize_code(before_body) == _normalize_code(after_body):
@@ -294,12 +299,78 @@ def _check_noop_before_after(task_text: str, proposal_text: str) -> List[str]:
     return []
 
 
+def _check_brace_only_after(proposal_text: str) -> List[str]:
+    """HARD BAN: AFTER fence whose only content is } or ); — unsafe delete shape."""
+    if _is_no_change_response(proposal_text):
+        return []
+
+    hits: List[str] = []
+    for m in FENCED_AFTER_RE.finditer(proposal_text):
+        body = m.group(1).strip()
+        if re.fullmatch(r"[}\]\);]+", body):
+            hits.append(
+                "HARD BAN: AFTER region is brace/paren-only (e.g. only `}`). "
+                "For method deletes use an **empty** AFTER fence body, or one coherent "
+                "region that removes the method without a lone closing brace."
+            )
+    return hits
+
+
+def _check_multi_region_same_file(proposal_text: str) -> List[str]:
+    """Soft warning if same FILE path appears more than twice."""
+    if _is_no_change_response(proposal_text):
+        return []
+
+    counts: dict[str, int] = {}
+    for m in FILE_LINE_RE.finditer(proposal_text):
+        p = m.group(1).replace("\\", "/").rstrip("`)")
+        counts[p] = counts.get(p, 0) + 1
+
+    warns: List[str] = []
+    for path, n in counts.items():
+        if n > 2:
+            warns.append(
+                f"APPLY RISK: {path} appears in {n} FILE blocks (prefer ≤2 regions). "
+                f"Multi-hunk same-file apply often breaks imports or class structure."
+            )
+    return warns
+
+
+def _check_onboarding_sections_import(proposal_text: str) -> List[str]:
+    """HARD BAN if AFTER drops navigation_utils while OnboardingSections still referenced."""
+    if _is_no_change_response(proposal_text):
+        return []
+
+    # Whole proposal text: if sections used and utils import removed in an AFTER import block
+    uses_sections = bool(re.search(r"\bOnboardingSections\.", proposal_text))
+    if not uses_sections:
+        return []
+
+    # Look for AFTER import blocks that omit utils while BEFORE had it
+    for m in FENCED_AFTER_RE.finditer(proposal_text):
+        body = m.group(1)
+        if "import " not in body and "package:" not in body:
+            continue
+        if "OnboardingSections" in body:
+            continue
+        if "onboarding_navigation_utils" in body:
+            continue
+        # Import-looking AFTER without utils — check if BEFORE for same vicinity had utils
+        # Heuristic: if this AFTER is import-only and proposal still mentions OnboardingSections
+        if re.search(r"^\s*import\s+", body, re.M) and "onboarding_navigation_utils" not in body:
+            if re.search(r"OnboardingSections\.", proposal_text):
+                return [
+                    "HARD BAN: import AFTER drops onboarding_navigation_utils while "
+                    "OnboardingSections is still required — keep that import."
+                ]
+    return []
+
+
 def _check_before_on_disk(
     task_text: str,
     proposal_text: str,
     project_root: Optional[Path],
 ) -> List[str]:
-    """HARD BAN if BEFORE cannot be located in the real target file."""
     if project_root is None:
         return []
 
@@ -315,7 +386,7 @@ def _check_before_on_disk(
 
     before_body = _extract_section(proposal_text, ["before", "exact before", "current"])
     if not before_body.strip():
-        return []  # missing BEFORE handled elsewhere
+        return []
 
     paths = extract_paths(task_text)
     if not paths:
@@ -350,6 +421,9 @@ def validate_proposal(
     warnings.extend(_check_path_allowlist(task_text, proposal_text))
     warnings.extend(_check_before_after_required(task_text, proposal_text))
     warnings.extend(_check_noop_before_after(task_text, proposal_text))
+    warnings.extend(_check_brace_only_after(proposal_text))
+    warnings.extend(_check_multi_region_same_file(proposal_text))
+    warnings.extend(_check_onboarding_sections_import(proposal_text))
     warnings.extend(_check_before_on_disk(task_text, proposal_text, project_root))
 
     if task_forbids_new_fields(task_text) and not _is_no_change_response(proposal_text):
