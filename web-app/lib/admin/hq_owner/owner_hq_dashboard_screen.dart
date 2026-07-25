@@ -465,9 +465,10 @@ class MultiBrandOverviewPanel extends StatelessWidget {
                     color: DesignTokens.primaryColor,
                     fontWeight: FontWeight.w600)),
             const SizedBox(height: 12),
-            // TODO: Replace with real multi-brand data from provider
-            const Text("Additional brands coming soon...",
-                style: TextStyle(color: DesignTokens.secondaryTextColor)),
+            Text(
+              'Single-franchise view for this HQ. Multi-brand rollup is planned.',
+              style: TextStyle(color: DesignTokens.secondaryTextColor),
+            ),
           ],
         ),
       ),
@@ -510,6 +511,19 @@ class QuickLinksPanel extends StatelessWidget {
                   icon: Icons.payments,
                   label: loc.payoutStatus ?? "Payouts",
                   onTap: () => Navigator.of(context).pushNamed('/hq/payouts'),
+                ),
+                _QuickLinkTile(
+                  icon: Icons.checklist_outlined,
+                  label: 'Onboarding',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const HqOnboardingShellScreen(
+                          initialSectionKey: 'onboardingMenu',
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

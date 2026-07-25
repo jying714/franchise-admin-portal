@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/onboarding_step_card.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
@@ -21,7 +20,6 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
   @override
   void initState() {
     super.initState();
-    print('[OnboardingMenuScreen] initState');
   }
 
   @override
@@ -32,15 +30,10 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
     final infoProvider = context.watch<shared.FranchiseInfoProvider>();
     final franchiseId = franchiseProvider.franchiseId;
 
-    print(
-        '[OnboardingMenuScreen] didChangeDependencies - franchiseId: $franchiseId, hasLoaded: $_hasLoadedFranchise');
-
     if (!_hasLoadedFranchise &&
         franchiseId != 'unknown' &&
         franchiseId.isNotEmpty) {
       _hasLoadedFranchise = true;
-      print(
-          '[OnboardingMenuScreen] Valid franchiseId → forcing loadFranchiseInfo');
 
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
@@ -76,9 +69,6 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
     final franchiseId = franchiseProvider.franchiseId;
     final franchise = infoProvider.franchise;
     final isLoading = infoProvider.loading || franchise == null;
-
-    print(
-        '[OnboardingMenuScreen] build() - franchiseId=$franchiseId, franchise=${franchise?.name ?? "null"}, loading=$isLoading');
 
     if (isLoading) {
       return const Scaffold(
@@ -156,13 +146,6 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
               subtitle: loc?.stepReviewDesc ?? '',
               completed: progressProvider.isStepComplete('onboardingReview'),
               onTap: () => _navigateToSection(context, 'onboardingReview'),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              loc?.progressComingSoon ?? 'More steps coming soon',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
             ),
           ],
         ),

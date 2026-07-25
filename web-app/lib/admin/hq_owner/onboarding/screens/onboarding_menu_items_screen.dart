@@ -355,8 +355,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
 
     // Legacy checkForSchemaIssues and handleSidebarRepair kept for full compatibility
     void checkForSchemaIssues(shared.MenuItem menuItem) {
-      print(
-          '[OnboardingMenuItemsScreen] checkForSchemaIssues called for item: ${menuItem.name}');
       final categoriesLocal =
           Provider.of<shared.CategoryProvider>(context, listen: false)
               .categories;
@@ -380,8 +378,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
 
     void handleSidebarRepair(
         shared.MenuItemSchemaIssue issue, String newValue) {
-      print(
-          '[OnboardingMenuItemsScreen] handleSidebarRepair called (legacy) - issue: ${issue.displayMessage} value: $newValue');
       if (itemPendingRepair == null) return;
 
       // Legacy repair logic preserved exactly
@@ -478,7 +474,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
           floatingActionButton: FloatingActionButton.extended(
             heroTag: 'fab-onboarding-menu-items',
             onPressed: () {
-              print('[DEBUG][FAB] FloatingActionButton pressed.');
               try {
                 openEditor(shared.MenuItem(
                   id: const Uuid().v4(),
@@ -601,7 +596,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                       // Permanent status bar
                       Container(
                         padding: const EdgeInsets.all(8),
-                        color: Colors.green.shade50,
+                        color: colorScheme.primaryContainer.withOpacity(0.35),
                         child: Row(
                           children: [
                             const Icon(Icons.check_circle, color: Colors.green),

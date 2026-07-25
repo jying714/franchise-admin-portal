@@ -25,11 +25,9 @@ import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/onboard
 
 /// HQ Owner host for the 4-step franchise onboarding flow.
 ///
-/// Phase 2 of Decision 7 migration: Continue from Owner HQ opens this shell
-/// instead of [AdminDashboardScreen]. Admin onboarding tree remains intact
-/// until Phase 4 cutover.
-///
-/// In-shell navigation: child screens call
+/// HQ is the sole host for franchise/menu onboarding (Decision 7 complete).
+/// Admin onboarding tree deleted. Navigation uses in-shell [switchToSection]:
+/// child screens call
 /// `context.findAncestorStateOfType<HqOnboardingShellScreenState>()?.switchToSection(key)`.
 class HqOnboardingShellScreen extends StatefulWidget {
   final String? initialSectionKey;
@@ -253,7 +251,7 @@ class HqOnboardingShellScreenState extends State<HqOnboardingShellScreen> {
                         listen: false,
                       ),
                     ),
-                    Provider<shared.OnboardingProgressProvider>.value(
+                    ChangeNotifierProvider<shared.OnboardingProgressProvider>.value(
                       value: Provider.of<OnboardingProgressProviderImpl>(
                         context,
                         listen: false,

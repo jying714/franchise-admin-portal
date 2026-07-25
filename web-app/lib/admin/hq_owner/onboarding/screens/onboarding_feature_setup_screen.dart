@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/feature_toggle_tile.dart';
@@ -96,7 +95,7 @@ class _OnboardingFeatureSetupScreenState
         appBar: AppBar(
           backgroundColor: theme.scaffoldBackgroundColor,
           elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.black),
+          iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
           title: Text(loc.featureSetupTitle),
         ),
         body: const Center(child: CircularProgressIndicator()),
@@ -108,7 +107,7 @@ class _OnboardingFeatureSetupScreenState
         appBar: AppBar(
           backgroundColor: theme.scaffoldBackgroundColor,
           elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.black),
+          iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
           title: Text(loc.featureSetupTitle),
         ),
         body: Center(
@@ -132,7 +131,7 @@ class _OnboardingFeatureSetupScreenState
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
         title: Text(loc.featureSetupTitle),
         actions: [
           IconButton(
