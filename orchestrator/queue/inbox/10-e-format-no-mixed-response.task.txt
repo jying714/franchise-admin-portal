@@ -1,0 +1,16 @@
+Role: web_frontend
+Mode: E format discipline
+
+File: web-app/lib/admin/dashboard/onboarding/screens/onboarding_review_screen.dart
+
+Task: If the file has no compile-breaking bug → reply with exactly one line:
+No change needed
+
+Forbidden response shapes:
+- BEFORE/AFTER fences plus "No change needed" in the same response
+- Full-file dump for a verify task
+
+Rules:
+1. Single-line No change needed if no compile-breaking bug.
+2. Edit only this file.
+3. No publish/Firestore invents.

@@ -1,0 +1,14 @@
+Role: backend
+Mode: B escape-hatch purity
+
+File: packages/shared_core/lib/src/core/providers/onboarding_progress_provider.dart
+
+Task: Verify abstract API has stepStatus, loading, isStepComplete, markStepComplete, markStepIncomplete, getFoundationProgress. Do not add methods.
+
+If already complete → single line only:
+No change needed
+
+Rules:
+1. Single-line No change needed if correct.
+2. Edit only this file.
+3. No new methods.

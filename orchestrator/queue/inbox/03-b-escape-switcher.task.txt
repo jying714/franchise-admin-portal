@@ -1,0 +1,13 @@
+Role: web_frontend
+Mode: B escape-hatch purity
+
+File: web-app/lib/widgets/dashboard/dashboard_switcher_dropdown.dart
+
+Task: Verify Admin vs HQ selection does not use only the trailing path segment "dashboard". If matching already distinguishes admin vs hq-owner routes → reply with a single line only:
+No change needed
+
+Do not dump the whole widget as BEFORE/AFTER.
+
+Rules:
+1. Single-line No change needed if correct.
+2. Edit only this file.

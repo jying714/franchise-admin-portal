@@ -1,0 +1,14 @@
+Role: web_frontend
+Mode: A false-ban probe + probe pack
+
+File: web-app/lib/config/design_tokens.dart
+
+Task: Verify DesignTokens does not invent onPrimary, onSecondary, currentPrimaryColor, or currentSecondaryColor. Comments in this file may mention FranchiseProvider() as forbidden — quoting comments is fine; do not construct FranchiseProvider().
+
+If the file already follows setFranchiseProvider + primaryColor/secondaryColor live path → reply with a single line only:
+No change needed
+
+Rules:
+1. Single-line No change needed if already correct.
+2. Do not add getters.
+3. Edit only this file.

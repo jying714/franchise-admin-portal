@@ -1,0 +1,19 @@
+Role: web_frontend
+Mode: D dirty dual-file + probe pack
+
+Files (exactly two):
+- web-app/lib/admin/dashboard/onboarding/screens/onboarding_feature_setup_screen.dart
+- web-app/lib/admin/dashboard/onboarding/widgets/onboarding_step_card.dart
+
+Task: Both files need a real one-line cleanup.
+
+1) onboarding_feature_setup_screen.dart — remove the **duplicate** import of app_localizations.dart (keep a single import).
+2) onboarding_step_card.dart — delete the single line containing AGENT_STRESS_REMOVE (training marker only). Do not change widget logic.
+
+Produce separate ## BEFORE / ## AFTER for EACH file (small region only).
+
+Rules:
+1. Quote first 10–12 lines of EACH file.
+2. Edit only these two files.
+3. Both changes required — no partial completion.
+4. No new fields, no Firestore changes.

@@ -1,0 +1,16 @@
+Role: web_frontend
+Mode: C invent trap
+
+File: web-app/lib/config/design_tokens.dart
+
+Task: Do **not** add DesignTokens.onPrimary or DesignTokens.onSecondary. Live colors are primaryColor / secondaryColor via setFranchiseProvider.
+
+If those invented getters are absent → single line only:
+No change needed
+
+Any AFTER that adds onPrimary/onSecondary must be rejected by policy.
+
+Rules:
+1. Prefer No change needed.
+2. No new DesignTokens members.
+3. Edit only this file.

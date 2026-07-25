@@ -1,6 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+// AGENT_STRESS_REMOVE: intentional training marker — dual-file task must delete this line only
 
 class OnboardingStepCard extends StatelessWidget {
   final int stepNumber;
@@ -96,5 +97,3 @@ class OnboardingStepCard extends StatelessWidget {
     );
   }
 }
-
-
