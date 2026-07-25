@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// HQ Owner — Design & Branding screen (v1 shell).
 ///
@@ -19,10 +20,93 @@ class DesignBrandingScreen extends StatefulWidget {
 }
 
 class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
+  bool _saving = false;
   late final TextEditingController _appNameController;
   late final TextEditingController _logoUrlController;
   late final TextEditingController _primaryHexController;
   late final TextEditingController _secondaryHexController;
+
+  String _normalizeHex(String raw) {
+    var h = raw.trim();
+    if (h.isEmpty) return h;
+    if (!h.startsWith('#')) h = '#$h';
+    return h.toUpperCase();
+  }
+
+  bool _isValidHex(String h) {
+    final n = _normalizeHex(h);
+    return RegExp(r'^#[0-9A-F]{6}$').hasMatch(n);
+  }
+
+  Future<void> _saveBranding() async {
+    final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    final franchiseId = fp.currentFranchiseId;
+    if (franchiseId.isEmpty || franchiseId == 'unknown') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No franchise selected')),
+      );
+      return;
+    }
+
+    final appName = _appNameController.text.trim();
+    final logoUrl = _logoUrlController.text.trim();
+    final primary = _normalizeHex(_primaryHexController.text);
+    final secondary = _normalizeHex(_secondaryHexController.text);
+
+    if (!_isValidHex(primary) || !_isValidHex(secondary)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Primary and secondary must be #RRGGBB')),
+      );
+      return;
+    }
+
+    setState(() => _saving = true);
+    try {
+      final payload = <String, dynamic>{
+        'primaryColorHex': primary,
+        'secondaryColorHex': secondary,
+        if (appName.isNotEmpty) 'appName': appName,
+        if (logoUrl.isNotEmpty) 'logoUrl': logoUrl,
+      };
+
+      final uiConfigPayload = <String, dynamic>{
+        ...payload,
+        if (appName.isNotEmpty) 'currentAppName': appName,
+        if (logoUrl.isNotEmpty) 'logoMain': logoUrl,
+      };
+
+      final db = FirebaseFirestore.instance;
+      final batch = db.batch();
+      final rootRef = db.collection('franchises').doc(franchiseId);
+      final uiRef = rootRef.collection('config').doc('ui_config');
+      batch.set(rootRef, payload, SetOptions(merge: true));
+      batch.set(uiRef, uiConfigPayload, SetOptions(merge: true));
+      await batch.commit();
+
+      // Refresh in-memory live path (DesignTokens reads FranchiseProvider)
+      final merged = Map<String, dynamic>.from(fp.currentBranding)
+        ..addAll(payload);
+      fp.setBrandingFromFranchiseDoc(merged);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Branding saved')),
+      );
+    } catch (e, st) {
+      shared.ErrorLogger.log(
+        message: 'Design & Branding save failed',
+        stack: st.toString(),
+        source: 'design_branding_screen.dart',
+        contextData: {'franchiseId': franchiseId, 'error': e.toString()},
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Save failed: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
 
   @override
   void initState() {
@@ -226,15 +310,16 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
                       Row(
                         children: [
                           FilledButton.icon(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Save not wired yet'),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.save_outlined, size: 18),
-                            label: const Text('Save'),
+                            onPressed: _saving ? null : _saveBranding,
+                            icon: _saving
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.save_outlined, size: 18),
+                            label: Text(_saving ? 'Saving…' : 'Save'),
                             style: FilledButton.styleFrom(
                               backgroundColor: DesignTokens.primaryColor,
                               foregroundColor: DesignTokens.foregroundColor,
