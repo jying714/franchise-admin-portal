@@ -257,11 +257,20 @@ class _FranchiseAuthenticatedRootState
   @override
   Widget build(BuildContext context) {
     return AuthProfileListener(
-      child: Consumer<shared.AdminUserProvider>(
-        builder: (context, adminUserProvider, _) {
+      child: Selector<shared.AdminUserProvider, String?>(
+        selector: (_, adminUserProvider) {
           final user = adminUserProvider.user;
+          if (user == null) return null;
+          final roles = user.roles ?? const <String>[];
+          // Rebuild shell only when signed-in identity or role set changes.
+          return '${user.id}|${roles.join(',')}';
+        },
+        builder: (context, shellKey, _) {
+          final user =
+              Provider.of<shared.AdminUserProvider>(context, listen: false)
+                  .user;
           debugPrint(
-              '[FranchiseAuthenticatedRoot] Consumer rebuild - user: ${user?.id} roles: ${user?.roles}');
+              '[FranchiseAuthenticatedRoot] Shell build - key: $shellKey user: ${user?.id} roles: ${user?.roles}');
 
           if (user == null) {
             return const MaterialApp(

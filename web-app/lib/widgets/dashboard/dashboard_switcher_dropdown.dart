@@ -58,11 +58,39 @@ class DashboardSwitcherDropdown extends StatelessWidget {
 
     final normalized = currentScreen.toLowerCase();
 
+    // Prefer explicit key / full route match. Do NOT match only the last
+    // path segment ("dashboard") — HQ, Admin, Platform all end that way.
     final current = options.firstWhere(
-      (opt) =>
-          normalized.contains(opt.key) ||
-          normalized.contains(opt.route.toLowerCase().split('/').last),
-      orElse: () => options.first,
+      (opt) {
+        final route = opt.route.toLowerCase();
+        final key = opt.key.toLowerCase();
+        if (normalized == route) return true;
+        if (normalized.contains('/$key/') || normalized.endsWith('/$key')) {
+          return true;
+        }
+        // Explicit aliases used as currentScreen values
+        if (key == 'hq' &&
+            (normalized.contains('hq-owner') ||
+                normalized.contains('owner-hq') ||
+                normalized.contains('hq_owner'))) {
+          return true;
+        }
+        if (key == 'admin' &&
+            (normalized.contains('/admin') || normalized.startsWith('admin'))) {
+          return true;
+        }
+        if (key == 'platform_owner' && normalized.contains('platform')) {
+          return true;
+        }
+        if (key == 'developer' && normalized.contains('developer')) {
+          return true;
+        }
+        return false;
+      },
+      orElse: () => options.firstWhere(
+        (opt) => opt.key == 'admin',
+        orElse: () => options.first,
+      ),
     );
 
     debugPrint(
