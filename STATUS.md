@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 24, 2026 (evening — HQ Design & Branding v1 complete)  
+**Last Updated**: July 24, 2026 (late evening — HQ onboarding Phase 1 entry + Admin shell stability)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch**: `feat/onboarding-4step`
 
@@ -51,7 +51,7 @@ Phase 0 complete (July 23, 2026).
 - [ ] 3-file Stage-C still unreliable (timeouts / format collapse under full source injection) — optional training only
 - [ ] Feedback → SCOPE_CARD refresh checklist (human-gated; no auto fine-tune)
 - [ ] Quote-first still inconsistently shown in human-facing proposals (process soft fail; product edits can still be correct)
-- [ ] Deliberate 2-file dirty-pair training (next: STATUS sync + product CTA tasks)
+- [ ] Deliberate 2-file dirty-pair training (next: product tasks only on known-dirty pairs)
 
 ### B. Product — Core config scoping & dynamic branding
 
@@ -103,24 +103,28 @@ Phase 0 complete (July 23, 2026).
 - [x] `Provider<shared.FranchiseSubscriptionService>` registered in authenticated MultiProvider (PlatformPlansSummaryCard)
 - [x] `PlatformFinancialsProviderImpl` injects `AdminFirestoreService` (fixes UnimplementedError on platform revenue/KPIs)
 
-**Onboarding placement (Decision 7 — July 24, 2026):**
+**Onboarding placement (Decision 7 — Phase 1 entry complete July 24, 2026 late evening):**
 
 - [x] **Target documented**: Franchise/menu onboarding lives on **HQ Owner** dashboard, not Admin
-- [x] **B-ONB-2** Onboarding progress card on `OwnerHQDashboardScreen` using real API only (`loading`, `getFoundationProgress()`, `isStepComplete` for ingredientTypes / ingredients / categories) — no invented `isOnboardingComplete` (July 24)
+- [x] **B-ONB-2** Onboarding progress card on `OwnerHQDashboardScreen` using real API only (`loading`, `getFoundationProgress()`, `isStepComplete` for ingredientTypes / ingredients / categories) — no invented `isOnboardingComplete`
 - [x] Loading state polished (Card + centered indicator + text; real DesignTokens only)
 - [x] Foundation percent label from `getFoundationProgress()`
 - [x] Completed vs Pending step line styles (primaryColor / secondaryTextColor)
 - [x] LinearProgressIndicator colored with live `DesignTokens.primaryColor`
-- [ ] Wire card → existing onboarding route/section (navigation CTA; Admin onboarding is sidebar-index based — no clean named route yet)
-- [ ] Demote Admin primary onboarding entry after HQ entry works
-- [ ] Reflect completed migration in DASHBOARDS.md / web-app README
+- [x] **Wire card → existing onboarding** — **Continue onboarding** CTA → `AdminDashboardScreen(initialSectionKey: 'onboardingMenu')` (reuse Admin 4-step screens; no HQ section_registry; no new HQ onboarding screen)
+- [x] **DashboardSwitcherDropdown** match by route key (admin vs hq), not trailing path segment `dashboard`
+- [x] **FranchiseAuthenticatedRoot** — `Selector` on user id|roles so authenticated `MaterialApp` is not recreated on every `AdminUserProvider` notify (fixes hq_owner sidebar bounce back to HQ)
+- [ ] Demote Admin primary onboarding entry after HQ is the expected home
+- [ ] Align HQ progress step keys vs overview keys (`ingredientTypes`/`ingredients`/`categories` vs `onboarding_feature_setup` / `onboarding_menu_foundation` / …) if Pending is wrong after real data
+- [ ] Reflect completed entry path in DASHBOARDS.md / web-app README / DECISIONS.md Decision 7 status
 - See `docs/DECISIONS.md` Decision 7 for full rationale and sequence
 
 **Still open (product):**
 
 - [ ] HQ Design & Branding **v1.1** persistence write path
 - [ ] Broader franchise-scoped config beyond branding colors (features, app config loaders)
-- [ ] Onboarding navigation CTA from HQ card + Admin demotion
+- [ ] Demote Admin primary onboarding entry (Decision 7 Phase 3)
+- [ ] Onboarding progress key alignment + Start/Continue/Review CTA label polish
 - [ ] Hybrid localization (partial)
 - [ ] Optional agent dual-edit drills only on known-dirty pairs (not default volume training)
 - [ ] Color picker UI (downstream of v1.1)
@@ -135,8 +139,10 @@ Phase 0 complete (July 23, 2026).
 - Mobile live colors: `FranchiseProvider` → `UiConfig.setFranchiseProvider` → `UiConfig.*`
 - Do not invent new fields on BrandingConfig / AppConfig / DesignTokens / FeatureConfig for scoping
 - Onboarding home = HQ Owner (Decision 7); Admin is not the long-term home
+- HQ onboarding entry reuses Admin screens via `initialSectionKey: 'onboardingMenu'` — do not invent HQ section_registry for onboarding
 - HQ Design & Branding v1: no Firestore branding writes; Save = snackbar only until v1.1
 - `section_registry.dart` is Admin-only — do not use for HQ Design & Branding entry
+- Authenticated `MaterialApp` must not rebuild on every `AdminUserProvider` notify (use identity/roles Selector)
 - See also `orchestrator/SCOPE_CARD.md` for the short always-on constraint list
 
 ---
