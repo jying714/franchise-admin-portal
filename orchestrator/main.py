@@ -11,6 +11,7 @@ Always-running process that:
   • Auto-rejects on HARD BAN / path-allowlist / BEFORE-on-disk misses (ok=False)
   • Saves proposals; applies ONLY after explicit /approve confirm
   • Treats "No change needed" as first-class success (status=no_change)
+  • Multi-file BEFORE/AFTER apply (2026-07-25)
   • Optional overnight queue: drop tasks in orchestrator/queue/inbox/
 
 Commands:
@@ -76,6 +77,16 @@ console = Console()
 app = typer.Typer(add_completion=False, help="Franchise Platform Multi-Agent Orchestrator")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
 logger = logging.getLogger("orchestrator")
+
+
+def _edits_summary(prop: Proposal) -> str:
+    edits = prop.file_edits() if hasattr(prop, "file_edits") else []
+    if len(edits) > 1:
+        paths = ", ".join(e.file_path for e in edits)
+        return f"{len(edits)} files: {paths}"
+    if prop.file_path:
+        return prop.file_path
+    return "unknown"
 
 
 async def run_task(
@@ -167,7 +178,7 @@ async def run_task(
             logger.warning("auto_reject feedback log failed: %s", e)
         console.print(
             f"[dim]Saved proposal [bold]{prop.id}[/bold] "
-            f"(file={prop.file_path or 'unknown'}, status=[bold red]rejected[/bold red]).\n"
+            f"(file={_edits_summary(prop)}, status=[bold red]rejected[/bold red]).\n"
             f"Not eligible for /approve confirm. Use /proposals to inspect.[/dim]\n"
         )
     elif prop.status == "no_change":
@@ -190,10 +201,10 @@ async def run_task(
     else:
         console.print(
             f"[dim]Saved proposal [bold]{prop.id}[/bold] "
-            f"(file={prop.file_path or 'unknown'}, status={prop.status}).\n"
+            f"(targets={_edits_summary(prop)}, status={prop.status}).\n"
             f"Review: /approve {prop.id}\n"
             f"Apply locally: /approve confirm {prop.id}\n"
-            f"(never auto-pushes)[/dim]\n"
+            f"(never auto-pushes; multi-file applies all parsed FILE pairs)[/dim]\n"
         )
 
     if return_proposal:
@@ -225,12 +236,17 @@ def _show_proposal(prop, *, full: bool = False) -> None:
         "pending": "yellow",
     }.get(prop.status, "cyan")
 
+    edits = prop.file_edits() if hasattr(prop, "file_edits") else []
+    edits_line = f"[bold]edits[/bold]: {len(edits)} file(s)" if edits else (
+        f"[bold]file[/bold]: {prop.file_path or '(not detected)'}"
+    )
+
     console.print(Panel.fit(
         f"[bold]id[/bold]: {prop.id}\n"
         f"[bold]status[/bold]: [{status_style}]{prop.status}[/{status_style}]\n"
         f"[bold]created[/bold]: {prop.created_at}\n"
         f"[bold]agent[/bold]: {prop.agent} / {prop.model}\n"
-        f"[bold]file[/bold]: {prop.file_path or '(not detected)'}\n"
+        f"{edits_line}\n"
         f"[bold]warnings[/bold]: {len(prop.validation_warnings)}\n"
         f"[bold]before parsed[/bold]: {'yes' if prop.before else 'no'}\n"
         f"[bold]after parsed[/bold]: {'yes' if prop.after else 'no'}",
@@ -246,7 +262,14 @@ def _show_proposal(prop, *, full: bool = False) -> None:
         console.print(Panel(prop.task, border_style="blue"))
         console.print("[bold]FULL RESPONSE[/bold]")
         console.print(Panel(Markdown(prop.response), border_style="green"))
-        if prop.before and prop.after:
+        if edits:
+            for i, e in enumerate(edits, 1):
+                console.print(f"[bold]FILE {i}/{len(edits)}[/bold] {e.file_path}")
+                console.print("[bold]BEFORE (parsed)[/bold]")
+                console.print(Panel(e.before, border_style="red"))
+                console.print("[bold]AFTER (parsed)[/bold]")
+                console.print(Panel(e.after, border_style="green"))
+        elif prop.before and prop.after:
             console.print("[bold]BEFORE (parsed)[/bold]")
             console.print(Panel(prop.before, border_style="red"))
             console.print("[bold]AFTER (parsed)[/bold]")
@@ -254,11 +277,18 @@ def _show_proposal(prop, *, full: bool = False) -> None:
         return
 
     # Compact view (default)
-    console.print(f"[bold]task[/bold]: {prop.task[:120]}{'\u2026' if len(prop.task) > 120 else ''}")
+    console.print(f"[bold]task[/bold]: {prop.task[:120]}{'…' if len(prop.task) > 120 else ''}")
     if prop.status == "no_change":
         console.print("[bold green]No change needed — escape hatch used.[/bold green]")
         return
-    if prop.before and prop.after:
+    if edits:
+        for i, e in enumerate(edits, 1):
+            console.print(f"\n[bold]FILE {i}/{len(edits)}[/bold] {e.file_path}")
+            console.print("[bold]BEFORE (parsed)[/bold]")
+            console.print(Panel(e.before, border_style="red"))
+            console.print("[bold]AFTER (parsed)[/bold]")
+            console.print(Panel(e.after, border_style="green"))
+    elif prop.before and prop.after:
         console.print("\n[bold]BEFORE (parsed)[/bold]")
         console.print(Panel(prop.before, border_style="red"))
         console.print("[bold]AFTER (parsed)[/bold]")
@@ -311,7 +341,11 @@ def _cmd_approve(confirm: bool = False, proposal_id: Optional[str] = None) -> No
                 kind="apply",
                 proposal_id=prop.id,
                 reason="applied",
-                extra={"file_path": prop.file_path or "", "agent": prop.agent},
+                extra={
+                    "file_path": prop.file_path or "",
+                    "agent": prop.agent,
+                    "edits": _edits_summary(prop),
+                },
             )
         except Exception as e:
             logger.warning("feedback log failed: %s", e)
@@ -388,9 +422,15 @@ def _cmd_proposals(status_filter: Optional[str] = None, full: bool = False) -> N
             "rejected": "red",
             "pending": "yellow",
         }.get(p.status, "white")
+        edits = p.file_edits() if hasattr(p, "file_edits") else []
+        target = (
+            f"{len(edits)} files"
+            if len(edits) > 1
+            else (p.file_path or "-")
+        )
         console.print(
             f"  [cyan]{p.id}[/cyan]  [{status_col}]{p.status}[/{status_col}]  "
-            f"{p.agent}  {p.file_path or '-'}{warn}"
+            f"{p.agent}  {target}{warn}"
         )
 
 
@@ -518,7 +558,7 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
             console.print("/approve                — show last proposal")
             console.print("/approve <id>           — show proposal by id")
             console.print("/approve confirm        — apply last locally (no push)")
-            console.print("/approve confirm <id>   — apply that id locally")
+            console.print("/approve confirm <id>   — apply that id locally (multi-file OK)")
             console.print("/reject [id] reason=... — mark rejected + log feedback")
             console.print("/queue status           — inbox/running/done counts")
             console.print("/queue run              — drain inbox until empty")
@@ -526,6 +566,7 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
             console.print("Overnight: docker exec -d franchise-orchestrator python queue_runner.py --drain")
             console.print("Auto-reject: HARD BAN / path / BEFORE-on-disk hits are saved as rejected.")
             console.print("No change needed: first-class success (status=no_change).")
+            console.print("Multi-file: FILE: path + BEFORE/AFTER pairs all apply on confirm.")
             continue
         if cmd == "/metrics" or cmd.startswith("/metrics "):
             _cmd_metrics()
