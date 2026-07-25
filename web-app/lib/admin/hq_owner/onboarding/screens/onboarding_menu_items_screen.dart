@@ -602,8 +602,8 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                             const Icon(Icons.check_circle, color: Colors.green),
                             const SizedBox(width: 8),
                             Text(
-                              '✅ Dependencies loaded • ${context.watch<shared.IngredientMetadataProvider>().allIngredients.length} ingredients • ${context.watch<shared.CategoryProvider>().categories.length} categories • ${context.watch<shared.IngredientTypeProvider>().ingredientTypes.length} types',
-                              style: shared.UiConfig.bodyStyle),
+                                '✅ Dependencies loaded • ${context.watch<shared.IngredientMetadataProvider>().allIngredients.length} ingredients • ${context.watch<shared.CategoryProvider>().categories.length} categories • ${context.watch<shared.IngredientTypeProvider>().ingredientTypes.length} types',
+                                style: shared.UiConfig.bodyStyle),
                             const Spacer(),
                             OutlinedButton.icon(
                               icon: const Icon(Icons.sync),
@@ -688,8 +688,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
                                           SnackBar(
-                                              content:
-                                                  Text('Save failed: $e')),
+                                              content: Text('Save failed: $e')),
                                         );
                                       }
                                     }
@@ -760,37 +759,40 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                       },
                                       onEdit: () => openEditor(item),
                                       onDelete: () async {
-                                        final confirmed = await showDialog<bool>(
+                                        final confirmed =
+                                            await showDialog<bool>(
                                           context: context,
-                                          builder: (dialogContext) => AlertDialog(
-                                            title: const Text('Delete menu item?'),
+                                          builder: (dialogContext) =>
+                                              AlertDialog(
+                                            title:
+                                                const Text('Delete menu item?'),
                                             content: Text(
                                               'Are you sure you want to delete "${item.name}"?',
                                             ),
                                             actions: [
                                               TextButton(
-                                                onPressed: () => Navigator.of(
-                                                        dialogContext)
-                                                    .pop(false),
+                                                onPressed: () =>
+                                                    Navigator.of(dialogContext)
+                                                        .pop(false),
                                                 child: const Text('Cancel'),
                                               ),
                                               TextButton(
-                                                onPressed: () => Navigator.of(
-                                                        dialogContext)
-                                                    .pop(true),
+                                                onPressed: () =>
+                                                    Navigator.of(dialogContext)
+                                                        .pop(true),
                                                 child: const Text('Delete'),
                                               ),
                                             ],
                                           ),
                                         );
                                         if (confirmed != true) return;
-                                        final menuProvider =
-                                            Provider.of<shared.MenuItemProvider>(
+                                        final menuProvider = Provider.of<
+                                            shared.MenuItemProvider>(
                                           context,
                                           listen: false,
                                         );
                                         try {
-                                          menuProvider.removeMenuItem(item.id);
+                                          menuProvider.deleteMenuItem(item.id);
                                           await menuProvider.persistChanges();
                                           if (!mounted) return;
                                           ScaffoldMessenger.of(context)
@@ -812,8 +814,8 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(
                                             SnackBar(
-                                              content: Text(
-                                                  '❌ Delete failed: $e'),
+                                              content:
+                                                  Text('❌ Delete failed: $e'),
                                               backgroundColor: Colors.red,
                                             ),
                                           );

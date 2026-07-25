@@ -251,11 +251,16 @@ class HqOnboardingShellScreenState extends State<HqOnboardingShellScreen> {
                         listen: false,
                       ),
                     ),
-                    ChangeNotifierProvider<shared.OnboardingProgressProvider>.value(
+                    ChangeNotifierProvider<
+                        OnboardingProgressProviderImpl>.value(
                       value: Provider.of<OnboardingProgressProviderImpl>(
                         context,
                         listen: false,
                       ),
+                    ),
+                    ProxyProvider<OnboardingProgressProviderImpl,
+                        shared.OnboardingProgressProvider>(
+                      update: (_, impl, __) => impl,
                     ),
                   ],
                   child: IndexedStack(
