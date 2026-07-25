@@ -1,0 +1,40 @@
+# id: xai-review-strip-action-v3
+# agent: web_frontend
+# backend: xai
+# priority: 8
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/widgets/review/review_summary_table.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Product decision (locked): Onboarding Progress summary table shows Section, Status, Issues only — no Action column.
+
+Required edits (same file):
+1. In `columnWidths`, remove index 3 (`FlexColumnWidth(1.3)`). Keep only 0, 1, 2.
+2. In `_buildHeaderRow`, remove the header cell for 'Action'.
+3. In `_buildSectionRow`, stop building/passing `actionWidget` and remove the Action cell from the TableRow children (keep Section, Status, Issues only).
+4. Delete the entire `_buildActionWidget` method and the entire `_actionButton` method.
+   - Method delete rule: BEFORE = full method body; AFTER must be **empty** (no lines). Forbidden: AFTER that is only `}` or `);`.
+
+Import rules (APPLY SAFETY):
+- **KEEP** `import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.dart';` because `_sectionOrder` uses `OnboardingSections.*`.
+- You may remove only imports that become truly unused after Action removal (e.g. ingredient_type_provider_impl, ingredient_metadata_provider_impl) — only if no remaining reference in this file.
+- Do **not** remove onboarding_navigation_utils or hq_onboarding_shell_screen if still referenced after the edit (if they become unused because only Action used them, they may be dropped).
+
+Format constraints:
+- Prefer **one** BEFORE/AFTER region, or at most **two**.
+- Do **not** emit multiple FILE blocks for the same path.
+- Do not change expansion panels, publish flow, progress keys, or `_sectionOrder`.
+
+If Action column and action methods are already fully gone → reply only: No change needed
+
+Rules:
+1. Quote-first from real source.
+2. Edit only the named file.
+3. Proposal only — human /approve confirm.
+4. No new providers, fields, or Firestore paths.

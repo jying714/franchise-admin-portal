@@ -1,0 +1,60 @@
+# id: xai-menu-items-hq-shell-nav
+# agent: web_frontend
+# backend: xai
+# priority: 7
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_items_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Product rule (Decision 7 / SCOPE_CARD): HQ onboarding navigation must use `HqOnboardingShellScreenState.switchToSection` — never `AdminDashboardScreen.switchToSection`.
+
+Locate `_navigateToSection`:
+```dart
+void _navigateToSection(String sectionKey) {
+  final dashboardState =
+      context.findAncestorStateOfType<State<AdminDashboardScreen>>();
+  if (dashboardState != null) {
+    (dashboardState as dynamic).switchToSection(sectionKey);
+  } else {
+    Navigator.pushNamed(context, '/admin/dashboard?section=$sectionKey');
+  }
+}
+```
+
+Replace the body with HQ-shell-first navigation (mirror foundation / review pattern):
+```dart
+void _navigateToSection(String sectionKey) {
+  final hqShell =
+      context.findAncestorStateOfType<HqOnboardingShellScreenState>();
+  if (hqShell != null) {
+    hqShell.switchToSection(sectionKey);
+    return;
+  }
+  debugPrint(
+    '[OnboardingMenuItemsScreen] ⚠️ No HQ shell for section=$sectionKey',
+  );
+}
+```
+
+Import rules:
+- Add (if missing): `import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';`
+- Remove `import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.dart';` **only if** `AdminDashboardScreen` has no remaining references in this file after the change.
+
+Do not change progress keys, mark complete, editor, or Firestore calls.
+
+APPLY SAFETY:
+- Prefer one region for the method body; second region only if import change is required.
+- Never remove an import that is still referenced.
+
+If `_navigateToSection` already uses `HqOnboardingShellScreenState` only → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.

@@ -1,0 +1,53 @@
+# id: xai-issue-expansion-4step-order
+# agent: web_frontend
+# backend: xai
+# priority: 6
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/widgets/review/issue_details_expansion.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Product truth: Review summary table uses 4 product sections. IssueDetailsExpansion still defaults to a legacy 5-item list (Features, Ingredient Types, Ingredients, Categories, Menu Items).
+
+Locate the default `sectionOrder` on the widget:
+```dart
+this.sectionOrder = const [
+  'Features',
+  'Ingredient Types',
+  'Ingredients',
+  'Categories',
+  'Menu Items',
+],
+```
+
+Replace with the same 4 product labels used by ReviewSummaryTable / OnboardingSections (exact strings already used in review_summary_table `_sectionOrder` via OnboardingSections — use the display strings that match the summary table rows):
+```dart
+this.sectionOrder = const [
+  OnboardingSections.features,
+  OnboardingSections.coreMenuFoundation,
+  OnboardingSections.menuItems,
+  OnboardingSections.reviewPublish,
+],
+```
+
+`OnboardingSections` is already available via the existing import:
+`import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.dart';`
+
+Do not change navigation Fix buttons, severity logic, or panel UI.
+Do not invent new section constants.
+
+APPLY SAFETY:
+- Exactly one BEFORE/AFTER region preferred.
+- Keep onboarding_navigation_utils import.
+
+If default sectionOrder already uses the four OnboardingSections product keys → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. Proposal only.

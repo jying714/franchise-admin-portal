@@ -1,0 +1,49 @@
+# id: xai-menu-items-incomplete-toggle-v3
+# agent: web_frontend
+# backend: xai
+# priority: 8
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_items_screen.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Product bug: Mark Complete updates the HQ progress card, but there is no path to unmark / mark incomplete. Feature Setup already implements the correct toggle pattern — mirror it here.
+
+Required (same file only):
+1. Locate `_markComplete()` (the method called by the AppBar check icon and the bottom “Mark Complete” button).
+2. Change it into a toggle using the existing progress API already imported via `shared`:
+   ```dart
+   final onboarding =
+       Provider.of<shared.OnboardingProgressProvider>(context, listen: false);
+   final isCompleted = onboarding.isStepComplete('onboardingMenuItems');
+   if (isCompleted) {
+     await onboarding.markStepIncomplete('onboardingMenuItems');
+     // incomplete snackbar
+   } else {
+     await onboarding.markStepComplete('onboardingMenuItems');
+     // complete snackbar
+   }
+   ```
+3. Product key must be exactly `onboardingMenuItems` (never `menu_items`).
+4. Keep existing try/catch + ErrorLogger structure; only add the isStepComplete branch.
+5. Do not invent provider methods, Firestore paths, or new imports.
+6. Do not change navigation, shell routing, or other steps.
+
+APPLY SAFETY:
+- Prefer exactly one BEFORE/AFTER region (the `_markComplete` method body).
+- Max 2 regions.
+- Do not remove imports still referenced.
+- Method delete not required — only edit the existing method.
+
+If `_markComplete` already toggles with `isStepComplete('onboardingMenuItems')` + `markStepIncomplete` / `markStepComplete` → reply only: No change needed
+
+Rules:
+1. Quote-first from real source.
+2. Edit only this file.
+3. Proposal only — human /approve confirm.
+4. No Admin onboarding paths; no top-level onboarding_progress/{id}.
