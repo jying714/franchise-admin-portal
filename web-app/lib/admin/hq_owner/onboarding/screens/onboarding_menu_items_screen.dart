@@ -11,7 +11,7 @@ import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_it
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/menu_item_template_picker_dialog.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/schema_issue_sidebar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
 import 'package:uuid/uuid.dart';
 import 'package:franchise_admin_portal/core/services/admin_firestore_service.dart';
 
@@ -87,13 +87,15 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
   }
 
   void _navigateToSection(String sectionKey) {
-    final dashboardState =
-        context.findAncestorStateOfType<State<AdminDashboardScreen>>();
-    if (dashboardState != null) {
-      (dashboardState as dynamic).switchToSection(sectionKey);
-    } else {
-      Navigator.pushNamed(context, '/admin/dashboard?section=$sectionKey');
+    final hqShell =
+        context.findAncestorStateOfType<HqOnboardingShellScreenState>();
+    if (hqShell != null) {
+      hqShell.switchToSection(sectionKey);
+      return;
     }
+    debugPrint(
+      '[OnboardingMenuItemsScreen] ⚠️ No HQ shell for section=$sectionKey',
+    );
   }
 
   Future<void> _markComplete() async {
@@ -102,13 +104,23 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     final loc = AppLocalizations.of(context)!;
 
     try {
-      await onboarding.markStepComplete('onboardingMenuItems');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content:
-                  Text(loc.menuItemMarkedAsComplete ?? 'Step marked complete')),
-        );
+      final isComplete = onboarding.isStepComplete('onboardingMenuItems');
+      if (isComplete) {
+        await onboarding.markStepIncomplete('onboardingMenuItems');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Step marked incomplete')),
+          );
+        }
+      } else {
+        await onboarding.markStepComplete('onboardingMenuItems');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(
+                    loc.menuItemMarkedAsComplete ?? 'Step marked complete')),
+          );
+        }
       }
     } catch (e, stack) {
       shared.ErrorLogger.log(

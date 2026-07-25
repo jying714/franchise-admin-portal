@@ -3,10 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_impl.dart';
-import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider_impl.dart';
 import 'package:franchise_admin_portal/core/providers/onboarding_review_provider_impl.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
 
 class ReviewSummaryTable extends StatelessWidget {
   // Updated for 4-Step Onboarding
@@ -53,7 +50,6 @@ class ReviewSummaryTable extends StatelessWidget {
                 0: FlexColumnWidth(2.2),
                 1: FlexColumnWidth(1.1),
                 2: FlexColumnWidth(1.0),
-                3: FlexColumnWidth(1.3),
               },
               border: TableBorder(
                 horizontalInside: BorderSide(
@@ -93,7 +89,6 @@ class ReviewSummaryTable extends StatelessWidget {
             align: TextAlign.left, padLeft: 10),
         _buildHeaderCell('Status', thStyle),
         _buildHeaderCell('Issues', thStyle),
-        _buildHeaderCell('Action', thStyle),
       ],
     );
   }
@@ -129,9 +124,6 @@ class ReviewSummaryTable extends StatelessWidget {
     final issuesWidget =
         _buildIssuesWidget(colorScheme, criticalCount, warningCount);
 
-    final actionWidget = _buildActionWidget(
-        context, section, issues, criticalCount, warningCount, colorScheme);
-
     final sectionWidget = Padding(
       padding: const EdgeInsets.symmetric(vertical: 11.0, horizontal: 10),
       child: Text(
@@ -150,10 +142,6 @@ class ReviewSummaryTable extends StatelessWidget {
         sectionWidget,
         statusWidget,
         issuesWidget,
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-          child: Center(child: actionWidget),
-        ),
       ],
     );
   }
@@ -227,124 +215,6 @@ class ReviewSummaryTable extends StatelessWidget {
                   color: fgColor, fontWeight: FontWeight.bold, fontSize: 15)),
         ),
       ),
-    );
-  }
-
-  Widget _buildActionWidget(
-    BuildContext context,
-    String section,
-    List<shared.OnboardingValidationIssue> issues,
-    int criticalCount,
-    int warningCount,
-    ColorScheme colorScheme,
-  ) {
-    void _navigateToFix(shared.OnboardingValidationIssue issue) async {
-      debugPrint(
-          '────────────────────────────────────────────────────────────');
-      debugPrint('[ReviewSummaryTable] Attempting navigation');
-      debugPrint('  • Section (raw): "$section"');
-      debugPrint('  • Issue.itemId: "${issue.itemId}"');
-
-      final normalizedSection =
-          OnboardingNavigationUtils.normalizeForRouting(section);
-      final route =
-          OnboardingNavigationUtils.resolveRoute(normalizedSection, issue);
-
-      if (route.isEmpty) {
-        debugPrint('[ReviewSummaryTable][WARN] Route is empty — aborted.');
-        return;
-      }
-
-      final sectionKey =
-          Uri.tryParse(route)?.queryParameters['section'] ?? 'onboardingMenu';
-
-      final args = OnboardingNavigationUtils.buildOnboardingNavArgs(
-        section: normalizedSection,
-        issue: issue,
-      );
-
-      try {
-        if (normalizedSection == 'onboardingIngredients' ||
-            normalizedSection == 'onboardingIngredientTypes') {
-          final typeProvider =
-              Provider.of<IngredientTypeProviderImpl>(context, listen: false);
-
-          String fid = typeProvider.franchiseId;
-          if (fid.isEmpty || fid == 'unknown') {
-            fid = '';
-          }
-
-          if (typeProvider.ingredientTypes.isEmpty) {
-            await typeProvider.load(franchiseIdOverride: fid);
-          }
-        }
-      } catch (e, st) {
-        debugPrint('[ReviewSummaryTable][ERROR] Preload failed: $e');
-      }
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final hqShell =
-            context.findAncestorStateOfType<HqOnboardingShellScreenState>();
-        if (hqShell != null) {
-          hqShell.switchToSection(sectionKey);
-          debugPrint('[ReviewSummaryTable] ✅ HQ shell → $sectionKey');
-          return;
-        }
-
-        Navigator.of(context).pushNamed(route, arguments: args);
-      });
-    }
-
-    if (criticalCount > 0) {
-      final issue = issues.firstWhere(
-        (e) =>
-            e.isBlocking &&
-            e.severity == shared.OnboardingIssueSeverity.critical,
-        orElse: () => issues.first,
-      );
-      return _actionButton(
-        label: issue.actionLabel?.isNotEmpty == true
-            ? issue.actionLabel!
-            : 'Fix Now',
-        icon: Icons.build_circle_outlined,
-        color: colorScheme.primary,
-        onPressed: () => _navigateToFix(issue),
-      );
-    } else if (warningCount > 0) {
-      final issue = issues.firstWhere(
-        (e) =>
-            !e.isBlocking &&
-            e.severity == shared.OnboardingIssueSeverity.warning,
-        orElse: () => issues.first,
-      );
-      return _actionButton(
-        label: issue.actionLabel?.isNotEmpty == true
-            ? issue.actionLabel!
-            : 'Review',
-        icon: Icons.visibility_outlined,
-        color: colorScheme.tertiary,
-        onPressed: () => _navigateToFix(issue),
-      );
-    }
-
-    return Text('â€”',
-        style: TextStyle(color: colorScheme.outlineVariant, fontSize: 15),
-        textAlign: TextAlign.center);
-  }
-
-  Widget _actionButton(
-      {required String label,
-      required IconData icon,
-      required Color color,
-      required VoidCallback onPressed}) {
-    return TextButton.icon(
-      style: TextButton.styleFrom(
-        foregroundColor: color,
-        textStyle: const TextStyle(fontWeight: FontWeight.w600),
-      ),
-      onPressed: onPressed,
-      icon: Icon(icon, size: 20),
-      label: Text(label),
     );
   }
 }

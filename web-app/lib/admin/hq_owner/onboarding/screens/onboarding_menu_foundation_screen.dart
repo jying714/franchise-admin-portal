@@ -167,9 +167,9 @@ class _OnboardingMenuFoundationScreenState
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   if (foundationProgress >= 0.8) {
-                    progressProvider
+                    await progressProvider
                         .markStepComplete('onboarding_menu_foundation');
 
                     final hqShell = context.findAncestorStateOfType<

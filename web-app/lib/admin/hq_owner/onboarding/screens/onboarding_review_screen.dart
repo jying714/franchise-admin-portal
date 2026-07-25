@@ -220,9 +220,9 @@ class _OnboardingReviewScreenState extends State<OnboardingReviewScreen> {
                 padding: const EdgeInsets.only(
                     top: 12.0, left: 16, right: 16, bottom: 6),
                 child: OnboardingProgressIndicator(
-                  currentStep: 6,
-                  totalSteps: 6,
-                  stepLabel: loc.onboardingStepLabel(6, 6),
+                  currentStep: 4,
+                  totalSteps: 4,
+                  stepLabel: loc.onboardingStepLabel(4, 4),
                 ),
               ),
               Expanded(

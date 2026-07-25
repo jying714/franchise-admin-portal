@@ -17,11 +17,10 @@ class IssueDetailsExpansion extends StatefulWidget {
   const IssueDetailsExpansion({
     Key? key,
     this.sectionOrder = const [
-      'Features',
-      'Ingredient Types',
-      'Ingredients',
-      'Categories',
-      'Menu Items',
+      OnboardingSections.features,
+      OnboardingSections.coreMenuFoundation,
+      OnboardingSections.menuItems,
+      OnboardingSections.reviewPublish,
     ],
   }) : super(key: key);
 

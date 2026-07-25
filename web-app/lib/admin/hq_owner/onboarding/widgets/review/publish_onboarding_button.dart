@@ -54,6 +54,8 @@ class _PublishOnboardingButtonState extends State<PublishOnboardingButton> {
         franchiseId: widget.franchiseId,
         userId: widget.userId,
       );
+      await Provider.of<shared.OnboardingProgressProvider>(context, listen: false)
+          .markStepComplete('onboardingReview');
       setState(() => _publishStatusMsg = "Franchise onboarding published!");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
