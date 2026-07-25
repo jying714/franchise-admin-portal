@@ -75,7 +75,10 @@ class _OnboardingMenuFoundationScreenState
       // Phase 3 will handle actual import here
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Template import triggered (Phase 3 wiring)')),
+          content: Text(
+            'Template import is not wired yet — use tabs to add types, ingredients, and categories.',
+          ),
+        ),
       );
 
       // Refresh providers - use Provider.of pattern from reference file

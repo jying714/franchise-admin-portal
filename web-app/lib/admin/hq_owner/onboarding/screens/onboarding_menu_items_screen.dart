@@ -477,21 +477,27 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
           ),
           floatingActionButton: FloatingActionButton.extended(
             heroTag: 'fab-onboarding-menu-items',
-            onPressed: () async {
+            onPressed: () {
               print('[DEBUG][FAB] FloatingActionButton pressed.');
               try {
-                Navigator.pushNamed(
-                  context,
-                  '/dashboard?section=menuItemEditor',
-                ).then((result) {
-                  if (result is shared.MenuItem) {
-                    Provider.of<shared.MenuItemProvider>(context, listen: false)
-                        .addOrUpdateMenuItem(result);
-                  }
-                });
+                openEditor(shared.MenuItem(
+                  id: const Uuid().v4(),
+                  name: 'New Item',
+                  price: 0.0,
+                  categoryId: '',
+                  category: '',
+                  available: true,
+                  availability: true,
+                  description: '',
+                  customizationGroups: [],
+                  customizations: [],
+                  taxCategory: 'standard',
+                  includedIngredients: [],
+                  optionalAddOns: [],
+                ));
               } catch (e, st) {
                 shared.ErrorLogger.log(
-                  message: 'Failed to navigate to MenuItemEditorScreen',
+                  message: 'Failed to open MenuItem editor',
                   stack: st.toString(),
                   source: 'onboarding_menu_items_screen.dart',
                   severity: 'error',
@@ -601,8 +607,8 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                             const Icon(Icons.check_circle, color: Colors.green),
                             const SizedBox(width: 8),
                             Text(
-                                '✅ Dependencies loaded • 18 ingredients • 6 categories • 17 types',
-                                style: shared.UiConfig.bodyStyle),
+                              '✅ Dependencies loaded • ${context.watch<shared.IngredientMetadataProvider>().allIngredients.length} ingredients • ${context.watch<shared.CategoryProvider>().categories.length} categories • ${context.watch<shared.IngredientTypeProvider>().ingredientTypes.length} types',
+                              style: shared.UiConfig.bodyStyle),
                             const Spacer(),
                             OutlinedButton.icon(
                               icon: const Icon(Icons.sync),
