@@ -25,7 +25,6 @@ import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_i
 import 'package:franchise_admin_portal/core/providers/menu_item_provider_impl.dart';
 import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider_impl.dart';
 import 'package:franchise_admin_portal/core/providers/franchise_subscription_provider_impl.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final String? initialSectionKey;
@@ -75,7 +74,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final sectionParam = uri?.queryParameters['section'];
 
     if (sectionParam != null && sectionParam.isNotEmpty) {
-      // Very tolerant normalization to match registry keys
       final normalizedParam =
           sectionParam.toLowerCase().replaceAll('_', '').replaceAll(' ', '');
 
@@ -96,7 +94,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       }
     }
 
-    // Constructor fallback (for direct initialSectionKey usage)
     if (widget.initialSectionKey != null && !_initializedFromKey) {
       final index =
           _sections.indexWhere((s) => s.key == widget.initialSectionKey);
@@ -107,7 +104,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
   }
 
-  /// Public safe method for onboarding navigation to switch section in place
+  /// Public in-place section switch for Admin ops sections.
   void switchToSection(String sectionKey) {
     final index = _sections.indexWhere((s) => s.key == sectionKey);
     if (index != -1 && index != _selectedIndex) {
@@ -126,9 +123,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final franchiseId = franchiseProvider.franchiseId;
     final adminUserProvider = Provider.of<shared.AdminUserProvider>(context);
     final appUser = adminUserProvider.user;
-
-    final firestoreService =
-        Provider.of<shared.FirestoreService>(context, listen: false);
 
     final isMobile = MediaQuery.of(context).size.width < 800;
     final colorScheme = Theme.of(context).colorScheme;
@@ -154,12 +148,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         body: const Center(child: Text("No dashboard sections registered.")),
       );
     }
-
-    // Sidebar grouping
-    final mainSidebarSections =
-        _sidebarSections.where((s) => !s.key.startsWith('onboarding')).toList();
-    final onboardingSidebarSections =
-        _sidebarSections.where((s) => s.key.startsWith('onboarding')).toList();
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -209,8 +197,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: SafeArea(
                 child: _buildSidebar(
                   context: context,
-                  mainSidebarSections: mainSidebarSections,
-                  onboardingSidebarSections: onboardingSidebarSections,
                   colorScheme: colorScheme,
                 ),
               ),
@@ -233,48 +219,58 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     child: SafeArea(
                       child: _buildSidebar(
                         context: context,
-                        mainSidebarSections: mainSidebarSections,
-                        onboardingSidebarSections: onboardingSidebarSections,
                         colorScheme: colorScheme,
                       ),
                     ),
                   ),
-                // Inside AdminDashboardScreen _AdminDashboardScreenState build(), replace the Expanded child LayoutBuilder with this:
-
                 Expanded(
                   child: Builder(
                     builder: (context) {
                       return MultiProvider(
                         providers: [
                           Provider<shared.FranchiseSubscriptionProvider>.value(
-                              value: Provider.of<
-                                      FranchiseSubscriptionProviderImpl>(
-                                  context,
-                                  listen: false)),
+                            value:
+                                Provider.of<FranchiseSubscriptionProviderImpl>(
+                              context,
+                              listen: false,
+                            ),
+                          ),
                           Provider<shared.CategoryProvider>.value(
-                              value: Provider.of<CategoryProviderImpl>(context,
-                                  listen: false)),
+                            value: Provider.of<CategoryProviderImpl>(
+                              context,
+                              listen: false,
+                            ),
+                          ),
                           Provider<shared.IngredientTypeProvider>.value(
-                              value: Provider.of<IngredientTypeProviderImpl>(
-                                  context,
-                                  listen: false)),
+                            value: Provider.of<IngredientTypeProviderImpl>(
+                              context,
+                              listen: false,
+                            ),
+                          ),
                           Provider<shared.IngredientMetadataProvider>.value(
-                              value:
-                                  Provider.of<IngredientMetadataProviderImpl>(
-                                      context,
-                                      listen: false)),
+                            value: Provider.of<IngredientMetadataProviderImpl>(
+                              context,
+                              listen: false,
+                            ),
+                          ),
                           Provider<shared.MenuItemProvider>.value(
-                              value: Provider.of<MenuItemProviderImpl>(context,
-                                  listen: false)),
+                            value: Provider.of<MenuItemProviderImpl>(
+                              context,
+                              listen: false,
+                            ),
+                          ),
                           Provider<shared.FranchiseInfoProvider>.value(
-                              value: Provider.of<FranchiseInfoProviderImpl>(
-                                  context,
-                                  listen: false)),
+                            value: Provider.of<FranchiseInfoProviderImpl>(
+                              context,
+                              listen: false,
+                            ),
+                          ),
                           Provider<shared.OnboardingProgressProvider>.value(
-                              value:
-                                  Provider.of<OnboardingProgressProviderImpl>(
-                                      context,
-                                      listen: false)),
+                            value: Provider.of<OnboardingProgressProviderImpl>(
+                              context,
+                              listen: false,
+                            ),
+                          ),
                         ],
                         child: IndexedStack(
                           index: _selectedIndex,
@@ -294,9 +290,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                     },
                                   );
                                   return Center(
-                                    child: Text('Section failed: $e',
-                                        style:
-                                            const TextStyle(color: Colors.red)),
+                                    child: Text(
+                                      'Section failed: $e',
+                                      style: const TextStyle(color: Colors.red),
+                                    ),
                                   );
                                 }
                               },
@@ -317,14 +314,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildSidebar({
     required BuildContext context,
-    required List<shared.DashboardSection> mainSidebarSections,
-    required List<shared.DashboardSection> onboardingSidebarSections,
     required ColorScheme colorScheme,
   }) {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        for (final section in mainSidebarSections)
+        for (final section in _sidebarSections)
           _SidebarSectionTile(
             section: section,
             isSelected: _selectedIndex < _sections.length &&
@@ -338,35 +333,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             },
             colorScheme: colorScheme,
           ),
-        if (onboardingSidebarSections.isNotEmpty) ...[
-          Padding(
-            padding:
-                const EdgeInsets.only(top: 24, bottom: 4, left: 14, right: 10),
-            child: Text(
-              'Franchise Onboarding',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                color: colorScheme.primary,
-                letterSpacing: 0.7,
-              ),
-            ),
-          ),
-          for (final section in onboardingSidebarSections)
-            _SidebarSectionTile(
-              section: section,
-              isSelected: _selectedIndex < _sections.length &&
-                  _sections[_selectedIndex].key == section.key,
-              onTap: () {
-                final index = _sections.indexWhere((s) => s.key == section.key);
-                if (index != -1 && index != _selectedIndex) {
-                  setState(() => _selectedIndex = index);
-                }
-                if (Navigator.of(context).canPop()) Navigator.of(context).pop();
-              },
-              colorScheme: colorScheme,
-            ),
-        ],
       ],
     );
   }

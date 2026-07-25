@@ -10,19 +10,12 @@ import 'package:franchise_admin_portal/admin/feedback/feedback_management_screen
 import 'package:franchise_admin_portal/admin/promo/promo_management_screen.dart';
 import 'package:franchise_admin_portal/admin/staff/staff_access_screen.dart';
 import 'package:franchise_admin_portal/admin/chat/chat_management_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_categories_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredients_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_items_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_review_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_ingredient_type_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_feature_setup_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/menu_item_editor_screen.dart';
-import 'package:franchise_admin_portal/admin/dashboard/onboarding/screens/onboarding_menu_foundation_screen.dart';
+// Menu item editor lives under HQ onboarding copy after Phase 4 removal of Admin onboarding tree.
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/menu_item_editor_screen.dart';
 
-// ==== UNIFIED SECTION REGISTRY (ALL MAIN + ONBOARDING) ====
+// ==== UNIFIED SECTION REGISTRY (Admin ops only — onboarding hosts under HQ) ====
 final List<shared.DashboardSection> sectionRegistry = [
-  // ---- Core dashboard sections (unchanged) ----
+  // ---- Core dashboard sections ----
   shared.DashboardSection(
     key: 'dashboardHome',
     title: 'Dashboard',
@@ -124,50 +117,6 @@ final List<shared.DashboardSection> sectionRegistry = [
     builder: (_) => const MenuItemEditorScreen(),
     sidebarOrder: 11,
     showInSidebar: false,
-  ),
-
-  // ---- Onboarding Steps (Updated to 4-Step Structure) ----
-  shared.DashboardSection(
-    key: 'onboardingMenu',
-    title: 'Onboarding Overview',
-    icon: Icons.list_alt_outlined,
-    builder: (_) => const OnboardingMenuScreen(),
-    sidebarOrder: 100,
-    showInSidebar: true,
-  ),
-  shared.DashboardSection(
-    key: 'onboarding_feature_setup',
-    title: 'Step 1: Feature Setup',
-    icon: Icons.tune,
-    builder: (_) => const OnboardingFeatureSetupScreen(),
-    sidebarOrder: 101,
-    showInSidebar: true,
-  ),
-  // NEW: Combined Core Menu Foundation (replaces old separate steps)
-  // NEW: Combined Core Menu Foundation
-  shared.DashboardSection(
-    key: 'onboarding_menu_foundation',
-    title: 'Step 2: Core Menu Foundation',
-    icon: Icons.foundation,
-    builder: (_) => const OnboardingMenuFoundationScreen(),
-    sidebarOrder: 102,
-    showInSidebar: true,
-  ),
-  shared.DashboardSection(
-    key: 'onboardingMenuItems',
-    title: 'Step 3: Menu Items',
-    icon: Icons.local_pizza_outlined,
-    builder: (_) => const OnboardingMenuItemsScreen(),
-    sidebarOrder: 103,
-    showInSidebar: true,
-  ),
-  shared.DashboardSection(
-    key: 'onboardingReview',
-    title: 'Step 4: Review & Publish',
-    icon: Icons.check_circle_outline,
-    builder: (_) => const OnboardingReviewScreen(),
-    sidebarOrder: 104,
-    showInSidebar: true,
   ),
 ];
 

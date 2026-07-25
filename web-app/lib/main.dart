@@ -401,11 +401,20 @@ class _FranchiseAuthenticatedRootState
               }
 
               if (name.contains('onboarding') || initialSectionKey != null) {
-                return MaterialPageRoute(
-                  builder: (_) => AdminDashboardScreen(
-                    initialSectionKey: initialSectionKey ?? 'onboardingMenu',
-                  ),
-                );
+                final section = initialSectionKey ??
+                    uri?.queryParameters['section'] ??
+                    'onboardingMenu';
+                final isOnboardingKey =
+                    section.toLowerCase().contains('onboarding') ||
+                        name.contains('onboarding');
+                if (isOnboardingKey) {
+                  return MaterialPageRoute(
+                    builder: (_) => HqOnboardingShellScreen(
+                      initialSectionKey: section,
+                      currentScreen: 'hq-owner/onboarding',
+                    ),
+                  );
+                }
               }
 
               // Fallback
