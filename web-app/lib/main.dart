@@ -507,6 +507,11 @@ class FranchiseAppRootSplit extends StatelessWidget {
                   OnboardingProgressProviderImpl(
                       firestore: fs, franchiseId: fp.franchiseId ?? ''),
             ),
+            // === Abstract Alias (required for Consumer<shared.OnboardingProgressProvider>) ===
+            ProxyProvider<OnboardingProgressProviderImpl,
+                shared.OnboardingProgressProvider>(
+              update: (_, impl, __) => impl,
+            ),
 
             // === Ingredient Metadata ===
             ChangeNotifierProxyProvider2<shared.FirestoreService,

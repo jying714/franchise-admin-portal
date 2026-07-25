@@ -16,6 +16,7 @@ import 'package:franchise_admin_portal/widgets/profile/user_avatar_menu.dart';
 import 'package:franchise_admin_portal/widgets/header/settings_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/help_icon_button.dart';
 import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/screens/design_branding_screen.dart';
 
 class OwnerHQDashboardScreen extends StatelessWidget {
   final String currentScreen;
@@ -259,12 +260,30 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: FilledButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const DesignBrandingScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.palette_outlined, size: 18),
+                          label: const Text('Open Design & Branding'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: DesignTokens.primaryColor,
+                            foregroundColor: DesignTokens.foregroundColor,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
               SizedBox(height: gap),
-
               // Onboarding Progress Card
               Consumer<shared.OnboardingProgressProvider>(
                 builder: (context, onboardingProgress, child) {
