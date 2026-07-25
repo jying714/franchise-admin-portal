@@ -1,0 +1,36 @@
+# Orchestrator model backends (no secrets here).
+# API key: set XAI_API_KEY in the environment only.
+
+xai:
+  # Confirm current id on https://docs.x.ai/developers/models
+  model: grok-4.5
+  base_url: https://api.x.ai/v1
+  temperature: 0.1
+  # Soft guidance for SMART context packing (not a hard API limit)
+  max_context_chars: 120000
+
+ollama:
+  host_env: OLLAMA_HOST
+  default_host: http://ollama:11434
+  models:
+    orchestrator: qwen2.5-coder:7b
+    backend: qwen2.5-coder:14b
+    web_frontend: qwen2.5-coder:14b
+    mobile_shared: qwen2.5-coder:14b
+    tester: qwen2.5-coder:7b
+    reviewer: qwen2.5-coder:7b
+
+routing:
+  # Default backend when task does not say backend: xai|ollama
+  default: ollama
+  # Prefer xAI for product / multi-file style tasks when header absent
+  prefer_xai_if_product_keywords: true
+  product_keywords:
+    - "markstepcomplete"
+    - "onboardingmenuitems"
+    - "strip action"
+    - "fix now"
+    - "hq shell"
+    - "publish"
+    - "multi-file"
+    - "dual-file"
