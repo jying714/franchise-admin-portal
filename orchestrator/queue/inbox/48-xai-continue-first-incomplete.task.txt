@@ -1,0 +1,53 @@
+# id: xai-continue-first-incomplete
+# agent: web_frontend
+# backend: xai
+# priority: 4
+# max_regions: 2
+
+backend: xai
+Role: web_frontend
+max_regions: 2
+
+Files:
+- web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart
+
+Goal: "Continue onboarding" opens HqOnboardingShellScreen on the first incomplete product step (not always onboardingMenu).
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Inside the Onboarding Progress Card Consumer builder, step1–step4 bools already exist:
+- onboarding_feature_setup
+- onboarding_menu_foundation
+- onboardingMenuItems
+- onboardingReview
+
+Locate the Continue button (exact pattern):
+```dart
+                            child: FilledButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) =>
+                                        const HqOnboardingShellScreen(
+                                      initialSectionKey: 'onboardingMenu',
+                                    ),
+                                  ),
+                                );
+                              },
+```
+
+AFTER: compute a local String initialKey before push:
+- if !step1 → 'onboarding_feature_setup'
+- else if !step2 → 'onboarding_menu_foundation'
+- else if !step3 → 'onboardingMenuItems'
+- else if !step4 → 'onboardingReview'
+- else → 'onboardingMenu'
+Pass initialSectionKey: initialKey (drop const on the shell constructor if needed).
+
+Optional Region 2: same logic for the QuickLinksPanel Onboarding tile (initialSectionKey currently 'onboardingMenu'). Only if you can do it with APIs already available in that StatelessWidget without inventing providers — otherwise skip Region 2 and fix Continue only.
+
+Constraints:
+- Use only existing isStepComplete keys above
+- No new progress imports
+- If Continue already picks first incomplete → No change needed

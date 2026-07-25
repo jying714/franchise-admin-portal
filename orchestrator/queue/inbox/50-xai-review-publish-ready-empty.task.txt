@@ -1,0 +1,28 @@
+# id: xai-review-publish-ready-empty
+# agent: web_frontend
+# backend: xai
+# priority: 6
+# max_regions: 2
+
+backend: xai
+Role: web_frontend
+max_regions: 2
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_review_screen.dart
+
+Goal: When review has no blocking issues / is publishable, show a clear ready-to-publish empty or success state (copy + optional icon) without inventing new providers.
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Inspect how the screen reads OnboardingReviewProviderImpl / issues / isPublishable (use whatever already exists in this file).
+
+If there is already a clear "ready to publish" / zero-issues banner → reply only: No change needed.
+
+Otherwise add one compact banner or placeholder in the main column when publishable or when issue lists are empty, e.g. green check + 'No blocking issues — you can publish when ready.' Use Theme/DesignTokens colors already in file. Do not change publish button logic or progress keys.
+
+Constraints:
+- No new DesignTokens fields
+- Do not mark onboardingReview here (publish button owns that)
+- Prefer ≤2 regions
