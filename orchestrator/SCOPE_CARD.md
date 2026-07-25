@@ -2,17 +2,22 @@
 **Phase 1 Workstream B — agent hard constraints**
 Keep this short. Loaded on every coding task (especially minimal/smart mode).
 
+## Operating mode (July 25 evening)
+- **Primary engine: `backend: xai`** (grok-4.5) — product **outcome** tasks
+- **Ollama**: optional verify-only / tiny hygiene — not the main queue
+- Both remain **proposal only** (human `/approve confirm`)
+
 ## IN SCOPE
-- Phase 1 Workstream B micro-edits only
+- Phase 1 product work under HQ onboarding + Design & Branding + related HQ surfaces
 - Quote real source first (first 10–12 lines + relevant region)
 - DesignTokens.setFranchiseProvider / live Color getters
 - FranchiseProvider instance hex getters only (never static)
-- Tiny UI that consumes existing DesignTokens / OnboardingProgressProvider API
-- HQ onboarding under `web-app/lib/admin/hq_owner/onboarding/**` only
+- UI that consumes existing DesignTokens / OnboardingProgressProvider API
+- HQ onboarding under `web-app/lib/admin/hq_owner/onboarding/**`
 - Progress keys (product): `onboarding_feature_setup`, `onboarding_menu_foundation`, `onboardingMenuItems`, `onboardingReview`
 - Foundation sub-keys only for detail %: `ingredientTypes`, `ingredients`, `categories`
-- Prefer **product slice tasks** over color-swap drills
-- backend: xai | ollama — both **proposal only** (human `/approve confirm`)
+- **xAI**: one **product outcome** per task (may span 2–3 related regions in one file)
+- Prefer product outcomes over color-swap / print-cleanup / import-only chores (those are secondary)
 
 ## OUT OF SCOPE (auto-reject if proposed)
 - New fields/getters on BrandingConfig, AppConfig, DesignTokens, FeatureConfig
@@ -20,12 +25,12 @@ Keep this short. Loaded on every coding task (especially minimal/smart mode).
 - **Static** FranchiseProvider.current* access
 - FirestoreService.collection or **new** Firestore query APIs not in the region
 - Schema changes / new collections
-- Multi-file "while you're at it" expansions
+- Multi-file "while you're at it" expansions beyond files the task names
 - Invented DesignTokens on* / current*Color
 - Hard-coded Colors.blue on live-branding tasks
 - Editing any file not named in the task
 - Identical BEFORE/AFTER — reply only: **No change needed**
-- Partial completion / "Next steps for human" on required wiring
+- Partial completion / "Next steps for human" when the required wiring was the goal
 - Registering onboarding or Design & Branding in `section_registry.dart`
 - Reintroducing Admin onboarding host (`admin/dashboard/onboarding/**` is **deleted**)
 - Top-level `onboarding_progress/{id}` path — use `franchises/{id}/onboarding_progress/progress` only
@@ -38,13 +43,15 @@ Keep this short. Loaded on every coding task (especially minimal/smart mode).
 - Verify-only tasks: never rewrite bootstrap branding or DesignTokens bridge.
 - Empty BEFORE fence when file is empty/BOM-only → will HARD BAN (see TASK DESIGN).
 
-## APPLY SAFETY (xAI + multi-region — mandatory)
-- Prefer **one coherent BEFORE/AFTER** per file. Max **2** regions per file unless the task explicitly allows more.
+## APPLY SAFETY (mandatory — all backends)
+- **xAI default**: up to **2** BEFORE/AFTER regions per file; task may set `max_regions: 3` for one coherent outcome
+- **Ollama default**: prefer **1** region; max 2 only when task says so
 - **Never remove an import** unless every symbol from that import is unused **after** your change.
 - `OnboardingSections` lives in `onboarding_navigation_utils.dart` — if `_sectionOrder` / UI still references it, **keep** that import.
 - Method delete: BEFORE = full method body; AFTER must be **empty** (no lines). **Forbidden**: AFTER that is only `}` or `);`.
-- Do not “clean up” imports as a side quest; only drop imports the task requires to drop and that are truly unused.
+- Do not “clean up” imports as a side quest unless the task requires it and they are truly unused.
 - Same path appearing as 5+ FILE blocks is a failure mode — consolidate.
+- `after parsed: no` → treat as reject (do not apply)
 
 ## LIVE PATHS (do not invent alternatives)
 - WEB: FranchiseProvider → DesignTokens.setFranchiseProvider → DesignTokens.primaryColor / secondaryColor
@@ -53,6 +60,7 @@ Keep this short. Loaded on every coding task (especially minimal/smart mode).
 - Onboarding host: HqOnboardingShellScreen + in-shell switchToSection
 - Progress Firestore: franchises/{franchiseId}/onboarding_progress/progress
 - Progress provider in UI: `Provider.of<shared.OnboardingProgressProvider>(context, listen: false)` — **not** a new web-app progress_provider import
+- HQ shell listenable progress: prefer `ChangeNotifierProvider<shared.OnboardingProgressProvider>.value` when exposing Impl to children that `watch`
 
 ## HQ DESIGN & BRANDING
 - v1 UI landed; v1.1 Save may write existing franchise branding keys when task explicitly says so
@@ -71,15 +79,27 @@ Keep this short. Loaded on every coding task (especially minimal/smart mode).
 - BEFORE/AFTER surgical and must **differ**
 - Already correct → **No change needed** only
 - Cannot load source → FAILED TO LOAD
-- 2-file: separate BEFORE/AFTER per file; No change needed OK on clean file
+- Multi-file only when task lists each path; separate BEFORE/AFTER per file
 
 ## PATH ALLOWLIST + AUTO-REJECT
 - Only edit files the task explicitly names.
 - HARD BAN / path-allowlist → auto-rejected.
 
-## TASK DESIGN (xAI reliability — July 25)
-- **Win pattern**: name one file + paste an **exact on-disk BEFORE** string + one small AFTER. Product slices with concrete strings succeed.
-- **Verify-only**: OK as smoke after apply; do **not** fill the main queue with “confirm X already done” when disk is known good — they correctly return No change needed and burn slots.
-- **Empty / near-empty files**: empty BEFORE cannot match → HARD BAN. Prefer human full-file write, or task text: “file may be empty; emit full-file AFTER only; do not invent empty BEFORE.”
-- **STATUS.md / markdown**: one FILE block; BEFORE/AFTER = contiguous checklist lines only; **no** prose after AFTER (parser fails → `after parsed: no`). Prefer human edit for STATUS when checklist intent is clear.
-- Prefer 3–5 surgical product tasks per batch over mixed verify + doc + empty-file tasks.
+## TASK DESIGN
+
+### xAI (primary) — outcome tasks
+- **Unit of work**: one **product outcome** in one sentence (e.g. “dirty menu Save and Delete work end-to-end on this screen”).
+- **Shape**: `backend: xai` + optional `max_regions: 2` (or 3) + one primary file.
+- **Win pattern**: paste **exact on-disk BEFORE** for each region + clear AFTER (or precise description of AFTER using only APIs already in the file).
+- Prefer **real fix** when goal is unmet; **No change needed** only when already on disk.
+- Batch size: **4–8 outcome tasks** per AFK run (not 20 micro-chores).
+- Secondary polish (prints, unused imports, theme-only) is fine as low-priority fillers — not the main load.
+
+### Ollama (secondary) — surgical / verify
+- Prefer 1 region, one tiny change, escape-hatch no_change when ambiguous.
+- Use for verify-only smoke after xAI applies, or when xAI key is unavailable.
+
+### All backends
+- **Empty / near-empty files**: empty BEFORE cannot match → HARD BAN. Prefer human full-file write, or: “file may be empty; emit full-file AFTER only; do not invent empty BEFORE.”
+- **STATUS.md / markdown**: contiguous checklist lines only; prefer human edit.
+- Never invent progress import path; always `shared.OnboardingProgressProvider`.

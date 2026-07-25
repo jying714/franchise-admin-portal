@@ -7,13 +7,22 @@ Multi-agent coordinator that runs 24/7 on the MINISFORUM AI X1 Pro-470.
 - Loads mandatory governance docs (`STATUS.md`, `AGENT_SYSTEM.md`, …)
 - Always loads **SCOPE_CARD.md** (short Phase 1 hard constraints)
 - Loads **real source files** when a path appears in the task
-- Routes tasks to specialized agents and calls Ollama **or xAI** (`backend: xai`)
+- Routes tasks to specialized agents; **primary backend is xAI** (`backend: xai`); Ollama optional
 - Validates proposals for scope drift (A3) + **hard ban list** + **identical BEFORE/AFTER no-op ban**
 - Saves proposals; applies **only** after explicit `/approve confirm [id]`
 - Treats **"No change needed"** as a first-class success (`status=no_change`)
 - **Never** auto-pushes to git; **never** writes Firestore
 - Optional **overnight queue**: drop task files in `queue/inbox/` and drain sequentially
 - Lightweight **`/metrics`** for training measurement
+
+## Operating mode (xAI-first)
+
+| Backend | Role |
+|---------|------|
+| **`backend: xai`** (grok-4.5) | **Primary product engine** — outcome-sized tasks, ≤2–3 regions/file |
+| Ollama (7b/14b) | Optional verify-only / tiny hygiene when xAI unavailable |
+
+Human remains the merge gate. HARD BAN field/path rules still apply to both.
 
 ## Directory layout
 
@@ -63,14 +72,29 @@ docker exec -it franchise-orchestrator python main.py status
 ```text
 # id: optional-slug
 # agent: web_frontend
-# priority: 10
-# backend: xai   ← optional; uses Grok API when set
+# priority: 5
+# backend: xai
+# max_regions: 2
 
-Using web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_items_screen.dart:
+backend: xai
+Role: web_frontend
 
-1. Quote the exact first 12 lines of the real file.
-2. Propose ONLY the small change named below.
-3. If the named region already satisfies the request, reply ONLY with: No change needed.
+Files:
+- path/to/file.dart
+
+Goal: <one sentence product outcome>
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Locate this exact region:
+```dart
+<paste real on-disk BEFORE>
+```
+
+Replace / extend so that <outcome>. Use only APIs already in this file.
+Prefer ≤2 BEFORE/AFTER regions (or max_regions from header).
+If already done → reply only: No change needed
 ```
 
 Lower `priority` numbers run first. Default priority is 100.
@@ -97,78 +121,83 @@ docker exec -it franchise-orchestrator python queue_runner.py --once
 ```text
 /proposals
 /proposals pending
-/proposals no_change            # escape-hatch successes
-/proposals full                 # full context dump of every pending proposal
-/metrics                        # training rates (last 50)
+/proposals no_change
+/proposals full
+/metrics
 /approve <id>
-/approve confirm <id>           # winners only
-/reject <id> reason=...         # logs orchestrator/feedback/rejects.jsonl
+/approve confirm <id>
+/reject <id> reason=...
 ```
 
 Learning is **governance**, not model fine-tuning: use reject reasons to update `SCOPE_CARD.md` / hard bans / task templates.
 
 ## SCOPE_CARD (always-on)
 
-`orchestrator/SCOPE_CARD.md` is injected on every coding task (especially minimal/smart mode).
+`orchestrator/SCOPE_CARD.md` is injected on every coding task.
 
-Key rules (see full file):
-- Prefer **product slice tasks** with an **exact on-disk BEFORE** string
-- If the region already satisfies the request → reply only: **No change needed**
-- Identical BEFORE/AFTER is a HARD BAN (no-op)
-- Empty-file BEFORE → HARD BAN (see TASK DESIGN in SCOPE_CARD)
+Key rules:
+- **xAI-first**: one product **outcome** per task; ≤2 regions default (3 if `max_regions: 3`)
+- Paste **exact on-disk BEFORE** strings
+- Field/path HARD BANs unchanged (no new DesignTokens/BrandingConfig fields, no invented progress imports)
+- If region already satisfies the request → **No change needed**
+- Empty-file BEFORE → HARD BAN
+- `after parsed: no` → reject; do not apply
 
-## Preferred coding task prompts (A2 + xAI lessons July 25)
+## Preferred coding task prompts (xAI outcome style)
 
-See also `AGENT_SYSTEM.md` → **Preferred Coding Task Prompt Style** and **SCOPE_CARD → TASK DESIGN**.
+See also `AGENT_SYSTEM.md` and **SCOPE_CARD → TASK DESIGN**.
 
-**Template that works well (product edit):**
+**Outcome template (preferred):**
 
 ```text
 backend: xai
 Role: web_frontend
+max_regions: 2
 
 Files:
 - path/to/file.dart
 
+Goal: <one product outcome>
+
 Task:
 Quote the exact first 10–12 lines of the loaded file.
 
-Locate this exact region:
+Region 1 — locate exact on-disk:
 ```dart
-<paste real on-disk BEFORE here>
+BEFORE…
+```
+AFTER should …
+
+Region 2 (optional) — …
+
+Constraints:
+- Use only APIs already imported or used in this file
+- No new fields on BrandingConfig / DesignTokens / FeatureConfig
+- shared.OnboardingProgressProvider only (no invented progress import)
+- If already satisfied → No change needed
 ```
 
-Replace with:
-```dart
-<exact AFTER>
-```
+**Rules of thumb (xAI-first, July 25)**
 
-Do not invent imports/fields. Prefer one BEFORE/AFTER region.
-If already present → reply only: No change needed
-```
+- Always include full file path(s)
+- **One outcome** per task; one file preferred; explicit 2-file only when both paths listed
+- Paste exact on-disk BEFORE — highest apply rate
+- Prefer real fix over no_change when the goal is unmet
+- Batch **4–8 outcome tasks** per AFK run (not 20 micro-chores)
+- Verify-only: sparse post-apply smoke; do not fill the main queue
+- Empty files: human full-file or special wording — never empty BEFORE
+- STATUS.md: prefer human edit
+- Treat `after parsed: no` like HARD BAN — reject
 
-**Rules of thumb (updated July 25)**
-
-- Always include the full file path
-- One file (or explicit 2-file), one small change per task
-- **Paste an exact on-disk BEFORE string** — highest success rate with xAI
-- Explicit forbid list (no fields / no logic / no invented progress imports)
-- Prefer **product slices** over verify-only and color drills
-- **Verify-only**: use sparingly as post-apply smoke; do not fill the main queue when disk is known good
-- **Empty files**: do not use empty BEFORE; full-file replace by human or special task wording
-- **STATUS.md / markdown**: contiguous checklist BEFORE/AFTER only; no prose after AFTER (or edit STATUS by hand)
-- Prefer 3–5 surgical product tasks per batch
-- Multi-file tasks: require quote blocks first or `FAILED TO LOAD`
-- Reward honesty: **No change needed** is a correct outcome when already done
-- Treat `after parsed: no` like HARD BAN — reject; do not `/approve confirm`
+**Ollama (secondary):** keep 1-region surgical prompts if used at all.
 
 ## Review & apply workflow
 
 ```text
 1. Run task (interactive or queue) → proposal saved with an id
 2. /proposals  or  /proposals pending  or  /proposals no_change
-3. /metrics                     # see training rates
-4. /proposals full              # see every pending proposal with full task + response
+3. /metrics
+4. /proposals full
 5. /approve <id>
 6. /approve confirm <id>        # local file write only
 7. git diff on the host → you commit & push
@@ -177,36 +206,32 @@ If already present → reply only: No change needed
 | Command | Effect |
 |---------|--------|
 | `/proposals` | List recent ids (all statuses) |
-| `/proposals pending` | List only pending (un-accepted / un-rejected) |
-| `/proposals no_change` | List escape-hatch successes |
-| `/proposals rejected` | List rejected |
-| `/proposals applied` | List applied |
-| `/proposals full` | **Fully print** every pending proposal (task + response + parsed before/after) |
-| `/metrics` | Training metrics (quote / no_change / real-diff / HARD BAN / applied rates) |
-| `/approve` | Show last proposal |
-| `/approve <id>` | Show proposal by id |
-| `/approve confirm` | Apply last locally |
-| `/approve confirm <id>` | Apply that id locally |
-| `/reject [id] reason=...` | Mark rejected + feedback log |
-| `/queue status` | Inbox / running / done |
-| `/queue run` | Drain inbox |
-| `/queue run --once` | One task |
+| `/proposals pending` | List only pending |
+| `/proposals no_change` | Escape-hatch successes |
+| `/proposals rejected` | Rejected |
+| `/proposals applied` | Applied |
+| `/proposals full` | Full dump of every pending proposal |
+| `/metrics` | Training metrics (last 50) |
+| `/approve` / `/approve <id>` | Show proposal |
+| `/approve confirm` / `/approve confirm <id>` | Apply locally |
+| `/reject [id] reason=...` | Reject + feedback log |
+| `/queue status` / `/queue run` / `/queue run --once` | Queue control |
 
-Treat **HARD BAN** validator warnings as reject candidates.  
-**No change needed** is a success — it is not pending work.  
+Treat **HARD BAN** as reject candidates.  
+**No change needed** is success.  
 **`after parsed: no`** → reject; do not apply.
 
 ## Model configuration
 
 | Agent | Default | Env var |
 |-------|---------|---------|
+| xAI (primary) | grok-4.5 | XAI_MODEL / backends.yaml |
 | orchestrator | qwen2.5-coder:7b | MODEL_ORCHESTRATOR |
 | backend | qwen2.5-coder:14b | MODEL_BACKEND |
 | web_frontend | qwen2.5-coder:14b | MODEL_WEB |
 | mobile_shared | qwen2.5-coder:14b | MODEL_MOBILE |
 | tester | qwen2.5-coder:7b | MODEL_TESTER |
 | reviewer | qwen2.5-coder:7b | MODEL_REVIEWER |
-| xAI | grok-4.5 (configurable) | XAI_MODEL / backends.yaml |
 
 ## Safety
 
@@ -216,16 +241,17 @@ Treat **HARD BAN** validator warnings as reject candidates.
 - No Firestore / production writes
 - Source injection always wins over status-only prompts when paths are present
 - Identical BEFORE/AFTER → HARD BAN (no-op)
-- "No change needed" → status=`no_change` (success, nothing to apply)
+- "No change needed" → status=`no_change`
 - Empty BEFORE on empty file → HARD BAN
+- Field/schema HARD BANs apply to **xAI and Ollama**
 
 ## Next improvements
 
-- Structured unified-diff proposals for more reliable apply (optional)
-- Feedback → SCOPE_CARD refresh checklist (human-gated)
-- Systematic 7b vs 14b A/B on Stage-A tasks (optional)
-- Empty-file / full-file replace apply path
 - Auto-reject when AFTER fails to parse
+- Empty-file / full-file replace apply path
+- Optional structured unified-diff proposals
+- Metrics split by backend (xAI vs Ollama)
+- Validator: honor `max_regions` from task header for xAI without HARD BAN
 
 ---
-Last updated: 2026-07-25
+Last updated: 2026-07-25 (xAI-first)

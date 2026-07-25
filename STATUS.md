@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 25, 2026 (progress writers + menu polish applied; xAI task lessons captured)  
+**Last Updated**: July 25, 2026 (xAI-first mode; progress writers + HQ polish applied)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch**: `feat/onboarding-4step`
 
@@ -20,10 +20,12 @@ Phase 0 complete (July 23, 2026).
 - [x] 2-file surgical reliable; dual-edit on dirty pairs improved
 - [x] **Multi-file parse/apply** in `proposal_store.py` + main.py messaging (July 25) — FILE: path + BEFORE/AFTER pairs; apply smoke proven
 - [x] Validator: net-new checks AFTER bans; skip HARD BAN on pure no_change; Role: line routing
-- [x] **xAI task lessons (July 25 evening)**: quote-first + exact on-disk BEFORE succeeds; empty-file BEFORE fails HARD BAN; STATUS/markdown prose breaks AFTER parse; verify-only tasks burn queue — prefer product slices with concrete BEFORE strings
+- [x] **xAI task lessons (July 25)**: quote-first + exact on-disk BEFORE succeeds; empty-file BEFORE fails HARD BAN; STATUS/markdown prose breaks AFTER parse; verify-only tasks burn queue
+- [x] **xAI-first operating mode (July 25 evening)**: primary engine = `backend: xai` outcome tasks (≤2–3 regions); Ollama optional verify-only; SCOPE_CARD + orchestrator README updated
 - [ ] Optional model A/B; structured unified-diff; 3-file volume training (optional only)
 - [ ] Empty-file / full-file replace apply path (optional)
 - [ ] Auto-reject when `after parsed: no` (same class as HARD BAN)
+- [ ] Validator honor `max_regions` from task header for xAI
 
 ### B. Product — Core config scoping & dynamic branding
 
@@ -76,15 +78,18 @@ Copy-first then Admin removal. HQ is the **sole product host** for franchise/men
 - [x] Menu FAB no longer navigates Admin `/dashboard?section=menuItemEditor` — uses in-screen `openEditor`
 - [x] Menu status bar uses live provider counts (not hard-coded 18/6/17)
 - [x] Foundation template snackbar is MVP-clear (not “Phase 3 wiring”)
+- [x] HQ shell exposes progress via **ChangeNotifierProvider** value (listenable to children)
+- [x] Overview: no “More steps coming soon”; HQ Quick Link → Onboarding
 
 **Still open (product):**
 
 - [ ] Broader franchise-scoped config beyond branding
 - [ ] Hybrid localization (partial)
 - [ ] Color picker UI (Design & Branding downstream)
-- [ ] Menu dirty-row `persistChanges` stub (if still empty on disk)
-- [ ] HQ dashboard progress card watches Impl (confirm if not already)
+- [ ] Menu dirty-row `persistChanges` + delete dialog (if still stubs on disk)
+- [ ] Branding draft-hex live swatches + stale “Save not wired” copy (if still present)
 - [ ] Empty `onboarding_summary_panel.dart` stub (full-file replace or delete)
+- [ ] Continue onboarding → first incomplete step (smart initial section)
 
 **Ground truth (do not regress):**
 
@@ -102,6 +107,7 @@ Copy-first then Admin removal. HQ is the **sole product host** for franchise/men
 - Card watches **Impl**, not abstract-only ProxyProvider
 - Authenticated MaterialApp must not rebuild on every AdminUserProvider notify (identity/roles Selector)
 - See `orchestrator/SCOPE_CARD.md` for short always-on constraints
+- **Agent mode**: xAI primary (outcome tasks); Ollama secondary
 
 ---
 
@@ -116,7 +122,7 @@ Copy-first then Admin removal. HQ is the **sole product host** for franchise/men
 7. "No change needed" → `status=no_change`  
 8. `/metrics` → training rates over last 50
 
-Prompt style: **AGENT_SYSTEM.md** + **SCOPE_CARD** task-design notes. Interactive: paste task, `END`. Queue: `orchestrator/queue/inbox/`.
+Prompt style: **AGENT_SYSTEM.md** + **SCOPE_CARD** (xAI outcome / Ollama surgical). Interactive: paste task, `END`. Queue: `orchestrator/queue/inbox/`.
 
 ---
 
