@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-
+import 'package:franchise_admin_portal/config/design_tokens.dart';
 class KpiCard extends StatelessWidget {
   final String title;
   final String value;
@@ -41,17 +41,17 @@ class KpiCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             loading
-                ? Container(
-                    width: 48,
-                    height: 22,
-                    decoration: BoxDecoration(
-                        color: colorScheme.surfaceVariant,
-                        borderRadius: BorderRadius.circular(8)),
-                  )
-                : Text(value,
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.primary)),
+              ? Container(
+                width: 48,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(8)),
+                )
+              : Text(value,
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: DesignTokens.primaryColor)),
           ],
         ),
       ),

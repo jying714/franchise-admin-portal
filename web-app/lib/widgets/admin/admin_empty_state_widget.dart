@@ -36,7 +36,7 @@ class AdminEmptyStateWidget extends StatelessWidget {
                 fit: BoxFit.contain,
               )
             else if (icon != null)
-              Icon(icon, size: 72, color: colorScheme.secondary),
+              Icon(icon, size: 72, color: DesignTokens.secondaryColor),
             const SizedBox(height: 24),
             Text(
               title,
@@ -61,7 +61,7 @@ class AdminEmptyStateWidget extends StatelessWidget {
                   icon: const Icon(Icons.arrow_forward),
                   label: Text(actionLabel!),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.primary,
+                    backgroundColor: DesignTokens.primaryColor,
                     foregroundColor: colorScheme.onPrimary,
                     elevation: 1,
                     shape: RoundedRectangleBorder(

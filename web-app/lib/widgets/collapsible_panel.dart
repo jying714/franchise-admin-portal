@@ -48,14 +48,14 @@ class _CollapsiblePanelState extends State<CollapsiblePanel> {
                 children: [
                   Icon(
                     _expanded ? Icons.expand_less : Icons.expand_more,
-                    color: colorScheme.primary,
+                    color: DesignTokens.primaryColor,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       widget.title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: colorScheme.primary,
+                            color: DesignTokens.primaryColor,
                             fontWeight: FontWeight.bold,
                           ),
                     ),

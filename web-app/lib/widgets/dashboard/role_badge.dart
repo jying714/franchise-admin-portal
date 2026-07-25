@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:franchise_admin_portal/config/design_tokens.dart';
 
 class RoleBadge extends StatelessWidget {
   final String role;
@@ -13,7 +14,7 @@ class RoleBadge extends StatelessWidget {
         badgeColor = DesignTokens.primaryColor;
         break;
       case 'Admin':
-        badgeColor = colorScheme.secondary;
+        badgeColor = DesignTokens.secondaryColor;
         break;
       default:
         badgeColor = colorScheme.tertiary ?? colorScheme.primaryContainer;
@@ -26,5 +27,3 @@ class RoleBadge extends StatelessWidget {
     );
   }
 }
-
-
