@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 25, 2026 (HQ onboarding sole host; progress path + Feature Setup → card verified)  
+**Last Updated**: July 25, 2026 (progress writers + menu polish applied; xAI task lessons captured)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch**: `feat/onboarding-4step`
 
@@ -20,7 +20,10 @@ Phase 0 complete (July 23, 2026).
 - [x] 2-file surgical reliable; dual-edit on dirty pairs improved
 - [x] **Multi-file parse/apply** in `proposal_store.py` + main.py messaging (July 25) — FILE: path + BEFORE/AFTER pairs; apply smoke proven
 - [x] Validator: net-new checks AFTER bans; skip HARD BAN on pure no_change; Role: line routing
+- [x] **xAI task lessons (July 25 evening)**: quote-first + exact on-disk BEFORE succeeds; empty-file BEFORE fails HARD BAN; STATUS/markdown prose breaks AFTER parse; verify-only tasks burn queue — prefer product slices with concrete BEFORE strings
 - [ ] Optional model A/B; structured unified-diff; 3-file volume training (optional only)
+- [ ] Empty-file / full-file replace apply path (optional)
+- [ ] Auto-reject when `after parsed: no` (same class as HARD BAN)
 
 ### B. Product — Core config scoping & dynamic branding
 
@@ -51,7 +54,7 @@ Copy-first then Admin removal. HQ is the **sole product host** for franchise/men
 | 2 HQ shell + Continue | Done | `HqOnboardingShellScreen`; overview/foundation in-shell `switchToSection`; smoke 1–17 pass |
 | 3 Deep links + review Fix | Done | `resolveRoute` → `/hq/onboarding?section=…`; main.dart HQ route before generic `hq`; review Fix prefers shell |
 | 4 Admin removal | Done | Admin onboarding tree **deleted**; `section_registry` ops-only; Admin sidebar no Franchise Onboarding group |
-| 5 Progress keys + tracking | Partial | Card shows 4 product steps; Feature Setup → card verified |
+| 5 Progress keys + tracking | Done (writers) | Card shows 4 product steps; Feature Setup / foundation / menu / publish keys on disk |
 
 **Progress tracking ground truth (July 25):**
 
@@ -65,18 +68,23 @@ Copy-first then Admin removal. HQ is the **sole product host** for franchise/men
 - `onboardingReview` progress key **only** on successful Publish (summary table “Complete” = validation only)
 - Menu complete/incomplete must use **`onboardingMenuItems`** (not `menu_items`)
 - [x] Feature Setup mark complete → HQ card step 1 + overall % **verified**
-- [ ] Menu Items unmark incomplete (same key)
-- [ ] Foundation Save & Continue → card step 2 reliably
-- [ ] Publish → `markStepComplete('onboardingReview')` → card step 4
-- [ ] Review UX: remove summary **Action / Fix Now** column; keep expansion detail; expansion Fix = **section-only** in-shell switch (no field highlight yet)
+- [x] Menu Items unmark incomplete (same key) — toggle via `isStepComplete` / `markStepIncomplete` / `markStepComplete`
+- [x] Foundation Save & Continue → `await markStepComplete('onboarding_menu_foundation')`
+- [x] Publish → `markStepComplete('onboardingReview')` → card step 4
+- [x] Review UX: summary **Action / Fix Now** column removed; expansion section-only Fix remains
+- [x] Review chrome is 4/4 (not Step 6 of 6)
+- [x] Menu FAB no longer navigates Admin `/dashboard?section=menuItemEditor` — uses in-screen `openEditor`
+- [x] Menu status bar uses live provider counts (not hard-coded 18/6/17)
+- [x] Foundation template snackbar is MVP-clear (not “Phase 3 wiring”)
 
 **Still open (product):**
 
-- [ ] Finish progress writers for steps 2–4 + menu unmark
-- [ ] Review summary strip Action column; expansion section-only nav polish
-- [ ] Stale “Step 6 of 6” chrome on review (4-step product)
 - [ ] Broader franchise-scoped config beyond branding
 - [ ] Hybrid localization (partial)
+- [ ] Color picker UI (Design & Branding downstream)
+- [ ] Menu dirty-row `persistChanges` stub (if still empty on disk)
+- [ ] HQ dashboard progress card watches Impl (confirm if not already)
+- [ ] Empty `onboarding_summary_panel.dart` stub (full-file replace or delete)
 
 **Ground truth (do not regress):**
 
@@ -108,7 +116,7 @@ Copy-first then Admin removal. HQ is the **sole product host** for franchise/men
 7. "No change needed" → `status=no_change`  
 8. `/metrics` → training rates over last 50
 
-Prompt style: **AGENT_SYSTEM.md**. Interactive: paste task, `END`. Queue: `orchestrator/queue/inbox/`.
+Prompt style: **AGENT_SYSTEM.md** + **SCOPE_CARD** task-design notes. Interactive: paste task, `END`. Queue: `orchestrator/queue/inbox/`.
 
 ---
 

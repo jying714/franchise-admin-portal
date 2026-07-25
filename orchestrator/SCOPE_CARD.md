@@ -36,6 +36,7 @@ Keep this short. Loaded on every coding task (especially minimal/smart mode).
 - HARD BAN applies to **net-new proposed code**, not quoting existing source.
 - If live file already satisfies task → **only**: **No change needed**
 - Verify-only tasks: never rewrite bootstrap branding or DesignTokens bridge.
+- Empty BEFORE fence when file is empty/BOM-only → will HARD BAN (see TASK DESIGN).
 
 ## APPLY SAFETY (xAI + multi-region — mandatory)
 - Prefer **one coherent BEFORE/AFTER** per file. Max **2** regions per file unless the task explicitly allows more.
@@ -75,3 +76,10 @@ Keep this short. Loaded on every coding task (especially minimal/smart mode).
 ## PATH ALLOWLIST + AUTO-REJECT
 - Only edit files the task explicitly names.
 - HARD BAN / path-allowlist → auto-rejected.
+
+## TASK DESIGN (xAI reliability — July 25)
+- **Win pattern**: name one file + paste an **exact on-disk BEFORE** string + one small AFTER. Product slices with concrete strings succeed.
+- **Verify-only**: OK as smoke after apply; do **not** fill the main queue with “confirm X already done” when disk is known good — they correctly return No change needed and burn slots.
+- **Empty / near-empty files**: empty BEFORE cannot match → HARD BAN. Prefer human full-file write, or task text: “file may be empty; emit full-file AFTER only; do not invent empty BEFORE.”
+- **STATUS.md / markdown**: one FILE block; BEFORE/AFTER = contiguous checklist lines only; **no** prose after AFTER (parser fails → `after parsed: no`). Prefer human edit for STATUS when checklist intent is clear.
+- Prefer 3–5 surgical product tasks per batch over mixed verify + doc + empty-file tasks.

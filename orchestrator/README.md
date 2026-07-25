@@ -7,7 +7,7 @@ Multi-agent coordinator that runs 24/7 on the MINISFORUM AI X1 Pro-470.
 - Loads mandatory governance docs (`STATUS.md`, `AGENT_SYSTEM.md`, …)
 - Always loads **SCOPE_CARD.md** (short Phase 1 hard constraints)
 - Loads **real source files** when a path appears in the task
-- Routes tasks to specialized agents and calls Ollama
+- Routes tasks to specialized agents and calls Ollama **or xAI** (`backend: xai`)
 - Validates proposals for scope drift (A3) + **hard ban list** + **identical BEFORE/AFTER no-op ban**
 - Saves proposals; applies **only** after explicit `/approve confirm [id]`
 - Treats **"No change needed"** as a first-class success (`status=no_change`)
@@ -29,6 +29,7 @@ orchestrator/
 ├── agent_router.py         ← routing + prompts
 ├── file_reader.py          ← safe source-file load
 ├── ollama_client.py        ← Ollama client + 14b→7b fallback
+├── xai_client.py           ← xAI API (proposal only)
 ├── proposal_validator.py   ← A3 drift checks + hard bans + no-op ban
 ├── proposal_store.py       ← save / approve / local apply + list_by_status + metrics
 ├── proposals/              ← saved proposal JSON (runtime)
@@ -61,13 +62,15 @@ docker exec -it franchise-orchestrator python main.py status
 
 ```text
 # id: optional-slug
-# agent: backend
+# agent: web_frontend
 # priority: 10
+# backend: xai   ← optional; uses Grok API when set
 
-Using web-app/lib/config/design_tokens.dart:
+Using web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_items_screen.dart:
 
 1. Quote the exact first 12 lines of the real file.
-2. No edits. End with: No change needed.
+2. Propose ONLY the small change named below.
+3. If the named region already satisfies the request, reply ONLY with: No change needed.
 ```
 
 Lower `priority` numbers run first. Default priority is 100.
@@ -106,39 +109,58 @@ Learning is **governance**, not model fine-tuning: use reject reasons to update 
 
 ## SCOPE_CARD (always-on)
 
-`orchestrator/SCOPE_CARD.md` is injected on every coding task (especially minimal mode).
+`orchestrator/SCOPE_CARD.md` is injected on every coding task (especially minimal/smart mode).
 
 Key rules (see full file):
-- Prefer **new surfaces** over re-polishing the same HQ DesignTokens consumers
+- Prefer **product slice tasks** with an **exact on-disk BEFORE** string
 - If the region already satisfies the request → reply only: **No change needed**
 - Identical BEFORE/AFTER is a HARD BAN (no-op)
+- Empty-file BEFORE → HARD BAN (see TASK DESIGN in SCOPE_CARD)
 
-## Preferred coding task prompts (A2)
+## Preferred coding task prompts (A2 + xAI lessons July 25)
 
-See also `AGENT_SYSTEM.md` → **Preferred Coding Task Prompt Style**.
+See also `AGENT_SYSTEM.md` → **Preferred Coding Task Prompt Style** and **SCOPE_CARD → TASK DESIGN**.
 
-**Template that works well:**
+**Template that works well (product edit):**
 
 ```text
-Using packages/shared_core/lib/src/core/models/address.dart:
+backend: xai
+Role: web_frontend
 
-1. Quote the exact first 8–12 lines of the real file.
-2. Propose ONLY a short class-level docstring above the main class declaration.
-3. Do not add fields, getters, methods, or change any logic or serialization.
-4. If the named region already satisfies the request, reply ONLY with: No change needed.
-5. Show exact before/after for that small region only (fenced code blocks preferred).
-   BEFORE and AFTER must differ. Identical fences = invalid (no-op).
+Files:
+- path/to/file.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Locate this exact region:
+```dart
+<paste real on-disk BEFORE here>
 ```
 
-**Rules of thumb**
+Replace with:
+```dart
+<exact AFTER>
+```
+
+Do not invent imports/fields. Prefer one BEFORE/AFTER region.
+If already present → reply only: No change needed
+```
+
+**Rules of thumb (updated July 25)**
 
 - Always include the full file path
 - One file (or explicit 2-file), one small change per task
-- Explicit forbid list (no fields / no logic)
-- Prefer **new surfaces** (files not recently micro-polished)
+- **Paste an exact on-disk BEFORE string** — highest success rate with xAI
+- Explicit forbid list (no fields / no logic / no invented progress imports)
+- Prefer **product slices** over verify-only and color drills
+- **Verify-only**: use sparingly as post-apply smoke; do not fill the main queue when disk is known good
+- **Empty files**: do not use empty BEFORE; full-file replace by human or special task wording
+- **STATUS.md / markdown**: contiguous checklist BEFORE/AFTER only; no prose after AFTER (or edit STATUS by hand)
+- Prefer 3–5 surgical product tasks per batch
 - Multi-file tasks: require quote blocks first or `FAILED TO LOAD`
-- Prefer small read-only quote tasks for overnight until timeouts are rare
 - Reward honesty: **No change needed** is a correct outcome when already done
+- Treat `after parsed: no` like HARD BAN — reject; do not `/approve confirm`
 
 ## Review & apply workflow
 
@@ -171,7 +193,8 @@ Using packages/shared_core/lib/src/core/models/address.dart:
 | `/queue run --once` | One task |
 
 Treat **HARD BAN** validator warnings as reject candidates.  
-**No change needed** is a success — it is not pending work.
+**No change needed** is a success — it is not pending work.  
+**`after parsed: no`** → reject; do not apply.
 
 ## Model configuration
 
@@ -183,6 +206,7 @@ Treat **HARD BAN** validator warnings as reject candidates.
 | mobile_shared | qwen2.5-coder:14b | MODEL_MOBILE |
 | tester | qwen2.5-coder:7b | MODEL_TESTER |
 | reviewer | qwen2.5-coder:7b | MODEL_REVIEWER |
+| xAI | grok-4.5 (configurable) | XAI_MODEL / backends.yaml |
 
 ## Safety
 
@@ -193,12 +217,15 @@ Treat **HARD BAN** validator warnings as reject candidates.
 - Source injection always wins over status-only prompts when paths are present
 - Identical BEFORE/AFTER → HARD BAN (no-op)
 - "No change needed" → status=`no_change` (success, nothing to apply)
+- Empty BEFORE on empty file → HARD BAN
 
 ## Next improvements
 
 - Structured unified-diff proposals for more reliable apply (optional)
 - Feedback → SCOPE_CARD refresh checklist (human-gated)
 - Systematic 7b vs 14b A/B on Stage-A tasks (optional)
+- Empty-file / full-file replace apply path
+- Auto-reject when AFTER fails to parse
 
 ---
-Last updated: 2026-07-24
+Last updated: 2026-07-25
