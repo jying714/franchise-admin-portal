@@ -222,6 +222,32 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
                           hintText: '#RRGGBB',
                         ),
                       ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          FilledButton.icon(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Save not wired yet'),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.save_outlined, size: 18),
+                            label: const Text('Save'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: DesignTokens.primaryColor,
+                              foregroundColor: DesignTokens.foregroundColor,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          OutlinedButton.icon(
+                            onPressed: _resetDraftsToLive,
+                            icon: const Icon(Icons.restart_alt, size: 18),
+                            label: const Text('Cancel'),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -293,5 +319,15 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
         ),
       ],
     );
+  }
+
+  void _resetDraftsToLive() {
+    final fp = Provider.of<shared.FranchiseProvider>(context, listen: false);
+    setState(() {
+      _appNameController.text = DesignTokens.currentAppName;
+      _logoUrlController.text = DesignTokens.currentLogoUrl ?? '';
+      _primaryHexController.text = fp.currentPrimaryColorHex;
+      _secondaryHexController.text = fp.currentSecondaryColorHex;
+    });
   }
 }
