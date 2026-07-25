@@ -285,7 +285,7 @@ class HqOnboardingShellScreenState extends State<HqOnboardingShellScreen> {
                             return Center(
                               child: Text(
                                 'Section failed: $e',
-                                style: const TextStyle(color: Colors.red),
+                                style: TextStyle(color: colorScheme.error),
                               ),
                             );
                           }

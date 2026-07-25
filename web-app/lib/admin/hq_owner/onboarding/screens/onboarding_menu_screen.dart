@@ -111,7 +111,10 @@ class _OnboardingMenuScreenState extends State<OnboardingMenuScreen> {
           children: [
             Text(
               'Onboarding – ${franchise?.name ?? franchiseId}',
-              style: Theme.of(context).textTheme.headlineMedium,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: DesignTokens.primaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
             const SizedBox(height: 32),
             OnboardingStepCard(

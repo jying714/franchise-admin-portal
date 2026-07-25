@@ -4,14 +4,13 @@ import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// HQ Owner — Design & Branding screen (v1 shell).
+/// HQ Owner — Design & Branding screen (v1.1).
 ///
 /// Slice: docs/slices/hq-design-branding-v1.md (Decision 8).
 /// Opened from Owner HQ Live Branding card via Navigator.push + MaterialPageRoute.
-/// Back pops to the dashboard. No Firestore writes in v1.
+/// Back pops to the dashboard. Save merges branding to franchise + config/ui_config.
 ///
-/// S1: scaffold + AppBar + placeholder only.
-/// Later steps fill preview, draft fields, and Save snackbar.
+/// Draft fields drive live preview; Save persists and refreshes DesignTokens path.
 class DesignBrandingScreen extends StatefulWidget {
   const DesignBrandingScreen({super.key});
 
@@ -36,6 +35,14 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
   bool _isValidHex(String h) {
     final n = _normalizeHex(h);
     return RegExp(r'^#[0-9A-F]{6}$').hasMatch(n);
+  }
+
+  Color? _colorFromHex(String raw) {
+    final n = _normalizeHex(raw);
+    if (!_isValidHex(n)) return null;
+    final v = int.tryParse(n.substring(1), radix: 16);
+    if (v == null) return null;
+    return Color(0xFF000000 | v);
   }
 
   Future<void> _saveBranding() async {
@@ -262,7 +269,7 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        'Draft (local only — Save not wired yet)',
+                        'Draft fields (Save writes franchise + config/ui_config)',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: DesignTokens.secondaryTextColor,
