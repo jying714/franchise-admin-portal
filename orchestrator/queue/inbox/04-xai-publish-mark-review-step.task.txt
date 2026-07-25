@@ -1,0 +1,35 @@
+# id: xai-publish-mark-review-step
+# agent: web_frontend
+# backend: xai
+# priority: 6
+
+backend: xai
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/widgets/review/publish_onboarding_button.dart
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Product rule (SCOPE_CARD):
+- Progress key **`onboardingReview`** is set only on **successful Publish**, not from summary-table validation status.
+
+Required:
+1. On successful publish path only, call `markStepComplete('onboardingReview')` using the progress provider pattern already present in HQ onboarding (or add the minimal call if publish succeeds but never marks the key).
+2. Do **not** mark `onboardingReview` on validation-only / blocked states.
+3. Do not strip confirmation dialogs or change Firestore publish payload shape unless required for the mark call.
+4. Do not invent new provider methods — use existing OnboardingProgressProvider / Impl API already used elsewhere in HQ onboarding.
+5. Edit only this named file. If the mark must live in a different named collaborator, reply with No change needed on this file and state which file needs a follow-up task (do not invent a second FILE path not listed).
+
+APPLY SAFETY:
+- Max **2** BEFORE/AFTER regions.
+- Keep required imports; no brace-only AFTER.
+
+If successful publish already marks `onboardingReview` → reply only: No change needed
+
+Rules:
+1. Quote-first.
+2. Edit only the named file.
+3. Proposal only — human apply.
+4. Progress path remains franchises/{id}/onboarding_progress/progress (no top-level invent).
