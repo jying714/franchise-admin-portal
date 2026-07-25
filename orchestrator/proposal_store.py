@@ -26,6 +26,11 @@ no_change status (2026-07-24):
   Exact phrase "No change needed" is a first-class success outcome.
   Saved with status=no_change so it is visible, countable, and not
   treated as ordinary pending work.
+
+Multi-file apply (2026-07-25):
+  Parse repeated FILE: path + BEFORE/AFTER pairs into Proposal.edits.
+  apply_proposal applies each pair; reports per-file success/failure.
+  Single-file proposals remain fully backward compatible.
 """
 
 from __future__ import annotations
@@ -37,7 +42,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from difflib import SequenceMatcher
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from file_reader import ALLOWED_ROOTS, _is_allowed
 
@@ -58,6 +63,26 @@ NO_CHANGE_LOOSE = re.compile(
     re.IGNORECASE,
 )
 
+PATH_RE = re.compile(
+    r"((?:packages|mobile_app|web-app|functions|docs|tasks|orchestrator|prompts)"
+    r"/[\w./\-]+\.(?:dart|ts|js|tsx|jsx|md|yaml|yml|json|txt|py))",
+    re.IGNORECASE,
+)
+
+FILE_HEADER_RE = re.compile(
+    r"(?:^|\n)\s*(?:FILE|File|file)\s*:\s*"
+    r"((?:packages|mobile_app|web-app|functions|docs|tasks|orchestrator|prompts)"
+    r"/[\w./\-]+\.(?:dart|ts|js|tsx|jsx|md|yaml|yml|json|txt|py))",
+    re.IGNORECASE,
+)
+
+
+@dataclass
+class FileEdit:
+    file_path: str
+    before: str
+    after: str
+
 
 @dataclass
 class Proposal:
@@ -72,6 +97,29 @@ class Proposal:
     after: Optional[str] = None
     validation_warnings: List[str] = field(default_factory=list)
     status: str = "pending"  # pending | approved | applied | rejected | no_change
+    # Multi-file support (2026-07-25). Empty on legacy single-file JSON.
+    edits: List[Dict[str, str]] = field(default_factory=list)
+
+    def file_edits(self) -> List[FileEdit]:
+        """Normalized list of edits (multi or single)."""
+        out: List[FileEdit] = []
+        for e in self.edits or []:
+            fp = (e.get("file_path") or "").strip()
+            b = e.get("before") or ""
+            a = e.get("after") or ""
+            if fp and b.strip() and a.strip():
+                out.append(FileEdit(file_path=fp, before=b, after=a))
+        if out:
+            return out
+        if self.file_path and self.before and self.after:
+            return [
+                FileEdit(
+                    file_path=self.file_path,
+                    before=self.before,
+                    after=self.after,
+                )
+            ]
+        return []
 
 
 def is_no_change_needed(response: str) -> bool:
@@ -88,11 +136,18 @@ def is_no_change_needed(response: str) -> bool:
     if NO_CHANGE_PATTERN.search(text):
         return True
     if NO_CHANGE_LOOSE.search(text):
-        before, after = _extract_before_after(text)
-        if not before and not after:
+        edits = extract_file_edits(text, task="")
+        if not edits:
+            before, after = _extract_before_after(text)
+            if not before and not after:
+                return True
+            if before and after and _normalize_for_compare(before) != _normalize_for_compare(after):
+                return False
             return True
-        if before and after and _normalize_for_compare(before) != _normalize_for_compare(after):
-            return False
+        # Multi-file with real diffs → not no_change
+        for e in edits:
+            if _normalize_for_compare(e.before) != _normalize_for_compare(e.after):
+                return False
         return True
     return False
 
@@ -112,16 +167,23 @@ def _proposals_dir(project_root: Path) -> Path:
 
 
 def _extract_file_path(task: str, response: str) -> Optional[str]:
-    pattern = re.compile(
-        r"((?:packages|mobile_app|web-app|functions|docs|tasks|orchestrator|prompts)"
-        r"/[\w./\-]+\.(?:dart|ts|js|tsx|jsx|md|yaml|yml|json|txt|py))",
-        re.IGNORECASE,
-    )
     for text in (task, response):
-        m = pattern.search(text)
+        m = PATH_RE.search(text or "")
         if m:
             return m.group(1).replace("\\", "/")
     return None
+
+
+def _extract_all_paths(task: str, response: str) -> List[str]:
+    seen: set[str] = set()
+    out: List[str] = []
+    for text in (task, response):
+        for m in PATH_RE.finditer(text or ""):
+            p = m.group(1).replace("\\", "/")
+            if p not in seen:
+                seen.add(p)
+                out.append(p)
+    return out
 
 
 def _extract_before_after(response: str) -> Tuple[Optional[str], Optional[str]]:
@@ -161,7 +223,7 @@ def _code_after_heading(text: str, headings: List[str]) -> Optional[str]:
 
         pat2 = (
             rf"(?:^|\n)#{{0,3}}\s*\d*\.?\s*{h}\b[^\n]*\n"
-            rf"(.*?)(?=\n#{{1,3}}\s|\n##\s|\Z)"
+            rf"(.*?)(?=\n#{{1,3}}\s|\n##\s|\n\s*FILE\s*:|\n\s*File\s*:|\Z)"
         )
         m2 = re.search(pat2, text, re.IGNORECASE | re.DOTALL)
         if m2:
@@ -179,9 +241,68 @@ def _code_after_heading(text: str, headings: List[str]) -> Optional[str]:
                 or "Widget " in block
                 or "appBar:" in block
                 or "Text(" in block
+                or "import " in block
+                or "const " in block
             ):
                 return block
     return None
+
+
+def _section_before_after(section: str) -> Tuple[Optional[str], Optional[str]]:
+    """Extract BEFORE/AFTER from a single FILE: segment."""
+    return _extract_before_after(section)
+
+
+def extract_file_edits(response: str, task: str = "") -> List[FileEdit]:
+    """
+    Parse multi-file or single-file BEFORE/AFTER pairs.
+
+    Preferred multi-file shape:
+      FILE: web-app/lib/foo.dart
+      ## BEFORE
+      ...
+      ## AFTER
+      ...
+      FILE: web-app/lib/bar.dart
+      ...
+
+    Fallback: first path from task/response + first BEFORE/AFTER pair.
+    """
+    if not response or not response.strip():
+        return []
+
+    headers = list(FILE_HEADER_RE.finditer(response))
+    edits: List[FileEdit] = []
+
+    if len(headers) >= 1:
+        for i, m in enumerate(headers):
+            path = m.group(1).replace("\\", "/")
+            start = m.end()
+            end = headers[i + 1].start() if i + 1 < len(headers) else len(response)
+            section = response[start:end]
+            before, after = _section_before_after(section)
+            if before and after and before.strip() and after.strip():
+                if _normalize_for_compare(before) != _normalize_for_compare(after):
+                    edits.append(FileEdit(file_path=path, before=before, after=after))
+                else:
+                    # Still record if task expects a change? Skip identical.
+                    pass
+        if edits:
+            return edits
+        # Headers present but no pairs — fall through
+
+    # Single-pair fallback
+    before, after = _extract_before_after(response)
+    if not before or not after:
+        return []
+    if _normalize_for_compare(before) == _normalize_for_compare(after):
+        return []
+
+    paths = _extract_all_paths(task, response)
+    path = paths[0] if paths else _extract_file_path(task, response)
+    if not path:
+        return []
+    return [FileEdit(file_path=path, before=before, after=after)]
 
 
 def save_proposal(
@@ -194,8 +315,20 @@ def save_proposal(
     validation_warnings: Optional[List[str]] = None,
 ) -> Proposal:
     pid = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8]
-    file_path = _extract_file_path(task, response)
-    before, after = _extract_before_after(response)
+
+    file_edits = extract_file_edits(response, task=task)
+    edits_payload = [
+        {"file_path": e.file_path, "before": e.before, "after": e.after}
+        for e in file_edits
+    ]
+
+    if file_edits:
+        file_path = file_edits[0].file_path
+        before = file_edits[0].before
+        after = file_edits[0].after
+    else:
+        file_path = _extract_file_path(task, response)
+        before, after = _extract_before_after(response)
 
     initial_status = "no_change" if is_no_change_needed(response) else "pending"
 
@@ -211,6 +344,7 @@ def save_proposal(
         after=after,
         validation_warnings=list(validation_warnings or []),
         status=initial_status,
+        edits=edits_payload,
     )
 
     d = _proposals_dir(project_root)
@@ -234,6 +368,9 @@ def load_by_id(project_root: Path, pid: str) -> Optional[Proposal]:
     if not path.exists():
         return None
     data = json.loads(path.read_text(encoding="utf-8"))
+    # Legacy JSON may lack edits
+    if "edits" not in data:
+        data["edits"] = []
     return Proposal(**data)
 
 
@@ -243,7 +380,10 @@ def list_recent(project_root: Path, limit: int = 10) -> List[Proposal]:
     out: List[Proposal] = []
     for f in files[:limit]:
         try:
-            out.append(Proposal(**json.loads(f.read_text(encoding="utf-8"))))
+            data = json.loads(f.read_text(encoding="utf-8"))
+            if "edits" not in data:
+                data["edits"] = []
+            out.append(Proposal(**data))
         except Exception:
             continue
     return out
@@ -263,7 +403,10 @@ def list_by_status(
         if len(out) >= limit:
             break
         try:
-            p = Proposal(**json.loads(f.read_text(encoding="utf-8")))
+            data = json.loads(f.read_text(encoding="utf-8"))
+            if "edits" not in data:
+                data["edits"] = []
+            p = Proposal(**data)
             if p.status == status:
                 out.append(p)
         except Exception:
@@ -300,7 +443,13 @@ def compute_metrics(project_root: Path, limit: int = 50) -> Dict[str, float | in
         if any(w.startswith("HARD BAN:") for w in (p.validation_warnings or [])):
             hard_ban += 1
 
-        if p.before and p.after:
+        edits = p.file_edits()
+        if edits:
+            for e in edits:
+                if _normalize_for_compare(e.before) != _normalize_for_compare(e.after):
+                    real_diff += 1
+                    break
+        elif p.before and p.after:
             if _normalize_for_compare(p.before) != _normalize_for_compare(p.after):
                 real_diff += 1
 
@@ -506,6 +655,52 @@ def _write_span(
     return original[:start_char] + reindented_after + original[end_char:]
 
 
+def _apply_one_edit(
+    project_root: Path,
+    edit: FileEdit,
+) -> Tuple[bool, str]:
+    """Apply a single FileEdit. Does not change proposal status."""
+    if not _is_allowed(edit.file_path):
+        return False, f"Path not allowed: {edit.file_path}"
+
+    full = project_root / edit.file_path
+    if not full.exists():
+        return False, f"File does not exist: {edit.file_path}"
+
+    original = full.read_text(encoding="utf-8")
+    before = edit.before.strip("\n")
+    after = edit.after.strip("\n")
+
+    if before in original:
+        if original.count(before) > 1:
+            return (
+                False,
+                f"{edit.file_path}: BEFORE matches multiple places (ambiguous)",
+            )
+        updated = original.replace(before, after, 1)
+        full.write_text(updated, encoding="utf-8")
+        return True, f"Applied to {edit.file_path} (exact)"
+
+    span = _flexible_span(original, before)
+    if span is not None:
+        start_char, end_char, base_indent = span
+        updated = _write_span(original, start_char, end_char, after, base_indent)
+        full.write_text(updated, encoding="utf-8")
+        return True, f"Applied to {edit.file_path} (indent-flexible)"
+
+    fuzzy = _fuzzy_span(original, before)
+    if fuzzy is not None:
+        start_char, end_char, base_indent, ratio = fuzzy
+        updated = _write_span(original, start_char, end_char, after, base_indent)
+        full.write_text(updated, encoding="utf-8")
+        return True, f"Applied to {edit.file_path} (fuzzy ratio={ratio:.2f})"
+
+    return (
+        False,
+        f"{edit.file_path}: BEFORE not found (exact/flexible/fuzzy failed)",
+    )
+
+
 def apply_proposal(project_root: Path, prop: Proposal) -> Tuple[bool, str]:
     if prop.status == "applied":
         return False, "Proposal already applied."
@@ -513,65 +708,41 @@ def apply_proposal(project_root: Path, prop: Proposal) -> Tuple[bool, str]:
     if prop.status == "no_change":
         return False, "Proposal is 'No change needed' — nothing to apply."
 
-    if not prop.file_path:
-        return False, "No file path detected in proposal — cannot apply automatically."
-
-    if not _is_allowed(prop.file_path):
-        return False, f"Path not allowed: {prop.file_path}"
-
-    if not prop.before or not prop.after:
+    edits = prop.file_edits()
+    if not edits:
         return (
             False,
             "Could not parse clear before/after code blocks from the proposal. "
             "Apply manually or re-run the task with fenced before/after blocks.",
         )
 
-    full = project_root / prop.file_path
-    if not full.exists():
-        return False, f"File does not exist: {prop.file_path}"
+    successes: List[str] = []
+    failures: List[str] = []
 
-    original = full.read_text(encoding="utf-8")
-    before = prop.before.strip("\n")
-    after = prop.after.strip("\n")
+    for edit in edits:
+        ok, msg = _apply_one_edit(project_root, edit)
+        if ok:
+            successes.append(msg)
+        else:
+            failures.append(msg)
 
-    if before in original:
-        if original.count(before) > 1:
-            return (
-                False,
-                "BEFORE text matches multiple places in the file. "
-                "Refusing apply to avoid ambiguous edits.",
-            )
-        updated = original.replace(before, after, 1)
-        full.write_text(updated, encoding="utf-8")
+    if successes and not failures:
         mark_status(project_root, prop, "applied")
-        return True, f"Applied to {prop.file_path} (local only — not committed, not pushed)."
+        n = len(successes)
+        detail = "; ".join(successes)
+        return (
+            True,
+            f"Applied {n} file(s) (local only — not committed, not pushed). {detail}",
+        )
 
-    span = _flexible_span(original, before)
-    if span is not None:
-        start_char, end_char, base_indent = span
-        updated = _write_span(original, start_char, end_char, after, base_indent)
-        full.write_text(updated, encoding="utf-8")
+    if successes and failures:
+        # Partial: mark applied so we don't double-apply successes; report failures
         mark_status(project_root, prop, "applied")
         return (
             True,
-            f"Applied to {prop.file_path} via indent-flexible match "
-            f"(local only — not committed, not pushed).",
+            f"Partial apply ({len(successes)} ok, {len(failures)} failed). "
+            f"OK: {'; '.join(successes)}. FAILED: {'; '.join(failures)}. "
+            f"Finish remaining files manually.",
         )
 
-    fuzzy = _fuzzy_span(original, before)
-    if fuzzy is not None:
-        start_char, end_char, base_indent, ratio = fuzzy
-        updated = _write_span(original, start_char, end_char, after, base_indent)
-        full.write_text(updated, encoding="utf-8")
-        mark_status(project_root, prop, "applied")
-        return (
-            True,
-            f"Applied to {prop.file_path} via fuzzy match (ratio={ratio:.2f}) "
-            f"(local only — not committed, not pushed).",
-        )
-
-    return (
-        False,
-        "BEFORE text not found in the file (exact, indent-flexible, and fuzzy match failed). "
-        "Refusing apply to avoid corrupting source. Apply manually.",
-    )
+    return False, "Apply failed: " + "; ".join(failures)
