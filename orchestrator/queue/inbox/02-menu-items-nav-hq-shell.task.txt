@@ -1,0 +1,17 @@
+Role: web_frontend
+
+File: web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_items_screen.dart
+
+Task: Quote first 10–12 lines. Find _navigateToSection (or equivalent).
+
+Problem: Navigation still uses AdminDashboardScreen ancestor / /admin/dashboard?section=...
+
+Required change:
+- Prefer context.findAncestorStateOfType<HqOnboardingShellScreenState>()?.switchToSection(sectionKey)
+- Remove AdminDashboardScreen fallback from this HQ copy
+- Import hq_onboarding_shell_screen.dart if needed
+- Do not invent new section keys
+
+If already HQ-shell-only → No change needed.
+
+Rules: quote-first; this file only; no Admin onboarding paths.
