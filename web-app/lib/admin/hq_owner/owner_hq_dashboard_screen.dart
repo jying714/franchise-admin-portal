@@ -19,6 +19,7 @@ import 'package:franchise_admin_portal/widgets/header/notifications_icon_button.
 import 'package:franchise_admin_portal/admin/hq_owner/screens/design_branding_screen.dart';
 import 'package:franchise_admin_portal/admin/dashboard/admin_dashboard_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
+import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider_impl.dart';
 
 class OwnerHQDashboardScreen extends StatelessWidget {
   final String currentScreen;
@@ -287,7 +288,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
               ),
               SizedBox(height: gap),
               // Onboarding Progress Card
-              Consumer<shared.OnboardingProgressProvider>(
+              Consumer<OnboardingProgressProviderImpl>(
                 builder: (context, onboardingProgress, child) {
                   if (onboardingProgress.loading) {
                     return Card(
@@ -317,6 +318,33 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                       ),
                     );
                   }
+
+                  final step1 = onboardingProgress
+                      .isStepComplete('onboarding_feature_setup');
+                  final step2 = onboardingProgress
+                      .isStepComplete('onboarding_menu_foundation');
+                  final step3 =
+                      onboardingProgress.isStepComplete('onboardingMenuItems');
+                  final step4 =
+                      onboardingProgress.isStepComplete('onboardingReview');
+                  final overall =
+                      [step1, step2, step3, step4].where((c) => c).length / 4.0;
+                  final foundationPct =
+                      (onboardingProgress.getFoundationProgress() * 100)
+                          .round();
+
+                  TextStyle pendingStyle =
+                      Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: DesignTokens.secondaryTextColor,
+                              ) ??
+                          const TextStyle();
+                  TextStyle doneStyle = TextStyle(
+                    color: DesignTokens.primaryColor,
+                    fontWeight: FontWeight.w600,
+                  );
+
+                  String status(bool done) => done ? 'Completed' : 'Pending';
+
                   return Card(
                     elevation: DesignTokens.adminCardElevation,
                     shape: RoundedRectangleBorder(
@@ -339,57 +367,39 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           LinearProgressIndicator(
-                            value: onboardingProgress.getFoundationProgress(),
+                            value: overall,
                             color: DesignTokens.primaryColor,
                             backgroundColor:
                                 DesignTokens.primaryColor.withOpacity(0.2),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 8),
                           Text(
-                            'Foundation: ${(onboardingProgress.getFoundationProgress() * 100).round()}%',
+                            'Overall: ${(overall * 100).round()}%',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           Text(
-                            'Ingredient Types: ${onboardingProgress.isStepComplete('ingredientTypes') ? 'Completed' : 'Pending'}',
-                            style: onboardingProgress
-                                    .isStepComplete('ingredientTypes')
-                                ? TextStyle(
-                                    color: DesignTokens.primaryColor,
-                                    fontWeight: FontWeight.w600)
-                                : Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
+                            'Foundation detail: $foundationPct%',
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: DesignTokens.secondaryTextColor,
                                     ),
                           ),
+                          const SizedBox(height: 12),
                           Text(
-                            'Ingredients: ${onboardingProgress.isStepComplete('ingredients') ? 'Completed' : 'Pending'}',
-                            style: onboardingProgress
-                                    .isStepComplete('ingredients')
-                                ? TextStyle(
-                                    color: DesignTokens.primaryColor,
-                                    fontWeight: FontWeight.w600)
-                                : Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color: DesignTokens.secondaryTextColor,
-                                    ),
+                            '1. Feature Setup: ${status(step1)}',
+                            style: step1 ? doneStyle : pendingStyle,
                           ),
                           Text(
-                            'Categories: ${onboardingProgress.isStepComplete('categories') ? 'Completed' : 'Pending'}',
-                            style: onboardingProgress
-                                    .isStepComplete('categories')
-                                ? TextStyle(
-                                    color: DesignTokens.primaryColor,
-                                    fontWeight: FontWeight.w600)
-                                : Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color: DesignTokens.secondaryTextColor,
-                                    ),
+                            '2. Core Menu Foundation: ${status(step2)}',
+                            style: step2 ? doneStyle : pendingStyle,
+                          ),
+                          Text(
+                            '3. Menu Items: ${status(step3)}',
+                            style: step3 ? doneStyle : pendingStyle,
+                          ),
+                          Text(
+                            '4. Review & Publish: ${status(step4)}',
+                            style: step4 ? doneStyle : pendingStyle,
                           ),
                           const SizedBox(height: 16),
                           Align(

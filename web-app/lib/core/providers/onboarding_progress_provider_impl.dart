@@ -5,7 +5,7 @@ import 'package:shared_core/shared_core.dart' as shared;
 class OnboardingProgressProviderImpl extends ChangeNotifier
     implements shared.OnboardingProgressProvider {
   final shared.FirestoreService _firestore;
-  final String _franchiseId;
+  String _franchiseId;
 
   Map<String, bool> _stepStatus = {};
   bool _loading = true;
@@ -18,6 +18,16 @@ class OnboardingProgressProviderImpl extends ChangeNotifier
     _loadProgress();
   }
 
+  String get franchiseId => _franchiseId;
+
+  /// Called from ProxyProvider when FranchiseProvider.franchiseId changes.
+  void updateFranchiseId(String franchiseId) {
+    final next = franchiseId.trim();
+    if (next == _franchiseId) return;
+    _franchiseId = next;
+    _loadProgress();
+  }
+
   @override
   Map<String, bool> get stepStatus => _stepStatus;
 
@@ -27,7 +37,6 @@ class OnboardingProgressProviderImpl extends ChangeNotifier
   @override
   bool isStepComplete(String stepKey) => _stepStatus[stepKey] == true;
 
-  /// NEW: Combined foundation progress (Types 25%, Ingredients 35%, Categories 40%)
   @override
   double getFoundationProgress() {
     final types = isStepComplete('ingredientTypes') ? 0.25 : 0.0;
@@ -37,25 +46,28 @@ class OnboardingProgressProviderImpl extends ChangeNotifier
   }
 
   Future<void> _loadProgress() async {
-    if (_franchiseId.isEmpty) {
+    if (_franchiseId.isEmpty || _franchiseId == 'unknown') {
       _stepStatus = {};
       _loading = false;
       notifyListeners();
       return;
     }
 
-    try {
-      _loading = true;
-      notifyListeners();
+    _loading = true;
+    notifyListeners();
 
+    try {
       final data = await _firestore.getOnboardingProgress(_franchiseId);
-      final defaultSteps = [
+      const defaultSteps = [
         'ingredientTypes',
         'ingredients',
         'categories',
+        'onboarding_feature_setup',
+        'onboarding_menu_foundation',
+        'onboardingMenuItems',
+        'onboardingReview',
         'menuItems',
         'review',
-        'onboarding_menu_foundation', // new combined key
       ];
 
       _stepStatus = {
@@ -64,12 +76,13 @@ class OnboardingProgressProviderImpl extends ChangeNotifier
       };
     } catch (e, stack) {
       shared.ErrorLogger.log(
-        message: 'Failed to load onboarding progress',
+        message: 'Failed to load onboarding progress: $e',
         stack: stack.toString(),
         source: 'OnboardingProgressProviderImpl',
         severity: 'warning',
         contextData: {'franchiseId': _franchiseId},
       );
+      _stepStatus = {};
     } finally {
       _loading = false;
       notifyListeners();
@@ -78,7 +91,7 @@ class OnboardingProgressProviderImpl extends ChangeNotifier
 
   @override
   Future<void> markStepComplete(String stepKey) async {
-    if (_franchiseId.isEmpty) return;
+    if (_franchiseId.isEmpty || _franchiseId == 'unknown') return;
 
     try {
       await _firestore.updateOnboardingStep(
@@ -101,7 +114,7 @@ class OnboardingProgressProviderImpl extends ChangeNotifier
 
   @override
   Future<void> markStepIncomplete(String stepKey) async {
-    if (_franchiseId.isEmpty) return;
+    if (_franchiseId.isEmpty || _franchiseId == 'unknown') return;
 
     try {
       await _firestore.updateOnboardingStep(

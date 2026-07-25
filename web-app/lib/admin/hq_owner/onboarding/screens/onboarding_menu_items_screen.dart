@@ -102,7 +102,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     final loc = AppLocalizations.of(context)!;
 
     try {
-      await onboarding.markStepComplete('menu_items');
+      await onboarding.markStepComplete('onboardingMenuItems');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

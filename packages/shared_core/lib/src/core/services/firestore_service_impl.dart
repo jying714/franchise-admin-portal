@@ -1218,8 +1218,12 @@ class FirestoreServiceImpl implements FirestoreService {
     }
 
     try {
-      final doc =
-          await _db.collection('onboarding_progress').doc(franchiseId).get();
+      final doc = await _db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('onboarding_progress')
+          .doc('progress')
+          .get();
       return doc.data();
     } catch (e, stack) {
       await ErrorLogger.log(

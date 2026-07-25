@@ -1651,6 +1651,76 @@ class AdminFirestoreService extends shared.FirestoreServiceImpl {
     }
   }
 
+  @override
+  Future<Map<String, dynamic>?> getOnboardingProgress(
+      String franchiseId) async {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      return null;
+    }
+
+    try {
+      final doc = await firestore.FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('onboarding_progress')
+          .doc('progress')
+          .get();
+      return doc.data();
+    } catch (e, stack) {
+      await shared.ErrorLogger.log(
+        message: 'Failed to getOnboardingProgress: $e',
+        source: 'AdminFirestoreService',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId},
+      );
+      return null;
+    }
+  }
+
+  @override
+  Future<void> updateOnboardingStep({
+    required String franchiseId,
+    required String stepKey,
+    required bool completed,
+  }) async {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      return;
+    }
+
+    try {
+      await firestore.FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('onboarding_progress')
+          .doc('progress')
+          .set(
+        {
+          stepKey: completed,
+          'updatedAt': firestore.FieldValue.serverTimestamp(),
+        },
+        firestore.SetOptions(merge: true),
+      );
+    } catch (e, stack) {
+      await shared.ErrorLogger.log(
+        message: 'Failed to updateOnboardingStep: $e',
+        source: 'AdminFirestoreService',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {
+          'franchiseId': franchiseId,
+          'stepKey': stepKey,
+          'completed': completed,
+        },
+      );
+      rethrow;
+    }
+  }
+
   /// Phase 1 Rule-Based Schema Normalization
   /// - Strips legacy prefixes (cat_, ing_, etc.)
   /// - Matches by name to live clean IDs
