@@ -1,0 +1,18 @@
+# id: hq-design-s4-live-preview
+# agent: web_frontend
+# priority: 20
+
+Using web-app/lib/admin/hq_owner/screens/design_branding_screen.dart:
+
+Quote the exact first 10–12 lines of the real file.
+Quote the current placeholder Card body region.
+
+Replace the placeholder Card body with a Live Preview section that shows:
+- App name from DesignTokens.currentAppName
+- Logo: Image.network when DesignTokens.currentLogoUrl is non-null and non-empty; otherwise a simple fallback (Icon + text "No logo")
+- Primary and secondary color swatches using DesignTokens.primaryColor and DesignTokens.secondaryColor
+- Hex labels under the swatches using FranchiseProvider.currentPrimaryColorHex and currentSecondaryColorHex (String values only — never treat hex as Color on DesignTokens)
+
+Use only existing DesignTokens and FranchiseProvider surfaces. No new fields, no State yet, no Firestore, no Save button.
+
+Show exact ## BEFORE / ## AFTER for the body/Card region only.
