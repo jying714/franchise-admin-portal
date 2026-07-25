@@ -33,6 +33,8 @@ services:
       - OLLAMA_HOST=http://ollama:11434
       - PROJECT_ROOT=/app
       - PYTHONUNBUFFERED=1
+      - XAI_API_KEY=${XAI_API_KEY}
+      - XAI_MODEL=grok-4.5
       # Optional model overrides (uncomment & change if desired)
       # - MODEL_ORCHESTRATOR=qwen2.5-coder:7b
       # - MODEL_BACKEND=qwen2.5-coder:14b
