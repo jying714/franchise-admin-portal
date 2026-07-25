@@ -5,30 +5,16 @@ main.py — Franchise Platform Orchestrator
 Always-running process that:
   • Loads the mandatory governance documents
   • Accepts tasks (interactive CLI)
-  • Routes them to specialized agents
-  • Calls Ollama and returns a proposal
-  • Validates proposals for scope drift (A3)
-  • Auto-rejects on HARD BAN / path-allowlist / BEFORE-on-disk misses (ok=False)
+  • Routes them to specialized agents + backend (ollama | xai)
+  • Calls Ollama or xAI API and returns a proposal
+  • Validates proposals for scope drift
+  • Auto-rejects on HARD BAN / path-allowlist / BEFORE-on-disk misses
   • Saves proposals; applies ONLY after explicit /approve confirm
   • Treats "No change needed" as first-class success (status=no_change)
-  • Multi-file BEFORE/AFTER apply (2026-07-25)
-  • Optional overnight queue: drop tasks in orchestrator/queue/inbox/
+  • Multi-file BEFORE/AFTER apply
+  • Optional overnight queue: drop *.task.txt in orchestrator/queue/inbox/
 
-Commands:
-  /approve                 show last proposal
-  /approve <id>            show a specific proposal by id
-  /approve confirm         apply last proposal locally (no git push)
-  /approve confirm <id>    apply a specific proposal locally
-  /reject [id] reason=...  mark rejected + log feedback
-  /proposals               list recent proposals (all statuses)
-  /proposals pending       list only pending (un-accepted / un-rejected)
-  /proposals no_change     list escape-hatch successes
-  /proposals rejected      list rejected
-  /proposals applied       list applied
-  /proposals full          fully print ALL pending proposals with full context
-  /metrics                 lightweight training metrics (last 50)
-  /queue status|run|run --once
-  /quit /models /agent /help
+Never auto-pushes. xAI never talks to git — proposal only.
 """
 
 from __future__ import annotations
@@ -38,7 +24,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import typer
 from rich.console import Console
@@ -60,6 +46,7 @@ from proposal_store import (
     save_proposal,
 )
 from proposal_validator import validate_proposal
+from xai_client import XaiClient
 
 PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", "/app"))
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://ollama:11434")
@@ -90,12 +77,17 @@ def _edits_summary(prop: Proposal) -> str:
 
 
 async def run_task(
-    client: OllamaClient,
+    client: Union[OllamaClient, XaiClient, None],
     task_text: str,
     preferred_agent: Optional[str] = None,
     *,
     return_proposal: bool = False,
+    ollama: Optional[OllamaClient] = None,
+    xai: Optional[XaiClient] = None,
 ) -> Optional[Proposal]:
+    """
+    client: legacy single-client arg (Ollama). Prefer ollama= / xai= for dual backend.
+    """
     console.rule("[bold blue]Preparing task")
 
     result = prepare_task(
@@ -105,10 +97,14 @@ async def run_task(
         model_map=MODEL_MAP,
     )
 
+    ollama_client = ollama or (client if isinstance(client, OllamaClient) else None)
+    xai_client = xai if xai is not None else None
+
     console.print(Panel.fit(
         f"[bold]Agent[/bold]: {result.agent}\n"
+        f"[bold]Backend[/bold]: {result.backend}\n"
         f"[bold]Model[/bold]: {result.model}\n"
-        f"[bold]num_ctx[/bold]: {result.num_ctx}\n"
+        f"[bold]num_ctx[/bold]: {result.num_ctx if result.backend == 'ollama' else 'n/a (xAI)'}\n"
         f"[bold]temperature[/bold]: {result.temperature}\n"
         f"[bold]Human approval[/bold]: {'YES — ' + result.reason if result.requires_human_approval else 'No (still proposal-only)'}",
         title="Routing Decision",
@@ -120,15 +116,36 @@ async def run_task(
             "[bold yellow]⚠  Protected area — proposal only until you review.[/bold yellow]\n"
         )
 
-    console.rule(f"[bold green]Calling {result.model}")
-    with console.status(f"[bold]Thinking with {result.model}…"):
-        response = await client.generate(
-            model=result.model,
-            system=result.system_prompt,
-            prompt=result.user_prompt,
-            temperature=result.temperature,
-            num_ctx=result.num_ctx,
-        )
+    console.rule(f"[bold green]Calling {result.backend}:{result.model}")
+
+    if result.backend == "xai":
+        if xai_client is None:
+            xai_client = XaiClient()
+        if not xai_client.configured:
+            console.print(
+                "[bold red]XAI_API_KEY is not set. Cannot run backend: xai.\n"
+                "Export XAI_API_KEY on the host/container, then retry.[/bold red]"
+            )
+            return None
+        with console.status(f"[bold]Thinking with xAI {result.model}…"):
+            response = await xai_client.generate(
+                system=result.system_prompt,
+                prompt=result.user_prompt,
+                model=result.model,
+                temperature=result.temperature,
+            )
+    else:
+        if ollama_client is None:
+            console.print("[bold red]Ollama client not available.[/bold red]")
+            return None
+        with console.status(f"[bold]Thinking with {result.model}…"):
+            response = await ollama_client.generate(
+                model=result.model,
+                system=result.system_prompt,
+                prompt=result.user_prompt,
+                temperature=result.temperature,
+                num_ctx=result.num_ctx or 8192,
+            )
 
     validation = validate_proposal(task_text, response, project_root=PROJECT_ROOT)
 
@@ -148,13 +165,17 @@ async def run_task(
             "[yellow]Soft warnings only — proposal shown below for human review.[/yellow]\n"
         )
 
-    console.print(Panel(Markdown(response), title=f"Proposal from {result.agent}", border_style="red" if auto_rejected else "green"))
+    console.print(Panel(
+        Markdown(response),
+        title=f"Proposal from {result.agent} ({result.backend})",
+        border_style="red" if auto_rejected else "green",
+    ))
 
     prop = save_proposal(
         PROJECT_ROOT,
         task=task_text,
         agent=result.agent,
-        model=result.model,
+        model=f"{result.backend}:{result.model}",
         response=response,
         validation_warnings=validation.warnings,
     )
@@ -171,6 +192,7 @@ async def run_task(
                 extra={
                     "file_path": prop.file_path or "",
                     "agent": prop.agent,
+                    "backend": result.backend,
                     "hard_bans": [w for w in validation.warnings if w.startswith("HARD BAN:")],
                 },
             )
@@ -194,14 +216,18 @@ async def run_task(
                 kind="no_change",
                 proposal_id=prop.id,
                 reason="No change needed",
-                extra={"file_path": prop.file_path or "", "agent": prop.agent},
+                extra={
+                    "file_path": prop.file_path or "",
+                    "agent": prop.agent,
+                    "backend": result.backend,
+                },
             )
         except Exception as e:
             logger.warning("no_change feedback log failed: %s", e)
     else:
         console.print(
             f"[dim]Saved proposal [bold]{prop.id}[/bold] "
-            f"(targets={_edits_summary(prop)}, status={prop.status}).\n"
+            f"(targets={_edits_summary(prop)}, status={prop.status}, backend={result.backend}).\n"
             f"Review: /approve {prop.id}\n"
             f"Apply locally: /approve confirm {prop.id}\n"
             f"(never auto-pushes; multi-file applies all parsed FILE pairs)[/dim]\n"
@@ -228,7 +254,6 @@ def _resolve_proposal(proposal_id: Optional[str] = None):
 
 
 def _show_proposal(prop, *, full: bool = False) -> None:
-    """Print proposal summary. When full=True, always include complete task + response."""
     status_style = {
         "no_change": "bold green",
         "applied": "green",
@@ -276,7 +301,6 @@ def _show_proposal(prop, *, full: bool = False) -> None:
             console.print(Panel(prop.after, border_style="green"))
         return
 
-    # Compact view (default)
     console.print(f"[bold]task[/bold]: {prop.task[:120]}{'…' if len(prop.task) > 120 else ''}")
     if prop.status == "no_change":
         console.print("[bold green]No change needed — escape hatch used.[/bold green]")
@@ -378,12 +402,6 @@ def _cmd_reject(proposal_id: Optional[str] = None, reason: str = "") -> None:
 
 
 def _cmd_proposals(status_filter: Optional[str] = None, full: bool = False) -> None:
-    """
-    List proposals.
-    - No args: recent (all statuses)
-    - status_filter: pending | rejected | applied | no_change
-    - full=True: dump every pending proposal with complete context
-    """
     if full:
         items = list_by_status(PROJECT_ROOT, "pending", limit=100)
         if not items:
@@ -435,7 +453,6 @@ def _cmd_proposals(status_filter: Optional[str] = None, full: bool = False) -> N
 
 
 def _cmd_metrics(limit: int = 50) -> None:
-    """Print lightweight training metrics over recent proposals."""
     m = compute_metrics(PROJECT_ROOT, limit=limit)
     if m.get("total", 0) == 0:
         console.print("[dim]No proposals found for metrics.[/dim]")
@@ -453,10 +470,6 @@ def _cmd_metrics(limit: int = 50) -> None:
         title="/metrics",
         border_style="cyan",
     ))
-    console.print(
-        "[dim]Targets for high 2-file effectiveness: "
-        "no_change_pct rising, hard_ban_pct falling, real_diff clean applies.[/dim]"
-    )
 
 
 def _parse_approve_cmd(cmd: str) -> tuple[bool, Optional[str]]:
@@ -487,14 +500,15 @@ def _parse_reject_cmd(cmd: str) -> tuple[Optional[str], str]:
 
 
 async def _interactive_loop(preferred_agent: Optional[str] = None):
+    xai_set = bool(os.getenv("XAI_API_KEY", "").strip())
     console.print(Panel.fit(
         "[bold]Franchise Platform Orchestrator[/bold]\n"
         f"Project root : {PROJECT_ROOT}\n"
         f"Ollama       : {OLLAMA_HOST}\n"
+        f"xAI API key  : {'set' if xai_set else 'NOT SET (backend: xai will fail)'}\n"
         "Paste a multi-line task, then type END on its own line.\n"
+        "Add line: backend: xai   for Grok API (proposal only).\n"
         "Commands: /quit /models /agent /help /proposals /metrics\n"
-        "          /proposals pending | no_change | rejected | applied\n"
-        "          /proposals full          (dump all pending fully)\n"
         "          /approve [id]   /approve confirm [id]\n"
         "          /reject [id] reason=...\n"
         "          /queue status | /queue run | /queue run --once",
@@ -502,13 +516,19 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
         border_style="blue",
     ))
 
-    client = OllamaClient(OLLAMA_HOST)
+    ollama = OllamaClient(OLLAMA_HOST)
+    xai = XaiClient()
     try:
-        models = await client.list_models()
-        console.print(f"[green]Ollama reachable — {len(models)} models available[/green]\n")
+        models = await ollama.list_models()
+        console.print(f"[green]Ollama reachable — {len(models)} models available[/green]")
     except Exception as e:
-        console.print(f"[bold red]Cannot reach Ollama at {OLLAMA_HOST}: {e}[/bold red]")
-        return
+        console.print(f"[yellow]Ollama not reachable at {OLLAMA_HOST}: {e}[/yellow]")
+        console.print("[dim]backend: xai can still run if XAI_API_KEY is set.[/dim]")
+
+    if xai.configured:
+        console.print("[green]xAI API key present — backend: xai enabled[/green]\n")
+    else:
+        console.print("[dim]xAI: set XAI_API_KEY to enable backend: xai[/dim]\n")
 
     current_agent: Optional[str] = preferred_agent
 
@@ -538,9 +558,13 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
         if cmd in ("/quit", "/exit", "quit", "exit"):
             break
         if cmd == "/models":
-            models = await client.list_models()
-            for m in models:
-                console.print(f"  • {m}")
+            try:
+                models = await ollama.list_models()
+                for m in models:
+                    console.print(f"  • ollama:{m}")
+            except Exception as e:
+                console.print(f"[red]Ollama list failed: {e}[/red]")
+            console.print(f"  • xai:{os.getenv('XAI_MODEL', 'grok-4.5')} (if key set)")
             continue
         if cmd.startswith("/agent "):
             current_agent = cmd.split(maxsplit=1)[1]
@@ -548,25 +572,11 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
             continue
         if cmd == "/help":
             console.print("Tasks: natural language with file paths when editing code.")
-            console.print("/proposals              — list recent proposal ids (all statuses)")
-            console.print("/proposals pending      — list only pending (un-accepted)")
-            console.print("/proposals no_change    — list escape-hatch successes")
-            console.print("/proposals rejected     — list rejected")
-            console.print("/proposals applied      — list applied")
-            console.print("/proposals full         — FULL dump of every pending proposal")
-            console.print("/metrics                — training metrics (last 50)")
-            console.print("/approve                — show last proposal")
-            console.print("/approve <id>           — show proposal by id")
-            console.print("/approve confirm        — apply last locally (no push)")
-            console.print("/approve confirm <id>   — apply that id locally (multi-file OK)")
-            console.print("/reject [id] reason=... — mark rejected + log feedback")
-            console.print("/queue status           — inbox/running/done counts")
-            console.print("/queue run              — drain inbox until empty")
-            console.print("/queue run --once       — one inbox task then stop")
-            console.print("Overnight: docker exec -d franchise-orchestrator python queue_runner.py --drain")
-            console.print("Auto-reject: HARD BAN / path / BEFORE-on-disk hits are saved as rejected.")
-            console.print("No change needed: first-class success (status=no_change).")
-            console.print("Multi-file: FILE: path + BEFORE/AFTER pairs all apply on confirm.")
+            console.print("backend: xai | ollama   — first line or in body selects model backend")
+            console.print("xAI returns a proposal only; /approve confirm applies locally (no git push).")
+            console.print("/proposals [pending|no_change|rejected|applied|full]")
+            console.print("/metrics | /approve [confirm] [id] | /reject [id] reason=...")
+            console.print("/queue status | run | run --once")
             continue
         if cmd == "/metrics" or cmd.startswith("/metrics "):
             _cmd_metrics()
@@ -596,7 +606,6 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
             continue
         if cmd == "/queue" or cmd.startswith("/queue "):
             rest = cmd[len("/queue"):].strip()
-            await client.close()
             try:
                 if not rest or rest == "status":
                     from queue_runner import status as queue_status
@@ -604,16 +613,23 @@ async def _interactive_loop(preferred_agent: Optional[str] = None):
                 elif rest.startswith("run"):
                     once = "--once" in rest or rest.endswith(" once")
                     from queue_runner import drain
-                    await drain(once=once)
+                    await drain(once=once, ollama=ollama, xai=xai)
                 else:
                     console.print("[yellow]Usage: /queue status | /queue run | /queue run --once[/yellow]")
-            finally:
-                client = OllamaClient(OLLAMA_HOST)
+            except Exception as e:
+                console.print(f"[red]Queue error: {e}[/red]")
             continue
 
-        await run_task(client, task, preferred_agent=current_agent)
+        await run_task(
+            ollama,
+            task,
+            preferred_agent=current_agent,
+            ollama=ollama,
+            xai=xai,
+        )
 
-    await client.close()
+    await ollama.close()
+    await xai.close()
 
 
 @app.command()
@@ -634,11 +650,13 @@ def task(
 
 
 async def _one_shot(text: str, agent: Optional[str]):
-    client = OllamaClient(OLLAMA_HOST)
+    ollama = OllamaClient(OLLAMA_HOST)
+    xai = XaiClient()
     try:
-        await run_task(client, text, preferred_agent=agent)
+        await run_task(ollama, text, preferred_agent=agent, ollama=ollama, xai=xai)
     finally:
-        await client.close()
+        await ollama.close()
+        await xai.close()
 
 
 @app.command()
@@ -649,18 +667,20 @@ def status():
 async def _status():
     console.print(f"PROJECT_ROOT = {PROJECT_ROOT}")
     console.print(f"OLLAMA_HOST  = {OLLAMA_HOST}")
+    console.print(f"XAI_API_KEY  = {'set' if os.getenv('XAI_API_KEY') else 'NOT SET'}")
+    console.print(f"XAI_MODEL    = {os.getenv('XAI_MODEL', 'grok-4.5')}")
     for k, v in MODEL_MAP.items():
-        console.print(f"  {k:15} → {v}")
-    client = OllamaClient(OLLAMA_HOST)
+        console.print(f"  ollama {k:15} → {v}")
+    ollama = OllamaClient(OLLAMA_HOST)
     try:
-        models = await client.list_models()
+        models = await ollama.list_models()
         console.print("[green]Ollama OK[/green]")
         for m in models:
             console.print(f"  • {m}")
     except Exception as e:
         console.print(f"[red]Ollama unreachable: {e}[/red]")
     finally:
-        await client.close()
+        await ollama.close()
 
 
 if __name__ == "__main__":
