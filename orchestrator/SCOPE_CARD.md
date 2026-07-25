@@ -1,6 +1,6 @@
 # SCOPE_CARD.md
 **Phase 1 Workstream B — agent hard constraints**
-Keep this short. Loaded on every coding task (especially minimal mode).
+Keep this short. Loaded on every coding task (especially minimal/smart mode).
 
 ## IN SCOPE
 - Phase 1 Workstream B micro-edits only
@@ -12,6 +12,7 @@ Keep this short. Loaded on every coding task (especially minimal mode).
 - Progress keys (product): `onboarding_feature_setup`, `onboarding_menu_foundation`, `onboardingMenuItems`, `onboardingReview`
 - Foundation sub-keys only for detail %: `ingredientTypes`, `ingredients`, `categories`
 - Prefer **product slice tasks** over color-swap drills
+- backend: xai | ollama — both **proposal only** (human `/approve confirm`)
 
 ## OUT OF SCOPE (auto-reject if proposed)
 - New fields/getters on BrandingConfig, AppConfig, DesignTokens, FeatureConfig
@@ -34,6 +35,14 @@ Keep this short. Loaded on every coding task (especially minimal mode).
 - HARD BAN applies to **net-new proposed code**, not quoting existing source.
 - If live file already satisfies task → **only**: **No change needed**
 - Verify-only tasks: never rewrite bootstrap branding or DesignTokens bridge.
+
+## APPLY SAFETY (xAI + multi-region — mandatory)
+- Prefer **one coherent BEFORE/AFTER** per file. Max **2** regions per file unless the task explicitly allows more.
+- **Never remove an import** unless every symbol from that import is unused **after** your change.
+- `OnboardingSections` lives in `onboarding_navigation_utils.dart` — if `_sectionOrder` / UI still references it, **keep** that import.
+- Method delete: BEFORE = full method body; AFTER must be **empty** (no lines). **Forbidden**: AFTER that is only `}` or `);`.
+- Do not “clean up” imports as a side quest; only drop imports the task requires to drop and that are truly unused.
+- Same path appearing as 5+ FILE blocks is a failure mode — consolidate.
 
 ## LIVE PATHS (do not invent alternatives)
 - WEB: FranchiseProvider → DesignTokens.setFranchiseProvider → DesignTokens.primaryColor / secondaryColor
