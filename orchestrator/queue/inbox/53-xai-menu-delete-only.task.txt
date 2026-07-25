@@ -1,0 +1,31 @@
+# id: xai-menu-delete-only
+# agent: web_frontend
+# backend: xai
+# priority: 3
+# max_regions: 1
+
+backend: xai
+Role: web_frontend
+max_regions: 1
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_items_screen.dart
+
+Goal: Wire list onDelete to confirm dialog + provider remove + persistChanges.
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Respond ONLY with FILE / BEFORE / AFTER fences (no prose about truncation).
+
+Exactly one region. Locate this on-disk stub inside the ReorderableListView item builder:
+```dart
+                                      onDelete: () async {
+                                        /* your exact delete dialog unchanged */
+                                      },
+```
+
+AFTER: confirm AlertDialog; if confirmed, call the closest existing MenuItemProvider delete/remove API already used in this codebase (e.g. removeMenuItem(item.id) or equivalent on the watched provider), then await persistChanges(); success/fail SnackBars; honor mounted.
+
+Do not invent service methods. Do not touch the Save button in this task.
+If onDelete already has a real dialog + delete → reply only: No change needed

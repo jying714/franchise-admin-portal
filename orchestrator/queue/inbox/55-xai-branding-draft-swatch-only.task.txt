@@ -1,0 +1,41 @@
+# id: xai-branding-draft-swatch-only
+# agent: web_frontend
+# backend: xai
+# priority: 4
+# max_regions: 2
+
+backend: xai
+Role: web_frontend
+max_regions: 2
+
+Files:
+- web-app/lib/admin/hq_owner/screens/design_branding_screen.dart
+
+Goal: Primary/secondary preview swatches use valid draft hex when present.
+
+Task:
+Quote the exact first 10–12 lines of the loaded file.
+
+Respond ONLY with FILE / BEFORE / AFTER. Use the path **once** per proposal (one FILE header; two sequential BEFORE/AFTER pairs under it is OK). Do not emit two separate FILE blocks for the same path.
+
+Region 1 — after _isValidHex, before _saveBranding, insert helper:
+```dart
+  Color? _colorFromHex(String raw) {
+    final n = _normalizeHex(raw);
+    if (!_isValidHex(n)) return null;
+    final v = int.tryParse(n.substring(1), radix: 16);
+    if (v == null) return null;
+    return Color(0xFF000000 | v);
+  }
+```
+BEFORE must be a contiguous on-disk slice including the end of _isValidHex and start of _saveBranding so AFTER can insert the helper between them.
+
+Region 2 — swatch Row color args (exact on-disk uses DesignTokens.primaryColor / secondaryColor):
+Change to:
+color: _colorFromHex(draftPrimaryHex) ?? DesignTokens.primaryColor
+and
+color: _colorFromHex(draftSecondaryHex) ?? DesignTokens.secondaryColor
+
+Do not change the draft label string in this task.
+No new DesignTokens fields.
+If swatches already use draft hex → reply only: No change needed
