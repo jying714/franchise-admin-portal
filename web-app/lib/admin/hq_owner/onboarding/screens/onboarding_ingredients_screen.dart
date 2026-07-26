@@ -390,11 +390,7 @@ class _OnboardingIngredientsScreenState
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-          tooltip: loc.back,
-        ),
+        automaticallyImplyLeading: false,
         title: Text(
           loc.onboardingIngredients,
           style: theme.textTheme.titleLarge?.copyWith(

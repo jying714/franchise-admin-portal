@@ -128,6 +128,9 @@ class _OnboardingFeatureSetupScreenState
       );
     }
 
+    final isFeatureSetupComplete = Provider.of<shared.OnboardingProgressProvider>(context)
+        .isStepComplete('onboarding_feature_setup');
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
@@ -137,7 +140,9 @@ class _OnboardingFeatureSetupScreenState
         actions: [
           IconButton(
             icon: const Icon(Icons.check_circle_outline),
-            tooltip: loc.markAsComplete,
+            tooltip: isFeatureSetupComplete
+                ? 'Mark step incomplete'
+                : 'Mark step complete',
             onPressed: _markComplete,
           ),
         ],

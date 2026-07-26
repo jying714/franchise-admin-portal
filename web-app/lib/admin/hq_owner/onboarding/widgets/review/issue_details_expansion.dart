@@ -383,13 +383,20 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
                         const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   ),
                   onPressed: () {
-                    final normalizedSection =
-                        OnboardingNavigationUtils.normalizeForRouting(section);
-                    final route = OnboardingNavigationUtils.resolveRoute(
-                        normalizedSection, issue);
-                    final sectionKey =
-                        Uri.tryParse(route)?.queryParameters['section'] ??
-                            'onboardingMenu';
+                    final raw = section.toLowerCase();
+                    final String sectionKey;
+                    if (raw.contains('feature')) {
+                      sectionKey = 'onboarding_feature_setup';
+                    } else if (raw.contains('foundation') ||
+                        raw.contains('type') ||
+                        raw.contains('ingredient') ||
+                        raw.contains('categor')) {
+                      sectionKey = 'onboarding_menu_foundation';
+                    } else if (raw.contains('menu')) {
+                      sectionKey = 'onboardingMenuItems';
+                    } else {
+                      sectionKey = 'onboarding_feature_setup';
+                    }
 
                     WidgetsBinding.instance.addPostFrameCallback((_) {
                       final hqShell = context.findAncestorStateOfType<
@@ -398,15 +405,7 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
                         hqShell.switchToSection(sectionKey);
                         debugPrint(
                             '[IssueDetailsExpansion] ✅ HQ shell → $sectionKey');
-                        return;
                       }
-
-                      final args =
-                          OnboardingNavigationUtils.buildOnboardingNavArgs(
-                        section: normalizedSection,
-                        issue: issue,
-                      );
-                      Navigator.of(context).pushNamed(route, arguments: args);
                     });
                   },
                 ),

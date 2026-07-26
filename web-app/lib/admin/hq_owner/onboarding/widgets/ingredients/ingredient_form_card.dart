@@ -73,11 +73,36 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
   Future<void> _saveIngredient() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final typeId = (_selectedTypeId ?? '').trim();
+    if (typeId.isEmpty) {
+      if (widget.parentContext.mounted) {
+        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+          SnackBar(content: Text(widget.loc.requiredField)),
+        );
+      }
+      return;
+    }
+
+    final typeProvider =
+        Provider.of<IngredientTypeProviderImpl>(context, listen: false);
+    final matched = typeProvider.ingredientTypes.where((t) => t.id == typeId);
+    final typeName =
+        matched.isNotEmpty ? matched.first.name : _typeController.text.trim();
+
+    if (typeName.isEmpty) {
+      if (widget.parentContext.mounted) {
+        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+          const SnackBar(content: Text('Ingredient type name is required')),
+        );
+      }
+      return;
+    }
+
     final ingredient = shared.IngredientMetadata(
       id: widget.initialData?.id ??
           _nameController.text.trim().toLowerCase().replaceAll(' ', '_'),
       name: _nameController.text.trim(),
-      type: _typeController.text.trim(),
+      type: typeName,
       notes: _notesController.text.trim().isEmpty
           ? null
           : _notesController.text.trim(),
@@ -86,27 +111,45 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
       supportsExtra: _supportsExtra,
       sidesAllowed: _sidesAllowed,
       outOfStock: _outOfStock,
-      typeId: _selectedTypeId,
-      upcharge: null,
-      imageUrl: null,
-      amountSelectable: false,
-      amountOptions: null,
+      typeId: typeId,
+      upcharge: widget.initialData?.upcharge,
+      imageUrl: widget.initialData?.imageUrl,
+      amountSelectable: widget.initialData?.amountSelectable ?? false,
+      amountOptions: widget.initialData?.amountOptions,
     );
 
     try {
       setState(() => _isSaving = true);
 
-      Provider.of<IngredientMetadataProviderImpl>(context, listen: false)
-          .updateIngredient(ingredient);
+      final meta = Provider.of<IngredientMetadataProviderImpl>(
+        context,
+        listen: false,
+      );
 
+      final isNew = widget.initialData == null;
+      if (isNew) {
+        await meta.createIngredient(ingredient);
+      } else {
+        // Local dirty update; user can also use list "Save changes" for batch.
+        // createIngredient path already writes Firestore for new rows.
+        meta.updateIngredient(ingredient);
+        // Persist edit immediately so edit isn't only in-memory.
+        final franchiseId = Provider.of<shared.FranchiseProvider>(
+          widget.parentContext,
+          listen: false,
+        ).franchiseId;
+        await meta.saveAllChanges(franchiseId);
+      }
+
+      if (!mounted) return;
       if (widget.onSaved != null) {
         widget.onSaved!();
-      } else if (mounted) {
+      } else {
         Navigator.of(context).pop();
       }
     } catch (e, stack) {
       shared.ErrorLogger.log(
-        message: 'Failed to update ingredient (local only): $e',
+        message: 'Failed to save ingredient: $e',
         source: 'IngredientFormCard',
         stack: stack.toString(),
         severity: 'error',
@@ -131,10 +174,37 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
 
     final ingredientTypes =
         context.watch<IngredientTypeProviderImpl>().ingredientTypes;
+    final typeIds = ingredientTypes.map((t) => t.id).toSet();
 
-    if (_selectedTypeId == null && ingredientTypes.isNotEmpty) {
-      _selectedTypeId = ingredientTypes.first.id;
-      _typeController.text = ingredientTypes.first.name;
+    // Dropdown value must be in items or null — invalid seed typeIds freeze the dialog.
+    final String? safeTypeId =
+        (_selectedTypeId != null && typeIds.contains(_selectedTypeId))
+            ? _selectedTypeId
+            : null;
+
+    if (safeTypeId != _selectedTypeId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _selectedTypeId = safeTypeId ??
+              (ingredientTypes.isNotEmpty ? ingredientTypes.first.id : null);
+          if (_selectedTypeId != null) {
+            final t = ingredientTypes.firstWhere(
+              (x) => x.id == _selectedTypeId,
+              orElse: () => shared.IngredientType(id: '', name: ''),
+            );
+            _typeController.text = t.name;
+          }
+        });
+      });
+    } else if (_selectedTypeId == null && ingredientTypes.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _selectedTypeId = ingredientTypes.first.id;
+          _typeController.text = ingredientTypes.first.name;
+        });
+      });
     }
 
     return KeyedSubtree(
@@ -163,7 +233,7 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: _selectedTypeId,
+                    value: safeTypeId,
                     isExpanded: true,
                     decoration: InputDecoration(
                       labelText: loc.ingredientType,

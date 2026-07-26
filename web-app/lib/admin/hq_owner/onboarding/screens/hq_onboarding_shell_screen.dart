@@ -353,6 +353,16 @@ class _HqSidebarTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const completableKeys = {
+      'onboarding_feature_setup',
+      'onboarding_menu_foundation',
+      'onboardingMenuItems',
+      'onboardingReview',
+    };
+    final isComplete = completableKeys.contains(section.key) &&
+        Provider.of<shared.OnboardingProgressProvider>(context)
+            .isStepComplete(section.key);
+
     return ListTile(
       leading: Icon(
         section.icon,
@@ -367,6 +377,13 @@ class _HqSidebarTile extends StatelessWidget {
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
+      trailing: isComplete
+          ? Icon(
+              Icons.check,
+              size: 16,
+              color: colorScheme.primary,
+            )
+          : null,
       selected: isSelected,
       selectedTileColor: colorScheme.primary.withOpacity(0.10),
       onTap: onTap,

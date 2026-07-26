@@ -45,9 +45,12 @@ class _OnboardingMenuFoundationScreenState
       final franchiseId = franchiseProvider.franchiseId;
 
       if (franchiseId.isNotEmpty) {
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false).load(
+            franchiseIdOverride: franchiseId, forceReloadFromFirestore: true);
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false)
+            .load(forceReloadFromFirestore: true);
         Provider.of<shared.CategoryProvider>(context, listen: false).load(
             franchiseIdOverride: franchiseId, forceReloadFromFirestore: true);
-
         Provider.of<shared.MenuItemProvider>(context, listen: false).load(
             franchiseIdOverride: franchiseId, forceReloadFromFirestore: true);
       }
@@ -103,8 +106,29 @@ class _OnboardingMenuFoundationScreenState
     final progressProvider = context.watch<shared.OnboardingProgressProvider>();
     final franchiseProvider = context.watch<shared.FranchiseProvider>();
     final franchiseId = franchiseProvider.franchiseId;
-    final foundationProgress =
-        progressProvider.getFoundationProgress(); // from Phase 1
+
+    final typeProvider = context.watch<shared.IngredientTypeProvider>();
+    final ingredientProvider =
+        context.watch<shared.IngredientMetadataProvider>();
+    final categoryProvider = context.watch<shared.CategoryProvider>();
+
+    final typeCount = typeProvider.ingredientTypes.length;
+    final categoryCount = categoryProvider.categories.length;
+    final allIngredients = ingredientProvider.ingredients;
+    final typedIngredientCount =
+        allIngredients.where((i) => (i.typeId ?? '').trim().isNotEmpty).length;
+    final orphanCount =
+        allIngredients.where((i) => (i.typeId ?? '').trim().isEmpty).length;
+
+    // Live readiness 0–1 for the bottom label (not the old sub-step flags).
+    double liveFoundationProgress = 0.0;
+    if (typeCount >= 1) liveFoundationProgress += 0.25;
+    if (categoryCount >= 1) liveFoundationProgress += 0.25;
+    if (typedIngredientCount >= 5) liveFoundationProgress += 0.35;
+    if (orphanCount == 0 && allIngredients.isNotEmpty) {
+      liveFoundationProgress += 0.15;
+    }
+    liveFoundationProgress = liveFoundationProgress.clamp(0.0, 1.0);
 
     return Scaffold(
       appBar: AppBar(
@@ -166,34 +190,51 @@ class _OnboardingMenuFoundationScreenState
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Foundation Progress: ${(foundationProgress * 100).toInt()}%',
+                'Foundation Progress: ${(liveFoundationProgress * 100).toInt()}%',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               ElevatedButton(
                 onPressed: () async {
-                  if (foundationProgress >= 0.8) {
-                    await progressProvider
-                        .markStepComplete('onboarding_menu_foundation');
-
-                    final hqShell = context.findAncestorStateOfType<
-                        HqOnboardingShellScreenState>();
-                    if (hqShell != null) {
-                      hqShell.switchToSection('onboardingMenuItems');
-                      return;
-                    }
-
-                    debugPrint(
-                      '[OnboardingMenuFoundationScreen] ⚠️ No HQ shell; stay on foundation',
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Complete minimum requirements (3 categories, 10+ ingredients)',
-                        ),
-                      ),
+                  final failures = <String>[];
+                  if (typeCount < 1) {
+                    failures.add(
+                        'Need at least 1 ingredient type (have $typeCount)');
+                  }
+                  if (categoryCount < 1) {
+                    failures
+                        .add('Need at least 1 category (have $categoryCount)');
+                  }
+                  if (typedIngredientCount < 5) {
+                    failures.add(
+                      'Need at least 5 ingredients with a type (have $typedIngredientCount)',
                     );
                   }
+                  if (orphanCount > 0) {
+                    failures.add(
+                      '$orphanCount ingredient(s) missing a type — assign types before continuing',
+                    );
+                  }
+
+                  if (failures.isNotEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(failures.join(' · '))),
+                    );
+                    return;
+                  }
+
+                  await progressProvider
+                      .markStepComplete('onboarding_menu_foundation');
+
+                  final hqShell = context
+                      .findAncestorStateOfType<HqOnboardingShellScreenState>();
+                  if (hqShell != null) {
+                    hqShell.switchToSection('onboardingMenuItems');
+                    return;
+                  }
+
+                  debugPrint(
+                    '[OnboardingMenuFoundationScreen] ⚠️ No HQ shell; stay on foundation',
+                  );
                 },
                 child: const Text('Save Foundation & Continue to Menu Items'),
               ),

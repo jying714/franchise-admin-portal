@@ -43,14 +43,6 @@ class FranchisePickerDropdown extends StatelessWidget {
         onChanged: (String? newValue) {
           if (newValue != null && newValue != currentFranchise.id) {
             franchiseProvider.setFranchiseId(newValue);
-
-            // Defer navigation to allow provider update
-            Future.microtask(() {
-              Navigator.pushNamed(
-                context,
-                '/admin/dashboard?section=onboardingMenu',
-              );
-            });
           }
         },
         items: franchises.map<DropdownMenuItem<String>>((f) {
