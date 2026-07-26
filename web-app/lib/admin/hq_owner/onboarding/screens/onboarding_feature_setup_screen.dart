@@ -86,6 +86,17 @@ class _OnboardingFeatureSetupScreenState
     }
   }
 
+  // MVP GA modules — fully toggleable. Everything else that survives
+  // deprecated/developerOnly filters is shown as In development.
+  static const Set<String> _gaModuleKeys = {
+    'menu_item_customization',
+    'mobile_ordering',
+    'order_tracking',
+    'branding_customization',
+    'promo_banners',
+    'feedback',
+  };
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -160,22 +171,40 @@ class _OnboardingFeatureSetupScreenState
             child: ListView(
               controller: _scrollController,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: _featureMetadata
-                  .where((meta) => meta['developerOnly'] != true)
-                  .map((meta) {
-                final moduleKey = meta['key'];
-                final title = meta['name'] ?? moduleKey;
-                final description = meta['description'] ?? '';
-                final isHighlighted = moduleKey == _highlightFeatureKey;
+              children: () {
+                final visible = _featureMetadata
+                    .where((meta) => meta['developerOnly'] != true)
+                    .toList();
 
-                return FeatureToggleTile(
-                  moduleKey: moduleKey,
-                  featureKey: 'enabled',
-                  title: title,
-                  description: description,
-                  highlight: isHighlighted,
-                );
-              }).toList(),
+                // GA (toggleable) first, then in-development — each group A–Z by name.
+                visible.sort((a, b) {
+                  final aKey = a['key'] as String? ?? '';
+                  final bKey = b['key'] as String? ?? '';
+                  final aGa = _gaModuleKeys.contains(aKey);
+                  final bGa = _gaModuleKeys.contains(bKey);
+                  if (aGa != bGa) return aGa ? -1 : 1;
+                  final aName = (a['name'] as String? ?? aKey).toLowerCase();
+                  final bName = (b['name'] as String? ?? bKey).toLowerCase();
+                  return aName.compareTo(bName);
+                });
+
+                return visible.map((meta) {
+                  final moduleKey = meta['key'] as String? ?? '';
+                  final title = meta['name'] ?? moduleKey;
+                  final description = meta['description'] ?? '';
+                  final isHighlighted = moduleKey == _highlightFeatureKey;
+                  final isInDevelopment = !_gaModuleKeys.contains(moduleKey);
+
+                  return FeatureToggleTile(
+                    moduleKey: moduleKey,
+                    featureKey: 'enabled',
+                    title: title,
+                    description: description,
+                    highlight: isHighlighted,
+                    isInDevelopment: isInDevelopment,
+                  );
+                }).toList();
+              }(),
             ),
           ),
         ],

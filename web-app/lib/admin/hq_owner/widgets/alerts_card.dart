@@ -43,7 +43,7 @@ class AlertsCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
       ),
       elevation: DesignTokens.adminCardElevation,
-      margin: shared.UiConfig.defaultPadding,
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: shared.UiConfig.defaultPadding,
         child: Column(

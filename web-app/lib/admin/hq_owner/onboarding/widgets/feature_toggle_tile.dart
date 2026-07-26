@@ -12,8 +12,8 @@ class FeatureToggleTile extends StatelessWidget {
   final String? featureKey;
   final String title;
   final String description;
-  final bool
-      highlight; // <-- new, to visually focus when navigating for error repair
+  final bool highlight;
+  final bool isInDevelopment;
 
   const FeatureToggleTile({
     Key? key,
@@ -22,6 +22,7 @@ class FeatureToggleTile extends StatelessWidget {
     required this.title,
     required this.description,
     this.highlight = false,
+    this.isInDevelopment = false,
   }) : super(key: key);
 
   @override
@@ -29,7 +30,6 @@ class FeatureToggleTile extends StatelessWidget {
     final theme = Theme.of(context);
     final localizations = AppLocalizations.of(context)!;
 
-    // For animated highlight, this can later be changed to an AnimatedContainer if desired.
     return Consumer2<shared.FranchiseFeatureProvider,
         shared.FranchiseInfoProvider>(
       builder: (context, featureProvider, franchiseInfo, _) {
@@ -38,6 +38,7 @@ class FeatureToggleTile extends StatelessWidget {
             : featureProvider.isSubfeatureEnabled(moduleKey, featureKey!);
 
         final isLocked = featureProvider.isModuleLocked(moduleKey);
+        final effectiveLocked = isLocked || isInDevelopment;
         final franchiseId = franchiseInfo.franchise?.id ?? '';
 
         return AnimatedContainer(
@@ -71,8 +72,10 @@ class FeatureToggleTile extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  isLocked ? Icons.lock_outline : Icons.toggle_on_outlined,
-                  color: isLocked
+                  effectiveLocked
+                      ? Icons.lock_outline
+                      : Icons.toggle_on_outlined,
+                  color: effectiveLocked
                       ? theme.disabledColor
                       : (isEnabled
                           ? theme.colorScheme.primary
@@ -86,7 +89,7 @@ class FeatureToggleTile extends StatelessWidget {
                       Text(
                         title,
                         style: theme.textTheme.titleMedium?.copyWith(
-                          color: isLocked
+                          color: effectiveLocked
                               ? theme.disabledColor
                               : theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w600,
@@ -95,10 +98,15 @@ class FeatureToggleTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        description,
+                        isInDevelopment ? 'In development' : description,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.textTheme.bodySmall?.color
-                              ?.withOpacity(0.74),
+                          color: isInDevelopment
+                              ? theme.colorScheme.onSurfaceVariant
+                              : theme.textTheme.bodySmall?.color
+                                  ?.withOpacity(0.74),
+                          fontStyle: isInDevelopment
+                              ? FontStyle.italic
+                              : FontStyle.normal,
                           fontFamily: DesignTokens.fontFamily,
                         ),
                       ),
@@ -108,7 +116,7 @@ class FeatureToggleTile extends StatelessWidget {
                 const SizedBox(width: 14),
                 Switch(
                   value: isEnabled,
-                  onChanged: isLocked
+                  onChanged: effectiveLocked
                       ? null
                       : (newValue) {
                           if (featureKey == null || featureKey == 'enabled') {
