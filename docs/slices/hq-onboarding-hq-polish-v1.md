@@ -19,8 +19,9 @@ Make onboarding and the HQ home **honest for MVP**:
 - Features and dashboard cards that are not production-ready stay **visible but labeled In development**.
 - **Design & Branding is a first-class onboarding step** between Feature Setup and Core Menu Foundation.
 - Franchise switch continues to scope branding and domain data; polish must not regress that.
+- **Platform billing** is thin: HQ sees whether the franchise owes the platform (SaaS/subscription), not a full AR workbench.
 
-**Success (v1):** Owner walks Feature Setup → **Design & Branding** → Foundation → Menu Items → Review without false blockers; foundation tabs have no JSON/back-arrow/fake mark-complete; Step 3 FAB matches Step 2; HQ cards work franchise-scoped or show In development; billing/invoices are a single honest card story.
+**Success (v1):** Owner walks Feature Setup → **Design & Branding** → Foundation → Menu Items → Review without false blockers; foundation tabs have no JSON/back-arrow/fake mark-complete; Step 3 FAB matches Step 2; HQ cards work franchise-scoped or show In development; **one** platform-billing card (no dual Billing Summary + Invoices).
 
 ---
 
@@ -34,7 +35,8 @@ Make onboarding and the HQ home **honest for MVP**:
 | Foundation product complete | Save & Continue / explicit foundation complete — **not** tab mark complete |
 | Menu Items | Slice closed; `MobileMenuPreviewCard`; `deleteMenuItem` / `deleteMenuItemAndPersist` |
 | FranchiseProvider | **Single** web instance at app root; branding setters call `_bumpConfig()` |
-| Design & Branding UI | Reuse `design_branding_screen.dart` (embed or shell section); Save already writes franchise + `config/ui_config` |
+| Design & Branding UI | Reuse `design_branding_screen.dart`; Save writes franchise + `config/ui_config` |
+| Platform invoices | **Platform → franchise** bills (SaaS/subscription/royalties), **not** diner order tickets. Model: `PlatformInvoice`. |
 
 ---
 
@@ -43,34 +45,39 @@ Make onboarding and the HQ home **honest for MVP**:
 ### 3.1 Design & Branding in onboarding — **A (LOCKED)**
 
 - **New onboarding step** between Feature Setup and Core Menu Foundation.
-- **Section key:** `onboarding_design_branding`
-- **Progress product key:** `onboarding_design_branding` (same string)
-- **UI:** Reuse existing Design & Branding screen/flow inside HQ shell (no duplicate branding model).
-- **Complete when:** Owner saves branding successfully (or explicit Mark complete only if Save already persisted — prefer Save success → enable continue / mark step).
-- **Navigation updates required:**
-  - Shell section order / sidebar
-  - Feature Setup success → `switchToSection('onboarding_design_branding')` (not straight to foundation)
-  - Design & Branding continue → `onboarding_menu_foundation`
-  - HQ **Continue onboarding** + **Quick Link** first-incomplete cascade must insert the new key after feature setup and before foundation
-  - Review / summary `N/4` becomes **N/5** product steps if panel counts product keys
+- **Section key + progress key:** `onboarding_design_branding`
+- **UI:** Reuse existing Design & Branding flow inside HQ shell.
+- **Complete when:** successful Save (prefer) → mark step / continue.
+- **Nav:** Feature Setup → branding → foundation; first-incomplete cascades + summary use **5** product keys.
 
 ### 3.2 Foundation tab “Mark complete” — **REMOVE (LOCKED)**
 
-- Remove Mark complete controls from Ingredient Types, Ingredients, and Categories onboarding chrome.
-- Do **not** wire them to `onboarding_menu_foundation`.
-- Sub-key detail % may remain if already driven by data counts; no fake tab complete buttons.
+- Remove from Types / Ingredients / Categories onboarding chrome.
+- Never write `onboarding_menu_foundation` from tab-only complete.
 
-### 3.3 Billing summary vs Invoices — **MERGE TO ONE IN-DEV CARD (LOCKED)**
+### 3.3 Platform billing on HQ — **ONE THIN CARD (LOCKED, refined)**
 
-Human accepted recommendation:
+**Domain:** Invoices are **bills from the platform to the franchise** (subscription/SaaS), not customer POS checks.
 
-- **Do not** show two competing cards (Billing summary + Invoices) while both lack solid MVP data/routes.
-- **Replace with one** card: **“Billing & invoices”** with **In development** state (no dead “View all” that 404s).
-- When real invoice list + route ship later, expand this card or split under a new slice — not in polish v1 unless routes already work end-to-end (then human may re-open).
+**MVP need:** “Do we owe the platform anything?” + path to pay/view if live — **not** a full invoice product.
+
+| Rule | Detail |
+|------|--------|
+| **One card only** | Remove dual **BillingSummaryCard** + **InvoicesCard** pair from HQ grid |
+| **Card name** | **Platform billing** (or “Subscription & fees”) |
+| **Default v1 state** | **In development** — no dead `pushNamed('/hq/invoices')` / Pay now that 404 |
+| **When data/Stripe is real (later)** | Same single card may show outstanding + overdue + CTA to **Stripe Customer Portal / hosted invoice URL** — still **no** requirement to ship custom list in this slice |
+| **Do not for this slice** | Wire full `InvoiceListScreen` as MVP; invent create-invoice; keep zeroed InvoicesCard KPIs; leave broken Quick Link “Invoices” |
+
+**Code context (do not treat as MVP mandate):**
+
+- `BillingSummaryCard` — service-backed AR snapshot; CTAs → `/hq/invoices` (route **not** registered on current HQ MaterialApp).
+- `InvoicesCard` on HQ — hard-coded zeros + same dead route.
+- `InvoiceListScreen` — exists on disk; orphaned from navigator; post-MVP if ever revived under a billing slice.
 
 ### 3.4 Feature Setup “In development”
 
-- Human owns GA vs dev list (Firestore status preferred; else const allowlist).
+- Human owns GA vs dev list.
 - Dev: visible, toggle disabled, **In development** note.
 
 ---
@@ -79,62 +86,32 @@ Human accepted recommendation:
 
 ### W1 — Foundation chrome honesty (Step 2)
 
-**Files:** `onboarding_ingredient_type_screen.dart`, `onboarding_ingredients_screen.dart`, `onboarding_categories_screen.dart`, foundation shell if needed.
-
-1. Remove competing **back arrows** (shell owns back).
-2. Remove **JSON import/export** entry points from onboarding UI.
-3. **Remove** tab Mark complete (§3.2).
-4. Leave Continue / orphan gates / product key writers intact.
-
-**Exit:** No JSON CTAs; no redundant back; no tab Mark complete.
-
----
+Remove competing back arrows; remove JSON import/export entry points; **remove** tab Mark complete. Leave Continue/orphan/product-key writers intact.
 
 ### W2 — Step 3 FAB + preview parity
 
-**Files:** `onboarding_menu_items_screen.dart`, foundation screen (reference), `mobile_menu_preview_card.dart`.
-
-1. FAB on **list pane** bottom-end (Step 2 parity).
-2. Same parent constraints for shared preview card; do not fork chrome.
-
----
+FAB on list pane bottom-end; shared `MobileMenuPreviewCard` constraints match foundation.
 
 ### W3 — Review false positive (“menu management”)
 
-1. Tracer: Review rule → feature key → Feature Setup persist path.
-2. Align keys or drop obsolete rule.
-3. No new schema/flags without approval.
-
-**Exit:** Features enabled ⇒ no false menu-management blocker.
-
----
+Tracer → align feature key or drop obsolete rule. No new schema.
 
 ### W4 — Feature Setup in-development UX
 
 Apply §3.4 after GA list exists.
 
----
-
 ### W5 — HQ Owner dashboard MVP honesty
 
-1. Franchise-scoped live cards only.
-2. Dead payouts/quick-link targets → wire or **In development** / remove.
-3. **§3.3:** single **Billing & invoices** in-dev card (remove duplicate Billing summary + Invoices pair).
-4. Live Branding + Onboarding Progress sized to grid peers.
-5. Quick Links: Onboarding + Design & Branding (and any other working routes only).
+1. Franchise-scoped live cards only where data is real.
+2. **§3.3:** one **Platform billing** card (in-dev for v1); remove Billing Summary + Invoices pair; remove/disable Quick Link “Invoices” unless CTA is real.
+3. Payouts: wire or **In development** (no broken `/hq/payouts`).
+4. Quick Links: Onboarding + Design & Branding (+ only working routes).
+5. Live Branding + Onboarding Progress sized to grid peers.
+6. Non-MVP mock cards → In development shells.
 
----
+### W6 — Design & Branding onboarding step
 
-### W6 — Design & Branding onboarding step (**A — in scope**)
-
-1. Register section `onboarding_design_branding` in HQ shell order **after** feature setup, **before** foundation.
-2. Persist progress key `onboarding_design_branding` via `shared.OnboardingProgressProvider` only.
-3. Embed/reuse Design & Branding UI; Save path unchanged (franchise doc + ui_config).
-4. Update handoffs: Feature Setup → branding step → foundation.
-5. Update first-incomplete cascades (Continue + Quick Link) and summary panel key list (5 steps).
-6. Sidebar labels: e.g. “Design & Branding”.
-
-**Exit:** New step appears in order; complete/incomplete toggles only that key; Continue path does not skip it when incomplete.
+Shell order, progress key `onboarding_design_branding`, handoffs, first-incomplete cascades, summary N/5.
 
 ---
 
@@ -142,9 +119,9 @@ Apply §3.4 after GA list exists.
 
 - Menu Items v1 redesign; soft-delete; JSON reintroduction
 - Second FranchiseProvider; new DesignTokens/BrandingConfig fields
-- Full Stripe production; color picker
-- Liberty ingredientId noise
-- Splitting billing/invoices back into two live cards without working data
+- **Full Stripe production integration / custom invoice list+detail workbench** (separate future billing slice)
+- Color picker; Liberty ingredientId noise
+- Restoring dual Billing Summary + Invoices cards
 
 ---
 
@@ -153,9 +130,9 @@ Apply §3.4 after GA list exists.
 1. **W3** Review false positive  
 2. **W1** Foundation chrome  
 3. **W2** FAB + preview  
-4. **W6** Branding step (shell + progress + cascades)  
-5. **W4** Feature in-dev (after GA list)  
-6. **W5** HQ dashboard (including billing merge)  
+4. **W6** Branding step  
+5. **W4** Feature in-dev  
+6. **W5** HQ dashboard (platform billing one-card + dead links)  
 
 ---
 
@@ -175,14 +152,14 @@ Apply §3.4 after GA list exists.
 - [ ] Non-GA features In development + non-toggleable
 
 ### Branding step
-- [ ] Shell order: feature setup → **design branding** → foundation → menu items → review
-- [ ] Progress key `onboarding_design_branding` only for this step
-- [ ] First-incomplete cascades include the new key
-- [ ] Summary / Continue treat 5 product steps correctly
+- [ ] Order: feature setup → design branding → foundation → menu items → review
+- [ ] Progress key `onboarding_design_branding`
+- [ ] Cascades + summary treat 5 product steps
 
 ### HQ dashboard
-- [ ] Single Billing & invoices in-dev (or successor) — not two dead cards
-- [ ] Payouts/Quick Links honest
+- [ ] **One** Platform billing card (in-dev OK); **not** Billing Summary + Invoices pair
+- [ ] No broken invoice/payout named routes from CTAs
+- [ ] Quick Links honest
 - [ ] Branding + onboarding cards grid-sized
 - [ ] Franchise switch still live-brands
 
@@ -190,15 +167,15 @@ Apply §3.4 after GA list exists.
 
 ## 8. Smoke
 
-1. Feature Setup save → lands on **Design & Branding** step.  
-2. Save branding → can continue to foundation; progress key set.  
-3. Skip branding incomplete → Continue/Quick Link still offers branding first when prior steps done.  
+1. Feature Setup save → **Design & Branding** step.  
+2. Save branding → foundation; progress key set.  
+3. First-incomplete includes branding when due.  
 4. Foundation: no JSON/back/mark-complete noise.  
 5. Menu Items FAB + preview vs foundation.  
 6. Review: no false feature blocker.  
-7. HQ: one billing card; no broken invoice/payout CTAs; switch franchise branding OK.  
+7. HQ: single platform billing card; no 404 invoice/payout CTAs; franchise switch branding OK.  
 
 ---
 
-**Last updated:** July 26, 2026 (decisions locked: A branding step; remove tab mark-complete; merge billing/invoices in-dev)  
-**Next:** W3 tracer; W1 xAI outcomes; W6 shell wiring plan.
+**Last updated:** July 26, 2026 (platform billing MVP refined: one thin card; invoices = platform→franchise SaaS bills; no dual cards / no custom list required for v1)  
+**Next:** W3 Review tracer; then W1 foundation chrome outcomes.
