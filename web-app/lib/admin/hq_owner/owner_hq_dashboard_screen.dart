@@ -64,7 +64,8 @@ class OwnerHQDashboardScreen extends StatelessWidget {
       appBar: AppBar(
         elevation: DesignTokens.adminCardElevation,
         title: Row(
-          key: ValueKey('hq-appbar-branding-$franchiseId'),
+          key: ValueKey(
+              'hq-appbar-branding-$franchiseId-${franchiseProvider.currentConfigVersion}'),
           children: [
             const SizedBox(width: 8),
             Icon(Icons.business_center_rounded,
@@ -419,8 +420,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                                                 : 'onboardingMenu';
                                 Navigator.of(context).push(
                                   MaterialPageRoute<void>(
-                                    builder: (_) =>
-                                        HqOnboardingShellScreen(
+                                    builder: (_) => HqOnboardingShellScreen(
                                       initialSectionKey: initialKey,
                                     ),
                                   ),
@@ -530,15 +530,16 @@ class QuickLinksPanel extends StatelessWidget {
                     final p = Provider.of<OnboardingProgressProviderImpl>(
                         context,
                         listen: false);
-                    final initialKey = !p.isStepComplete('onboarding_feature_setup')
-                        ? 'onboarding_feature_setup'
-                        : !p.isStepComplete('onboarding_menu_foundation')
-                            ? 'onboarding_menu_foundation'
-                            : !p.isStepComplete('onboardingMenuItems')
-                                ? 'onboardingMenuItems'
-                                : !p.isStepComplete('onboardingReview')
-                                    ? 'onboardingReview'
-                                    : 'onboardingMenu';
+                    final initialKey =
+                        !p.isStepComplete('onboarding_feature_setup')
+                            ? 'onboarding_feature_setup'
+                            : !p.isStepComplete('onboarding_menu_foundation')
+                                ? 'onboarding_menu_foundation'
+                                : !p.isStepComplete('onboardingMenuItems')
+                                    ? 'onboardingMenuItems'
+                                    : !p.isStepComplete('onboardingReview')
+                                        ? 'onboardingReview'
+                                        : 'onboardingMenu';
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => HqOnboardingShellScreen(

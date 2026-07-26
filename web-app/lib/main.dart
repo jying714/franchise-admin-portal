@@ -268,7 +268,9 @@ class _FranchiseAuthenticatedRootState
         },
         builder: (context, shellKey, _) {
           // Rebuild MaterialApp ThemeData when franchise branding/config notifies.
-          context.watch<shared.FranchiseProvider>();
+          final fp = context.watch<shared.FranchiseProvider>();
+          // Depend on branding generation so theme rebuilds after setBrandingFromFranchiseDoc.
+          final _ = fp.currentConfigVersion;
           final user =
               Provider.of<shared.AdminUserProvider>(context, listen: false)
                   .user;
@@ -325,7 +327,12 @@ class _FranchiseAuthenticatedRootState
                 surface: DesignTokens.surfaceColor,
                 onSurface: DesignTokens.textColor,
               ),
-              appBarTheme: const AppBarTheme(elevation: 2),
+              appBarTheme: AppBarTheme(
+                elevation: 2,
+                backgroundColor: DesignTokens.primaryColor,
+                foregroundColor: Colors.white,
+                iconTheme: const IconThemeData(color: Colors.white),
+              ),
             ),
             darkTheme: ThemeData(
               brightness: Brightness.dark,
@@ -343,6 +350,12 @@ class _FranchiseAuthenticatedRootState
                 onBackground: DesignTokens.textColorDark,
                 surface: DesignTokens.surfaceColorDark,
                 onSurface: DesignTokens.textColorDark,
+              ),
+              appBarTheme: AppBarTheme(
+                elevation: 2,
+                backgroundColor: DesignTokens.primaryColor,
+                foregroundColor: Colors.white,
+                iconTheme: const IconThemeData(color: Colors.white),
               ),
             ),
             themeMode:
