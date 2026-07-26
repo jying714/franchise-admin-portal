@@ -5,7 +5,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/admin/features/alerts/alerts_repository.dart';
 
-class AlertsCard extends StatelessWidget {
+class AlertsCard extends StatefulWidget {
   final String franchiseId;
   final String? locationId;
   final String? userId;
@@ -22,6 +22,17 @@ class AlertsCard extends StatelessWidget {
   });
 
   @override
+  State<AlertsCard> createState() => _AlertsCardState();
+}
+
+class _AlertsCardState extends State<AlertsCard> {
+  /// null = all levels
+  String? _levelFilter;
+  int _streamEpoch = 0;
+
+  void _retry() => setState(() => _streamEpoch++);
+
+  @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
@@ -33,7 +44,7 @@ class AlertsCard extends StatelessWidget {
     final fireService =
         Provider.of<shared.FirestoreService>(context, listen: false);
 
-    final repo = repository ??
+    final repo = widget.repository ??
         AlertsRepository(
           firestoreService: fireService,
         );
@@ -61,23 +72,49 @@ class AlertsCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                IconButton(
+                PopupMenuButton<String?>(
+                  tooltip: loc.dashboard_alerts_filter_tooltip,
+                  initialValue: _levelFilter,
                   icon: Icon(
                     Icons.filter_alt_outlined,
-                    color: colorScheme.onSurface.withOpacity(0.45),
+                    color: _levelFilter == null
+                        ? colorScheme.onSurface.withOpacity(0.45)
+                        : DesignTokens.primaryColor,
                   ),
-                  onPressed: null,
-                  tooltip: loc.dashboard_alerts_filter_tooltip,
+                  onSelected: (value) {
+                    setState(() => _levelFilter = value);
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem<String?>(
+                      value: null,
+                      child: Text('All'),
+                    ),
+                    PopupMenuItem<String?>(
+                      value: 'error',
+                      child: Text('Error'),
+                    ),
+                    PopupMenuItem<String?>(
+                      value: 'warning',
+                      child: Text('Warning'),
+                    ),
+                    PopupMenuItem<String?>(
+                      value: 'info',
+                      child: Text('Info'),
+                    ),
+                  ],
                 ),
               ],
             ),
             const SizedBox(height: 10),
             Expanded(
               child: StreamBuilder<List<shared.AlertModel>>(
+                key: ValueKey(
+                  'alerts-stream-${widget.franchiseId}-$_streamEpoch',
+                ),
                 stream: repo.watchActiveAlerts(
-                  franchiseId: franchiseId,
-                  locationId: locationId,
-                  developerMode: developerMode,
+                  franchiseId: widget.franchiseId,
+                  locationId: widget.locationId,
+                  developerMode: widget.developerMode,
                 ),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
@@ -88,25 +125,37 @@ class AlertsCard extends StatelessWidget {
                       source: 'AlertsCard',
                       severity: 'error',
                       contextData: {
-                        'franchiseId': franchiseId,
-                        'locationId': locationId,
-                        'userId': userId,
-                        'developerMode': developerMode,
+                        'franchiseId': widget.franchiseId,
+                        'locationId': widget.locationId,
+                        'userId': widget.userId,
+                        'developerMode': widget.developerMode,
                       },
                     );
                     return _AlertError(
                       message: loc.dashboard_alerts_error,
                       color: colorScheme.error,
+                      onRetry: _retry,
                     );
                   }
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return _AlertLoading(color: colorScheme.primary);
                   }
 
-                  final alerts = snapshot.data ?? [];
+                  final all = snapshot.data ?? [];
+                  final alerts = _levelFilter == null
+                      ? all
+                      : all
+                          .where(
+                            (a) => a.level.toLowerCase() == _levelFilter,
+                          )
+                          .toList();
 
                   if (alerts.isEmpty) {
-                    return _AlertEmpty(message: loc.dashboard_no_active_alerts);
+                    return _AlertEmpty(
+                      message: _levelFilter == null
+                          ? loc.dashboard_no_active_alerts
+                          : 'No $_levelFilter alerts.',
+                    );
                   }
 
                   return SingleChildScrollView(
@@ -121,14 +170,12 @@ class AlertsCard extends StatelessWidget {
                               ),
                             ),
                         if (alerts.length > 3)
-                          TextButton(
-                            onPressed: () =>
-                                Navigator.of(context).pushNamed('/alerts'),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
                             child: Text(
-                              loc.dashboard_see_all_alerts,
+                              '+${alerts.length - 3} more',
                               style: theme.textTheme.labelLarge?.copyWith(
-                                color: DesignTokens.primaryColor,
-                                fontWeight: FontWeight.bold,
+                                color: DesignTokens.secondaryTextColor,
                               ),
                             ),
                           ),
@@ -250,7 +297,14 @@ class _AlertLoading extends StatelessWidget {
 class _AlertError extends StatelessWidget {
   final String message;
   final Color color;
-  const _AlertError({super.key, required this.message, required this.color});
+  final VoidCallback? onRetry;
+
+  const _AlertError({
+    super.key,
+    required this.message,
+    required this.color,
+    this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -260,13 +314,20 @@ class _AlertError extends StatelessWidget {
             Icon(Icons.error_outline,
                 color: color, size: DesignTokens.iconSize),
             const SizedBox(width: 10),
-            Text(
-              message,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: color),
+            Expanded(
+              child: Text(
+                message,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: color),
+              ),
             ),
+            if (onRetry != null)
+              TextButton(
+                onPressed: onRetry,
+                child: const Text('Retry'),
+              ),
           ],
         ),
       );

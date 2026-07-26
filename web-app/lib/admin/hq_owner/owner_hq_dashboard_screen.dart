@@ -108,6 +108,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                 children: [
                   const QuickLinksPanel(),
                   AlertsCard(
+                    key: ValueKey('hq-alerts-$franchiseId'),
                     franchiseId: franchiseId,
                     userId: adminUser?.id ?? '',
                   ),
