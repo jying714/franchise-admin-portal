@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 26, 2026 (afternoon — **hq-onboarding-hq-polish-v1 COMPLETE**)  
+**Last Updated**: July 26, 2026 (afternoon — polish-v1 COMPLETE; **hq-financial-honesty-v1 OPEN**)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch**: `feat/onboarding-4step`
 
@@ -10,32 +10,30 @@
 
 ## Current Phase
 
-**Phase 1 – Core Config Scoping & Dynamic Branding + HQ/Onboarding polish**
+**Phase 1 – Core Config Scoping & Dynamic Branding + HQ surfaces**
 
 ### Completed (recent)
 
 - [x] Menu Items v1; live HQ branding on franchise switch; branding notify + picker guard
 - [x] **Single** web `FranchiseProvider` at app root
 - [x] Design & Branding screen v1/v1.1
-- [x] **Polish W3:** removed Review `menu_management` false critical
-- [x] **Polish W1:** foundation chrome honesty
-- [x] **Polish W2:** menu-items FAB + preview parity
-- [x] **Polish W6:** onboarding step `onboarding_design_branding` (5-step flow)
-- [x] **Polish W4:** Feature Setup GA allowlist + In development UX (sorted)
-- [x] **Polish W5:** HQ one Platform billing card; Payouts in-dev; dead CTAs removed; grid sizing
+- [x] **Polish W1–W6 COMPLETE** — see `docs/slices/hq-onboarding-hq-polish-v1.md`
 
-### Active slice
+### Active slice: `docs/slices/hq-financial-honesty-v1.md`
 
-**`docs/slices/hq-onboarding-hq-polish-v1.md` — COMPLETE**
+**Status:** OPEN — decisions locked.
 
-**Product key order:**  
-`onboarding_feature_setup` → `onboarding_design_branding` → `onboarding_menu_foundation` → `onboardingMenuItems` → `onboardingReview`
+| Topic | Decision |
+|-------|----------|
+| Outstanding | Sum unpaid/open **platform invoices** for current franchise (A) |
+| Analytics | **Latest available** summary doc for franchise (C) |
+| Scope | Financial KPIs card only; in-card; no new screens; AdminFirestoreService path |
 
-**Ground truth:** one FranchiseProvider; no new DesignTokens fields; progress under `franchises/{id}/onboarding_progress/progress`; progress is load+write (not a stream); xAI primary for residual surgical tasks.
+**Next implementation order:** W1 Admin service real reads → W2 KPI card wiring + franchise reload → smoke → STATUS complete.
 
-**Known residual (non-blocking):** franchise-switch lag on progress until reload; Liberty `ingredientId` type noise deferred; device re-smoke of `mobile_ordering` after Android Studio re-setup.
+**Ground truth:** one FranchiseProvider; no new DesignTokens fields; progress under `franchises/{id}/onboarding_progress/progress`; progress is load+write (not a stream); lightweight `FirestoreServiceImpl` KPI methods are stubs — HQ must not treat them as product.
 
-**Next:** Open a new product slice only when ready; do not bulk agent inbox against closed polish work.
+**Known residual (non-blocking for this slice):** franchise-switch progress lag; Liberty `ingredientId` type noise; device re-smoke of `mobile_ordering`; Cash Flow / Platform billing / Payouts product cards still separate.
 
 ---
 
