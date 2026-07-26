@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 26, 2026 (morning — menu items v1 closed; FranchiseProvider listenable)  
+**Last Updated**: July 26, 2026 (afternoon — single FranchiseProvider; live HQ branding; menu items v1 closed)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch**: `feat/onboarding-4step`
 
@@ -26,23 +26,26 @@ Phase 0 complete (July 23, 2026).
 
 ### B. Product — Core config scoping & dynamic branding
 
-**Web branding path (logic):**
+**Web branding path (logic) — COMPLETE for live switch (July 26):**
 
 - [x] `DesignTokens.setFranchiseProvider` at authenticated bootstrap
 - [x] Franchise doc → `setBrandingFromFranchiseDoc`; live primary/secondary getters
-- [x] Authenticated MaterialApp themes from live DesignTokens
-- [x] **FranchiseProvider extends ChangeNotifier** + `notifyListeners` in `_bumpConfig` (July 26)
-- [x] Web registers `ChangeNotifierProvider<FranchiseProvider>` (not plain `Provider`)
-- [x] Franchise picker reloads branding after `setFranchiseId` (`setBrandingFromFranchiseDoc` / `applyBrandingFromInfo`)
+- [x] Authenticated MaterialApp themes from live DesignTokens + `appBarTheme.backgroundColor: DesignTokens.primaryColor`
+- [x] **FranchiseProvider extends ChangeNotifier**; `_bumpConfig` → `notifyListeners`
+- [x] **`setBrandingFromFranchiseDoc` / `applyBrandingFromInfo` call `_bumpConfig()`** (must notify — silent branding was the lag root cause)
+- [x] Web: **single** `ChangeNotifierProvider<FranchiseProvider>` at app root; authenticated MultiProvider must **not** create a second instance (Phase 0–2 proven July 26)
+- [x] Franchise picker: `setFranchiseId` → Firestore doc → `setBrandingFromFranchiseDoc` with **stale-response guard** (`franchiseId == requestedId`)
+- [x] `setFranchiseId` clears `_brandingData` so previous franchise hex cannot paint after switch
+- [x] HQ dashboard AppBar explicit `backgroundColor: DesignTokens.primaryColor`; Live Branding keys on franchiseId/configVersion
 
-**HQ Design & Branding**
+**HQ Design & Branding screen**
 
 - [x] **v1** (Decision 8): Live Branding card + Open Design & Branding → `design_branding_screen.dart`
-- [x] **v1.1** (July 25): Save merges branding keys to `franchises/{id}` + `config/ui_config`; `setBrandingFromFranchiseDoc`
-- [ ] Draft section label still may say “Save not wired yet” (copy fix)
-- [ ] Draft-hex live swatches polish if still outstanding
+- [x] **v1.1** Save merges branding keys to `franchises/{id}` + `config/ui_config`
+- [x] Draft resync on franchise change (`didChangeDependencies` + `_syncedFranchiseId`)
+- [x] Context line shows `DesignTokens.currentAppName (id)`
 - [ ] Color picker UI (downstream)
-- [ ] **HQ Owner dashboard shell** still does not fully re-theme on franchise switch (progress card does; chrome often does not) — follow-up
+- [ ] Optional: branding as **onboarding step or Review gate** — see active slice `docs/slices/hq-onboarding-hq-polish-v1.md`
 
 **Onboarding — Decision 7 migration (host move complete)**
 
@@ -56,39 +59,40 @@ Phase 0 complete (July 23, 2026).
 - Firestore: `franchises/{id}/onboarding_progress/progress`
 - Card watches **Impl**; shell: `ChangeNotifierProvider<OnboardingProgressProviderImpl>` + `ProxyProvider` → abstract
 - [x] Continue onboarding → **first incomplete** product step
+- [x] Quick Link Onboarding → first incomplete cascade (on disk)
 - [x] Menu dirty Save → `persistChanges()`
 - [x] Menu Delete → **`deleteMenuItemAndPersist`** + list refresh
 - [x] Foundation Save & Continue → mark + **switchToSection('onboardingMenuItems')**
+- [x] Feature Setup save → shell `switchToSection('onboarding_menu_foundation')` when in shell
 - [x] Publish → `onboardingReview`; review ready/not-ready copy present
-- [x] Review 4/4 chrome; Action column stripped; FAB in-screen editor
+- [x] Review 4/4 chrome; Action column stripped
+- [x] Onboarding summary panel shows live `N/4` product keys
 
-**HQ Onboarding Step 3 — Menu Items v1 (July 26): COMPLETE**
+**HQ Onboarding Step 3 — Menu Items v1: COMPLETE** — `docs/slices/hq-onboarding-menu-items-v1.md`
 
-- [x] Foundation gate + nav to `onboarding_menu_foundation`
-- [x] Schema sidebar contrast + readable issues; `$0` warning; mark-complete gated on zero errors
-- [x] List error affordance; template + residual UX; hard delete with confirm
-- [x] Shared `MobileMenuPreviewCard` (interactive on Step 3): categories → items, franchise name/colors
-- [x] List tile chrome aligned with foundation
-- [x] Stay-on-surface franchise switch on Step 3 (list + preview reload) via FranchiseProvider listenable + picker branding
-- Deferred: Liberty-only `ingredientId` String/int noise (test franchise; skip); HQ dashboard full design re-theme on switch (separate)
+**Active product slice:** `docs/slices/hq-onboarding-hq-polish-v1.md`  
+Authority for remaining onboarding chrome honesty, Review false positives, Feature Setup in-dev flags, HQ dashboard MVP card audit, preview/FAB parity, foundation JSON/back-arrow cleanup, optional branding-in-onboarding.
 
-**Still open (product):**
+**Still open (product) — tracked in polish slice, not free-form:**
 
-- [ ] Branding draft label + any remaining draft-hex polish
-- [ ] HQ Quick Link Onboarding still hardcodes `onboardingMenu` (not first incomplete) — verify if still true
-- [ ] Feature Setup save success still `maybePop` (prefer in-shell → foundation)
-- [ ] Empty `onboarding_summary_panel.dart` (~3 bytes stub) if still stub
-- [ ] HQ Owner dashboard live branding on franchise switch (chrome, not only progress card)
-- [ ] Broader franchise-scoped config; hybrid localization; color picker
+- [ ] Foundation: remove in-shell back arrows (types/categories); remove JSON import/export entry points
+- [ ] Foundation tab “Mark complete” — remove or sub-key only (must not fake product step)
+- [ ] Step 3 FAB position = Step 2 list-pane bottom-end (not under preview)
+- [ ] Preview call-site constraint parity Step 2 vs Step 3
+- [ ] Review false positive: “enable menu management” when features already on — tracer + key fix
+- [ ] Feature Setup: non-GA features visible, disabled, “In development”
+- [ ] HQ dashboard: dead routes (payouts/invoices); Quick Links; Billing vs Invoices; card sizing; non-MVP → In development
+- [ ] Optional: Design & Branding in onboarding (step or Review gate)
 
 **Ground truth (do not regress):**
 
 - Never invent `FranchiseProvider()` zero-arg / `FirestoreService.collection` / static `current*`
+- **One** web `FranchiseProvider` at app root only
 - No new BrandingConfig / DesignTokens / FeatureConfig fields for scoping
 - Onboarding home = HQ only; progress path under franchise
 - Menu delete API = **`deleteMenuItem` / `deleteMenuItemAndPersist`**; progress CNP type = **Impl** not abstract
-- **FranchiseProvider is ChangeNotifier**; web must use `ChangeNotifierProvider`
-- Preview size chrome owned only by `MobileMenuPreviewCard` (340×680)
+- Branding writes must `_bumpConfig()` / `notifyListeners`
+- Preview chrome owned by `MobileMenuPreviewCard` (340×680)
 - **Agent mode**: xAI primary; Ollama secondary
 
 ---
