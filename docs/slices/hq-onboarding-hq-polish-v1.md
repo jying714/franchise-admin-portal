@@ -1,6 +1,6 @@
 # Slice: HQ Onboarding & HQ Dashboard Polish v1
 
-**Status:** Implementation in progress — **W1, W2, W3, W6 done**; **W4 + W5 open** (decisions locked July 26, 2026)  
+**Status:** **COMPLETE** — W1–W6 implemented and smoke-passed (July 26, 2026)  
 **Branch:** `feat/onboarding-4step`  
 **Created:** July 26, 2026  
 **Last code session:** July 26, 2026 afternoon  
@@ -59,7 +59,7 @@ Make onboarding and the HQ home **honest for MVP**:
 - Nested AppBars removed; in-body titles + template only.
 - Foundation AppBar on scaffold background; TabBar selection = bold/size not primary red.
 
-### 3.3 Platform billing on HQ — **ONE THIN CARD (LOCKED — NOT YET IMPLEMENTED IN UI)**
+### 3.3 Platform billing on HQ — **ONE THIN CARD (LOCKED + IMPLEMENTED)**
 
 | Rule | Detail |
 |------|--------|
@@ -68,11 +68,12 @@ Make onboarding and the HQ home **honest for MVP**:
 | **Default v1 state** | **In development** — no dead `/hq/invoices` |
 | **Later** | Stripe portal / hosted invoice URL OK; custom list not required here |
 
-### 3.4 Feature Setup “In development” — **LOCKED — NOT YET IMPLEMENTED**
+### 3.4 Feature Setup “In development” — **LOCKED + IMPLEMENTED**
 
 - Human owns GA vs dev list.
 - Dev: visible, toggle disabled, **In development** note.
 - Higher-tier gates only; menu customization is for every subscriber.
+- GA keys: `menu_item_customization`, `mobile_ordering`, `order_tracking`, `branding_customization`, `promo_banners`, `feedback`.
 
 ### 3.5 Review feature gate — **IMPLEMENTED**
 
@@ -97,17 +98,20 @@ Make onboarding and the HQ home **honest for MVP**:
 
 - `menu_management` gate removed.
 
-### W4 — Feature Setup in-development UX — **OPEN**
+### W4 — Feature Setup in-development UX — **DONE**
 
-Apply §3.4 after human GA list.
+- Human GA list locked: `menu_item_customization`, `mobile_ordering`, `order_tracking`, `branding_customization`, `promo_banners`, `feedback`.
+- Non-GA modules remain visible, toggle disabled, labeled **In development**.
+- List sorted GA first (A–Z), then in-dev (A–Z).
+- Subscription grant lock still applies via `isModuleLocked` / plan features (e.g. `mobile_app` vs `mobile_ordering` key mismatch fixed on `test` subscription doc).
 
-### W5 — HQ Owner dashboard MVP honesty — **OPEN**
+### W5 — HQ Owner dashboard MVP honesty — **DONE**
 
-1. One **Platform billing** in-dev card; remove Billing Summary + Invoices pair.  
-2. Payouts: wire or In development.  
-3. Quick Links: only working routes (Onboarding cascade already fixed).  
-4. Live Branding + Onboarding Progress sized to grid peers.  
-5. Non-MVP mocks → In development shells.
+1. One **Platform billing** in-dev card; dual Billing Summary + Invoices removed.  
+2. Payouts: In development card (no broken route).  
+3. Quick Links: Onboarding only.  
+4. Live Branding + Onboarding Progress in same grid as peers (`childAspectRatio` mobile 1.5 / desktop 2.8).  
+5. AlertsCard margin zero so cell size matches peers.
 
 ### W6 — Design & Branding onboarding step — **DONE**
 
@@ -126,11 +130,11 @@ Apply §3.4 after human GA list.
 
 ---
 
-## 6. Implementation order (remaining)
+## 6. Implementation order
 
-1. **W4** Feature in-dev (needs human GA list)  
-2. **W5** HQ dashboard (platform billing one-card + dead links + sizing)  
-3. Tick acceptance + STATUS; mark slice **complete**
+1. ~~W4 Feature in-dev~~ **DONE**  
+2. ~~W5 HQ dashboard~~ **DONE**  
+3. Tick acceptance + STATUS — **DONE** (this close)
 
 ---
 
@@ -147,7 +151,7 @@ Apply §3.4 after human GA list.
 
 ### Review / features
 - [x] No false menu-management issue
-- [ ] Non-GA features In development + non-toggleable (**W4**)
+- [x] Non-GA features In development + non-toggleable (**W4**)
 
 ### Branding step
 - [x] Order: feature setup → design branding → foundation → menu items → review
@@ -156,38 +160,44 @@ Apply §3.4 after human GA list.
 - [x] Review branding row tracks progress key (Impl listen)
 
 ### HQ dashboard
-- [ ] **One** Platform billing card (in-dev OK) (**W5**)
-- [ ] No broken invoice/payout named routes from CTAs (**W5**)
+- [x] **One** Platform billing card (in-dev OK) (**W5**)
+- [x] No broken invoice/payout named routes from CTAs (**W5**)
 - [x] Quick Link Onboarding cascade includes branding
-- [ ] Branding + onboarding cards grid-sized (**W5**)
+- [x] Branding + onboarding cards grid-sized (**W5**)
 - [x] Franchise switch still live-brands (pre-slice; do not regress)
 
 ---
 
-## 8. Smoke (remaining focus)
+## 8. Smoke
 
-Already passed in session: Feature→branding handoff; branding Save/progress; Continue/Quick Link branding; foundation chrome; menu FAB; Review no menu_management; Review 5/5 + incomplete branding status.
+Passed (July 26, 2026 close):
 
-Still required before close:
+- Feature Setup: GA toggleable; in-dev locked + “In development”; GA-first alpha sort
+- Save → branding handoff
+- HQ grid: one Platform billing; Payouts in-dev; no dual invoice cards
+- No dead `/hq/invoices` or `/hq/payouts` from HQ CTAs
+- Quick Links = Onboarding only
+- Live Branding + Onboarding in same grid; Future Features last
+- Franchise switch still live-brands
 
-1. W4: non-GA features In development.  
-2. W5: single platform billing card; no 404 invoice/payout CTAs; card sizing.  
-3. Optional: reduce franchise-switch progress lag (reload path or future stream — not required to close if documented).
+Deferred / non-blocking: Android re-smoke of `mobile_ordering` on device after Studio re-setup; franchise-switch progress lag remains load+write (documented).
 
 ---
 
 ## 9. Key files touched (this slice)
 
 - `hq_onboarding_shell_screen.dart` — section order + completableKeys  
-- `onboarding_feature_setup_screen.dart` — handoff to branding  
+- `onboarding_feature_setup_screen.dart` — GA allowlist + sort + handoff to branding  
+- `feature_toggle_tile.dart` — `isInDevelopment`  
 - `design_branding_screen.dart` — embed mode, progress mark, Continue  
 - foundation + types/ingredients/categories screens — chrome  
 - `onboarding_menu_items_screen.dart` — FAB Stack + preview  
 - `franchise_feature_provider_impl.dart` — validate()  
-- `owner_hq_dashboard_screen.dart` — 5-step progress + cascades  
+- `owner_hq_dashboard_screen.dart` — W5 grid, Platform billing, Payouts in-dev, Live Branding + Onboarding cards  
+- `alerts_card.dart` — margin zero  
 - review summary / issue expansion / navigation utils / review screen  
 
 ---
 
-**Last updated:** July 26, 2026 (W1–W3 + W6 implemented and smoke-passed; next = W4 then W5)  
-**Next:** Human GA list for W4; then HQ Platform billing one-card (W5).
+**Last updated:** July 26, 2026 — slice **COMPLETE** (W1–W6)  
+**Next:** New product slice only after STATUS reflects close; no bulk agent inbox until then.
