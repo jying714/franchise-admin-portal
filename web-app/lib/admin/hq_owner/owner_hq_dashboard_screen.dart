@@ -111,7 +111,10 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                     franchiseId: franchiseId,
                     userId: adminUser?.id ?? '',
                   ),
-                  const PlatformBillingCard(),
+                  PlatformBillingCard(
+                    key: ValueKey('hq-platform-billing-$franchiseId'),
+                    franchiseId: franchiseId,
+                  ),
                   const LiveBrandingPreviewCard(),
                   const MultiBrandOverviewPanel(),
                   FranchiseFinancialKpiCard(
@@ -287,19 +290,99 @@ class FutureFeaturePlaceholderPanel extends StatelessWidget {
 }
 
 /// Thin platform → franchise SaaS billing story. MVP: visible, not navigable.
-class PlatformBillingCard extends StatelessWidget {
-  const PlatformBillingCard({super.key});
+/// Platform → franchise SaaS invoices (read-only, in-card MVP).
+class PlatformBillingCard extends StatefulWidget {
+  final String franchiseId;
+
+  const PlatformBillingCard({
+    super.key,
+    required this.franchiseId,
+  });
+
+  @override
+  State<PlatformBillingCard> createState() => _PlatformBillingCardState();
+}
+
+class _PlatformBillingCardState extends State<PlatformBillingCard> {
+  late Future<List<shared.PlatformInvoice>> _future;
+  String? _loadedForFranchiseId;
+
+  static const _outstandingStatuses = {
+    'unpaid',
+    'partial',
+    'overdue',
+    'open',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _loadedForFranchiseId = widget.franchiseId;
+    _future = _load(widget.franchiseId);
+  }
+
+  @override
+  void didUpdateWidget(covariant PlatformBillingCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.franchiseId != widget.franchiseId) {
+      _loadedForFranchiseId = widget.franchiseId;
+      setState(() {
+        _future = _load(widget.franchiseId);
+      });
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final providerId =
+        Provider.of<shared.FranchiseProvider>(context, listen: true)
+            .franchiseId;
+    final effectiveId = (providerId.isNotEmpty && providerId != 'unknown')
+        ? providerId
+        : widget.franchiseId;
+    if (_loadedForFranchiseId != effectiveId) {
+      _loadedForFranchiseId = effectiveId;
+      setState(() {
+        _future = _load(effectiveId);
+      });
+    }
+  }
+
+  Future<List<shared.PlatformInvoice>> _load(String franchiseId) async {
+    final fs = Provider.of<shared.FirestoreService>(context, listen: false);
+    final list = await fs.getPlatformInvoicesForFranchisee(franchiseId);
+    list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  }
+
+  double _outstanding(List<shared.PlatformInvoice> invoices) {
+    double sum = 0;
+    for (final inv in invoices) {
+      if (_outstandingStatuses.contains(inv.status.toLowerCase())) {
+        sum += inv.amount;
+      }
+    }
+    return sum;
+  }
+
+  String _fmtDate(DateTime d) {
+    final m = d.month.toString().padLeft(2, '0');
+    final day = d.day.toString().padLeft(2, '0');
+    return '${d.year}-$m-$day';
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Card(
       elevation: DesignTokens.adminCardElevation,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -308,27 +391,141 @@ class PlatformBillingCard extends StatelessWidget {
                 Icon(Icons.receipt_long,
                     color: DesignTokens.primaryColor, size: 20),
                 const SizedBox(width: 8),
-                Text(
-                  'Platform billing',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    'Platform billing',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              'Subscription and platform fees for this franchise.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: DesignTokens.secondaryTextColor,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              'In development',
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontStyle: FontStyle.italic,
-                color: theme.colorScheme.onSurfaceVariant,
+            const SizedBox(height: 8),
+            Expanded(
+              child: FutureBuilder<List<shared.PlatformInvoice>>(
+                future: _future,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Failed to load invoices',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.error,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _future = _load(widget.franchiseId);
+                            });
+                          },
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    );
+                  }
+
+                  final invoices = snapshot.data ?? [];
+                  if (invoices.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'No platform invoices for this franchise.',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: DesignTokens.secondaryTextColor,
+                        ),
+                      ),
+                    );
+                  }
+
+                  final outstanding = _outstanding(invoices);
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: ListView.separated(
+                          padding: EdgeInsets.zero,
+                          itemCount: invoices.length,
+                          separatorBuilder: (_, __) => Divider(
+                            height: 8,
+                            color: theme.dividerColor.withOpacity(0.3),
+                          ),
+                          itemBuilder: (context, i) {
+                            final inv = invoices[i];
+                            final number = inv.invoiceNumber.isNotEmpty
+                                ? inv.invoiceNumber
+                                : inv.id;
+                            return Row(
+                              children: [
+                                Expanded(
+                                  flex: 3,
+                                  child: Text(
+                                    number,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    inv.status,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    '${inv.amount.toStringAsFixed(2)} ${inv.currency}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.right,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  _fmtDate(inv.dueDate),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: DesignTokens.secondaryTextColor,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Outstanding: ${outstanding.toStringAsFixed(2)}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: DesignTokens.primaryColor,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ],
