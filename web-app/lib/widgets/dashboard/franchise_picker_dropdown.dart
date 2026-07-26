@@ -2,6 +2,7 @@
 import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FranchisePickerDropdown extends StatelessWidget {
   final String? selectedFranchiseId;
@@ -40,9 +41,33 @@ class FranchisePickerDropdown extends StatelessWidget {
         style: Theme.of(context).textTheme.bodyMedium,
         borderRadius: BorderRadius.circular(12),
         dropdownColor: Theme.of(context).colorScheme.surface,
-        onChanged: (String? newValue) {
-          if (newValue != null && newValue != currentFranchise.id) {
-            franchiseProvider.setFranchiseId(newValue);
+        onChanged: (String? newValue) async {
+          if (newValue == null || newValue == currentFranchise.id) return;
+
+          await franchiseProvider.setFranchiseId(newValue);
+
+          // Reload franchise doc so name / colors / logo update in-place
+          try {
+            final snap = await FirebaseFirestore.instance
+                .collection('franchises')
+                .doc(newValue)
+                .get();
+            if (snap.exists && snap.data() != null) {
+              franchiseProvider.setBrandingFromFranchiseDoc(snap.data()!);
+            } else {
+              // Fallback: at least apply name/logo from the list entry
+              final info = franchises.firstWhere(
+                (f) => f.id == newValue,
+                orElse: () => currentFranchise,
+              );
+              franchiseProvider.applyBrandingFromInfo(info);
+            }
+          } catch (_) {
+            final info = franchises.firstWhere(
+              (f) => f.id == newValue,
+              orElse: () => currentFranchise,
+            );
+            franchiseProvider.applyBrandingFromInfo(info);
           }
         },
         items: franchises.map<DropdownMenuItem<String>>((f) {
