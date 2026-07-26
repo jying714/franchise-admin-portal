@@ -1,12 +1,13 @@
 # Slice: HQ Onboarding & HQ Dashboard Polish v1
 
-**Status:** Spec locked — implementation open (§3 decisions locked July 26, 2026)  
+**Status:** Implementation in progress — **W1, W2, W3, W6 done**; **W4 + W5 open** (decisions locked July 26, 2026)  
 **Branch:** `feat/onboarding-4step`  
 **Created:** July 26, 2026  
+**Last code session:** July 26, 2026 afternoon  
 **Authority:** This file + STATUS.md  
 **Depends on (done):** Menu Items v1; FranchiseProvider ChangeNotifier + single root instance; live HQ branding on switch; picker stale-response guard  
 **Owner surfaces:** HQ Owner onboarding shell + Owner HQ dashboard  
-**Agent policy:** Surgical outcome tasks from this card. No Menu Items v1 redesign. No second FranchiseProvider. No new DesignTokens/BrandingConfig fields. Progress key for branding is **fixed below** — do not invent alternate key names.
+**Agent policy:** Surgical outcome tasks from this card. No Menu Items v1 redesign. No second FranchiseProvider. No new DesignTokens/BrandingConfig fields. Progress key for branding is **`onboarding_design_branding`** — do not invent alternate key names. Do not reintroduce `menu_management` Review gate.
 
 ---
 
@@ -21,7 +22,7 @@ Make onboarding and the HQ home **honest for MVP**:
 - Franchise switch continues to scope branding and domain data; polish must not regress that.
 - **Platform billing** is thin: HQ sees whether the franchise owes the platform (SaaS/subscription), not a full AR workbench.
 
-**Success (v1):** Owner walks Feature Setup → **Design & Branding** → Foundation → Menu Items → Review without false blockers; foundation tabs have no JSON/back-arrow/fake mark-complete; Step 3 FAB matches Step 2; HQ cards work franchise-scoped or show In development; **one** platform-billing card (no dual Billing Summary + Invoices).
+**Success (v1):** Owner walks Feature Setup → **Design & Branding** → Foundation → Menu Items → Review without false blockers; foundation tabs have no JSON/back-arrow/fake mark-complete; menu FAB on list pane; HQ cards work franchise-scoped or show In development; **one** platform-billing card (no dual Billing Summary + Invoices).
 
 ---
 
@@ -35,147 +36,158 @@ Make onboarding and the HQ home **honest for MVP**:
 | Foundation product complete | Save & Continue / explicit foundation complete — **not** tab mark complete |
 | Menu Items | Slice closed; `MobileMenuPreviewCard`; `deleteMenuItem` / `deleteMenuItemAndPersist` |
 | FranchiseProvider | **Single** web instance at app root; branding setters call `_bumpConfig()` |
-| Design & Branding UI | Reuse `design_branding_screen.dart`; Save writes franchise + `config/ui_config` |
-| Platform invoices | **Platform → franchise** bills (SaaS/subscription/royalties), **not** diner order tickets. Model: `PlatformInvoice`. |
+| Design & Branding UI | `design_branding_screen.dart`; `embeddedInOnboarding: true` in shell; Save writes franchise + `config/ui_config` + marks progress key |
+| Platform invoices | **Platform → franchise** bills (SaaS/subscription), **not** diner tickets. Model: `PlatformInvoice` |
+| Progress provider listen | Prefer **`OnboardingProgressProviderImpl`** (ChangeNotifier) for UI that must rebuild on mark complete; abstract Proxy alone may not |
+| Progress load model | Load + write — **not** a Firestore snapshot stream. Console edits need reload/restart |
 
 ---
 
 ## 3. Locked product decisions (July 26, 2026)
 
-### 3.1 Design & Branding in onboarding — **A (LOCKED)**
+### 3.1 Design & Branding in onboarding — **A (LOCKED + IMPLEMENTED)**
 
-- **New onboarding step** between Feature Setup and Core Menu Foundation.
-- **Section key + progress key:** `onboarding_design_branding`
-- **UI:** Reuse existing Design & Branding flow inside HQ shell.
-- **Complete when:** successful Save (prefer) → mark step / continue.
-- **Nav:** Feature Setup → branding → foundation; first-incomplete cascades + summary use **5** product keys.
+- Section + progress key: **`onboarding_design_branding`**
+- Shell order: Feature → Design & Branding → Foundation → Menu Items → Review (sidebar titles Step 1–5)
+- Feature Setup save → branding; Save branding → mark key; Continue → foundation
+- HQ Continue + Quick Link first-incomplete include branding
+- Review summary + progress chip treat **5** product steps; branding row status = progress key via Impl
 
-### 3.2 Foundation tab “Mark complete” — **REMOVE (LOCKED)**
+### 3.2 Foundation tab “Mark complete” — **REMOVE (LOCKED + IMPLEMENTED)**
 
-- Remove from Types / Ingredients / Categories onboarding chrome.
-- Never write `onboarding_menu_foundation` from tab-only complete.
+- Removed from Types / Ingredients / Categories chrome.
+- Nested AppBars removed; in-body titles + template only.
+- Foundation AppBar on scaffold background; TabBar selection = bold/size not primary red.
 
-### 3.3 Platform billing on HQ — **ONE THIN CARD (LOCKED, refined)**
-
-**Domain:** Invoices are **bills from the platform to the franchise** (subscription/SaaS), not customer POS checks.
-
-**MVP need:** “Do we owe the platform anything?” + path to pay/view if live — **not** a full invoice product.
+### 3.3 Platform billing on HQ — **ONE THIN CARD (LOCKED — NOT YET IMPLEMENTED IN UI)**
 
 | Rule | Detail |
 |------|--------|
-| **One card only** | Remove dual **BillingSummaryCard** + **InvoicesCard** pair from HQ grid |
+| **One card only** | Remove dual **BillingSummaryCard** + **InvoicesCard** |
 | **Card name** | **Platform billing** (or “Subscription & fees”) |
-| **Default v1 state** | **In development** — no dead `pushNamed('/hq/invoices')` / Pay now that 404 |
-| **When data/Stripe is real (later)** | Same single card may show outstanding + overdue + CTA to **Stripe Customer Portal / hosted invoice URL** — still **no** requirement to ship custom list in this slice |
-| **Do not for this slice** | Wire full `InvoiceListScreen` as MVP; invent create-invoice; keep zeroed InvoicesCard KPIs; leave broken Quick Link “Invoices” |
+| **Default v1 state** | **In development** — no dead `/hq/invoices` |
+| **Later** | Stripe portal / hosted invoice URL OK; custom list not required here |
 
-**Code context (do not treat as MVP mandate):**
-
-- `BillingSummaryCard` — service-backed AR snapshot; CTAs → `/hq/invoices` (route **not** registered on current HQ MaterialApp).
-- `InvoicesCard` on HQ — hard-coded zeros + same dead route.
-- `InvoiceListScreen` — exists on disk; orphaned from navigator; post-MVP if ever revived under a billing slice.
-
-### 3.4 Feature Setup “In development”
+### 3.4 Feature Setup “In development” — **LOCKED — NOT YET IMPLEMENTED**
 
 - Human owns GA vs dev list.
 - Dev: visible, toggle disabled, **In development** note.
+- Higher-tier gates only; menu customization is for every subscriber.
+
+### 3.5 Review feature gate — **IMPLEMENTED**
+
+- Dropped hard `menu_management` check in `FranchiseFeatureProviderImpl.validate()` (key never existed in feature_metadata).
 
 ---
 
-## 4. Workstreams (ordered)
+## 4. Workstreams
 
-### W1 — Foundation chrome honesty (Step 2)
+### W1 — Foundation chrome honesty — **DONE**
 
-Remove competing back arrows; remove JSON import/export entry points; **remove** tab Mark complete. Leave Continue/orphan/product-key writers intact.
+- No competing back arrows; no JSON import/export entry points; tab Mark complete removed.
+- Nested Scaffold AppBars → in-body title rows; InlineAddIngredientTypeRow removed.
+- Foundation TabBar styling fixed.
 
-### W2 — Step 3 FAB + preview parity
+### W2 — Step 3 FAB + preview parity — **DONE**
 
-FAB on list pane bottom-end; shared `MobileMenuPreviewCard` constraints match foundation.
+- FAB Positioned on list-pane Stack (not full Scaffold).
+- Preview without Center; dependencies status uses `DesignTokens.textColor`.
 
-### W3 — Review false positive (“menu management”)
+### W3 — Review false positive — **DONE**
 
-Tracer → align feature key or drop obsolete rule. No new schema.
+- `menu_management` gate removed.
 
-### W4 — Feature Setup in-development UX
+### W4 — Feature Setup in-development UX — **OPEN**
 
-Apply §3.4 after GA list exists.
+Apply §3.4 after human GA list.
 
-### W5 — HQ Owner dashboard MVP honesty
+### W5 — HQ Owner dashboard MVP honesty — **OPEN**
 
-1. Franchise-scoped live cards only where data is real.
-2. **§3.3:** one **Platform billing** card (in-dev for v1); remove Billing Summary + Invoices pair; remove/disable Quick Link “Invoices” unless CTA is real.
-3. Payouts: wire or **In development** (no broken `/hq/payouts`).
-4. Quick Links: Onboarding + Design & Branding (+ only working routes).
-5. Live Branding + Onboarding Progress sized to grid peers.
-6. Non-MVP mock cards → In development shells.
+1. One **Platform billing** in-dev card; remove Billing Summary + Invoices pair.  
+2. Payouts: wire or In development.  
+3. Quick Links: only working routes (Onboarding cascade already fixed).  
+4. Live Branding + Onboarding Progress sized to grid peers.  
+5. Non-MVP mocks → In development shells.
 
-### W6 — Design & Branding onboarding step
+### W6 — Design & Branding onboarding step — **DONE**
 
-Shell order, progress key `onboarding_design_branding`, handoffs, first-incomplete cascades, summary N/5.
+- Shell section, handoffs, cascades, Review section order, progress-key status, embedded chrome (no filled AppBar).
 
 ---
 
 ## 5. Explicit out of scope
 
-- Menu Items v1 redesign; soft-delete; JSON reintroduction
-- Second FranchiseProvider; new DesignTokens/BrandingConfig fields
-- **Full Stripe production integration / custom invoice list+detail workbench** (separate future billing slice)
-- Color picker; Liberty ingredientId noise
-- Restoring dual Billing Summary + Invoices cards
+- Menu Items v1 redesign; soft-delete; JSON reintroduction  
+- Second FranchiseProvider; new DesignTokens/BrandingConfig fields  
+- Full Stripe production / custom invoice workbench  
+- Color picker; Liberty ingredientId type noise  
+- Restoring dual Billing Summary + Invoices cards  
+- Reintroducing `menu_management` Review gate  
 
 ---
 
-## 6. Implementation order
+## 6. Implementation order (remaining)
 
-1. **W3** Review false positive  
-2. **W1** Foundation chrome  
-3. **W2** FAB + preview  
-4. **W6** Branding step  
-5. **W4** Feature in-dev  
-6. **W5** HQ dashboard (platform billing one-card + dead links)  
+1. **W4** Feature in-dev (needs human GA list)  
+2. **W5** HQ dashboard (platform billing one-card + dead links + sizing)  
+3. Tick acceptance + STATUS; mark slice **complete**
 
 ---
 
 ## 7. Acceptance checklist
 
 ### Foundation
-- [ ] No competing back arrow on types/categories/ingredients
-- [ ] No JSON import/export on those onboarding UIs
-- [ ] Tab Mark complete **removed**
+- [x] No competing back arrow on types/categories/ingredients
+- [x] No JSON import/export on those onboarding UIs
+- [x] Tab Mark complete **removed**
 
 ### Menu Items / preview
-- [ ] FAB list-pane bottom-end
-- [ ] Preview size parity with foundation
+- [x] FAB list-pane bottom-end
+- [x] Preview aligned with foundation (no Center wrapper)
 
 ### Review / features
-- [ ] No false menu-management issue
-- [ ] Non-GA features In development + non-toggleable
+- [x] No false menu-management issue
+- [ ] Non-GA features In development + non-toggleable (**W4**)
 
 ### Branding step
-- [ ] Order: feature setup → design branding → foundation → menu items → review
-- [ ] Progress key `onboarding_design_branding`
-- [ ] Cascades + summary treat 5 product steps
+- [x] Order: feature setup → design branding → foundation → menu items → review
+- [x] Progress key `onboarding_design_branding`
+- [x] Cascades + summary treat 5 product steps
+- [x] Review branding row tracks progress key (Impl listen)
 
 ### HQ dashboard
-- [ ] **One** Platform billing card (in-dev OK); **not** Billing Summary + Invoices pair
-- [ ] No broken invoice/payout named routes from CTAs
-- [ ] Quick Links honest
-- [ ] Branding + onboarding cards grid-sized
-- [ ] Franchise switch still live-brands
+- [ ] **One** Platform billing card (in-dev OK) (**W5**)
+- [ ] No broken invoice/payout named routes from CTAs (**W5**)
+- [x] Quick Link Onboarding cascade includes branding
+- [ ] Branding + onboarding cards grid-sized (**W5**)
+- [x] Franchise switch still live-brands (pre-slice; do not regress)
 
 ---
 
-## 8. Smoke
+## 8. Smoke (remaining focus)
 
-1. Feature Setup save → **Design & Branding** step.  
-2. Save branding → foundation; progress key set.  
-3. First-incomplete includes branding when due.  
-4. Foundation: no JSON/back/mark-complete noise.  
-5. Menu Items FAB + preview vs foundation.  
-6. Review: no false feature blocker.  
-7. HQ: single platform billing card; no 404 invoice/payout CTAs; franchise switch branding OK.  
+Already passed in session: Feature→branding handoff; branding Save/progress; Continue/Quick Link branding; foundation chrome; menu FAB; Review no menu_management; Review 5/5 + incomplete branding status.
+
+Still required before close:
+
+1. W4: non-GA features In development.  
+2. W5: single platform billing card; no 404 invoice/payout CTAs; card sizing.  
+3. Optional: reduce franchise-switch progress lag (reload path or future stream — not required to close if documented).
 
 ---
 
-**Last updated:** July 26, 2026 (platform billing MVP refined: one thin card; invoices = platform→franchise SaaS bills; no dual cards / no custom list required for v1)  
-**Next:** W3 Review tracer; then W1 foundation chrome outcomes.
+## 9. Key files touched (this slice)
+
+- `hq_onboarding_shell_screen.dart` — section order + completableKeys  
+- `onboarding_feature_setup_screen.dart` — handoff to branding  
+- `design_branding_screen.dart` — embed mode, progress mark, Continue  
+- foundation + types/ingredients/categories screens — chrome  
+- `onboarding_menu_items_screen.dart` — FAB Stack + preview  
+- `franchise_feature_provider_impl.dart` — validate()  
+- `owner_hq_dashboard_screen.dart` — 5-step progress + cascades  
+- review summary / issue expansion / navigation utils / review screen  
+
+---
+
+**Last updated:** July 26, 2026 (W1–W3 + W6 implemented and smoke-passed; next = W4 then W5)  
+**Next:** Human GA list for W4; then HQ Platform billing one-card (W5).
