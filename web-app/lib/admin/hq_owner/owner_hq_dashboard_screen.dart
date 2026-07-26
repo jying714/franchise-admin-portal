@@ -114,7 +114,10 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                   const PlatformBillingCard(),
                   const LiveBrandingPreviewCard(),
                   const MultiBrandOverviewPanel(),
-                  FranchiseFinancialKpiCard(franchiseId: franchiseId),
+                  FranchiseFinancialKpiCard(
+                    key: ValueKey('hq-kpi-$franchiseId'),
+                    franchiseId: franchiseId,
+                  ),
                   const OnboardingProgressCard(),
                   const PayoutStatusInDevCard(),
                   CashFlowForecastCard(franchiseId: franchiseId),

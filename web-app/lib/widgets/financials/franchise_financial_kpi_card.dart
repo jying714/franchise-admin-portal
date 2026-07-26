@@ -23,26 +23,57 @@ class FranchiseFinancialKpiCard extends StatefulWidget {
 
 class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
   late Future<Map<String, dynamic>> _kpiFuture;
+  String? _loadedForFranchiseId;
 
   @override
   void initState() {
     super.initState();
     _kpiFuture = _loadKpis();
+    _loadedForFranchiseId = widget.franchiseId;
   }
 
-  Future<Map<String, dynamic>> _loadKpis() async {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final providerId =
+        provider.Provider.of<shared.FranchiseProvider>(context, listen: true)
+            .franchiseId;
+    final effectiveId = (providerId.isNotEmpty && providerId != 'unknown')
+        ? providerId
+        : widget.franchiseId;
+    if (_loadedForFranchiseId != effectiveId) {
+      _loadedForFranchiseId = effectiveId;
+      setState(() {
+        _kpiFuture = _loadKpisFor(effectiveId);
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant FranchiseFinancialKpiCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.franchiseId != widget.franchiseId) {
+      _loadedForFranchiseId = widget.franchiseId;
+      setState(() {
+        _kpiFuture = _loadKpis();
+      });
+    }
+  }
+
+  Future<Map<String, dynamic>> _loadKpis() => _loadKpisFor(widget.franchiseId);
+
+  Future<Map<String, dynamic>> _loadKpisFor(String franchiseId) async {
     try {
       final firestoreService = provider.Provider.of<shared.FirestoreService>(
         context,
         listen: false,
       );
 
-      final analytics = await firestoreService
-          .getFranchiseAnalyticsSummary(widget.franchiseId);
+      final analytics =
+          await firestoreService.getFranchiseAnalyticsSummary(franchiseId);
       final outstanding =
-          await firestoreService.getOutstandingInvoices(widget.franchiseId);
-      final lastPayout =
-          await firestoreService.getLastPayout(widget.franchiseId);
+          await firestoreService.getOutstandingInvoices(franchiseId);
+      final lastPayout = await firestoreService.getLastPayout(franchiseId);
 
       return {
         'analytics': analytics,
@@ -55,7 +86,7 @@ class _FranchiseFinancialKpiCardState extends State<FranchiseFinancialKpiCard> {
         source: 'FranchiseFinancialKpiCard',
         stack: st.toString(),
         severity: 'error',
-        contextData: {'franchiseId': widget.franchiseId},
+        contextData: {'franchiseId': franchiseId},
       );
       rethrow;
     }
@@ -167,31 +198,48 @@ class _KpiRow extends StatelessWidget {
       Color? color,
       String? tooltip,
     }) {
-      final displayValue =
-          value is num ? value.toStringAsFixed(0) : (value?.toString() ?? '--');
+      final String displayValue;
+      if (value is num) {
+        displayValue = value.toStringAsFixed(2);
+      } else if (value == null || value == '--') {
+        displayValue = '--';
+      } else {
+        final parsed = num.tryParse(value.toString());
+        displayValue =
+            parsed != null ? parsed.toStringAsFixed(2) : value.toString();
+      }
 
-      return Tooltip(
-        message: tooltip ?? label,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 32, color: color ?? colorScheme.primary),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.7),
-                  ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              displayValue,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: color ?? colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-          ],
+      return Expanded(
+        child: Tooltip(
+          message: tooltip ?? label,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 28, color: color ?? colorScheme.primary),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurface.withOpacity(0.7),
+                    ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                displayValue,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: color ?? colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ),
         ),
       );
     }

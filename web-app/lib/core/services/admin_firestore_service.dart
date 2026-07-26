@@ -1112,6 +1112,183 @@ class AdminFirestoreService extends shared.FirestoreServiceImpl {
   // Now fully scoped under franchises/{franchiseId}/platform_invoices and platform_payments
   // Uses exact PlatformInvoice.fromMap / toMap and PlatformPayment.fromMap / toMap
 
+  // === HQ KPI card reads (hq-financial-honesty-v1) ===
+
+  @override
+  Future<Map<String, dynamic>> getFranchiseAnalyticsSummary(
+      String franchiseId) async {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      return {};
+    }
+    try {
+      final snap = await db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('analytics_summaries')
+          .get();
+
+      // ignore: avoid_print
+      print(
+          '[KPI] analytics_summaries count=${snap.docs.length} franchiseId=$franchiseId');
+
+      if (snap.docs.isEmpty) return {};
+
+      DateTime? asDate(dynamic v) {
+        if (v is firestore.Timestamp) return v.toDate();
+        if (v is DateTime) return v;
+        if (v is String) return DateTime.tryParse(v);
+        return null;
+      }
+
+      final scored = snap.docs.map((d) {
+        final data = d.data();
+        final revenue = (data['totalRevenue'] ?? 0).toDouble();
+        final dt = asDate(data['updatedAt']) ?? asDate(data['createdAt']);
+        return (doc: d, data: data, revenue: revenue, dt: dt);
+      }).toList();
+
+      // Prefer real revenue; among those, newest updatedAt; else any newest.
+      scored.sort((a, b) {
+        final aHas = a.revenue > 0;
+        final bHas = b.revenue > 0;
+        if (aHas != bHas) return aHas ? -1 : 1;
+        if (a.dt != null && b.dt != null) return b.dt!.compareTo(a.dt!);
+        if (a.dt != null) return -1;
+        if (b.dt != null) return 1;
+        return b.revenue.compareTo(a.revenue);
+      });
+
+      final best = scored.first;
+      // ignore: avoid_print
+      print(
+          '[KPI] chosen id=${best.doc.id} totalRevenue=${best.revenue} aov=${best.data['averageOrderValue']}');
+
+      return {
+        'totalRevenue': best.revenue,
+        'averageOrderValue': (best.data['averageOrderValue'] ?? 0).toDouble(),
+        'totalOrders': best.data['totalOrders'] ?? 0,
+        'currency': best.data['currency'] ?? 'USD',
+        'period': best.data['period'] ?? best.doc.id,
+      };
+    } catch (e, st) {
+      shared.ErrorLogger.log(
+        message: 'getFranchiseAnalyticsSummary failed: $e',
+        stack: st.toString(),
+        source: 'AdminFirestoreService.getFranchiseAnalyticsSummary',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      // ignore: avoid_print
+      print('[KPI] analytics ERROR: $e');
+      return {};
+    }
+  }
+
+  @override
+  Future<double> getOutstandingInvoices(String franchiseId) async {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      return 0.0;
+    }
+    try {
+      final invoices = await getPlatformInvoicesForFranchisee(franchiseId);
+      // A: unpaid / open balance for platform → franchise SaaS invoices.
+      double sum = 0.0;
+      for (final inv in invoices) {
+        final s = inv.status.toLowerCase();
+        if (s == 'unpaid' || s == 'partial' || s == 'overdue' || s == 'open') {
+          sum += inv.amount;
+        }
+      }
+      return sum;
+    } catch (e, st) {
+      shared.ErrorLogger.log(
+        message: 'getOutstandingInvoices failed: $e',
+        stack: st.toString(),
+        source: 'AdminFirestoreService.getOutstandingInvoices',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return 0.0;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getLastPayout(String franchiseId) async {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      return {};
+    }
+    try {
+      final snap = await db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('payouts')
+          .orderBy('createdAt', descending: true)
+          .limit(1)
+          .get();
+
+      if (snap.docs.isEmpty) {
+        // Fallback: some docs may use paidAt / date instead of createdAt.
+        final snap2 = await db
+            .collection('franchises')
+            .doc(franchiseId)
+            .collection('payouts')
+            .limit(25)
+            .get();
+        if (snap2.docs.isEmpty) return {};
+
+        final sorted = [...snap2.docs];
+        sorted.sort((a, b) {
+          final aData = a.data();
+          final bData = b.data();
+          final aTs = aData['createdAt'] ?? aData['paidAt'] ?? aData['date'];
+          final bTs = bData['createdAt'] ?? bData['paidAt'] ?? bData['date'];
+          if (aTs is firestore.Timestamp && bTs is firestore.Timestamp) {
+            return bTs.compareTo(aTs);
+          }
+          return 0;
+        });
+        final data = sorted.first.data();
+        final amount = (data['amount'] ?? data['netAmount'] ?? 0).toDouble();
+        final dateVal = data['createdAt'] ?? data['paidAt'] ?? data['date'];
+        final dateStr = dateVal is firestore.Timestamp
+            ? dateVal.toDate().toIso8601String()
+            : dateVal?.toString();
+        return {
+          'amount': amount,
+          if (dateStr != null) 'date': dateStr,
+          'id': sorted.first.id,
+        };
+      }
+
+      final data = snap.docs.first.data();
+      final amount = (data['amount'] ?? data['netAmount'] ?? 0).toDouble();
+      final dateVal = data['createdAt'] ?? data['paidAt'] ?? data['date'];
+      final dateStr = dateVal is firestore.Timestamp
+          ? dateVal.toDate().toIso8601String()
+          : dateVal?.toString();
+      return {
+        'amount': amount,
+        if (dateStr != null) 'date': dateStr,
+        'id': snap.docs.first.id,
+      };
+    } catch (e, st) {
+      shared.ErrorLogger.log(
+        message: 'getLastPayout failed: $e',
+        stack: st.toString(),
+        source: 'AdminFirestoreService.getLastPayout',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return {};
+    }
+  }
+
   @override
   Future<PlatformRevenueOverview> fetchPlatformRevenueOverview() async {
     // Placeholder - in production this would aggregate from franchise-scoped data or a materialized view
