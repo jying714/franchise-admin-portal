@@ -130,24 +130,53 @@ class _OnboardingMenuFoundationScreenState
     }
     liveFoundationProgress = liveFoundationProgress.clamp(0.0, 1.0);
 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0,
+        foregroundColor: colorScheme.onSurface,
+        iconTheme: IconThemeData(color: colorScheme.onSurface),
         title: Text(
-            loc?.coreMenuFoundationTitle ?? 'Step 2: Core Menu Foundation'),
+          loc?.coreMenuFoundationTitle ?? 'Step 2: Core Menu Foundation',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: colorScheme.onSurface,
+          ),
+        ),
         actions: [
           TextButton.icon(
             onPressed: _showTemplateDialog,
-            icon: const Icon(Icons.file_download_outlined),
-            label: const Text('Quick Start with Template'),
+            icon: Icon(Icons.file_download_outlined,
+                color: colorScheme.onSurface),
+            label: Text(
+              'Quick Start with Template',
+              style: TextStyle(color: colorScheme.onSurface),
+            ),
           ),
           const SizedBox(width: 16),
         ],
         bottom: TabBar(
           controller: _tabController,
           tabs: _tabTitles.map((title) => Tab(text: title)).toList(),
-          labelColor: shared.UiConfig.primaryColor,
-          indicatorColor: shared.UiConfig.primaryColor,
+          // Selection = weight/size, not franchise primary (avoids red on “test”)
+          labelColor: colorScheme.onSurface,
+          unselectedLabelColor: colorScheme.onSurface.withOpacity(0.55),
+          labelStyle: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
+          ),
+          unselectedLabelStyle: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+          ),
+          indicatorColor: colorScheme.onSurface,
+          indicatorWeight: 2.5,
+          dividerColor: theme.dividerColor,
         ),
       ),
       body: Row(

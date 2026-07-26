@@ -18,6 +18,7 @@ import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_i
 import 'package:franchise_admin_portal/core/providers/menu_item_provider_impl.dart';
 import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider_impl.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/onboarding_feature_setup_screen.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/screens/design_branding_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/onboarding_menu_foundation_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/onboarding_menu_items_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/onboarding_menu_screen.dart';
@@ -96,27 +97,35 @@ class HqOnboardingShellScreenState extends State<HqOnboardingShellScreen> {
         showInSidebar: true,
       ),
       shared.DashboardSection(
-        key: 'onboarding_menu_foundation',
-        title: 'Step 2: Core Menu Foundation',
-        icon: Icons.foundation,
-        builder: (_) => const OnboardingMenuFoundationScreen(),
+        key: 'onboarding_design_branding',
+        title: 'Step 2: Design & Branding',
+        icon: Icons.palette_outlined,
+        builder: (_) => const DesignBrandingScreen(embeddedInOnboarding: true),
         sidebarOrder: 2,
         showInSidebar: true,
       ),
       shared.DashboardSection(
-        key: 'onboardingMenuItems',
-        title: 'Step 3: Menu Items',
-        icon: Icons.local_pizza_outlined,
-        builder: (_) => const OnboardingMenuItemsScreen(),
+        key: 'onboarding_menu_foundation',
+        title: 'Step 3: Core Menu Foundation',
+        icon: Icons.foundation,
+        builder: (_) => const OnboardingMenuFoundationScreen(),
         sidebarOrder: 3,
         showInSidebar: true,
       ),
       shared.DashboardSection(
+        key: 'onboardingMenuItems',
+        title: 'Step 4: Menu Items',
+        icon: Icons.local_pizza_outlined,
+        builder: (_) => const OnboardingMenuItemsScreen(),
+        sidebarOrder: 4,
+        showInSidebar: true,
+      ),
+      shared.DashboardSection(
         key: 'onboardingReview',
-        title: 'Step 4: Review & Publish',
+        title: 'Step 5: Review & Publish',
         icon: Icons.check_circle_outline,
         builder: (_) => const OnboardingReviewScreen(),
-        sidebarOrder: 4,
+        sidebarOrder: 5,
         showInSidebar: true,
       ),
     ];
@@ -355,6 +364,7 @@ class _HqSidebarTile extends StatelessWidget {
   Widget build(BuildContext context) {
     const completableKeys = {
       'onboarding_feature_setup',
+      'onboarding_design_branding',
       'onboarding_menu_foundation',
       'onboardingMenuItems',
       'onboardingReview',

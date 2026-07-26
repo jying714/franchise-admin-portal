@@ -211,25 +211,9 @@ class FranchiseFeatureProviderImpl extends ChangeNotifier
   Future<List<shared.OnboardingValidationIssue>> validate() async {
     final issues = <shared.OnboardingValidationIssue>[];
     try {
-      if (!enabledModuleKeys.contains('menu_management')) {
-        issues.add(shared.OnboardingValidationIssue(
-          section: 'Features',
-          itemId: '',
-          itemDisplayName: '',
-          severity: shared.OnboardingIssueSeverity.critical,
-          code: 'MISSING_MENU_MANAGEMENT_FEATURE',
-          message:
-              "Menu Management feature must be enabled to continue onboarding.",
-          affectedFields: ['menu_management'],
-          isBlocking: true,
-          fixRoute: '/onboarding/feature_setup',
-          resolutionHint: "Enable the Menu Management feature.",
-          actionLabel: "Fix Now",
-          icon: Icons.build_outlined,
-          detectedAt: DateTime.now(),
-          contextData: {'enabledFeatures': enabledModuleKeys},
-        ));
-      }
+      // No feature-module hard gate for MVP.
+      // `menu_management` is not a real key in feature_metadata (false positive).
+      // Menu readiness is enforced by foundation + menu-items validators.
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message: 'franchise_feature_validate_failed',

@@ -191,70 +191,8 @@ class _IngredientTypeManagementScreenState
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          loc.ingredientTypes,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.data_object),
-            tooltip: loc.importExport,
-            onPressed: () {
-              final typeProvider = Provider.of<shared.IngredientTypeProvider>(
-                  context,
-                  listen: false);
-              IngredientTypeJsonImportExportDialog.show(context, typeProvider);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.library_add),
-            tooltip: loc.loadDefaultTypes,
-            onPressed: () async {
-              final parentLoc = AppLocalizations.of(context);
-              if (parentLoc == null) return;
-
-              await showDialog(
-                context: context,
-                builder: (BuildContext dialogContext) {
-                  return Localizations.override(
-                    context: dialogContext,
-                    child: Builder(
-                      builder: (innerContext) {
-                        return ScaffoldMessenger(
-                          child: IngredientTypeTemplatePickerDialog(
-                              loc: parentLoc),
-                        );
-                      },
-                    ),
-                  );
-                },
-              );
-
-              // Force refresh after dialog closes
-              await _refreshIngredientTypes();
-
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(parentLoc.templateLoadedSuccessfully)),
-                );
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.check_circle_outline),
-            tooltip: loc.markAsComplete,
-            onPressed: _markComplete,
-          ),
-        ],
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-      ),
       backgroundColor: colorScheme.background,
+      // No AppBar — foundation shell owns the only top bar.
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'onboarding_ingredient_type_fab',
         onPressed: () => _showFormDialog(),
@@ -274,6 +212,55 @@ class _IngredientTypeManagementScreenState
 
             return Column(
               children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        loc.ingredientTypes,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
+                            ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.library_add),
+                      tooltip: loc.loadDefaultTypes,
+                      onPressed: () async {
+                        final parentLoc = AppLocalizations.of(context);
+                        if (parentLoc == null) return;
+
+                        await showDialog(
+                          context: context,
+                          builder: (BuildContext dialogContext) {
+                            return Localizations.override(
+                              context: dialogContext,
+                              child: Builder(
+                                builder: (innerContext) {
+                                  return ScaffoldMessenger(
+                                    child: IngredientTypeTemplatePickerDialog(
+                                        loc: parentLoc),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        );
+
+                        await _refreshIngredientTypes();
+
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content:
+                                    Text(parentLoc.templateLoadedSuccessfully)),
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 if (types.isEmpty)
                   Expanded(
                     child: Center(
@@ -288,7 +275,6 @@ class _IngredientTypeManagementScreenState
                   Expanded(
                     child: Column(
                       children: [
-                        const InlineAddIngredientTypeRow(),
                         if (_showSelectAllBanner)
                           Card(
                             color: Colors.amber[100],

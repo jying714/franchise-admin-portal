@@ -234,38 +234,7 @@ class _OnboardingCategoriesScreenState
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-        title: Text(
-          loc.onboardingCategories,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.data_object),
-            tooltip: loc.importExportCategories,
-            onPressed: _openImportExportDialog,
-          ),
-          IconButton(
-            icon: const Icon(Icons.library_add),
-            tooltip: loc.selectCategoryTemplate,
-            onPressed: () async {
-              await CategoriesTemplatePickerDialog.show(
-                  context); // this is the screen context, not the dialog's context
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.check_circle_outline),
-            tooltip: loc.markAsComplete,
-            onPressed: _markComplete,
-          ),
-        ],
-      ),
+      backgroundColor: colorScheme.background,
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'onboarding_categories_fab',
         onPressed: () => _openCategoryForm(),
@@ -277,6 +246,27 @@ class _OnboardingCategoriesScreenState
         padding: DesignTokens.gridPadding,
         child: Column(
           children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    loc.onboardingCategories,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.library_add),
+                  tooltip: loc.selectCategoryTemplate,
+                  onPressed: () async {
+                    await CategoriesTemplatePickerDialog.show(context);
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             if (provider.isDirty)
               Row(
                 children: [

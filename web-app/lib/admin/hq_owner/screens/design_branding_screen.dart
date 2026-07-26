@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
 
 /// HQ Owner — Design & Branding screen (v1.1).
 ///
@@ -12,7 +13,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 ///
 /// Draft fields drive live preview; Save persists and refreshes DesignTokens path.
 class DesignBrandingScreen extends StatefulWidget {
-  const DesignBrandingScreen({super.key});
+  /// When true (HQ onboarding shell), no route back; Save marks progress and can continue.
+  final bool embeddedInOnboarding;
+
+  const DesignBrandingScreen({
+    super.key,
+    this.embeddedInOnboarding = false,
+  });
 
   @override
   State<DesignBrandingScreen> createState() => _DesignBrandingScreenState();
@@ -102,6 +109,20 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Branding saved')),
       );
+
+      if (widget.embeddedInOnboarding) {
+        try {
+          await Provider.of<shared.OnboardingProgressProvider>(context,
+                  listen: false)
+              .markStepComplete('onboarding_design_branding');
+        } catch (e, st) {
+          shared.ErrorLogger.log(
+            message: 'Failed to mark onboarding_design_branding complete',
+            stack: st.toString(),
+            source: 'design_branding_screen.dart',
+          );
+        }
+      }
     } catch (e, st) {
       shared.ErrorLogger.log(
         message: 'Design & Branding save failed',
@@ -178,25 +199,37 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
 
     return Scaffold(
       backgroundColor: DesignTokens.backgroundColor,
-      appBar: AppBar(
-        elevation: DesignTokens.appBarElevation,
-        backgroundColor: DesignTokens.appBarBackgroundColor,
-        foregroundColor: DesignTokens.appBarForegroundColor,
-        iconTheme: IconThemeData(color: DesignTokens.appBarIconColor),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Back',
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-        title: const Text('Design & Branding'),
-      ),
+      // HQ-only route keeps AppBar + Back. Onboarding embed: title in body only.
+      appBar: widget.embeddedInOnboarding
+          ? null
+          : AppBar(
+              elevation: DesignTokens.appBarElevation,
+              backgroundColor: DesignTokens.appBarBackgroundColor,
+              foregroundColor: DesignTokens.appBarForegroundColor,
+              iconTheme: IconThemeData(color: DesignTokens.appBarIconColor),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: 'Back',
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+              title: const Text('Design & Branding'),
+            ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(DesignTokens.paddingLg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Franchise context (minimal for shell; S3 can polish)
+              if (widget.embeddedInOnboarding) ...[
+                Text(
+                  'Step 2: Design & Branding',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: DesignTokens.textColor,
+                      ),
+                ),
+                SizedBox(height: DesignTokens.adminCardSpacing),
+              ],
               Text(
                 hasFranchise
                     ? 'Franchise: ${DesignTokens.currentAppName} ($franchiseId)'
@@ -356,6 +389,23 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
                             icon: const Icon(Icons.restart_alt, size: 18),
                             label: const Text('Cancel'),
                           ),
+                          if (widget.embeddedInOnboarding) ...[
+                            const SizedBox(width: 12),
+                            FilledButton.icon(
+                              onPressed: () {
+                                final hqShell = context.findAncestorStateOfType<
+                                    HqOnboardingShellScreenState>();
+                                hqShell?.switchToSection(
+                                    'onboarding_menu_foundation');
+                              },
+                              icon: const Icon(Icons.arrow_forward, size: 18),
+                              label: const Text('Continue to Foundation'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: DesignTokens.primaryColor,
+                                foregroundColor: DesignTokens.foregroundColor,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ],

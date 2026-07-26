@@ -18,6 +18,7 @@ class IssueDetailsExpansion extends StatefulWidget {
     Key? key,
     this.sectionOrder = const [
       OnboardingSections.features,
+      OnboardingSections.designBranding,
       OnboardingSections.coreMenuFoundation,
       OnboardingSections.menuItems,
       OnboardingSections.reviewPublish,
@@ -387,6 +388,9 @@ class _IssueDetailsExpansionState extends State<IssueDetailsExpansion> {
                     final String sectionKey;
                     if (raw.contains('feature')) {
                       sectionKey = 'onboarding_feature_setup';
+                    } else if (raw.contains('branding') ||
+                        raw.contains('design')) {
+                      sectionKey = 'onboarding_design_branding';
                     } else if (raw.contains('foundation') ||
                         raw.contains('type') ||
                         raw.contains('ingredient') ||

@@ -128,8 +128,9 @@ class _OnboardingFeatureSetupScreenState
       );
     }
 
-    final isFeatureSetupComplete = Provider.of<shared.OnboardingProgressProvider>(context)
-        .isStepComplete('onboarding_feature_setup');
+    final isFeatureSetupComplete =
+        Provider.of<shared.OnboardingProgressProvider>(context)
+            .isStepComplete('onboarding_feature_setup');
 
     return Scaffold(
       appBar: AppBar(
@@ -212,7 +213,7 @@ class _OnboardingFeatureSetupScreenState
         final hqShell =
             context.findAncestorStateOfType<HqOnboardingShellScreenState>();
         if (hqShell != null) {
-          hqShell.switchToSection('onboarding_menu_foundation');
+          hqShell.switchToSection('onboarding_design_branding');
         } else {
           Navigator.of(context).maybePop();
         }

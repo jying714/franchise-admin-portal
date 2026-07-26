@@ -59,6 +59,7 @@ class OnboardingReviewProviderImpl extends ChangeNotifier
     try {
       _issuesBySection = {
         'Features': [],
+        'Design & Branding': [],
         'Ingredient Types': [],
         'Ingredients': [],
         'Categories': [],
@@ -68,6 +69,9 @@ class OnboardingReviewProviderImpl extends ChangeNotifier
       // 1. Franchise Features
       final featuresIssues = await _franchiseFeatureProvider.validate();
       _issuesBySection['Features'] = featuresIssues;
+
+      // 1b. Design & Branding — complete when progress key is set (Save already required)
+      // Issues stay empty if step marked; optional soft check can be added later.
 
       // 2. Ingredient Types
       final typeIssues = await _ingredientTypeProvider.validate(

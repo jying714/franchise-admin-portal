@@ -466,38 +466,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
               ),
             ],
           ),
-          floatingActionButton: FloatingActionButton.extended(
-            heroTag: 'fab-onboarding-menu-items',
-            onPressed: () {
-              try {
-                openEditor(shared.MenuItem(
-                  id: const Uuid().v4(),
-                  name: 'New Item',
-                  price: 0.0,
-                  categoryId: '',
-                  category: '',
-                  available: true,
-                  availability: true,
-                  description: '',
-                  customizationGroups: [],
-                  customizations: [],
-                  taxCategory: 'standard',
-                  includedIngredients: [],
-                  optionalAddOns: [],
-                ));
-              } catch (e, st) {
-                shared.ErrorLogger.log(
-                  message: 'Failed to open MenuItem editor',
-                  stack: st.toString(),
-                  source: 'onboarding_menu_items_screen.dart',
-                  severity: 'error',
-                );
-              }
-            },
-            icon: const Icon(Icons.add),
-            label: Text(loc.addMenuItem),
-            backgroundColor: DesignTokens.primaryColor,
-          ),
+          // FAB is scoped to the list pane (Stack) so it matches foundation.
           body: Padding(
             padding: DesignTokens.gridPadding,
             child: _isEditing
@@ -532,7 +501,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                             menuProvider.addOrUpdateMenuItem(updatedItem);
 
                             try {
-                              // Correct call pattern for AdminFirestoreService
                               await adminService.saveMenuItem(
                                 franchiseId: franchiseId,
                                 menuItem: updatedItem,
@@ -592,401 +560,525 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                 : Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ── Left: existing list surface ──
+                      // ── Left: list surface + pane-scoped FAB ──
                       Expanded(
                         flex: 7,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Stack(
                           children: [
-                            // Permanent status bar
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              // Match foundation: no tinted strip; plain surface.
-                              color: theme.scaffoldBackgroundColor,
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.check_circle,
-                                      color: Colors.green),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      '✅ Dependencies loaded • ${context.watch<shared.IngredientMetadataProvider>().allIngredients.length} ingredients • ${context.watch<shared.CategoryProvider>().categories.length} categories • ${context.watch<shared.IngredientTypeProvider>().ingredientTypes.length} types',
-                                      style: shared.UiConfig.bodyStyle,
-                                    ),
-                                  ),
-                                  OutlinedButton.icon(
-                                    icon: const Icon(Icons.sync),
-                                    label: const Text('Force Refresh'),
-                                    onPressed: () async {
-                                      final franchiseId =
-                                          Provider.of<shared.FranchiseProvider>(
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Permanent status bar
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  color: theme.scaffoldBackgroundColor,
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.check_circle,
+                                          color: Colors.green),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Dependencies loaded • ${context.watch<shared.IngredientMetadataProvider>().allIngredients.length} ingredients • ${context.watch<shared.CategoryProvider>().categories.length} categories • ${context.watch<shared.IngredientTypeProvider>().ingredientTypes.length} types',
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                            color: DesignTokens.textColor,
+                                          ),
+                                        ),
+                                      ),
+                                      OutlinedButton.icon(
+                                        icon: const Icon(Icons.sync),
+                                        label: const Text('Force Refresh'),
+                                        onPressed: () async {
+                                          final franchiseId = Provider.of<
+                                                      shared.FranchiseProvider>(
                                                   context,
                                                   listen: false)
                                               .franchiseId;
-                                      await _reloadFoundationProviders(
-                                          franchiseId);
-                                      if (mounted) setState(() {});
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text('✅ UI fully refreshed'),
-                                          backgroundColor: Colors.green,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                            FeatureGateBanner(
-                              module: 'menu_item_customization',
-                              child: Container(
-                                width: double.infinity,
-                                height: 60,
-                                color: Colors.yellow.shade50,
-                                alignment: Alignment.center,
-                                child: const Text(
-                                    'Menu Item Customization is a premium feature.'),
-                              ),
-                            ),
-                            if (provider.isDirty)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: Row(
-                                  children: [
-                                    ElevatedButton(
-                                        onPressed: () async {
-                                          final menuProvider = Provider.of<
-                                                  shared.MenuItemProvider>(
-                                              context,
-                                              listen: false);
-                                          try {
-                                            await menuProvider.persistChanges();
-                                            if (mounted) {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                const SnackBar(
-                                                    content:
-                                                        Text('Changes saved')),
-                                              );
-                                            }
-                                          } catch (e) {
-                                            if (mounted) {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                SnackBar(
-                                                    content: Text(
-                                                        'Save failed: $e')),
-                                              );
-                                            }
-                                          }
+                                          await _reloadFoundationProviders(
+                                              franchiseId);
+                                          if (mounted) setState(() {});
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content:
+                                                  Text('✅ UI fully refreshed'),
+                                              backgroundColor: Colors.green,
+                                            ),
+                                          );
                                         },
-                                        child: Text(loc.saveChanges)),
-                                    const SizedBox(width: 12),
-                                    OutlinedButton(
-                                        onPressed: provider.revertChanges,
-                                        child: Text(loc.revertChanges)),
-                                  ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            Expanded(
-                              child: provider.menuItems.isEmpty
-                                  ? Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                FeatureGateBanner(
+                                  module: 'menu_item_customization',
+                                  child: Container(
+                                    width: double.infinity,
+                                    height: 60,
+                                    color: Colors.yellow.shade50,
+                                    alignment: Alignment.center,
+                                    child: const Text(
+                                        'Menu Item Customization is a premium feature.'),
+                                  ),
+                                ),
+                                if (provider.isDirty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: Row(
                                       children: [
-                                        EmptyStateWidget(
-                                          title: 'No Menu Items Yet',
-                                          message:
-                                              'All foundation data is loaded.\nTap the button below to create your first item.',
-                                          iconData: Icons.add_circle_outline,
-                                        ),
-                                        const SizedBox(height: 24),
-                                        ElevatedButton.icon(
-                                          icon: const Icon(Icons.add),
-                                          label: const Text(
-                                              'Create First Menu Item'),
-                                          onPressed: () =>
-                                              openEditor(shared.MenuItem(
-                                            id: const Uuid().v4(),
-                                            name: 'New Item',
-                                            price: 0.0,
-                                            categoryId: '',
-                                            category: '',
-                                            available: true,
-                                            availability: true,
-                                            description: '',
-                                            customizationGroups: [],
-                                            customizations: [],
-                                            taxCategory: 'standard',
-                                            includedIngredients: [],
-                                            optionalAddOns: [],
-                                          )),
-                                        ),
-                                        const SizedBox(height: 12),
-                                        OutlinedButton.icon(
-                                          icon: const Icon(Icons
-                                              .dashboard_customize_outlined),
-                                          label:
-                                              const Text('Add from template'),
-                                          onPressed: () async {
-                                            await MenuItemTemplatePickerDialog
-                                                .show(context);
-                                            if (!mounted) return;
+                                        ElevatedButton(
+                                            onPressed: () async {
+                                              final menuProvider = Provider.of<
+                                                      shared.MenuItemProvider>(
+                                                  context,
+                                                  listen: false);
+                                              try {
+                                                await menuProvider
+                                                    .persistChanges();
+                                                if (mounted) {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    const SnackBar(
+                                                        content: Text(
+                                                            'Changes saved')),
+                                                  );
+                                                }
+                                              } catch (e) {
+                                                if (mounted) {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                        content: Text(
+                                                            'Save failed: $e')),
+                                                  );
+                                                }
+                                              }
+                                            },
+                                            child: Text(loc.saveChanges)),
+                                        const SizedBox(width: 12),
+                                        OutlinedButton(
+                                            onPressed: provider.revertChanges,
+                                            child: Text(loc.revertChanges)),
+                                      ],
+                                    ),
+                                  ),
+                                Expanded(
+                                  child: provider.menuItems.isEmpty
+                                      ? Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            EmptyStateWidget(
+                                              title: 'No Menu Items Yet',
+                                              message:
+                                                  'All foundation data is loaded.\nTap the button below to create your first item.',
+                                              iconData:
+                                                  Icons.add_circle_outline,
+                                            ),
+                                            const SizedBox(height: 24),
+                                            ElevatedButton.icon(
+                                              icon: const Icon(Icons.add),
+                                              label: const Text(
+                                                  'Create First Menu Item'),
+                                              onPressed: () =>
+                                                  openEditor(shared.MenuItem(
+                                                id: const Uuid().v4(),
+                                                name: 'New Item',
+                                                price: 0.0,
+                                                categoryId: '',
+                                                category: '',
+                                                available: true,
+                                                availability: true,
+                                                description: '',
+                                                customizationGroups: [],
+                                                customizations: [],
+                                                taxCategory: 'standard',
+                                                includedIngredients: [],
+                                                optionalAddOns: [],
+                                              )),
+                                            ),
+                                            const SizedBox(height: 12),
+                                            OutlinedButton.icon(
+                                              icon: const Icon(Icons
+                                                  .dashboard_customize_outlined),
+                                              label: const Text(
+                                                  'Add from template'),
+                                              onPressed: () async {
+                                                await MenuItemTemplatePickerDialog
+                                                    .show(context);
+                                                if (!mounted) return;
 
-                                            // Residual UX: recompute badges / mark-complete
-                                            // from provider items after bulk template import.
-                                            setState(() {});
+                                                setState(() {});
 
-                                            final menuProvider = Provider.of<
-                                                shared.MenuItemProvider>(
-                                              context,
-                                              listen: false,
-                                            );
-                                            final categories = Provider.of<
-                                                shared.CategoryProvider>(
-                                              context,
-                                              listen: false,
-                                            ).categories;
-                                            final ingredients = Provider.of<
-                                                shared
-                                                .IngredientMetadataProvider>(
-                                              context,
-                                              listen: false,
-                                            ).allIngredients;
-                                            final types = Provider.of<
-                                                shared.IngredientTypeProvider>(
-                                              context,
-                                              listen: false,
-                                            ).ingredientTypes;
+                                                final menuProvider =
+                                                    Provider.of<
+                                                        shared
+                                                        .MenuItemProvider>(
+                                                  context,
+                                                  listen: false,
+                                                );
+                                                final categories = Provider.of<
+                                                    shared.CategoryProvider>(
+                                                  context,
+                                                  listen: false,
+                                                ).categories;
+                                                final ingredients = Provider.of<
+                                                    shared
+                                                    .IngredientMetadataProvider>(
+                                                  context,
+                                                  listen: false,
+                                                ).allIngredients;
+                                                final types = Provider.of<
+                                                    shared
+                                                    .IngredientTypeProvider>(
+                                                  context,
+                                                  listen: false,
+                                                ).ingredientTypes;
 
-                                            var errorCount = 0;
+                                                var errorCount = 0;
+                                                for (final item
+                                                    in menuProvider.menuItems) {
+                                                  final issues =
+                                                      shared.MenuItemSchemaIssue
+                                                          .detectAllIssues(
+                                                    menuItem: item,
+                                                    categories: categories,
+                                                    ingredients: ingredients,
+                                                    ingredientTypes: types,
+                                                  );
+                                                  if (issues.any((i) =>
+                                                      i.severity == 'error')) {
+                                                    errorCount++;
+                                                  }
+                                                }
+
+                                                if (!mounted) return;
+                                                if (errorCount > 0) {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        'Template applied · $errorCount item(s) still have schema errors — edit to fix',
+                                                      ),
+                                                      backgroundColor:
+                                                          Colors.orange,
+                                                    ),
+                                                  );
+                                                } else if (menuProvider
+                                                    .menuItems.isNotEmpty) {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        menuProvider.isDirty
+                                                            ? 'Template applied · all items clean — save changes if needed'
+                                                            : 'Template applied · all items clean',
+                                                      ),
+                                                      backgroundColor:
+                                                          Colors.green,
+                                                    ),
+                                                  );
+                                                }
+                                              },
+                                            ),
+                                          ],
+                                        )
+                                      : Builder(
+                                          builder: (context) {
+                                            final seenIds = <String>{};
+                                            final uniqueItems =
+                                                <shared.MenuItem>[];
                                             for (final item
-                                                in menuProvider.menuItems) {
-                                              final issues =
-                                                  shared.MenuItemSchemaIssue
-                                                      .detectAllIssues(
-                                                menuItem: item,
-                                                categories: categories,
-                                                ingredients: ingredients,
-                                                ingredientTypes: types,
-                                              );
-                                              if (issues.any((i) =>
-                                                  i.severity == 'error')) {
-                                                errorCount++;
+                                                in provider.menuItems) {
+                                              if (seenIds.add(item.id)) {
+                                                uniqueItems.add(item);
+                                              } else {
+                                                debugPrint(
+                                                  '[OnboardingMenuItemsScreen] Duplicate menu item id skipped: ${item.id} (${item.name})',
+                                                );
                                               }
                                             }
 
-                                            if (!mounted) return;
-                                            if (errorCount > 0) {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    'Template applied · $errorCount item(s) still have schema errors — edit to fix',
+                                            return ReorderableListView(
+                                              onReorder: (oldIndex, newIndex) {
+                                                final items =
+                                                    List.of(uniqueItems);
+                                                if (newIndex > oldIndex) {
+                                                  newIndex -= 1;
+                                                }
+                                                final item =
+                                                    items.removeAt(oldIndex);
+                                                items.insert(newIndex, item);
+                                                provider
+                                                    .reorderMenuItems(items);
+                                              },
+                                              children: [
+                                                for (var index = 0;
+                                                    index < uniqueItems.length;
+                                                    index++)
+                                                  MenuItemListTile(
+                                                    key: ValueKey(
+                                                      'menu_item_${uniqueItems[index].id}_$index',
+                                                    ),
+                                                    item: uniqueItems[index],
+                                                    hasSchemaErrors: shared
+                                                            .MenuItemSchemaIssue
+                                                        .detectAllIssues(
+                                                      menuItem:
+                                                          uniqueItems[index],
+                                                      categories:
+                                                          categoryProvider
+                                                              .categories,
+                                                      ingredients:
+                                                          ingredientProvider
+                                                              .allIngredients,
+                                                      ingredientTypes:
+                                                          typeProvider
+                                                              .ingredientTypes,
+                                                    ).any((i) =>
+                                                        i.severity == 'error'),
+                                                    isSelected:
+                                                        _selectedIds.contains(
+                                                            uniqueItems[index]
+                                                                .id),
+                                                    onSelect: (checked) {
+                                                      final id =
+                                                          uniqueItems[index].id;
+                                                      setState(() {
+                                                        if (checked == true) {
+                                                          _selectedIds.add(id);
+                                                        } else {
+                                                          _selectedIds
+                                                              .remove(id);
+                                                        }
+                                                      });
+                                                    },
+                                                    onEdit: () => openEditor(
+                                                        uniqueItems[index]),
+                                                    onDelete: () async {
+                                                      final item =
+                                                          uniqueItems[index];
+                                                      final confirmed =
+                                                          await showDialog<
+                                                              bool>(
+                                                        context: context,
+                                                        builder:
+                                                            (dialogContext) =>
+                                                                AlertDialog(
+                                                          title: const Text(
+                                                              'Delete menu item?'),
+                                                          content: Text(
+                                                            'Are you sure you want to delete "${item.name}"?',
+                                                          ),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.of(
+                                                                          dialogContext)
+                                                                      .pop(
+                                                                          false),
+                                                              child: const Text(
+                                                                  'Cancel'),
+                                                            ),
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.of(
+                                                                          dialogContext)
+                                                                      .pop(
+                                                                          true),
+                                                              child: const Text(
+                                                                  'Delete'),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                      if (confirmed != true) {
+                                                        return;
+                                                      }
+                                                      final menuProvider =
+                                                          Provider.of<
+                                                              shared
+                                                              .MenuItemProvider>(
+                                                        context,
+                                                        listen: false,
+                                                      );
+                                                      try {
+                                                        final franchiseId =
+                                                            Provider.of<
+                                                                shared
+                                                                .FranchiseProvider>(
+                                                          context,
+                                                          listen: false,
+                                                        ).franchiseId;
+
+                                                        if (menuProvider
+                                                            is MenuItemProviderImpl) {
+                                                          menuProvider
+                                                              .setFranchiseId(
+                                                                  franchiseId);
+                                                        }
+
+                                                        final impl = menuProvider
+                                                            as MenuItemProviderImpl;
+                                                        impl.setFranchiseId(
+                                                            franchiseId);
+                                                        await impl
+                                                            .deleteMenuItemAndPersist(
+                                                                item.id);
+                                                        if (!mounted) return;
+                                                        setState(() {
+                                                          _selectedIds
+                                                              .remove(item.id);
+                                                        });
+                                                        ScaffoldMessenger.of(
+                                                                context)
+                                                            .showSnackBar(
+                                                          const SnackBar(
+                                                            content: Text(
+                                                                '✅ Item deleted'),
+                                                            backgroundColor:
+                                                                Colors.green,
+                                                          ),
+                                                        );
+                                                      } catch (e, stack) {
+                                                        shared.ErrorLogger.log(
+                                                          message:
+                                                              'delete_menu_item_failed',
+                                                          stack:
+                                                              stack.toString(),
+                                                          source:
+                                                              'onboarding_menu_items_screen',
+                                                          severity: 'error',
+                                                        );
+                                                        if (!mounted) return;
+                                                        ScaffoldMessenger.of(
+                                                                context)
+                                                            .showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                                '❌ Delete failed: $e'),
+                                                            backgroundColor:
+                                                                Colors.red,
+                                                          ),
+                                                        );
+                                                      }
+                                                    },
                                                   ),
-                                                  backgroundColor:
-                                                      Colors.orange,
-                                                ),
-                                              );
-                                            } else if (menuProvider
-                                                .menuItems.isNotEmpty) {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    menuProvider.isDirty
-                                                        ? 'Template applied · all items clean — save changes if needed'
-                                                        : 'Template applied · all items clean',
-                                                  ),
-                                                  backgroundColor: Colors.green,
-                                                ),
-                                              );
-                                            }
+                                              ],
+                                            );
                                           },
                                         ),
-                                      ],
-                                    )
-                                  : Builder(
-                                      builder: (context) {
-                                        final seenIds = <String>{};
-                                        final uniqueItems = <shared.MenuItem>[];
-                                        for (final item in provider.menuItems) {
-                                          if (seenIds.add(item.id)) {
-                                            uniqueItems.add(item);
-                                          } else {
-                                            debugPrint(
-                                              '[OnboardingMenuItemsScreen] Duplicate menu item id skipped: ${item.id} (${item.name})',
+                                ),
+                                // Bottom toolbar (template + mark complete only)
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      OutlinedButton.icon(
+                                        icon: const Icon(
+                                            Icons.dashboard_customize_outlined),
+                                        label: const Text('Add from template'),
+                                        onPressed: () async {
+                                          await MenuItemTemplatePickerDialog
+                                              .show(context);
+                                          if (!mounted) return;
+
+                                          setState(() {});
+
+                                          final menuProvider = Provider.of<
+                                              shared.MenuItemProvider>(
+                                            context,
+                                            listen: false,
+                                          );
+                                          final categories = Provider.of<
+                                              shared.CategoryProvider>(
+                                            context,
+                                            listen: false,
+                                          ).categories;
+                                          final ingredients = Provider.of<
+                                              shared
+                                              .IngredientMetadataProvider>(
+                                            context,
+                                            listen: false,
+                                          ).allIngredients;
+                                          final types = Provider.of<
+                                              shared.IngredientTypeProvider>(
+                                            context,
+                                            listen: false,
+                                          ).ingredientTypes;
+
+                                          var errorCount = 0;
+                                          for (final item
+                                              in menuProvider.menuItems) {
+                                            final issues =
+                                                shared.MenuItemSchemaIssue
+                                                    .detectAllIssues(
+                                              menuItem: item,
+                                              categories: categories,
+                                              ingredients: ingredients,
+                                              ingredientTypes: types,
+                                            );
+                                            if (issues.any(
+                                                (i) => i.severity == 'error')) {
+                                              errorCount++;
+                                            }
+                                          }
+
+                                          if (!mounted) return;
+                                          if (errorCount > 0) {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  'Template applied · $errorCount item(s) still have schema errors — edit to fix',
+                                                ),
+                                                backgroundColor: Colors.orange,
+                                              ),
+                                            );
+                                          } else if (menuProvider
+                                              .menuItems.isNotEmpty) {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  menuProvider.isDirty
+                                                      ? 'Template applied · all items clean — save changes if needed'
+                                                      : 'Template applied · all items clean',
+                                                ),
+                                                backgroundColor: Colors.green,
+                                              ),
                                             );
                                           }
-                                        }
-
-                                        return ReorderableListView(
-                                          onReorder: (oldIndex, newIndex) {
-                                            final items = List.of(uniqueItems);
-                                            if (newIndex > oldIndex)
-                                              newIndex -= 1;
-                                            final item =
-                                                items.removeAt(oldIndex);
-                                            items.insert(newIndex, item);
-                                            provider.reorderMenuItems(items);
-                                          },
-                                          children: [
-                                            for (var index = 0;
-                                                index < uniqueItems.length;
-                                                index++)
-                                              MenuItemListTile(
-                                                key: ValueKey(
-                                                  'menu_item_${uniqueItems[index].id}_$index',
-                                                ),
-                                                item: uniqueItems[index],
-                                                hasSchemaErrors:
-                                                    shared.MenuItemSchemaIssue
-                                                        .detectAllIssues(
-                                                  menuItem: uniqueItems[index],
-                                                  categories: categoryProvider
-                                                      .categories,
-                                                  ingredients:
-                                                      ingredientProvider
-                                                          .allIngredients,
-                                                  ingredientTypes: typeProvider
-                                                      .ingredientTypes,
-                                                ).any((i) =>
-                                                        i.severity == 'error'),
-                                                isSelected:
-                                                    _selectedIds.contains(
-                                                        uniqueItems[index].id),
-                                                onSelect: (checked) {
-                                                  final id =
-                                                      uniqueItems[index].id;
-                                                  setState(() {
-                                                    if (checked == true) {
-                                                      _selectedIds.add(id);
-                                                    } else {
-                                                      _selectedIds.remove(id);
-                                                    }
-                                                  });
-                                                },
-                                                onEdit: () => openEditor(
-                                                    uniqueItems[index]),
-                                                onDelete: () async {
-                                                  final item =
-                                                      uniqueItems[index];
-                                                  final confirmed =
-                                                      await showDialog<bool>(
-                                                    context: context,
-                                                    builder: (dialogContext) =>
-                                                        AlertDialog(
-                                                      title: const Text(
-                                                          'Delete menu item?'),
-                                                      content: Text(
-                                                        'Are you sure you want to delete "${item.name}"?',
-                                                      ),
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed: () =>
-                                                              Navigator.of(
-                                                                      dialogContext)
-                                                                  .pop(false),
-                                                          child: const Text(
-                                                              'Cancel'),
-                                                        ),
-                                                        TextButton(
-                                                          onPressed: () =>
-                                                              Navigator.of(
-                                                                      dialogContext)
-                                                                  .pop(true),
-                                                          child: const Text(
-                                                              'Delete'),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-                                                  if (confirmed != true) return;
-                                                  final menuProvider =
-                                                      Provider.of<
-                                                          shared
-                                                          .MenuItemProvider>(
-                                                    context,
-                                                    listen: false,
-                                                  );
-                                                  try {
-                                                    final franchiseId =
-                                                        Provider.of<
-                                                            shared
-                                                            .FranchiseProvider>(
-                                                      context,
-                                                      listen: false,
-                                                    ).franchiseId;
-
-                                                    // Bind franchise on this provider instance.
-                                                    if (menuProvider
-                                                        is MenuItemProviderImpl) {
-                                                      menuProvider
-                                                          .setFranchiseId(
-                                                              franchiseId);
-                                                    }
-
-                                                    final impl = menuProvider
-                                                        as MenuItemProviderImpl;
-                                                    impl.setFranchiseId(
-                                                        franchiseId);
-                                                    await impl
-                                                        .deleteMenuItemAndPersist(
-                                                            item.id);
-                                                    if (!mounted) return;
-                                                    setState(() {
-                                                      _selectedIds
-                                                          .remove(item.id);
-                                                    });
-                                                    ScaffoldMessenger.of(
-                                                            context)
-                                                        .showSnackBar(
-                                                      const SnackBar(
-                                                        content: Text(
-                                                            '✅ Item deleted'),
-                                                        backgroundColor:
-                                                            Colors.green,
-                                                      ),
-                                                    );
-                                                  } catch (e, stack) {
-                                                    shared.ErrorLogger.log(
-                                                      message:
-                                                          'delete_menu_item_failed',
-                                                      stack: stack.toString(),
-                                                      source:
-                                                          'onboarding_menu_items_screen',
-                                                      severity: 'error',
-                                                    );
-                                                    if (!mounted) return;
-                                                    ScaffoldMessenger.of(
-                                                            context)
-                                                        .showSnackBar(
-                                                      SnackBar(
-                                                        content: Text(
-                                                            '❌ Delete failed: $e'),
-                                                        backgroundColor:
-                                                            Colors.red,
-                                                      ),
-                                                    );
-                                                  }
-                                                },
-                                              ),
-                                          ],
-                                        );
-                                      },
-                                    ),
+                                        },
+                                      ),
+                                      const SizedBox(width: 16),
+                                      ElevatedButton.icon(
+                                        icon: const Icon(Icons.check_circle),
+                                        label: Text(
+                                          anyItemHasSchemaErrors
+                                              ? 'Fix schema errors first'
+                                              : 'Mark Complete',
+                                        ),
+                                        onPressed: anyItemHasSchemaErrors
+                                            ? null
+                                            : _markComplete,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                            // Floating toolbar for quick actions
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.add),
-                                    tooltip: 'Add menu item',
-                                    onPressed: () => openEditor(shared.MenuItem(
+                            Positioned(
+                              right: 16,
+                              bottom: 16,
+                              child: FloatingActionButton.extended(
+                                heroTag: 'fab-onboarding-menu-items',
+                                onPressed: () {
+                                  try {
+                                    openEditor(shared.MenuItem(
                                       id: const Uuid().v4(),
                                       name: 'New Item',
                                       price: 0.0,
@@ -1000,100 +1092,20 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                       taxCategory: 'standard',
                                       includedIngredients: [],
                                       optionalAddOns: [],
-                                    )),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  OutlinedButton.icon(
-                                    icon: const Icon(
-                                        Icons.dashboard_customize_outlined),
-                                    label: const Text('Add from template'),
-                                    onPressed: () async {
-                                      await MenuItemTemplatePickerDialog.show(
-                                          context);
-                                      if (!mounted) return;
-
-                                      // Residual UX: recompute badges / mark-complete
-                                      // from provider items after bulk template import.
-                                      setState(() {});
-
-                                      final menuProvider =
-                                          Provider.of<shared.MenuItemProvider>(
-                                        context,
-                                        listen: false,
-                                      );
-                                      final categories =
-                                          Provider.of<shared.CategoryProvider>(
-                                        context,
-                                        listen: false,
-                                      ).categories;
-                                      final ingredients = Provider.of<
-                                          shared.IngredientMetadataProvider>(
-                                        context,
-                                        listen: false,
-                                      ).allIngredients;
-                                      final types = Provider.of<
-                                          shared.IngredientTypeProvider>(
-                                        context,
-                                        listen: false,
-                                      ).ingredientTypes;
-
-                                      var errorCount = 0;
-                                      for (final item
-                                          in menuProvider.menuItems) {
-                                        final issues =
-                                            shared.MenuItemSchemaIssue
-                                                .detectAllIssues(
-                                          menuItem: item,
-                                          categories: categories,
-                                          ingredients: ingredients,
-                                          ingredientTypes: types,
-                                        );
-                                        if (issues.any(
-                                            (i) => i.severity == 'error')) {
-                                          errorCount++;
-                                        }
-                                      }
-
-                                      if (!mounted) return;
-                                      if (errorCount > 0) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Template applied · $errorCount item(s) still have schema errors — edit to fix',
-                                            ),
-                                            backgroundColor: Colors.orange,
-                                          ),
-                                        );
-                                      } else if (menuProvider
-                                          .menuItems.isNotEmpty) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              menuProvider.isDirty
-                                                  ? 'Template applied · all items clean — save changes if needed'
-                                                  : 'Template applied · all items clean',
-                                            ),
-                                            backgroundColor: Colors.green,
-                                          ),
-                                        );
-                                      }
-                                    },
-                                  ),
-                                  const SizedBox(width: 16),
-                                  ElevatedButton.icon(
-                                    icon: const Icon(Icons.check_circle),
-                                    label: Text(
-                                      anyItemHasSchemaErrors
-                                          ? 'Fix schema errors first'
-                                          : 'Mark Complete',
-                                    ),
-                                    onPressed: anyItemHasSchemaErrors
-                                        ? null
-                                        : _markComplete,
-                                  ),
-                                ],
+                                    ));
+                                  } catch (e, st) {
+                                    shared.ErrorLogger.log(
+                                      message: 'Failed to open MenuItem editor',
+                                      stack: st.toString(),
+                                      source:
+                                          'onboarding_menu_items_screen.dart',
+                                      severity: 'error',
+                                    );
+                                  }
+                                },
+                                icon: const Icon(Icons.add),
+                                label: Text(loc.addMenuItem),
+                                backgroundColor: DesignTokens.primaryColor,
                               ),
                             ),
                           ],
@@ -1102,7 +1114,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
 
                       const VerticalDivider(width: 1, thickness: 1),
 
-                      // ── Right: always-visible navigable phone preview ──
+                      // ── Right: phone preview (foundation parity — no Center) ──
                       Expanded(
                         flex: 3,
                         child: Container(
@@ -1113,13 +1125,11 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                             ),
                             color: Theme.of(context).colorScheme.surface,
                           ),
-                          child: Center(
-                            child: MobileMenuPreviewCard(
-                              franchiseId: context
-                                  .watch<shared.FranchiseProvider>()
-                                  .franchiseId,
-                              interactive: true,
-                            ),
+                          child: MobileMenuPreviewCard(
+                            franchiseId: context
+                                .watch<shared.FranchiseProvider>()
+                                .franchiseId,
+                            interactive: true,
                           ),
                         ),
                       ),

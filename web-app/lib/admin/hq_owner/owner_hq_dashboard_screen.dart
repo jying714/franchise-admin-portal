@@ -324,14 +324,18 @@ class OwnerHQDashboardScreen extends StatelessWidget {
 
                   final step1 = onboardingProgress
                       .isStepComplete('onboarding_feature_setup');
+                  final stepBranding = onboardingProgress
+                      .isStepComplete('onboarding_design_branding');
                   final step2 = onboardingProgress
                       .isStepComplete('onboarding_menu_foundation');
                   final step3 =
                       onboardingProgress.isStepComplete('onboardingMenuItems');
                   final step4 =
                       onboardingProgress.isStepComplete('onboardingReview');
-                  final overall =
-                      [step1, step2, step3, step4].where((c) => c).length / 4.0;
+                  final overall = [step1, stepBranding, step2, step3, step4]
+                          .where((c) => c)
+                          .length /
+                      5.0;
                   final foundationPct =
                       (onboardingProgress.getFoundationProgress() * 100)
                           .round();
@@ -393,15 +397,19 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                             style: step1 ? doneStyle : pendingStyle,
                           ),
                           Text(
-                            '2. Core Menu Foundation: ${status(step2)}',
+                            '2. Design & Branding: ${status(stepBranding)}',
+                            style: stepBranding ? doneStyle : pendingStyle,
+                          ),
+                          Text(
+                            '3. Core Menu Foundation: ${status(step2)}',
                             style: step2 ? doneStyle : pendingStyle,
                           ),
                           Text(
-                            '3. Menu Items: ${status(step3)}',
+                            '4. Menu Items: ${status(step3)}',
                             style: step3 ? doneStyle : pendingStyle,
                           ),
                           Text(
-                            '4. Review & Publish: ${status(step4)}',
+                            '5. Review & Publish: ${status(step4)}',
                             style: step4 ? doneStyle : pendingStyle,
                           ),
                           const SizedBox(height: 16),
@@ -411,13 +419,15 @@ class OwnerHQDashboardScreen extends StatelessWidget {
                               onPressed: () {
                                 final String initialKey = !step1
                                     ? 'onboarding_feature_setup'
-                                    : !step2
-                                        ? 'onboarding_menu_foundation'
-                                        : !step3
-                                            ? 'onboardingMenuItems'
-                                            : !step4
-                                                ? 'onboardingReview'
-                                                : 'onboardingMenu';
+                                    : !stepBranding
+                                        ? 'onboarding_design_branding'
+                                        : !step2
+                                            ? 'onboarding_menu_foundation'
+                                            : !step3
+                                                ? 'onboardingMenuItems'
+                                                : !step4
+                                                    ? 'onboardingReview'
+                                                    : 'onboardingMenu';
                                 Navigator.of(context).push(
                                   MaterialPageRoute<void>(
                                     builder: (_) => HqOnboardingShellScreen(
@@ -530,9 +540,11 @@ class QuickLinksPanel extends StatelessWidget {
                     final p = Provider.of<OnboardingProgressProviderImpl>(
                         context,
                         listen: false);
-                    final initialKey =
-                        !p.isStepComplete('onboarding_feature_setup')
-                            ? 'onboarding_feature_setup'
+                    final initialKey = !p
+                            .isStepComplete('onboarding_feature_setup')
+                        ? 'onboarding_feature_setup'
+                        : !p.isStepComplete('onboarding_design_branding')
+                            ? 'onboarding_design_branding'
                             : !p.isStepComplete('onboarding_menu_foundation')
                                 ? 'onboarding_menu_foundation'
                                 : !p.isStepComplete('onboardingMenuItems')

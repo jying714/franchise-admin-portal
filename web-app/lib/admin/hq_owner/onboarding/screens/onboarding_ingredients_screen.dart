@@ -386,143 +386,6 @@ class _OnboardingIngredientsScreenState
     //     '[OnboardingIngredientsScreen] BUILD OK! INGREDIENTS: ${metadataProvider.ingredients.length}');
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-        automaticallyImplyLeading: false,
-        title: Text(
-          loc.onboardingIngredients,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-        centerTitle: false,
-        actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.data_object),
-              tooltip: loc.importExport,
-              onPressed: () {
-                final provider = Provider.of<IngredientMetadataProviderImpl>(
-                    context,
-                    listen: false);
-                IngredientMetadataJsonImportExportDialog.show(
-                    context, provider);
-              },
-            ),
-          ),
-          Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.library_add),
-              tooltip: loc.selectIngredientTemplate,
-              onPressed: () async {
-                // print(
-                //     '[OnboardingIngredientsScreen] Template import button pressed');
-                final franchiseId = Provider.of<shared.FranchiseProvider>(
-                        context,
-                        listen: false)
-                    .franchiseId;
-
-                // 1. Let user select and load the template ingredients (returns list or null)
-                final List<shared.IngredientMetadata>? templateIngredients =
-                    await IngredientMetadataTemplatePickerDialog.show(context);
-
-                if (templateIngredients == null || templateIngredients.isEmpty)
-                  return;
-
-                final typeProvider = Provider.of<shared.IngredientTypeProvider>(
-                    context,
-                    listen: false);
-                final existingTypeIds =
-                    typeProvider.ingredientTypes.map((t) => t.id).toSet();
-
-                // 2. Find all imported ingredients with missing types
-                final ingredientsWithMissingTypes = templateIngredients
-                    .where((ing) => !existingTypeIds.contains(ing.typeId))
-                    .toList();
-
-                List<shared.IngredientMetadata> allToImport = [];
-
-                if (ingredientsWithMissingTypes.isNotEmpty) {
-                  // 3. Show resolution dialog, block until all are mapped or skipped
-                  final resolved =
-                      await showDialog<List<shared.IngredientMetadata>>(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (dialogContext) => MissingTypeResolutionDialog(
-                      ingredientsWithMissingTypes: ingredientsWithMissingTypes,
-                      availableTypes: typeProvider.ingredientTypes,
-                      dialogContext: dialogContext,
-                      onResolved: (fixed) {
-                        Navigator.of(dialogContext)
-                            .pop(fixed); // GOOD: local dialog context
-                      },
-                    ),
-                  );
-
-                  // Merge: valid+resolved
-                  allToImport = [
-                    ...templateIngredients
-                        .where((ing) => existingTypeIds.contains(ing.typeId)),
-                    if (resolved != null) ...resolved,
-                  ];
-                } else {
-                  allToImport = templateIngredients;
-                }
-
-                // 4. Add resolved/valid ingredients to provider
-                if (allToImport.isNotEmpty) {
-                  final metadataProvider =
-                      Provider.of<shared.IngredientMetadataProvider>(context,
-                          listen: false);
-                  // print(
-                  //     '[OnboardingIngredientsScreen] About to add ${allToImport.length} imported ingredients');
-                  for (final ing in allToImport) {
-                    // print(
-                    //     '[OnboardingIngredientsScreen][DEBUG] New ingredient: id=${ing.id}, typeId=${ing.typeId}, name=${ing.name}');
-                    assert(ing.typeId != null && ing.typeId!.isNotEmpty,
-                        'ingredient typeId must not be null/empty!');
-                  }
-
-                  metadataProvider.addImportedIngredients(allToImport);
-                  // print(
-                  //     '[Provider] after add, ingredients.length=${metadataProvider.ingredients.length}, staged=${metadataProvider.stagedIngredients.length}');
-                  for (final ing in metadataProvider.ingredients) {
-                    // print(
-                    //     '[Provider][DEBUG] Stored ingredient: id=${ing.id}, typeId=${ing.typeId}, name=${ing.name}');
-                    assert(ing.typeId != null && ing.typeId!.isNotEmpty,
-                        'ingredient typeId must not be null/empty!');
-                  }
-                  // print(
-                  //     '[OnboardingIngredientsScreen] build() after template import and dialog resolution. Ingredients: ${metadataProvider.ingredients.length}');
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    // print(
-                    //     '[OnboardingIngredientsScreen][STACK] ModalRoute.of(context): ${ModalRoute.of(context)}');
-                    // print(
-                    //     '[OnboardingIngredientsScreen][STACK] context.mounted: $mounted');
-                  });
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content:
-                          Text(loc.ingredientsImported(allToImport.length)),
-                    ),
-                  );
-                }
-              },
-            ),
-          ),
-          Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.check_circle_outline),
-              tooltip: loc.markAsComplete,
-              onPressed: _markComplete,
-            ),
-          ),
-        ],
-      ),
       floatingActionButton: Builder(
         builder: (context) {
           final loc = AppLocalizations.of(context);
@@ -545,6 +408,104 @@ class _OnboardingIngredientsScreenState
         padding: DesignTokens.gridPadding,
         child: Column(
           children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    loc.onboardingIngredients,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ),
+                Builder(
+                  builder: (context) => IconButton(
+                    icon: const Icon(Icons.library_add),
+                    tooltip: loc.selectIngredientTemplate,
+                    onPressed: () async {
+                      final franchiseId = Provider.of<shared.FranchiseProvider>(
+                              context,
+                              listen: false)
+                          .franchiseId;
+
+                      final List<shared.IngredientMetadata>?
+                          templateIngredients =
+                          await IngredientMetadataTemplatePickerDialog.show(
+                              context);
+
+                      if (templateIngredients == null ||
+                          templateIngredients.isEmpty) {
+                        return;
+                      }
+
+                      final typeProvider =
+                          Provider.of<shared.IngredientTypeProvider>(context,
+                              listen: false);
+                      final existingTypeIds =
+                          typeProvider.ingredientTypes.map((t) => t.id).toSet();
+
+                      final ingredientsWithMissingTypes = templateIngredients
+                          .where((ing) => !existingTypeIds.contains(ing.typeId))
+                          .toList();
+
+                      List<shared.IngredientMetadata> allToImport = [];
+
+                      if (ingredientsWithMissingTypes.isNotEmpty) {
+                        final resolved =
+                            await showDialog<List<shared.IngredientMetadata>>(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (dialogContext) =>
+                              MissingTypeResolutionDialog(
+                            ingredientsWithMissingTypes:
+                                ingredientsWithMissingTypes,
+                            availableTypes: typeProvider.ingredientTypes,
+                            dialogContext: dialogContext,
+                            onResolved: (fixed) {
+                              Navigator.of(dialogContext).pop(fixed);
+                            },
+                          ),
+                        );
+
+                        allToImport = [
+                          ...templateIngredients.where(
+                              (ing) => existingTypeIds.contains(ing.typeId)),
+                          if (resolved != null) ...resolved,
+                        ];
+                      } else {
+                        allToImport = templateIngredients;
+                      }
+
+                      if (allToImport.isNotEmpty) {
+                        final metadataProvider =
+                            Provider.of<shared.IngredientMetadataProvider>(
+                                context,
+                                listen: false);
+                        for (final ing in allToImport) {
+                          assert(ing.typeId != null && ing.typeId!.isNotEmpty,
+                              'ingredient typeId must not be null/empty!');
+                        }
+
+                        metadataProvider.addImportedIngredients(allToImport);
+                        for (final ing in metadataProvider.ingredients) {
+                          assert(ing.typeId != null && ing.typeId!.isNotEmpty,
+                              'ingredient typeId must not be null/empty!');
+                        }
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                loc.ingredientsImported(allToImport.length)),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             if (metadataProvider.isDirty)
               Row(
                 children: [

@@ -4,11 +4,13 @@ import 'package:shared_core/shared_core.dart' as shared; // Phase 3 scoped fix
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/core/utils/onboarding_navigation_utils.dart';
 import 'package:franchise_admin_portal/core/providers/onboarding_review_provider_impl.dart';
+import 'package:franchise_admin_portal/core/providers/onboarding_progress_provider_impl.dart';
 
 class ReviewSummaryTable extends StatelessWidget {
   // Updated for 4-Step Onboarding
   static const List<String> _sectionOrder = [
     OnboardingSections.features,
+    OnboardingSections.designBranding,
     OnboardingSections.coreMenuFoundation,
     OnboardingSections.menuItems,
     OnboardingSections.reviewPublish,
@@ -107,6 +109,43 @@ class ReviewSummaryTable extends StatelessWidget {
     List<shared.OnboardingValidationIssue> issues,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
+
+    // Design & Branding is progress-key driven (no schema issues list).
+    if (section == OnboardingSections.designBranding ||
+        section == 'Design & Branding') {
+      // Watch Impl (ChangeNotifier), not the abstract Proxy — so Save on Step 2 rebuilds Review.
+      final brandingDone = Provider.of<OnboardingProgressProviderImpl>(context)
+          .isStepComplete('onboarding_design_branding');
+      final statusWidget = brandingDone
+          ? _statusRow(
+              Icons.check_circle_rounded, 'Complete', Colors.green[700]!,
+              iconColor: Colors.green[600]!)
+          : _statusRow(Icons.cancel_rounded, 'Incomplete', colorScheme.error);
+      final issuesWidget = Text(
+        brandingDone ? '0' : '1',
+        style: TextStyle(
+          color: brandingDone ? Colors.green[800] : colorScheme.error,
+          fontWeight: FontWeight.bold,
+          fontSize: 15,
+        ),
+        textAlign: TextAlign.center,
+      );
+      final sectionWidget = Padding(
+        padding: const EdgeInsets.symmetric(vertical: 11.0, horizontal: 10),
+        child: Text(
+          section,
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 16,
+            color: colorScheme.onSurface.withOpacity(0.89),
+            fontFamily: DesignTokens.fontFamily,
+          ),
+        ),
+      );
+      return TableRow(
+        children: [sectionWidget, statusWidget, issuesWidget],
+      );
+    }
 
     final criticalCount = issues
         .where((e) =>

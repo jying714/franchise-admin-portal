@@ -27,12 +27,14 @@ class OnboardingSections {
   OnboardingSections._();
 
   static const features = 'Features';
+  static const designBranding = 'Design & Branding';
   static const coreMenuFoundation = 'Core Menu Foundation';
   static const menuItems = 'Menu Items';
   static const reviewPublish = 'Review & Publish';
 
   static const all = <String>[
     features,
+    designBranding,
     coreMenuFoundation,
     menuItems,
     reviewPublish,
@@ -47,6 +49,9 @@ const Map<String, String> _sectionKeyMap = {
   'onboarding_menu_foundation': 'onboarding_menu_foundation',
   'onboardingmenuitems': 'onboardingMenuItems',
   'onboardingreview': 'onboardingReview',
+  'onboarding_design_branding': 'onboarding_design_branding',
+  'design & branding': 'onboarding_design_branding',
+  'design branding': 'onboarding_design_branding',
 
   // Human / alias variants
   'features': 'onboarding_feature_setup',
