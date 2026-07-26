@@ -76,7 +76,13 @@ class _SchemaIssueSidebarState extends State<SchemaIssueSidebar> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Text('Schema Issues', style: shared.UiConfig.titleStyle),
+                Text(
+                  'Schema Issues',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
                 const Spacer(),
                 Chip(
                   label: Text('${unresolved.length} unresolved'),
@@ -121,24 +127,65 @@ class _SchemaIssueSidebarState extends State<SchemaIssueSidebar> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // AFTER
                               Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Icon(Icons.error_outline,
-                                      color: Colors.orange),
+                                  Icon(
+                                    issue.severity == 'error'
+                                        ? Icons.error_outline
+                                        : Icons.warning_amber_outlined,
+                                    color: issue.severity == 'error'
+                                        ? Colors.red
+                                        : Colors.orange,
+                                  ),
                                   const SizedBox(width: 12),
                                   Expanded(
-                                    child: Text(
-                                      issue.displayMessage,
-                                      style: shared.UiConfig.bodyStyle,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          issue.displayMessage,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.copyWith(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Field: ${issue.field}'
+                                          '${issue.context != null ? ' · ${issue.context}' : ''}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
+                                        ),
+                                        Text(
+                                          'Current: ${issue.missingReference.isEmpty ? "(empty)" : issue.missingReference}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
+                                                fontFamily: 'monospace',
+                                              ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Current: ${issue.missingReference ?? "unknown"}',
-                                style: shared.UiConfig.bodyStyle
-                                    .copyWith(fontSize: 13),
                               ),
                               const SizedBox(height: 12),
                               _RepairDropdown(

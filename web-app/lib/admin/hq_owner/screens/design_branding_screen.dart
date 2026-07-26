@@ -250,7 +250,8 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
                         children: [
                           _swatchColumn(
                             context,
-                            color: DesignTokens.primaryColor,
+                            color: _colorFromHex(draftPrimaryHex) ??
+                                DesignTokens.primaryColor,
                             label: 'Primary',
                             hex: draftPrimaryHex.isEmpty
                                 ? franchiseProvider.currentPrimaryColorHex
@@ -259,7 +260,8 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
                           const SizedBox(width: 16),
                           _swatchColumn(
                             context,
-                            color: DesignTokens.secondaryColor,
+                            color: _colorFromHex(draftSecondaryHex) ??
+                                DesignTokens.secondaryColor,
                             label: 'Secondary',
                             hex: draftSecondaryHex.isEmpty
                                 ? franchiseProvider.currentSecondaryColorHex

@@ -29,42 +29,37 @@ class MenuItemListTile extends StatelessWidget {
     final loc = AppLocalizations.of(context)!;
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+      ),
       color:
           hasSchemaErrors ? colorScheme.errorContainer.withOpacity(0.35) : null,
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Checkbox(
-          value: isSelected,
-          onChanged: onSelect,
-        ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                item.name,
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ),
-            if (hasSchemaErrors)
-              Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Icon(
-                  Icons.error_outline,
-                  color: colorScheme.error,
-                  size: 20,
-                ),
-              ),
-          ],
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        leading: const Icon(Icons.drag_handle),
+        title: Text(
+          item.name,
+          style: theme.textTheme.titleMedium,
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (item.description.isNotEmpty) Text(item.description),
-            Text('${loc.price ?? "Price"}: \$${item.price.toStringAsFixed(2)}'),
+            if (item.description.isNotEmpty)
+              Text(
+                item.description,
+                style: theme.textTheme.bodySmall,
+              ),
+            Text(
+              '${loc.price ?? "Price"}: \$${item.price.toStringAsFixed(2)}',
+              style: theme.textTheme.bodySmall,
+            ),
             if (item.sizes != null && item.sizes!.isNotEmpty)
-              Text('${loc.sizes ?? "Sizes"}: ${item.sizes!.join(', ')}'),
+              Text(
+                '${loc.sizes ?? "Sizes"}: ${item.sizes!.join(', ')}',
+                style: theme.textTheme.bodySmall,
+              ),
             if (item.highlightTags != null && item.highlightTags!.isNotEmpty)
               Wrap(
                 spacing: 4,
@@ -79,7 +74,18 @@ class MenuItemListTile extends StatelessWidget {
         ),
         trailing: Wrap(
           spacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
+            if (hasSchemaErrors)
+              Icon(
+                Icons.error_outline,
+                color: colorScheme.error,
+                size: 20,
+              ),
+            Checkbox(
+              value: isSelected,
+              onChanged: onSelect,
+            ),
             IconButton(
               icon: const Icon(Icons.edit),
               tooltip: loc.edit ?? 'Edit',
@@ -89,7 +95,7 @@ class MenuItemListTile extends StatelessWidget {
               icon: const Icon(Icons.delete_outline),
               tooltip: loc.delete ?? 'Delete',
               onPressed: onDelete,
-            )
+            ),
           ],
         ),
       ),
