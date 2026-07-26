@@ -15,6 +15,8 @@ class FranchisePickerDropdown extends StatelessWidget {
 
     // Proper shared. access — no shadowing
     final franchiseProvider = Provider.of<shared.FranchiseProvider>(context);
+    debugPrint(
+        '[FP-PROOF] PICKER read hash=${identityHashCode(franchiseProvider)} id=${franchiseProvider.franchiseId}');
     final adminUser = Provider.of<shared.AdminUserProvider>(context).user;
 
     final franchises = franchiseProvider.viewableFranchises;

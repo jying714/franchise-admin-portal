@@ -118,7 +118,13 @@ void main() {
         providers: [
           ChangeNotifierProvider(create: (_) => UserProfileNotifier()),
           ChangeNotifierProvider<shared.FranchiseProvider>(
-              create: (_) => shared.FranchiseProvider(storage)),
+              lazy: false,
+              create: (_) {
+                final fp = shared.FranchiseProvider(storage);
+                debugPrint(
+                    '[FP-PROOF] OUTER create hash=${identityHashCode(fp)}');
+                return fp;
+              }),
           Provider<shared.AuthService>.value(value: authService),
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           Provider<shared.FirestoreService>.value(value: firestoreService),
@@ -131,6 +137,8 @@ void main() {
             create: (_) => FranchiseSubscriptionProviderImpl(
                 service: FranchiseSubscriptionServiceImpl(), franchiseId: ''),
             update: (_, fp, prev) {
+              debugPrint(
+                  '[FP-PROOF] OUTER subscription proxy fp hash=${identityHashCode(fp)} id=${fp.franchiseId}');
               final notifier = prev ??
                   FranchiseSubscriptionProviderImpl(
                       service: FranchiseSubscriptionServiceImpl(),
@@ -204,6 +212,8 @@ class _FranchiseAuthenticatedRootState
           Provider.of<shared.FranchiseProvider>(context, listen: false);
       // Mirrors mobile UiConfig.setFranchiseProvider and enables DesignTokens live getters.
       DesignTokens.setFranchiseProvider(franchiseProvider);
+      debugPrint(
+          '[FP-PROOF] DesignTokens.setFranchiseProvider hash=${identityHashCode(franchiseProvider)}');
       final firestoreService =
           Provider.of<shared.FirestoreService>(context, listen: false);
 
@@ -492,6 +502,8 @@ class FranchiseAppRootSplit extends StatelessWidget {
         // AUTHENTICATED - Force dashboard
         // AUTHENTICATED - Force dashboard
         // AUTHENTICATED - Force dashboard
+        debugPrint(
+            '[FP-PROOF] PARENT scope FP hash=${identityHashCode(Provider.of<shared.FranchiseProvider>(context, listen: false))}');
         return MultiProvider(
           providers: [
             // === Core Providers ===
@@ -502,10 +514,6 @@ class FranchiseAppRootSplit extends StatelessWidget {
             // === ADMIN FIRESTORE SERVICE ===
             Provider<shared.FirestoreService>(
                 create: (_) => AdminFirestoreService()),
-
-            // === SINGLE SOURCE OF TRUTH ===
-            ChangeNotifierProvider<shared.FranchiseProvider>(
-                create: (_) => shared.FranchiseProvider(AppLocalStorage())),
 
             // === Franchise Info ===
             ChangeNotifierProxyProvider2<shared.FranchiseProvider,
