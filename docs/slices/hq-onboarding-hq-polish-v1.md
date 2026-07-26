@@ -1,12 +1,12 @@
 # Slice: HQ Onboarding & HQ Dashboard Polish v1
 
-**Status:** Spec locked — implementation open  
+**Status:** Spec locked — implementation open (§3 decisions locked July 26, 2026)  
 **Branch:** `feat/onboarding-4step`  
 **Created:** July 26, 2026  
-**Authority:** This file + STATUS.md + human product decisions below  
+**Authority:** This file + STATUS.md  
 **Depends on (done):** Menu Items v1; FranchiseProvider ChangeNotifier + single root instance; live HQ branding on switch; picker stale-response guard  
 **Owner surfaces:** HQ Owner onboarding shell + Owner HQ dashboard  
-**Agent policy:** Derive **surgical outcome tasks** from this card only after human locks the open product choices in §3. No redesign of Menu Items v1. No second FranchiseProvider. No new DesignTokens/BrandingConfig fields.
+**Agent policy:** Surgical outcome tasks from this card. No Menu Items v1 redesign. No second FranchiseProvider. No new DesignTokens/BrandingConfig fields. Progress key for branding is **fixed below** — do not invent alternate key names.
 
 ---
 
@@ -16,10 +16,11 @@ Make onboarding and the HQ home **honest for MVP**:
 
 - No dead navigation, no false Review errors, no fake “complete” controls.
 - Foundation and Menu Items share the same preview/FAB layout language.
-- Features and dashboard cards that are not production-ready stay **visible but labeled In development** (not silently broken).
-- Franchise switch continues to scope branding **and** domain data (already proven); polish must not regress that.
+- Features and dashboard cards that are not production-ready stay **visible but labeled In development**.
+- **Design & Branding is a first-class onboarding step** between Feature Setup and Core Menu Foundation.
+- Franchise switch continues to scope branding and domain data; polish must not regress that.
 
-**Success (v1):** Owner can walk Feature Setup → Foundation → Menu Items → Review without false blockers; foundation tabs have no JSON/back-arrow noise; Step 3 FAB matches Step 2; HQ cards either work franchise-scoped or show In development; optional path for branding in onboarding is decided and either implemented lightly or explicitly deferred.
+**Success (v1):** Owner walks Feature Setup → **Design & Branding** → Foundation → Menu Items → Review without false blockers; foundation tabs have no JSON/back-arrow/fake mark-complete; Step 3 FAB matches Step 2; HQ cards work franchise-scoped or show In development; billing/invoices are a single honest card story.
 
 ---
 
@@ -27,48 +28,50 @@ Make onboarding and the HQ home **honest for MVP**:
 
 | Fact | Detail |
 |------|--------|
-| Onboarding host | `HqOnboardingShellScreen` only; Admin onboarding tree deleted |
+| Onboarding host | `HqOnboardingShellScreen` only |
 | Progress path | `franchises/{id}/onboarding_progress/progress` |
-| Product keys | `onboarding_feature_setup`, `onboarding_menu_foundation`, `onboardingMenuItems`, `onboardingReview` |
-| Foundation product complete | Save & Continue / explicit foundation complete — **not** tab-only mark complete |
-| Menu Items | Slice closed; shared `MobileMenuPreviewCard`; `deleteMenuItem` / `deleteMenuItemAndPersist` |
-| FranchiseProvider | **Single** web instance at app root; `ChangeNotifier`; branding setters call `_bumpConfig()` |
-| Live branding | `DesignTokens` ← FranchiseProvider; MaterialApp `appBarTheme` + HQ AppBar use primary |
-| Picker | After id change, load doc; apply only if `franchiseId == requestedId` |
+| Product keys (final set) | `onboarding_feature_setup` → **`onboarding_design_branding`** → `onboarding_menu_foundation` → `onboardingMenuItems` → `onboardingReview` |
+| Foundation product complete | Save & Continue / explicit foundation complete — **not** tab mark complete |
+| Menu Items | Slice closed; `MobileMenuPreviewCard`; `deleteMenuItem` / `deleteMenuItemAndPersist` |
+| FranchiseProvider | **Single** web instance at app root; branding setters call `_bumpConfig()` |
+| Design & Branding UI | Reuse `design_branding_screen.dart` (embed or shell section); Save already writes franchise + `config/ui_config` |
 
 ---
 
-## 3. Locked / pending product decisions
+## 3. Locked product decisions (July 26, 2026)
 
-### 3.1 Design & Branding in onboarding (pending human pick)
+### 3.1 Design & Branding in onboarding — **A (LOCKED)**
 
-| Option | Description | v1 lean |
-|--------|-------------|--------|
-| **A. New shell section** | e.g. Identity step before or after Feature Setup; embed/reuse `DesignBrandingScreen`; new progress key only if human approves key name | Heavier |
-| **B. Review gate only** | Review requires appName + primary/secondary present; CTA opens Design & Branding | Lighter |
-| **C. Defer** | HQ card only (status quo) | Fastest |
+- **New onboarding step** between Feature Setup and Core Menu Foundation.
+- **Section key:** `onboarding_design_branding`
+- **Progress product key:** `onboarding_design_branding` (same string)
+- **UI:** Reuse existing Design & Branding screen/flow inside HQ shell (no duplicate branding model).
+- **Complete when:** Owner saves branding successfully (or explicit Mark complete only if Save already persisted — prefer Save success → enable continue / mark step).
+- **Navigation updates required:**
+  - Shell section order / sidebar
+  - Feature Setup success → `switchToSection('onboarding_design_branding')` (not straight to foundation)
+  - Design & Branding continue → `onboarding_menu_foundation`
+  - HQ **Continue onboarding** + **Quick Link** first-incomplete cascade must insert the new key after feature setup and before foundation
+  - Review / summary `N/4` becomes **N/5** product steps if panel counts product keys
 
-**Until chosen:** no agent tasks that invent progress keys or restructure the 4-step order.
+### 3.2 Foundation tab “Mark complete” — **REMOVE (LOCKED)**
 
-### 3.2 Foundation tab “Mark complete”
+- Remove Mark complete controls from Ingredient Types, Ingredients, and Categories onboarding chrome.
+- Do **not** wire them to `onboarding_menu_foundation`.
+- Sub-key detail % may remain if already driven by data counts; no fake tab complete buttons.
 
-| Option | Rule |
-|--------|------|
-| **Preferred** | **Remove** mark-complete from Ingredient Types / Ingredients / Categories chrome when it does not write product keys |
-| Alternate | Keep only if wired to **sub-keys** for foundation detail % — never mark `onboarding_menu_foundation` from tab-only |
+### 3.3 Billing summary vs Invoices — **MERGE TO ONE IN-DEV CARD (LOCKED)**
 
-### 3.3 Billing summary vs Invoices (HQ)
+Human accepted recommendation:
 
-| Option | Rule |
-|--------|------|
-| **Preferred** | **One** billing/invoices story for MVP: either real invoices card **or** combined “Billing & invoices — In development” if both are mock/dead |
-| Alternate | Keep both only if each has distinct working data (plan/subscription vs invoice list) |
+- **Do not** show two competing cards (Billing summary + Invoices) while both lack solid MVP data/routes.
+- **Replace with one** card: **“Billing & invoices”** with **In development** state (no dead “View all” that 404s).
+- When real invoice list + route ship later, expand this card or split under a new slice — not in polish v1 unless routes already work end-to-end (then human may re-open).
 
 ### 3.4 Feature Setup “In development”
 
-- Human owns the **GA vs dev** list (Firestore `platform_features` status field preferred; else const allowlist in screen).
-- UI: row still visible; toggle **disabled**; chip/note **In development**.
-- Do not delete platform feature docs from this slice.
+- Human owns GA vs dev list (Firestore status preferred; else const allowlist).
+- Dev: visible, toggle disabled, **In development** note.
 
 ---
 
@@ -76,188 +79,126 @@ Make onboarding and the HQ home **honest for MVP**:
 
 ### W1 — Foundation chrome honesty (Step 2)
 
-**Files (expected):**
+**Files:** `onboarding_ingredient_type_screen.dart`, `onboarding_ingredients_screen.dart`, `onboarding_categories_screen.dart`, foundation shell if needed.
 
-- `onboarding_ingredient_type_screen.dart`
-- `onboarding_ingredients_screen.dart`
-- `onboarding_categories_screen.dart`
-- `onboarding_menu_foundation_screen.dart` (if chrome lives here)
+1. Remove competing **back arrows** (shell owns back).
+2. Remove **JSON import/export** entry points from onboarding UI.
+3. **Remove** tab Mark complete (§3.2).
+4. Leave Continue / orphan gates / product key writers intact.
 
-**Requirements:**
-
-1. **Remove back arrow** on Ingredient Types and Categories when embedded in HQ shell (shell owns back). Same for Ingredients if it still shows a competing leading back.
-2. **Remove JSON import/export entry points** from Types, Ingredients, and Categories onboarding surfaces (dialogs may remain in tree unused; no user-facing buttons/menus on these screens).
-3. **Tab mark complete:** implement §3.2 (remove or sub-key only).
-4. Do not change foundation Continue gates, orphan rules, or product key writers except as required by §3.2.
-
-**Exit:** No JSON CTAs; no redundant AppBar back; no non-functional “Mark complete” that implies product step done.
+**Exit:** No JSON CTAs; no redundant back; no tab Mark complete.
 
 ---
 
 ### W2 — Step 3 FAB + preview parity
 
-**Files:**
+**Files:** `onboarding_menu_items_screen.dart`, foundation screen (reference), `mobile_menu_preview_card.dart`.
 
-- `onboarding_menu_items_screen.dart`
-- `onboarding_menu_foundation_screen.dart` (reference layout)
-- `mobile_menu_preview_card.dart` (size source of truth — avoid divergent chrome)
-
-**Requirements:**
-
-1. **FAB:** “Add menu item” sits at **bottom of the list (left) pane**, same visual language as Step 2 foundation FAB placement — not below/under the preview column.
-2. **Preview sizing:** Step 2 and Step 3 call sites constrain the shared card the same way (same flex/rail width pattern). Phone chrome remains 340×680 inside the card; do not fork a second phone widget.
-
-**Exit:** Side-by-side smoke: FAB position matches; preview physical size matches within normal layout tolerance.
+1. FAB on **list pane** bottom-end (Step 2 parity).
+2. Same parent constraints for shared preview card; do not fork chrome.
 
 ---
 
 ### W3 — Review false positive (“menu management”)
 
-**Problem:** Step 4 reports Feature Setup issue “enable menu management” / Fix now when all features appear enabled.
+1. Tracer: Review rule → feature key → Feature Setup persist path.
+2. Align keys or drop obsolete rule.
+3. No new schema/flags without approval.
 
-**Requirements:**
-
-1. **Human/Grok tracer first:** locate Review rule → feature key string → Feature Setup persist path (`FranchiseFeatureProvider` / Firestore).
-2. Align key names **or** remove obsolete rule if feature is not part of MVP gate.
-3. No schema invention; no new feature flags without human approval.
-
-**Exit:** With features enabled for franchise, Review does not show that false blocker.
+**Exit:** Features enabled ⇒ no false menu-management blocker.
 
 ---
 
 ### W4 — Feature Setup in-development UX
 
-**Files:**
-
-- `onboarding_feature_setup_screen.dart`
-- `feature_toggle_tile.dart` (if shared)
-
-**Requirements:**
-
-1. Apply §3.4 list.
-2. Dev features: visible, toggle disabled (or non-interactive), **In development** note.
-3. GA features unchanged in behavior.
-4. Save / mark complete still only reflect real toggles.
-
-**Exit:** Owner cannot “enable” vaporware; UI explains why.
+Apply §3.4 after GA list exists.
 
 ---
 
 ### W5 — HQ Owner dashboard MVP honesty
 
-**Files:**
-
-- `owner_hq_dashboard_screen.dart`
-- Related cards: invoices, billing summary, payout status, quick links, financial KPI, etc.
-- Routes referenced by CTAs
-
-**Requirements:**
-
-1. **Franchise scope:** Every live metric card uses current `franchiseId` from FranchiseProvider (single instance). Re-smoke after switch.
-2. **Dead links:** “View all payouts”, “Invoices”, Quick Link targets — either wire to existing screens **or** disable CTA + In development (no silent no-op / broken named routes).
-3. **Quick Links:** Only ship working targets (Onboarding works; add Design & Branding if desired; hide/disable others until routes work).
-4. **Billing vs Invoices:** implement §3.3.
-5. **Card sizing:** Live Branding Preview and Onboarding Progress use the **same grid rhythm** as peer cards (constrained height/aspect consistent with dashboard grid — not a full-bleed outlier unless intentional).
-6. Non-MVP / mock-only cards: show content shell + **In development** rather than fake numbers that imply production data.
-
-**Exit:** No broken CTAs; clear MVP vs in-dev; branding + onboarding cards sized with grid; franchise switch still updates branding chrome.
+1. Franchise-scoped live cards only.
+2. Dead payouts/quick-link targets → wire or **In development** / remove.
+3. **§3.3:** single **Billing & invoices** in-dev card (remove duplicate Billing summary + Invoices pair).
+4. Live Branding + Onboarding Progress sized to grid peers.
+5. Quick Links: Onboarding + Design & Branding (and any other working routes only).
 
 ---
 
-### W6 — Design & Branding in onboarding (optional)
+### W6 — Design & Branding onboarding step (**A — in scope**)
 
-Only after §3.1 choice.
+1. Register section `onboarding_design_branding` in HQ shell order **after** feature setup, **before** foundation.
+2. Persist progress key `onboarding_design_branding` via `shared.OnboardingProgressProvider` only.
+3. Embed/reuse Design & Branding UI; Save path unchanged (franchise doc + ui_config).
+4. Update handoffs: Feature Setup → branding step → foundation.
+5. Update first-incomplete cascades (Continue + Quick Link) and summary panel key list (5 steps).
+6. Sidebar labels: e.g. “Design & Branding”.
 
-- **If B (Review gate):** Review checks branding presence; CTA → existing Design & Branding route; no new progress key required unless human wants one.
-- **If A (new step):** Human names section key + progress key; embed existing screen; update shell order + Continue cascade + HQ Continue/Quick Link first-incomplete lists.
-- **If C:** Document defer in this file + STATUS; no code.
+**Exit:** New step appears in order; complete/incomplete toggles only that key; Continue path does not skip it when incomplete.
 
 ---
 
 ## 5. Explicit out of scope
 
-- Reopening Menu Items v1 architecture / schema sidebar redesign
-- Soft-delete menu items; JSON reintroduction on foundation/menu
-- Second `FranchiseProvider` under authenticated MultiProvider
-- New DesignTokens / BrandingConfig / FeatureConfig fields
-- Full Stripe production integration (decisions only; implementation separate)
-- Mobile app feature parity in this slice
-- Liberty `ingredientId` type noise
-- Color picker UI (downstream of Design & Branding)
+- Menu Items v1 redesign; soft-delete; JSON reintroduction
+- Second FranchiseProvider; new DesignTokens/BrandingConfig fields
+- Full Stripe production; color picker
+- Liberty ingredientId noise
+- Splitting billing/invoices back into two live cards without working data
 
 ---
 
-## 6. Implementation order (recommended)
+## 6. Implementation order
 
-1. **W3** Review false positive (trust)  
+1. **W3** Review false positive  
 2. **W1** Foundation chrome  
-3. **W2** FAB + preview parity  
-4. **W4** Feature in-dev flags (after GA list locked)  
-5. **W5** HQ dashboard audit  
-6. **W6** Branding-in-onboarding if chosen  
-
-xAI: prefer one outcome per task, named files, quote-first, max 1–2 regions; human tracers for W3 and §3 decisions first.
+3. **W2** FAB + preview  
+4. **W6** Branding step (shell + progress + cascades)  
+5. **W4** Feature in-dev (after GA list)  
+6. **W5** HQ dashboard (including billing merge)  
 
 ---
 
 ## 7. Acceptance checklist
 
 ### Foundation
-
-- [ ] No back arrow competing with shell on types/categories (and ingredients if applicable)
-- [ ] No JSON import/export actions on types/ingredients/categories onboarding UI
-- [ ] No non-functional product-level Mark complete on foundation tabs
+- [ ] No competing back arrow on types/categories/ingredients
+- [ ] No JSON import/export on those onboarding UIs
+- [ ] Tab Mark complete **removed**
 
 ### Menu Items / preview
-
-- [ ] Add Menu Item FAB on list pane bottom-end (Step 2 parity)
-- [ ] Step 2 vs Step 3 preview size parity with shared card
+- [ ] FAB list-pane bottom-end
+- [ ] Preview size parity with foundation
 
 ### Review / features
+- [ ] No false menu-management issue
+- [ ] Non-GA features In development + non-toggleable
 
-- [ ] No false “enable menu management” when features enabled
-- [ ] Non-GA features show In development and cannot be toggled on as if live
+### Branding step
+- [ ] Shell order: feature setup → **design branding** → foundation → menu items → review
+- [ ] Progress key `onboarding_design_branding` only for this step
+- [ ] First-incomplete cascades include the new key
+- [ ] Summary / Continue treat 5 product steps correctly
 
 ### HQ dashboard
-
-- [ ] Payouts / Invoices / Quick Links: working or explicitly In development
-- [ ] Billing vs Invoices decision implemented
-- [ ] Live Branding + Onboarding Progress card sizing aligned to grid
-- [ ] Franchise switch still live-brands AppBar + Live Branding card
-
-### Branding-in-onboarding
-
-- [ ] §3.1 decided; A/B implemented or C deferred in STATUS
+- [ ] Single Billing & invoices in-dev (or successor) — not two dead cards
+- [ ] Payouts/Quick Links honest
+- [ ] Branding + onboarding cards grid-sized
+- [ ] Franchise switch still live-brands
 
 ---
 
-## 8. Smoke scripts
+## 8. Smoke
 
-**Onboarding**
-
-1. Feature Setup → only GA toggles interact; save → foundation.  
-2. Foundation tabs: no JSON; no bogus back; Continue still gates orphans/counts.  
-3. Menu Items: FAB position; preview size vs foundation.  
-4. Review: no false menu-management issue with features on.  
-
-**HQ**
-
-1. Switch franchise: AppBar + Live Branding + progress track.  
-2. Each card CTA: lands on real screen or disabled/in-dev.  
-3. Grid visual: branding + onboarding cards not wildly oversized vs neighbors.  
+1. Feature Setup save → lands on **Design & Branding** step.  
+2. Save branding → can continue to foundation; progress key set.  
+3. Skip branding incomplete → Continue/Quick Link still offers branding first when prior steps done.  
+4. Foundation: no JSON/back/mark-complete noise.  
+5. Menu Items FAB + preview vs foundation.  
+6. Review: no false feature blocker.  
+7. HQ: one billing card; no broken invoice/payout CTAs; switch franchise branding OK.  
 
 ---
 
-## 9. Related completed work (context only)
-
-| Item | Ref |
-|------|-----|
-| Menu Items v1 | `docs/slices/hq-onboarding-menu-items-v1.md` |
-| Design & Branding v1 | `docs/slices/hq-design-branding-v1.md` |
-| Single FranchiseProvider | STATUS July 26 afternoon |
-| Branding notify + picker guard | `franchise_provider.dart`, `franchise_picker_dropdown.dart` |
-
----
-
-**Last updated:** July 26, 2026  
-**Next:** Lock §3.1–3.3 if needed; start W3 tracer + W1 xAI outcomes.
+**Last updated:** July 26, 2026 (decisions locked: A branding step; remove tab mark-complete; merge billing/invoices in-dev)  
+**Next:** W3 tracer; W1 xAI outcomes; W6 shell wiring plan.
