@@ -1,0 +1,32 @@
+# id: xai-review-fix-section-map
+# agent: web_frontend
+# backend: xai
+# priority: 2
+# max_regions: 1
+# context: coding_min
+
+backend: xai
+Role: web_frontend
+max_regions: 1
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/widgets/review/issue_details_expansion.dart
+
+Goal: Fix button routes issues to the correct HQ section key (menu items must not open Overview).
+
+Task:
+Quote first 10–12 lines.
+Respond ONLY with FILE / BEFORE / AFTER.
+
+Locate Fix / onPressed that calls switchToSection or Navigator with a section key derived from issue.section / issue.fixRoute.
+
+Map must be:
+- Features / feature → onboarding_feature_setup
+- Foundation / types / ingredients / categories → onboarding_menu_foundation
+- Menu items / menu → onboardingMenuItems
+- Never onboardingReview or onboardingMenu as dump for menu issues
+
+AFTER: explicit if/else or switch on issue.section (or code) using the keys above; call hqShell.switchToSection(...).
+
+Do not invent Admin routes.
+If map already correct → No change needed

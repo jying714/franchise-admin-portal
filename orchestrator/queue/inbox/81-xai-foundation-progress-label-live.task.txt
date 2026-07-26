@@ -1,0 +1,29 @@
+# id: xai-foundation-progress-label-live
+# agent: web_frontend
+# backend: xai
+# priority: 3
+# max_regions: 1
+# context: coding_min
+
+backend: xai
+Role: web_frontend
+max_regions: 1
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_foundation_screen.dart
+
+Goal: Bottom bar must not use progressProvider.getFoundationProgress() flag formula if live counts already exist in build.
+
+Task:
+Quote first 10–12 lines.
+Respond ONLY with FILE / BEFORE / AFTER.
+
+If bottom label still uses foundationProgress from getFoundationProgress() and gate still checks >= 0.8 flags → replace gate+label with live provider counts:
+- types >= 1 (IngredientTypeProvider.ingredientTypes)
+- categories >= 1
+- typed ingredients (typeId non-empty) >= 5
+- orphan typeId empty == 0
+SnackBar lists failed rules.
+On pass: markStepComplete('onboarding_menu_foundation') + switchToSection('onboardingMenuItems').
+
+If human already applied live counts gate → No change needed

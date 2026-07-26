@@ -1,0 +1,26 @@
+# id: xai-review-exclude-self-section
+# agent: web_frontend
+# backend: xai
+# priority: 3
+# max_regions: 1
+# context: coding_min
+
+backend: xai
+Role: web_frontend
+max_regions: 1
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_review_screen.dart
+
+Goal: Review & Publish must not appear as a fixable issue section in the summary (auditor, not content step).
+
+Task:
+Quote first 10–12 lines.
+Respond ONLY with FILE / BEFORE / AFTER.
+
+Locate where validation issues are listed/filtered for the summary table or expansion.
+
+AFTER: filter out issues whose section is Review / onboardingReview / 'Review & Publish' (case-insensitive match on section string or code).
+
+Do not change publish logic or progress keys.
+If already filtered → No change needed

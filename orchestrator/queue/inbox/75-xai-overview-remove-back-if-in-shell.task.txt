@@ -1,0 +1,23 @@
+# id: xai-overview-scaffold-in-shell
+# agent: web_frontend
+# backend: xai
+# priority: 5
+# max_regions: 1
+# context: coding_min
+
+backend: xai
+Role: web_frontend
+max_regions: 1
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_screen.dart
+
+Goal: Overview body should not rely on a nested full AppBar back that pops out of HQ shell incorrectly if present.
+
+Task:
+Quote first 10–12 lines.
+Respond ONLY with FILE / BEFORE / AFTER.
+
+If the screen Scaffold has an AppBar with leading back that Navigator.pop's out of shell, remove that AppBar or leading so shell owns chrome (title can stay as body header only).
+
+If there is no AppBar / no bad back → No change needed
