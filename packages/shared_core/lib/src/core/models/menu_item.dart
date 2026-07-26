@@ -625,15 +625,25 @@ class MenuItem {
       dippingSauceOptions: template['dippingSauceOptions'] == null
           ? null
           : List<String>.from(template['dippingSauceOptions']),
-      dippingSplits: template['dippingSplits'] == null
-          ? null
-          : Map<String, int>.from(template['dippingSplits']),
+      dippingSplits: template['dippingSplits'] is Map
+          ? Map.fromEntries(
+              (template['dippingSplits'] as Map).entries.map((e) {
+                final parsed = int.tryParse('${e.value}') ?? 0;
+                return MapEntry(e.key.toString(), parsed);
+              }),
+            )
+          : null,
       sideDipSauceOptions: template['sideDipSauceOptions'] == null
           ? null
           : List<String>.from(template['sideDipSauceOptions']),
-      freeDipCupCount: template['freeDipCupCount'] == null
-          ? null
-          : Map<String, int>.from(template['freeDipCupCount']),
+      freeDipCupCount: template['freeDipCupCount'] is Map
+          ? Map.fromEntries(
+              (template['freeDipCupCount'] as Map).entries.map((e) {
+                final parsed = int.tryParse('${e.value}') ?? 0;
+                return MapEntry(e.key.toString(), parsed);
+              }),
+            )
+          : null,
       sideDipUpcharge: template['sideDipUpcharge'] == null
           ? null
           : Map<String, double>.from(template['sideDipUpcharge']),

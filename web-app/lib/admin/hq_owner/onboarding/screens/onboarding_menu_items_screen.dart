@@ -14,6 +14,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
 import 'package:uuid/uuid.dart';
 import 'package:franchise_admin_portal/core/services/admin_firestore_service.dart';
+import 'package:franchise_admin_portal/core/providers/menu_item_provider_impl.dart';
 
 class OnboardingMenuItemsScreen extends StatefulWidget {
   const OnboardingMenuItemsScreen({super.key});
@@ -875,10 +876,25 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                               listen: false,
                                             );
                                             try {
-                                              menuProvider
-                                                  .deleteMenuItem(item.id);
-                                              await menuProvider
-                                                  .persistChanges();
+                                              final franchiseId = Provider.of<
+                                                  shared.FranchiseProvider>(
+                                                context,
+                                                listen: false,
+                                              ).franchiseId;
+
+                                              // Bind franchise on this provider instance.
+                                              if (menuProvider
+                                                  is MenuItemProviderImpl) {
+                                                menuProvider.setFranchiseId(
+                                                    franchiseId);
+                                              }
+
+                                              final impl = menuProvider
+                                                  as MenuItemProviderImpl;
+                                              impl.setFranchiseId(franchiseId);
+                                              await impl
+                                                  .deleteMenuItemAndPersist(
+                                                      item.id);
                                               if (!mounted) return;
                                               ScaffoldMessenger.of(context)
                                                   .showSnackBar(

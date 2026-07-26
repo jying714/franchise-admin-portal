@@ -78,7 +78,8 @@ class Customization {
 
     return Customization(
       id: data['id'] ?? _randomId(),
-      ingredientId: data['ingredientId'],
+      ingredientId:
+          data['ingredientId'] == null ? null : data['ingredientId'].toString(),
       name: data['name'] ?? '',
       isGroup: data['isGroup'] ?? false,
       price: parsedPrice,

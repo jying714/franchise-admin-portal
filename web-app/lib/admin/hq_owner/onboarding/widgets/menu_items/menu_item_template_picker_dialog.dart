@@ -7,19 +7,57 @@ import 'package:shared_core/shared_core.dart' as shared;
 
 class MenuItemTemplatePickerDialog extends StatelessWidget {
   final AppLocalizations loc;
+  final shared.MenuItemProvider menuItemProvider;
+  final String franchiseId;
+  final String restaurantType;
 
-  const MenuItemTemplatePickerDialog({super.key, required this.loc});
+  const MenuItemTemplatePickerDialog({
+    super.key,
+    required this.loc,
+    required this.menuItemProvider,
+    required this.franchiseId,
+    required this.restaurantType,
+  });
 
-  static Future<void> show(BuildContext context) async {
+  static Future<void> show(
+    BuildContext context, {
+    String? restaurantTypeOverride,
+  }) async {
     final loc = AppLocalizations.of(context);
     if (loc == null) {
       debugPrint('[MenuItemTemplatePickerDialog] ERROR: loc is null!');
       return;
     }
 
+    // Resolve from the *caller* context (has providers), not dialog context.
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
+    final menuItemProvider =
+        Provider.of<shared.MenuItemProvider>(context, listen: false);
+
+    String? restaurantType = restaurantTypeOverride;
+    if (restaurantType == null || restaurantType.isEmpty) {
+      try {
+        restaurantType = Provider.of<shared.FranchiseInfoProvider>(
+          context,
+          listen: false,
+        ).franchise?.restaurantType;
+      } catch (_) {}
+    }
+    // Your templates live under onboarding_templates/pizzeria
+    restaurantType = (restaurantType == null || restaurantType.isEmpty)
+        ? 'pizzeria'
+        : restaurantType;
+
     await showDialog(
       context: context,
-      builder: (ctx) => MenuItemTemplatePickerDialog(loc: loc),
+      builder: (ctx) => MenuItemTemplatePickerDialog(
+        loc: loc,
+        menuItemProvider: menuItemProvider,
+        franchiseId: franchiseId,
+        restaurantType: restaurantType!,
+      ),
     );
   }
 
@@ -28,36 +66,7 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false)
-            .franchiseId;
-    final menuItemProvider =
-        Provider.of<shared.MenuItemProvider>(context, listen: false);
-
-    // HQ shell may not provide FranchiseInfoProvider — resolve safely.
-    String? restaurantType;
-    try {
-      restaurantType = Provider.of<shared.FranchiseInfoProvider>(
-        context,
-        listen: false,
-      ).franchise?.restaurantType;
-    } catch (_) {
-      restaurantType = null;
-    }
-
-    // Fallback: common field on FranchiseProvider if exposed in your tree.
-    if (restaurantType == null || restaurantType.isEmpty) {
-      try {
-        final fp =
-            Provider.of<shared.FranchiseProvider>(context, listen: false);
-        // ignore: avoid_dynamic_calls
-        final dynamic maybe = fp;
-        restaurantType = maybe.restaurantType as String? ??
-            maybe.currentRestaurantType as String?;
-      } catch (_) {}
-    }
-
-    if (restaurantType == null || restaurantType.isEmpty) {
+    if (restaurantType.isEmpty) {
       shared.ErrorLogger.log(
         message: 'Missing or invalid restaurant type',
         source: 'MenuItemTemplatePickerDialog',
@@ -117,20 +126,27 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
                   trailing: ElevatedButton(
                     onPressed: () async {
                       try {
-                        final items = (data['items'] as List<dynamic>)
-                            .map((e) => shared.MenuItem.fromMap(
-                                  Map<String, dynamic>.from(e),
-                                ))
-                            .toList();
+                        // Schema: each doc under menu_items IS one MenuItem
+                        // (not a pack with an "items" array).
+                        final map = Map<String, dynamic>.from(data);
+                        map['id'] = map['id'] ?? doc.id;
 
-                        for (final item in items) {
-                          menuItemProvider.addOrUpdateMenuItem(item);
-                        }
+                        final item = shared.MenuItem.fromTemplate(
+                          map,
+                          idOverride: doc.id,
+                        );
+                        menuItemProvider.addOrUpdateMenuItem(item);
 
+                        if (!context.mounted) return;
                         Navigator.pop(context);
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                              content: Text('Templates imported successfully')),
+                            content: Text(
+                              'Imported "${item.name.isNotEmpty ? item.name : doc.id}" from template',
+                            ),
+                            backgroundColor: Colors.green,
+                          ),
                         );
                       } catch (e, stack) {
                         shared.ErrorLogger.log(
@@ -141,14 +157,16 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
                           contextData: {
                             'franchiseId': franchiseId,
                             'templateId': doc.id,
+                            'error': e.toString(),
                           },
                         );
 
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                                content:
-                                    Text(loc.errorGeneric ?? 'Import failed')),
+                              content: Text('Import failed: $e'),
+                              backgroundColor: Colors.red,
+                            ),
                           );
                         }
                       }

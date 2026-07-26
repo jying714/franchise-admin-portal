@@ -78,6 +78,11 @@ class MenuItemProviderImpl extends ChangeNotifier
     notifyListeners();
   }
 
+  void setFranchiseId(String franchiseId) {
+    if (franchiseId.isEmpty || franchiseId == 'unknown') return;
+    _franchiseId = franchiseId;
+  }
+
   @override
   Future<void> load({
     bool forceReloadFromFirestore = false,
@@ -148,9 +153,47 @@ class MenuItemProviderImpl extends ChangeNotifier
     notifyListeners();
   }
 
-  @override
+  /// Firestore delete for one item (does not depend on full-list save semantics).
+  Future<void> deleteMenuItemAndPersist(String id) async {
+    final franchiseId = _franchiseId;
+    if (franchiseId == null ||
+        franchiseId.isEmpty ||
+        franchiseId == 'unknown') {
+      throw StateError(
+        'MenuItemProvider: franchiseId not set — call load/setFranchiseId before delete',
+      );
+    }
+
+    _working.removeWhere((item) => item.id == id);
+    notifyListeners();
+
+    try {
+      // Prefer a dedicated delete if AdminFirestoreService exposes it.
+      await (_firestoreService as dynamic).deleteMenuItem(
+        franchiseId: franchiseId,
+        menuItemId: id,
+      );
+    } catch (_) {
+      // Fallback: rewrite full list (must remove missing docs server-side).
+      await _firestoreService.saveMenuItems(franchiseId, _working);
+    }
+
+    _original = _working.map((e) => e.copyWith()).toList();
+    notifyListeners();
+  }
+
   Future<void> persistChanges() async {
-    if (_franchiseId == null || !isDirty) return;
+    if (_franchiseId == null ||
+        _franchiseId!.isEmpty ||
+        _franchiseId == 'unknown') {
+      shared.ErrorLogger.log(
+        message: 'persistChanges skipped: franchiseId not set',
+        source: 'MenuItemProviderImpl',
+        severity: 'warning',
+      );
+      return;
+    }
+    if (!isDirty) return;
 
     try {
       if (_typeProvider.hasStagedTypeChanges) {

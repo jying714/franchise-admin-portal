@@ -31,9 +31,9 @@ class IngredientReference extends Equatable {
   /// Deserialize from Firestore
   factory IngredientReference.fromMap(Map<String, dynamic> data) {
     // Support both admin export and runtime keys:
-    final id = data['id'] ?? data['ingredientId'] ?? '';
-    final name = data['name'] ?? '';
-    final typeId = data['typeId'] ?? data['type'] ?? '';
+    final id = '${data['id'] ?? data['ingredientId'] ?? ''}';
+    final name = '${data['name'] ?? ''}';
+    final typeId = '${data['typeId'] ?? data['type'] ?? ''}';
     final isRemovable = data['isRemovable'] ?? data['removable'] ?? true;
     double? upcharge;
     final rawUpcharge = data['upcharge'] ?? data['price'];
