@@ -25,6 +25,9 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
   late final TextEditingController _primaryHexController;
   late final TextEditingController _secondaryHexController;
 
+  /// FranchiseId drafts were last synced from (re-sync when picker changes).
+  String? _syncedFranchiseId;
+
   String _normalizeHex(String raw) {
     var h = raw.trim();
     if (h.isEmpty) return h;
@@ -137,6 +140,19 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final fp = Provider.of<shared.FranchiseProvider>(context);
+    final franchiseId = fp.franchiseId;
+    final isFirstSync = _syncedFranchiseId == null;
+    if (_syncedFranchiseId == franchiseId) return;
+    _syncedFranchiseId = franchiseId;
+    // initState already populated controllers for the initial franchise
+    if (isFirstSync) return;
+    _resetDraftsToLive();
+  }
+
+  @override
   void dispose() {
     _appNameController.dispose();
     _logoUrlController.dispose();
@@ -183,7 +199,7 @@ class _DesignBrandingScreenState extends State<DesignBrandingScreen> {
               // Franchise context (minimal for shell; S3 can polish)
               Text(
                 hasFranchise
-                    ? 'Franchise: $franchiseId'
+                    ? 'Franchise: ${DesignTokens.currentAppName} ($franchiseId)'
                     : 'Franchise: not selected',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: DesignTokens.secondaryTextColor,

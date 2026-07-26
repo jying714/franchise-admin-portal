@@ -64,6 +64,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
       appBar: AppBar(
         elevation: DesignTokens.adminCardElevation,
         title: Row(
+          key: ValueKey('hq-appbar-branding-$franchiseId'),
           children: [
             const SizedBox(width: 8),
             Icon(Icons.business_center_rounded,
@@ -161,6 +162,7 @@ class OwnerHQDashboardScreen extends StatelessWidget {
               const FutureFeaturePlaceholderPanel(),
               SizedBox(height: gap),
               Card(
+                key: ValueKey('hq-live-branding-$franchiseId'),
                 elevation: DesignTokens.adminCardElevation,
                 shape: RoundedRectangleBorder(
                   borderRadius:

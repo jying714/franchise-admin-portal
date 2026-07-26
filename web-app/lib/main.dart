@@ -267,6 +267,8 @@ class _FranchiseAuthenticatedRootState
           return '${user.id}|${roles.join(',')}';
         },
         builder: (context, shellKey, _) {
+          // Rebuild MaterialApp ThemeData when franchise branding/config notifies.
+          context.watch<shared.FranchiseProvider>();
           final user =
               Provider.of<shared.AdminUserProvider>(context, listen: false)
                   .user;
