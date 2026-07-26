@@ -16,6 +16,7 @@ import 'package:uuid/uuid.dart';
 import 'package:franchise_admin_portal/core/services/admin_firestore_service.dart';
 import 'package:franchise_admin_portal/core/providers/menu_item_provider_impl.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/preview_menu_item_card.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/foundation/mobile_menu_preview_card.dart';
 
 class OnboardingMenuItemsScreen extends StatefulWidget {
   const OnboardingMenuItemsScreen({super.key});
@@ -46,7 +47,10 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
+    final fp = context.watch<shared.FranchiseProvider>();
+    // Force dependency on version so rebuilds happen when branding/id bump.
+    final _ = fp.currentConfigVersion;
+    final franchiseId = fp.franchiseId;
 
     if (franchiseId.isEmpty || franchiseId == 'unknown') return;
     if (_boundFranchiseId == franchiseId) return;
@@ -1105,15 +1109,16 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                           decoration: BoxDecoration(
                             border: Border(
                               left: BorderSide(
-                                color: Theme.of(context).dividerColor,
-                              ),
+                                  color: Theme.of(context).dividerColor),
                             ),
                             color: Theme.of(context).colorScheme.surface,
                           ),
                           child: Center(
-                            child: FittedBox(
-                              fit: BoxFit.contain,
-                              child: _buildMobilePreviewPane(context),
+                            child: MobileMenuPreviewCard(
+                              franchiseId: context
+                                  .watch<shared.FranchiseProvider>()
+                                  .franchiseId,
+                              interactive: true,
                             ),
                           ),
                         ),
@@ -1123,311 +1128,6 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildMobilePreviewPane(BuildContext context) {
-    final franchiseProvider = context.watch<shared.FranchiseProvider>();
-    final categoryProvider = context.watch<shared.CategoryProvider>();
-    final menuProvider = context.watch<shared.MenuItemProvider>();
-    final categories = categoryProvider.categories;
-
-    final selectedCategory = _previewCategoryId == null
-        ? null
-        : categories.cast<shared.Category?>().firstWhere(
-              (c) => c?.id == _previewCategoryId,
-              orElse: () => null,
-            );
-
-    final itemsForCategory = _previewCategoryId == null
-        ? const <shared.MenuItem>[]
-        : menuProvider.menuItems
-            .where((m) => m.categoryId == _previewCategoryId)
-            .toList();
-
-    final appName = () {
-      final live = franchiseProvider.currentAppName.trim();
-      if (live.isNotEmpty) return live;
-      final token = DesignTokens.currentAppName.trim();
-      if (token.isNotEmpty) return token;
-      return 'Menu';
-    }();
-
-    // Exact foundation chrome: 340 × 680, black bezel, white tiles on black body.
-    return Center(
-      child: Container(
-        width: 340,
-        height: 680,
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(48),
-          border: Border.all(color: Colors.grey.shade800, width: 12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(36),
-          child: Column(
-            children: [
-              // Status bar — match foundation
-              Container(
-                height: 30,
-                color: Colors.black,
-                child: const Center(
-                  child: Text(
-                    '9:41',
-                    style: TextStyle(color: Colors.white, fontSize: 13),
-                  ),
-                ),
-              ),
-              // Branded header — match foundation
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                color: DesignTokens.primaryColor,
-                child: Row(
-                  children: [
-                    if (_previewCategoryId != null)
-                      InkWell(
-                        onTap: () => setState(() => _previewCategoryId = null),
-                        child: const Padding(
-                          padding: EdgeInsets.only(right: 8),
-                          child: Icon(Icons.arrow_back,
-                              color: Colors.white, size: 20),
-                        ),
-                      )
-                    else if ((franchiseProvider.currentLogoUrl ?? '')
-                        .isNotEmpty)
-                      CircleAvatar(
-                        backgroundImage:
-                            NetworkImage(franchiseProvider.currentLogoUrl!),
-                        radius: 18,
-                      )
-                    else
-                      const CircleAvatar(
-                        backgroundColor: Colors.white,
-                        radius: 18,
-                        child: Icon(Icons.local_pizza, color: Colors.red),
-                      ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _previewCategoryId == null
-                            ? appName
-                            : (selectedCategory?.name ?? 'Category'),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const Icon(Icons.search, color: Colors.white),
-                    const SizedBox(width: 16),
-                    const Icon(Icons.shopping_cart_outlined,
-                        color: Colors.white),
-                  ],
-                ),
-              ),
-              // Body — black canvas like foundation
-              Expanded(
-                child: Container(
-                  color: Colors.black,
-                  child: _previewCategoryId == null
-                      ? _buildPreviewCategoriesGrid(categories)
-                      : _buildPreviewItemsGrid(itemsForCategory),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPreviewCategoriesGrid(List<shared.Category> categories) {
-    if (categories.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.restaurant_menu, size: 48, color: Colors.grey),
-              SizedBox(height: 16),
-              Text(
-                'Add categories to see live preview',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(12),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 1.1,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-        ),
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final category = categories[index];
-          return Card(
-            elevation: 2,
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: InkWell(
-              onTap: () => setState(() => _previewCategoryId = category.id),
-              borderRadius: BorderRadius.circular(12),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.local_pizza,
-                    size: 48,
-                    color: DesignTokens.primaryColor,
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(
-                      category.name,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildPreviewItemsGrid(List<shared.MenuItem> items) {
-    if (items.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            'No items in this category',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
-          ),
-        ),
-      );
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(12),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 1.1,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-        ),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final item = items[index];
-          final imageUrl = (item.imageUrl ?? item.image ?? '').toString();
-          final outOfStock =
-              item.available == false || item.availability == false;
-
-          return Opacity(
-            opacity: outOfStock ? 0.45 : 1,
-            child: Card(
-              elevation: 2,
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(12),
-                      ),
-                      child: imageUrl.isNotEmpty
-                          ? Image.network(
-                              imageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Center(
-                                child: Icon(
-                                  Icons.local_pizza,
-                                  size: 40,
-                                  color: DesignTokens.primaryColor,
-                                ),
-                              ),
-                            )
-                          : Center(
-                              child: Icon(
-                                Icons.local_pizza,
-                                size: 40,
-                                color: DesignTokens.primaryColor,
-                              ),
-                            ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
-                    child: Column(
-                      children: [
-                        Text(
-                          item.name,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '\$${item.price.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: DesignTokens.primaryColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
     );
   }
 }
