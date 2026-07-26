@@ -52,6 +52,7 @@ class FranchiseProvider extends ChangeNotifier {
     if (id.isEmpty || _franchiseId == id) return;
 
     _franchiseId = id;
+    _brandingData = const {}; // no stale primary/secondary
     await _storage.setString('selectedFranchiseId', id);
     _bumpConfig();
   }
@@ -182,11 +183,9 @@ class FranchiseProvider extends ChangeNotifier {
   /// loading; do not add fields on static config classes for this.
   void setBrandingFromFranchiseDoc(Map<String, dynamic> docData) {
     _brandingData = Map<String, dynamic>.from(docData);
-    _configVersion++;
-    if (onFranchiseChanged != null) onFranchiseChanged!();
+    _bumpConfig(); // version++ + onFranchiseChanged + notifyListeners
   }
 
-  /// Merge basic info (name/logo) from FranchiseInfo + optional extra branding.
   void applyBrandingFromInfo(FranchiseInfo info,
       {Map<String, dynamic>? extraBranding}) {
     _brandingData = {
@@ -195,8 +194,7 @@ class FranchiseProvider extends ChangeNotifier {
       'logoUrl': info.logoUrl,
       if (extraBranding != null) ...extraBranding,
     };
-    _configVersion++;
-    if (onFranchiseChanged != null) onFranchiseChanged!();
+    _bumpConfig();
   }
 
   // Bump version + notify on all mutating ops for theme reactivity via version selector.

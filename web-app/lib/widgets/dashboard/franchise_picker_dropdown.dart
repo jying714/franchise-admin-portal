@@ -44,30 +44,42 @@ class FranchisePickerDropdown extends StatelessWidget {
         onChanged: (String? newValue) async {
           if (newValue == null || newValue == currentFranchise.id) return;
 
-          await franchiseProvider.setFranchiseId(newValue);
+          final requestedId = newValue;
+          await franchiseProvider.setFranchiseId(requestedId);
 
           // Reload franchise doc so name / colors / logo update in-place
           try {
             final snap = await FirebaseFirestore.instance
                 .collection('franchises')
-                .doc(newValue)
+                .doc(requestedId)
                 .get();
+            // Ignore late response if user already switched again.
+            if (franchiseProvider.franchiseId != requestedId) return;
             if (snap.exists && snap.data() != null) {
               franchiseProvider.setBrandingFromFranchiseDoc(snap.data()!);
             } else {
-              // Fallback: at least apply name/logo from the list entry
               final info = franchises.firstWhere(
-                (f) => f.id == newValue,
+                (f) => f.id == requestedId,
                 orElse: () => currentFranchise,
               );
-              franchiseProvider.applyBrandingFromInfo(info);
+              // Name/logo only — do not re-merge old hex via partial apply after a full clear.
+              franchiseProvider.setBrandingFromFranchiseDoc({
+                'name': info.name,
+                'appName': info.name,
+                if (info.logoUrl != null) 'logoUrl': info.logoUrl,
+              });
             }
           } catch (_) {
+            if (franchiseProvider.franchiseId != requestedId) return;
             final info = franchises.firstWhere(
-              (f) => f.id == newValue,
+              (f) => f.id == requestedId,
               orElse: () => currentFranchise,
             );
-            franchiseProvider.applyBrandingFromInfo(info);
+            franchiseProvider.setBrandingFromFranchiseDoc({
+              'name': info.name,
+              'appName': info.name,
+              if (info.logoUrl != null) 'logoUrl': info.logoUrl,
+            });
           }
         },
         items: franchises.map<DropdownMenuItem<String>>((f) {
