@@ -1,0 +1,22 @@
+# id: 78-verify-quicklink-first-incomplete
+# agent: web_frontend
+# backend: xai
+# priority: 60
+
+backend: xai
+max_regions: 1
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart
+
+Task: Quote QuickLinksPanel Onboarding onTap handler.
+
+Product outcome: Onboarding quick link must open HqOnboardingShellScreen with first incomplete product key among: onboarding_feature_setup → onboarding_menu_foundation → onboardingMenuItems → onboardingReview (fallback onboardingMenu).
+
+If that cascade is already on disk → reply only: No change needed.
+Do not hardcode only 'onboardingMenu'.
+
+Rules:
+1. Quote-first.
+2. Verify-only preferred; edit only if cascade missing.

@@ -1,0 +1,22 @@
+# id: 80-verify-feature-setup-shell-handoff
+# agent: web_frontend
+# backend: xai
+# priority: 55
+
+backend: xai
+max_regions: 1
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_feature_setup_screen.dart
+
+Task: Quote _handleSave success path after markStepComplete.
+
+Product outcome: On successful save, prefer HqOnboardingShellScreenState.switchToSection('onboarding_menu_foundation'); only maybePop if no shell ancestor.
+
+If that pattern is already on disk → No change needed.
+Do not reintroduce AdminDashboardScreen.switchToSection.
+
+Rules:
+1. Quote-first.
+2. Edit only if shell handoff missing.

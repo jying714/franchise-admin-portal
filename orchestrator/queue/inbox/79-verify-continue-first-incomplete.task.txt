@@ -1,0 +1,19 @@
+# id: 79-verify-continue-first-incomplete
+# agent: web_frontend
+# backend: xai
+# priority: 60
+
+backend: xai
+max_regions: 1
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart
+
+Task: Quote Continue onboarding FilledButton onPressed inside Onboarding Progress Card.
+
+Product outcome: Same first-incomplete cascade as Quick Link. If already implemented → No change needed.
+
+Rules:
+1. Quote-first.
+2. Verify-only if correct on disk.

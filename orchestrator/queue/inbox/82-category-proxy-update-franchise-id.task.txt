@@ -1,0 +1,21 @@
+# id: 82-category-proxy-update-franchise-id
+# agent: web_frontend
+# backend: xai
+# priority: 88
+
+backend: xai
+max_regions: 1
+Role: web_frontend
+
+Files:
+- web-app/lib/main.dart
+
+Task: Quote ChangeNotifierProxyProvider2 for CategoryProviderImpl (create + update).
+
+Product outcome: On FranchiseProvider change, reuse prev CategoryProviderImpl and bind franchiseId (setFranchiseId / load with franchiseIdOverride if those APIs exist on Impl). Do not create a new Impl every update (disposed listener risk). Mirror OnboardingProgress / IngredientMetadata update pattern already in main.dart.
+
+Rules:
+1. Quote-first.
+2. Edit only main.dart Category proxy region.
+3. No new Firestore APIs.
+4. If update already rebinds franchise on prev → No change needed.

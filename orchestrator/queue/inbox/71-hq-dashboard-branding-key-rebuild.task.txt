@@ -1,0 +1,24 @@
+# id: 71-hq-dashboard-branding-key-rebuild
+# agent: web_frontend
+# backend: xai
+# priority: 94
+
+backend: xai
+max_regions: 2
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart
+
+Task: Quote first 10–12 lines and the Scaffold/AppBar region that uses DesignTokens.primaryColor.
+
+Product outcome: After franchise switch, HQ dashboard AppBar icon + Live Branding Preview card + FilledButtons show the new franchise primary/secondary/appName/logo without navigating away.
+
+FranchiseProvider is already listened (listen: true). Ensure the Live Branding Preview section and AppBar accent read DesignTokens.primaryColor / secondaryColor / currentAppName / currentLogoUrl (live path). If widgets still freeze old colors, Key the branded Card/AppBar title Row on franchiseProvider.currentConfigVersion or franchiseId so Flutter cannot reuse stale Element state.
+
+Rules:
+1. Quote-first.
+2. Edit only this file.
+3. No new DesignTokens fields; no static FranchiseProvider.current*.
+4. Do not redesign the grid layout.
+5. If already fully live on switch → No change needed.

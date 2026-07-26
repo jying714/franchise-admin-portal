@@ -1,0 +1,20 @@
+# id: 76-design-branding-show-app-name-not-only-id
+# agent: web_frontend
+# backend: xai
+# priority: 80
+
+backend: xai
+max_regions: 1
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/screens/design_branding_screen.dart
+
+Task: Quote the franchise context Text that shows 'Franchise: $franchiseId'.
+
+Product outcome: Context line should show live app name (FranchiseProvider.currentAppName or DesignTokens.currentAppName) plus id when useful — e.g. 'Franchise: {appName} ({id})' — not id alone.
+
+Rules:
+1. Quote-first.
+2. One region.
+3. No new DesignTokens fields.

@@ -1,0 +1,23 @@
+# id: 72-hq-live-branding-card-config-version
+# agent: web_frontend
+# backend: xai
+# priority: 90
+
+backend: xai
+max_regions: 1
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/owner_hq_dashboard_screen.dart
+
+Task: Quote the Live Branding Preview Card region (title through Open Design & Branding button).
+
+Product outcome: Live Branding card must display DesignTokens.currentAppName, currentLogoUrl, primaryColor, secondaryColor from the selected franchise. Prefer reading franchiseProvider.currentAppName when DesignTokens falls back to placeholder names.
+
+Do not change navigation to DesignBrandingScreen.
+If card already shows live franchise branding after picker switch → No change needed.
+
+Rules:
+1. Quote-first.
+2. One file only.
+3. No new fields on BrandingConfig/DesignTokens.

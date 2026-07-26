@@ -1,0 +1,22 @@
+# id: 84-foundation-tabbar-live-primary
+# agent: web_frontend
+# backend: xai
+# priority: 72
+
+backend: xai
+max_regions: 1
+Role: web_frontend
+
+Files:
+- web-app/lib/admin/hq_owner/onboarding/screens/onboarding_menu_foundation_screen.dart
+
+Task: Quote TabBar (labelColor / indicatorColor using shared.UiConfig.primaryColor).
+
+Product outcome: TabBar accent follows live franchise branding. Prefer DesignTokens.primaryColor or shared.UiConfig.primaryColor only if UiConfig already delegates to DesignTokens. Do not hard-code Colors.red.
+
+If already live via UiConfig→DesignTokens → No change needed.
+
+Rules:
+1. Quote-first.
+2. One file.
+3. No new token fields.
