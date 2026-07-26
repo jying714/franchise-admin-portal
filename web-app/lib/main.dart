@@ -117,7 +117,7 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => UserProfileNotifier()),
-          Provider<shared.FranchiseProvider>(
+          ChangeNotifierProvider<shared.FranchiseProvider>(
               create: (_) => shared.FranchiseProvider(storage)),
           Provider<shared.AuthService>.value(value: authService),
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
@@ -489,7 +489,7 @@ class FranchiseAppRootSplit extends StatelessWidget {
                 create: (_) => AdminFirestoreService()),
 
             // === SINGLE SOURCE OF TRUTH ===
-            Provider<shared.FranchiseProvider>(
+            ChangeNotifierProvider<shared.FranchiseProvider>(
                 create: (_) => shared.FranchiseProvider(AppLocalStorage())),
 
             // === Franchise Info ===
@@ -502,10 +502,19 @@ class FranchiseAppRootSplit extends StatelessWidget {
                     context,
                     listen: false),
               ),
-              update: (_, fp, fs, prev) => prev ??
-                  FranchiseInfoProviderImpl(
-                      firestore: fs, franchiseProvider: fp)
-                ..loadFranchiseInfo(),
+              update: (_, fp, fs, prev) {
+                // Always reuse the same ChangeNotifier instance.
+                // Creating a new one while Provider still holds the old
+                // causes addListener on a disposed notifier (Null is not a subtype of bool).
+                final p = prev ??
+                    FranchiseInfoProviderImpl(
+                      firestore: fs,
+                      franchiseProvider: fp,
+                    );
+                // Franchise id may have changed — reload, do not replace.
+                p.loadFranchiseInfo();
+                return p;
+              },
             ),
 
             // === Franchise Feature ===

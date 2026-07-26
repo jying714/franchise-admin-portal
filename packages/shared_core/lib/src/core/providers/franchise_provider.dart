@@ -3,13 +3,14 @@
 import 'package:shared_core/src/core/models/user.dart' as admin_user;
 import 'package:shared_core/src/core/models/franchise_info.dart';
 import 'package:shared_core/src/core/utils/local_storage.dart';
+import 'package:flutter/foundation.dart';
 
 /// Pure business logic for franchise selection and user context
 /// Phase 1 Workstream B: this provider is the runtime source of franchise-scoped
 /// branding and config. Static classes in config/ (BrandingConfig, DesignTokens,
 /// AppConfig, FeatureConfig) remain defaults/fallbacks until fully wired here.
 /// Do not invent new fields on those config classes; extend loading/apply paths instead.
-class FranchiseProvider {
+class FranchiseProvider extends ChangeNotifier {
   Function()? onFranchiseChanged;
 
   String _franchiseId = 'unknown';
@@ -31,7 +32,7 @@ class FranchiseProvider {
   bool get hasValidFranchise =>
       _franchiseId.isNotEmpty && _franchiseId != 'unknown';
 
-  FranchiseProvider(this._storage) {
+  FranchiseProvider(this._storage) : super() {
     _loadFranchiseId();
   }
 
@@ -202,6 +203,7 @@ class FranchiseProvider {
   void _bumpConfig() {
     _configVersion++;
     if (onFranchiseChanged != null) onFranchiseChanged!();
+    notifyListeners();
   }
 
   // Force refresh for providers that depend on franchiseId
