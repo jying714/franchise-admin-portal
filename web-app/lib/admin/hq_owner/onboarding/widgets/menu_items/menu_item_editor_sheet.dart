@@ -126,6 +126,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     // Initial computation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _session.forceRecomputeIssues();
+      widget.onSchemaIssuesChanged?.call(_session.issues);
     });
   }
 
@@ -135,10 +136,16 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
     widget.onSchemaIssuesChanged?.call(_session.issues);
   }
 
+  void forceRecomputeIssues() {
+    _session.forceRecomputeIssues();
+    widget.onSchemaIssuesChanged?.call(_session.issues);
+  }
+
   void _saveItem() {
-    if (_session.issues.isNotEmpty) {
+    final hasErrors = _session.issues.any((i) => i.severity == 'error');
+    if (hasErrors) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Resolve remaining schema issues first'),
+        content: Text('Resolve remaining schema errors first'),
         backgroundColor: Colors.red,
       ));
       return;
@@ -199,7 +206,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final categories = Provider.of<shared.CategoryProvider>(context).categories;
-
+    final hasErrors = _session.issues.any((i) => i.severity == 'error');
     return ChangeNotifierProvider.value(
       value: _session,
       child: Consumer<MenuItemEditSession>(
@@ -213,9 +220,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                 IconButton(
                     onPressed: widget.onCancel, icon: const Icon(Icons.close)),
                 ElevatedButton(
-                  onPressed: session.issues.isEmpty && session.isDirty
-                      ? _saveItem
-                      : null,
+                  onPressed: !hasErrors && session.isDirty ? _saveItem : null,
                   child: const Text('Save & Publish'),
                 ),
               ],

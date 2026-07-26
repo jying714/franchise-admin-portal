@@ -176,29 +176,37 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     });
   }
 
-  void _onFullRefresh() {
-    final draft = _editorKey.currentState?.currentDraft ?? _editingItem;
-    if (draft != null) {
-      _checkForSchemaIssues(draft);
-    } else {
-      setState(() => _inlineSchemaIssues = []);
+  Future<void> _onNormalizeAll() async {
+    final menuProvider =
+        Provider.of<shared.MenuItemProvider>(context, listen: false);
+    try {
+      await menuProvider.normalizeSchemaReferences();
+      _editorKey.currentState?.forceRecomputeIssues();
+      _onFullRefresh();
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'menu_items_normalize_failed',
+        stack: stack.toString(),
+        source: 'onboarding_menu_items_screen',
+        severity: 'warning',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Normalize failed: $e')),
+      );
     }
   }
 
-  void _onNormalizeAll() {
-    final editorState = _editorKey.currentState;
-    if (editorState != null) {
-      // Call normalize on the session / provider if exposed
-      // For now, trigger refresh + recompute
-      editorState.repairSchemaIssue(
-        const shared.MenuItemSchemaIssue(
-          type: shared.MenuItemSchemaIssueType.missingField,
-          field: 'normalize',
-          missingReference: '',
-        ),
-        '',
+  void _onFullRefresh() {
+    final issues = _editorKey.currentState?.currentIssues;
+    if (issues != null) {
+      setState(() => _inlineSchemaIssues = List.from(issues));
+    } else if (_editingItem != null) {
+      _checkForSchemaIssues(
+        _editorKey.currentState?.currentDraft ?? _editingItem,
       );
-      _onFullRefresh();
+    } else {
+      setState(() => _inlineSchemaIssues = []);
     }
   }
 
@@ -206,22 +214,9 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     setState(() {
       _editingItem = item;
       _isEditing = true;
-      _inlineSchemaIssues = []; // clear stale
+      _inlineSchemaIssues = [];
     });
-
-    // Force initial computation after render
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _onFullRefresh();
-      _editorKey.currentState?.repairSchemaIssue(
-        // dummy to trigger
-        const shared.MenuItemSchemaIssue(
-          type: shared.MenuItemSchemaIssueType.missingField,
-          field: 'init',
-          missingReference: '',
-        ),
-        '',
-      );
-    });
+    // Sheet recomputes issues in its own post-frame; parent listens via callback.
   }
 
   void _exitEditor() {
@@ -240,24 +235,39 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     final provider = context.watch<shared.MenuItemProvider>();
 
     // Correct getters + live counts (fixes false block)
-    final hasIngredientTypes = context
-        .watch<shared.IngredientTypeProvider>()
-        .ingredientTypes
-        .isNotEmpty;
-    final hasIngredients = context
-        .watch<shared.IngredientMetadataProvider>()
-        .allIngredients
-        .isNotEmpty;
-    final hasCategories =
-        context.watch<shared.CategoryProvider>().categories.isNotEmpty;
+    final typeProvider = context.watch<shared.IngredientTypeProvider>();
+    final ingredientProvider =
+        context.watch<shared.IngredientMetadataProvider>();
+    final categoryProvider = context.watch<shared.CategoryProvider>();
 
-    final missingSteps = <String>[];
-    if (!hasIngredientTypes)
-      missingSteps.add(loc.stepIngredientTypes ?? 'Ingredient Types');
-    if (!hasIngredients) missingSteps.add(loc.stepIngredients ?? 'Ingredients');
-    if (!hasCategories) missingSteps.add(loc.stepCategories ?? 'Categories');
+    final typeCount = typeProvider.ingredientTypes.length;
+    final categoryCount = categoryProvider.categories.length;
+    final allIngredients = ingredientProvider.allIngredients;
+    final typedCount =
+        allIngredients.where((i) => (i.typeId ?? '').trim().isNotEmpty).length;
+    final orphanCount =
+        allIngredients.where((i) => (i.typeId ?? '').trim().isEmpty).length;
 
-    if (missingSteps.isNotEmpty && !_isEditing) {
+    final readinessFailures = <String>[];
+    if (typeCount < 1) {
+      readinessFailures
+          .add('Need at least 1 ingredient type (have $typeCount)');
+    }
+    if (categoryCount < 1) {
+      readinessFailures.add('Need at least 1 category (have $categoryCount)');
+    }
+    if (typedCount < 5) {
+      readinessFailures.add(
+        'Need at least 5 ingredients with a type (have $typedCount)',
+      );
+    }
+    if (orphanCount > 0) {
+      readinessFailures.add(
+        '$orphanCount ingredient(s) missing a type — assign types in Core Menu Foundation',
+      );
+    }
+
+    if (readinessFailures.isNotEmpty && !_isEditing) {
       return Scaffold(
         appBar: AppBar(
           title: Text(loc.onboardingMenuItems),
@@ -269,12 +279,10 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               EmptyStateWidget(
-                iconData: Icons.check_circle_outline,
-                title:
-                    'Dependencies Detected (${context.watch<shared.IngredientMetadataProvider>().allIngredients.length} ingredients loaded)',
-                message: missingSteps.isEmpty
-                    ? 'All prerequisites complete ✓'
-                    : 'Still syncing: ${missingSteps.join(', ')}\n\nTap the button below to force UI sync.',
+                iconData: Icons.warning_amber_outlined,
+                title: 'Foundation not ready for menu items',
+                message:
+                    '${readinessFailures.join('\n')}\n\nLoaded: $typeCount types · ${allIngredients.length} ingredients ($typedCount typed, $orphanCount orphan) · $categoryCount categories',
                 isAdmin: true,
               ),
               const SizedBox(height: 32),
@@ -313,38 +321,16 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                   forceReloadFromFirestore: true),
                         ]);
                       }
-                      if (mounted) setState(() {}); // force full rebuild
+                      if (mounted) setState(() {});
                     },
-                    label: const Text('Force Full Sync + Unblock'),
+                    label: const Text('Force Full Sync'),
                   ),
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.play_arrow),
-                    onPressed: () => setState(
-                        () => _isEditing = false), // manual bypass once loaded
-                    label: const Text('All Loaded – Open Menu Items'),
+                    icon: const Icon(Icons.list_alt),
+                    onPressed: () =>
+                        _navigateToSection('onboarding_menu_foundation'),
+                    label: const Text('Open Core Menu Foundation'),
                   ),
-                  // Keep your original navigation buttons exactly
-                  if (!hasIngredientTypes)
-                    ElevatedButton.icon(
-                        icon: const Icon(Icons.list_alt),
-                        onPressed: () =>
-                            _navigateToSection('onboardingIngredientTypes'),
-                        label: Text(loc.goToStep(
-                            loc.stepIngredientTypes ?? 'Ingredient Types'))),
-                  if (!hasIngredients)
-                    ElevatedButton.icon(
-                        icon: const Icon(Icons.egg),
-                        onPressed: () =>
-                            _navigateToSection('onboardingIngredients'),
-                        label: Text(loc
-                            .goToStep(loc.stepIngredients ?? 'Ingredients'))),
-                  if (!hasCategories)
-                    ElevatedButton.icon(
-                        icon: const Icon(Icons.category),
-                        onPressed: () =>
-                            _navigateToSection('onboardingCategories'),
-                        label: Text(
-                            loc.goToStep(loc.stepCategories ?? 'Categories'))),
                 ],
               ),
             ],
@@ -518,6 +504,11 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                   context,
                                   listen: false)
                               .franchiseId,
+                          onSchemaIssuesChanged: (issues) {
+                            if (!mounted) return;
+                            setState(
+                                () => _inlineSchemaIssues = List.from(issues));
+                          },
                           onSave: (updatedItem) async {
                             final adminService = AdminFirestoreService();
                             final franchiseId =
@@ -573,8 +564,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                       Expanded(
                         flex: 2,
                         child: SchemaIssueSidebar(
-                          issues: _editorKey.currentState?.currentIssues ??
-                              _inlineSchemaIssues,
+                          issues: _inlineSchemaIssues,
                           franchiseId: Provider.of<shared.FranchiseProvider>(
                                   context,
                                   listen: false)
@@ -734,95 +724,125 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                   ),
                                 ],
                               )
-                            : ReorderableListView(
-                                onReorder: (oldIndex, newIndex) {
-                                  final items = List.of(provider.menuItems);
-                                  if (newIndex > oldIndex) newIndex -= 1;
-                                  final item = items.removeAt(oldIndex);
-                                  items.insert(newIndex, item);
-                                  provider.reorderMenuItems(items);
-                                },
-                                children: [
-                                  for (final item in provider.menuItems)
-                                    MenuItemListTile(
-                                      key: ValueKey(item.id),
-                                      item: item,
-                                      isSelected:
-                                          _selectedIds.contains(item.id),
-                                      onSelect: (checked) {
-                                        setState(() {
-                                          if (checked == true)
-                                            _selectedIds.add(item.id);
-                                          else
-                                            _selectedIds.remove(item.id);
-                                        });
-                                      },
-                                      onEdit: () => openEditor(item),
-                                      onDelete: () async {
-                                        final confirmed =
-                                            await showDialog<bool>(
-                                          context: context,
-                                          builder: (dialogContext) =>
-                                              AlertDialog(
-                                            title:
-                                                const Text('Delete menu item?'),
-                                            content: Text(
-                                              'Are you sure you want to delete "${item.name}"?',
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () =>
-                                                    Navigator.of(dialogContext)
-                                                        .pop(false),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              TextButton(
-                                                onPressed: () =>
-                                                    Navigator.of(dialogContext)
-                                                        .pop(true),
-                                                child: const Text('Delete'),
-                                              ),
-                                            ],
+                            : Builder(
+                                builder: (context) {
+                                  final seenIds = <String>{};
+                                  final uniqueItems = <shared.MenuItem>[];
+                                  for (final item in provider.menuItems) {
+                                    if (seenIds.add(item.id)) {
+                                      uniqueItems.add(item);
+                                    } else {
+                                      debugPrint(
+                                        '[OnboardingMenuItemsScreen] Duplicate menu item id skipped: ${item.id} (${item.name})',
+                                      );
+                                    }
+                                  }
+
+                                  return ReorderableListView(
+                                    onReorder: (oldIndex, newIndex) {
+                                      final items = List.of(uniqueItems);
+                                      if (newIndex > oldIndex) newIndex -= 1;
+                                      final item = items.removeAt(oldIndex);
+                                      items.insert(newIndex, item);
+                                      provider.reorderMenuItems(items);
+                                    },
+                                    children: [
+                                      for (var index = 0;
+                                          index < uniqueItems.length;
+                                          index++)
+                                        MenuItemListTile(
+                                          key: ValueKey(
+                                            'menu_item_${uniqueItems[index].id}_$index',
                                           ),
-                                        );
-                                        if (confirmed != true) return;
-                                        final menuProvider = Provider.of<
-                                            shared.MenuItemProvider>(
-                                          context,
-                                          listen: false,
-                                        );
-                                        try {
-                                          menuProvider.deleteMenuItem(item.id);
-                                          await menuProvider.persistChanges();
-                                          if (!mounted) return;
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                              content: Text('✅ Item deleted'),
-                                              backgroundColor: Colors.green,
-                                            ),
-                                          );
-                                        } catch (e, stack) {
-                                          shared.ErrorLogger.log(
-                                            message: 'delete_menu_item_failed',
-                                            stack: stack.toString(),
-                                            source:
-                                                'onboarding_menu_items_screen',
-                                            severity: 'error',
-                                          );
-                                          if (!mounted) return;
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content:
-                                                  Text('❌ Delete failed: $e'),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                        }
-                                      },
-                                    ),
-                                ],
+                                          item: uniqueItems[index],
+                                          isSelected: _selectedIds
+                                              .contains(uniqueItems[index].id),
+                                          onSelect: (checked) {
+                                            final id = uniqueItems[index].id;
+                                            setState(() {
+                                              if (checked == true) {
+                                                _selectedIds.add(id);
+                                              } else {
+                                                _selectedIds.remove(id);
+                                              }
+                                            });
+                                          },
+                                          onEdit: () =>
+                                              openEditor(uniqueItems[index]),
+                                          onDelete: () async {
+                                            final item = uniqueItems[index];
+                                            final confirmed =
+                                                await showDialog<bool>(
+                                              context: context,
+                                              builder: (dialogContext) =>
+                                                  AlertDialog(
+                                                title: const Text(
+                                                    'Delete menu item?'),
+                                                content: Text(
+                                                  'Are you sure you want to delete "${item.name}"?',
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.of(
+                                                                dialogContext)
+                                                            .pop(false),
+                                                    child: const Text('Cancel'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.of(
+                                                                dialogContext)
+                                                            .pop(true),
+                                                    child: const Text('Delete'),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                            if (confirmed != true) return;
+                                            final menuProvider = Provider.of<
+                                                shared.MenuItemProvider>(
+                                              context,
+                                              listen: false,
+                                            );
+                                            try {
+                                              menuProvider
+                                                  .deleteMenuItem(item.id);
+                                              await menuProvider
+                                                  .persistChanges();
+                                              if (!mounted) return;
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                const SnackBar(
+                                                  content:
+                                                      Text('✅ Item deleted'),
+                                                  backgroundColor: Colors.green,
+                                                ),
+                                              );
+                                            } catch (e, stack) {
+                                              shared.ErrorLogger.log(
+                                                message:
+                                                    'delete_menu_item_failed',
+                                                stack: stack.toString(),
+                                                source:
+                                                    'onboarding_menu_items_screen',
+                                                severity: 'error',
+                                              );
+                                              if (!mounted) return;
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                      '❌ Delete failed: $e'),
+                                                  backgroundColor: Colors.red,
+                                                ),
+                                              );
+                                            }
+                                          },
+                                        ),
+                                    ],
+                                  );
+                                },
                               ),
                       ),
                       // Floating toolbar for quick actions

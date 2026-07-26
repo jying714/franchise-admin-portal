@@ -303,7 +303,7 @@ class MenuItemSchemaIssue {
         severity: 'error',
       ));
     }
-    if (menuItem.price == null || menuItem.price == 0.0) {
+    if (menuItem.price == null) {
       issues.add(MenuItemSchemaIssue(
         type: MenuItemSchemaIssueType.missingField,
         missingReference: '',
@@ -311,6 +311,15 @@ class MenuItemSchemaIssue {
         field: 'price',
         menuItemId: menuItem.id,
         severity: 'error',
+      ));
+    } else if (menuItem.price == 0.0) {
+      issues.add(MenuItemSchemaIssue(
+        type: MenuItemSchemaIssueType.missingField,
+        missingReference: '0',
+        label: 'Price is \$0 (free item)',
+        field: 'price',
+        menuItemId: menuItem.id,
+        severity: 'warning',
       ));
     }
 // Add more as needed (e.g., description, image, etc.)

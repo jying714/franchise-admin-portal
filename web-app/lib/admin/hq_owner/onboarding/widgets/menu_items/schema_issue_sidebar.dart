@@ -82,11 +82,7 @@ class _SchemaIssueSidebarState extends State<SchemaIssueSidebar> {
                   label: Text('${unresolved.length} unresolved'),
                   backgroundColor:
                       unresolved.isEmpty ? Colors.green : Colors.orange,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
+                )
               ],
             ),
           ),
@@ -173,13 +169,6 @@ class _SchemaIssueSidebarState extends State<SchemaIssueSidebar> {
                       );
                     },
                   ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close Sidebar'),
-            ),
           ),
         ],
       ),
