@@ -31,13 +31,31 @@ class MenuItemTemplatePickerDialog extends StatelessWidget {
     final franchiseId =
         Provider.of<shared.FranchiseProvider>(context, listen: false)
             .franchiseId;
-    final franchiseInfo =
-        Provider.of<shared.FranchiseInfoProvider>(context, listen: false)
-            .franchise;
     final menuItemProvider =
         Provider.of<shared.MenuItemProvider>(context, listen: false);
 
-    final restaurantType = franchiseInfo?.restaurantType;
+    // HQ shell may not provide FranchiseInfoProvider — resolve safely.
+    String? restaurantType;
+    try {
+      restaurantType = Provider.of<shared.FranchiseInfoProvider>(
+        context,
+        listen: false,
+      ).franchise?.restaurantType;
+    } catch (_) {
+      restaurantType = null;
+    }
+
+    // Fallback: common field on FranchiseProvider if exposed in your tree.
+    if (restaurantType == null || restaurantType.isEmpty) {
+      try {
+        final fp =
+            Provider.of<shared.FranchiseProvider>(context, listen: false);
+        // ignore: avoid_dynamic_calls
+        final dynamic maybe = fp;
+        restaurantType = maybe.restaurantType as String? ??
+            maybe.currentRestaurantType as String?;
+      } catch (_) {}
+    }
 
     if (restaurantType == null || restaurantType.isEmpty) {
       shared.ErrorLogger.log(

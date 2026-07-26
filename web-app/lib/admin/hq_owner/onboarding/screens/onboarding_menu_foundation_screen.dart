@@ -132,6 +132,7 @@ class _OnboardingMenuFoundationScreenState
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(
             loc?.coreMenuFoundationTitle ?? 'Step 2: Core Menu Foundation'),
         actions: [

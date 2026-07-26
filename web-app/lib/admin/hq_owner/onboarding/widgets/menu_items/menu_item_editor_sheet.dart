@@ -123,11 +123,23 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       buildContext: context,
     );
 
-    // Initial computation
+    // Keep parent sidebar in sync on every session notify (updateDraft / repair / force).
+    _session.addListener(_forwardIssuesToParent);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _session.forceRecomputeIssues();
-      widget.onSchemaIssuesChanged?.call(_session.issues);
+      _forwardIssuesToParent();
     });
+  }
+
+  void _forwardIssuesToParent() {
+    widget.onSchemaIssuesChanged?.call(List.from(_session.issues));
+  }
+
+  @override
+  void dispose() {
+    _session.removeListener(_forwardIssuesToParent);
+    super.dispose();
   }
 
   void repairSchemaIssue(shared.MenuItemSchemaIssue issue, String newValue) {
@@ -206,19 +218,23 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final categories = Provider.of<shared.CategoryProvider>(context).categories;
-    final hasErrors = _session.issues.any((i) => i.severity == 'error');
     return ChangeNotifierProvider.value(
       value: _session,
       child: Consumer<MenuItemEditSession>(
         builder: (context, session, _) {
+          final hasErrors = session.issues.any((i) => i.severity == 'error');
           return Scaffold(
             appBar: AppBar(
+              automaticallyImplyLeading: false,
               title: Text(session.draft.id.isEmpty
                   ? 'New Menu Item'
                   : 'Edit ${session.draft.name}'),
               actions: [
                 IconButton(
-                    onPressed: widget.onCancel, icon: const Icon(Icons.close)),
+                  tooltip: 'Back to menu list',
+                  onPressed: widget.onCancel,
+                  icon: const Icon(Icons.close),
+                ),
                 ElevatedButton(
                   onPressed: !hasErrors && session.isDirty ? _saveItem : null,
                   child: const Text('Save & Publish'),
@@ -259,16 +275,28 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                         Expanded(
                           child: TextFormField(
                             initialValue: session.draft.price.toString(),
-                            decoration: const InputDecoration(
-                                labelText: 'Base Price *', prefixText: '\$'),
+                            decoration: InputDecoration(
+                              labelText: 'Base Price *',
+                              prefixText: '\$',
+                              helperText: session.draft.price == 0
+                                  ? 'Warning: \$0 is allowed (free item)'
+                                  : null,
+                              helperStyle: TextStyle(
+                                color: session.draft.price == 0
+                                    ? Colors.orange.shade800
+                                    : null,
+                              ),
+                            ),
                             keyboardType: const TextInputType.numberWithOptions(
                                 decimal: true),
                             onChanged: (v) => session.updateDraft(session.draft
                                 .copyWith(price: double.tryParse(v) ?? 0.0)),
-                            validator: (v) =>
-                                (double.tryParse(v ?? '') ?? 0.0) <= 0
-                                    ? 'Price must be > 0'
-                                    : null,
+                            validator: (v) {
+                              final parsed = double.tryParse(v ?? '');
+                              if (parsed == null) return 'Enter a valid price';
+                              if (parsed < 0) return 'Price cannot be negative';
+                              return null; // 0 allowed
+                            },
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -319,9 +347,101 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                     ? session.draft.templateRefs!.first
                                     : null,
                             onTemplateApplied: (template) {
-                              final updated =
-                                  applyTemplateToDraft(session.draft, template);
+                              final categories =
+                                  Provider.of<shared.CategoryProvider>(
+                                context,
+                                listen: false,
+                              ).categories;
+                              final ingredients = Provider.of<
+                                  shared.IngredientMetadataProvider>(
+                                context,
+                                listen: false,
+                              ).allIngredients;
+                              final types =
+                                  Provider.of<shared.IngredientTypeProvider>(
+                                context,
+                                listen: false,
+                              ).ingredientTypes;
+
+                              // Apply template using live foundation ingredients
+                              // (utility currently passes [] internally — map after).
+                              var updated = applyTemplateToDraft(
+                                session.draft,
+                                template,
+                                allIngredients: ingredients,
+                              );
+
+                              // Draft-local normalize: map broken refs by id or name.
+                              final issues =
+                                  shared.MenuItemSchemaIssue.detectAllIssues(
+                                menuItem: updated,
+                                categories: categories,
+                                ingredients: ingredients,
+                                ingredientTypes: types,
+                              );
+
+                              for (final issue in issues) {
+                                if (issue.severity != 'error') continue;
+
+                                String? mapped;
+                                switch (issue.type) {
+                                  case shared.MenuItemSchemaIssueType.category:
+                                    mapped = categories
+                                        .where((c) =>
+                                            c.id == issue.missingReference ||
+                                            c.name.trim().toLowerCase() ==
+                                                (issue.label ??
+                                                        issue.missingReference)
+                                                    .trim()
+                                                    .toLowerCase())
+                                        .map((c) => c.id)
+                                        .cast<String?>()
+                                        .firstWhere((_) => true,
+                                            orElse: () => null);
+                                    break;
+                                  case shared
+                                        .MenuItemSchemaIssueType.ingredient:
+                                    mapped = ingredients
+                                        .where((ing) =>
+                                            ing.id == issue.missingReference ||
+                                            ing.name.trim().toLowerCase() ==
+                                                (issue.label ??
+                                                        issue.missingReference)
+                                                    .trim()
+                                                    .toLowerCase())
+                                        .map((ing) => ing.id)
+                                        .cast<String?>()
+                                        .firstWhere((_) => true,
+                                            orElse: () => null);
+                                    break;
+                                  case shared
+                                        .MenuItemSchemaIssueType.ingredientType:
+                                    mapped = types
+                                        .where((t) =>
+                                            t.id == issue.missingReference ||
+                                            t.name.trim().toLowerCase() ==
+                                                (issue.label ??
+                                                        issue.missingReference)
+                                                    .trim()
+                                                    .toLowerCase())
+                                        .map((t) => t.id)
+                                        .cast<String?>()
+                                        .firstWhere((_) => true,
+                                            orElse: () => null);
+                                    break;
+                                  case shared
+                                        .MenuItemSchemaIssueType.missingField:
+                                    break;
+                                }
+
+                                if (mapped != null && mapped.isNotEmpty) {
+                                  updated =
+                                      repairMenuItem(updated, issue, mapped);
+                                }
+                              }
+
                               session.updateDraft(updated);
+                              // Issues recompute + parent notify via session listener
                             },
                           ),
                         ),
@@ -495,9 +615,11 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                       onPressed: widget.onCancel, child: const Text('Cancel')),
                   const Spacer(),
                   ElevatedButton(
-                    onPressed: session.issues.isEmpty && session.isDirty
-                        ? _saveItem
-                        : null,
+                    onPressed:
+                        !session.issues.any((i) => i.severity == 'error') &&
+                                session.isDirty
+                            ? _saveItem
+                            : null,
                     child: const Text('Save & Publish to Franchise'),
                   ),
                 ],

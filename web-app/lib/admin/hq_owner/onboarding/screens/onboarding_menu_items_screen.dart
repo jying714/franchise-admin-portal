@@ -4,10 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider_impl.dart';
 import 'package:franchise_admin_portal/core/utils/features/feature_gate_banner.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/menu_item_editor_sheet.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/menu_items_list_tile.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/menu_item_json_import_export_dialog.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/menu_item_template_picker_dialog.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/schema_issue_sidebar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -51,35 +51,15 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
 
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
-        final typeProvider =
-            Provider.of<shared.IngredientTypeProvider>(context, listen: false);
-        final metadataProvider = Provider.of<shared.IngredientMetadataProvider>(
-            context,
-            listen: false);
-        final categoryProvider =
-            Provider.of<shared.CategoryProvider>(context, listen: false);
-        final menuProvider =
-            Provider.of<shared.MenuItemProvider>(context, listen: false);
-
-        await Future.wait([
-          typeProvider.load(
-              franchiseIdOverride: franchiseId, forceReloadFromFirestore: true),
-          metadataProvider.load(forceReloadFromFirestore: true),
-          categoryProvider.load(
-              franchiseIdOverride: franchiseId, forceReloadFromFirestore: true),
-          menuProvider.load(
-              franchiseIdOverride: franchiseId, forceReloadFromFirestore: true),
-        ]);
-
-        // Force UI re-evaluation after loads
+        await _reloadFoundationProviders(franchiseId);
         if (mounted) {
           setState(() {
             _hasInitialized = true;
           });
-          // Trigger one final check for inline editor
           Future.delayed(const Duration(milliseconds: 100), () {
-            if (mounted && _editingItem != null)
+            if (mounted && _editingItem != null) {
               _checkForSchemaIssues(_editingItem);
+            }
           });
         }
       });
@@ -96,6 +76,40 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     debugPrint(
       '[OnboardingMenuItemsScreen] ⚠️ No HQ shell for section=$sectionKey',
     );
+  }
+
+  Future<void> _reloadFoundationProviders(String franchiseId) async {
+    if (franchiseId.isEmpty || franchiseId == 'unknown') return;
+
+    final typeProvider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
+    final metadataProvider =
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
+    final categoryProvider =
+        Provider.of<shared.CategoryProvider>(context, listen: false);
+    final menuProvider =
+        Provider.of<shared.MenuItemProvider>(context, listen: false);
+
+    // Metadata load() has no franchiseIdOverride — bind franchise first.
+    if (metadataProvider is IngredientMetadataProviderImpl) {
+      metadataProvider.updateFranchiseId(franchiseId);
+    }
+
+    await Future.wait([
+      typeProvider.load(
+        franchiseIdOverride: franchiseId,
+        forceReloadFromFirestore: true,
+      ),
+      metadataProvider.load(forceReloadFromFirestore: true),
+      categoryProvider.load(
+        franchiseIdOverride: franchiseId,
+        forceReloadFromFirestore: true,
+      ),
+      menuProvider.load(
+        franchiseIdOverride: franchiseId,
+        forceReloadFromFirestore: true,
+      ),
+    ]);
   }
 
   Future<void> _markComplete() async {
@@ -267,6 +281,21 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
       );
     }
 
+    // P2.2 — mark complete only when no item has schema errors
+    bool anyItemHasSchemaErrors = false;
+    for (final item in provider.menuItems) {
+      final itemIssues = shared.MenuItemSchemaIssue.detectAllIssues(
+        menuItem: item,
+        categories: categoryProvider.categories,
+        ingredients: allIngredients,
+        ingredientTypes: typeProvider.ingredientTypes,
+      );
+      if (itemIssues.any((i) => i.severity == 'error')) {
+        anyItemHasSchemaErrors = true;
+        break;
+      }
+    }
+
     if (readinessFailures.isNotEmpty && !_isEditing) {
       return Scaffold(
         appBar: AppBar(
@@ -298,29 +327,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                               context,
                               listen: false)
                           .franchiseId;
-                      if (franchiseId.isNotEmpty) {
-                        await Future.wait([
-                          Provider.of<shared.IngredientTypeProvider>(context,
-                                  listen: false)
-                              .load(
-                                  franchiseIdOverride: franchiseId,
-                                  forceReloadFromFirestore: true),
-                          Provider.of<shared.IngredientMetadataProvider>(
-                                  context,
-                                  listen: false)
-                              .load(forceReloadFromFirestore: true),
-                          Provider.of<shared.CategoryProvider>(context,
-                                  listen: false)
-                              .load(
-                                  franchiseIdOverride: franchiseId,
-                                  forceReloadFromFirestore: true),
-                          Provider.of<shared.MenuItemProvider>(context,
-                                  listen: false)
-                              .load(
-                                  franchiseIdOverride: franchiseId,
-                                  forceReloadFromFirestore: true),
-                        ]);
-                      }
+                      await _reloadFoundationProviders(franchiseId);
                       if (mounted) setState(() {});
                     },
                     label: const Text('Force Full Sync'),
@@ -446,14 +453,11 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                   onPressed: _exitEditor,
                 ),
               IconButton(
-                icon: const Icon(Icons.data_object),
-                tooltip: loc.importExport,
-                onPressed: () => MenuItemJsonImportExportDialog.show(context),
-              ),
-              IconButton(
                 icon: const Icon(Icons.check_circle_outline),
-                tooltip: loc.markAsComplete,
-                onPressed: _markComplete,
+                tooltip: anyItemHasSchemaErrors
+                    ? 'Fix schema errors on all items first'
+                    : (loc.markAsComplete),
+                onPressed: anyItemHasSchemaErrors ? null : _markComplete,
               ),
             ],
           ),
@@ -604,39 +608,14 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                             context,
                                             listen: false)
                                         .franchiseId;
-                                if (franchiseId.isNotEmpty) {
-                                  await Future.wait([
-                                    Provider.of<shared.IngredientTypeProvider>(
-                                            context,
-                                            listen: false)
-                                        .load(
-                                            franchiseIdOverride: franchiseId,
-                                            forceReloadFromFirestore: true),
-                                    Provider.of<
-                                                shared
-                                                .IngredientMetadataProvider>(
-                                            context,
-                                            listen: false)
-                                        .load(forceReloadFromFirestore: true),
-                                    Provider.of<shared.CategoryProvider>(
-                                            context,
-                                            listen: false)
-                                        .load(
-                                            franchiseIdOverride: franchiseId,
-                                            forceReloadFromFirestore: true),
-                                    Provider.of<shared.MenuItemProvider>(
-                                            context,
-                                            listen: false)
-                                        .load(
-                                            franchiseIdOverride: franchiseId,
-                                            forceReloadFromFirestore: true),
-                                  ]);
-                                }
+                                await _reloadFoundationProviders(franchiseId);
                                 if (mounted) setState(() {});
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text('✅ UI fully refreshed'),
-                                        backgroundColor: Colors.green));
+                                  const SnackBar(
+                                    content: Text('✅ UI fully refreshed'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
                               },
                             ),
                           ],
@@ -722,6 +701,85 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                       optionalAddOns: [],
                                     )),
                                   ),
+                                  const SizedBox(height: 12),
+                                  OutlinedButton.icon(
+                                    icon: const Icon(
+                                        Icons.dashboard_customize_outlined),
+                                    label: const Text('Add from template'),
+                                    onPressed: () async {
+                                      await MenuItemTemplatePickerDialog.show(
+                                          context);
+                                      if (!mounted) return;
+
+                                      // Residual UX: recompute badges / mark-complete
+                                      // from provider items after bulk template import.
+                                      setState(() {});
+
+                                      final menuProvider =
+                                          Provider.of<shared.MenuItemProvider>(
+                                        context,
+                                        listen: false,
+                                      );
+                                      final categories =
+                                          Provider.of<shared.CategoryProvider>(
+                                        context,
+                                        listen: false,
+                                      ).categories;
+                                      final ingredients = Provider.of<
+                                          shared.IngredientMetadataProvider>(
+                                        context,
+                                        listen: false,
+                                      ).allIngredients;
+                                      final types = Provider.of<
+                                          shared.IngredientTypeProvider>(
+                                        context,
+                                        listen: false,
+                                      ).ingredientTypes;
+
+                                      var errorCount = 0;
+                                      for (final item
+                                          in menuProvider.menuItems) {
+                                        final issues =
+                                            shared.MenuItemSchemaIssue
+                                                .detectAllIssues(
+                                          menuItem: item,
+                                          categories: categories,
+                                          ingredients: ingredients,
+                                          ingredientTypes: types,
+                                        );
+                                        if (issues.any(
+                                            (i) => i.severity == 'error')) {
+                                          errorCount++;
+                                        }
+                                      }
+
+                                      if (!mounted) return;
+                                      if (errorCount > 0) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Template applied · $errorCount item(s) still have schema errors — edit to fix',
+                                            ),
+                                            backgroundColor: Colors.orange,
+                                          ),
+                                        );
+                                      } else if (menuProvider
+                                          .menuItems.isNotEmpty) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              menuProvider.isDirty
+                                                  ? 'Template applied · all items clean — save changes if needed'
+                                                  : 'Template applied · all items clean',
+                                            ),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      }
+                                    },
+                                  ),
                                 ],
                               )
                             : Builder(
@@ -755,6 +813,17 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                             'menu_item_${uniqueItems[index].id}_$index',
                                           ),
                                           item: uniqueItems[index],
+                                          hasSchemaErrors:
+                                              shared.MenuItemSchemaIssue
+                                                  .detectAllIssues(
+                                            menuItem: uniqueItems[index],
+                                            categories:
+                                                categoryProvider.categories,
+                                            ingredients: ingredientProvider
+                                                .allIngredients,
+                                            ingredientTypes:
+                                                typeProvider.ingredientTypes,
+                                          ).any((i) => i.severity == 'error'),
                                           isSelected: _selectedIds
                                               .contains(uniqueItems[index].id),
                                           onSelect: (checked) {
@@ -853,6 +922,7 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                           children: [
                             IconButton(
                               icon: const Icon(Icons.add),
+                              tooltip: 'Add menu item',
                               onPressed: () => openEditor(shared.MenuItem(
                                 id: const Uuid().v4(),
                                 name: 'New Item',
@@ -871,16 +941,89 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                             ),
                             const SizedBox(width: 16),
                             OutlinedButton.icon(
-                                icon: const Icon(Icons.import_export),
-                                label: const Text('Import JSON'),
-                                onPressed: () =>
-                                    MenuItemJsonImportExportDialog.show(
-                                        context)),
+                              icon: const Icon(
+                                  Icons.dashboard_customize_outlined),
+                              label: const Text('Add from template'),
+                              onPressed: () async {
+                                await MenuItemTemplatePickerDialog.show(
+                                    context);
+                                if (!mounted) return;
+
+                                // Residual UX: recompute badges / mark-complete
+                                // from provider items after bulk template import.
+                                setState(() {});
+
+                                final menuProvider =
+                                    Provider.of<shared.MenuItemProvider>(
+                                  context,
+                                  listen: false,
+                                );
+                                final categories =
+                                    Provider.of<shared.CategoryProvider>(
+                                  context,
+                                  listen: false,
+                                ).categories;
+                                final ingredients = Provider.of<
+                                    shared.IngredientMetadataProvider>(
+                                  context,
+                                  listen: false,
+                                ).allIngredients;
+                                final types =
+                                    Provider.of<shared.IngredientTypeProvider>(
+                                  context,
+                                  listen: false,
+                                ).ingredientTypes;
+
+                                var errorCount = 0;
+                                for (final item in menuProvider.menuItems) {
+                                  final issues = shared.MenuItemSchemaIssue
+                                      .detectAllIssues(
+                                    menuItem: item,
+                                    categories: categories,
+                                    ingredients: ingredients,
+                                    ingredientTypes: types,
+                                  );
+                                  if (issues
+                                      .any((i) => i.severity == 'error')) {
+                                    errorCount++;
+                                  }
+                                }
+
+                                if (!mounted) return;
+                                if (errorCount > 0) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Template applied · $errorCount item(s) still have schema errors — edit to fix',
+                                      ),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                } else if (menuProvider.menuItems.isNotEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        menuProvider.isDirty
+                                            ? 'Template applied · all items clean — save changes if needed'
+                                            : 'Template applied · all items clean',
+                                      ),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
                             const SizedBox(width: 16),
                             ElevatedButton.icon(
-                                icon: const Icon(Icons.check_circle),
-                                label: const Text('Mark Complete'),
-                                onPressed: _markComplete),
+                              icon: const Icon(Icons.check_circle),
+                              label: Text(
+                                anyItemHasSchemaErrors
+                                    ? 'Fix schema errors first'
+                                    : 'Mark Complete',
+                              ),
+                              onPressed:
+                                  anyItemHasSchemaErrors ? null : _markComplete,
+                            ),
                           ],
                         ),
                       ),

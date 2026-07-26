@@ -507,8 +507,11 @@ shared.MenuItem repairMenuItem(
 }
 
 shared.MenuItem applyTemplateToDraft(
-    shared.MenuItem draft, shared.MenuItem template) {
-  final fields = extractTemplateFieldsForEditor(template, []);
+  shared.MenuItem draft,
+  shared.MenuItem template, {
+  List<shared.IngredientMetadata> allIngredients = const [],
+}) {
+  final fields = extractTemplateFieldsForEditor(template, allIngredients);
 
   return draft.copyWith(
     name: fields['name'] as String? ?? draft.name,

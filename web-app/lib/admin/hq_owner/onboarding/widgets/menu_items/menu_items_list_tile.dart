@@ -7,6 +7,7 @@ import 'package:franchise_admin_portal/generated/app_localizations.dart';
 class MenuItemListTile extends StatelessWidget {
   final shared.MenuItem item;
   final bool isSelected;
+  final bool hasSchemaErrors;
   final ValueChanged<bool?>? onSelect;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -15,6 +16,7 @@ class MenuItemListTile extends StatelessWidget {
     super.key,
     required this.item,
     required this.isSelected,
+    this.hasSchemaErrors = false,
     required this.onSelect,
     required this.onEdit,
     required this.onDelete,
@@ -28,16 +30,33 @@ class MenuItemListTile extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
+      color:
+          hasSchemaErrors ? colorScheme.errorContainer.withOpacity(0.35) : null,
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Checkbox(
           value: isSelected,
           onChanged: onSelect,
         ),
-        title: Text(
-          item.name,
-          style: theme.textTheme.titleMedium
-              ?.copyWith(fontWeight: FontWeight.bold),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                item.name,
+                style: theme.textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
+            if (hasSchemaErrors)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Icon(
+                  Icons.error_outline,
+                  color: colorScheme.error,
+                  size: 20,
+                ),
+              ),
+          ],
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
