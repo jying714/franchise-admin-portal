@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:collection/collection.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MenuItemProviderImpl extends ChangeNotifier
     implements shared.MenuItemProvider {
@@ -167,16 +168,9 @@ class MenuItemProviderImpl extends ChangeNotifier
     _working.removeWhere((item) => item.id == id);
     notifyListeners();
 
-    try {
-      // Prefer a dedicated delete if AdminFirestoreService exposes it.
-      await (_firestoreService as dynamic).deleteMenuItem(
-        franchiseId: franchiseId,
-        menuItemId: id,
-      );
-    } catch (_) {
-      // Fallback: rewrite full list (must remove missing docs server-side).
-      await _firestoreService.saveMenuItems(franchiseId, _working);
-    }
+    // saveMenuItems only merges — it does NOT remove missing docs.
+    // Delete the document explicitly.
+    await _firestoreService.deleteMenuItem(franchiseId, id);
 
     _original = _working.map((e) => e.copyWith()).toList();
     notifyListeners();

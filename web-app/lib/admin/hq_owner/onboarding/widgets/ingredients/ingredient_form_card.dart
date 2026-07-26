@@ -83,15 +83,18 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
       return;
     }
 
+    // Always use screen context — dialog route may not have providers.
+    final host = widget.parentContext;
+
     final typeProvider =
-        Provider.of<IngredientTypeProviderImpl>(context, listen: false);
+        Provider.of<IngredientTypeProviderImpl>(host, listen: false);
     final matched = typeProvider.ingredientTypes.where((t) => t.id == typeId);
     final typeName =
         matched.isNotEmpty ? matched.first.name : _typeController.text.trim();
 
     if (typeName.isEmpty) {
-      if (widget.parentContext.mounted) {
-        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+      if (host.mounted) {
+        ScaffoldMessenger.of(host).showSnackBar(
           const SnackBar(content: Text('Ingredient type name is required')),
         );
       }
@@ -122,22 +125,22 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
       setState(() => _isSaving = true);
 
       final meta = Provider.of<IngredientMetadataProviderImpl>(
-        context,
+        host,
         listen: false,
       );
+
+      final franchiseId =
+          Provider.of<shared.FranchiseProvider>(host, listen: false)
+              .franchiseId;
+
+      // Keep provider franchise in sync before write.
+      meta.updateFranchiseId(franchiseId);
 
       final isNew = widget.initialData == null;
       if (isNew) {
         await meta.createIngredient(ingredient);
       } else {
-        // Local dirty update; user can also use list "Save changes" for batch.
-        // createIngredient path already writes Firestore for new rows.
         meta.updateIngredient(ingredient);
-        // Persist edit immediately so edit isn't only in-memory.
-        final franchiseId = Provider.of<shared.FranchiseProvider>(
-          widget.parentContext,
-          listen: false,
-        ).franchiseId;
         await meta.saveAllChanges(franchiseId);
       }
 
@@ -173,7 +176,8 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
     final colorScheme = theme.colorScheme;
 
     final ingredientTypes =
-        context.watch<IngredientTypeProviderImpl>().ingredientTypes;
+        Provider.of<IngredientTypeProviderImpl>(widget.parentContext)
+            .ingredientTypes;
     final typeIds = ingredientTypes.map((t) => t.id).toSet();
 
     // Dropdown value must be in items or null — invalid seed typeIds freeze the dialog.

@@ -239,7 +239,25 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
   @override
   void deleteIngredient(String id) {
     _current.removeWhere((e) => e.id == id);
+    _original.removeWhere((e) => e.id == id);
+    _stagedIngredients.removeWhere((e) => e.id == id);
+    _selectedIngredientIds.remove(id);
+    itemGlobalKeys.remove(id);
     notifyListeners();
+  }
+
+  /// Single ingredient: local + Firestore.
+  /// Single ingredient: local + Firestore (uses batch API — no single-delete method).
+  Future<void> deleteIngredientAndPersist(String id) async {
+    if (_franchiseId.isEmpty || _franchiseId == 'unknown') {
+      throw StateError(
+        'IngredientMetadataProvider: franchiseId not set before delete',
+      );
+    }
+
+    deleteIngredient(id);
+
+    await _firestore.deleteIngredientMetadataBatch(_franchiseId, [id]);
   }
 
   @override
@@ -313,12 +331,18 @@ class IngredientMetadataProviderImpl extends ChangeNotifier
     notifyListeners();
   }
 
-  @override
   Future<void> bulkDeleteIngredientsFromFirestore(List<String> ids) async {
     if (_franchiseId.isEmpty || _franchiseId == 'unknown') return;
     try {
       await _firestore.deleteIngredientMetadataBatch(_franchiseId, ids);
-      await load();
+      _current.removeWhere((i) => ids.contains(i.id));
+      _original.removeWhere((i) => ids.contains(i.id));
+      _selectedIngredientIds.removeAll(ids);
+      for (final id in ids) {
+        itemGlobalKeys.remove(id);
+      }
+      notifyListeners();
+      await load(forceReloadFromFirestore: true);
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message: 'Failed to bulk delete ingredients',

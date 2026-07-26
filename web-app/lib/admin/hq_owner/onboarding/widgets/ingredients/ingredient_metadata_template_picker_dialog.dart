@@ -91,14 +91,8 @@ class _IngredientMetadataTemplatePickerDialogState
 
   @override
   Widget build(BuildContext context) {
-    try {
-      final p = Provider.of<shared.IngredientMetadataProvider>(context,
-          listen: false);
-      print(
-          '[IngredientMetadataTemplatePickerDialog] build() provider hashCode=${p.hashCode}');
-    } catch (e) {
-      print('[IngredientMetadataTemplatePickerDialog] build() NO PROVIDER: $e');
-    }
+    // HQ registers IngredientMetadataProviderImpl, not the abstract type.
+    // This dialog does not need the metadata provider to load templates.
     final loc = widget.loc;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;

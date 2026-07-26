@@ -6,6 +6,7 @@ import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/widgets/network_image_widget.dart';
 import 'ingredient_form_card.dart';
+import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider_impl.dart';
 
 class IngredientListTile extends StatelessWidget {
   final shared.IngredientMetadata ingredient;
@@ -157,10 +158,25 @@ class IngredientListTile extends StatelessWidget {
 
                 if (confirm == true) {
                   try {
-                    await firestore.deleteIngredientMetadataBatch(
-                      franchiseId,
-                      [ingredient.id],
+                    final metaProvider =
+                        Provider.of<shared.IngredientMetadataProvider>(
+                      context,
+                      listen: false,
                     );
+
+                    // Prefer provider path (local + Firestore + notify).
+                    if (metaProvider is IngredientMetadataProviderImpl) {
+                      metaProvider.updateFranchiseId(franchiseId);
+                      await metaProvider
+                          .deleteIngredientAndPersist(ingredient.id);
+                    } else {
+                      await firestore.deleteIngredientMetadataBatch(
+                        franchiseId,
+                        [ingredient.id],
+                      );
+                      metaProvider.deleteIngredient(ingredient.id);
+                    }
+
                     onRefresh();
                   } catch (e, stack) {
                     shared.ErrorLogger.log(

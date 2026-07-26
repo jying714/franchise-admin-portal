@@ -1721,6 +1721,50 @@ class AdminFirestoreService extends shared.FirestoreServiceImpl {
     }
   }
 
+  @override
+  Future<void> deleteMenuItem(
+    String franchiseId,
+    String menuItemId, {
+    String? userId,
+  }) async {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default' ||
+        menuItemId.isEmpty) {
+      shared.ErrorLogger.log(
+        message: 'deleteMenuItem called with invalid ids',
+        source: 'AdminFirestoreService.deleteMenuItem',
+        severity: 'error',
+        contextData: {
+          'franchiseId': franchiseId,
+          'menuItemId': menuItemId,
+        },
+      );
+      return;
+    }
+
+    try {
+      await db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('menu_items')
+          .doc(menuItemId)
+          .delete();
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to delete menu item',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.deleteMenuItem',
+        severity: 'error',
+        contextData: {
+          'franchiseId': franchiseId,
+          'menuItemId': menuItemId,
+        },
+      );
+      rethrow;
+    }
+  }
+
   /// Phase 1 Rule-Based Schema Normalization
   /// - Strips legacy prefixes (cat_, ing_, etc.)
   /// - Matches by name to live clean IDs

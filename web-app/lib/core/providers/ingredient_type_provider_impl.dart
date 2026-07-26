@@ -394,9 +394,14 @@ class IngredientTypeProviderImpl extends ChangeNotifier
         _stagedTypes.any((t) => t.id == id)) {
       return false;
     }
-    final staged =
-        shared.IngredientType(id: id, name: name, visibleInApp: true);
+    final staged = shared.IngredientType(
+      id: id,
+      name: name,
+      visibleInApp: true,
+      sortOrder: _ingredientTypes.length,
+    );
     _stagedTypes.add(staged);
+    _ingredientTypes.add(staged); // must be selectable in the dialog dropdown
     notifyListeners();
     return true;
   }

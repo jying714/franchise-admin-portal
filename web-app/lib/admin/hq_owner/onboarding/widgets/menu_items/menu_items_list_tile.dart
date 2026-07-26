@@ -88,57 +88,7 @@ class MenuItemListTile extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.delete_outline),
               tooltip: loc.delete ?? 'Delete',
-              onPressed: () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: Text(loc.confirmDeletion ?? 'Confirm Deletion'),
-                    content: Text(loc.deleteMenuItemConfirm(item.name) ??
-                        'Delete ${item.name}?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(false),
-                        child: Text(loc.cancel ?? 'Cancel'),
-                      ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red),
-                        onPressed: () => Navigator.of(ctx).pop(true),
-                        child: Text(loc.delete ?? 'Delete'),
-                      ),
-                    ],
-                  ),
-                );
-
-                if (confirmed == true) {
-                  try {
-                    Provider.of<shared.MenuItemProvider>(context, listen: false)
-                        .deleteMenuItem(item.id);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text(
-                                loc.menuItemDeleted ?? 'Menu item deleted')),
-                      );
-                    }
-                  } catch (e, stack) {
-                    shared.ErrorLogger.log(
-                      message: 'menu_item_delete_failed',
-                      source: 'MenuItemListTile',
-                      severity: 'error',
-                      stack: stack.toString(),
-                      contextData: {'itemId': item.id},
-                    );
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content:
-                                Text(loc.errorGeneric ?? 'An error occurred')),
-                      );
-                    }
-                  }
-                }
-              },
+              onPressed: onDelete,
             )
           ],
         ),

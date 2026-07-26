@@ -60,15 +60,34 @@ class _MissingTypeResolutionDialogState
     setState(() => _addingType = true);
 
     try {
-      final provider =
-          Provider.of<shared.IngredientTypeProvider>(context, listen: false);
-      final id = name.toLowerCase().replaceAll(' ', '_');
-      final added = provider.stageIfNew(id: id, name: name);
-      if (!added) {
-        // Already exists, optionally warn
+      // Prefer the context that opened the dialog (has MultiProvider).
+      final host = widget.dialogContext;
+
+      final franchiseId =
+          Provider.of<shared.FranchiseProvider>(host, listen: false)
+              .franchiseId;
+      if (franchiseId.isEmpty || franchiseId == 'unknown') {
+        throw StateError('franchiseId not set');
+      }
+
+      final provider = Provider.of<IngredientTypeProviderImpl>(
+        host,
+        listen: false,
+      );
+
+      final id = name
+          .toLowerCase()
+          .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+          .replaceAll(RegExp(r'^_|_$'), '');
+
+      if (id.isEmpty) {
+        throw StateError('Invalid type name');
+      }
+
+      if (allTypes.any((t) => t.id == id) || provider.getById(id) != null) {
         setState(() => _addingType = false);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          ScaffoldMessenger.of(host).showSnackBar(
             const SnackBar(
               content: Text('Ingredient type already exists.'),
               backgroundColor: Colors.orange,
@@ -77,25 +96,36 @@ class _MissingTypeResolutionDialogState
         }
         return;
       }
-      final newType = provider.getById(id);
+
+      final newType = shared.IngredientType(
+        id: id,
+        name: name,
+        visibleInApp: true,
+      );
+
+      await provider.createType(franchiseId, newType);
+
+      final resolved = provider.getById(id) ?? newType;
 
       setState(() {
-        if (newType != null) allTypes.add(newType);
+        if (!allTypes.any((t) => t.id == resolved.id)) {
+          allTypes.add(resolved);
+        }
         _newTypeNameCtrl.clear();
         _addingType = false;
       });
     } catch (e, stack) {
       shared.ErrorLogger.log(
-        message: 'Failed to create new ingredient type',
+        message: 'Failed to create new ingredient type: $e',
         stack: stack.toString(),
         source: 'MissingTypeResolutionDialog',
         severity: 'error',
       );
       setState(() => _addingType = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to create new ingredient type.'),
+        ScaffoldMessenger.of(widget.dialogContext).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create new ingredient type: $e'),
             backgroundColor: Colors.red,
           ),
         );
