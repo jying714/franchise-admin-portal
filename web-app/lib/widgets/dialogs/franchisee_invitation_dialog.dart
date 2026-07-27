@@ -161,35 +161,61 @@ class _FranchiseeInvitationDialogState
       _error = null;
       _success = null;
     });
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      debugPrint('[FranchiseeInvitationDialog] validate() failed — abort');
+      return;
+    }
     _formKey.currentState!.save();
 
     setState(() => _isLoading = true);
     debugPrint('[FranchiseeInvitationDialog] Sending invite: email=$_email, '
         'franchiseName=$_franchiseName, role=$_role, notes=$_notes');
     try {
+      debugPrint(
+          '[FranchiseeInvitationDialog] resolving FranchiseeInvitationProvider...');
       final invitationProvider =
           Provider.of<shared.FranchiseeInvitationProvider>(context,
               listen: false);
+      debugPrint(
+          '[FranchiseeInvitationDialog] provider ok: ${invitationProvider.runtimeType}');
 
+      debugPrint('[FranchiseeInvitationDialog] resolving AdminUserProvider...');
+      final adminUser =
+          Provider.of<shared.AdminUserProvider>(context, listen: false).user;
+      final inviterUserId = adminUser?.id ?? '';
+      debugPrint('[FranchiseeInvitationDialog] inviterUserId="$inviterUserId" '
+          'adminUser=${adminUser?.email ?? "null"}');
+
+      if (inviterUserId.isEmpty) {
+        throw Exception(
+            'Current user id is unavailable; cannot send invitation');
+      }
+
+      debugPrint(
+          '[FranchiseeInvitationDialog] calling inviteFranchisee (Cloud Function)...');
       await invitationProvider.inviteFranchisee(
         email: _email!,
         role: _role!,
-        inviterUserId: '', // TODO: Pass current user ID here
+        inviterUserId: inviterUserId,
         franchiseName: _franchiseName ?? '',
-        // notes can go into extraData if needed
         extraData: _notes != null ? {'notes': _notes} : null,
       );
+      debugPrint('[FranchiseeInvitationDialog] inviteFranchisee returned OK');
+
       setState(() {
         _success = AppLocalizations.of(context)!.invitationSent;
         _isLoading = false;
       });
 
-      // Optionally, close after a short delay
       Future.delayed(const Duration(milliseconds: 1200), () {
         if (mounted) Navigator.of(context).pop(true);
       });
     } catch (e, stack) {
+      // --- DEBUG: force full error into console ---
+      debugPrint('[FranchiseeInvitationDialog] RAW ERROR: $e');
+      debugPrint('[FranchiseeInvitationDialog] TYPE: ${e.runtimeType}');
+      debugPrint('[FranchiseeInvitationDialog] STACK:\n$stack');
+      // --------------------------------------------
       shared.ErrorLogger.log(
         message: 'Failed to send franchisee invitation',
         stack: stack.toString(),

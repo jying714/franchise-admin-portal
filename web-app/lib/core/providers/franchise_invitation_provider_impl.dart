@@ -79,11 +79,18 @@ class FranchiseeInvitationProviderImpl extends ChangeNotifier
         inviterUserId: inviterUserId,
         email: email,
       );
-    } catch (e) {
+    } catch (e, stack) {
       _lastError = e.toString();
+      shared.ErrorLogger.log(
+        message: 'Failed to fetch invitations in provider',
+        stack: stack.toString(),
+        source: 'FranchiseeInvitationProviderImpl.fetchInvitations',
+        contextData: {'exception': e.toString()},
+      );
+    } finally {
+      _loading = false;
+      notifyListeners();
     }
-    _loading = false;
-    notifyListeners();
   }
 
   @override
@@ -106,7 +113,9 @@ class FranchiseeInvitationProviderImpl extends ChangeNotifier
     String? password,
     Map<String, dynamic>? extraData,
   }) async {
-    _loading = true;
+    // Use _sending for the invite action. Do NOT set _loading here — that flag
+    // drives the pending-invites list spinner in FranchiseInvitationPanel.
+    _sending = true;
     _lastError = null;
     notifyListeners();
     try {
@@ -118,8 +127,10 @@ class FranchiseeInvitationProviderImpl extends ChangeNotifier
         password: password,
         extraData: extraData,
       );
+      // Refresh list (fetchInvitations owns _loading true/false + notify).
       await fetchInvitations();
-      _loading = false;
+      _sending = false;
+      notifyListeners();
       return true;
     } catch (e, stack) {
       _lastError = e.toString();
@@ -129,6 +140,7 @@ class FranchiseeInvitationProviderImpl extends ChangeNotifier
         source: 'FranchiseeInvitationProviderImpl.inviteFranchisee',
         contextData: {'email': email, 'role': role},
       );
+      _sending = false;
       _loading = false;
       notifyListeners();
       return false;

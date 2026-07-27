@@ -43,6 +43,8 @@ import 'package:franchise_admin_portal/admin/developer/developer_dashboard_scree
 import 'package:franchise_admin_portal/admin/franchise/franchise_selector_screen.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/owner_hq_dashboard_screen.dart';
 import 'package:franchise_admin_portal/admin/platform_owner/platform_owner_dashboard_screen.dart';
+import 'package:franchise_admin_portal/admin/platform_owner/screens/full_platform_plans_screen.dart';
+import 'package:franchise_admin_portal/admin/platform_owner/screens/full_franchise_subscription_list_screen.dart';
 import 'package:franchise_admin_portal/widgets/profile_gate_screen.dart';
 import 'package:franchise_admin_portal/widgets/auth_profile_listener.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart'; // Web-specific DesignTokens (returns Color)
@@ -412,6 +414,19 @@ class _FranchiseAuthenticatedRootState
               if (name.contains('admin')) {
                 return MaterialPageRoute(
                     builder: (_) => const AdminDashboardScreen());
+              }
+              // Specific platform routes must be matched before the generic
+              // "platform" catch-all, otherwise they never reach their screens.
+              if (name == '/platform/plans' ||
+                  name.endsWith('/platform/plans')) {
+                return MaterialPageRoute(
+                    builder: (_) => const FullPlatformPlansScreen());
+              }
+              if (name == '/platform/subscriptions' ||
+                  name.endsWith('/platform/subscriptions')) {
+                return MaterialPageRoute(
+                    builder: (_) =>
+                        const FullFranchiseSubscriptionListScreen());
               }
               if (name.contains('platform-owner') ||
                   name.contains('platform')) {

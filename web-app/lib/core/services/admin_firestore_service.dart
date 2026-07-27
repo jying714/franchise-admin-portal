@@ -35,6 +35,205 @@ class AdminFirestoreService extends shared.FirestoreServiceImpl {
   firestore.CollectionReference<Map<String, dynamic>>
       get invitationCollection => db.collection('franchisee_invitations');
 
+  DateTime _invitationParseDate(dynamic d) {
+    if (d is firestore.Timestamp) return d.toDate();
+    if (d is DateTime) return d;
+    if (d is String) return DateTime.tryParse(d) ?? DateTime.now();
+    return DateTime.now();
+  }
+
+  shared.FranchiseeInvitation _invitationFromDoc(
+      firestore.DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? <String, dynamic>{};
+    // Normalize Timestamps so FranchiseeInvitation.fromMap receives DateTime/String only.
+    final normalized = Map<String, dynamic>.from(data);
+    if (normalized['createdAt'] is firestore.Timestamp) {
+      normalized['createdAt'] =
+          (normalized['createdAt'] as firestore.Timestamp).toDate();
+    }
+    if (normalized['lastSentAt'] is firestore.Timestamp) {
+      normalized['lastSentAt'] =
+          (normalized['lastSentAt'] as firestore.Timestamp).toDate();
+    }
+    return shared.FranchiseeInvitation.fromMap(normalized, doc.id);
+  }
+
+  @override
+  Future<List<shared.FranchiseeInvitation>> fetchInvitations({
+    String? status,
+    String? inviterUserId,
+    String? email,
+  }) async {
+    try {
+      firestore.Query<Map<String, dynamic>> q = invitationCollection;
+
+      if (status != null && status.isNotEmpty) {
+        q = q.where('status', isEqualTo: status);
+      }
+      if (inviterUserId != null && inviterUserId.isNotEmpty) {
+        q = q.where('inviterUserId', isEqualTo: inviterUserId);
+      }
+      if (email != null && email.isNotEmpty) {
+        q = q.where('email', isEqualTo: email);
+      }
+
+      final snap = await q.get();
+      return snap.docs.map(_invitationFromDoc).toList();
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to fetchInvitations: $e',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.fetchInvitations',
+        severity: 'error',
+        contextData: {
+          if (status != null) 'status': status,
+          if (inviterUserId != null) 'inviterUserId': inviterUserId,
+          if (email != null) 'email': email,
+        },
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Stream<List<shared.FranchiseeInvitation>> invitationStream({
+    String? status,
+    String? inviterUserId,
+  }) {
+    firestore.Query<Map<String, dynamic>> q = invitationCollection;
+
+    if (status != null && status.isNotEmpty) {
+      q = q.where('status', isEqualTo: status);
+    }
+    if (inviterUserId != null && inviterUserId.isNotEmpty) {
+      q = q.where('inviterUserId', isEqualTo: inviterUserId);
+    }
+
+    return q.snapshots().map(
+          (snap) => snap.docs.map(_invitationFromDoc).toList(),
+        );
+  }
+
+  @override
+  Future<shared.FranchiseeInvitation?> fetchInvitationById(String id) async {
+    if (id.isEmpty) return null;
+    try {
+      final doc = await invitationCollection.doc(id).get();
+      if (!doc.exists || doc.data() == null) return null;
+      return _invitationFromDoc(doc);
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to fetchInvitationById: $e',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.fetchInvitationById',
+        severity: 'error',
+        contextData: {'id': id},
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> updateInvitation(String id, Map<String, dynamic> data) async {
+    if (id.isEmpty) return;
+    try {
+      await invitationCollection.doc(id).update({
+        ...data,
+        'updatedAt': firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to updateInvitation: $e',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.updateInvitation',
+        severity: 'error',
+        contextData: {'id': id},
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> cancelInvitation(String id, {String? revokedByUserId}) async {
+    if (id.isEmpty) return;
+    try {
+      await invitationCollection.doc(id).update({
+        'status': 'revoked',
+        'revokedAt': firestore.FieldValue.serverTimestamp(),
+        if (revokedByUserId != null && revokedByUserId.isNotEmpty)
+          'revokedBy': revokedByUserId,
+      });
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to cancelInvitation: $e',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.cancelInvitation',
+        severity: 'error',
+        contextData: {
+          'id': id,
+          if (revokedByUserId != null) 'revokedBy': revokedByUserId
+        },
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteInvitation(String id) async {
+    if (id.isEmpty) return;
+    try {
+      await invitationCollection.doc(id).delete();
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to deleteInvitation: $e',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.deleteInvitation',
+        severity: 'error',
+        contextData: {'id': id},
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> expireInvitation(String id) async {
+    if (id.isEmpty) return;
+    try {
+      await invitationCollection.doc(id).update({
+        'status': 'expired',
+        'expiredAt': firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to expireInvitation: $e',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.expireInvitation',
+        severity: 'error',
+        contextData: {'id': id},
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> markInvitationResent(String id) async {
+    if (id.isEmpty) return;
+    try {
+      await invitationCollection.doc(id).update({
+        'lastSentAt': firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to markInvitationResent: $e',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.markInvitationResent',
+        severity: 'error',
+        contextData: {'id': id},
+      );
+      rethrow;
+    }
+  }
+
   // ===================== INGREDIENT METADATA =====================
   // Uses the exact IngredientMetadata model you provided.
   // Fully scoped under franchises/{franchiseId}/ingredient_metadata.
@@ -1291,24 +1490,306 @@ class AdminFirestoreService extends shared.FirestoreServiceImpl {
 
   @override
   Future<PlatformRevenueOverview> fetchPlatformRevenueOverview() async {
-    // Placeholder - in production this would aggregate from franchise-scoped data or a materialized view
-    return PlatformRevenueOverview(
-      totalRevenueYtd: 0,
-      subscriptionRevenue: 0,
-      royaltyRevenue: 0,
-      overdueAmount: 0,
-    );
+    try {
+      final now = DateTime.now();
+      final yearStart = DateTime(now.year, 1, 1);
+
+      DateTime? asDate(dynamic v) {
+        if (v is firestore.Timestamp) return v.toDate();
+        if (v is DateTime) return v;
+        if (v is String) return DateTime.tryParse(v);
+        return null;
+      }
+
+      final invSnap = await db.collection('platform_invoices').get();
+
+      double totalRevenueYtd = 0;
+      double subscriptionRevenue = 0;
+      double royaltyRevenue = 0;
+      double overdueAmount = 0;
+
+      for (final doc in invSnap.docs) {
+        final data = doc.data();
+        final amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+        final status = (data['status'] as String?)?.toLowerCase() ?? 'unpaid';
+        final createdAt = asDate(data['createdAt']);
+        final dueDate = asDate(data['dueDate']);
+        final planId = data['planId'] as String?;
+        final note = (data['note'] as String?)?.toLowerCase() ?? '';
+        final lineItems = data['lineItems'];
+
+        final isPaid = status == 'paid';
+        final isUnpaidLike = status == 'unpaid' ||
+            status == 'partial' ||
+            status == 'overdue' ||
+            status == 'open';
+
+        if (isPaid && createdAt != null && !createdAt.isBefore(yearStart)) {
+          totalRevenueYtd += amount;
+
+          final looksSubscription = planId != null ||
+              note.contains('subscription') ||
+              note.contains('saas') ||
+              (lineItems is Map &&
+                  lineItems.toString().toLowerCase().contains('subscription'));
+          final looksRoyalty = note.contains('royalty') ||
+              (lineItems is Map &&
+                  lineItems.toString().toLowerCase().contains('royalty'));
+
+          if (looksRoyalty) {
+            royaltyRevenue += amount;
+          } else if (looksSubscription) {
+            subscriptionRevenue += amount;
+          } else {
+            // Default paid SaaS invoices to subscription bucket when untagged.
+            subscriptionRevenue += amount;
+          }
+        }
+
+        if (isUnpaidLike) {
+          final overdueByStatus = status == 'overdue';
+          final overdueByDate = dueDate != null && dueDate.isBefore(now);
+          if (overdueByStatus || overdueByDate) {
+            overdueAmount += amount;
+          }
+        }
+      }
+
+      return PlatformRevenueOverview(
+        totalRevenueYtd: totalRevenueYtd,
+        subscriptionRevenue: subscriptionRevenue,
+        royaltyRevenue: royaltyRevenue,
+        overdueAmount: overdueAmount,
+      );
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to fetchPlatformRevenueOverview: $e',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.fetchPlatformRevenueOverview',
+        severity: 'error',
+      );
+      return PlatformRevenueOverview(
+        totalRevenueYtd: 0,
+        subscriptionRevenue: 0,
+        royaltyRevenue: 0,
+        overdueAmount: 0,
+      );
+    }
   }
 
   @override
   Future<PlatformFinancialKpis> fetchPlatformFinancialKpis() async {
-    // Placeholder - in production this would aggregate from franchise-scoped data
-    return PlatformFinancialKpis(
-      activeFranchises: 0,
-      mrr: 0,
-      arr: 0,
-      recentPayouts: 0.0,
-    );
+    try {
+      final now = DateTime.now();
+      final thirtyDaysAgo = now.subtract(const Duration(days: 30));
+
+      DateTime? asDate(dynamic v) {
+        if (v is firestore.Timestamp) return v.toDate();
+        if (v is DateTime) return v;
+        if (v is String) return DateTime.tryParse(v);
+        return null;
+      }
+
+      // Active franchise count + MRR from franchise_subscriptions.
+      final subSnap = await db.collection('franchise_subscriptions').get();
+      final activeFranchiseIds = <String>{};
+      double mrr = 0;
+
+      for (final doc in subSnap.docs) {
+        final data = doc.data();
+        final status = (data['status'] as String?)?.toLowerCase() ?? '';
+        if (status != 'active' && status != 'trialing') continue;
+
+        final franchiseId = data['franchiseId'] as String? ?? '';
+        if (franchiseId.isNotEmpty) {
+          activeFranchiseIds.add(franchiseId);
+        }
+
+        final price = (data['priceAtSubscription'] as num?)?.toDouble() ?? 0.0;
+        final interval =
+            (data['billingInterval'] as String?)?.toLowerCase() ?? 'monthly';
+        final discount = (data['discountPercent'] as num?)?.toInt() ?? 0;
+        final discounted = price * (1 - (discount / 100.0));
+
+        if (interval == 'yearly' || interval == 'annual') {
+          mrr += discounted / 12.0;
+        } else {
+          // monthly or unknown → treat as monthly recurring
+          mrr += discounted;
+        }
+      }
+
+      final arr = mrr * 12.0;
+
+      // Recent payouts (last 30 days) from top-level payouts collection.
+      double recentPayouts = 0;
+      final payoutSnap = await db.collection('payouts').get();
+      for (final doc in payoutSnap.docs) {
+        final data = doc.data();
+        final amount = (data['amount'] as num?)?.toDouble() ??
+            (data['netAmount'] as num?)?.toDouble() ??
+            0.0;
+        final dt = asDate(data['createdAt']) ??
+            asDate(data['paidAt']) ??
+            asDate(data['date']);
+        if (dt != null && !dt.isBefore(thirtyDaysAgo)) {
+          recentPayouts += amount;
+        }
+      }
+
+      return PlatformFinancialKpis(
+        mrr: mrr,
+        arr: arr,
+        activeFranchises: activeFranchiseIds.length,
+        recentPayouts: recentPayouts,
+      );
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to fetchPlatformFinancialKpis: $e',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.fetchPlatformFinancialKpis',
+        severity: 'error',
+      );
+      return const PlatformFinancialKpis(
+        activeFranchises: 0,
+        mrr: 0,
+        arr: 0,
+        recentPayouts: 0.0,
+      );
+    }
+  }
+
+  // ===================== FRANCHISE SUBSCRIPTIONS (top-level collection) =====================
+  // Collection: franchise_subscriptions/{subId}
+  // Rules: isHqOwner() read/write already granted.
+  // Model: shared.FranchiseSubscription.fromMap(id, data)
+
+  @override
+  Future<List<shared.FranchiseSubscription>> getFranchiseSubscriptions() async {
+    try {
+      final snap = await db.collection('franchise_subscriptions').get();
+      return snap.docs
+          .map((d) => shared.FranchiseSubscription.fromMap(
+                d.id,
+                d.data() as Map<String, dynamic>,
+              ))
+          .toList();
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to getFranchiseSubscriptions: $e',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.getFranchiseSubscriptions',
+        severity: 'error',
+      );
+      return [];
+    }
+  }
+
+  @override
+  Future<List<shared.FranchiseSubscription>>
+      getAllFranchiseSubscriptions() async {
+    return getFranchiseSubscriptions();
+  }
+
+  @override
+  Future<List<dynamic>> getAllFranchiseSubscriptionsRaw() async {
+    try {
+      final snap = await db.collection('franchise_subscriptions').get();
+      return snap.docs
+          .map((d) => <String, dynamic>{
+                ...d.data(),
+                'id': d.id,
+              })
+          .toList();
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to getAllFranchiseSubscriptionsRaw: $e',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.getAllFranchiseSubscriptionsRaw',
+        severity: 'error',
+      );
+      return [];
+    }
+  }
+
+  @override
+  Future<shared.FranchiseSubscription?> getFranchiseSubscription(
+      String franchiseId) async {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      return null;
+    }
+    try {
+      final snap = await db
+          .collection('franchise_subscriptions')
+          .where('franchiseId', isEqualTo: franchiseId)
+          .limit(1)
+          .get();
+      if (snap.docs.isEmpty) return null;
+      final d = snap.docs.first;
+      return shared.FranchiseSubscription.fromMap(
+        d.id,
+        d.data() as Map<String, dynamic>,
+      );
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to getFranchiseSubscription: $e',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.getFranchiseSubscription',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return null;
+    }
+  }
+
+  @override
+  Future<shared.FranchiseSubscription?> getCurrentSubscriptionForFranchise(
+      String franchiseId) async {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      return null;
+    }
+    try {
+      // Prefer an active subscription for this franchise.
+      final activeSnap = await db
+          .collection('franchise_subscriptions')
+          .where('franchiseId', isEqualTo: franchiseId)
+          .where('status', isEqualTo: 'active')
+          .limit(1)
+          .get();
+      if (activeSnap.docs.isNotEmpty) {
+        final d = activeSnap.docs.first;
+        return shared.FranchiseSubscription.fromMap(
+          d.id,
+          d.data() as Map<String, dynamic>,
+        );
+      }
+
+      // Fallback: any subscription doc for this franchise.
+      final anySnap = await db
+          .collection('franchise_subscriptions')
+          .where('franchiseId', isEqualTo: franchiseId)
+          .limit(1)
+          .get();
+      if (anySnap.docs.isEmpty) return null;
+      final d = anySnap.docs.first;
+      return shared.FranchiseSubscription.fromMap(
+        d.id,
+        d.data() as Map<String, dynamic>,
+      );
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to getCurrentSubscriptionForFranchise: $e',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.getCurrentSubscriptionForFranchise',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return null;
+    }
   }
 
   @override
