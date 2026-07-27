@@ -35,11 +35,7 @@ class AdminMenuEditorPopupMenu extends StatelessWidget {
       ),
       icon: const Icon(Icons.more_vert),
       onSelected: (value) async {
-        if (value == 0) {
-          onShowColumns();
-        } else if (value == 1) {
-          onBulkUpload();
-        } else if (value == 2) {
+        if (value == 2) {
           onToggleShowDeleted();
         } else if (value == 3) {
           if (!canDeleteOrExport) return;
@@ -47,51 +43,7 @@ class AdminMenuEditorPopupMenu extends StatelessWidget {
         }
       },
       itemBuilder: (context) => [
-        PopupMenuItem<int>(
-          value: 0,
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14.0, vertical: 4.0),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.view_column, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  columnsLabel,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        PopupMenuItem<int>(
-          value: 1,
-          enabled: canDeleteOrExport,
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14.0, vertical: 4.0),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.upload_file, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  importCSVLabel,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        // Columns + Import CSV removed for MVP (empty / noisy stubs).
         PopupMenuItem<int>(
           value: 2,
           child: Padding(
@@ -147,5 +99,3 @@ class AdminMenuEditorPopupMenu extends StatelessWidget {
     );
   }
 }
-
-

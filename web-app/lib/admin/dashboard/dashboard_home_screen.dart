@@ -113,8 +113,46 @@ class _DashboardHomeScreenState extends State<DashboardHomeScreen> {
                 ),
                 SizedBox(
                   width: isMobile ? double.infinity : 290,
-                  child: const KpiCard(
-                      title: "Active Promotions", value: "--", loading: true),
+                  child: StreamBuilder<List<shared.Promo>>(
+                    stream: Provider.of<shared.FirestoreService>(
+                      context,
+                      listen: false,
+                    ).getPromos(franchiseId),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting &&
+                          !snapshot.hasData) {
+                        return const KpiCard(
+                          title: 'Active Promotions',
+                          value: '--',
+                          loading: true,
+                          icon: Icons.local_offer_outlined,
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return const KpiCard(
+                          title: 'Active Promotions',
+                          value: '—',
+                          loading: false,
+                          icon: Icons.local_offer_outlined,
+                        );
+                      }
+                      final promos = snapshot.data ?? const <shared.Promo>[];
+                      final now = DateTime.now();
+                      final activeCount = promos.where((p) {
+                        if (!p.active) return false;
+                        // Inclusive window: started and not past end.
+                        if (p.endDate.isBefore(now)) return false;
+                        if (p.startDate.isAfter(now)) return false;
+                        return true;
+                      }).length;
+                      return KpiCard(
+                        title: 'Active Promotions',
+                        value: '$activeCount',
+                        loading: false,
+                        icon: Icons.local_offer_outlined,
+                      );
+                    },
+                  ),
                 ),
                 SizedBox(
                   width: isMobile ? double.infinity : 290,

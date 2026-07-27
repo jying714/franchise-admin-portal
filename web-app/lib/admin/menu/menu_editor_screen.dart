@@ -201,29 +201,32 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
         _lastDeletedItem = items.last;
         _selectedIds.value = [];
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.itemDeleted),
-          action: SnackBarAction(
-            label: AppLocalizations.of(context)!.undo,
-            onPressed: () async {
-              if (_lastDeletedItem != null) {
-                await firestore.addMenuItem(franchiseId, _lastDeletedItem!,
-                    userId: user.id);
-                await auditLogService.addLog(
-                  franchiseId: franchiseId,
-                  userId: user.id,
-                  action: 'undo_delete_menu_item',
-                  targetType: 'menu_item',
-                  targetId: _lastDeletedItem!.id,
-                  details: {'name': _lastDeletedItem!.name},
-                );
-                setState(() => _lastDeletedItem = null);
-              }
-            },
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 4),
+            content: Text(AppLocalizations.of(context)!.itemDeleted),
+            action: SnackBarAction(
+              label: AppLocalizations.of(context)!.undo,
+              onPressed: () async {
+                if (_lastDeletedItem != null) {
+                  await firestore.addMenuItem(franchiseId, _lastDeletedItem!,
+                      userId: user.id);
+                  await auditLogService.addLog(
+                    franchiseId: franchiseId,
+                    userId: user.id,
+                    action: 'undo_delete_menu_item',
+                    targetType: 'menu_item',
+                    targetId: _lastDeletedItem!.id,
+                    details: {'name': _lastDeletedItem!.name},
+                  );
+                  setState(() => _lastDeletedItem = null);
+                }
+              },
+            ),
           ),
-        ),
-      );
+        );
     }
   }
 
