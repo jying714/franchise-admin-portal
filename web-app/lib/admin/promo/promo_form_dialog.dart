@@ -51,8 +51,21 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
 
+    if (active && endDate.isBefore(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Active promos need an end date today or later',
+          ),
+        ),
+      );
+      return;
+    }
+
     final promo = shared.Promo(
-      id: widget.promo?.id ?? UniqueKey().toString(),
+      id: (widget.promo?.id != null && widget.promo!.id.isNotEmpty)
+          ? widget.promo!.id
+          : '', // empty → AdminFirestoreService assigns Firestore doc id
       name: name,
       description: description,
       code: code,
