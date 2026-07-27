@@ -10,6 +10,16 @@ import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/foundat
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/foundation/mobile_menu_preview_card.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/hq_onboarding_shell_screen.dart';
 
+class FoundationFocusRequest {
+  static bool showOrphansOnly = false;
+  static String? firstOrphanId;
+
+  static void clear() {
+    showOrphansOnly = false;
+    firstOrphanId = null;
+  }
+}
+
 class OnboardingMenuFoundationScreen extends StatefulWidget {
   const OnboardingMenuFoundationScreen({super.key});
 
@@ -53,6 +63,12 @@ class _OnboardingMenuFoundationScreenState
             franchiseIdOverride: franchiseId, forceReloadFromFirestore: true);
         Provider.of<shared.MenuItemProvider>(context, listen: false).load(
             franchiseIdOverride: franchiseId, forceReloadFromFirestore: true);
+      }
+
+      // Menu Items CTA: land on Ingredients tab (index 1).
+      if (FoundationFocusRequest.showOrphansOnly) {
+        _tabController.index = 1;
+        setState(() {});
       }
     });
   }
@@ -115,10 +131,15 @@ class _OnboardingMenuFoundationScreenState
     final typeCount = typeProvider.ingredientTypes.length;
     final categoryCount = categoryProvider.categories.length;
     final allIngredients = ingredientProvider.ingredients;
-    final typedIngredientCount =
-        allIngredients.where((i) => (i.typeId ?? '').trim().isNotEmpty).length;
-    final orphanCount =
-        allIngredients.where((i) => (i.typeId ?? '').trim().isEmpty).length;
+    final typeIds =
+        typeProvider.ingredientTypes.map((t) => (t.id ?? '').trim()).toSet();
+    bool isOrphan(shared.IngredientMetadata i) {
+      final tid = (i.typeId ?? '').trim();
+      return tid.isEmpty || !typeIds.contains(tid);
+    }
+
+    final orphanCount = allIngredients.where(isOrphan).length;
+    final typedIngredientCount = allIngredients.length - orphanCount;
 
     // Live readiness 0–1 for the bottom label (not the old sub-step flags).
     double liveFoundationProgress = 0.0;

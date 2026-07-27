@@ -17,6 +17,8 @@ import 'package:franchise_admin_portal/core/services/admin_firestore_service.dar
 import 'package:franchise_admin_portal/core/providers/menu_item_provider_impl.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/preview_menu_item_card.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/foundation/mobile_menu_preview_card.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/onboarding_menu_foundation_screen.dart'
+    show FoundationFocusRequest;
 
 class OnboardingMenuItemsScreen extends StatefulWidget {
   const OnboardingMenuItemsScreen({super.key});
@@ -255,17 +257,24 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
 
     // Correct getters + live counts (fixes false block)
     final typeProvider = context.watch<shared.IngredientTypeProvider>();
-    final ingredientProvider =
-        context.watch<shared.IngredientMetadataProvider>();
+    final ingredientProvider = context.watch<IngredientMetadataProviderImpl>();
     final categoryProvider = context.watch<shared.CategoryProvider>();
 
     final typeCount = typeProvider.ingredientTypes.length;
     final categoryCount = categoryProvider.categories.length;
     final allIngredients = ingredientProvider.allIngredients;
-    final typedCount =
-        allIngredients.where((i) => (i.typeId ?? '').trim().isNotEmpty).length;
-    final orphanCount =
-        allIngredients.where((i) => (i.typeId ?? '').trim().isEmpty).length;
+    final typeIds =
+        typeProvider.ingredientTypes.map((t) => (t.id ?? '').trim()).toSet();
+
+    bool isOrphan(shared.IngredientMetadata i) {
+      final tid = (i.typeId ?? '').trim();
+      return tid.isEmpty || !typeIds.contains(tid);
+    }
+
+    final orphanIngredients =
+        allIngredients.where(isOrphan).toList(growable: false);
+    final orphanCount = orphanIngredients.length;
+    final typedCount = allIngredients.length - orphanCount;
 
     final readinessFailures = <String>[];
     if (typeCount < 1) {
@@ -277,12 +286,12 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
     }
     if (typedCount < 5) {
       readinessFailures.add(
-        'Need at least 5 ingredients with a type (have $typedCount)',
+        'Need at least 5 ingredients with a known type (have $typedCount)',
       );
     }
     if (orphanCount > 0) {
       readinessFailures.add(
-        '$orphanCount ingredient(s) missing a type — assign types in Core Menu Foundation',
+        '$orphanCount ingredient(s) missing or unknown type — assign types in Core Menu Foundation',
       );
     }
 
@@ -339,8 +348,15 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                   ),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.list_alt),
-                    onPressed: () =>
-                        _navigateToSection('onboarding_menu_foundation'),
+                    onPressed: () {
+                      // Handoff: Ingredients tab + orphan filter + first focus.
+                      FoundationFocusRequest.showOrphansOnly = true;
+                      FoundationFocusRequest.firstOrphanId =
+                          orphanIngredients.isNotEmpty
+                              ? orphanIngredients.first.id
+                              : null;
+                      _navigateToSection('onboarding_menu_foundation');
+                    },
                     label: const Text('Open Core Menu Foundation'),
                   ),
                 ],

@@ -39,6 +39,7 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
   bool _outOfStock = false;
 
   bool _isSaving = false;
+  bool _typeSeeded = false;
 
   late final String _id;
 
@@ -74,6 +75,14 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
     if (!_formKey.currentState!.validate()) return;
 
     final typeId = (_selectedTypeId ?? '').trim();
+    debugPrint(
+      '[IngredientFormCard] SAVE tap '
+      'selectedTypeId="$_selectedTypeId" '
+      'trimmedTypeId="$typeId" '
+      'name="${_nameController.text}" '
+      'isNew=${widget.initialData == null} '
+      'initialTypeId="${widget.initialData?.typeId}"',
+    );
     if (typeId.isEmpty) {
       if (widget.parentContext.mounted) {
         ScaffoldMessenger.of(widget.parentContext).showSnackBar(
@@ -91,6 +100,18 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
     final matched = typeProvider.ingredientTypes.where((t) => t.id == typeId);
     final typeName =
         matched.isNotEmpty ? matched.first.name : _typeController.text.trim();
+
+    final hostTypes = typeProvider.ingredientTypes
+        .map((t) => '${t.id}:${t.name}')
+        .take(30)
+        .join(', ');
+    debugPrint(
+      '[IngredientFormCard] SAVE types '
+      'matchCount=${matched.length} typeName="$typeName" '
+      'hostTypeCount=${typeProvider.ingredientTypes.length} '
+      'containsSelected=${typeProvider.ingredientTypes.any((t) => t.id == typeId)} '
+      'sample=[$hostTypes]',
+    );
 
     if (typeName.isEmpty) {
       if (host.mounted) {
@@ -133,24 +154,28 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
           Provider.of<shared.FranchiseProvider>(host, listen: false)
               .franchiseId;
 
-      // Keep provider franchise in sync before write.
-      meta.updateFranchiseId(franchiseId);
-
+      // Avoid updateFranchiseId here — it can trigger load() and rebuild under the route.
       final isNew = widget.initialData == null;
+      debugPrint(
+        '[IngredientFormCard] SAVE writing '
+        'id=${ingredient.id} typeId=${ingredient.typeId} type=${ingredient.type} '
+        'franchiseId=$franchiseId isNew=$isNew',
+      );
       if (isNew) {
         await meta.createIngredient(ingredient);
       } else {
         meta.updateIngredient(ingredient);
-        await meta.saveAllChanges(franchiseId);
+        // saveChanges = batch write only. Do NOT saveAllChanges/load under an open dialog.
+        await meta.saveChanges();
       }
-
-      if (!mounted) return;
-      if (widget.onSaved != null) {
-        widget.onSaved!();
-      } else {
-        Navigator.of(context).pop();
-      }
+      debugPrint(
+        '[IngredientFormCard] SAVE write OK mounted=$mounted → onSaved (parent pops)',
+      );
+      widget.onSaved?.call();
+      // Do not setState after a successful save — route should be gone.
+      return;
     } catch (e, stack) {
+      debugPrint('[IngredientFormCard] SAVE ERROR: $e');
       shared.ErrorLogger.log(
         message: 'Failed to save ingredient: $e',
         source: 'IngredientFormCard',
@@ -164,8 +189,9 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
           SnackBar(content: Text(widget.loc.errorSavingIngredient)),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 
@@ -175,42 +201,62 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
     final loc = widget.loc;
     final colorScheme = theme.colorScheme;
 
-    final ingredientTypes =
-        Provider.of<IngredientTypeProviderImpl>(widget.parentContext)
-            .ingredientTypes;
-    final typeIds = ingredientTypes.map((t) => t.id).toSet();
+    final ingredientTypes = Provider.of<IngredientTypeProviderImpl>(
+      widget.parentContext,
+      listen: false,
+    ).ingredientTypes;
+    final typeIds = ingredientTypes.map((t) => (t.id ?? '').trim()).toSet();
 
-    // Dropdown value must be in items or null — invalid seed typeIds freeze the dialog.
-    final String? safeTypeId =
-        (_selectedTypeId != null && typeIds.contains(_selectedTypeId))
-            ? _selectedTypeId
-            : null;
-
-    if (safeTypeId != _selectedTypeId) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        setState(() {
-          _selectedTypeId = safeTypeId ??
-              (ingredientTypes.isNotEmpty ? ingredientTypes.first.id : null);
-          if (_selectedTypeId != null) {
-            final t = ingredientTypes.firstWhere(
-              (x) => x.id == _selectedTypeId,
-              orElse: () => shared.IngredientType(id: '', name: ''),
-            );
-            _typeController.text = t.name;
-          }
+    // Seed once when types are available. Never fight user selection on every build.
+    if (!_typeSeeded && ingredientTypes.isNotEmpty) {
+      _typeSeeded = true;
+      final initial = (widget.initialData?.typeId ?? '').trim();
+      final current = (_selectedTypeId ?? '').trim();
+      String? next;
+      if (current.isNotEmpty && typeIds.contains(current)) {
+        next = current;
+      } else if (initial.isNotEmpty && typeIds.contains(initial)) {
+        next = initial;
+      } else {
+        next = ingredientTypes.first.id;
+      }
+      final nextName = ingredientTypes
+          .firstWhere(
+            (t) => t.id == next,
+            orElse: () => ingredientTypes.first,
+          )
+          .name;
+      debugPrint(
+        '[IngredientFormCard] SEED once typeId="$next" name="$nextName" '
+        'initial="$initial" current="$current"',
+      );
+      // Schedule setState only if value must change.
+      if (next != _selectedTypeId) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() {
+            _selectedTypeId = next;
+            _typeController.text = nextName;
+          });
         });
-      });
-    } else if (_selectedTypeId == null && ingredientTypes.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        setState(() {
-          _selectedTypeId = ingredientTypes.first.id;
-          _typeController.text = ingredientTypes.first.name;
-        });
-      });
+      } else if (_typeController.text.trim().isEmpty) {
+        _typeController.text = nextName;
+      }
     }
 
+    final String? safeTypeId = (_selectedTypeId != null &&
+            typeIds.contains((_selectedTypeId ?? '').trim()))
+        ? _selectedTypeId
+        : null;
+
+    debugPrint(
+      '[IngredientFormCard] BUILD '
+      'selected="$_selectedTypeId" safe="$safeTypeId" '
+      'seeded=$_typeSeeded typeCount=${ingredientTypes.length} '
+      'isSaving=$_isSaving',
+    );
+
+    // showDialog already supplies the modal route + barrier — do not nest Dialog.
     return KeyedSubtree(
       key: ValueKey(_id),
       child: Dialog(
@@ -237,7 +283,11 @@ class _IngredientFormCardState extends State<IngredientFormCard> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: safeTypeId,
+                    value: safeTypeId ??
+                        (_selectedTypeId != null &&
+                                typeIds.contains((_selectedTypeId ?? '').trim())
+                            ? _selectedTypeId
+                            : null),
                     isExpanded: true,
                     decoration: InputDecoration(
                       labelText: loc.ingredientType,

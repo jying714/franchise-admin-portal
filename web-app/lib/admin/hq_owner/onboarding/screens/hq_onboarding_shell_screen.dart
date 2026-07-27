@@ -236,17 +236,26 @@ class HqOnboardingShellScreenState extends State<HqOnboardingShellScreen> {
                         listen: false,
                       ),
                     ),
-                    Provider<shared.IngredientTypeProvider>.value(
+                    ChangeNotifierProvider<IngredientTypeProviderImpl>.value(
                       value: Provider.of<IngredientTypeProviderImpl>(
                         context,
                         listen: false,
                       ),
                     ),
-                    Provider<shared.IngredientMetadataProvider>.value(
+                    ProxyProvider<IngredientTypeProviderImpl,
+                        shared.IngredientTypeProvider>(
+                      update: (_, impl, __) => impl,
+                    ),
+                    ChangeNotifierProvider<
+                        IngredientMetadataProviderImpl>.value(
                       value: Provider.of<IngredientMetadataProviderImpl>(
                         context,
                         listen: false,
                       ),
+                    ),
+                    ProxyProvider<IngredientMetadataProviderImpl,
+                        shared.IngredientMetadataProvider>(
+                      update: (_, impl, __) => impl,
                     ),
                     Provider<shared.MenuItemProvider>.value(
                       value: Provider.of<MenuItemProviderImpl>(

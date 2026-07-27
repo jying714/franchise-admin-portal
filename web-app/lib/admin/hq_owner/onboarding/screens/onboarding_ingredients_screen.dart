@@ -12,6 +12,8 @@ import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/ingredi
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/ingredients/missing_type_resolution_dialog.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_impl.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider_impl.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/onboarding_menu_foundation_screen.dart'
+    show FoundationFocusRequest;
 
 class OnboardingIngredientsScreen extends StatefulWidget {
   const OnboardingIngredientsScreen({super.key});
@@ -28,6 +30,8 @@ class _OnboardingIngredientsScreenState
   bool _hasInitialized = false;
   final _listViewKey = GlobalKey();
   final Set<String> _highlightedIngredients = {};
+  bool _showOrphansOnly = false;
+  bool _appliedOrphanHandoff = false;
 
   // Local-only keys for this screen instance (do NOT store in provider)
   final Map<String, GlobalKey> _itemKeys = {};
@@ -72,7 +76,17 @@ class _OnboardingIngredientsScreenState
     List<String>? focusFields,
   }) {
     // Use screen-local keys, not provider-level keys
-    final key = _itemKeys.putIfAbsent(ingredientId, () => GlobalKey());
+    GlobalKey? key = _itemKeys[ingredientId];
+    if (key == null) {
+      // Prefer first list occurrence key written as id#index.
+      for (final e in _itemKeys.entries) {
+        if (e.key == ingredientId || e.key.startsWith('$ingredientId#')) {
+          key = e.value;
+          break;
+        }
+      }
+    }
+    key ??= _itemKeys.putIfAbsent(ingredientId, () => GlobalKey());
     final ctx = key.currentContext;
 
     if (ctx == null || !mounted) {
@@ -148,10 +162,11 @@ class _OnboardingIngredientsScreenState
       return;
     }
 
-    showDialog(
+    showDialog<bool>(
       context: context,
+      useRootNavigator: false,
+      barrierDismissible: true,
       builder: (dialogContext) {
-        // Get the providers from the parent context
         final ingredientProvider =
             Provider.of<IngredientMetadataProviderImpl>(context, listen: false);
         final typeProvider =
@@ -160,14 +175,24 @@ class _OnboardingIngredientsScreenState
         return MultiProvider(
           providers: [
             ChangeNotifierProvider<IngredientMetadataProviderImpl>.value(
-                value: ingredientProvider),
+              value: ingredientProvider,
+            ),
             ChangeNotifierProvider<IngredientTypeProviderImpl>.value(
-                value: typeProvider),
+              value: typeProvider,
+            ),
           ],
           child: IngredientFormCard(
             initialData: ingredient,
             onSaved: () {
-              Navigator.of(dialogContext).pop();
+              debugPrint(
+                '[Ingredients] onSaved pop '
+                'dialogMounted=${dialogContext.mounted} '
+                'canPop=${Navigator.of(dialogContext).canPop()}',
+              );
+              if (dialogContext.mounted &&
+                  Navigator.of(dialogContext).canPop()) {
+                Navigator.of(dialogContext).pop(true);
+              }
             },
             loc: loc,
             parentContext: context,
@@ -340,8 +365,9 @@ class _OnboardingIngredientsScreenState
 
       metadataProvider.load(forceReloadFromFirestore: true).then((_) {
         if (!mounted) return;
+        _maybeApplyOrphanHandoff();
         _maybeApplyInitialFocus();
-        setState(() {}); // Safe UI refresh after load
+        setState(() {});
       });
     } catch (e, stack) {
       shared.ErrorLogger.log(
@@ -374,8 +400,50 @@ class _OnboardingIngredientsScreenState
     //     '[OnboardingIngredientsScreen] IngredientMetadataProvider FOUND - Count: ${metadataProvider.ingredients.length}');
     // print('[OnboardingIngredientsScreen] IngredientTypeProvider FOUND');
 
-    final groupedIngredients = metadataProvider.groupedIngredients;
+    final typeIds =
+        typeProvider.ingredientTypes.map((t) => (t.id ?? '').trim()).toSet();
+    bool isOrphan(shared.IngredientMetadata i) {
+      final tid = (i.typeId ?? '').trim();
+      return tid.isEmpty || !typeIds.contains(tid);
+    }
+
     final allIngredientsFlat = metadataProvider.ingredients;
+    final orphanCount = allIngredientsFlat.where(isOrphan).length;
+
+    // Optional orphan-only view (Menu Items handoff defaults this on).
+    // Group by franchise type id only. Unknown/missing typeId → Unassigned (top).
+    const unassignedLabel = 'Unassigned';
+    final typeById = {
+      for (final t in typeProvider.ingredientTypes) (t.id ?? '').trim(): t,
+    };
+
+    final Map<String, List<shared.IngredientMetadata>> groupedIngredients = {};
+    final unassigned = <shared.IngredientMetadata>[];
+
+    for (final item in allIngredientsFlat) {
+      if (_showOrphansOnly && !isOrphan(item)) continue;
+
+      final tid = (item.typeId ?? '').trim();
+      final type = typeById[tid];
+      if (type == null) {
+        unassigned.add(item);
+      } else {
+        // Canonical label from franchise type (case-sensitive as stored).
+        final label = (type.name).trim().isNotEmpty ? type.name.trim() : tid;
+        groupedIngredients.putIfAbsent(label, () => []).add(item);
+      }
+    }
+
+    // Stable order: Unassigned first, then type groups by label.
+    final orderedEntries =
+        <MapEntry<String, List<shared.IngredientMetadata>>>[];
+    if (unassigned.isNotEmpty) {
+      orderedEntries.add(MapEntry(unassignedLabel, unassigned));
+    }
+    final sortedKeys = groupedIngredients.keys.toList()..sort();
+    for (final k in sortedKeys) {
+      orderedEntries.add(MapEntry(k, groupedIngredients[k]!));
+    }
 
     final allSelected =
         _selectedIngredientIds.length == allIngredientsFlat.length &&
@@ -630,6 +698,29 @@ class _OnboardingIngredientsScreenState
 
             const SizedBox(height: 12),
 
+            Align(
+              alignment: Alignment.centerLeft,
+              child: FilterChip(
+                label: Text(
+                  _showOrphansOnly
+                      ? 'Orphans only ($orphanCount)'
+                      : 'Show orphans ($orphanCount)',
+                ),
+                selected: _showOrphansOnly,
+                onSelected: (v) {
+                  setState(() => _showOrphansOnly = v);
+                  if (v && orphanCount > 0) {
+                    final first = allIngredientsFlat.where(isOrphan).first;
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) scrollAndHighlightIngredient(first.id);
+                    });
+                  }
+                },
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
             Expanded(
               child: metadataProvider.ingredients.isEmpty
                   ? EmptyStateWidget(
@@ -638,11 +729,27 @@ class _OnboardingIngredientsScreenState
                     )
                   : ListView(
                       controller: _scrollController,
-                      children: groupedIngredients.entries.map((entry) {
-                        // print(
-                        //     '[OnboardingIngredientsScreen] Building ingredient group: ${entry.key}');
-                        final groupName = entry.key ?? loc.ungrouped;
+                      children: orderedEntries.map((entry) {
+                        final groupName = entry.key;
                         final groupItems = entry.value;
+                        final isUnassigned = groupName == unassignedLabel;
+
+                        String? unassignedTooltip;
+                        if (isUnassigned) {
+                          final samples = groupItems.take(5).map((i) {
+                            final tid = (i.typeId ?? '').trim();
+                            if (tid.isEmpty) {
+                              return '${i.name}: missing typeId';
+                            }
+                            return '${i.name}: typeId "$tid" not in franchise types';
+                          }).join('\n');
+                          final more = groupItems.length > 5
+                              ? '\n…and ${groupItems.length - 5} more'
+                              : '';
+                          unassignedTooltip =
+                              'Unassigned / invalid type\n$samples$more';
+                        }
+
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -668,22 +775,69 @@ class _OnboardingIngredientsScreenState
                                       });
                                     },
                                   ),
-                                  Text(
-                                    groupName,
-                                    style:
-                                        theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
+                                  if (isUnassigned)
+                                    Tooltip(
+                                      message: unassignedTooltip ?? '',
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.warning_amber_rounded,
+                                              size: 18,
+                                              color: theme.colorScheme.error),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            '$groupName (${groupItems.length})',
+                                            style: theme.textTheme.titleMedium
+                                                ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: theme.colorScheme.error,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  else
+                                    Text(
+                                      groupName,
+                                      style:
+                                          theme.textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
                                 ],
                               ),
                             ),
-                            ...groupItems.map((item) {
+                            ...groupItems.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final item = entry.value;
+                              // Unique even when Firestore ids collide.
                               final itemKey = _itemKeys.putIfAbsent(
-                                  item.id, () => GlobalKey());
+                                '${item.id}#$index',
+                                () => GlobalKey(),
+                              );
+
+                              final typeProvider =
+                                  Provider.of<shared.IngredientTypeProvider>(
+                                      context,
+                                      listen: false);
+                              final typeIds = typeProvider.ingredientTypes
+                                  .map((t) => (t.id ?? '').trim())
+                                  .toSet();
+                              final tid = (item.typeId ?? '').trim();
+                              final orphan =
+                                  tid.isEmpty || !typeIds.contains(tid);
 
                               return Container(
                                 key: itemKey,
+                                decoration: orphan
+                                    ? BoxDecoration(
+                                        border: Border.all(
+                                          color: theme.colorScheme.error
+                                              .withValues(alpha: 0.55),
+                                        ),
+                                        borderRadius: BorderRadius.circular(8),
+                                      )
+                                    : null,
                                 child: IngredientListTile(
                                   ingredient: item,
                                   franchiseId:
@@ -705,6 +859,23 @@ class _OnboardingIngredientsScreenState
         ),
       ),
     );
+  }
+
+  void _maybeApplyOrphanHandoff() {
+    if (_appliedOrphanHandoff) return;
+    if (!FoundationFocusRequest.showOrphansOnly) return;
+    _appliedOrphanHandoff = true;
+    _showOrphansOnly = true;
+
+    final firstId = FoundationFocusRequest.firstOrphanId;
+    FoundationFocusRequest.clear();
+
+    if (firstId != null && firstId.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        scrollAndHighlightIngredient(firstId);
+      });
+    }
   }
 
   @override
