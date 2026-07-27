@@ -113,9 +113,13 @@ class _CategoryManagementScreenContentState
                   ?.id;
           try {
             if (category == null) {
+              final nextSort = _allCategories
+                      .map((c) => c.sortOrder ?? 0)
+                      .fold<int>(0, (a, b) => a > b ? a : b) +
+                  1;
               await firestoreService.addCategory(
                 franchiseId: franchiseId,
-                category: saved,
+                category: saved.copyWith(sortOrder: nextSort),
               );
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -157,10 +161,86 @@ class _CategoryManagementScreenContentState
     );
   }
 
+  Future<void> _bulkDeleteSelected() async {
+    if (!_canManage || _isLoading || _bulkLoading || _selectedIds.isEmpty) {
+      return;
+    }
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
+    if (franchiseId.isEmpty || franchiseId == 'unknown') return;
+
+    final loc = AppLocalizations.of(context)!;
+    final ids = _selectedIds.toList();
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(loc.deleteCategory),
+        content: Text('Delete ${ids.length} selected categories?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(loc.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: DesignTokens.errorColor,
+              foregroundColor: Colors.white,
+            ),
+            child: Text(loc.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    setState(() => _bulkLoading = true);
+    try {
+      for (final id in ids) {
+        await firestoreService.deleteCategory(
+          franchiseId: franchiseId,
+          categoryId: id,
+        );
+      }
+      if (mounted) {
+        setState(() => _selectedIds.clear());
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(loc.categoryDeleted)),
+        );
+      }
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: e.toString(),
+        stack: stack.toString(),
+        source: 'CategoryManagementScreen',
+        contextData: {
+          'franchiseId': franchiseId,
+          'operation': 'bulk_delete',
+          'count': ids.length,
+        },
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(loc.failedToDeleteCategory)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _bulkLoading = false);
+    }
+  }
+
   Future<void> _deleteCategory(shared.Category category,
       {bool showUndo = true}) async {
-    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
     if (!_canManage || _isLoading || _bulkLoading) return;
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        category.id.isEmpty) {
+      return;
+    }
     final loc = AppLocalizations.of(context)!;
     final userId =
         Provider.of<shared.AdminUserProvider>(context, listen: false)?.user?.id;
@@ -324,14 +404,6 @@ class _CategoryManagementScreenContentState
                             ),
                             const Spacer(),
                             IconButton(
-                              icon: Icon(Icons.upload_file,
-                                  color: colorScheme.onBackground),
-                              tooltip: loc.bulkUploadCategories,
-                              onPressed: _isLoading || _bulkLoading
-                                  ? null
-                                  : _showBulkUploadDialog,
-                            ),
-                            IconButton(
                               icon: Icon(Icons.add,
                                   color: colorScheme.onBackground),
                               tooltip: loc.addCategory,
@@ -356,7 +428,7 @@ class _CategoryManagementScreenContentState
                             padding: const EdgeInsets.only(top: 8.0),
                             child: BulkActionBar(
                               selectedCount: _selectedIds.length,
-                              onBulkDelete: () {},
+                              onBulkDelete: _bulkDeleteSelected,
                               onClearSelection: () =>
                                   setState(() => _selectedIds.clear()),
                             ),
@@ -376,13 +448,23 @@ class _CategoryManagementScreenContentState
                                 );
                               }
                               _allCategories = snapshot.data ?? [];
-                              _filteredCategories = _searchQuery.isEmpty
-                                  ? _allCategories
+                              var list = _searchQuery.isEmpty
+                                  ? List<shared.Category>.from(_allCategories)
                                   : _allCategories
                                       .where((c) => c.name
                                           .toLowerCase()
                                           .contains(_searchQuery.toLowerCase()))
                                       .toList();
+                              list.sort((a, b) {
+                                final cmp = switch (_sortKey) {
+                                  'name' => a.name.compareTo(b.name),
+                                  'description' => (a.description ?? '')
+                                      .compareTo(b.description ?? ''),
+                                  _ => 0,
+                                };
+                                return _sortAsc ? cmp : -cmp;
+                              });
+                              _filteredCategories = list;
                               _selectedIds.removeWhere((id) =>
                                   !_filteredCategories.any((c) => c.id == id));
 

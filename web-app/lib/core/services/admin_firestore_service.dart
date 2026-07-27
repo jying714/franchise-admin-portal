@@ -667,12 +667,16 @@ class AdminFirestoreService extends shared.FirestoreServiceImpl {
       return;
     }
     try {
-      await db
-          .collection('franchises')
-          .doc(franchiseId)
-          .collection('categories')
-          .doc(category.id)
-          .set(category.toFirestore(), firestore.SetOptions(merge: true));
+      final col =
+          db.collection('franchises').doc(franchiseId).collection('categories');
+      final id = (category.id.isNotEmpty) ? category.id : col.doc().id;
+      // orderBy('sortOrder') excludes docs without the field — always write it.
+      final sortOrder = category.sortOrder ?? 0;
+      final payload = {
+        ...category.copyWith(id: id, sortOrder: sortOrder).toFirestore(),
+        'sortOrder': sortOrder,
+      };
+      await col.doc(id).set(payload, firestore.SetOptions(merge: true));
     } catch (e, stack) {
       shared.ErrorLogger.log(
         message: 'Failed to add category: $e',
@@ -883,6 +887,121 @@ class AdminFirestoreService extends shared.FirestoreServiceImpl {
         contextData: {'franchiseId': franchiseId},
       );
       return {};
+    }
+  }
+
+  // ===================== PROMOS (franchise-scoped) =====================
+  // Shared FirestoreServiceImpl throws UnimplementedError for admin-only
+  // promo writes; Admin portal must implement them.
+
+  @override
+  Stream<List<shared.Promo>> getPromos(String franchiseId) {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      return Stream.value(<shared.Promo>[]);
+    }
+    return db
+        .collection('franchises')
+        .doc(franchiseId)
+        .collection('promotions')
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => shared.Promo.fromFirestore(d.data(), d.id))
+            .toList());
+  }
+
+  @override
+  Future<void> addPromo(String franchiseId, shared.Promo promo) async {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      shared.ErrorLogger.log(
+        message: 'addPromo called with invalid franchiseId',
+        source: 'AdminFirestoreService.addPromo',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId},
+      );
+      return;
+    }
+    try {
+      final col =
+          db.collection('franchises').doc(franchiseId).collection('promotions');
+      final id = promo.id.isNotEmpty ? promo.id : col.doc().id;
+      await col.doc(id).set(promo.copyWith(id: id).toFirestore(),
+          firestore.SetOptions(merge: true));
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to addPromo: $e',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.addPromo',
+        contextData: {'franchiseId': franchiseId, 'promoId': promo.id},
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> updatePromo(String franchiseId, shared.Promo promo) async {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default' ||
+        promo.id.isEmpty) {
+      shared.ErrorLogger.log(
+        message: 'updatePromo called with invalid ids',
+        source: 'AdminFirestoreService.updatePromo',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId, 'promoId': promo.id},
+      );
+      return;
+    }
+    try {
+      await db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('promotions')
+          .doc(promo.id)
+          .set(promo.toFirestore(), firestore.SetOptions(merge: true));
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to updatePromo: $e',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.updatePromo',
+        contextData: {'franchiseId': franchiseId, 'promoId': promo.id},
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deletePromo(String franchiseId, String promoId) async {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default' ||
+        promoId.isEmpty) {
+      shared.ErrorLogger.log(
+        message: 'deletePromo called with invalid ids',
+        source: 'AdminFirestoreService.deletePromo',
+        severity: 'error',
+        contextData: {'franchiseId': franchiseId, 'promoId': promoId},
+      );
+      return;
+    }
+    try {
+      await db
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('promotions')
+          .doc(promoId)
+          .delete();
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: 'Failed to deletePromo: $e',
+        stack: stack.toString(),
+        source: 'AdminFirestoreService.deletePromo',
+        contextData: {'franchiseId': franchiseId, 'promoId': promoId},
+      );
+      rethrow;
     }
   }
 

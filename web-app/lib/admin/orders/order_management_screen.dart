@@ -61,53 +61,109 @@ class _OrderManagementScreenContentState
 
   Future<void> _processRefund(String franchiseId, shared.Order order,
       double amount, shared.User user) async {
-    await Provider.of<shared.FirestoreService>(context, listen: false)
-        .refundOrder(franchiseId, order.id, amount: amount);
-    await Provider.of<shared.AuditLogService>(context, listen: false).addLog(
-      franchiseId: franchiseId,
-      userId: user.id,
-      action: 'refund_order',
-      targetType: 'order',
-      targetId: order.id,
-      details: {'refundAmount': amount},
-    );
+    try {
+      await Provider.of<shared.FirestoreService>(context, listen: false)
+          .refundOrder(franchiseId, order.id, amount: amount);
+      await Provider.of<shared.AuditLogService>(context, listen: false).addLog(
+        franchiseId: franchiseId,
+        userId: user.id,
+        action: 'refund_order',
+        targetType: 'order',
+        targetId: order.id,
+        details: {'refundAmount': amount},
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Refund processed')),
+      );
+    } catch (e, stack) {
+      shared.ErrorLogger.log(
+        message: e.toString(),
+        stack: stack.toString(),
+        source: 'OrderManagementScreen._processRefund',
+        contextData: {
+          'franchiseId': franchiseId,
+          'orderId': order.id,
+          'amount': amount,
+        },
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Refund failed: $e')),
+      );
+      rethrow;
+    }
   }
 
   void _showRefundDialog(shared.Order order, shared.User user) {
+    final parentContext = context;
     final franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false)
+        Provider.of<shared.FranchiseProvider>(parentContext, listen: false)
             .franchiseId;
     final controller =
         TextEditingController(text: order.total.toStringAsFixed(2));
-    final colorScheme = Theme.of(context).colorScheme;
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Process Refund"),
-        content: TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: "Refund Amount"),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text("Cancel", style: TextStyle(color: colorScheme.outline)),
+    final colorScheme = Theme.of(parentContext).colorScheme;
+
+    showDialog<void>(
+      context: parentContext,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Process Refund'),
+          content: TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: 'Refund Amount'),
           ),
-          ElevatedButton(
-            onPressed: () {
-              final amount = double.tryParse(controller.text) ?? 0.0;
-              if (amount > 0 && amount <= order.total) {
-                Navigator.of(context).pop();
-                _processRefund(franchiseId, order, amount, user);
-              }
-            },
-            style:
-                ElevatedButton.styleFrom(backgroundColor: colorScheme.primary),
-            child: const Text("Refund"),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child:
+                  Text('Cancel', style: TextStyle(color: colorScheme.outline)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final raw = controller.text
+                    .trim()
+                    .replaceAll(r'$', '')
+                    .replaceAll(',', '');
+                final amount = double.tryParse(raw) ?? 0.0;
+                final max = order.total;
+
+                if (amount <= 0) {
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
+                    const SnackBar(
+                        content: Text('Enter a refund amount greater than 0')),
+                  );
+                  return;
+                }
+                // Allow full refund even with tiny float noise; still block nonsense totals.
+                if (max > 0 && amount > max + 0.01) {
+                  ScaffoldMessenger.of(parentContext).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Amount cannot exceed ${max.toStringAsFixed(2)}',
+                      ),
+                    ),
+                  );
+                  return;
+                }
+
+                // Close dialog first so messenger/parent context stay valid.
+                Navigator.of(dialogContext).pop();
+
+                try {
+                  await _processRefund(franchiseId, order, amount, user);
+                } catch (_) {
+                  // Snackbar handled inside _processRefund
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary),
+              child: const Text('Refund'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -158,10 +214,25 @@ class _OrderManagementScreenContentState
     );
   }
 
+  bool _isRefundedOrder(shared.Order o) {
+    final status = o.status.trim().toLowerCase();
+    final refund = (o.refundStatus ?? '').trim().toLowerCase();
+    return status == 'refunded' ||
+        refund == 'refunded' ||
+        refund == 'completed' ||
+        refund == 'full';
+  }
+
   List<shared.Order> _filterOrders(List<shared.Order> orders) {
     return orders.where((o) {
-      if (!_showRefunded && o.status == 'Refunded') return false;
-      if (_filterStatus != null && o.status != _filterStatus) return false;
+      if (!_showRefunded && _isRefundedOrder(o)) return false;
+      if (_filterStatus != null) {
+        if (_filterStatus == 'Refunded') {
+          if (!_isRefundedOrder(o)) return false;
+        } else if (o.status != _filterStatus) {
+          return false;
+        }
+      }
       if (_searchText.isNotEmpty &&
           !(o.userNameDisplay
                   .toLowerCase()
@@ -197,9 +268,7 @@ class _OrderManagementScreenContentState
 
   @override
   Widget build(BuildContext context) {
-    final franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false)
-            .franchiseId;
+    final franchiseId = context.watch<shared.FranchiseProvider>().franchiseId;
     final user =
         Provider.of<shared.AdminUserProvider>(context, listen: false).user;
     final loading =
@@ -286,8 +355,19 @@ class _OrderManagementScreenContentState
                           ),
                           const SizedBox(width: 12),
                           IconButton(
-                            icon: const Icon(Icons.calendar_today),
+                            icon: Icon(
+                              _dateRange == null
+                                  ? Icons.calendar_today
+                                  : Icons.event_busy,
+                            ),
+                            tooltip: _dateRange == null
+                                ? 'Filter by date'
+                                : 'Clear date filter',
                             onPressed: () async {
+                              if (_dateRange != null) {
+                                setState(() => _dateRange = null);
+                                return;
+                              }
                               final range = await showDateRangePicker(
                                 context: context,
                                 firstDate: DateTime.now()
@@ -295,8 +375,9 @@ class _OrderManagementScreenContentState
                                 lastDate:
                                     DateTime.now().add(const Duration(days: 1)),
                               );
-                              if (range != null)
+                              if (range != null) {
                                 setState(() => _dateRange = range);
+                              }
                             },
                           ),
                           Checkbox(
@@ -374,7 +455,13 @@ class _OrderManagementScreenContentState
                                       itemBuilder: (context) {
                                         final items =
                                             <PopupMenuEntry<String>>[];
-                                        if (user.isOwner || user.isManager) {
+                                        final canManageOrders = user.isOwner ||
+                                            user.isManager ||
+                                            user.isAdmin ||
+                                            user.isHqOwner ||
+                                            user.isPlatformOwner ||
+                                            user.isDeveloper;
+                                        if (canManageOrders) {
                                           items.add(const PopupMenuItem(
                                               value: 'status',
                                               child: Text("Update Status")));

@@ -158,10 +158,15 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                     _formKey.currentState?.save();
                     setState(() => _saving = true);
                     final category = shared.Category(
-                      id: widget.category?.id ?? UniqueKey().toString(),
+                      id: (widget.category?.id != null &&
+                              widget.category!.id.isNotEmpty)
+                          ? widget.category!.id
+                          : '', // empty → AdminFirestoreService assigns doc id
                       name: _name,
                       image: _image,
                       description: _description,
+                      sortOrder: widget.category?.sortOrder,
+                      isActive: widget.category?.isActive ?? true,
                     );
                     try {
                       await widget.onSaved(category);

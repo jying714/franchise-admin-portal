@@ -1658,6 +1658,7 @@ class FirestoreServiceImpl implements FirestoreService {
 
     try {
       await _franchiseCollection(franchiseId, _orders).doc(orderId).update({
+        'status': 'Refunded',
         'refundStatus': 'refunded',
         'refundAmount': amount,
         'refundReason': refundReason,

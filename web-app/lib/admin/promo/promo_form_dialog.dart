@@ -52,7 +52,9 @@ class _PromoFormDialogState extends State<PromoFormDialog> {
     _formKey.currentState!.save();
 
     final promo = shared.Promo(
-      id: widget.promo?.id ?? UniqueKey().toString(),
+      id: (widget.promo?.id != null && widget.promo!.id.isNotEmpty)
+          ? widget.promo!.id
+          : '', // empty → AdminFirestoreService assigns Firestore doc id
       name: name,
       description: description,
       code: code,
