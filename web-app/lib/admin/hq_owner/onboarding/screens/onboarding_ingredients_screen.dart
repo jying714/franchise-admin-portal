@@ -14,6 +14,7 @@ import 'package:franchise_admin_portal/core/providers/ingredient_type_provider_i
 import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider_impl.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/screens/onboarding_menu_foundation_screen.dart'
     show FoundationFocusRequest;
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/ingredients/ingredient_bulk_edit_dialog.dart';
 
 class OnboardingIngredientsScreen extends StatefulWidget {
   const OnboardingIngredientsScreen({super.key});
@@ -246,6 +247,51 @@ class _OnboardingIngredientsScreenState
           SnackBar(content: Text(loc.errorGeneric)),
         );
       }
+    }
+  }
+
+  Future<void> _openBulkEditDialog() async {
+    if (_selectedIngredientIds.isEmpty) return;
+
+    final loc = AppLocalizations.of(context);
+    if (loc == null) return;
+
+    final applied = await showDialog<bool>(
+      context: context,
+      useRootNavigator: false,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        final ingredientProvider =
+            Provider.of<IngredientMetadataProviderImpl>(context, listen: false);
+        final typeProvider =
+            Provider.of<IngredientTypeProviderImpl>(context, listen: false);
+
+        return MultiProvider(
+          providers: [
+            ChangeNotifierProvider<IngredientMetadataProviderImpl>.value(
+              value: ingredientProvider,
+            ),
+            ChangeNotifierProvider<IngredientTypeProviderImpl>.value(
+              value: typeProvider,
+            ),
+          ],
+          child: IngredientBulkEditDialog(
+            selectedIds: _selectedIngredientIds.toSet(),
+            loc: loc,
+            parentContext: context,
+            onSaved: () {
+              if (dialogContext.mounted &&
+                  Navigator.of(dialogContext).canPop()) {
+                Navigator.of(dialogContext).pop(true);
+              }
+            },
+          ),
+        );
+      },
+    );
+
+    if (applied == true && mounted) {
+      setState(() => _selectedIngredientIds.clear());
     }
   }
 
@@ -677,6 +723,16 @@ class _OnboardingIngredientsScreenState
               Row(
                 children: [
                   ElevatedButton.icon(
+                    icon: const Icon(Icons.edit_note),
+                    label: const Text('Group edit'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: DesignTokens.primaryColor,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: _openBulkEditDialog,
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton.icon(
                     icon: const Icon(Icons.delete_forever),
                     label: Text(loc.deleteSelected),
                     style: ElevatedButton.styleFrom(
@@ -695,7 +751,6 @@ class _OnboardingIngredientsScreenState
                   ),
                 ],
               ),
-
             const SizedBox(height: 12),
 
             Align(
@@ -845,6 +900,11 @@ class _OnboardingIngredientsScreenState
                                               context,
                                               listen: false)
                                           .franchiseId,
+                                  isSelectable: true,
+                                  isSelected:
+                                      _selectedIngredientIds.contains(item.id),
+                                  onSelectChanged: (checked) =>
+                                      _toggleSelection(item.id, checked),
                                   onEdited: () => _openIngredientForm(item),
                                   onRefresh: () => metadataProvider.load(),
                                 ),

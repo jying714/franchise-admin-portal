@@ -29,7 +29,22 @@ class _InlineAddIngredientTypeRowState
   Future<void> _submit() async {
     final loc = AppLocalizations.of(context)!;
     final name = _nameController.text.trim();
-    final sortOrder = int.tryParse(_sortOrderController.text.trim()) ?? 0;
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
+    final provider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
+
+    final rawSort = _sortOrderController.text.trim();
+    final int sortOrder;
+    if (rawSort.isEmpty) {
+      final maxSort = provider.ingredientTypes
+          .map((t) => t.sortOrder ?? 0)
+          .fold<int>(-1, (a, b) => a > b ? a : b);
+      sortOrder = maxSort + 1;
+    } else {
+      sortOrder = int.tryParse(rawSort) ?? 0;
+    }
 
     if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -38,11 +53,17 @@ class _InlineAddIngredientTypeRowState
       return;
     }
 
-    final franchiseId =
-        Provider.of<shared.FranchiseProvider>(context, listen: false)
-            .franchiseId;
-    final provider =
-        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
+    final taken = provider.ingredientTypes.any((t) => t.sortOrder == sortOrder);
+    if (taken) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Sort order $sortOrder is already used by another type',
+          ),
+        ),
+      );
+      return;
+    }
 
     setState(() => _submitting = true);
 

@@ -532,6 +532,8 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
   String? description;
   String? systemTag;
   int sortOrder = 1;
+  late final TextEditingController _sortOrderController;
+  bool _seededSortOrder = false;
 
   @override
   void initState() {
@@ -541,6 +543,28 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
     description = initial?.description;
     systemTag = initial?.systemTag;
     sortOrder = initial?.sortOrder ?? 1;
+    _sortOrderController = TextEditingController(text: sortOrder.toString());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Create only: one-shot next free sort order.
+    if (_seededSortOrder || widget.initial != null) return;
+    _seededSortOrder = true;
+    final provider =
+        Provider.of<IngredientTypeProviderImpl>(context, listen: false);
+    final maxSort = provider.ingredientTypes
+        .map((t) => t.sortOrder ?? 0)
+        .fold<int>(-1, (a, b) => a > b ? a : b);
+    sortOrder = maxSort + 1;
+    _sortOrderController.text = sortOrder.toString();
+  }
+
+  @override
+  void dispose() {
+    _sortOrderController.dispose();
+    super.dispose();
   }
 
   @override
@@ -580,7 +604,7 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
                 onChanged: (val) => systemTag = val,
               ),
               TextFormField(
-                initialValue: sortOrder.toString(),
+                controller: _sortOrderController,
                 decoration: InputDecoration(labelText: widget.loc.sortOrder),
                 keyboardType: TextInputType.number,
                 onChanged: (val) => sortOrder = int.tryParse(val) ?? sortOrder,
@@ -598,6 +622,25 @@ class _IngredientTypeFormDialogState extends State<IngredientTypeFormDialog> {
         ElevatedButton(
           onPressed: () async {
             if (_formKey.currentState?.validate() != true) return;
+
+            final taken = provider.ingredientTypes.any(
+              (t) =>
+                  t.sortOrder == sortOrder &&
+                  t.id != null &&
+                  t.id != widget.initial?.id,
+            );
+            if (taken) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Sort order $sortOrder is already used by another type',
+                    ),
+                  ),
+                );
+              }
+              return;
+            }
 
             final newType = shared.IngredientType(
               id: widget.initial?.id,

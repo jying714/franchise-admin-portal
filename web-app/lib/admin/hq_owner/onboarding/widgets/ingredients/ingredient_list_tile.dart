@@ -5,7 +5,6 @@ import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/widgets/network_image_widget.dart';
-import 'ingredient_form_card.dart';
 import 'package:franchise_admin_portal/core/providers/ingredient_metadata_provider_impl.dart';
 
 class IngredientListTile extends StatelessWidget {
@@ -115,20 +114,7 @@ class IngredientListTile extends StatelessWidget {
               icon: const Icon(Icons.edit_outlined),
               tooltip: t.edit,
               onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (dialogContext) {
-                    return IngredientFormCard(
-                      loc: t,
-                      initialData: ingredient,
-                      onSaved: () {
-                        onRefresh();
-                        if (onEdited != null) onEdited!();
-                      },
-                      parentContext: context,
-                    );
-                  },
-                );
+                onEdited?.call();
               },
             ),
             IconButton(

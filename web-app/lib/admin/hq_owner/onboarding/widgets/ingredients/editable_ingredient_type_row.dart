@@ -71,14 +71,33 @@ class _EditableIngredientTypeRowState extends State<EditableIngredientTypeRow> {
         Provider.of<shared.FranchiseProvider>(context, listen: false)
             .franchiseId;
 
+    final newName = _nameController.text.trim();
+    final newSort =
+        int.tryParse(_sortOrderController.text.trim()) ?? widget.type.sortOrder;
+
+    if (newName == widget.type.name && newSort == widget.type.sortOrder) {
+      widget.onSaveTapped();
+      return;
+    }
+
     final updated = widget.type.copyWith(
-      name: _nameController.text.trim(),
-      sortOrder: int.tryParse(_sortOrderController.text.trim()) ??
-          widget.type.sortOrder,
+      name: newName,
+      sortOrder: newSort,
     );
 
-    if (updated == widget.type) {
-      widget.onSaveTapped();
+    final taken = provider.ingredientTypes.any(
+      (t) => t.sortOrder == newSort && t.id != null && t.id != widget.type.id,
+    );
+    if (taken) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Sort order $newSort is already used by another type',
+            ),
+          ),
+        );
+      }
       return;
     }
 
