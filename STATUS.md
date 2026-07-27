@@ -1,8 +1,8 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 26, 2026 (night — HQ onboarding foundation residual + Platform Owner MVP)  
+**Last Updated**: July 27, 2026 (Admin smoke + menu modifier rebuild direction)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
-**Branch**: `feat/onboarding-4step`
+**Branch**: `main` (feat/onboarding-4step merged July 27, 2026)
 
 > This file is **always loaded in full** by every agent.
 
@@ -10,52 +10,59 @@
 
 ## Current Phase
 
-**Phase 1 – Core Config Scoping & Dynamic Branding + HQ / Platform Owner surfaces**
+**Phase 1 complete for HQ onboarding + Platform Owner MVP.**  
+**Active development:** Admin ops reliability + **Menu modifier system rebuild** (not patch-only).
 
-### Completed (recent)
+### Completed (locked)
 
-- [x] Menu Items v1; live HQ branding on franchise switch; branding notify + picker guard
-- [x] **Single** web `FranchiseProvider` at app root
-- [x] Design & Branding screen v1/v1.1
-- [x] **Polish W1–W6 COMPLETE** — `docs/slices/hq-onboarding-hq-polish-v1.md`
-- [x] **HQ Financial Honesty v1 COMPLETE** — `docs/slices/hq-financial-honesty-v1.md`
-- [x] **HQ Platform Billing v1 COMPLETE** — `docs/slices/hq-platform-billing-v1.md`
-- [x] **HQ Alerts card UI honesty (card-only)** — filter, Retry, no dead See all; no producers
-- [x] **Platform Owner dashboard MVP COMPLETE** — `docs/slices/platform-owner-dashboard-v1.md`
-- [x] **HQ onboarding foundation residual (orphan gate + Unassigned grouping)** — `docs/slices/hq-onboarding-foundation-residual-v1.md`
-  - Menu Items **hard block** until orphan count = 0
-  - Orphan = empty `typeId` **or** `typeId` not in live franchise ingredient types
-  - CTA “Open Core Menu Foundation” → Ingredients tab + orphan filter + first-highlight handoff (`FoundationFocusRequest`)
-  - Ingredients list: group by **canonical franchise type name** only; **Unassigned** section at top + tooltip of discrepancies
-  - Unique list keys (`id#index`) — fixes Flutter “Duplicate keys found” on Doughboys data
-  - Ingredient form: save uses `saveChanges()` (no mid-dialog `load()`); dialog pop via `dialogContext` / nearest navigator; type seed once
-  - Shell: `ChangeNotifierProvider` + `ProxyProvider` for ingredient type/metadata Impl so Menu Items readiness rebuilds live
+- [x] HQ onboarding sole host (Decision 7); foundation residual (orphan gate, Unassigned)
+- [x] HQ Design & Branding v1/v1.1; financial honesty; platform billing card honesty
+- [x] Platform Owner dashboard MVP
+- [x] Ingredient type sortOrder uniqueness + ingredients group edit (pushed pre-merge)
+- [x] `feat/onboarding-4step` → `main` fast-forward; Hosting deploy (intl 0.19.0 pin for Flutter 3.29.2)
+- [x] Admin dashboard **exhaustive smoke** (July 27) — results drive ops-fixes slice
 
-### Active focus (human-chosen next)
+### Active focus (human-chosen)
 
-1. **Admin dashboard** — inventory / cleanup / real vs stub cards  
-2. **Developer dashboard** — same  
-3. **HQ residual polish** — ingredient form dismiss reliability if still flaky; Doughboys data cleanup (103→0 orphans); optional bulk type-map
+| Priority | Work | Authority |
+|----------|------|-----------|
+| **1** | **Menu modifier system rebuild** — full rebuild, not MVP band-aids | `docs/slices/menu-modifier-system-rebuild-v1.md`, Decision 10 |
+| **2** | **Admin dashboard ops fixes** — P0 broken CRUD / franchise refresh / honesty only | `docs/slices/admin-dashboard-ops-fixes-v1.md` |
+| **3** | Developer dashboard inventory | After Admin ops + menu path clear |
+
+**Explicit product rule (July 27):** Menu customization must work for **Doughboys pizza UX** (halves, doubles, sauce split) **and** any other restaurant type. Do **not** ship “barely held together” dual write paths (`customizationGroups` vs `customizations[]` vs category-name heuristics). Prefer a complete robust rebuild over temporary MVP patches that increase post-launch debt.
+
+### Admin smoke — high-signal failures (July 27)
+
+| Area | Result |
+|------|--------|
+| Categories **add** | Dialog closes; **does not persist** |
+| Categories **delete / bulk delete** | Broken / bulk no-op |
+| Categories sort name/description | Broken — remove; keep asc toggle if fixed |
+| Promos add/edit/delete | **FAIL** |
+| Orders ⋮ status/refund | Menu does not function |
+| Orders franchise switch | Stale until multi-switch |
+| Menu ⋮ Customize | **Endless spinner** |
+| Menu delete snackbar | Stuck until Undo |
+| Menu dietary/allergens / inventory on item | Missing in editor |
+| Staff / Support Chat sidebar | Honest **placeholders** (real screens not registered) |
+| Home Active Promotions KPI | Stub `"--"` / loading — **wire** |
+| Import CSV (menu) / category bulk upload | Remove for MVP noise |
 
 ### Explicit post-MVP / deferred
 
 | Surface | Decision |
 |---------|----------|
-| **Cash Flow Forecast** (HQ) | **Post-MVP** |
-| **Multi-Brand Overview** (HQ) | **Post-MVP** |
-| **Payouts** (HQ product card) | In-dev shell |
-| **Alerts producers / AlertListScreen** | Deferred |
-| **Mobile app restaurant-type agnostic QA** | Deferred discussion — pizzeria-first history |
-| **Cloud Functions Node 22** | Node **20** live; 20 decommissions ~2026-10-30 |
-| **Franchise-scoped invoice rollup in Platform revenue** | Optional — top-level `platform_invoices` only today |
-| **Bulk “map type X → Y” for orphans** | Not in residual v1; hand-edit + filter is the path |
+| Cash Flow Forecast / Multi-Brand HQ cards | Post-MVP |
+| Alerts producers / full AlertListScreen | Deferred |
+| CF Node 22 | Before ~2026-10-30 (Node 20 live) |
+| Inventory SKU ↔ `Inventory` collection link | Phase B after item-level stock |
+| Combos / bundles | Deferred |
 
-**Product key order (onboarding):**  
+**Onboarding product keys:**  
 `onboarding_feature_setup` → `onboarding_design_branding` → `onboarding_menu_foundation` → `onboardingMenuItems` → `onboardingReview`
 
-**Ground truth:** one FranchiseProvider; no new DesignTokens fields; progress under `franchises/{id}/onboarding_progress/progress`; progress is load+write (not a stream); HQ + Platform Owner financial/admin reads on **AdminFirestoreService**; Menu Items foundation readiness watches **Impl** ChangeNotifiers (not inert `Provider.value` alone).
-
-**Known residual (non-blocking):** franchise-switch onboarding progress lag; Liberty `ingredientId` type noise; device re-smoke `mobile_ordering`; Payouts shell; CF Node 22; mobile multi-type layout QA; ingredient form dismiss may still need one more navigator pass on some hosts; Doughboys production data still has many historical orphans until repaired in UI/Console.
+**Ground truth:** one FranchiseProvider; no new DesignTokens fields; progress under `franchises/{id}/onboarding_progress/progress`; HQ + Platform financials on AdminFirestoreService.
 
 ---
 

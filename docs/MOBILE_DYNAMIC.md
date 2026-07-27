@@ -1,64 +1,56 @@
 # Mobile App — Dynamic UI Architecture
 **Doughboys Pizzeria Franchise Platform**
-**Last Updated**: July 20, 2026
+**Last Updated**: July 27, 2026
 
 ## Current State
-- Mobile app is currently pizzeria-specific (hardcoded UI elements, categories, customization flows).
-- Core ordering flow is stable and device-tested.
-- FranchiseProvider and shared_core unification is complete.
-- P1/P2.5 cleanup (duplicated widgets, models, configs) is done.
+- Mobile ordering flow is stable and device-tested for **pizzeria-shaped** data.
+- `CustomizationModal` still uses **category/name heuristics** (`_isPizza`, wings, drinks, hard-coded group labels such as Meats/Veggies/Cheeses).
+- Menu data is overloaded: `customizationGroups` / `optionalAddOns` / `includedIngredients` plus parallel `customizations[]` and pizza/wings first-class fields.
+- FranchiseProvider and shared_core unification is complete for branding/config.
+- This state is **insufficient** for multi-type restaurants and for clean live MVP testing long-term.
 
 ## Target Architecture (Dynamic & Generic)
-The mobile app must become **fully dynamic and restaurant-type agnostic** while remaining a **single published binary** that serves unlimited franchises.
+The mobile app must become **fully dynamic and restaurant-type agnostic** while remaining a **single published binary**.
+
+### Locked execution path (July 27, 2026)
+
+**Decision 10 — Menu modifier system full rebuild** (`docs/slices/menu-modifier-system-rebuild-v1.md`):
+
+- One **canonical modifier group** schema (shared with web HQ + Admin).
+- **`menuProfile`** (`standard` | `pizza` | `wings` | `drinks` | …) drives advanced UX (half toppings, doubles cap, sauce split, wings dips)—**not** `category.contains('pizza')`.
+- Doughboys remains the **pizza profile** acceptance franchise for parity before cutover.
+- Ingredient-linked options by default; free-text ad-hoc allowed as escape hatch.
+- Item-level inventory flags/counts are part of the shared menu contract.
+
+Do **not** add more production heuristic branches “for MVP.” Prefer completing rebuild workstreams M1–M5.
 
 ### Core Principles
-- All UI driven by `shared_core` configs + Firestore (`franchises/{franchiseId}/config/*`)
-- `restaurantType` field determines available UI models, components, and flows
-- FeatureGate controls visibility of advanced features
-- Hybrid single/multi-location support with automatic UI simplification
-- Strict agent governance: changes must stay within phase scope and receive human review
+- UI driven by `shared_core` models + Firestore per franchise
+- FeatureGate for advanced features
+- Hybrid single/multi-location support
+- Human review on schema and cutover
 
 ## Key Dynamic Mechanisms
-1. **Config-Driven UI**
-   - `ui_config.dart`, `design_tokens.dart`, `branding_config.dart`, `app_config.dart` in `shared_core`
-   - Runtime theming (colors, fonts, logos) applied after franchise resolution (see `FranchiseProvider`)
-   - Component registry for show/hide sections, custom fields, layouts
-   - Authoritative reference: `/docs/architecture/firestore-per-franchise-config.md`
-
-2. **Restaurant Type Handling**
-   - Support for Pizzeria, Mexican, Burger, Cafe, etc.
-   - Different default category structures, customization groups, menu flows
-   - Extensible via Firestore schemas (`category_schemas`, etc.)
-
-3. **Shared Core Integration**
-   - All models, providers, services live in `shared_core`
-   - `FranchiseProvider` as central source for branding, configuration, and location
-   - Mobile-specific adapters kept minimal in `mobile_app`
-
-4. **Offline Support**
-   - Cached menu + category data
-   - Order queue with sync on reconnect
-   - Meets/exceeds industry standard for ordering apps
+1. **Config-Driven branding/theme** — `ui_config`, DesignTokens, FranchiseProvider (Phase 1 largely done)
+2. **Modifier groups + menuProfile** — primary path for item customization (Decision 10)
+3. **Shared Core** — single domain models for web and mobile
+4. **Offline** — cached menu + order queue (existing direction)
 
 ## Implementation Approach
-- **Phase 1**: Config scoping in shared_core (foundational) — **Completed**
-- **Phase 3 (Primary Focus)**: Mobile + Shared Core agents refactor UI to dynamic
-- **Agent Guardrails**: All changes must respect existing flows, use task files (`tasks/Phase3.md`), and receive human review on architecture decisions
-- **Testing**: Full regression on Samsung S25 + iPhone 15 before any phase is marked complete
+- Phase 1 config scoping — largely complete
+- **Menu modifier rebuild M1–M5** — active epic (shared_core → editors → mobile → cutover)
+- Phase 3 remainder — deep linking, roles, offline polish after modifier cutover as needed
+- Device regression: Samsung S25 + iPhone 15; Doughboys order parity required
 
 ## Dashboard Integration
-- HQ Owner / Franchise Owner dashboard includes **Design & Branding** page with live mobile preview
-- Changes published to Firestore → mobile app reflects them on next load/restart
-- Human approval required for any design/config changes affecting mobile
+- HQ onboarding builds the same modifier schema managers edit later in Admin Menu (Decision 9)
+- Design & Branding remains HQ-owned for theme/logo
 
-## Success Criteria for MVP
-- Single app binary works for multiple restaurant types without pizzeria hardcoding
-- UI adapts correctly to configs, `restaurantType`, and location count
-- Seamless hybrid single/multi-location behavior on mobile
-- Performance and offline experience remain excellent
-- No major refactors needed after launch
+## Success Criteria
+- Single binary serves pizza and non-pizza franchises without pizzeria hardcoding in the production path
+- Doughboys pizza UX preserved via profile, not forks
+- No dual runtime customization trees after M5 cutover
 
-## Risks & Defensive Notes
-- Avoid breaking existing ordering flow during dynamic migration
-- Hybrid localization (hardcoded base + DB overrides) to be implemented carefully
-- Thorough testing on real devices required before each major phase
+## Risks
+- Migration of existing Doughboys documents must be lossless for ordering
+- Temporary feature flag may be required during M4/M5; do not leave two permanent paths

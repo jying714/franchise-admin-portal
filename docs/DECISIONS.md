@@ -1,6 +1,6 @@
 # Architecture Decision Log (DECISIONS.md)
 
-**Last Updated**: July 25, 2026 (Decision 7 migration complete; Decision 8 v1.1 persistence)
+**Last Updated**: July 27, 2026 (Decisions 9–10 — Admin Menu surfaces + menu modifier rebuild)
 
 This file records major architectural and design decisions for the Doughboys Pizzeria Franchise Platform.
 
@@ -30,10 +30,10 @@ This file records major architectural and design decisions for the Doughboys Piz
 
 ### 4. Mobile App Dynamic UI
 **Date**: July 2026  
-**Status**: Approved  
-**Decision**: Config-driven UI based on `restaurantType`, configs, and FeatureGate. One published binary.  
+**Status**: Approved (execution via Decision 10 rebuild)  
+**Decision**: Config-driven UI based on restaurant type / menu profiles, configs, and FeatureGate. One published binary.  
 **Rationale**: Supports multiple restaurant types without multiple apps.  
-**Impact**: Phase 3 focus.
+**Impact**: Phase 3; **menu modifier rebuild** is the concrete path (Decision 10).
 
 ### 5. Multi-Agent Development Approach
 **Date**: July 2026  
@@ -57,39 +57,54 @@ This file records major architectural and design decisions for the Doughboys Piz
 **Implemented state (July 25):**
 1. HQ copy at `web-app/lib/admin/hq_owner/onboarding/**`
 2. Host: `HqOnboardingShellScreen` (sidebar + IndexedStack; in-shell `switchToSection`)
-3. Continue onboarding from HQ progress card → HQ shell (`initialSectionKey: onboardingMenu`)
-4. Deep links: `resolveRoute` → `/hq/onboarding?section=…`; main.dart registers HQ shell before generic `hq` match
-5. Admin onboarding tree **deleted**; `section_registry` has **no** onboarding sections; Admin sidebar ops-only
-6. Progress card: four product steps; path `franchises/{id}/onboarding_progress/progress`
+3. Continue onboarding from HQ progress card → HQ shell
+4. Deep links: `resolveRoute` → `/hq/onboarding?section=…`
+5. Admin onboarding tree **deleted**; `section_registry` ops-only
+6. Progress path: `franchises/{id}/onboarding_progress/progress`
 
-**Progress key rules (locked July 25):**
-- Product keys: `onboarding_feature_setup`, `onboarding_menu_foundation`, `onboardingMenuItems`, `onboardingReview`
-- Foundation sub-keys (`ingredientTypes` / `ingredients` / `categories`) → detail % only; step 2 only via foundation continue / explicit foundation complete
-- Summary table “Complete” = validation (zero critical issues); `onboardingReview` only on successful Publish
-- Review UX direction: remove summary Action/Fix Now; expansion Fix = section-only in-shell navigation
+**Progress product keys:** `onboarding_feature_setup`, `onboarding_design_branding`, `onboarding_menu_foundation`, `onboardingMenuItems`, `onboardingReview`
 
 **Rationale**: HQ Owners own franchise setup. Admin is day-to-day operations.  
-**Impact**: Navigation, registry, dashboard composition; no new onboarding schema.  
-**Reference**: `STATUS.md`, `docs/DASHBOARDS.md`, `web-app/README.md`.
+**Reference**: `STATUS.md`, `docs/DASHBOARDS.md`.
 
 ### 8. HQ Design & Branding v1 / v1.1
 **Date**: July 24, 2026 (v1 locked); **July 25, 2026 v1.1 persistence**  
 **Status**: **v1 complete; v1.1 complete**  
-**Decision**:
-1. Live Branding Preview card on Owner HQ + **Open Design & Branding** → dedicated screen
-2. v1: local draft; Save snackbar only; logo Image + fallback
-3. v1.1: Save merges primary/secondary hex, appName, logoUrl to `franchises/{id}` + `config/ui_config`; then `setBrandingFromFranchiseDoc`
-4. Screen-owned Firestore writes for now; port to Admin/FirestoreService when the editor expands
-5. No section_registry for HQ entry; no new BrandingConfig/DesignTokens fields for this slice
+**Decision**: Live Branding Preview + Design & Branding screen; Save merges branding keys to franchise + `config/ui_config`.  
+**Reference**: `docs/slices/hq-design-branding-v1.md`.
 
-**Rationale**: Delivers Decision 3 without inventing schema. Persistence uses existing franchise branding keys.  
-**Reference**: `docs/slices/hq-design-branding-v1.md`, `STATUS.md`.
+### 9. Admin Menu vs HQ Menu Items (surface split)
+**Date**: July 27, 2026  
+**Status**: **Approved**  
+**Decision**:
+1. **HQ onboarding Menu Items** = guided, step-by-step franchise self-onboarding (templates, schema repair, foundation gates, publish).
+2. **Admin Menu** (`menuEditor`) = day-2 operations for restaurant managers (search, availability, light edits, bulk ops, inventory counts once shipped).
+3. Both surfaces **must share one underlying menu + modifier schema** after Decision 10. No permanent dual Customize formats.
+4. Staff/Support Chat may remain honest placeholders until wired; not part of onboarding.
+
+**Rationale**: Onboarding and ops audiences differ; data model must not.  
+**Impact**: Editor UX depth differs; write path unified under Decision 10.  
+**Reference**: `docs/DASHBOARDS.md`, `docs/slices/admin-dashboard-ops-fixes-v1.md`.
+
+### 10. Menu Modifier System — Full Rebuild (not patch-only)
+**Date**: July 27, 2026  
+**Status**: **Approved — implementation pending**  
+**Decision**:
+1. **Rebuild** menu customization end-to-end. Reject “barely held together” MVP patches that leave dual trees and mobile category-name heuristics.
+2. **Canonical runtime model:** enriched modifier groups (evolve `customizationGroups`) with `selectMode`, min/max/maxFree, portion/double flags, options preferring `ingredientId`; optional free-text ad-hoc options as escape hatch.
+3. **`menuProfile`** (`standard` | `pizza` | `wings` | `drinks` | …): supplies defaults and advanced widgets. Doughboys requires **pizza** UX (half toppings, doubles cap, sauce split) as profile behavior—not `category.contains('pizza')` in mobile.
+4. **Stop dual-writing** Admin `customizations: List<Customization>` as a second source of truth vs groups. Migrate → single tree; cut over mobile to schema-driven renderer.
+5. **Item inventory:** `inventoryTracked` + `stockCount` (+ optional threshold) on menu items for count-tracked products (wings, breadsticks, etc.). Ingredient OOS remains for toppings. SKU ↔ Inventory collection = later phase.
+6. Workstreams **M1–M5** in `docs/slices/menu-modifier-system-rebuild-v1.md`. Acceptance includes Doughboys order parity before removing legacy path.
+
+**Rationale**: Multi-tenant restaurant types + live Doughboys MVP testing require one robust system; patching increases long-term debt and live clunkiness.  
+**Impact**: shared_core models, HQ + Admin editors, mobile `CustomizationModal`, Firestore menu docs, seeds.  
+**Reference**: `docs/slices/menu-modifier-system-rebuild-v1.md`, `docs/MOBILE_DYNAMIC.md`.
 
 ---
 
 **How to Use This File**:
 - Add new decisions with date, status, rationale, impact, and references.
-- Reference this file in ARCHITECTURE.md when appropriate.
 - Review before major refactors.
 
-**Last Updated**: July 25, 2026
+**Last Updated**: July 27, 2026

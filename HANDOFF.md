@@ -1,96 +1,76 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: July 26, 2026 (night — HQ foundation residual + Platform Owner MVP)  
+**Last Updated**: July 27, 2026 (Admin smoke + menu rebuild direction)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
-**Branch**: `feat/onboarding-4step`  
+**Branch**: `main`  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
-**Local path**: `C:\projects\franchise-admin-portal`
+**Local path**: `C:\projects\franchise-admin-portal`  
+**Firebase project**: `doughboyspizzeria-2b3d2`  
+**Live web**: franchisehq.io (Deploy Web on push to `main`)
 
-Prefer **STATUS.md + this handoff + slice docs under `docs/slices/`** over agent memory.
-
----
-
-## 1. Latest session (HQ onboarding foundation residual)
-
-Authority: `docs/slices/hq-onboarding-foundation-residual-v1.md`  
-Code commit (example): `HQ onboarding: orphan gate, Unassigned grouping, ingredient dialog save/pop fixes`
-
-### Product decisions (locked)
-
-| Decision | Choice |
-|----------|--------|
-| Menu Items when orphans exist | **Hard block** |
-| Orphan definition | Any ingredient with empty **or** unknown `typeId` (not in live franchise types) |
-| Fix UX | Filter + first highlight (not multi-row yellow for 100+) |
-| Unassigned section | Top of list; label **Unassigned**; tooltip shows discrepancy samples |
-| Grouping | Only by **matched franchise type**; case-sensitive canonical type **name**; do not invent groups from stale type strings |
-
-### Implemented
-
-- Menu Items readiness: orphan = unknown typeId; CTA sets `FoundationFocusRequest` then `switchToSection('onboarding_menu_foundation')`
-- Foundation: on handoff, Ingredients tab (index 1)
-- Ingredients: orphan FilterChip; ordered Unassigned-first groups; unique keys; row error border for orphans
-- Shell providers: CNP + Proxy for type/metadata Impl (Menu Items counts update without full leave/re-enter)
-- Form: `saveChanges()` not `saveAllChanges()` under dialog; pop via `dialogContext` / nearest navigator; one-time type seed
-
-### Still soft / watch
-
-- Ingredient form may still leave a barrier on some hosts after save (debug: `[Ingredients] onSaved pop canPop=…`). Prefer nearest navigator; avoid `load()` while dialog open.
-- Doughboys franchise still has large historical orphan set until user assigns types in Unassigned section.
+Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/DECISIONS.md`** over agent memory.
 
 ---
 
-## 2. Platform Owner MVP (same day, earlier)
+## 1. Latest session (July 27, 2026)
 
-Authority: `docs/slices/platform-owner-dashboard-v1.md`
+### Git / deploy
 
-| Item | Status |
-|------|--------|
-| Routes plans/subscriptions | Done |
-| Invite list + submit | Done (Admin FS, rules, dialog Provider, CF nodejs20) |
-| Subscriptions card | Done |
-| Revenue overview | Done (top-level aggregation; single card UI) |
-| Layout | HQ-like grid; revenue 2-wide; plans card removed |
+- `feat/onboarding-4step` merged into `main` (fast-forward).
+- CI: `intl` pinned to **0.19.0** (Flutter 3.29.2 / flutter_localizations); Hosting deploy succeeded.
 
-Ops: Functions **nodejs20**; `functions` `main`: `lib/src/index.js`; project `doughboyspizzeria-2b3d2`.
+### Admin dashboard smoke (exhaustive)
 
----
+Full section_registry walk completed. **Shell/chrome mostly PASS.** Broken product paths documented in STATUS and `docs/slices/admin-dashboard-ops-fixes-v1.md`.
 
-## 3. Prior HQ closures (same day)
+Notable: Staff + Support Chat registry entries are **placeholders**; real `StaffAccessScreen` / `ChatManagementScreen` exist but are **not** wired.
 
-| Slice | Status |
-|-------|--------|
-| `hq-onboarding-hq-polish-v1` | COMPLETE |
-| `hq-financial-honesty-v1` | COMPLETE |
-| `hq-platform-billing-v1` | COMPLETE |
-| AlertsCard UI honesty | Card-only |
+### Menu customization — rebuild decision (locked)
 
-Onboarding host = HQ only; 5 product keys including `onboarding_design_branding`.
+Human rejected patch-only MVP fixes for modifiers. **Full rebuild** of the menu modifier system so Doughboys pizza UX and non-pizza restaurants share one model.
+
+Authority:
+
+- `docs/slices/menu-modifier-system-rebuild-v1.md`
+- `docs/DECISIONS.md` Decision **10**
+- Surface split: Decision **9**
+
+**Do not** “lightly fix” Admin Customize spinner while leaving dual `customizations[]` vs `customizationGroups` + mobile `category.contains('pizza')`.
 
 ---
 
-## 4. What’s left (prioritized)
+## 2. Prior closures (still true)
 
-1. **Admin dashboard** — inventory / real vs stub  
-2. **Developer dashboard** — same  
-3. **HQ residual** — form dismiss if still flaky; data cleanup orphans; optional bulk type map later  
-4. **Mobile** — multi-type QA discussion later  
-5. **CF Node 22** before ~2026-10-30  
-6. Optional Platform revenue franchise-scoped invoice rollup  
-
-**Not next:** Cash Flow / Multi-brand (post-MVP).
+| Slice / area | Status |
+|--------------|--------|
+| HQ onboarding sole host | Done |
+| Foundation residual (orphans / Unassigned) | Done |
+| Platform Owner MVP | Done |
+| HQ polish / financial honesty / platform billing | Done |
+| Ingredient sortOrder + group edit | Done (pre-merge) |
 
 ---
 
-## 5. Architecture reminders
+## 3. What’s next (prioritized)
+
+1. **Menu modifier system rebuild** (M1–M5) — schema, migration, unified editors, mobile renderer, cutover  
+2. **Admin ops fixes** — categories/promos/orders/franchise refresh/KPI wire/remove CSV noise (**not** modifier architecture)  
+3. Developer dashboard inventory  
+4. CF Node 22 before decommission window  
+
+**Not next:** Cash Flow / Multi-brand HQ cards.
+
+---
+
+## 4. Architecture reminders
 
 - `shared_core` SSoT; franchise-scoped Firestore  
 - Onboarding = `HqOnboardingShellScreen` only  
-- AdminFirestoreService for heavy admin/platform reads  
-- Dialogs that need local CNPs must re-provide into `showDialog`  
+- Admin Menu = **day-2 ops**; HQ Menu Items = **guided setup** — same underlying menu model after rebuild  
+- Prefer ingredient-linked modifiers; free-text ad-hoc allowed as escape hatch  
+- Item-level inventory: `inventoryTracked` + `stockCount` (SKU link later)  
 - Do not invent DesignTokens/BrandingConfig fields or `FranchiseProvider()` zero-arg  
-- Progress path: `franchises/{id}/onboarding_progress/progress` (load+write, not stream)
 
 ---
 
-**Bottom line:** Platform Owner MVP + HQ foundation orphan path are in. Next product focus remains **Admin** then **Developer** dashboards unless human prioritizes form/data cleanup.
+**Bottom line:** Main is live. Next epic is **menu modifier rebuild**; Admin P0 ops fixes are parallel/narrow. Pull `main` before starting either slice branch.
