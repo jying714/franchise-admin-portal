@@ -1,8 +1,9 @@
 # Slice: Menu modifier system rebuild v1
 
-**Status**: Approved — implement as full rebuild (Decision 10)  
-**Branch**: `feat/menu-modifier-system-rebuild-v1` off `main`  
-**Date locked**: July 27, 2026 (catalog rules refined same day)  
+**Status**: In progress — M1–M3 HQ landed; Admin M3 / M4 / M5 open  
+**Branch**: `feat/menu-modifier-system-rebuild-v1`  
+**Date locked**: July 27, 2026  
+**Progress note**: July 27 evening — canonical schema + HQ editor write path; Doughboys menu_items wiped for clean re-seed  
 **Do not** deliver as a thin Admin Customize patch.
 
 ## Problem
@@ -23,23 +24,24 @@ Plus: Cook/Cut/Crust forced into **ingredient types**; whole products treated li
 4. **HQ** = guided setup; **Admin Menu** = day-2 ops; **same schema** (Decision 9).  
 5. Options: **ingredient-linked when food is shared/tracked**; **label-only** for structural choices (Cook/Cut/Crust).  
 6. **Item inventory**: `inventoryTracked` + `stockCount` (+ optional threshold).  
-7. **Clear catalog boundaries** (below)—no fake ingredient types for structure.
+7. **Clear catalog boundaries**—no fake ingredient types for structure.
 
 ## Catalog rules (must implement)
 
 | Concept | Role | Examples |
 |---------|------|----------|
 | **Ingredient type + ingredient** | Shared kitchen component | Meats, Sauces; BBQ, ranch, pepperoni |
-| **Modifier option (non-ingredient)** | Structural / choice without catalog SKU | Cook Regular/Crispy; Cut Regular/Square; Crust Hand-tossed/Thin |
+| **Modifier option (non-ingredient)** | Structural / choice without catalog SKU | Cook Regular/Crispy; Cut; Crust Hand-tossed/Thin |
 | **Menu item** | What the customer buys | Pizza, Garlic Bread, Cheesecake, soft drink |
 
 **Rules:**
 
-- Ingredient types **must not** include Cook, Cut, Crust (or equivalent structure).
-- Those are **`modifierGroups`** with **label-only options** (unless the franchise truly inventories dough as an ingredient).
-- **Cheesecake / garlic bread / many drinks** = menu items. Groups only for real add-ons (e.g. dipping cups on garlic bread).
-- **Shared BBQ** (pizza + wings) = **one** sauce ingredient + many group references—not two types.
-- **`menuProfile` templates** seed groups (pizza → Crust, Cook, Cut; wings → sauce/heat; standard → none or simple add-ons).
+- Ingredient types **must not** include Cook, Cut, Crust.
+- Those are **`modifierGroups`** with **label-only options**.
+- Whole products = menu items; groups only for real add-ons.
+- Shared BBQ = **one** sauce ingredient, many group refs.
+- Optional customer extras = groups with **`min: 0`** + max/maxFree + size topping upcharge (web sets rules; mobile enforces).
+- **`menuProfile` templates** seed groups (pizza includes Sauce + Meats/Veggies/Cheeses).
 
 ## Non-goals
 
@@ -47,56 +49,52 @@ Plus: Cook/Cut/Crust forced into **ingredient types**; whole products treated li
 - Combos/bundles  
 - Rewriting entire Admin shell / Platform Owner  
 - Keeping dual production code paths after cutover  
-- Forcing every drink/flavor into the ingredient catalog
+- Forcing every drink/flavor into the ingredient catalog  
+- Separate legacy `optionalAddOns` editor (removed on HQ path)
 
-## Target shape (contract sketch)
+## Target shape
 
 ```
 MenuItem
-  core catalog + sizes/prices
   menuProfile: standard | pizza | wings | drinks | …
   inventoryTracked, stockCount, lowStockThreshold?
-  dietaryTags, allergens
   modifierGroups[]:
-    id, label
-    selectMode: single | multi | quantity
-    min, max, maxFree?
+    id, label, selectMode, min, max, maxFree?
     allowsPortion?, allowsDouble?
-    options[]:
-      ingredientId?     // preferred when shared food / OOS / allergens
-      label             // required if no ingredientId (Cook/Cut/Crust)
-      upchargeBySize?, defaultSelected?, …
+    options[]: ingredientId? | label, upcharge?, upchargeBySize?, defaultSelected?
 ```
-
-Deprecate dual-write of structured `customizations[]` after migration.
 
 ## Workstreams
 
-| ID | Name | Done means |
-|----|------|------------|
-| **M1** | Schema & contract in `shared_core` | Types; inventory; menuProfile; option = ingredient **or** label; validation |
-| **M2** | Migration | Doughboys readable as groups + profiles; structural choices not fake ingredient types |
-| **M3** | Write path | HQ + Admin shared module; templates seed profile groups; legacy Customize disabled/removed |
-| **M4** | Mobile renderer | Schema-driven; profile widgets; Doughboys parity |
-| **M5** | Cutover | Flag off legacy; delete dual tree + category heuristics |
+| ID | Name | Status | Done means |
+|----|------|--------|------------|
+| **M1** | Schema & contract in `shared_core` | **Done** | Types; inventory; menuProfile; option = ingredient or label |
+| **M2** | Read adapter / migration posture | **Done** (adapter); backfill optional | `effective*` getters; human chose wipe + re-seed over mass migrate |
+| **M3 HQ** | HQ write path | **Done** | Profile seed, binder, min/max/maxFree, pizza pricing UX, inventory, no legacy UI |
+| **M3 Admin** | Admin write path | **Open** | Same schema; Customize spinner gone |
+| **M4** | Mobile renderer | **Open** | Schema-driven; profile widgets; Doughboys parity |
+| **M5** | Cutover | **Open** | Flag off legacy; delete dual tree + heuristics |
+
+### Key files (landed)
+
+- `packages/shared_core/lib/src/core/models/modifier_group.dart`
+- `packages/shared_core/lib/src/core/models/menu_profile_templates.dart`
+- `packages/shared_core/lib/src/core/models/menu_item.dart` (fields + adapter + softer missingRequiredFields)
+- `web-app/.../menu_item_editor_sheet.dart`
+- `web-app/.../modifier_groups_ingredient_binder.dart`
+- `web-app/.../menu_item_utility.dart` (construct passes canonical fields; legacy lists cleared on save)
+- `web-app/.../multi_ingredient_selector.dart` (structural type filter)
 
 ## Acceptance (epic)
 
-- [ ] Doughboys pizza/calzone/wings/salad parity on **new** path  
+- [ ] Doughboys pizza/calzone/wings/salad parity on **new** path (mobile M4)  
 - [ ] Non-pizza seed/franchise without pizza heuristics  
-- [ ] Cook/Cut/Crust (or equivalent) are **groups**, not ingredient types  
-- [ ] Shared sauce ingredient usable on pizza + wings groups  
-- [ ] Dessert/appetizer whole-items without mandatory ingredient self-reference  
+- [x] Cook/Cut/Crust are **groups**, not ingredient types (HQ seed + filter)  
+- [ ] Shared sauce ingredient usable on pizza + wings groups (data + mobile)  
+- [x] Dessert/appetizer whole-items without mandatory ingredient self-reference (schema + HQ)  
 - [ ] Admin + HQ same structure; no Customize spinner  
-- [ ] Dietary/allergens + item inventory on managers’ edit path  
+- [x] Item inventory on HQ edit path (Admin dietary/inventory still open)  
 - [ ] STATUS.md complete only after M5  
-
-## Related docs
-
-- `docs/DECISIONS.md` Decisions 9–10  
-- `docs/MOBILE_DYNAMIC.md`  
-- `packages/shared_core/lib/src/core/models/menu_item.dart`  
-- `mobile_app/lib/widgets/customization/customization_modal.dart`  
 
 ## Agent / human rules
 
@@ -104,4 +102,4 @@ Deprecate dual-write of structured `customizations[]` after migration.
 - No inventing BrandingConfig/DesignTokens fields.  
 - Do not reintroduce Cook/Cut/Crust as ingredient types.  
 - Human review on schema migration and cutover.  
-- Admin ops-fixes slice must **not** absorb M1–M5.
+- Admin ops-fixes slice must **not** absorb M1–M5 (ops slice is closed).
