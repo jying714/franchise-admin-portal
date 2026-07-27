@@ -712,6 +712,13 @@ class _OnboardingMenuItemsScreenState extends State<OnboardingMenuItemsScreen> {
                                                 taxCategory: 'standard',
                                                 includedIngredients: [],
                                                 optionalAddOns: [],
+                                                menuProfile:
+                                                    shared.MenuProfile.standard,
+                                                modifierGroups:
+                                                    shared.MenuProfileTemplates
+                                                        .seedGroups(shared
+                                                            .MenuProfile
+                                                            .standard),
                                               )),
                                             ),
                                             const SizedBox(height: 12),

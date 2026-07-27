@@ -27,7 +27,9 @@ class MultiIngredientSelector extends StatelessWidget {
     final loc = AppLocalizations.of(context)!;
     final ingredientProvider =
         context.watch<shared.IngredientMetadataProvider>();
+    final typeProvider = context.watch<shared.IngredientTypeProvider>();
     final metadataList = ingredientProvider.allIngredients;
+    final types = typeProvider.ingredientTypes;
 
     if (!ingredientProvider.isInitialized) {
       return const Padding(
@@ -36,12 +38,22 @@ class MultiIngredientSelector extends StatelessWidget {
       );
     }
 
-    if (metadataList.isEmpty) {
+    // Decision 10: Cook/Cut/Crust are modifier options, not catalog ingredients.
+    final foodOnly = metadataList.where((ingredient) {
+      final typeName = ingredient.type;
+      return !shared.StructuralIngredientTypes.isStructuralType(
+        typeId: ingredient.typeId,
+        typeName: typeName,
+        types: types,
+      );
+    }).toList();
+
+    if (foodOnly.isEmpty) {
       return _EmptyIngredientsWarning(message: warningMessage);
     }
 
     final Map<String, List<shared.IngredientMetadata>> groupedByType = {};
-    for (final ingredient in metadataList) {
+    for (final ingredient in foodOnly) {
       groupedByType
           .putIfAbsent(
             ingredient.type ?? 'Other',

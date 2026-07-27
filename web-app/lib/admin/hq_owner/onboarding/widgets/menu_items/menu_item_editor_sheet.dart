@@ -9,12 +9,11 @@ import 'package:uuid/uuid.dart';
 import 'package:collection/collection.dart'; // For DeepCollectionEquality
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/size_pricing_editor.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/image_upload_field.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/multi_ingredient_selector.dart';
-import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/customization_group_editor.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/nutrition_editor_dialog.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/preview_menu_item_card.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/menu_item_template_dropdown.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/menu_item_utility.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/modifier_groups_ingredient_binder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 // ===================== NEW COORDINATOR (Single Source of Truth) =====================
@@ -184,12 +183,10 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       sortOrder: _session.draft.sortOrder,
       taxCategory: _session.draft.taxCategory ?? 'standard',
       exportId: _session.draft.exportId,
-      customizationGroups:
-          customizationGroupsFromDraft(_session.draft.customizationGroups),
-      includedIngredients:
-          ingredientRefsFromDraft(_session.draft.includedIngredients),
-      optionalAddOns: ingredientRefsFromDraft(_session.draft.optionalAddOns),
-      customizations: _session.draft.customizations ?? [],
+      customizationGroups: const [],
+      includedIngredients: const [],
+      optionalAddOns: const [],
+      customizations: const [],
       imageUrl: _session.draft.imageUrl ?? '',
       nutrition: _session.draft.nutrition,
       selectedTemplateRefs: _session.draft.templateRefs ?? [],
@@ -203,9 +200,40 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       maxFreeSauces: _session.draft.maxFreeSauces,
       maxFreeDressings: _session.draft.maxFreeDressings,
       maxToppings: _session.draft.maxToppings,
+      menuProfile:
+          _session.draft.menuProfile ?? _session.draft.effectiveMenuProfile,
+      modifierGroups: _session.draft.modifierGroups,
+      inventoryTracked: _session.draft.inventoryTracked,
+      stockCount: _session.draft.stockCount,
+      lowStockThreshold: _session.draft.lowStockThreshold,
     );
 
-    widget.onSave(savedItem);
+    var toSave = savedItem.copyWith(
+      menuProfile:
+          _session.draft.menuProfile ?? _session.draft.effectiveMenuProfile,
+      modifierGroups: _session.draft.modifierGroups ??
+          _session.draft.effectiveModifierGroups,
+      inventoryTracked: _session.draft.inventoryTracked,
+      stockCount: _session.draft.stockCount,
+      lowStockThreshold: _session.draft.lowStockThreshold,
+    );
+
+    final profile =
+        (toSave.menuProfile ?? toSave.effectiveMenuProfile).toLowerCase();
+    if (profile == shared.MenuProfile.pizza) {
+      final sizes = toSave.sizes ?? const <shared.SizeData>[];
+      if (sizes.isNotEmpty) {
+        final large = sizes.where((s) {
+          final l = s.label.toLowerCase();
+          return l.contains('large') && !l.contains('x');
+        });
+        final derived =
+            large.isNotEmpty ? large.first.basePrice : sizes.first.basePrice;
+        toSave = toSave.copyWith(price: derived);
+      }
+    }
+
+    widget.onSave(toSave);
     _session.markClean();
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
       content: Text('✅ Saved to Firestore • Provider synced'),
@@ -246,8 +274,88 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // === BASIC INFO ===
+                    // ── 0. Profile first ──────────────────────────────
+                    Text('Menu profile',
+                        style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Choose how this item is built. Pizza uses size prices + topping upcharges; '
+                      'optional toppings are modifier groups (min 0), not a separate list.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: shared.MenuProfile.known.contains(
+                              (session.draft.menuProfile ??
+                                      session.draft.effectiveMenuProfile)
+                                  .toLowerCase())
+                          ? (session.draft.menuProfile ??
+                                  session.draft.effectiveMenuProfile)
+                              .toLowerCase()
+                          : shared.MenuProfile.standard,
+                      decoration: const InputDecoration(
+                        labelText: 'Menu profile',
+                      ),
+                      items: shared.MenuProfile.known
+                          .map(
+                            (p) => DropdownMenuItem<String>(
+                              value: p,
+                              child: Text(p),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (val) async {
+                        if (val == null) return;
+                        final current = session.draft.menuProfile ??
+                            session.draft.effectiveMenuProfile;
+                        if (val == current) return;
+
+                        final existing = session.draft.modifierGroups;
+                        final hasCustom = existing != null &&
+                            existing.any((g) => g.options.isNotEmpty);
+
+                        if (hasCustom) {
+                          final ok = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Replace modifier groups?'),
+                              content: const Text(
+                                'Changing profile will re-seed default groups. '
+                                'Custom option bindings may be cleared.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  child: const Text('Replace'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (ok != true) return;
+                        }
+
+                        session.updateDraft(
+                          session.draft.copyWith(
+                            menuProfile: val,
+                            modifierGroups:
+                                shared.MenuProfileTemplates.seedGroups(val),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(height: 32),
+
+                    // ── 1. Basics ─────────────────────────────────────
+                    // ── 1. Basics ─────────────────────────────────────
+                    Text('Basics',
+                        style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 8),
                     TextFormField(
                       initialValue: session.draft.name,
                       decoration: const InputDecoration(labelText: 'Name *'),
@@ -260,8 +368,9 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                     TextFormField(
                       initialValue: session.draft.description,
                       decoration: const InputDecoration(
-                          labelText: 'Description *',
-                          helperText: 'Shown to customers'),
+                        labelText: 'Description *',
+                        helperText: 'Shown to customers',
+                      ),
                       maxLines: 3,
                       onChanged: (v) => session.updateDraft(
                           session.draft.copyWith(description: v.trim())),
@@ -270,73 +379,169 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                           : null,
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            initialValue: session.draft.price.toString(),
-                            decoration: InputDecoration(
-                              labelText: 'Base Price *',
-                              prefixText: '\$',
-                              helperText: session.draft.price == 0
-                                  ? 'Warning: \$0 is allowed (free item)'
-                                  : null,
-                              helperStyle: TextStyle(
-                                color: session.draft.price == 0
-                                    ? Colors.orange.shade800
-                                    : null,
+                    Builder(
+                      builder: (context) {
+                        final profile = (session.draft.menuProfile ??
+                                session.draft.effectiveMenuProfile)
+                            .toLowerCase();
+                        final isPizza = profile == shared.MenuProfile.pizza;
+
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (!isPizza) ...[
+                              Expanded(
+                                child: TextFormField(
+                                  initialValue: session.draft.price.toString(),
+                                  decoration: InputDecoration(
+                                    labelText: 'Base Price *',
+                                    prefixText: '\$',
+                                    helperText: session.draft.price == 0
+                                        ? 'Warning: \$0 is allowed (free item)'
+                                        : null,
+                                    helperStyle: TextStyle(
+                                      color: session.draft.price == 0
+                                          ? Colors.orange.shade800
+                                          : null,
+                                    ),
+                                  ),
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                          decimal: true),
+                                  onChanged: (v) => session.updateDraft(
+                                      session.draft.copyWith(
+                                          price: double.tryParse(v) ?? 0.0)),
+                                  validator: (v) {
+                                    final parsed = double.tryParse(v ?? '');
+                                    if (parsed == null) {
+                                      return 'Enter a valid price';
+                                    }
+                                    if (parsed < 0) {
+                                      return 'Price cannot be negative';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                            ] else
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 12),
+                                  child: Text(
+                                    'Pizza pricing is per size (see Image & sizes). '
+                                    'Set each size base price and topping upcharge there.',
+                                    style:
+                                        Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ),
+                              ),
+                            if (isPizza) const SizedBox(width: 16),
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: Provider.of<shared.CategoryProvider>(
+                                        context)
+                                    .resolveCategoryId(
+                                        session.draft.categoryId),
+                                decoration: const InputDecoration(
+                                    labelText: 'Category *'),
+                                items: Provider.of<shared.CategoryProvider>(
+                                        context)
+                                    .uniqueCategories
+                                    .map((cat) => DropdownMenuItem<String>(
+                                          value: cat.id,
+                                          child: Text(cat.name),
+                                        ))
+                                    .toList(),
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    session.updateDraft(session.draft
+                                        .copyWith(categoryId: val));
+                                  }
+                                },
+                                validator: (v) =>
+                                    v == null ? 'Category required' : null,
                               ),
                             ),
-                            keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true),
-                            onChanged: (v) => session.updateDraft(session.draft
-                                .copyWith(price: double.tryParse(v) ?? 0.0)),
-                            validator: (v) {
-                              final parsed = double.tryParse(v ?? '');
-                              if (parsed == null) return 'Enter a valid price';
-                              if (parsed < 0) return 'Price cannot be negative';
-                              return null; // 0 allowed
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            value: Provider.of<shared.CategoryProvider>(context)
-                                .resolveCategoryId(session.draft.categoryId),
-                            decoration:
-                                const InputDecoration(labelText: 'Category *'),
-                            items: Provider.of<shared.CategoryProvider>(context)
-                                .uniqueCategories
-                                .map((cat) => DropdownMenuItem<String>(
-                                      value: cat.id,
-                                      child: Text(cat.name),
-                                    ))
-                                .toList(),
-                            onChanged: (val) {
-                              if (val != null)
-                                session.updateDraft(
-                                    session.draft.copyWith(categoryId: val));
-                            },
-                            validator: (v) =>
-                                v == null ? 'Category required' : null,
-                          ),
-                        ),
-                      ],
+                          ],
+                        );
+                      },
                     ),
                     SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
                       value: session.draft.outOfStock ?? false,
                       onChanged: (v) => session.updateDraft(
                           session.draft.copyWith(availability: !v)),
                       title: const Text('Out of Stock'),
                       subtitle: const Text('Temporarily unavailable'),
                     ),
-                    const SizedBox(height: 20),
 
-                    // === IMAGE & TEMPLATE ===
+                    const Divider(height: 32),
+
+                    Text('Modifiers',
+                        style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Bind catalog ingredients. Crust/Cook/Cut are label-only. '
+                      'Optional toppings = multi groups (min 0); extras use size topping upcharge.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 12),
+                    ModifierGroupsIngredientBinder(
+                      groups: session.draft.modifierGroups ??
+                          session.draft.effectiveModifierGroups,
+                      onChanged: (groups) => session.updateDraft(
+                        session.draft.copyWith(modifierGroups: groups),
+                      ),
+                    ),
+
+                    const Divider(height: 32),
+
+                    // ── 3. Item inventory ─────────────────────────────
+                    Text('Item inventory',
+                        style: Theme.of(context).textTheme.titleMedium),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: session.draft.inventoryTracked,
+                      onChanged: (v) => session.updateDraft(
+                        session.draft.copyWith(
+                          inventoryTracked: v,
+                          stockCount: v
+                              ? (session.draft.stockCount ?? 0)
+                              : session.draft.stockCount,
+                        ),
+                      ),
+                      title: const Text('Track inventory on this item'),
+                      subtitle: const Text(
+                        'Count-tracked products only. Topping OOS stays on ingredients.',
+                      ),
+                    ),
+                    if (session.draft.inventoryTracked)
+                      TextFormField(
+                        key: ValueKey(
+                          'stock_${session.draft.id}_${session.draft.inventoryTracked}',
+                        ),
+                        initialValue: '${session.draft.stockCount ?? 0}',
+                        decoration: const InputDecoration(
+                          labelText: 'Stock count',
+                        ),
+                        keyboardType: TextInputType.number,
+                        onChanged: (v) => session.updateDraft(
+                          session.draft.copyWith(
+                            stockCount: int.tryParse(v.trim()) ?? 0,
+                          ),
+                        ),
+                      ),
+
+                    const Divider(height: 32),
+
+                    // ── 4. Presentation ───────────────────────────────
+                    Text('Image & sizes',
+                        style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Text('Menu Item Template:',
+                        const Text('Template:',
                             style: TextStyle(fontWeight: FontWeight.w600)),
                         const SizedBox(width: 12),
                         Expanded(
@@ -363,15 +568,12 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                 listen: false,
                               ).ingredientTypes;
 
-                              // Apply template using live foundation ingredients
-                              // (utility currently passes [] internally — map after).
                               var updated = applyTemplateToDraft(
                                 session.draft,
                                 template,
                                 allIngredients: ingredients,
                               );
 
-                              // Draft-local normalize: map broken refs by id or name.
                               final issues =
                                   shared.MenuItemSchemaIssue.detectAllIssues(
                                 menuItem: updated,
@@ -382,7 +584,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
 
                               for (final issue in issues) {
                                 if (issue.severity != 'error') continue;
-
                                 String? mapped;
                                 switch (issue.type) {
                                   case shared.MenuItemSchemaIssueType.category:
@@ -433,7 +634,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                         .MenuItemSchemaIssueType.missingField:
                                     break;
                                 }
-
                                 if (mapped != null && mapped.isNotEmpty) {
                                   updated =
                                       repairMenuItem(updated, issue, mapped);
@@ -441,22 +641,18 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                               }
 
                               session.updateDraft(updated);
-                              // Issues recompute + parent notify via session listener
                             },
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     ImageUploadField(
                       initialValue: session.draft.imageUrl ?? '',
                       onSaved: (url) => session.updateDraft(
                           session.draft.copyWith(image: url ?? '')),
                     ),
-
-                    const Divider(height: 40),
-
-                    // === SIZE & PRICING ===
+                    const SizedBox(height: 16),
                     SizePricingEditor(
                       sizes: session.draft.sizes ?? [],
                       onChanged: (newSizes) => session
@@ -478,57 +674,28 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                 ))
                             .toList(),
                         onChanged: (template) {
-                          if (template != null)
+                          if (template != null) {
                             session.updateDraft(
                                 session.draft.copyWith(sizes: template.sizes));
+                          }
                         },
                       ),
                     ),
 
-                    const Divider(height: 40),
+                    const Divider(height: 32),
 
-                    // === INGREDIENTS & ADD-ONS ===
-                    MultiIngredientSelector(
-                      title: 'Included Ingredients',
-                      selected: ingredientRefsFromDraft(
-                          session.draft.includedIngredients),
-                      onChanged: (list) => session.updateDraft(session.draft
-                          .copyWith(
-                              includedIngredients:
-                                  ingredientRefsToDraft(list))),
-                    ),
-                    const SizedBox(height: 12),
-                    MultiIngredientSelector(
-                      title: 'Optional Add-ons',
-                      selected:
-                          ingredientRefsFromDraft(session.draft.optionalAddOns),
-                      onChanged: (list) => session.updateDraft(session.draft
-                          .copyWith(
-                              optionalAddOns: ingredientRefsToDraft(list))),
-                    ),
+                    // Legacy includedIngredients / optionalAddOns / customizationGroups
+                    // UI removed (Decision 10). Canonical path: menuProfile + modifierGroups.
 
-                    // ...
-
-                    CustomizationGroupEditor(
-                      value: customizationGroupsFromDraft(
-                          session.draft.customizationGroups),
-                      onChanged: (groups) => session.updateDraft(session.draft
-                          .copyWith(
-                              customizationGroups:
-                                  customizationGroupsToDraft(groups))),
-                    ),
-
-                    const Divider(height: 40),
-
-                    // === NUTRITION ===
+                    // ── 6. Nutrition / preview / schema ───────────────
                     shared.FeatureGuard(
                       module: shared.PlatformFeature.nutritionalInfo.key,
                       fallback: const SizedBox.shrink(),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Nutrition Info',
-                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          Text('Nutrition',
+                              style: Theme.of(context).textTheme.titleMedium),
                           TextButton(
                             onPressed: () async {
                               final result =
@@ -537,9 +704,10 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                                 builder: (_) => NutritionEditorDialog(
                                     initialValue: session.draft.nutrition),
                               );
-                              if (result != null)
+                              if (result != null) {
                                 session.updateDraft(
                                     session.draft.copyWith(nutrition: result));
+                              }
                             },
                             child: Text(session.draft.nutrition == null
                                 ? 'Add Nutrition'
@@ -547,22 +715,19 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                           ),
                           if (session.draft.nutrition != null)
                             Text(
-                                '${session.draft.nutrition!.calories} cal • P:${session.draft.nutrition!.protein}g • F:${session.draft.nutrition!.fat}g • C:${session.draft.nutrition!.carbs}g'),
+                              '${session.draft.nutrition!.calories} cal • P:${session.draft.nutrition!.protein}g • F:${session.draft.nutrition!.fat}g • C:${session.draft.nutrition!.carbs}g',
+                            ),
+                          const Divider(height: 32),
                         ],
                       ),
                     ),
 
-                    const Divider(height: 40),
-
-                    // === LIVE PREVIEW ===
                     ExpansionTile(
-                      title: const Text('Live Mobile Preview'),
+                      title: const Text('Live mobile preview'),
                       children: [PreviewMenuItemCard(menuItem: session.draft)],
                     ),
+                    const SizedBox(height: 16),
 
-                    const Divider(height: 40),
-
-                    // === SCHEMA ISSUES DISPLAY ===
                     if (session.issues.isNotEmpty)
                       Card(
                         color: Colors.orange.shade50,
@@ -572,27 +737,21 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                  'Active Schema Issues: ${session.issues.length}',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.orange)),
+                                'Active schema issues: ${session.issues.length}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange,
+                                ),
+                              ),
                               const SizedBox(height: 8),
-                              ...session.issues.map((issue) => ListTile(
-                                    dense: true,
-                                    leading: const Icon(Icons.error_outline,
-                                        color: Colors.orange, size: 18),
-                                    title: Text(issue.displayMessage),
-                                    trailing: TextButton(
-                                      child: const Text('Fix'),
-                                      onPressed: () {
-                                        // Trigger repair UI in sidebar or inline dropdown
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(SnackBar(
-                                                content: Text(
-                                                    'Open sidebar to repair: ${issue.displayMessage}')));
-                                      },
-                                    ),
-                                  )),
+                              ...session.issues.map(
+                                (issue) => ListTile(
+                                  dense: true,
+                                  leading: const Icon(Icons.error_outline,
+                                      color: Colors.orange, size: 18),
+                                  title: Text(issue.displayMessage),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -600,7 +759,7 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                     else
                       const ListTile(
                         leading: Icon(Icons.check_circle, color: Colors.green),
-                        title: Text('✅ Schema clean – ready to publish'),
+                        title: Text('Schema clean – ready to publish'),
                       ),
 
                     const SizedBox(height: 100),

@@ -5,6 +5,7 @@ import 'size_template.dart';
 import 'dart:convert';
 import 'package:shared_core/src/core/utils/error_logger.dart';
 import 'package:flutter/material.dart';
+import 'modifier_group.dart';
 
 extension IterableFirstOrNull<T> on Iterable<T> {
   T? get firstOrNull => isEmpty ? null : first;
@@ -106,7 +107,18 @@ class MenuItem {
   final Map<String, double>? sideDipUpcharge; // Upcharge per dip cup by size
 
   /// List of customization template IDs used to populate the menu item.
+  /// List of customization template IDs used to populate the menu item.
   final List<String>? templateRefs;
+
+  // --- Canonical modifier contract (Decision 10) ---
+  /// Restaurant / UX profile: standard | pizza | wings | drinks | …
+  final String? menuProfile;
+
+  /// Canonical groups; when null/empty, clients may still use legacy fields.
+  final List<ModifierGroup>? modifierGroups;
+  final bool inventoryTracked;
+  final int? stockCount;
+  final int? lowStockThreshold;
 
   Map<String, dynamic>? extraCharges;
 
@@ -197,6 +209,11 @@ class MenuItem {
     // NEW: raw customizations
     this.rawCustomizations,
     this.templateRefs,
+    this.menuProfile,
+    this.modifierGroups,
+    this.inventoryTracked = false,
+    this.stockCount,
+    this.lowStockThreshold,
   })  : dietaryTags = dietaryTags ?? [],
         allergens = allergens ?? [];
 
@@ -207,6 +224,189 @@ class MenuItem {
 
   /// Convenience: returns a non-null image string
   String get imageUrl => image ?? '';
+
+  /// Canonical profile: stored value, else heuristic from legacy pizza/wings fields only.
+  /// Prefer [menuProfile] once backfilled; do not use category name in callers.
+  String get effectiveMenuProfile {
+    final stored = menuProfile?.trim();
+    if (stored != null && stored.isNotEmpty) return stored;
+
+    final hasPizzaStructure = (crustTypes != null && crustTypes!.isNotEmpty) ||
+        (cookTypes != null && cookTypes!.isNotEmpty) ||
+        (cutStyles != null && cutStyles!.isNotEmpty) ||
+        (maxFreeToppings != null) ||
+        (maxToppings != null);
+    if (hasPizzaStructure) return MenuProfile.pizza;
+
+    final hasWingsStructure =
+        (dippingSauceOptions != null && dippingSauceOptions!.isNotEmpty) ||
+            (sideDipSauceOptions != null && sideDipSauceOptions!.isNotEmpty) ||
+            (dippingSplits != null && dippingSplits!.isNotEmpty);
+    if (hasWingsStructure) return MenuProfile.wings;
+
+    return MenuProfile.standard;
+  }
+
+  /// Canonical groups: stored [modifierGroups], else legacy → [ModifierGroup] map.
+  List<ModifierGroup> get effectiveModifierGroups {
+    if (modifierGroups != null && modifierGroups!.isNotEmpty) {
+      return List<ModifierGroup>.from(modifierGroups!);
+    }
+    return _legacyToModifierGroups();
+  }
+
+  List<ModifierGroup> _legacyToModifierGroups() {
+    final groups = <ModifierGroup>[];
+    var sort = 0;
+
+    List<ModifierOption> labelsFrom(List<String>? labels, String prefix) {
+      if (labels == null || labels.isEmpty) return const [];
+      return [
+        for (var i = 0; i < labels.length; i++)
+          ModifierOption(
+            id: '${prefix}_$i',
+            label: labels[i],
+            defaultSelected: i == 0,
+          ),
+      ];
+    }
+
+    if (crustTypes != null && crustTypes!.isNotEmpty) {
+      groups.add(
+        ModifierGroup(
+          id: 'crust',
+          label: 'Crust',
+          selectMode: ModifierSelectMode.single,
+          min: 1,
+          max: 1,
+          sortOrder: sort++,
+          options: labelsFrom(crustTypes, 'crust'),
+        ),
+      );
+    }
+    if (cookTypes != null && cookTypes!.isNotEmpty) {
+      groups.add(
+        ModifierGroup(
+          id: 'cook',
+          label: 'Cook',
+          selectMode: ModifierSelectMode.single,
+          min: 1,
+          max: 1,
+          sortOrder: sort++,
+          options: labelsFrom(cookTypes, 'cook'),
+        ),
+      );
+    }
+    if (cutStyles != null && cutStyles!.isNotEmpty) {
+      groups.add(
+        ModifierGroup(
+          id: 'cut',
+          label: 'Cut',
+          selectMode: ModifierSelectMode.single,
+          min: 1,
+          max: 1,
+          sortOrder: sort++,
+          options: labelsFrom(cutStyles, 'cut'),
+        ),
+      );
+    }
+
+    // Legacy customizationGroups: { label, ingredientIds: [] }
+    if (customizationGroups != null) {
+      for (final g in customizationGroups!) {
+        final label = (g['label'] ?? g['name'] ?? 'Options').toString();
+        final id =
+            (g['id'] ?? label).toString().toLowerCase().replaceAll(' ', '_');
+        final rawIds = g['ingredientIds'];
+        final options = <ModifierOption>[];
+        if (rawIds is List) {
+          for (var i = 0; i < rawIds.length; i++) {
+            final ingId = rawIds[i].toString();
+            if (ingId.isEmpty) continue;
+            options.add(
+              ModifierOption(
+                id: '${id}_$ingId',
+                label:
+                    ingId, // callers may resolve name from ingredient catalog
+                ingredientId: ingId,
+              ),
+            );
+          }
+        }
+        groups.add(
+          ModifierGroup(
+            id: id,
+            label: label,
+            selectMode: ModifierSelectMode.multi,
+            min: 0,
+            max: (g['max'] as int?) ??
+                (maxToppings ?? (options.isEmpty ? 1 : options.length)),
+            maxFree: (g['maxFree'] as int?) ?? maxFreeToppings,
+            sortOrder: sort++,
+            allowsPortion: effectiveMenuProfile == MenuProfile.pizza,
+            allowsDouble: effectiveMenuProfile == MenuProfile.pizza,
+            options: options,
+          ),
+        );
+      }
+    }
+
+    // optionalAddOns → single multi group if present
+    if (optionalAddOns != null && optionalAddOns!.isNotEmpty) {
+      final options = <ModifierOption>[];
+      for (var i = 0; i < optionalAddOns!.length; i++) {
+        final e = optionalAddOns![i];
+        final ingId = (e['ingredientId'] ?? e['id'] ?? '').toString();
+        final name = (e['name'] ?? ingId).toString();
+        if (ingId.isEmpty && name.isEmpty) continue;
+        options.add(
+          ModifierOption(
+            id: 'addon_${ingId.isNotEmpty ? ingId : i}',
+            label: name.isNotEmpty ? name : ingId,
+            ingredientId: ingId.isNotEmpty ? ingId : null,
+            upcharge: (e['price'] as num?)?.toDouble(),
+          ),
+        );
+      }
+      if (options.isNotEmpty) {
+        groups.add(
+          ModifierGroup(
+            id: 'optional_addons',
+            label: 'Add-ons',
+            selectMode: ModifierSelectMode.multi,
+            min: 0,
+            max: options.length,
+            sortOrder: sort++,
+            options: options,
+          ),
+        );
+      }
+    }
+
+    // Wings dips (IDs only — resolve labels in UI)
+    if (sideDipSauceOptions != null && sideDipSauceOptions!.isNotEmpty) {
+      groups.add(
+        ModifierGroup(
+          id: 'wing_dips',
+          label: 'Dipping cups',
+          selectMode: ModifierSelectMode.multi,
+          min: 0,
+          max: sideDipSauceOptions!.length,
+          sortOrder: sort++,
+          options: [
+            for (final id in sideDipSauceOptions!)
+              ModifierOption(
+                id: 'dip_$id',
+                label: id,
+                ingredientId: id,
+              ),
+          ],
+        ),
+      );
+    }
+
+    return groups;
+  }
 
   factory MenuItem.fromFirestore(Map<String, dynamic> data, String id) {
     try {
@@ -483,6 +683,23 @@ class MenuItem {
             : null,
         templateRefs:
             (data['templateRefs'] as List?)?.map((e) => e.toString()).toList(),
+        menuProfile: data['menuProfile']?.toString(),
+        modifierGroups: (() {
+          final raw = data['modifierGroups'];
+          if (raw is! List || raw.isEmpty) return null;
+          final list = <ModifierGroup>[];
+          for (final e in raw) {
+            if (e is Map) {
+              list.add(
+                ModifierGroup.fromMap(Map<String, dynamic>.from(e)),
+              );
+            }
+          }
+          return list.isEmpty ? null : list;
+        })(),
+        inventoryTracked: data['inventoryTracked'] == true,
+        stockCount: data['stockCount'] as int?,
+        lowStockThreshold: data['lowStockThreshold'] as int?,
       );
     } catch (e, st) {
       ErrorLogger.log(
@@ -651,6 +868,23 @@ class MenuItem {
           ? null
           : List<String>.from(template['templateRefs']),
       extraCharges: template['extraCharges'],
+      menuProfile: template['menuProfile']?.toString(),
+      modifierGroups: (() {
+        final raw = template['modifierGroups'];
+        if (raw is! List || raw.isEmpty) return null;
+        final list = <ModifierGroup>[];
+        for (final e in raw) {
+          if (e is Map) {
+            list.add(
+              ModifierGroup.fromMap(Map<String, dynamic>.from(e)),
+            );
+          }
+        }
+        return list.isEmpty ? null : list;
+      })(),
+      inventoryTracked: template['inventoryTracked'] == true,
+      stockCount: template['stockCount'] as int?,
+      lowStockThreshold: template['lowStockThreshold'] as int?,
     );
   }
 
@@ -708,8 +942,16 @@ class MenuItem {
       if (bundleDiscount != null) 'bundleDiscount': bundleDiscount,
       if (highlightTags != null) 'highlightTags': highlightTags,
       if (templateRefs != null) 'templateRefs': templateRefs,
+      if (menuProfile != null && menuProfile!.isNotEmpty)
+        'menuProfile': menuProfile,
+      if (modifierGroups != null)
+        'modifierGroups': modifierGroups!.map((g) => g.toMap()).toList(),
+      'inventoryTracked': inventoryTracked,
+      if (stockCount != null) 'stockCount': stockCount,
+      if (lowStockThreshold != null) 'lowStockThreshold': lowStockThreshold,
       if (allowSpecialInstructions != null)
         'allowSpecialInstructions': allowSpecialInstructions,
+      'allowSpecialInstructions': allowSpecialInstructions,
       if (hideInMenu != null) 'hideInMenu': hideInMenu,
       // Sauce/Dressing fields
       if (freeSauceCount != null) 'freeSauceCount': freeSauceCount,
@@ -877,6 +1119,11 @@ class MenuItem {
     double? bundleDiscount,
     List<String>? highlightTags,
     List<String>? templateRefs,
+    String? menuProfile,
+    List<ModifierGroup>? modifierGroups,
+    bool? inventoryTracked,
+    int? stockCount,
+    int? lowStockThreshold,
     bool? allowSpecialInstructions,
     bool? hideInMenu,
     // NEW fields
@@ -954,6 +1201,11 @@ class MenuItem {
       sideDipUpcharge: sideDipUpcharge ?? this.sideDipUpcharge,
       // NEW: template refs
       templateRefs: templateRefs ?? this.templateRefs,
+      menuProfile: menuProfile ?? this.menuProfile,
+      modifierGroups: modifierGroups ?? this.modifierGroups,
+      inventoryTracked: inventoryTracked ?? this.inventoryTracked,
+      stockCount: stockCount ?? this.stockCount,
+      lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
     );
   }
 
@@ -1056,27 +1308,20 @@ class MenuItem {
     if (description.isEmpty) missing.add('description');
     if (categoryId.isEmpty) missing.add('categoryId');
     if (category.isEmpty) missing.add('category');
-    if (image == null || image!.isEmpty) missing.add('image');
+    // if (image == null || image!.isEmpty) missing.add('image');
     if (taxCategory.isEmpty) missing.add('taxCategory');
     if (price == 0.0 && (sizePrices == null || sizePrices!.isEmpty))
       missing.add('price');
     if (availability != true && available != true) missing.add('available');
 
-    // Ingredient/Customization structure
-    if (includedIngredients == null || includedIngredients!.isEmpty)
-      missing.add('includedIngredients');
-    if (customizationGroups == null || customizationGroups!.isEmpty)
-      missing.add('customizationGroups');
-
-    // Add-ons (optional, but commonly required for certain categories)
-    // if (optionalAddOns == null || optionalAddOns!.isEmpty) missing.add('optionalAddOns');
+    // Ingredient/Customization structure (Decision 10):
+    // - Whole products may have zero groups / zero included ingredients.
+    // - Canonical path is menuProfile + modifierGroups; legacy fields optional.
+    // Do NOT require includedIngredients, customizationGroups, or customizations.
 
     // Sizing (for multi-size items)
     if ((sizePrices != null && sizePrices!.isNotEmpty) &&
         (sizes == null || sizes!.isEmpty)) missing.add('sizes');
-
-    // Customizations
-    if (customizations.isEmpty) missing.add('customizations');
 
     // Advanced/Meta fields (optional—uncomment if needed for your workflow)
     // if (sku == null || sku!.isEmpty) missing.add('sku');

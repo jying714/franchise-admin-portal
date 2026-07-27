@@ -59,6 +59,9 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
     if (!_formKey.currentState!.validate()) return;
 
     try {
+      final isNew = widget.initialItem == null;
+      final profile =
+          widget.initialItem?.menuProfile ?? shared.MenuProfile.standard;
       final menuItem = shared.MenuItem(
         id: widget.initialItem?.id ?? UniqueKey().toString(),
         available: true,
@@ -71,6 +74,11 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
         taxCategory: 'default',
         customizations: [],
         customizationGroups: [],
+        menuProfile: profile,
+        modifierGroups: isNew
+            ? shared.MenuProfileTemplates.seedGroups(profile)
+            : (widget.initialItem?.modifierGroups ??
+                shared.MenuProfileTemplates.seedGroups(profile)),
       );
 
       if (!mounted) return;

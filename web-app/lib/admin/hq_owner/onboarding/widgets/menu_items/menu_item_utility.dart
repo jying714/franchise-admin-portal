@@ -322,6 +322,11 @@ shared.MenuItem constructMenuItemFromEditorFields({
   Map<String, double>? sideDipUpcharge,
   Map<String, dynamic>? extraCharges,
   List<Map<String, dynamic>>? rawCustomizations,
+  String? menuProfile,
+  List<shared.ModifierGroup>? modifierGroups,
+  bool inventoryTracked = false,
+  int? stockCount,
+  int? lowStockThreshold,
 }) {
   return shared.MenuItem(
     id: id ?? const Uuid().v4(),
@@ -376,6 +381,11 @@ shared.MenuItem constructMenuItemFromEditorFields({
     sideDipUpcharge: sideDipUpcharge,
     extraCharges: extraCharges,
     rawCustomizations: rawCustomizations,
+    menuProfile: menuProfile,
+    modifierGroups: modifierGroups,
+    inventoryTracked: inventoryTracked,
+    stockCount: stockCount,
+    lowStockThreshold: lowStockThreshold,
   );
 }
 
@@ -565,6 +575,9 @@ shared.MenuItem emptyDraft() {
     includedIngredients: [], // Use empty list (model expects List<Map> or references depending on shared)
     optionalAddOns: [],
     customizations: [],
+    menuProfile: shared.MenuProfile.standard,
+    modifierGroups:
+        shared.MenuProfileTemplates.seedGroups(shared.MenuProfile.standard),
   );
 }
 
