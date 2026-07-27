@@ -1,6 +1,6 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: July 26, 2026 (late evening — Platform Owner dashboard MVP)  
+**Last Updated**: July 26, 2026 (night — HQ foundation residual + Platform Owner MVP)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch**: `feat/onboarding-4step`  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
@@ -10,71 +10,87 @@ Prefer **STATUS.md + this handoff + slice docs under `docs/slices/`** over agent
 
 ---
 
-## 1. Session outcomes (Platform Owner arc, July 26 evening)
+## 1. Latest session (HQ onboarding foundation residual)
 
-### Closed product work
+Authority: `docs/slices/hq-onboarding-foundation-residual-v1.md`  
+Code commit (example): `HQ onboarding: orphan gate, Unassigned grouping, ingredient dialog save/pop fixes`
 
-| Item | Status | Notes |
-|------|--------|--------|
-| Platform Owner routes | Done | Explicit plans/subscriptions routes before platform catch-all |
-| Invite Franchisees (list + submit) | Done | Admin Firestore overrides; rules; dialog Provider.value; CF nodejs20 |
-| Franchise Subscriptions summary card | Done | Admin `getFranchiseSubscriptions` |
-| Platform revenue overview | Done | Real Admin aggregation; single consolidated card UI |
-| Platform Owner layout | Done | HQ-like grid; revenue 2-wide; plans card removed from dashboard |
+### Product decisions (locked)
 
-Authority: `docs/slices/platform-owner-dashboard-v1.md`
+| Decision | Choice |
+|----------|--------|
+| Menu Items when orphans exist | **Hard block** |
+| Orphan definition | Any ingredient with empty **or** unknown `typeId` (not in live franchise types) |
+| Fix UX | Filter + first highlight (not multi-row yellow for 100+) |
+| Unassigned section | Top of list; label **Unassigned**; tooltip shows discrepancy samples |
+| Grouping | Only by **matched franchise type**; case-sensitive canonical type **name**; do not invent groups from stale type strings |
 
-### Ops / infra (same session)
+### Implemented
 
-- Firebase Functions runtime: **nodejs18 → nodejs20** (all callables including `inviteAndSetRole`)
-- `functions/package.json` `main`: `lib/src/index.js` (matches `tsc` output layout)
-- Root `.firebaserc` / `firebase use doughboyspizzeria-2b3d2` for deploys from monorepo root
+- Menu Items readiness: orphan = unknown typeId; CTA sets `FoundationFocusRequest` then `switchToSection('onboarding_menu_foundation')`
+- Foundation: on handoff, Ingredients tab (index 1)
+- Ingredients: orphan FilterChip; ordered Unassigned-first groups; unique keys; row error border for orphans
+- Shell providers: CNP + Proxy for type/metadata Impl (Menu Items counts update without full leave/re-enter)
+- Form: `saveChanges()` not `saveAllChanges()` under dialog; pop via `dialogContext` / nearest navigator; one-time type seed
+
+### Still soft / watch
+
+- Ingredient form may still leave a barrier on some hosts after save (debug: `[Ingredients] onSaved pop canPop=…`). Prefer nearest navigator; avoid `load()` while dialog open.
+- Doughboys franchise still has large historical orphan set until user assigns types in Unassigned section.
 
 ---
 
-## 2. Prior HQ closures (same day, earlier)
+## 2. Platform Owner MVP (same day, earlier)
+
+Authority: `docs/slices/platform-owner-dashboard-v1.md`
+
+| Item | Status |
+|------|--------|
+| Routes plans/subscriptions | Done |
+| Invite list + submit | Done (Admin FS, rules, dialog Provider, CF nodejs20) |
+| Subscriptions card | Done |
+| Revenue overview | Done (top-level aggregation; single card UI) |
+| Layout | HQ-like grid; revenue 2-wide; plans card removed |
+
+Ops: Functions **nodejs20**; `functions` `main`: `lib/src/index.js`; project `doughboyspizzeria-2b3d2`.
+
+---
+
+## 3. Prior HQ closures (same day)
 
 | Slice | Status |
 |-------|--------|
 | `hq-onboarding-hq-polish-v1` | COMPLETE |
 | `hq-financial-honesty-v1` | COMPLETE |
 | `hq-platform-billing-v1` | COMPLETE |
-| AlertsCard UI honesty | Card-only (no producers) |
+| AlertsCard UI honesty | Card-only |
+
+Onboarding host = HQ only; 5 product keys including `onboarding_design_branding`.
 
 ---
 
-## 3. What’s left (prioritized)
+## 4. What’s left (prioritized)
 
-1. **Admin dashboard** — cleanup, inventory of real vs stub cards  
+1. **Admin dashboard** — inventory / real vs stub  
 2. **Developer dashboard** — same  
-3. **HQ Owner residual wiring** — small remaining product wiring only  
-4. **Mobile app** — many tests expected; originally pizzeria-shaped; restaurant-type-agnostic layouts/config acceptance is a **later discussion**, not this session  
-5. Optional: franchise-scoped `platform_invoices` in Platform revenue if top-level stays empty in prod data  
-6. Before ~2026-10-30: Cloud Functions **Node 22** migration  
+3. **HQ residual** — form dismiss if still flaky; data cleanup orphans; optional bulk type map later  
+4. **Mobile** — multi-type QA discussion later  
+5. **CF Node 22** before ~2026-10-30  
+6. Optional Platform revenue franchise-scoped invoice rollup  
 
-**Explicitly not next:** Cash Flow Forecast, Multi-Brand Overview (post-MVP).
-
----
-
-## 4. Architecture reminders (do not regress)
-
-- `shared_core` single source of domain models  
-- Franchise-scoped Firestore under `franchises/{id}/...`  
-- Onboarding host = **HQ only** (`HqOnboardingShellScreen`)  
-- Platform Owner / HQ financial heavy reads = **AdminFirestoreService**  
-- Web live branding: `FranchiseProvider` → `DesignTokens.setFranchiseProvider`  
-- Invite CF role gate still: `platform_owner | owner | developer | admin` (not `hq_owner`) — callers must hold one of those claims  
-- Local invitation `ChangeNotifierProvider` must be **re-provided** into `showDialog` (root navigator does not see panel subtree)
+**Not next:** Cash Flow / Multi-brand (post-MVP).
 
 ---
 
-## 5. Agent instructions
+## 5. Architecture reminders
 
-- Read `STATUS.md` first, then this file, `AGENT_SYSTEM.md`, `orchestrator/SCOPE_CARD.md`  
-- Do not invent BrandingConfig / DesignTokens fields or `FranchiseProvider()` zero-arg  
-- Do not reintroduce Admin onboarding or top-level `onboarding_progress/{id}`  
-- Prefer smallest safe next step; human is merge gate
+- `shared_core` SSoT; franchise-scoped Firestore  
+- Onboarding = `HqOnboardingShellScreen` only  
+- AdminFirestoreService for heavy admin/platform reads  
+- Dialogs that need local CNPs must re-provide into `showDialog`  
+- Do not invent DesignTokens/BrandingConfig fields or `FranchiseProvider()` zero-arg  
+- Progress path: `franchises/{id}/onboarding_progress/progress` (load+write, not stream)
 
 ---
 
-**Bottom line:** HQ Owner financial + Platform Owner dashboard MVP are usable. Next conversations should start on **Admin dashboard** and/or **Developer dashboard**, then HQ residuals — not re-opening deferred HQ shells or mobile multi-type redesign until human expands scope.
+**Bottom line:** Platform Owner MVP + HQ foundation orphan path are in. Next product focus remains **Admin** then **Developer** dashboards unless human prioritizes form/data cleanup.
