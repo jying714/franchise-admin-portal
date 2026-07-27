@@ -1,6 +1,6 @@
 # Architecture Decision Log (DECISIONS.md)
 
-**Last Updated**: July 27, 2026 (Decisions 9–10 — Admin Menu surfaces + menu modifier rebuild)
+**Last Updated**: July 27, 2026 (Decision 10 refined — catalog vs groups vs items)
 
 This file records major architectural and design decisions for the Doughboys Pizzeria Franchise Platform.
 
@@ -87,18 +87,31 @@ This file records major architectural and design decisions for the Doughboys Piz
 **Reference**: `docs/DASHBOARDS.md`, `docs/slices/admin-dashboard-ops-fixes-v1.md`.
 
 ### 10. Menu Modifier System — Full Rebuild (not patch-only)
-**Date**: July 27, 2026  
+**Date**: July 27, 2026 (refined same day: catalog vs groups vs items)  
 **Status**: **Approved — implementation pending**  
 **Decision**:
 1. **Rebuild** menu customization end-to-end. Reject “barely held together” MVP patches that leave dual trees and mobile category-name heuristics.
-2. **Canonical runtime model:** enriched modifier groups (evolve `customizationGroups`) with `selectMode`, min/max/maxFree, portion/double flags, options preferring `ingredientId`; optional free-text ad-hoc options as escape hatch.
-3. **`menuProfile`** (`standard` | `pizza` | `wings` | `drinks` | …): supplies defaults and advanced widgets. Doughboys requires **pizza** UX (half toppings, doubles cap, sauce split) as profile behavior—not `category.contains('pizza')` in mobile.
+2. **Canonical runtime model:** enriched modifier groups (evolve `customizationGroups`) with `selectMode`, min/max/maxFree, portion/double flags; options may use **`ingredientId` (preferred for food)** or **label-only (non-ingredient)** for structural choices.
+3. **`menuProfile`** (`standard` | `pizza` | `wings` | `drinks` | …): supplies defaults, **seeded groups** (e.g. pizza → Crust/Cook/Cut), and advanced widgets. Doughboys **pizza** UX via profile—not `category.contains('pizza')`.
 4. **Stop dual-writing** Admin `customizations: List<Customization>` as a second source of truth vs groups. Migrate → single tree; cut over mobile to schema-driven renderer.
-5. **Item inventory:** `inventoryTracked` + `stockCount` (+ optional threshold) on menu items for count-tracked products (wings, breadsticks, etc.). Ingredient OOS remains for toppings. SKU ↔ Inventory collection = later phase.
-6. Workstreams **M1–M5** in `docs/slices/menu-modifier-system-rebuild-v1.md`. Acceptance includes Doughboys order parity before removing legacy path.
+5. **Item inventory:** `inventoryTracked` + `stockCount` (+ optional threshold) on menu items. Ingredient OOS for toppings/sauces. SKU link later.
+6. Workstreams **M1–M5** in `docs/slices/menu-modifier-system-rebuild-v1.md`.
 
-**Rationale**: Multi-tenant restaurant types + live Doughboys MVP testing require one robust system; patching increases long-term debt and live clunkiness.  
-**Impact**: shared_core models, HQ + Admin editors, mobile `CustomizationModal`, Firestore menu docs, seeds.  
+**Catalog rules (locked July 27):**
+
+| Concept | Role | Examples | Ingredient type / ingredient? |
+|---------|------|----------|-------------------------------|
+| **Ingredient type + ingredient** | Shared kitchen component (allergens, OOS, reuse) | Pepperoni, ranch, BBQ sauce | **Yes** |
+| **Modifier group option (non-ingredient)** | Structural / product choice | Cook Regular/Crispy; Cut; Crust Hand-tossed/Thin | **No** — option `label` only (or optional ingredientId if dough tracked) |
+| **Menu item** | Sellable product | BBQ Chicken Pizza, Garlic Bread, Cheesecake, Coke | The **item**, not an ingredient of itself |
+
+- **Do not** model Cook / Cut / Crust as ingredient types.
+- **Whole products** (cheesecake, garlic bread, many drinks) are **menu items**; add groups only for real choices (e.g. dipping cups).
+- **Shared sauces** (BBQ for pizza + wings): **one** ingredient, referenced by multiple groups/items—not duplicated wing-sauce vs pizza-sauce types unless the kitchen treats them as different products.
+- Foundation onboarding catalogs **real** ingredient types only; **profile templates** seed structural groups on items.
+
+**Rationale**: Multi-tenant types + Doughboys live MVP need one system; stuffing structural choices into ingredient types forces false catalog data.  
+**Impact**: shared_core models, HQ + Admin editors, mobile modal, Firestore, seeds, onboarding foundation guidance.  
 **Reference**: `docs/slices/menu-modifier-system-rebuild-v1.md`, `docs/MOBILE_DYNAMIC.md`.
 
 ---
