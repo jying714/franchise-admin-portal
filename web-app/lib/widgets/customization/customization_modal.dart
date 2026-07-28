@@ -301,7 +301,6 @@ class _CustomizationModalState extends State<CustomizationModal> {
     final stored = widget.menuItem.modifierGroups;
     if (stored != null && stored.isNotEmpty) {
       return widget.menuItem.effectiveModifierGroups.map((g) {
-        // Food options: ingredientId. Label-only (crust/cook/cut): use option id.
         final optionIds = g.options
             .map((o) {
               final ing = o.ingredientId?.trim();
@@ -641,7 +640,6 @@ class _CustomizationModalState extends State<CustomizationModal> {
   bool _isPizza() {
     final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
     if (profile == shared.MenuProfile.pizza) return true;
-    // Legacy fallback only when profile was never written
     final cat = widget.menuItem.category.toLowerCase();
     return cat.contains('pizza');
   }

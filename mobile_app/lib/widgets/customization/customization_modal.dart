@@ -256,6 +256,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   bool _showsCurrentIngredients() {
+    final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
+    if (profile == shared.MenuProfile.pizza) return true;
     final cat = widget.menuItem.category.toLowerCase();
     final catId = (widget.menuItem.categoryId ?? '').toLowerCase();
     return [cat, catId].any((c) =>
@@ -266,6 +268,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   bool _isPizzaOrCalzone() {
+    final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
+    if (profile == shared.MenuProfile.pizza) return true;
     final cat = widget.menuItem.category.toLowerCase();
     return cat.contains('pizza') || cat.contains('calzone');
   }
@@ -275,6 +279,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   bool _isWings() {
+    final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
+    if (profile == shared.MenuProfile.wings) return true;
     final name = widget.menuItem.name.toLowerCase();
     return name.contains('wings');
   }
@@ -286,17 +292,74 @@ class _CustomizationModalState extends State<CustomizationModal> {
         groupLabel == "Cheeses";
   }
 
-  @override
+  List<Map<String, dynamic>> _groupsForUi() {
+    final stored = widget.menuItem.modifierGroups;
+    if (stored != null && stored.isNotEmpty) {
+      return widget.menuItem.effectiveModifierGroups.map((g) {
+        final optionIds = g.options
+            .map((o) {
+              final ing = o.ingredientId?.trim();
+              if (ing != null && ing.isNotEmpty) return ing;
+              return o.id.trim();
+            })
+            .where((id) => id.isNotEmpty)
+            .toList();
+        final optionLabels = <String, String>{
+          for (final o in g.options)
+            if (o.id.trim().isNotEmpty)
+              (o.ingredientId != null && o.ingredientId!.trim().isNotEmpty
+                      ? o.ingredientId!.trim()
+                      : o.id.trim()):
+                  o.label.trim().isNotEmpty ? o.label.trim() : o.id.trim(),
+        };
+        return <String, dynamic>{
+          'id': g.id,
+          'label': g.label,
+          'ingredientIds': optionIds,
+          'optionLabels': optionLabels,
+          'min': g.min,
+          'max': g.max,
+          if (g.maxFree != null) 'maxFree': g.maxFree,
+        };
+      }).toList();
+    }
+    return List<Map<String, dynamic>>.from(
+      widget.menuItem.customizationGroups ?? const [],
+    );
+  }
+
+  int? _maxFreeForGroupLabel(String label) {
+    final key = label.trim().toLowerCase();
+    for (final g in _groupsForUi()) {
+      final gl = (g['label'] ?? '').toString().trim().toLowerCase();
+      if (gl == key && g['maxFree'] is int) {
+        return g['maxFree'] as int;
+      }
+    }
+    if (key == 'meats' || key == 'veggies' || key == 'toppings') {
+      for (final g in _groupsForUi()) {
+        final gl = (g['label'] ?? '').toString().trim().toLowerCase();
+        if ((gl == 'toppings' || gl == 'meats' || gl == 'veggies') &&
+            g['maxFree'] is int) {
+          return g['maxFree'] as int;
+        }
+      }
+    }
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
     // Debug print removed in P1 Batch 1 cleanup (no log spam)
 
     // --- Initialize cheeses state (self-contained) ---
-    final cheeseGroup = widget.menuItem.customizationGroups?.firstWhereOrNull(
-        (g) => (g['label'] as String).toLowerCase() == 'cheeses');
-    final cheeseIds =
-        (cheeseGroup?['ingredientIds'] as List?)?.cast<String>() ?? [];
+    final cheeseGroup = _groupsForUi().firstWhereOrNull(
+        (g) => (g['label']?.toString().toLowerCase() ?? '') == 'cheeses');
+    final cheeseIds = (cheeseGroup?['ingredientIds'] as List?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [];
     _selectedCheeses = {
       ...?widget.menuItem.includedIngredients
           ?.where((i) => cheeseIds.contains(i['ingredientId'] ?? i['id']))
@@ -315,13 +378,15 @@ class _CustomizationModalState extends State<CustomizationModal> {
             listen: false);
     final sizes = widget.menuItem.sizes;
     _selectedSize =
-        (sizes != null && sizes.isNotEmpty) ? sizes.first.toString() : null;
+        (sizes != null && sizes.isNotEmpty) ? sizes.first.label : null;
     _drinkFlavorCounts = {};
     if (_isPizza()) {
-      final saucesGroup = widget.menuItem.customizationGroups?.firstWhereOrNull(
-          (g) => (g['label'] as String).toLowerCase() == 'sauces');
-      final sauceIds =
-          (saucesGroup?['ingredientIds'] as List?)?.cast<String>() ?? [];
+      final saucesGroup = _groupsForUi().firstWhereOrNull(
+          (g) => (g['label']?.toString().toLowerCase() ?? '') == 'sauces');
+      final sauceIds = (saucesGroup?['ingredientIds'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [];
       _pizzaSauceSelections = sauceIds.map((id) {
         final meta = _ingredientMetadata[id];
         return PizzaSauceSelection(
@@ -342,10 +407,12 @@ class _CustomizationModalState extends State<CustomizationModal> {
     _initializeSelections();
     if (_isPizza()) {
       // Find default sauce (first from sauces group, fallback to included ingredient, fallback to null)
-      final saucesGroup = widget.menuItem.customizationGroups?.firstWhereOrNull(
-          (g) => (g['label'] as String).toLowerCase() == 'sauces');
-      final sauceIds =
-          (saucesGroup?['ingredientIds'] as List?)?.cast<String>() ?? [];
+      final saucesGroup = _groupsForUi().firstWhereOrNull(
+          (g) => (g['label']?.toString().toLowerCase() ?? '') == 'sauces');
+      final sauceIds = (saucesGroup?['ingredientIds'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [];
       // Default: included sauce or first from group, or 'sauce_none'
       final includedSauceId =
           widget.menuItem.includedIngredients?.firstWhereOrNull(
@@ -358,10 +425,12 @@ class _CustomizationModalState extends State<CustomizationModal> {
     }
     _sortCustomizationGroups();
     // Setup pizza/calzone topping tabs for "Meats" and "Veggies" ONLY
-    if (_isPizzaOrCalzone() && widget.menuItem.customizationGroups != null) {
-      _toppingTabGroups = widget.menuItem.customizationGroups!
+    final uiGroups = _groupsForUi();
+    if (_isPizzaOrCalzone() && uiGroups.isNotEmpty) {
+      _toppingTabGroups = uiGroups
           .where((g) => (g['label']?.toString().toLowerCase() == 'meats' ||
-              g['label']?.toString().toLowerCase() == 'veggies'))
+              g['label']?.toString().toLowerCase() == 'veggies' ||
+              g['label']?.toString().toLowerCase() == 'toppings'))
           .toList();
       _toppingTabLabels =
           _toppingTabGroups.map((g) => g['label'].toString()).toList();
@@ -379,7 +448,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
     // --- Wings initialization ---
     if (_isWings()) {
       final sizes = widget.menuItem.sizes ?? [];
-      _selectedSize ??= sizes.isNotEmpty ? sizes.first.toString() : null;
+      _selectedSize ??= sizes.isNotEmpty ? sizes.first.label : null;
       final splitCount = widget.menuItem.dippingSplits?[_selectedSize] ?? 2;
       _selectedDippedSauces = {};
       final sauceOptions = widget.menuItem.dippingSauceOptions ?? [];
@@ -440,9 +509,11 @@ class _CustomizationModalState extends State<CustomizationModal> {
     }
     _groupSelections = {};
     _radioSelections = {};
-    if (widget.menuItem.customizationGroups != null) {
-      for (final group in widget.menuItem.customizationGroups!) {
-        final groupLabel = group['label'];
+    final groups = _groupsForUi();
+    if (groups.isNotEmpty) {
+      for (final group in groups) {
+        final groupLabel = (group['label'] ?? '').toString();
+        if (groupLabel.isEmpty) continue;
         final ids = (group['ingredientIds'] as List<dynamic>? ?? [])
             .map((e) => e.toString())
             .toList();
@@ -472,16 +543,14 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   void _initializeSauceCounts() {
-    if (widget.menuItem.customizationGroups != null) {
-      for (final group in widget.menuItem.customizationGroups!) {
-        final label = (group['label'] as String?)?.toLowerCase();
-        if (label == 'sauces') {
-          final ids = (group['ingredientIds'] as List<dynamic>? ?? [])
-              .map((e) => e.toString())
-              .toList();
-          for (final id in ids) {
-            _selectedSauceCounts[id] = 0;
-          }
+    for (final group in _groupsForUi()) {
+      final label = (group['label'] as String?)?.toLowerCase();
+      if (label == 'sauces') {
+        final ids = (group['ingredientIds'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList();
+        for (final id in ids) {
+          _selectedSauceCounts[id] = 0;
         }
       }
     }
@@ -499,16 +568,14 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   void _initializeDressingCounts() {
-    if (widget.menuItem.customizationGroups != null) {
-      for (final group in widget.menuItem.customizationGroups!) {
-        final label = (group['label'] as String?)?.toLowerCase();
-        if (label == 'dressings') {
-          final ids = (group['ingredientIds'] as List<dynamic>? ?? [])
-              .map((e) => e.toString())
-              .toList();
-          for (final id in ids) {
-            _selectedDressingCounts[id] = 0;
-          }
+    for (final group in _groupsForUi()) {
+      final label = (group['label'] as String?)?.toLowerCase();
+      if (label == 'dressings') {
+        final ids = (group['ingredientIds'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList();
+        for (final id in ids) {
+          _selectedDressingCounts[id] = 0;
         }
       }
     }
@@ -517,20 +584,18 @@ class _CustomizationModalState extends State<CustomizationModal> {
   void _sortCustomizationGroups() {
     _checkboxGroups = [];
     _radioGroups = [];
-    if (widget.menuItem.customizationGroups != null) {
-      for (final group in widget.menuItem.customizationGroups!) {
-        final groupLabel = (group['label'] ?? '').toString();
-        final isSauceGroup = groupLabel.toLowerCase() == 'sauces';
-        final isDressingGroup = groupLabel.toLowerCase() == 'dressings';
-        if (_isRadioGroup(groupLabel) || isSauceGroup || isDressingGroup) {
-          _radioGroups.add(group);
-        } else {
-          // Exclude "Meats" and "Veggies" for pizza/calzone, they'll be handled as tabs
-          if (!_isPizzaOrCalzone() ||
-              (groupLabel.toLowerCase() != 'meats' &&
-                  groupLabel.toLowerCase() != 'veggies')) {
-            _checkboxGroups.add(group);
-          }
+    for (final group in _groupsForUi()) {
+      final groupLabel = (group['label'] ?? '').toString();
+      final isSauceGroup = groupLabel.toLowerCase() == 'sauces';
+      final isDressingGroup = groupLabel.toLowerCase() == 'dressings';
+      if (_isRadioGroup(groupLabel) || isSauceGroup || isDressingGroup) {
+        _radioGroups.add(group);
+      } else {
+        if (!_isPizzaOrCalzone() ||
+            (groupLabel.toLowerCase() != 'meats' &&
+                groupLabel.toLowerCase() != 'veggies' &&
+                groupLabel.toLowerCase() != 'toppings')) {
+          _checkboxGroups.add(group);
         }
       }
     }
@@ -559,6 +624,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   bool _isPizza() {
+    final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
+    if (profile == shared.MenuProfile.pizza) return true;
     final cat = widget.menuItem.category.toLowerCase();
     return cat.contains('pizza');
   }
@@ -631,11 +698,27 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   int _getFreeSauceCount() {
-    // Use freeSauceCount for sauces, and fallback to 2 if missing
+    final fromGroup = _maxFreeForGroupLabel('sauces');
+    if (fromGroup != null) return fromGroup;
+
     final value = widget.menuItem.freeSauceCount;
     if (value is Map) {
       final key = _normalizeSizeKey(_selectedSize);
-      return (key != null && value[key] != null) ? value[key] as int : 0;
+      return (key.isNotEmpty && value[key] != null) ? value[key] as int : 0;
+    }
+    if (value is int) return value;
+    return 0;
+  }
+
+  int _getFreeDressingCount() {
+    final fromGroup = _maxFreeForGroupLabel('dressings');
+    if (fromGroup != null) return fromGroup;
+
+    final value =
+        widget.menuItem.freeDressingCount ?? widget.menuItem.freeSauceCount;
+    if (value is Map) {
+      final key = _normalizeSizeKey(_selectedSize);
+      return (key.isNotEmpty && value[key] != null) ? value[key] as int : 0;
     }
     if (value is int) return value;
     return 0;
@@ -644,17 +727,6 @@ class _CustomizationModalState extends State<CustomizationModal> {
   double _getExtraSauceUpcharge() {
     // Use extraSauceUpcharge if present, fallback to 0.95
     return (widget.menuItem.extraSauceUpcharge as num?)?.toDouble() ?? 0.95;
-  }
-
-  int _getFreeDressingCount() {
-    final value =
-        widget.menuItem.freeDressingCount ?? widget.menuItem.freeSauceCount;
-    if (value is Map) {
-      final key = _normalizeSizeKey(_selectedSize);
-      return (key != null && value[key] != null) ? value[key] as int : 0;
-    }
-    if (value is int) return value;
-    return 0;
   }
 
   double _getExtraDressingUpcharge() {
@@ -1866,7 +1938,12 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                     final selected = _radioSelections[label];
                                     if (selected == null) return '';
                                     final meta = _ingredientMetadata[selected];
-                                    return "${label.capitalize()}: ${meta?.name ?? selected}";
+                                    final labels = (group['optionLabels']
+                                                as Map?)
+                                            ?.map((k, v) => MapEntry(
+                                                k.toString(), v.toString())) ??
+                                        const <String, String>{};
+                                    return "${label.capitalize()}: ${meta?.name ?? labels[selected] ?? selected}";
                                   })
                                   .where((str) => str.isNotEmpty)
                                   .join(" | ");
@@ -1961,9 +2038,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                     onConfirm: widget.onConfirm,
                     drinkFlavorCounts: _drinkFlavorCounts,
                     sizePrices: widget.menuItem.sizePrices,
-                    sizes: widget.menuItem.sizes
-                        ?.map((s) => s.toString())
-                        .toList(),
+                    sizes: widget.menuItem.sizes?.map((s) => s.label).toList(),
                     menuItemPrice: widget.menuItem.price,
                     drinkMaxPerFlavor: _drinkMaxPerFlavor,
                   ),
