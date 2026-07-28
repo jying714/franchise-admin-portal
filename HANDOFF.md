@@ -1,6 +1,6 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: July 28, 2026 (~17:25 CDT — W7 PASS; salad/dinner mobile polish; M5 next)  
+**Last Updated**: July 28, 2026 (~18:05 CDT — M5 dual-tree cutover complete)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
 **Active branch**: `feat/menu-modifier-system-rebuild-v1`  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
@@ -43,12 +43,20 @@ Human acceptance: wings, calzone, pizza — **PASS**.
 - Salad: optional pool uses Click to Add (Additional Toppings-style cards); selected items move to Current only; included not listed on both; remove from Current returns to optional pool.
 - Pricing: included never auto-added to starting total.
 
+### M5 dual-tree cutover (**Done**)
+
+- Canonical-only `toFirestore` (always write menuProfile/modifierGroups; skip empty dual lists).
+- `effectiveMenuProfile` / `effectiveModifierGroups` stored-only; `_legacyToModifierGroups` deleted.
+- Offline cache DB v3 + profile/groups columns.
+- Admin day-2 form preserves canonical; dual Customize dialog + customization_types deleted.
+- Dynamic form Save preserves menuProfile/modifierGroups.
+- Full reseed; legacy dual-tree data deleted; smoke green.
+
 ### Still open
 
-1. **M5** dual-tree cutover (next epic gate)  
-2. Optional **W2** franchise `config/menu_profile_wings` pool  
-3. Developer dashboard  
-4. Ensure latest local mobile salad/optional commits are on `origin` if any remain unstaged  
+1. Optional **W2** franchise `config/menu_profile_wings` pool  
+2. Developer dashboard  
+3. Merge feature branch → `main` when ready for Hosting  
 
 ### Do not regress
 
@@ -59,6 +67,7 @@ Human acceptance: wings, calzone, pizza — **PASS**.
 - No Cook/Cut/Crust as ingredient types  
 - No new `wing_sauces` ingredient type  
 - Wings: single dipping list; no dual tabs; no included/optional UI  
+- No dual production write paths after M5  
 
 ---
 
@@ -69,7 +78,7 @@ Human acceptance: wings, calzone, pizza — **PASS**.
 | HQ onboarding sole host | Done |
 | Platform Owner MVP | Done |
 | Admin ops v1 | Done on `main` |
-| Menu rebuild M1–M4 pizza + optionalAddOns UX | Done on feature branch |
+| Menu rebuild M1–M5 | **Done** on feature branch |
 | Foundation seed Doughboys | Done |
 | Wings + calzone W0–W7 | **Done** on feature branch |
 | Salad/dinner mobile optional UX + pricing honesty | Done on feature branch |
@@ -78,9 +87,9 @@ Human acceptance: wings, calzone, pizza — **PASS**.
 
 ## 3. What’s next
 
-1. **M5** dual-tree cutover: canonical-only write/read; backfill live items; remove legacy production paths  
-2. Optional **W2** franchise shared sauce pool (ops convenience only)  
-3. Developer dashboard after menu path stable on `main`  
+1. Optional **W2** franchise shared sauce pool (ops convenience only)  
+2. Developer dashboard after menu path stable on `main`  
+3. Merge `feat/menu-modifier-system-rebuild-v1` → `main` for Hosting  
 
 ---
 
@@ -98,4 +107,4 @@ Human acceptance: wings, calzone, pizza — **PASS**.
 
 ---
 
-**Bottom line:** Wings + calzone acceptance is **green**. Pizza Order Details + pricing honesty + salad/dinner optional UX landed. **Next product-technical gate is M5 cutover** (not more wings feature work unless W2 is explicitly requested).
+**Bottom line:** Menu modifier rebuild **M1–M5 complete** on `feat/menu-modifier-system-rebuild-v1`. Wings/calzone/pizza/salad paths green. Canonical `menuProfile` + `modifierGroups` only. Optional residual: W2 sauce pool; then merge to `main`.
