@@ -257,6 +257,19 @@ class _CustomizationModalState extends State<CustomizationModal> {
     return uiSize; // guaranteed not null by above
   }
 
+  bool _wasIncludedIngredient(String ingId) {
+    final raw = widget.menuItem.includedIngredients;
+    if (raw == null || raw.isEmpty) return false;
+    final want = ingId.trim();
+    if (want.isEmpty) return false;
+    for (final e in raw) {
+      final a = (e['ingredientId'] ?? '').toString().trim();
+      final b = (e['id'] ?? '').toString().trim();
+      if (a == want || b == want) return true;
+    }
+    return false;
+  }
+
   bool _showsCurrentIngredients() {
     if (_isWings()) return false;
     final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
@@ -292,6 +305,18 @@ class _CustomizationModalState extends State<CustomizationModal> {
     if (profile == shared.MenuProfile.wings) return true;
     final name = widget.menuItem.name.toLowerCase();
     return name.contains('wings');
+  }
+
+  bool _isSalad() {
+    final cat = widget.menuItem.category.toLowerCase();
+    final catId = (widget.menuItem.categoryId ?? '').toLowerCase();
+    return cat.contains('salad') || catId.contains('salad');
+  }
+
+  bool _isDinner() {
+    final cat = widget.menuItem.category.toLowerCase();
+    final catId = (widget.menuItem.categoryId ?? '').toLowerCase();
+    return cat.contains('dinner') || catId.contains('dinner');
   }
 
   void _resyncWingsForSize(String? size) {
@@ -1077,6 +1102,14 @@ class _CustomizationModalState extends State<CustomizationModal> {
     if (widget.menuItem.optionalAddOns != null) {
       for (final addOn in widget.menuItem.optionalAddOns!) {
         final ingId = addOn['ingredientId'] ?? addOn['id'];
+        // Salad/dinner: priced via _currentIngredients path below
+        if ((_isSalad() || _isDinner()) &&
+            _currentIngredients.contains(ingId)) {
+          continue;
+        }
+        if (_wasIncludedIngredient(ingId.toString())) {
+          continue; // included in base price — never charge as add-on
+        }
         if (_selectedAddOns.contains(ingId)) {
           final meta = _ingredientMetadata[ingId];
           double upcharge = usesDynamicToppingPricing
@@ -1150,10 +1183,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
       final cat = widget.menuItem.category.toLowerCase();
       final isSalad = cat.contains('salad');
-      final wasIncluded = (widget.menuItem.includedIngredients?.any(
-            (e) => (e['ingredientId'] ?? e['id']) == ingId,
-          ) ??
-          false);
+      final wasIncluded = _wasIncludedIngredient(ingId);
 
       double upcharge = usesDynamicToppingPricing
           ? _getToppingUpcharge()
@@ -1179,11 +1209,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
             if (_isDoughIngredient(id)) return false;
             if (_selectedSauceCounts.containsKey(id)) return false;
             if (_selectedDressingCounts.containsKey(id)) return false;
-            final was = widget.menuItem.includedIngredients?.any(
-                  (e) => (e['ingredientId'] ?? e['id']) == id,
-                ) ??
-                false;
-            return !was;
+            return !_wasIncludedIngredient(id);
           }).toList();
           final indexAmongExtras = extraIds.indexOf(ingId);
           final beyondFree =
@@ -1694,7 +1720,6 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                           .colorScheme.error,
                                                     ),
                                                     onPressed: () {
-                                                      // AFTER
                                                       setState(() {
                                                         _currentIngredients
                                                             .remove(ingId);
@@ -1703,6 +1728,11 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                         _ingredientPortions
                                                             .remove(ingId);
                                                         _selectedCheeses
+                                                            .remove(ingId);
+                                                        // Return to optional list (salad/dinner add-ons)
+                                                        _selectedAddOns
+                                                            .remove(ingId);
+                                                        _doubleAddOns
                                                             .remove(ingId);
                                                         for (var i = 0;
                                                             i <
@@ -1731,7 +1761,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                               SizedBox(height: 6),
                                               Row(
                                                 children: [
-                                                  if (!_isCalzone()) ...[
+                                                  // Left/right only on pizza (not calzone, not salad)
+                                                  if (_isPizza() &&
+                                                      !_isCalzone()) ...[
                                                     Flexible(
                                                       fit: FlexFit.tight,
                                                       child: PortionSelector(
@@ -1971,8 +2003,13 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               final label = (group['label'] ?? '')
                                   .toString()
                                   .toLowerCase();
-                              // Calzone: only cheeses from this list (no extra add-on groups)
-                              if (_isCalzone() && label != 'cheeses') {
+                              // Pizza/calzone: only Cheeses — no Sauce / Add-ons / other groups
+                              if ((_isPizzaOrCalzone() || _isSalad()) &&
+                                  label != 'cheeses') {
+                                return const SizedBox.shrink();
+                              }
+                              // Salads: no cheeses section from modifier groups either
+                              if (_isSalad()) {
                                 return const SizedBox.shrink();
                               }
                               if (label == 'cheeses') {
@@ -2526,6 +2563,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
                             }).whereType<Widget>(),
 
                           // AFTER
+                          // Optional ingredients: only when HQ attached optionalAddOns
+                          // (salads e.g. garbanzo; dinners e.g. meatballs). Not pizza/calzone/wings.
                           if (!_isWings() &&
                               !_isPizzaOrCalzone() &&
                               widget.menuItem.optionalAddOns != null &&
@@ -2536,6 +2575,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               loc: loc,
                               ingredientMetadata: _ingredientMetadata,
                               selectedAddOns: _selectedAddOns,
+                              currentIngredientIds: _currentIngredients,
                               doubleAddOns: _doubleAddOns,
                               selectedSauceCounts: _selectedSauceCounts,
                               usesDynamicToppingPricing:
@@ -2549,9 +2589,18 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                   if (val == true) {
                                     _selectedAddOns.add(ingId);
                                     _doubleAddOns[ingId] = false;
+                                    // Salad/dinner: show under Current Toppings
+                                    if (_isSalad() || _isDinner()) {
+                                      _currentIngredients.add(ingId);
+                                      _doubleToppings[ingId] = false;
+                                    }
                                   } else {
                                     _selectedAddOns.remove(ingId);
                                     _doubleAddOns.remove(ingId);
+                                    if (_isSalad() || _isDinner()) {
+                                      _currentIngredients.remove(ingId);
+                                      _doubleToppings.remove(ingId);
+                                    }
                                   }
                                 });
                               },
@@ -2573,18 +2622,69 @@ class _CustomizationModalState extends State<CustomizationModal> {
                             ),
 
                           // --- ORDER DETAILS: crust/cook/cut — pizza only ---
-                          if (!_isWings() && !_isCalzone())
+                          if (!_isWings() &&
+                              !_isCalzone() &&
+                              !_isSalad() &&
+                              !_isDinner())
                             Builder(
                               builder: (context) {
-                                // Get all remaining radio groups (crust, cook, cut)
-                                final orderDetailGroups =
+                                // Get crust / cook / cut for pizza Order Details
+                                var orderDetailGroups =
                                     _radioGroups.where((group) {
                                   final label = (group['label'] as String?)
                                       ?.toLowerCase();
+                                  final id =
+                                      (group['id'] as String?)?.toLowerCase() ??
+                                          '';
                                   return label == 'crust' ||
                                       label == 'cook' ||
-                                      label == 'cut';
+                                      label == 'cut' ||
+                                      id == 'crust' ||
+                                      id == 'cook' ||
+                                      id == 'cut';
                                 }).toList();
+
+                                // Fallback: template structural groups when stored groups omit them
+                                if (_isPizza() && orderDetailGroups.isEmpty) {
+                                  orderDetailGroups =
+                                      shared.MenuProfileTemplates.seedGroups(
+                                    shared.MenuProfile.pizza,
+                                  )
+                                          .where((g) {
+                                            final id = g.id.toLowerCase();
+                                            return id == 'crust' ||
+                                                id == 'cook' ||
+                                                id == 'cut';
+                                          })
+                                          .map((g) => <String, dynamic>{
+                                                'id': g.id,
+                                                'label': g.label,
+                                                'ingredientIds': g.options
+                                                    .map((o) => o.id)
+                                                    .toList(),
+                                                'optionLabels': {
+                                                  for (final o in g.options)
+                                                    o.id: o.label,
+                                                },
+                                                'min': g.min,
+                                                'max': g.max,
+                                              })
+                                          .toList();
+                                  for (final g in orderDetailGroups) {
+                                    final label = (g['label'] as String?) ?? '';
+                                    if (label.isEmpty) continue;
+                                    if ((_radioSelections[label] ?? '')
+                                        .isNotEmpty) {
+                                      continue;
+                                    }
+                                    final ids =
+                                        (g['ingredientIds'] as List? ?? [])
+                                            .map((e) => e.toString())
+                                            .toList();
+                                    if (ids.isEmpty) continue;
+                                    _radioSelections[label] = ids.first;
+                                  }
+                                }
 
                                 // Compose summary for collapsed state
                                 String detailsSummary = orderDetailGroups

@@ -11,6 +11,9 @@ class OptionalAddOnsGroup extends StatelessWidget {
   final AppLocalizations loc;
   final Map<String, shared.IngredientMetadata> ingredientMetadata;
   final Set<String> selectedAddOns;
+
+  /// Ingredients already on Current Toppings — hide from optional pool.
+  final Set<String> currentIngredientIds;
   final Map<String, bool> doubleAddOns;
   final Map<String, int> selectedSauceCounts;
   final bool usesDynamicToppingPricing;
@@ -30,6 +33,7 @@ class OptionalAddOnsGroup extends StatelessWidget {
     required this.loc,
     required this.ingredientMetadata,
     required this.selectedAddOns,
+    this.currentIngredientIds = const {},
     required this.doubleAddOns,
     required this.selectedSauceCounts,
     required this.usesDynamicToppingPricing,
@@ -51,15 +55,43 @@ class OptionalAddOnsGroup extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            loc.optionalAddOnsLabel,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: shared.UiConfig.secondaryColor,
-              fontWeight: shared.UiConfig.bold,
-              fontFamily: shared.DesignTokens.fontFamily,
+          Padding(
+            padding: const EdgeInsets.only(top: 10, bottom: 10),
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: shared.UiConfig.primaryColor,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+              child: Text(
+                loc.optionalAddOnsLabel,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: shared.UiConfig.onPrimaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
-          ...menuItem.optionalAddOns!.map((addOn) {
+          ...() {
+            // Pool = optionalAddOns ∪ includedIngredients, minus what's on Current
+            final byId = <String, Map<String, dynamic>>{};
+            for (final addOn in menuItem.optionalAddOns ?? const []) {
+              final id =
+                  (addOn['ingredientId'] ?? addOn['id'] ?? '').toString();
+              if (id.isEmpty) continue;
+              byId[id] = Map<String, dynamic>.from(addOn);
+            }
+            for (final inc in menuItem.includedIngredients ?? const []) {
+              final id = (inc['ingredientId'] ?? inc['id'] ?? '').toString();
+              if (id.isEmpty) continue;
+              byId.putIfAbsent(id, () => Map<String, dynamic>.from(inc));
+            }
+            return byId.entries
+                .where((e) => !currentIngredientIds.contains(e.key))
+                .map((e) => e.value);
+          }()
+              .map((addOn) {
             final ingId = addOn['ingredientId'] ?? addOn['id'];
             final meta = ingredientMetadata[ingId];
             final isSauce = (meta?.type?.toLowerCase() == "sauces") ||
@@ -119,51 +151,58 @@ class OptionalAddOnsGroup extends StatelessWidget {
                 ),
               );
             } else {
-              final checked = selectedAddOns.contains(ingId);
-              final isDouble = doubleAddOns[ingId] == true;
+              // Same card + "Click to Add" pattern as Additional Toppings
+              if (selectedAddOns.contains(ingId)) {
+                return const SizedBox.shrink();
+              }
+              final outOfStock = meta?.outOfStock == true;
               final priceDisplay = upcharge > 0
-                  ? '+${shared.UiConfig.currencyFormat(upcharge * (isDouble ? 2 : 1))}'
+                  ? '+${shared.UiConfig.currencyFormat(upcharge)}'
                   : '';
-              return Row(
-                children: [
-                  Checkbox(
-                    value: checked,
-                    onChanged: meta?.outOfStock == true
-                        ? null
-                        : (val) => onToggleAddOn(ingId, val),
-                  ),
-                  Expanded(
-                    child: Text(
-                      meta?.name ?? addOn['name'] ?? ingId,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: shared.UiConfig.textColor,
-                        fontFamily: shared.DesignTokens.fontFamily,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (checked && upcharge > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 4.0),
-                      child: Text(
-                        priceDisplay,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: shared.UiConfig.secondaryColor,
-                          fontWeight: shared.UiConfig.bold,
-                          fontFamily: shared.DesignTokens.fontFamily,
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 0),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          meta?.name ?? addOn['name'] ?? ingId,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: shared.UiConfig.textColor,
+                            fontFamily: shared.DesignTokens.fontFamily,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    ),
-                  if (checked)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0, right: 4.0),
-                      child: buildAddOnDoublePill(
-                        ingId,
-                        isDouble,
-                        () => onToggleAddOn(ingId, !isDouble),
+                      if (priceDisplay.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Text(
+                            priceDisplay,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: shared.UiConfig.secondaryColor,
+                              fontWeight: shared.UiConfig.bold,
+                              fontFamily: shared.DesignTokens.fontFamily,
+                            ),
+                          ),
+                        ),
+                      TextButton(
+                        onPressed: outOfStock
+                            ? null
+                            : () => onToggleAddOn(ingId, true),
+                        child: Text(
+                          'Click to Add',
+                          style: TextStyle(
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
                       ),
-                    ),
-                ],
+                    ],
+                  ),
+                ),
               );
             }
           }),
