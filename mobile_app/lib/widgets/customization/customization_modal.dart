@@ -283,7 +283,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
         c.contains('pizza') ||
         c.contains('calzone') ||
         c.contains('salad') ||
-        c.contains('sub'));
+        c.contains('sub') ||
+        c.contains('dinner'));
   }
 
   bool _isPizzaOrCalzone() {
@@ -672,34 +673,39 @@ class _CustomizationModalState extends State<CustomizationModal> {
     _currentIngredients = {};
     if (widget.menuItem.includedIngredients != null) {
       for (final ing in widget.menuItem.includedIngredients!) {
-        final ingId = ing['ingredientId'] ?? ing['id'];
+        final ingId = (ing['ingredientId'] ?? ing['id'])?.toString() ?? '';
+        if (ingId.isEmpty) continue;
         _currentIngredients.add(ingId);
       }
     }
-    // Cheeses & sauces stay in their own sections, not Current Toppings
-    _currentIngredients.removeWhere((id) {
-      final meta = _ingredientMetadata[id];
-      final type = (meta?.type ?? '').toLowerCase();
-      final typeId = (meta?.typeId ?? type).toLowerCase();
-      if (type == 'cheeses' ||
-          typeId == 'cheeses' ||
-          type == 'sauces' ||
-          type == 'sauce' ||
-          typeId == 'sauces' ||
-          typeId == 'sauce') {
-        return true;
-      }
-      final included = widget.menuItem.includedIngredients?.firstWhereOrNull(
-        (e) => (e['ingredientId'] ?? e['id'])?.toString() == id,
-      );
-      if (included != null) {
-        final t = (included['typeId'] ?? included['type'] ?? '')
-            .toString()
-            .toLowerCase();
-        if (t == 'cheeses' || t == 'sauces' || t == 'sauce') return true;
-      }
-      return false;
-    });
+    // Pizza/calzone only: cheeses & sauces live in their own sections, not
+    // Current Toppings. Dinner/salad/standard keep all included ingredients on
+    // Current so they do not open as "Removed" or leak into optional pool.
+    if (_isPizzaOrCalzone()) {
+      _currentIngredients.removeWhere((id) {
+        final meta = _ingredientMetadata[id];
+        final type = (meta?.type ?? '').toLowerCase();
+        final typeId = (meta?.typeId ?? type).toLowerCase();
+        if (type == 'cheeses' ||
+            typeId == 'cheeses' ||
+            type == 'sauces' ||
+            type == 'sauce' ||
+            typeId == 'sauces' ||
+            typeId == 'sauce') {
+          return true;
+        }
+        final included = widget.menuItem.includedIngredients?.firstWhereOrNull(
+          (e) => (e['ingredientId'] ?? e['id'])?.toString() == id,
+        );
+        if (included != null) {
+          final t = (included['typeId'] ?? included['type'] ?? '')
+              .toString()
+              .toLowerCase();
+          if (t == 'cheeses' || t == 'sauces' || t == 'sauce') return true;
+        }
+        return false;
+      });
+    }
     _groupSelections = {};
     _radioSelections = {};
     final groups = _groupsForUi();
@@ -1592,17 +1598,6 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               selectedSauceCounts: _selectedSauceCounts,
                               setState: setState,
                             )
-                          else if (widget.menuItem.category.toLowerCase() ==
-                              'dinners')
-                            DinnerIncludedIngredients(
-                              menuItem: widget.menuItem,
-                              theme: theme,
-                              loc: loc,
-                              ingredientMetadata: _ingredientMetadata,
-                              currentIngredients: _currentIngredients,
-                              ingredientAmounts: _ingredientAmounts,
-                              setState: setState,
-                            )
                           else if (_showsCurrentIngredients())
                             Builder(
                               builder: (context) {
@@ -1758,42 +1753,48 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                   ),
                                                 ],
                                               ),
-                                              SizedBox(height: 6),
-                                              Row(
-                                                children: [
-                                                  // Left/right only on pizza (not calzone, not salad)
-                                                  if (_isPizza() &&
-                                                      !_isCalzone()) ...[
+                                              // Pizza/calzone only: portion + double.
+                                              // Dinner/salad/standard: name + Remove only
+                                              // (same card chrome, no extra modifiers).
+                                              if (_isPizzaOrCalzone()) ...[
+                                                SizedBox(height: 6),
+                                                Row(
+                                                  children: [
+                                                    if (_isPizza() &&
+                                                        !_isCalzone()) ...[
+                                                      Flexible(
+                                                        fit: FlexFit.tight,
+                                                        child: PortionSelector(
+                                                          value:
+                                                              _ingredientPortions[
+                                                                      ingId] ??
+                                                                  Portion.whole,
+                                                          onChanged: (portion) =>
+                                                              _handlePortionChanged(
+                                                                  ingId,
+                                                                  portion),
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 10),
+                                                    ],
                                                     Flexible(
                                                       fit: FlexFit.tight,
-                                                      child: PortionSelector(
-                                                        value:
-                                                            _ingredientPortions[
-                                                                    ingId] ??
-                                                                Portion.whole,
-                                                        onChanged: (portion) =>
-                                                            _handlePortionChanged(
-                                                                ingId, portion),
+                                                      child: PortionPillToggle(
+                                                        isDouble:
+                                                            _doubleToppings[
+                                                                    ingId] ==
+                                                                true,
+                                                        onTap: () =>
+                                                            _handleDoubleChanged(
+                                                                ingId,
+                                                                !(_doubleToppings[
+                                                                        ingId] ??
+                                                                    false)),
                                                       ),
                                                     ),
-                                                    SizedBox(width: 10),
                                                   ],
-                                                  Flexible(
-                                                    fit: FlexFit.tight,
-                                                    child: PortionPillToggle(
-                                                      isDouble: _doubleToppings[
-                                                              ingId] ==
-                                                          true,
-                                                      onTap: () =>
-                                                          _handleDoubleChanged(
-                                                              ingId,
-                                                              !(_doubleToppings[
-                                                                      ingId] ??
-                                                                  false)),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
+                                                ),
+                                              ],
                                             ],
                                           ),
                                         ),

@@ -102,7 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             logoAsset: shared.BrandingConfig.appBarLogoAsset,
             centerTitle: true,
           ),
-          backgroundColor: shared.UiConfig.backgroundColorDark,
+          backgroundColor: shared.UiConfig.backgroundColor,
           body: SafeArea(
             bottom: true,
             child: Padding(

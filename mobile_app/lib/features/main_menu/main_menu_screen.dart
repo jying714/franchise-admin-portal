@@ -40,48 +40,15 @@ class MainMenuScreen extends material.StatelessWidget {
         Provider.of<shared.AnalyticsService>(context, listen: false);
     final loc = AppLocalizations.of(context)!;
 
-    return material.Scaffold(
-      appBar: FranchiseAppBar(
-        title:
-            "Doughboys Pizzeria", // Will be dynamic via Consumer below if needed
-        centerTitle: true,
-        actions: [
-          ProfileIconButton(
-            tooltip: loc.profile,
-            onPressed: () => material.Navigator.push(
-              context,
-              material.MaterialPageRoute(builder: (_) => const ProfileScreen()),
-            ),
-          ),
-          // P2 QR foundations: scanner entry point in app bar
-          material.IconButton(
-            icon: const material.Icon(material.Icons.qr_code_scanner),
-            tooltip: 'Scan Franchise QR',
-            onPressed: () => material.Navigator.push(
-              context,
-              material.MaterialPageRoute(builder: (_) => const QrScanScreen()),
-            ),
-          ),
-          const CartIconBadge(
-            tooltip: 'Cart',
-            onPressed: null, // Will be overridden in Consumer
-          ),
-          const material.SizedBox(width: shared.DesignTokens.gridSpacing),
-        ],
-      ),
-      backgroundColor: shared.UiConfig.backgroundColor,
-      body: material.SafeArea(
-        child: Consumer<shared.FranchiseProvider>(
-          builder: (context, provider, child) {
-            if (!provider.hasValidFranchise) {
-              return const material.Center(
-                  child: material.CircularProgressIndicator());
-            }
+    return Consumer<shared.FranchiseProvider>(
+      builder: (context, provider, child) {
+        final franchiseTitle = provider.currentAppName;
 
-            final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
-
-            // Override the CartIconBadge onPressed with proper context
-            final updatedActions = [
+        return material.Scaffold(
+          appBar: FranchiseAppBar(
+            title: franchiseTitle,
+            centerTitle: true,
+            actions: [
               ProfileIconButton(
                 tooltip: loc.profile,
                 onPressed: () => material.Navigator.push(
@@ -90,7 +57,6 @@ class MainMenuScreen extends material.StatelessWidget {
                       builder: (_) => const ProfileScreen()),
                 ),
               ),
-              // P2 QR button (duplicated for CartIconBadge override context)
               material.IconButton(
                 icon: const material.Icon(material.Icons.qr_code_scanner),
                 tooltip: 'Scan Franchise QR',
@@ -109,88 +75,90 @@ class MainMenuScreen extends material.StatelessWidget {
                 ),
               ),
               const material.SizedBox(width: shared.DesignTokens.gridSpacing),
-            ];
-
-            return material.Column(
-              children: [
-                // Banner
-                material.StreamBuilder<List<shared.Banner>>(
-                  stream: firestoreService.getBanners(
-                      franchiseId: provider.currentFranchiseId),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState ==
-                        material.ConnectionState.waiting) {
-                      return const LoadingShimmerWidget(
-                          itemCount: 1, cardHeight: 180);
-                    }
-                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return EmptyStateWidget(
-                        title: loc.checkBackSoon,
-                        message: loc.noPromotionsAvailable,
-                        imageAsset: shared.BrandingConfig.bannerPlaceholder,
-                      );
-                    }
-                    final banners =
-                        (snapshot.data ?? []).where((b) => b.active).toList();
-                    return BannerCarousel(
-                      banners: banners,
-                      onBannerTap: (banner) => BannerActionHandler.handle(
-                        context,
-                        banner,
-                        analyticsService:
-                            analyticsService as shared.AnalyticsService?,
-                        loc: loc,
-                      ),
-                    );
-                  },
-                ),
-
-                // Categories
-                material.Expanded(
-                  child: material.StreamBuilder<List<shared.Category>>(
-                    stream: firestoreService
-                        .getCategories(provider.currentFranchiseId),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState ==
-                          material.ConnectionState.waiting) {
-                        return const LoadingShimmerWidget(
-                            itemCount: 6, cardHeight: 160);
-                      }
-                      final categories = snapshot.data ?? [];
-                      if (categories.isEmpty) {
-                        return EmptyStateWidget(
-                          title: loc.noCategoriesAvailable,
-                          message: loc.checkBackSoon,
-                          imageAsset: shared.BrandingConfig.defaultCategoryIcon,
-                        );
-                      }
-                      return CategoryGrid(
-                        categories: categories,
-                        onCategoryTap: (category) {
-                          analyticsService.logCategoryTap(
-                            franchiseId: provider.currentFranchiseId,
-                            categoryId: category.id,
-                            categoryName: category.name,
-                          );
-                          material.Navigator.push(
-                            context,
-                            material.MaterialPageRoute(
-                              builder: (_) => CategoryScreen(
-                                categoryId: category.id,
-                                categoryName: category.name,
-                              ),
+            ],
+          ),
+          backgroundColor: shared.UiConfig.backgroundColor,
+          body: material.SafeArea(
+            child: !provider.hasValidFranchise
+                ? const material.Center(
+                    child: material.CircularProgressIndicator())
+                : material.Column(
+                    children: [
+                      // Promo banner — collapse completely when none / all inactive
+                      material.StreamBuilder<List<shared.Banner>>(
+                        stream: firestoreService.getBanners(
+                            franchiseId: provider.currentFranchiseId),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              material.ConnectionState.waiting) {
+                            return const material.SizedBox.shrink();
+                          }
+                          final banners = (snapshot.data ?? [])
+                              .where((b) => b.active)
+                              .toList();
+                          if (banners.isEmpty) {
+                            return const material.SizedBox.shrink();
+                          }
+                          return BannerCarousel(
+                            banners: banners,
+                            onBannerTap: (banner) => BannerActionHandler.handle(
+                              context,
+                              banner,
+                              analyticsService:
+                                  analyticsService as shared.AnalyticsService?,
+                              loc: loc,
                             ),
                           );
                         },
-                      );
-                    },
+                      ),
+
+                      // Categories
+                      material.Expanded(
+                        child: material.StreamBuilder<List<shared.Category>>(
+                          stream: firestoreService
+                              .getCategories(provider.currentFranchiseId),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                material.ConnectionState.waiting) {
+                              return const LoadingShimmerWidget(
+                                  itemCount: 6, cardHeight: 160);
+                            }
+                            final categories = snapshot.data ?? [];
+                            if (categories.isEmpty) {
+                              return EmptyStateWidget(
+                                title: loc.noCategoriesAvailable,
+                                message: loc.checkBackSoon,
+                                imageAsset:
+                                    shared.BrandingConfig.defaultCategoryIcon,
+                              );
+                            }
+                            return CategoryGrid(
+                              categories: categories,
+                              onCategoryTap: (category) {
+                                analyticsService.logCategoryTap(
+                                  franchiseId: provider.currentFranchiseId,
+                                  categoryId: category.id,
+                                  categoryName: category.name,
+                                );
+                                material.Navigator.push(
+                                  context,
+                                  material.MaterialPageRoute(
+                                    builder: (_) => CategoryScreen(
+                                      categoryId: category.id,
+                                      categoryName: category.name,
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
