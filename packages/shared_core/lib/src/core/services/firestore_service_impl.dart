@@ -587,9 +587,37 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Future<List<String>> fetchIngredientTypeIds(String franchiseId) async =>
       throw UnimplementedError(_adminOnlyMsg('fetchIngredientTypeIds'));
+  // AFTER
   @override
-  Future<List<model.Category>> fetchCategories(String franchiseId) async =>
-      throw UnimplementedError(_adminOnlyMsg('fetchCategories'));
+  Future<List<model.Category>> fetchCategories(String franchiseId) async {
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      return [];
+    }
+    try {
+      final snap = await _franchiseCollection(franchiseId, _categories).get();
+      final list = snap.docs
+          .map((d) => model.Category.fromFirestore(d.data(), d.id))
+          .toList();
+      list.sort((a, b) {
+        final ao = a.sortOrder ?? 0;
+        final bo = b.sortOrder ?? 0;
+        if (ao != bo) return ao.compareTo(bo);
+        return a.name.compareTo(b.name);
+      });
+      return list;
+    } catch (e, stack) {
+      await ErrorLogger.log(
+        message: 'Failed to fetchCategories',
+        source: 'FirestoreServiceImpl',
+        severity: 'error',
+        stack: stack.toString(),
+        contextData: {'franchiseId': franchiseId},
+      );
+      return [];
+    }
+  }
   @override
   Future<void> saveCategory(
           String franchiseId, model.Category category) async =>
@@ -3464,10 +3492,39 @@ class FirestoreServiceImpl implements FirestoreService {
       get invitationCollection => throw UnimplementedError(_adminOnly(
           'invitationCollection (use invitationCollectionPath or dedicated invitation methods instead in lightweight tier)'));
 
+  // AFTER
   @override
   Stream<List<model.Category>> getCategories(String franchiseId) {
-    // Lightweight impl returns empty - AdminFirestoreService provides real stream
-    return Stream.value(<model.Category>[]);
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      return Stream.value(<model.Category>[]);
+    }
+
+    return _franchiseCollection(franchiseId, _categories)
+        .snapshots()
+        .map((s) {
+      final list = s.docs
+          .map((d) {
+        try {
+          return model.Category.fromFirestore(
+              d.data() as Map<String, dynamic>, d.id);
+        } catch (_) {
+          return null;
+        }
+      })
+          .where((c) => c != null)
+          .cast<model.Category>()
+          .toList();
+
+      list.sort((a, b) {
+        final ao = a.sortOrder ?? 0;
+        final bo = b.sortOrder ?? 0;
+        if (ao != bo) return ao.compareTo(bo);
+        return a.name.compareTo(b.name);
+      });
+      return list;
+    });
   }
 
   @override
