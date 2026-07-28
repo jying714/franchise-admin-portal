@@ -1,9 +1,9 @@
 # Slice: Menu modifier system rebuild v1
 
-**Status**: In progress — M1–M4 pizza path + optionalAddOns UX locked; wings/calzone planned; M5 open  
+**Status**: In progress — M1–M4 pizza path locked; wings/calzone W1–W6 done; W7 + M5 open  
 **Branch**: `feat/menu-modifier-system-rebuild-v1`  
 **Date locked**: July 27, 2026  
-**Progress note**: July 28, 2026 — pizza CBR PASS + foundation seed; **hq-wings-calzone-v1** product locked (W0); implement wings/calzone before M5 preferred  
+**Progress note**: July 28, 2026 — pizza CBR PASS + foundation seed; **hq-wings-calzone-v1** W1–W6 (code + seed) landed; W7 acceptance next; M5 after W7 preferred  
 **Do not** deliver as a thin Admin Customize patch.
 
 ## Problem
@@ -51,14 +51,14 @@ Three parallel customization stories historically:
 | Order Details | Crust / Cook / Cut |
 | Flat Optional add-ons | Hidden on pizza/calzone |
 
-**HQ:** Included toppings + Optional add-ons must remain editable and **persisted** on save.
+**HQ:** Included toppings + Optional add-ons must remain editable and **persisted** on save (not on wings profile).
 
 ## Related: Wings + Calzone
 
 Full product + workstreams: **`docs/slices/hq-wings-calzone-v1.md`**.
 
 - `menuProfile: calzone` — pizza twin, no left/right.  
-- `menuProfile: wings` — 2 portions, Plain, franchise sauce pool, free cups on item maps.
+- `menuProfile: wings` — 2 portions, Plain, item sauce bind + free cups on item maps; W1–W6 done, W7 open.
 
 ## Non-goals
 
@@ -77,14 +77,15 @@ Full product + workstreams: **`docs/slices/hq-wings-calzone-v1.md`**.
 | M3 HQ (+ included/optional UI) | Done |
 | M3 Admin | Done |
 | M4 Mobile/web pizza | Done (CBR PASS) |
-| Wings + calzone | **Planned** (sibling slice) |
+| Wings + calzone W1–W6 | **Done** (sibling slice) |
+| Wings + calzone W7 acceptance | **Open** |
 | M5 Cutover | **Open** |
 
 ## Acceptance (epic)
 
 - [x] Pizza path Customize + Order Details + Current food-only + cheeses/sauces (CBR)  
-- [ ] Wings acceptance (hq-wings-calzone-v1)  
-- [ ] Calzone acceptance (hq-wings-calzone-v1)  
+- [ ] Wings acceptance (hq-wings-calzone-v1 W7)  
+- [ ] Calzone acceptance (hq-wings-calzone-v1 W7)  
 - [x] Cook/Cut/Crust as groups  
 - [x] HQ + Admin same write structure  
 - [ ] STATUS complete only after **M5**
@@ -92,7 +93,7 @@ Full product + workstreams: **`docs/slices/hq-wings-calzone-v1.md`**.
 ## Agent / human rules
 
 - No new production `category.contains('pizza')` for behavior.  
-- Do not strip HQ included/optional fields or save as empty constants.  
+- Do not strip HQ included/optional fields or save as empty constants (except clear on wings profile switch).  
 - Do not collapse pizza cheeses/sauces into Current Toppings.  
 - Do not invent `wing_sauces` ingredient type.  
 - Do not mark epic complete until M5.

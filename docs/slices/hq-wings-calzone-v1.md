@@ -1,6 +1,6 @@
 # Slice: HQ Wings + Calzone v1
 
-**Status**: Planned — product locked July 28, 2026; implementation not started  
+**Status**: In progress — W1–W6 done (code + seed); W7 acceptance open; W2 optional  
 **Branch**: `feat/menu-modifier-system-rebuild-v1`  
 **Authority**: Decision 10 addendum; STATUS / HANDOFF / MOBILE_DYNAMIC  
 **Depends on**: Pizza optionalAddOns contract (locked, CBR PASS)
@@ -26,6 +26,7 @@
 | Toss + side cups | **Same** sauce ingredient ids |
 | Free cups / extra upcharge | Set in **menu item creation**, per size |
 | UI | **Build your wings** (2 portions) + **Dipping sauces** (cup counts only) |
+| HQ profile | No included toppings / optional add-ons editors on wings |
 
 ### Calzone
 
@@ -41,8 +42,8 @@
 
 | Layer | Store | Role |
 |--------|--------|------|
-| Franchise default | `franchises/{id}/config/menu_profile_wings` | `{ sauceIngredientIds: string[], maxFlavorPortions: 2 }` |
-| Item bind | `dippingSauceOptions` + `sideDipSauceOptions` (same list) and/or `modifierGroups` `wing_sauce` / `wing_dips` | Mobile runtime; snapshot on save |
+| Franchise default | `franchises/{id}/config/menu_profile_wings` | `{ sauceIngredientIds: string[], maxFlavorPortions: 2 }` (W2 optional) |
+| Item bind | `dippingSauceOptions` + `sideDipSauceOptions` (same list) and/or `modifierGroups` `wing_sauce` / `wing_dips` | Mobile runtime; **HQ save projects group binds → option lists** |
 | Catalog | `ingredient_metadata` + type `sauces` | SKUs |
 
 Mobile read order: item option lists → modifier groups → empty (Plain only).
@@ -60,38 +61,40 @@ Phase B (optional later): `SizeData.freeSideDips` / upcharge fields.
 ### Existing model support
 
 `MenuItem` already has wings accessors (`getDippingSauceOptions`, `getFreeDipCupCountForSize`, `getSideDipUpchargeForSize`, `getDippingSplitsForSize`).  
-`MenuProfileTemplates._wings()` already seeds `wing_sauce` + `wing_dips` groups.
+`MenuProfileTemplates._wings()` seeds `wing_sauce` + `wing_dips` groups; `MenuProfile.calzone` seeds pizza groups.
 
 ## Workstreams
 
 | ID | Name | Status |
 |----|------|--------|
 | **W0** | Docs lock (this slice + STATUS/HANDOFF/DECISIONS/MOBILE) | **Done** |
-| **W1** | shared_core: `MenuProfile.calzone` + template = pizza clone; wings template notes | Open |
-| **W2** | Franchise `config/menu_profile_wings` read/write + Apply pool | Open |
-| **W3** | HQ editor: wings panel (sizes, free cups, upcharge, sauce bind) + calzone profile | Open |
-| **W4** | Mobile wings UX: 2 portions + Plain + Dipping sauces counts | Open |
-| **W5** | Mobile calzone = pizza path, hide left/right | Open |
-| **W6** | Seed sauces + wings item + calzone item | Open |
-| **W7** | Smoke acceptance | Open |
+| **W1** | shared_core: `MenuProfile.calzone` + template = pizza clone; wings template notes | **Done** |
+| **W2** | Franchise `config/menu_profile_wings` read/write + Apply pool | Open (optional; item bind works) |
+| **W3** | HQ editor: wings panel (sizes, free cups, upcharge, sauce bind) + calzone profile | **Done** |
+| **W4** | Mobile wings UX: 2 portions + Plain + Dipping sauces counts | **Done** |
+| **W5** | Mobile calzone = pizza path, hide left/right | **Done** |
+| **W6** | Seed sauces + wings item + calzone item | **Done** |
+| **W7** | Smoke acceptance | **Open** |
 
-### Suggested build order
+### Suggested build order (executed)
 
-W0 → W1 → W4 (against seeded maps) → W5 → W3 → W2 → W6 → W7 → then **M5** of menu-modifier epic.
+W0 → W1 → W5/W4 → W3 → W6 → **W7** → optional W2 → then **M5** of menu-modifier epic.
 
 ## Acceptance
 
 **Wings**
 - [ ] Sizes drive free cups + extra upcharge from item maps  
 - [ ] Always 2 flavor portions; Plain = no toss  
-- [ ] Sauces from shared pool / item bind; toss list = side-cup list  
+- [ ] Sauces from item bind; toss list = side-cup list  
 - [ ] One **Dipping sauces** section (counts); no dual empty dips taxonomy  
 - [ ] Cart/total correct; empty pool does not crash  
+- [x] HQ free-cups panel + save projection of bound sauces  
+- [x] Mobile sauces list smoke PASS (human)  
 
 **Calzone**
-- [ ] `menuProfile: calzone`  
-- [ ] Pizza-equivalent customize  
-- [ ] No left/right half UI  
+- [ ] `menuProfile: calzone` end-to-end acceptance  
+- [x] Profile + pizza path helpers (mobile/web)  
+- [x] No left/right half UI (helpers + existing `_isCalzone` gates)  
 
 **Regression**
 - [ ] Pizza CBR optionalAddOns contract unchanged  
@@ -106,10 +109,13 @@ W0 → W1 → W4 (against seeded maps) → W5 → W3 → W2 → W6 → W7 → th
 - M5 dual-tree deletion (separate)  
 - SizeData schema migration unless explicitly expanded  
 
-## Key files (expected)
+## Key files
 
 - `packages/shared_core/lib/src/core/models/menu_item.dart` (existing wings fields)  
 - `packages/shared_core/lib/src/core/models/menu_profile_templates.dart`  
+- `packages/shared_core/lib/src/core/models/modifier_group.dart` (`MenuProfile.calzone`)  
 - `web-app/.../menu_item_editor_sheet.dart`  
+- `web-app/.../modifier_groups_ingredient_binder.dart`  
 - `mobile_app/lib/widgets/customization/customization_modal.dart`  
-- Franchise config doc under `franchises/{id}/config/`  
+- `mobile_app/.../wings_portion_selector.dart` / `wings_dip_sauce_selector.dart`  
+- `web-app/lib/widgets/customization/` (web parity)  

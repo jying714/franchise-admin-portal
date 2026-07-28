@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 28, 2026 (wings + calzone plan locked — W0 docs)  
+**Last Updated**: July 28, 2026 (wings + calzone W1–W6 code + seed; W7 acceptance open)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch (active)**: `feat/menu-modifier-system-rebuild-v1`  
 **Main**: includes Admin ops fixes merge + onboarding-4step; Hosting deploy OK
@@ -13,7 +13,7 @@
 
 **Phase 1 HQ onboarding + Platform Owner MVP complete.**  
 **Admin ops P0/P1 complete** (merged to `main`).  
-**Active epic:** Menu modifier system rebuild (Decision 10) — **M1–M4 pizza path done; wings + calzone v1 planned (W0); M5 cutover still open.**
+**Active epic:** Menu modifier system rebuild (Decision 10) — **M1–M4 pizza path done; wings + calzone W1–W6 done; W7 acceptance open; M5 cutover still open.**
 
 ### Completed (locked)
 
@@ -29,6 +29,12 @@
 - [x] **Mobile pizza pools from `optionalAddOns` by typeId** (meats/veggies/cheeses/sauces); cheeses/sauces section UX parity; human-verified PASS
 - [x] Doughboys foundation seed (categories, ingredient_types, ingredient_metadata, menu_items) — human verified complete
 - [x] **W0** Wings + calzone product/plan locked in docs
+- [x] **W1** `MenuProfile.calzone` + pizza-clone template; wings template notes
+- [x] **W3** HQ wings panel (free cups / upcharge per size, sauce bind, no included/optional on wings, layout cleanup)
+- [x] **W4** Mobile wings UX (2 portions + Plain + single Dipping sauces; size resync)
+- [x] **W5** Mobile/web calzone = pizza path; no left/right half UI
+- [x] **W6** Wings item + calzone item seeded (Doughboys)
+- [x] Web wings parity (portion callback, single dip list, selected-size free cups)
 
 ### Menu modifier rebuild — progress
 
@@ -40,8 +46,14 @@
 | **M3 Admin** Shared editor sheet | **Done** |
 | **M4 Web** Modal bridge | **Done** (pizza path) |
 | **M4 Mobile** optionalAddOns-driven pizza customization UX | **Done** (CBR smoke PASS) |
-| **Wings + Calzone v1** | **Planned** — see `docs/slices/hq-wings-calzone-v1.md` |
-| **M5** Cutover / delete dual trees | **Open** (after wings/calzone acceptance preferred) |
+| **W1** MenuProfile.calzone + templates | **Done** |
+| **W2** Franchise sauce pool | **Open** (optional; item bind + save projection works without it) |
+| **W3** HQ wings panel (free cups / upcharge / sauce bind / layout) | **Done** |
+| **W4** Mobile wings UX (2 portions + Plain + single Dipping sauces) | **Done** (sauces smoke PASS) |
+| **W5** Mobile/web calzone = pizza path, no left/right | **Done** |
+| **W6** Seed wings + calzone items | **Done** |
+| **W7** Full acceptance smoke | **Open** |
+| **M5** Cutover / delete dual trees | **Open** (after W7 preferred) |
 
 ### Locked pizza customization UX (do not regress)
 
@@ -59,9 +71,9 @@
 | Order Details | Crust / Cook / Cut |
 | Flat Optional add-ons | Hidden on pizza/calzone |
 
-### Locked wings + calzone (do not regress once implemented)
+### Locked wings + calzone (do not regress)
 
-**Wings:** max 2 flavor portions; Plain = no toss; free cups still apply; sauces from type `sauces`; franchise shared pool + item bind; toss list = side-cup list; free cups + extra upcharge set per size on **menu item** (`freeDipCupCount` / `sideDipUpcharge`); UI = Build your wings + Dipping sauces only.
+**Wings:** max 2 flavor portions; Plain = no toss; free cups still apply; sauces from type `sauces`; item bind via `modifierGroups` (`wing_sauce` / `wing_dips`) projected to `dippingSauceOptions` / `sideDipSauceOptions` on save; toss list = side-cup list; free cups + extra upcharge set per size on **menu item** (`freeDipCupCount` / `sideDipUpcharge`); UI = Build your wings + Dipping sauces only (no included/optional toppings on wings profile).
 
 **Calzone:** `menuProfile: calzone`; pizza-equivalent data/UX; **no left/right half** UI.
 
@@ -71,9 +83,9 @@ Authority: `docs/slices/hq-wings-calzone-v1.md`.
 
 | Priority | Work | Authority |
 |----------|------|-----------|
-| **1** | Wings + calzone v1 (W1–W7) | `docs/slices/hq-wings-calzone-v1.md` |
-| **2** | Pizza regression smoke while wings lands | pizza contract above |
-| **3** | **M5** cutover when menu profiles acceptance green | menu-modifier slice |
+| **1** | **W7** acceptance smoke (wings + calzone + pizza CBR regression) | `docs/slices/hq-wings-calzone-v1.md` |
+| **2** | Optional **W2** franchise shared sauce pool | same slice |
+| **3** | **M5** cutover when W7 green | menu-modifier slice |
 | **4** | Developer dashboard | After menu path clear |
 
 ### Explicit post-MVP / deferred
