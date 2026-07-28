@@ -717,12 +717,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
     if (sizes != null && _selectedSize != null) {
       for (final s in sizes) {
         if (s.label == _selectedSize || _normalizeSizeKey(s.label) == key) {
-          // SizeData.toppingPrice if present on model
-          try {
-            final dynamic tp = (s as dynamic).toppingPrice;
-            if (tp is num) return tp.toDouble();
-          } catch (_) {}
-          break;
+          return s.toppingPrice;
         }
       }
     }
@@ -786,9 +781,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
   double get _customizationsTotal {
     double total = 0.0;
-    final usesDynamicToppingPricing =
-        widget.menuItem.additionalToppingPrices != null &&
-            _selectedSize != null;
+    final usesDynamicToppingPricing = _selectedSize != null &&
+        (widget.menuItem.additionalToppingPrices != null ||
+            (widget.menuItem.sizes?.isNotEmpty ?? false));
 
     // 1. Add-ons
     if (widget.menuItem.optionalAddOns != null) {
@@ -923,10 +918,18 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
   double get _basePrice {
     final key = _normalizeSizeKey(_selectedSize);
-    if (key != null &&
+    if (key.isNotEmpty &&
         widget.menuItem.sizePrices != null &&
         widget.menuItem.sizePrices![key] != null) {
       return (widget.menuItem.sizePrices![key] as num).toDouble();
+    }
+    final sizes = widget.menuItem.sizes;
+    if (sizes != null && _selectedSize != null) {
+      for (final s in sizes) {
+        if (s.label == _selectedSize || _normalizeSizeKey(s.label) == key) {
+          return s.basePrice;
+        }
+      }
     }
     return widget.menuItem.price;
   }
@@ -1101,9 +1104,18 @@ class _CustomizationModalState extends State<CustomizationModal> {
     }
 
     final Map<String, dynamic> result = {
-      'currentIngredients': _currentIngredients
-          .where((id) => !_selectedDressingCounts.containsKey(id))
-          .toList(),
+      'currentIngredients': _currentIngredients.where((id) {
+        if (_selectedDressingCounts.containsKey(id)) return false;
+        if (_selectedSauceCounts.containsKey(id)) return false;
+        if (_radioSelections.values.contains(id)) return false;
+        final lower = id.toLowerCase();
+        if (lower.startsWith('crust_') ||
+            lower.startsWith('cook_') ||
+            lower.startsWith('cut_')) {
+          return false;
+        }
+        return true;
+      }).toList(),
       'groupSelections':
           _groupSelections.map((k, v) => MapEntry(k, v.toList())),
       'selectedAddOns': _selectedAddOns.toList(),

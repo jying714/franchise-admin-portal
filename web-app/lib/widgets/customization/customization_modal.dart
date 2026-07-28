@@ -697,8 +697,17 @@ class _CustomizationModalState extends State<CustomizationModal> {
   double _getToppingUpcharge() {
     final prices = widget.menuItem.additionalToppingPrices;
     final key = _normalizeSizeKey(_selectedSize?.label);
-    if (prices != null && key != null && prices[key] != null) {
+    if (prices != null && key.isNotEmpty && prices[key] != null) {
       return (prices[key] as num).toDouble();
+    }
+    final sizes = widget.menuItem.sizes;
+    final selectedLabel = _selectedSize?.label;
+    if (sizes != null && selectedLabel != null) {
+      for (final s in sizes) {
+        if (s.label == selectedLabel || _normalizeSizeKey(s.label) == key) {
+          return s.toppingPrice;
+        }
+      }
     }
     return 0.0;
   }
@@ -761,9 +770,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
   double get _customizationsTotal {
     double total = 0.0;
-    final usesDynamicToppingPricing =
-        widget.menuItem.additionalToppingPrices != null &&
-            _selectedSize != null;
+    final usesDynamicToppingPricing = _selectedSize != null &&
+        (widget.menuItem.additionalToppingPrices != null ||
+            (widget.menuItem.sizes?.isNotEmpty ?? false));
 
     // 1. Add-ons
     if (widget.menuItem.optionalAddOns != null) {
@@ -902,11 +911,19 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
   double get _basePrice {
     final key = _normalizeSizeKey(_selectedSize?.label);
-
-    if (key != null &&
+    if (key.isNotEmpty &&
         widget.menuItem.sizePrices != null &&
         widget.menuItem.sizePrices![key] != null) {
       return (widget.menuItem.sizePrices![key] as num).toDouble();
+    }
+    final sizes = widget.menuItem.sizes;
+    final selectedLabel = _selectedSize?.label;
+    if (sizes != null && selectedLabel != null) {
+      for (final s in sizes) {
+        if (s.label == selectedLabel || _normalizeSizeKey(s.label) == key) {
+          return s.basePrice;
+        }
+      }
     }
     return widget.menuItem.price;
   }
@@ -1114,9 +1131,18 @@ class _CustomizationModalState extends State<CustomizationModal> {
     }
 
     final Map<String, dynamic> result = {
-      'currentIngredients': _currentIngredients
-          .where((id) => !_selectedDressingCounts.containsKey(id))
-          .toList(),
+      'currentIngredients': _currentIngredients.where((id) {
+        if (_selectedDressingCounts.containsKey(id)) return false;
+        if (_selectedSauceCounts.containsKey(id)) return false;
+        if (_radioSelections.values.contains(id)) return false;
+        final lower = id.toLowerCase();
+        if (lower.startsWith('crust_') ||
+            lower.startsWith('cook_') ||
+            lower.startsWith('cut_')) {
+          return false;
+        }
+        return true;
+      }).toList(),
       'groupSelections':
           _groupSelections.map((k, v) => MapEntry(k, v.toList())),
       'selectedAddOns': _selectedAddOns.toList(),
@@ -1794,10 +1820,11 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                 widget.menuItem.includedIngredients,
                             ingredientMetadata: _ingredientMetadata,
                             currentIngredients: _currentIngredients,
-                            usesDynamicToppingPricing:
-                                widget.menuItem.additionalToppingPrices !=
-                                        null &&
-                                    _selectedSize != null,
+                            usesDynamicToppingPricing: _selectedSize != null &&
+                                (widget.menuItem.additionalToppingPrices !=
+                                        null ||
+                                    (widget.menuItem.sizes?.isNotEmpty ??
+                                        false)),
                             showPortionToggle: _showPortionToggle,
                             getToppingUpcharge: _getToppingUpcharge,
                             getIngredientUpcharge: _getIngredientUpcharge,
@@ -1972,9 +1999,10 @@ class _CustomizationModalState extends State<CustomizationModal> {
                           selectedAddOns: _selectedAddOns,
                           doubleAddOns: _doubleAddOns,
                           selectedSauceCounts: _selectedSauceCounts,
-                          usesDynamicToppingPricing:
-                              widget.menuItem.additionalToppingPrices != null &&
-                                  _selectedSize != null,
+                          usesDynamicToppingPricing: _selectedSize != null &&
+                              (widget.menuItem.additionalToppingPrices !=
+                                      null ||
+                                  (widget.menuItem.sizes?.isNotEmpty ?? false)),
                           getToppingUpcharge: _getToppingUpcharge,
                           getIngredientUpcharge: _getIngredientUpcharge,
                           onToggleAddOn: (ingId, val) {
