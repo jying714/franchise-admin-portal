@@ -15,6 +15,7 @@ import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_it
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/menu_item_utility.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/modifier_groups_ingredient_binder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/multi_ingredient_selector.dart';
 
 // ===================== NEW COORDINATOR (Single Source of Truth) =====================
 // ===================== NEW COORDINATOR (Single Source of Truth) =====================
@@ -78,6 +79,40 @@ class MenuItemEditSession extends ChangeNotifier {
     _recomputeIssues();
     notifyListeners();
   }
+}
+
+// BEFORE
+// (nothing)
+
+// AFTER
+List<shared.IngredientReference> _refsFromMaps(
+    List<Map<String, dynamic>>? maps) {
+  if (maps == null || maps.isEmpty) return [];
+  return maps
+      .map((m) {
+        final id = (m['ingredientId'] ?? m['id'] ?? '').toString();
+        final name = (m['name'] ?? id).toString();
+        final typeId = (m['typeId'] ?? m['type'] ?? 'unknown').toString();
+        return shared.IngredientReference(
+          id: id,
+          name: name,
+          typeId: typeId,
+        );
+      })
+      .where((r) => r.id.isNotEmpty)
+      .toList();
+}
+
+List<Map<String, dynamic>> _mapsFromRefs(
+    List<shared.IngredientReference> refs) {
+  return refs
+      .map((r) => <String, dynamic>{
+            'ingredientId': r.id,
+            'id': r.id,
+            'name': r.name,
+            'typeId': r.typeId,
+          })
+      .toList();
 }
 
 class MenuItemEditorSheet extends StatefulWidget {
@@ -183,9 +218,11 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       sortOrder: _session.draft.sortOrder,
       taxCategory: _session.draft.taxCategory ?? 'standard',
       exportId: _session.draft.exportId,
+      // AFTER
+      // AFTER
       customizationGroups: const [],
-      includedIngredients: const [],
-      optionalAddOns: const [],
+      includedIngredients: _refsFromMaps(_session.draft.includedIngredients),
+      optionalAddOns: _refsFromMaps(_session.draft.optionalAddOns),
       customizations: const [],
       imageUrl: _session.draft.imageUrl ?? '',
       nutrition: _session.draft.nutrition,
@@ -208,11 +245,14 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       lowStockThreshold: _session.draft.lowStockThreshold,
     );
 
+    // AFTER
     var toSave = savedItem.copyWith(
       menuProfile:
           _session.draft.menuProfile ?? _session.draft.effectiveMenuProfile,
       modifierGroups: _session.draft.modifierGroups ??
           _session.draft.effectiveModifierGroups,
+      includedIngredients: _session.draft.includedIngredients,
+      optionalAddOns: _session.draft.optionalAddOns,
       inventoryTracked: _session.draft.inventoryTracked,
       stockCount: _session.draft.stockCount,
       lowStockThreshold: _session.draft.lowStockThreshold,
@@ -684,8 +724,49 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
 
                     const Divider(height: 32),
 
-                    // Legacy includedIngredients / optionalAddOns / customizationGroups
-                    // UI removed (Decision 10). Canonical path: menuProfile + modifierGroups.
+                    // AFTER
+                    // ── Included + optional ingredients ───────────────
+                    Text('Included toppings',
+                        style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 4),
+                    Text(
+                      'What starts on the item (Current Toppings on mobile). '
+                      'Customers can remove these; re-adding does not upcharge.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    MultiIngredientSelector(
+                      title: 'Included (on by default)',
+                      selected:
+                          _refsFromMaps(session.draft.includedIngredients),
+                      allowEmpty: true,
+                      onChanged: (refs) => session.updateDraft(
+                        session.draft.copyWith(
+                          includedIngredients: _mapsFromRefs(refs),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text('Optional add-ons',
+                        style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Extra ingredients not in modifier groups. '
+                      'Pizza meats/veggies/cheeses still use Modifier groups above.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    MultiIngredientSelector(
+                      title: 'Optional add-ons',
+                      selected: _refsFromMaps(session.draft.optionalAddOns),
+                      allowEmpty: true,
+                      onChanged: (refs) => session.updateDraft(
+                        session.draft.copyWith(
+                          optionalAddOns: _mapsFromRefs(refs),
+                        ),
+                      ),
+                    ),
+                    const Divider(height: 32),
 
                     // ── 6. Nutrition / preview / schema ───────────────
                     shared.FeatureGuard(
