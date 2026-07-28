@@ -218,10 +218,10 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       sortOrder: _session.draft.sortOrder,
       taxCategory: _session.draft.taxCategory ?? 'standard',
       exportId: _session.draft.exportId,
-      customizationGroups: const [],
+      // M5: do not inject empty dual-tree lists. Model still requires the
+      // fields; construct defaults keep them empty. toFirestore omits empties.
       includedIngredients: _refsFromMaps(_session.draft.includedIngredients),
       optionalAddOns: _refsFromMaps(_session.draft.optionalAddOns),
-      customizations: const [],
       imageUrl: _session.draft.imageUrl ?? '',
       nutrition: _session.draft.nutrition,
       selectedTemplateRefs: _session.draft.templateRefs ?? [],
@@ -235,7 +235,6 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       maxFreeSauces: _session.draft.maxFreeSauces,
       maxFreeDressings: _session.draft.maxFreeDressings,
       maxToppings: _session.draft.maxToppings,
-      // Wings Phase A maps — must round-trip or the HQ panel is a no-op
       dippingSauceOptions: _session.draft.dippingSauceOptions,
       dippingSplits: _session.draft.dippingSplits,
       sideDipSauceOptions: _session.draft.sideDipSauceOptions,
@@ -243,7 +242,8 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       sideDipUpcharge: _session.draft.sideDipUpcharge,
       menuProfile:
           _session.draft.menuProfile ?? _session.draft.effectiveMenuProfile,
-      modifierGroups: _session.draft.modifierGroups,
+      modifierGroups: _session.draft.modifierGroups ??
+          _session.draft.effectiveModifierGroups,
       inventoryTracked: _session.draft.inventoryTracked,
       stockCount: _session.draft.stockCount,
       lowStockThreshold: _session.draft.lowStockThreshold,

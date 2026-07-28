@@ -94,6 +94,16 @@ class _DynamicMenuItemFormState extends State<DynamicMenuItemForm> {
     } else {
       _customizations = [];
     }
+
+    // M5: carry canonical profile/groups through this form so Save cannot wipe them.
+    if (widget.initialItem?.menuProfile != null) {
+      _fieldValues['menuProfile'] = widget.initialItem!.menuProfile;
+    }
+    if (widget.initialItem?.modifierGroups != null &&
+        widget.initialItem!.modifierGroups!.isNotEmpty) {
+      _fieldValues['modifierGroups'] =
+          widget.initialItem!.modifierGroups!.map((g) => g.toMap()).toList();
+    }
   }
 
   dynamic _sanitizeValue(dynamic value) {
@@ -136,14 +146,55 @@ class _DynamicMenuItemFormState extends State<DynamicMenuItemForm> {
       }
     }
 
-    final item = shared.MenuItem.fromMap({
+    final existing = widget.initialItem;
+
+    final map = <String, dynamic>{
       ..._fieldValues,
       'includedIngredients': _includedIngredients,
       'optionalAddOns': _optionalAddOns,
       'customizations': _customizations,
-    });
+      // M5: never drop canonical fields on this secondary form path.
+      'menuProfile': _fieldValues['menuProfile'] ??
+          existing?.menuProfile ??
+          existing?.effectiveMenuProfile ??
+          shared.MenuProfile.standard,
+      if (existing?.modifierGroups != null &&
+          existing!.modifierGroups!.isNotEmpty)
+        'modifierGroups':
+            existing.modifierGroups!.map((g) => g.toMap()).toList()
+      else if (_fieldValues['modifierGroups'] is List)
+        'modifierGroups': _fieldValues['modifierGroups'],
+      if (existing?.sizes != null)
+        'sizes': existing!.sizes!.map((s) => s.toMap()).toList(),
+      if (existing?.sizePrices != null) 'sizePrices': existing!.sizePrices,
+      if (existing?.additionalToppingPrices != null)
+        'additionalToppingPrices': existing!.additionalToppingPrices,
+      if (existing?.dippingSauceOptions != null)
+        'dippingSauceOptions': existing!.dippingSauceOptions,
+      if (existing?.dippingSplits != null)
+        'dippingSplits': existing!.dippingSplits,
+      if (existing?.sideDipSauceOptions != null)
+        'sideDipSauceOptions': existing!.sideDipSauceOptions,
+      if (existing?.freeDipCupCount != null)
+        'freeDipCupCount': existing!.freeDipCupCount,
+      if (existing?.sideDipUpcharge != null)
+        'sideDipUpcharge': existing!.sideDipUpcharge,
+      if (existing?.crustTypes != null) 'crustTypes': existing!.crustTypes,
+      if (existing?.cookTypes != null) 'cookTypes': existing!.cookTypes,
+      if (existing?.cutStyles != null) 'cutStyles': existing!.cutStyles,
+      if (existing?.inventoryTracked == true) 'inventoryTracked': true,
+      if (existing?.stockCount != null) 'stockCount': existing!.stockCount,
+      if (existing?.lowStockThreshold != null)
+        'lowStockThreshold': existing!.lowStockThreshold,
+      if (existing?.templateRefs != null)
+        'templateRefs': existing!.templateRefs,
+      if (existing?.id != null && existing!.id.isNotEmpty) 'id': existing.id,
+    };
 
-    // Calculate extra sauce charges if applicable
+    final item = shared.MenuItem.fromMap(
+        map, existing?.id ?? map['id']?.toString() ?? '');
+
+    // Calculate extra sauce charges if applicable (legacy schema path only)
     final saucesGroup = _customizations.firstWhere(
       (g) =>
           (g['label'] is Map ? g['label']['en'] : g['label'])
@@ -221,10 +272,23 @@ class _DynamicMenuItemFormState extends State<DynamicMenuItemForm> {
             franchiseId: widget.franchiseId,
           ),
           const SizedBox(height: 16),
+          // M5: this schema form is not the canonical modifier editor.
+          // Full profile + modifierGroups editing is MenuItemEditorSheet only.
+          // Keep residual CustomizationGroupEditor only to avoid breaking
+          // category schemas that still ship a customizations block; Save
+          // now preserves menuProfile/modifierGroups from the existing item.
           CustomizationGroupEditor(
             customizations: _customizations,
             onChanged: (updated) => setState(() => _customizations = updated),
             franchiseId: widget.franchiseId,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Canonical modifiers (profile, crust/cook/cut, wings binds) are edited in the full menu item editor. '
+              'This form preserves those fields on save.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ),
           const SizedBox(height: 24),
           Row(

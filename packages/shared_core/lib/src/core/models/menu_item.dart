@@ -225,187 +225,23 @@ class MenuItem {
   /// Convenience: returns a non-null image string
   String get imageUrl => image ?? '';
 
-  /// Canonical profile: stored value, else heuristic from legacy pizza/wings fields only.
-  /// Prefer [menuProfile] once backfilled; do not use category name in callers.
+  /// Canonical profile only (M5 dual-tree cutover complete for reads).
+  /// Live data is reseeded with menuProfile; legacy pizza/wings field heuristics deleted.
+  /// Callers must not use category name. Missing stored value → standard.
   String get effectiveMenuProfile {
     final stored = menuProfile?.trim();
     if (stored != null && stored.isNotEmpty) return stored;
-
-    final hasPizzaStructure = (crustTypes != null && crustTypes!.isNotEmpty) ||
-        (cookTypes != null && cookTypes!.isNotEmpty) ||
-        (cutStyles != null && cutStyles!.isNotEmpty) ||
-        (maxFreeToppings != null) ||
-        (maxToppings != null);
-    if (hasPizzaStructure) return MenuProfile.pizza;
-
-    final hasWingsStructure =
-        (dippingSauceOptions != null && dippingSauceOptions!.isNotEmpty) ||
-            (sideDipSauceOptions != null && sideDipSauceOptions!.isNotEmpty) ||
-            (dippingSplits != null && dippingSplits!.isNotEmpty);
-    if (hasWingsStructure) return MenuProfile.wings;
-
     return MenuProfile.standard;
   }
 
-  /// Canonical groups: stored [modifierGroups], else legacy → [ModifierGroup] map.
+  /// Canonical groups only (M5 dual-tree cutover complete for reads).
+  /// Live data is reseeded with menuProfile + modifierGroups; legacy
+  /// crustTypes / customizationGroups / dual-list mapping is deleted.
   List<ModifierGroup> get effectiveModifierGroups {
     if (modifierGroups != null && modifierGroups!.isNotEmpty) {
       return List<ModifierGroup>.from(modifierGroups!);
     }
-    return _legacyToModifierGroups();
-  }
-
-  List<ModifierGroup> _legacyToModifierGroups() {
-    final groups = <ModifierGroup>[];
-    var sort = 0;
-
-    List<ModifierOption> labelsFrom(List<String>? labels, String prefix) {
-      if (labels == null || labels.isEmpty) return const [];
-      return [
-        for (var i = 0; i < labels.length; i++)
-          ModifierOption(
-            id: '${prefix}_$i',
-            label: labels[i],
-            defaultSelected: i == 0,
-          ),
-      ];
-    }
-
-    if (crustTypes != null && crustTypes!.isNotEmpty) {
-      groups.add(
-        ModifierGroup(
-          id: 'crust',
-          label: 'Crust',
-          selectMode: ModifierSelectMode.single,
-          min: 1,
-          max: 1,
-          sortOrder: sort++,
-          options: labelsFrom(crustTypes, 'crust'),
-        ),
-      );
-    }
-    if (cookTypes != null && cookTypes!.isNotEmpty) {
-      groups.add(
-        ModifierGroup(
-          id: 'cook',
-          label: 'Cook',
-          selectMode: ModifierSelectMode.single,
-          min: 1,
-          max: 1,
-          sortOrder: sort++,
-          options: labelsFrom(cookTypes, 'cook'),
-        ),
-      );
-    }
-    if (cutStyles != null && cutStyles!.isNotEmpty) {
-      groups.add(
-        ModifierGroup(
-          id: 'cut',
-          label: 'Cut',
-          selectMode: ModifierSelectMode.single,
-          min: 1,
-          max: 1,
-          sortOrder: sort++,
-          options: labelsFrom(cutStyles, 'cut'),
-        ),
-      );
-    }
-
-    // Legacy customizationGroups: { label, ingredientIds: [] }
-    if (customizationGroups != null) {
-      for (final g in customizationGroups!) {
-        final label = (g['label'] ?? g['name'] ?? 'Options').toString();
-        final id =
-            (g['id'] ?? label).toString().toLowerCase().replaceAll(' ', '_');
-        final rawIds = g['ingredientIds'];
-        final options = <ModifierOption>[];
-        if (rawIds is List) {
-          for (var i = 0; i < rawIds.length; i++) {
-            final ingId = rawIds[i].toString();
-            if (ingId.isEmpty) continue;
-            options.add(
-              ModifierOption(
-                id: '${id}_$ingId',
-                label:
-                    ingId, // callers may resolve name from ingredient catalog
-                ingredientId: ingId,
-              ),
-            );
-          }
-        }
-        groups.add(
-          ModifierGroup(
-            id: id,
-            label: label,
-            selectMode: ModifierSelectMode.multi,
-            min: 0,
-            max: (g['max'] as int?) ??
-                (maxToppings ?? (options.isEmpty ? 1 : options.length)),
-            maxFree: (g['maxFree'] as int?) ?? maxFreeToppings,
-            sortOrder: sort++,
-            allowsPortion: effectiveMenuProfile == MenuProfile.pizza,
-            allowsDouble: effectiveMenuProfile == MenuProfile.pizza,
-            options: options,
-          ),
-        );
-      }
-    }
-
-    // optionalAddOns → single multi group if present
-    if (optionalAddOns != null && optionalAddOns!.isNotEmpty) {
-      final options = <ModifierOption>[];
-      for (var i = 0; i < optionalAddOns!.length; i++) {
-        final e = optionalAddOns![i];
-        final ingId = (e['ingredientId'] ?? e['id'] ?? '').toString();
-        final name = (e['name'] ?? ingId).toString();
-        if (ingId.isEmpty && name.isEmpty) continue;
-        options.add(
-          ModifierOption(
-            id: 'addon_${ingId.isNotEmpty ? ingId : i}',
-            label: name.isNotEmpty ? name : ingId,
-            ingredientId: ingId.isNotEmpty ? ingId : null,
-            upcharge: (e['price'] as num?)?.toDouble(),
-          ),
-        );
-      }
-      if (options.isNotEmpty) {
-        groups.add(
-          ModifierGroup(
-            id: 'optional_addons',
-            label: 'Add-ons',
-            selectMode: ModifierSelectMode.multi,
-            min: 0,
-            max: options.length,
-            sortOrder: sort++,
-            options: options,
-          ),
-        );
-      }
-    }
-
-    // Wings dips (IDs only — resolve labels in UI)
-    if (sideDipSauceOptions != null && sideDipSauceOptions!.isNotEmpty) {
-      groups.add(
-        ModifierGroup(
-          id: 'wing_dips',
-          label: 'Dipping cups',
-          selectMode: ModifierSelectMode.multi,
-          min: 0,
-          max: sideDipSauceOptions!.length,
-          sortOrder: sort++,
-          options: [
-            for (final id in sideDipSauceOptions!)
-              ModifierOption(
-                id: 'dip_$id',
-                label: id,
-                ingredientId: id,
-              ),
-          ],
-        ),
-      );
-    }
-
-    return groups;
+    return const <ModifierGroup>[];
   }
 
   factory MenuItem.fromFirestore(Map<String, dynamic> data, String id) {
@@ -917,18 +753,21 @@ class MenuItem {
       'lastModifiedBy': lastModifiedBy,
       'archived': archived,
       'exportId': exportId,
-      //customization groups
       if (sizes != null) 'sizes': sizes!.map((s) => s.toMap()).toList(),
       if (sizePrices != null) 'sizePrices': sizePrices,
       if (additionalToppingPrices != null)
         'additionalToppingPrices': additionalToppingPrices,
-      if (includedIngredients != null)
+      // Intentional product fields (pizza/standard/salad) — keep when non-empty.
+      if (includedIngredients != null && includedIngredients!.isNotEmpty)
         'includedIngredients': includedIngredients,
-      if (customizationGroups != null)
+      if (optionalAddOns != null && optionalAddOns!.isNotEmpty)
+        'optionalAddOns': optionalAddOns,
+      // M5: do not emit empty dual-tree lists. Only write legacy groups/list
+      // when they still carry real residual data (should be none after reseed).
+      if (customizationGroups != null && customizationGroups!.isNotEmpty)
         'customizationGroups': customizationGroups,
-      if (optionalAddOns != null) 'optionalAddOns': optionalAddOns,
-      'customizations': customizations.map((c) => c.toFirestore()).toList(),
-      'customizationGroups': customizationGroups,
+      if (customizations.isNotEmpty)
+        'customizations': customizations.map((c) => c.toFirestore()).toList(),
       if (crustTypes != null) 'crustTypes': crustTypes,
       if (cookTypes != null) 'cookTypes': cookTypes,
       if (cutStyles != null) 'cutStyles': cutStyles,
@@ -946,16 +785,18 @@ class MenuItem {
       if (bundleDiscount != null) 'bundleDiscount': bundleDiscount,
       if (highlightTags != null) 'highlightTags': highlightTags,
       if (templateRefs != null) 'templateRefs': templateRefs,
-      if (menuProfile != null && menuProfile!.isNotEmpty)
-        'menuProfile': menuProfile,
-      if (modifierGroups != null)
-        'modifierGroups': modifierGroups!.map((g) => g.toMap()).toList(),
+      // M5: always write canonical profile + groups (seed + editor already set them).
+      'menuProfile': (menuProfile != null && menuProfile!.trim().isNotEmpty)
+          ? menuProfile
+          : effectiveMenuProfile,
+      'modifierGroups': (modifierGroups != null && modifierGroups!.isNotEmpty)
+          ? modifierGroups!.map((g) => g.toMap()).toList()
+          : effectiveModifierGroups.map((g) => g.toMap()).toList(),
       'inventoryTracked': inventoryTracked,
       if (stockCount != null) 'stockCount': stockCount,
       if (lowStockThreshold != null) 'lowStockThreshold': lowStockThreshold,
       if (allowSpecialInstructions != null)
         'allowSpecialInstructions': allowSpecialInstructions,
-      'allowSpecialInstructions': allowSpecialInstructions,
       if (hideInMenu != null) 'hideInMenu': hideInMenu,
       // Sauce/Dressing fields
       if (freeSauceCount != null) 'freeSauceCount': freeSauceCount,
@@ -963,7 +804,7 @@ class MenuItem {
       if (freeDressingCount != null) 'freeDressingCount': freeDressingCount,
       if (extraDressingUpcharge != null)
         'extraDressingUpcharge': extraDressingUpcharge,
-      // Wings fields
+      // Wings fields (intentional product maps — keep)
       if (dippingSauceOptions != null)
         'dippingSauceOptions': dippingSauceOptions,
       if (dippingSplits != null) 'dippingSplits': dippingSplits,
