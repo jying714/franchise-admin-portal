@@ -1,6 +1,6 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: July 28, 2026 (~16:00 CDT — wings + calzone W1–W6 code + seed)  
+**Last Updated**: July 28, 2026 (~17:25 CDT — W7 PASS; salad/dinner mobile polish; M5 next)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
 **Active branch**: `feat/menu-modifier-system-rebuild-v1`  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
@@ -12,14 +12,16 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/DECISIONS.md`** over
 
 ---
 
-## 1. Latest session (July 28 afternoon/evening)
+## 1. Latest session (July 28 evening)
 
-### Pizza path (done)
+### Pizza path (done + polish)
 
 - HQ included + optional add-ons persist; mobile optionalAddOns pools; cheeses/sauces section parity; CBR PASS.
-- Doughboys categories / ingredient_types / ingredient_metadata / menu_items seeded and verified.
+- Order Details: Crust/Cook/Cut via stored groups **or** pizza template fallback when omitted.
+- Flat “Add-ons” checkbox groups hidden on pizza/calzone.
+- Included ingredients **do not** inflate base price (only doubles / true extras charge).
 
-### Wings + calzone (W1–W6 done — W7 acceptance open)
+### Wings + calzone (W0–W7 **Done**)
 
 Authority: **`docs/slices/hq-wings-calzone-v1.md`**.
 
@@ -27,33 +29,36 @@ Authority: **`docs/slices/hq-wings-calzone-v1.md`**.
 |--------|------|
 | Wings portions | Max **2** always |
 | Plain | No toss on portion; **still gets free cups** |
-| Sauces | Catalog type **`sauces`**; item **binds** via modifier groups; save projects to `dippingSauceOptions` / `sideDipSauceOptions` (same list) |
-| Free cups / extra $ | Menu item per size → `freeDipCupCount` / `sideDipUpcharge` (existing MenuItem fields) |
-| UI | Build your wings + **Dipping sauces** only; no included/optional on wings profile |
-| Calzone | **`menuProfile: calzone`**; pizza twin; **no left/right** |
+| Sauces | Catalog type **`sauces`**; item **binds** via modifier groups; save projects to `dippingSauceOptions` / `sideDipSauceOptions` |
+| Free cups / extra $ | Menu item per size → `freeDipCupCount` / `sideDipUpcharge` |
+| UI | Build your wings + **Dipping sauces** only; no included/optional; no Order Details |
+| Calzone | **`menuProfile: calzone`**; pizza twin; **no left/right**; cheeses/sauces like pizza |
 
-**Landed this session:**
+Human acceptance: wings, calzone, pizza — **PASS**.
 
-- W1: `MenuProfile.calzone` + seedGroups pizza clone; wings template notes
-- W3: HQ editor wings free-cups panel, save projection, hide included/optional, layout cleanup, binder chip fix
-- W4/W5: mobile + web profile helpers; wings portion callback; single dipping list; size resync
-- W6: wings + calzone items seeded (human)
+### Salad / dinner mobile (done this session)
+
+- No Order Details for salad/dinner.
+- Optional ingredients only when HQ set `optionalAddOns` (`menuProfile: standard` — no new profiles).
+- Salad: optional pool uses Click to Add (Additional Toppings-style cards); selected items move to Current only; included not listed on both; remove from Current returns to optional pool.
+- Pricing: included never auto-added to starting total.
 
 ### Still open
 
-1. **W7** full acceptance smoke (wings + calzone + pizza regression)  
+1. **M5** dual-tree cutover (next epic gate)  
 2. Optional **W2** franchise `config/menu_profile_wings` pool  
-3. **M5** cutover  
-4. Developer dashboard  
+3. Developer dashboard  
+4. Ensure latest local mobile salad/optional commits are on `origin` if any remain unstaged  
 
 ### Do not regress
 
 - Pizza optionalAddOns contract (Current / Additional / Cheeses / Sauces / Order Details)  
 - HQ included + optional persist (non-wings profiles)  
+- Included ingredients not charged as extras until double or truly extra  
 - No `FranchiseProvider()` zero-arg / DesignTokens invention  
 - No Cook/Cut/Crust as ingredient types  
 - No new `wing_sauces` ingredient type  
-- Wings: no dual Dips/Sauces tabs; no included/optional toppings UI  
+- Wings: single dipping list; no dual tabs; no included/optional UI  
 
 ---
 
@@ -66,16 +71,16 @@ Authority: **`docs/slices/hq-wings-calzone-v1.md`**.
 | Admin ops v1 | Done on `main` |
 | Menu rebuild M1–M4 pizza + optionalAddOns UX | Done on feature branch |
 | Foundation seed Doughboys | Done |
-| Wings + calzone product lock (W0) | Done |
-| Wings + calzone W1–W6 (code + seed) | Done on feature branch |
+| Wings + calzone W0–W7 | **Done** on feature branch |
+| Salad/dinner mobile optional UX + pricing honesty | Done on feature branch |
 
 ---
 
 ## 3. What’s next
 
-1. **W7** acceptance smoke: wings (2 portions, Plain, free cups by size, single dipping list, cart totals) + calzone (pizza path, no left/right) + pizza CBR regression  
-2. Optional **W2** franchise shared sauce pool (item bind already works)  
-3. **M5** dual-tree cutover only after W7 green  
+1. **M5** dual-tree cutover: canonical-only write/read; backfill live items; remove legacy production paths  
+2. Optional **W2** franchise shared sauce pool (ops convenience only)  
+3. Developer dashboard after menu path stable on `main`  
 
 ---
 
@@ -83,13 +88,14 @@ Authority: **`docs/slices/hq-wings-calzone-v1.md`**.
 
 - `docs/slices/hq-wings-calzone-v1.md`  
 - `docs/slices/menu-modifier-system-rebuild-v1.md`  
-- `packages/shared_core/.../menu_item.dart` (wings fields already present)  
+- `docs/MOBILE_DYNAMIC.md`  
+- `packages/shared_core/.../menu_item.dart`  
 - `packages/shared_core/.../menu_profile_templates.dart`  
 - `mobile_app/.../customization_modal.dart`  
+- `mobile_app/.../optional_addons_group.dart`  
 - `mobile_app/.../wings_portion_selector.dart` / `wings_dip_sauce_selector.dart`  
 - `web-app/.../menu_item_editor_sheet.dart`  
-- `web-app/.../modifier_groups_ingredient_binder.dart`  
 
 ---
 
-**Bottom line:** Pizza UX locked. Wings + calzone **code + seed (W1–W6) landed** on feature branch. Next is **W7 acceptance**; do not start M5 until that is green unless human expands scope.
+**Bottom line:** Wings + calzone acceptance is **green**. Pizza Order Details + pricing honesty + salad/dinner optional UX landed. **Next product-technical gate is M5 cutover** (not more wings feature work unless W2 is explicitly requested).
