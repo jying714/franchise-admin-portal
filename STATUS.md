@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 28, 2026 (~17:25 CDT — W7 acceptance PASS; mobile salad/dinner polish; M5 next)  
+**Last Updated**: July 28, 2026 (~18:05 CDT — M5 dual-tree cutover complete; canonical menuProfile/modifierGroups only)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch (active)**: `feat/menu-modifier-system-rebuild-v1`  
 **Main**: includes Admin ops fixes merge + onboarding-4step; Hosting deploy OK
@@ -13,7 +13,7 @@
 
 **Phase 1 HQ onboarding + Platform Owner MVP complete.**  
 **Admin ops P0/P1 complete** (merged to `main`).  
-**Active epic:** Menu modifier system rebuild (Decision 10) — **M1–M4 pizza done; wings + calzone W0–W7 done; optional W2 open; M5 dual-tree cutover is the next gate.**
+**Active epic:** Menu modifier system rebuild (Decision 10) — **M1–M5 complete; wings + calzone W0–W7 done; optional W2 open.**
 
 ### Completed (locked)
 
@@ -34,6 +34,7 @@
 - [x] Mobile salad/dinner: no Order Details; optional ingredients only when `optionalAddOns` set
 - [x] Salad optional ↔ Current Toppings (Click to Add pool; included not double-listed; banner parity)
 - [x] Pricing: included ingredients never add to base (only doubles / true extras charge)
+- [x] **M5 dual-tree cutover** — canonical-only write/read; legacy adapter removed; dual Admin Customize UI deleted; data reseeded; smoke green
 
 ### Menu modifier rebuild — progress
 
@@ -52,7 +53,7 @@
 | **W5** Mobile/web calzone = pizza path, no left/right | **Done** |
 | **W6** Seed wings + calzone items | **Done** |
 | **W7** Full acceptance smoke | **Done** (human PASS July 28) |
-| **M5** Cutover / delete dual trees | **Open** (next epic gate) |
+| **M5** Cutover / delete dual trees | **Done** (July 28 — canonical write/read; legacy adapter + dual Admin Customize paths removed; data reseeded) |
 
 ### Locked pizza customization UX (do not regress)
 
@@ -90,10 +91,9 @@ Authority: `docs/slices/hq-wings-calzone-v1.md`, `docs/MOBILE_DYNAMIC.md`.
 
 | Priority | Work | Authority |
 |----------|------|-----------|
-| **1** | **M5** dual-tree cutover (canonical-only write/read; backfill; delete legacy paths) | `docs/slices/menu-modifier-system-rebuild-v1.md` |
-| **2** | Optional **W2** franchise shared sauce pool | `docs/slices/hq-wings-calzone-v1.md` |
-| **3** | Developer dashboard | After menu path clear |
-| **4** | Commit any remaining local mobile salad/optional UX if not on origin | — |
+| **1** | Optional **W2** franchise shared sauce pool | `docs/slices/hq-wings-calzone-v1.md` |
+| **2** | Developer dashboard | Menu path clear on feature branch |
+| **3** | Merge `feat/menu-modifier-system-rebuild-v1` → `main` when ready for Hosting | Human gate |
 
 ### Explicit post-MVP / deferred
 
