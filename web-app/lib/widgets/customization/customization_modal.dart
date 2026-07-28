@@ -260,6 +260,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   bool _showsCurrentIngredients() {
+    final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
+    if (profile == shared.MenuProfile.pizza) return true;
     final cat = widget.menuItem.category.toLowerCase();
     final catId = (widget.menuItem.categoryId ?? '').toLowerCase();
     return [cat, catId].any((c) =>
@@ -299,15 +301,28 @@ class _CustomizationModalState extends State<CustomizationModal> {
     final stored = widget.menuItem.modifierGroups;
     if (stored != null && stored.isNotEmpty) {
       return widget.menuItem.effectiveModifierGroups.map((g) {
-        final ingredientIds = g.options
-            .map((o) => o.ingredientId)
-            .whereType<String>()
-            .where((id) => id.trim().isNotEmpty)
+        // Food options: ingredientId. Label-only (crust/cook/cut): use option id.
+        final optionIds = g.options
+            .map((o) {
+              final ing = o.ingredientId?.trim();
+              if (ing != null && ing.isNotEmpty) return ing;
+              return o.id.trim();
+            })
+            .where((id) => id.isNotEmpty)
             .toList();
+        final optionLabels = <String, String>{
+          for (final o in g.options)
+            if (o.id.trim().isNotEmpty)
+              (o.ingredientId != null && o.ingredientId!.trim().isNotEmpty
+                      ? o.ingredientId!.trim()
+                      : o.id.trim()):
+                  o.label.trim().isNotEmpty ? o.label.trim() : o.id.trim(),
+        };
         return <String, dynamic>{
           'id': g.id,
           'label': g.label,
-          'ingredientIds': ingredientIds,
+          'ingredientIds': optionIds,
+          'optionLabels': optionLabels,
           'min': g.min,
           'max': g.max,
           if (g.maxFree != null) 'maxFree': g.maxFree,
@@ -319,16 +334,40 @@ class _CustomizationModalState extends State<CustomizationModal> {
     );
   }
 
+  /// Free allowance for a group label from canonical groups, else null.
+  int? _maxFreeForGroupLabel(String label) {
+    final key = label.trim().toLowerCase();
+    for (final g in _groupsForUi()) {
+      final gl = (g['label'] ?? '').toString().trim().toLowerCase();
+      if (gl == key && g['maxFree'] is int) {
+        return g['maxFree'] as int;
+      }
+    }
+    // Also match by known aliases (Toppings ↔ Meats/Veggies charged as toppings)
+    if (key == 'meats' || key == 'veggies' || key == 'toppings') {
+      for (final g in _groupsForUi()) {
+        final gl = (g['label'] ?? '').toString().trim().toLowerCase();
+        if ((gl == 'toppings' || gl == 'meats' || gl == 'veggies') &&
+            g['maxFree'] is int) {
+          return g['maxFree'] as int;
+        }
+      }
+    }
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
     //print('[DEBUG] MenuItem for customization: ${widget.menuItem.toMap()}');
 
     // --- Initialize cheeses state (self-contained) ---
-    final cheeseGroup = widget.menuItem.customizationGroups!.firstWhereOrNull(
-        (g) => (g['label'] as String).toLowerCase() == 'cheeses');
-    final cheeseIds =
-        (cheeseGroup?['ingredientIds'] as List?)?.cast<String>() ?? [];
+    final cheeseGroup = _groupsForUi().firstWhereOrNull(
+        (g) => (g['label']?.toString().toLowerCase() ?? '') == 'cheeses');
+    final cheeseIds = (cheeseGroup?['ingredientIds'] as List?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [];
     _selectedCheeses = {
       ...?widget.menuItem.includedIngredients
           ?.where((i) => cheeseIds.contains(i['ingredientId'] ?? i['id']))
@@ -349,15 +388,20 @@ class _CustomizationModalState extends State<CustomizationModal> {
     _selectedSize = (sizes != null && sizes.isNotEmpty) ? sizes.first : null;
     _drinkFlavorCounts = {};
     if (_isPizza()) {
-      final saucesGroup = widget.menuItem.customizationGroups!.firstWhereOrNull(
-          (g) => (g['label'] as String).toLowerCase() == 'sauces');
-      final sauceIds =
-          (saucesGroup?['ingredientIds'] as List?)?.cast<String>() ?? [];
+      final saucesGroup = _groupsForUi().firstWhereOrNull(
+          (g) => (g['label']?.toString().toLowerCase() ?? '') == 'sauces');
+      final sauceIds = (saucesGroup?['ingredientIds'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [];
+      final sauceLabels = (saucesGroup?['optionLabels'] as Map?)
+              ?.map((k, v) => MapEntry(k.toString(), v.toString())) ??
+          const <String, String>{};
       _pizzaSauceSelections = sauceIds.map((id) {
         final meta = _ingredientMetadata[id];
         return PizzaSauceSelection(
           id: id,
-          name: meta?.name ?? id,
+          name: meta?.name ?? sauceLabels[id] ?? id,
           selected: false,
           portion: Portion.whole,
           amount: 'regular',
@@ -373,10 +417,12 @@ class _CustomizationModalState extends State<CustomizationModal> {
     _initializeSelections();
     if (_isPizza()) {
       // Find default sauce (first from sauces group, fallback to included ingredient, fallback to null)
-      final saucesGroup = widget.menuItem.customizationGroups!.firstWhereOrNull(
-          (g) => (g['label'] as String).toLowerCase() == 'sauces');
-      final sauceIds =
-          (saucesGroup?['ingredientIds'] as List?)?.cast<String>() ?? [];
+      final saucesGroup = _groupsForUi().firstWhereOrNull(
+          (g) => (g['label']?.toString().toLowerCase() ?? '') == 'sauces');
+      final sauceIds = (saucesGroup?['ingredientIds'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [];
       // Default: included sauce or first from group, or 'sauce_none'
       final includedSauceId =
           widget.menuItem.includedIngredients?.firstWhereOrNull(
@@ -413,7 +459,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
     if (_isWings()) {
       final sizes = widget.menuItem.sizes ?? [];
       _selectedSize ??= sizes.isNotEmpty ? sizes.first : null;
-      final splitCount = widget.menuItem.dippingSplits?[_selectedSize] ?? 2;
+      final splitCount =
+          widget.menuItem.dippingSplits?[_selectedSize?.label] ?? 2;
       _selectedDippedSauces = {};
       final sauceOptions = widget.menuItem.dippingSauceOptions ?? [];
       for (var i = 0; i < splitCount; i++) {
@@ -476,7 +523,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
     final groups = _groupsForUi();
     if (groups.isNotEmpty) {
       for (final group in groups) {
-        final groupLabel = group['label'];
+        final groupLabel = (group['label'] ?? '').toString();
+        if (groupLabel.isEmpty) continue;
         final ids = (group['ingredientIds'] as List<dynamic>? ?? [])
             .map((e) => e.toString())
             .toList();
@@ -506,16 +554,14 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   void _initializeSauceCounts() {
-    if (widget.menuItem.customizationGroups != null) {
-      for (final group in widget.menuItem.customizationGroups!) {
-        final label = (group['label'] as String?)?.toLowerCase();
-        if (label == 'sauces') {
-          final ids = (group['ingredientIds'] as List<dynamic>? ?? [])
-              .map((e) => e.toString())
-              .toList();
-          for (final id in ids) {
-            _selectedSauceCounts[id] = 0;
-          }
+    for (final group in _groupsForUi()) {
+      final label = (group['label'] as String?)?.toLowerCase();
+      if (label == 'sauces') {
+        final ids = (group['ingredientIds'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList();
+        for (final id in ids) {
+          _selectedSauceCounts[id] = 0;
         }
       }
     }
@@ -533,16 +579,14 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   void _initializeDressingCounts() {
-    if (widget.menuItem.customizationGroups != null) {
-      for (final group in widget.menuItem.customizationGroups!) {
-        final label = (group['label'] as String?)?.toLowerCase();
-        if (label == 'dressings') {
-          final ids = (group['ingredientIds'] as List<dynamic>? ?? [])
-              .map((e) => e.toString())
-              .toList();
-          for (final id in ids) {
-            _selectedDressingCounts[id] = 0;
-          }
+    for (final group in _groupsForUi()) {
+      final label = (group['label'] as String?)?.toLowerCase();
+      if (label == 'dressings') {
+        final ids = (group['ingredientIds'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toList();
+        for (final id in ids) {
+          _selectedDressingCounts[id] = 0;
         }
       }
     }
@@ -563,7 +607,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
           // Exclude "Meats" and "Veggies" for pizza/calzone, they'll be handled as tabs
           if (!_isPizzaOrCalzone() ||
               (groupLabel.toLowerCase() != 'meats' &&
-                  groupLabel.toLowerCase() != 'veggies')) {
+                  groupLabel.toLowerCase() != 'veggies' &&
+                  groupLabel.toLowerCase() != 'toppings')) {
             _checkboxGroups.add(group);
           }
         }
@@ -669,12 +714,13 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   int _getFreeSauceCount() {
-    // Use freeSauceCount for sauces, and fallback to 2 if missing
+    final fromGroup = _maxFreeForGroupLabel('sauces');
+    if (fromGroup != null) return fromGroup;
+
     final value = widget.menuItem.freeSauceCount;
     if (value is Map) {
       final key = _normalizeSizeKey(_selectedSize?.label);
-
-      return (key != null && value[key] != null) ? value[key] as int : 0;
+      return (key.isNotEmpty && value[key] != null) ? value[key] as int : 0;
     }
     if (value is int) return value;
     return 0;
@@ -686,12 +732,14 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   int _getFreeDressingCount() {
+    final fromGroup = _maxFreeForGroupLabel('dressings');
+    if (fromGroup != null) return fromGroup;
+
     final value =
         widget.menuItem.freeDressingCount ?? widget.menuItem.freeSauceCount;
     if (value is Map) {
       final key = _normalizeSizeKey(_selectedSize?.label);
-
-      return (key != null && value[key] != null) ? value[key] as int : 0;
+      return (key.isNotEmpty && value[key] != null) ? value[key] as int : 0;
     }
     if (value is int) return value;
     return 0;
@@ -759,8 +807,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
     // --- Wings Side Dip Pricing ---
     if (_isWings()) {
-      final upcharge = widget.menuItem.sideDipUpcharge?[_selectedSize] ?? 0.95;
-      final freeDips = widget.menuItem.freeDipCupCount?[_selectedSize] ?? 0;
+      final sizeKey = _selectedSize?.label;
+      final upcharge = widget.menuItem.sideDipUpcharge?[sizeKey] ?? 0.95;
+      final freeDips = widget.menuItem.freeDipCupCount?[sizeKey] ?? 0;
       // Only dips in dippingSauceOptions are eligible as "free"
       final dipIds = widget.menuItem.dippingSauceOptions ?? [];
       final totalDipCups = dipIds.fold<int>(
@@ -817,8 +866,32 @@ class _CustomizationModalState extends State<CustomizationModal> {
           total += upcharge * (isDouble ? 2 : 1);
         }
       } else {
-        // All other categories: original logic
-        if (wasIncluded) {
+        // Pizza/profile path: apply group maxFree to extra toppings
+        if (_isPizzaOrCalzone() && !wasIncluded) {
+          final freeToppings = _maxFreeForGroupLabel('toppings') ??
+              _maxFreeForGroupLabel('meats') ??
+              0;
+          // Count extras already decided before this id (stable order)
+          final extraIds = _currentIngredients.where((id) {
+            if (_isDoughIngredient(id)) return false;
+            if (_selectedSauceCounts.containsKey(id)) return false;
+            if (_selectedDressingCounts.containsKey(id)) return false;
+            final was = widget.menuItem.includedIngredients?.any(
+                  (e) => (e['ingredientId'] ?? e['id']) == id,
+                ) ??
+                false;
+            return !was;
+          }).toList();
+          final indexAmongExtras = extraIds.indexOf(ingId);
+          final beyondFree =
+              freeToppings <= 0 || indexAmongExtras >= freeToppings;
+          if (beyondFree) {
+            total += upcharge * (isDouble ? 2 : 1);
+          } else if (isDouble) {
+            // Free slot still pays for double only
+            total += upcharge;
+          }
+        } else if (wasIncluded) {
           if (isDouble) total += upcharge;
         } else {
           total += upcharge * (isDouble ? 2 : 1);
@@ -851,12 +924,29 @@ class _CustomizationModalState extends State<CustomizationModal> {
         _currentIngredients.remove(ingId);
         _doubleToppings.remove(ingId);
         _ingredientPortions.remove(ingId);
-      } else {
-        _currentIngredients.add(ingId);
-        if (_isPizzaOrCalzone()) {
-          _doubleToppings[ingId] = false;
-          _ingredientPortions[ingId] = Portion.whole;
+        return;
+      }
+
+      final group = _groupsForUi().firstWhere(
+        (g) => (g['label']?.toString() ?? '') == groupLabel,
+        orElse: () => <String, dynamic>{},
+      );
+      final max = (group['max'] as int?) ?? 0;
+      if (max > 0) {
+        final ids = (group['ingredientIds'] as List<dynamic>? ?? [])
+            .map((e) => e.toString())
+            .toSet();
+        final selectedInGroup =
+            _currentIngredients.where((id) => ids.contains(id)).length;
+        if (selectedInGroup >= max) {
+          return; // at capacity; submit max check remains as backstop
         }
+      }
+
+      _currentIngredients.add(ingId);
+      if (_isPizzaOrCalzone()) {
+        _doubleToppings[ingId] = false;
+        _ingredientPortions[ingId] = Portion.whole;
       }
     });
   }
@@ -879,17 +969,18 @@ class _CustomizationModalState extends State<CustomizationModal> {
   void _handleRadioSelect(String groupLabel, String? ingId) {
     setState(() {
       _radioSelections[groupLabel] = ingId;
-      if (widget.menuItem.customizationGroups != null) {
-        final group = widget.menuItem.customizationGroups!.firstWhere(
-            (g) => (g['label'] as String) == groupLabel,
-            orElse: () => {});
-        final ids = (group['ingredientIds'] as List<dynamic>? ?? [])
-            .map((e) => e.toString())
-            .toList();
-        for (final id in ids) {
-          _currentIngredients.remove(id);
-        }
-        if (ingId != null && ingId.isNotEmpty) _currentIngredients.add(ingId);
+      final group = _groupsForUi().firstWhere(
+        (g) => (g['label']?.toString() ?? '') == groupLabel,
+        orElse: () => <String, dynamic>{},
+      );
+      final ids = (group['ingredientIds'] as List<dynamic>? ?? [])
+          .map((e) => e.toString())
+          .toList();
+      for (final id in ids) {
+        _currentIngredients.remove(id);
+      }
+      if (ingId != null && ingId.isNotEmpty) {
+        _currentIngredients.add(ingId);
       }
     });
   }
@@ -908,16 +999,63 @@ class _CustomizationModalState extends State<CustomizationModal> {
     setState(() => _error = null);
 
     // --- RADIO GROUP VALIDATION ---
-    if (widget.menuItem.customizationGroups != null) {
-      for (final group in widget.menuItem.customizationGroups!) {
-        final groupLabel = group['label'];
-        if ((_isRadioGroup(groupLabel)) &&
-            (_radioSelections[groupLabel] == null ||
-                _radioSelections[groupLabel]!.isEmpty)) {
+    for (final group in _groupsForUi()) {
+      final groupLabel = (group['label'] ?? '').toString();
+      if (groupLabel.isEmpty) continue;
+      if (_isRadioGroup(groupLabel) &&
+          (_radioSelections[groupLabel] == null ||
+              _radioSelections[groupLabel]!.isEmpty)) {
+        setState(() => _error =
+            loc.pleaseSelectRequired.replaceFirst('{name}', groupLabel));
+        return;
+      }
+    }
+
+    // --- GROUP MIN VALIDATION (canonical + legacy maps from _groupsForUi) ---
+    for (final group in _groupsForUi()) {
+      final groupLabel = (group['label'] ?? '').toString();
+      if (groupLabel.isEmpty) continue;
+      final min = (group['min'] as int?) ?? 0;
+      if (min <= 0) continue;
+
+      if (_isRadioGroup(groupLabel)) {
+        final selected = _radioSelections[groupLabel];
+        if (selected == null || selected.isEmpty) {
           setState(() => _error =
               loc.pleaseSelectRequired.replaceFirst('{name}', groupLabel));
           return;
         }
+        continue;
+      }
+
+      // Multi / toppings: count selected option ids for this group
+      final ids = (group['ingredientIds'] as List<dynamic>? ?? [])
+          .map((e) => e.toString())
+          .toSet();
+      final selectedCount =
+          _currentIngredients.where((id) => ids.contains(id)).length +
+              (_groupSelections[groupLabel]
+                      ?.where((id) => ids.contains(id))
+                      .length ??
+                  0);
+      // Cheeses tracked separately
+      final cheeseExtra = groupLabel.toLowerCase() == 'cheeses'
+          ? _selectedCheeses.where((id) => ids.contains(id)).length
+          : 0;
+      final totalSelected = selectedCount > 0 ? selectedCount : cheeseExtra;
+
+      if (totalSelected < min) {
+        setState(() => _error =
+            loc.pleaseSelectRequired.replaceFirst('{name}', groupLabel));
+        return;
+      }
+
+      final max = (group['max'] as int?) ?? 0;
+      if (max > 0 && totalSelected > max) {
+        setState(() {
+          _error = 'Too many selected for $groupLabel (max $max).';
+        });
+        return;
       }
     }
 
@@ -984,7 +1122,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
       'groupSelections':
           _groupSelections.map((k, v) => MapEntry(k, v.toList())),
       'selectedAddOns': _selectedAddOns.toList(),
-      'size': _selectedSize,
+      'size': _selectedSize?.label,
       ..._radioSelections,
       if (ingredientOptions.isNotEmpty) 'ingredientOptions': ingredientOptions,
       if (_selectedCheeses.isNotEmpty) 'cheeses': _selectedCheeses.toList(),
@@ -1389,6 +1527,25 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                           TextButton(
                                             onPressed: () {
                                               setState(() {
+                                                final max =
+                                                    (group['max'] as int?) ?? 0;
+                                                if (max > 0) {
+                                                  final ids = (group[
+                                                                  'ingredientIds']
+                                                              as List<
+                                                                  dynamic>? ??
+                                                          [])
+                                                      .map((e) => e.toString())
+                                                      .toSet();
+                                                  final selectedInGroup =
+                                                      _currentIngredients
+                                                          .where((id) =>
+                                                              ids.contains(id))
+                                                          .length;
+                                                  if (selectedInGroup >= max) {
+                                                    return;
+                                                  }
+                                                }
                                                 _currentIngredients.add(ingId);
                                                 _doubleToppings[ingId] = false;
                                                 _ingredientPortions[ingId] =
@@ -1535,6 +1692,16 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                   TextButton(
                                                     onPressed: () {
                                                       setState(() {
+                                                        final max =
+                                                            (group['max']
+                                                                    as int?) ??
+                                                                0;
+                                                        if (max > 0 &&
+                                                            _selectedCheeses
+                                                                    .length >=
+                                                                max) {
+                                                          return;
+                                                        }
                                                         _selectedCheeses
                                                             .add(cheeseId);
                                                         _cheesePortions[
@@ -1848,7 +2015,11 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                 final selected = _radioSelections[label];
                                 if (selected == null) return '';
                                 final meta = _ingredientMetadata[selected];
-                                return "${label.capitalize()}: ${meta?.name ?? selected}";
+                                final labels = (group['optionLabels'] as Map?)
+                                        ?.map((k, v) => MapEntry(
+                                            k.toString(), v.toString())) ??
+                                    const <String, String>{};
+                                return "${label.capitalize()}: ${meta?.name ?? labels[selected] ?? selected}";
                               })
                               .where((str) => str.isNotEmpty)
                               .join(" | ");
