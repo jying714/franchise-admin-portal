@@ -129,7 +129,9 @@ class _MenuItemCardState extends State<MenuItemCard> {
   bool get _hasCustomizations =>
       (widget.menuItem.includedIngredients?.isNotEmpty ?? false) ||
       (widget.menuItem.customizationGroups?.isNotEmpty ?? false) ||
-      (widget.menuItem.optionalAddOns?.isNotEmpty ?? false);
+      (widget.menuItem.optionalAddOns?.isNotEmpty ?? false) ||
+      (widget.menuItem.modifierGroups?.isNotEmpty ?? false) ||
+      (widget.menuItem.sizes?.isNotEmpty ?? false);
 
   @override
   Widget build(BuildContext context) {
