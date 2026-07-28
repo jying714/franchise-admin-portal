@@ -194,7 +194,7 @@ class MyApp extends StatelessWidget {
         /// FranchiseProvider from shared_core ONLY (P1 cleanup: dual wrapper removed).
         /// All franchise state + logic lives in shared_core.
         /// The plain Provider is sufficient: Consumers use it for hasValidFranchise guards + currentFranchiseId reads.
-        Provider<shared.FranchiseProvider>(
+        ChangeNotifierProvider<shared.FranchiseProvider>(
           create: (_) => shared.FranchiseProvider(AppLocalStorage()),
         ),
         // P2: FranchiseProvider is now the single source for dynamic branding/theme.

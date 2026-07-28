@@ -3466,8 +3466,17 @@ class FirestoreServiceImpl implements FirestoreService {
 
   @override
   Stream<List<model.Category>> getCategories(String franchiseId) {
-    // Lightweight impl returns empty - AdminFirestoreService provides real stream
-    return Stream.value(<model.Category>[]);
+    if (franchiseId.isEmpty ||
+        franchiseId == 'unknown' ||
+        franchiseId == 'default') {
+      return Stream.value(<model.Category>[]);
+    }
+    return _franchiseCollection(franchiseId, _categories)
+        .orderBy('sortOrder')
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => model.Category.fromFirestore(d.data(), d.id))
+            .toList());
   }
 
   @override
