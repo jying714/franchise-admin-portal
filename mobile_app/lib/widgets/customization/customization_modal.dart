@@ -653,6 +653,15 @@ class _CustomizationModalState extends State<CustomizationModal> {
     return false;
   }
 
+  Set<String> get _originalIncludedIds {
+    final raw = widget.menuItem.includedIngredients;
+    if (raw == null || raw.isEmpty) return <String>{};
+    return raw
+        .map((e) => (e['ingredientId'] ?? e['id'])?.toString() ?? '')
+        .where((id) => id.isNotEmpty)
+        .toSet();
+  }
+
   bool _isPizza() {
     final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
     if (profile == shared.MenuProfile.pizza) return true;
@@ -1332,10 +1341,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                       type != 'cheeses';
                                 }).toList();
 
-                                if (currentFoodIds.isEmpty) {
-                                  return const SizedBox.shrink();
-                                }
-
+                                // AFTER
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -1362,6 +1368,20 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                         ),
                                       ),
                                     ),
+                                    if (currentFoodIds.isEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            bottom: 8, left: 4, right: 4),
+                                        child: Text(
+                                          "None — defaults appear here when set on the item. Add extras below.",
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                            color: shared
+                                                .UiConfig.secondaryTextColor,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ),
                                     ...currentFoodIds.map((ingId) {
                                       final meta = _ingredientMetadata[ingId];
                                       return Card(
