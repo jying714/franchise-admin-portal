@@ -20,9 +20,6 @@ import 'package:franchise_admin_portal/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_admin_portal/widgets/empty_state_widget.dart';
 import 'package:franchise_admin_portal/widgets/filter_dropdown.dart';
 import 'package:franchise_admin_portal/admin/menu/bulk_menu_upload_dialog.dart';
-import 'package:franchise_admin_portal/admin/menu/menu_item_customizations_dialog.dart';
-import 'package:franchise_admin_portal/admin/menu/customization_types.dart'
-    as ct;
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:franchise_admin_portal/widgets/subscription_access_guard.dart';
 import 'package:franchise_admin_portal/widgets/subscription/grace_period_banner.dart';
@@ -227,54 +224,6 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
             ),
           ),
         );
-    }
-  }
-
-  Future<void> _openCustomizations(String franchiseId, BuildContext context,
-      shared.MenuItem item, shared.User user) async {
-    if (!(user.isAdmin ||
-        user.isHqOwner ||
-        user.isManager ||
-        user.isPlatformOwner)) {
-      await _logUnauthorizedAttempt(
-          franchiseId, user, 'edit_customizations', item.id);
-      _showUnauthorizedDialog();
-      return;
-    }
-    final firestore =
-        Provider.of<shared.FirestoreService>(context, listen: false);
-
-    // Use shared mapping utilities
-    final List<ct.CustomizationGroup> groups =
-        item.customizations.map((c) => ct.customizationToGroup(c)).toList();
-
-    final result = await showDialog<List<ct.CustomizationGroup>>(
-      context: context,
-      builder: (_) => MenuItemCustomizationsDialog(
-        initialGroups: groups,
-      ),
-    );
-
-    if (result != null) {
-      final updatedCustomizations =
-          result.map((g) => ct.groupToCustomization(g)).toList();
-      await firestore.updateMenuItem(
-        franchiseId,
-        item.copyWith(customizations: updatedCustomizations),
-        userId: user.id,
-      );
-      await auditLogService.addLog(
-        franchiseId: franchiseId,
-        userId: user.id,
-        action: 'update_customizations',
-        targetType: 'menu_item',
-        targetId: item.id,
-        details: {},
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(AppLocalizations.of(context)!.customizationsUpdated)),
-      );
     }
   }
 
@@ -505,7 +454,7 @@ class _MenuEditorScreenContentState extends State<MenuEditorScreenContent> {
                         _addOrEditMenuItemPanel(item: item);
                         break;
                       case 'customize':
-                        _openCustomizations(franchiseId, context, item, user);
+                        _addOrEditMenuItemPanel(item: item);
                         break;
                       case 'delete':
                         _deleteMenuItems(franchiseId, context, [item], user);

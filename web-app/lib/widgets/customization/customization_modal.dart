@@ -270,6 +270,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   bool _isPizzaOrCalzone() {
+    final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
+    if (profile == shared.MenuProfile.pizza) return true;
     final cat = widget.menuItem.category.toLowerCase();
     return cat.contains('pizza') || cat.contains('calzone');
   }
@@ -279,6 +281,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   bool _isWings() {
+    final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
+    if (profile == shared.MenuProfile.wings) return true;
     final name = widget.menuItem.name.toLowerCase();
     return name.contains('wings');
   }
@@ -290,14 +294,38 @@ class _CustomizationModalState extends State<CustomizationModal> {
         groupLabel == "Cheeses";
   }
 
-  @override
+  /// Prefer Decision 10 groups when present; else legacy customizationGroups.
+  List<Map<String, dynamic>> _groupsForUi() {
+    final stored = widget.menuItem.modifierGroups;
+    if (stored != null && stored.isNotEmpty) {
+      return widget.menuItem.effectiveModifierGroups.map((g) {
+        final ingredientIds = g.options
+            .map((o) => o.ingredientId)
+            .whereType<String>()
+            .where((id) => id.trim().isNotEmpty)
+            .toList();
+        return <String, dynamic>{
+          'id': g.id,
+          'label': g.label,
+          'ingredientIds': ingredientIds,
+          'min': g.min,
+          'max': g.max,
+          if (g.maxFree != null) 'maxFree': g.maxFree,
+        };
+      }).toList();
+    }
+    return List<Map<String, dynamic>>.from(
+      widget.menuItem.customizationGroups ?? const [],
+    );
+  }
+
   @override
   void initState() {
     super.initState();
     //print('[DEBUG] MenuItem for customization: ${widget.menuItem.toMap()}');
 
     // --- Initialize cheeses state (self-contained) ---
-    final cheeseGroup = widget.menuItem.customizationGroups?.firstWhereOrNull(
+    final cheeseGroup = widget.menuItem.customizationGroups!.firstWhereOrNull(
         (g) => (g['label'] as String).toLowerCase() == 'cheeses');
     final cheeseIds =
         (cheeseGroup?['ingredientIds'] as List?)?.cast<String>() ?? [];
@@ -321,7 +349,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
     _selectedSize = (sizes != null && sizes.isNotEmpty) ? sizes.first : null;
     _drinkFlavorCounts = {};
     if (_isPizza()) {
-      final saucesGroup = widget.menuItem.customizationGroups?.firstWhereOrNull(
+      final saucesGroup = widget.menuItem.customizationGroups!.firstWhereOrNull(
           (g) => (g['label'] as String).toLowerCase() == 'sauces');
       final sauceIds =
           (saucesGroup?['ingredientIds'] as List?)?.cast<String>() ?? [];
@@ -345,7 +373,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
     _initializeSelections();
     if (_isPizza()) {
       // Find default sauce (first from sauces group, fallback to included ingredient, fallback to null)
-      final saucesGroup = widget.menuItem.customizationGroups?.firstWhereOrNull(
+      final saucesGroup = widget.menuItem.customizationGroups!.firstWhereOrNull(
           (g) => (g['label'] as String).toLowerCase() == 'sauces');
       final sauceIds =
           (saucesGroup?['ingredientIds'] as List?)?.cast<String>() ?? [];
@@ -361,10 +389,12 @@ class _CustomizationModalState extends State<CustomizationModal> {
     }
     _sortCustomizationGroups();
     // Setup pizza/calzone topping tabs for "Meats" and "Veggies" ONLY
-    if (_isPizzaOrCalzone() && widget.menuItem.customizationGroups != null) {
-      _toppingTabGroups = widget.menuItem.customizationGroups!
+    final uiGroups = _groupsForUi();
+    if (_isPizzaOrCalzone() && uiGroups.isNotEmpty) {
+      _toppingTabGroups = uiGroups
           .where((g) => (g['label']?.toString().toLowerCase() == 'meats' ||
-              g['label']?.toString().toLowerCase() == 'veggies'))
+              g['label']?.toString().toLowerCase() == 'veggies' ||
+              g['label']?.toString().toLowerCase() == 'toppings'))
           .toList();
       _toppingTabLabels =
           _toppingTabGroups.map((g) => g['label'].toString()).toList();
@@ -443,8 +473,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
     }
     _groupSelections = {};
     _radioSelections = {};
-    if (widget.menuItem.customizationGroups != null) {
-      for (final group in widget.menuItem.customizationGroups!) {
+    final groups = _groupsForUi();
+    if (groups.isNotEmpty) {
+      for (final group in groups) {
         final groupLabel = group['label'];
         final ids = (group['ingredientIds'] as List<dynamic>? ?? [])
             .map((e) => e.toString())
@@ -520,8 +551,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
   void _sortCustomizationGroups() {
     _checkboxGroups = [];
     _radioGroups = [];
-    if (widget.menuItem.customizationGroups != null) {
-      for (final group in widget.menuItem.customizationGroups!) {
+    final groups = _groupsForUi();
+    if (groups.isNotEmpty) {
+      for (final group in groups) {
         final groupLabel = (group['label'] ?? '').toString();
         final isSauceGroup = groupLabel.toLowerCase() == 'sauces';
         final isDressingGroup = groupLabel.toLowerCase() == 'dressings';
@@ -562,6 +594,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   bool _isPizza() {
+    final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
+    if (profile == shared.MenuProfile.pizza) return true;
+    // Legacy fallback only when profile was never written
     final cat = widget.menuItem.category.toLowerCase();
     return cat.contains('pizza');
   }

@@ -76,7 +76,7 @@ shared.MenuItem buildMenuItemForSchemaCheck({
     dietaryTags: dietaryTags,
     allergens: allergens,
     prepTime: prepTime,
-    sortOrder: sortOrder,
+    sortOrder: sortOrder ?? 0,
     taxCategory: taxCategory,
     exportId: exportId,
     customizationGroups: customizationGroups.map((g) => g.toMap()).toList(),
@@ -329,7 +329,7 @@ shared.MenuItem constructMenuItemFromEditorFields({
   int? lowStockThreshold,
 }) {
   return shared.MenuItem(
-    id: id ?? const Uuid().v4(),
+    id: (id == null || id.isEmpty) ? const Uuid().v4() : id,
     available: !outOfStock,
     availability: !outOfStock,
     category: categoryName,
@@ -342,7 +342,7 @@ shared.MenuItem constructMenuItemFromEditorFields({
     dietaryTags: dietaryTags,
     allergens: allergens,
     prepTime: prepTime,
-    sortOrder: sortOrder,
+    sortOrder: sortOrder ?? 0,
     taxCategory: taxCategory,
     exportId: exportId,
     customizationGroups: customizationGroups.map((g) => g.toMap()).toList(),
@@ -568,11 +568,12 @@ shared.MenuItem emptyDraft() {
     category: '',
     available: true,
     availability: true,
-    image: '', // Matches MenuItem 'image' field
-    taxCategory: 'standard', // Required
+    image: '',
+    taxCategory: 'standard',
+    sortOrder: 0,
     sizes: [],
     customizationGroups: [],
-    includedIngredients: [], // Use empty list (model expects List<Map> or references depending on shared)
+    includedIngredients: [],
     optionalAddOns: [],
     customizations: [],
     menuProfile: shared.MenuProfile.standard,

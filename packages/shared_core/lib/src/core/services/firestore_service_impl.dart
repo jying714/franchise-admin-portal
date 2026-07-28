@@ -2870,10 +2870,10 @@ class FirestoreServiceImpl implements FirestoreService {
     if (search != null && search.isNotEmpty) {
       q = q.where('categoryId', isEqualTo: search);
     }
-    if (sortBy != null && sortBy.isNotEmpty) {
+    // Do NOT orderBy sortOrder in the query: docs without that field are
+    // excluded by Firestore. Sort client-side so HQ-authored items load.
+    if (sortBy != null && sortBy.isNotEmpty && sortBy != 'sortOrder') {
       q = q.orderBy(sortBy, descending: descending);
-    } else {
-      q = q.orderBy('sortOrder');
     }
 
     return q.snapshots().map((s) {
@@ -2889,6 +2889,13 @@ class FirestoreServiceImpl implements FirestoreService {
           .where((item) => item != null)
           .cast<MenuItem>()
           .toList();
+
+      list.sort((a, b) {
+        final ao = a.sortOrder ?? 0;
+        final bo = b.sortOrder ?? 0;
+        if (ao != bo) return ao.compareTo(bo);
+        return a.name.compareTo(b.name);
+      });
 
       return list;
     });

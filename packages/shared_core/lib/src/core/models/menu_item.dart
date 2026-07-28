@@ -907,7 +907,7 @@ class MenuItem {
       'allergens': allergens,
       'prepTime': prepTime,
       'nutrition': nutrition?.toFirestore(),
-      'sortOrder': sortOrder,
+      'sortOrder': sortOrder ?? 0,
       'lastModified':
           lastModified != null ? Timestamp.fromDate(lastModified!) : null,
       'lastModifiedBy': lastModifiedBy,

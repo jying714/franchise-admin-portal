@@ -1,9 +1,11 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:franchise_admin_portal/admin/menu/dynamic_menu_item_editor_screen.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/branding_config.dart';
 import 'package:shared_core/shared_core.dart' as shared; // migrated from src/
 import 'package:provider/provider.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/menu_item_editor_sheet.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:franchise_admin_portal/core/services/admin_firestore_service.dart';
 
 class MenuItemEditorPanel extends StatefulWidget {
   final bool isOpen;
@@ -40,6 +42,15 @@ class _MenuItemEditorPanelState extends State<MenuItemEditorPanel> {
         _categoryId = widget.initialCategoryId;
       });
     }
+    if (widget.initialItem != oldWidget.initialItem ||
+        widget.isOpen != oldWidget.isOpen) {
+      if (widget.isOpen) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _ensureFoundationLoaded();
+        });
+      }
+    }
     if (!widget.isOpen) {
       setState(() {
         _categoryId = null;
@@ -51,6 +62,43 @@ class _MenuItemEditorPanelState extends State<MenuItemEditorPanel> {
   void initState() {
     super.initState();
     _categoryId = widget.initialCategoryId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _ensureFoundationLoaded();
+    });
+  }
+
+  Future<void> _ensureFoundationLoaded() async {
+    final franchiseId =
+        Provider.of<shared.FranchiseProvider>(context, listen: false)
+            .franchiseId;
+    if (franchiseId.isEmpty || franchiseId == 'unknown') return;
+
+    final typeProvider =
+        Provider.of<shared.IngredientTypeProvider>(context, listen: false);
+    final metadataProvider =
+        Provider.of<shared.IngredientMetadataProvider>(context, listen: false);
+    final categoryProvider =
+        Provider.of<shared.CategoryProvider>(context, listen: false);
+    final menuProvider =
+        Provider.of<shared.MenuItemProvider>(context, listen: false);
+
+    await Future.wait([
+      typeProvider.load(
+        franchiseIdOverride: franchiseId,
+        forceReloadFromFirestore: true,
+      ),
+      metadataProvider.load(forceReloadFromFirestore: true),
+      categoryProvider.load(
+        franchiseIdOverride: franchiseId,
+        forceReloadFromFirestore: true,
+      ),
+      menuProvider.load(
+        franchiseIdOverride: franchiseId,
+        forceReloadFromFirestore: true,
+      ),
+    ]);
+    if (mounted) setState(() {});
   }
 
   @override
@@ -67,99 +115,61 @@ class _MenuItemEditorPanelState extends State<MenuItemEditorPanel> {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       color: theme.colorScheme.surface,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Panel header with back button and close button
-              Container(
-                color: Colors.transparent,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                child: Row(
-                  children: [
-                    if (_categoryId != null)
-                      IconButton(
-                        icon:
-                            const Icon(Icons.arrow_back, color: Colors.black87),
-                        tooltip: 'Back',
-                        onPressed: () {
-                          setState(() {
-                            _categoryId = null; // Back to category picker
-                          });
-                          if (widget.onCategoryCleared != null) {
-                            widget.onCategoryCleared!();
-                          }
-                        },
-                      )
-                    else
-                      const SizedBox(width: 48), // maintain alignment
-
-                    Text(
-                      loc.addItem,
-                      style: TextStyle(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white
-                            : colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 22,
-                      ),
-                    ),
-
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.black87),
-                      tooltip: 'Close',
-                      onPressed: widget.onClose,
-                    ),
-                  ],
+      child: MenuItemEditorSheet(
+        key: ValueKey(widget.initialItem?.id ?? _categoryId ?? 'new'),
+        existing: widget.initialItem,
+        franchiseId:
+            Provider.of<shared.FranchiseProvider>(context, listen: false)
+                .franchiseId,
+        firestore: FirebaseFirestore.instance,
+        onSave: (item) async {
+          final franchiseId =
+              Provider.of<shared.FranchiseProvider>(context, listen: false)
+                  .franchiseId;
+          final adminService = AdminFirestoreService();
+          final menuProvider =
+              Provider.of<shared.MenuItemProvider>(context, listen: false);
+          try {
+            menuProvider.addOrUpdateMenuItem(item);
+            await adminService.saveMenuItem(
+              franchiseId: franchiseId,
+              menuItem: item,
+            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('✅ Item saved'),
+                  backgroundColor: Colors.green,
                 ),
-              ),
-
-              // Content area
-              Expanded(
-                child: SingleChildScrollView(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 600),
-                    child: DynamicMenuItemEditorScreen(
-                      key: ValueKey(
-                          _editingMenuItem?.id ?? _categoryId ?? 'new'),
-                      franchiseId: Provider.of<shared.FranchiseProvider>(
-                              context,
-                              listen: false)
-                          .franchiseId,
-                      initialCategoryId: _categoryId ??
-                          widget.initialItem?.categoryId, // fallback
-                      initialItem:
-                          widget.initialItem ?? _editingMenuItem, // ← CRITICAL
-                      onCategorySelected: (selectedCategory) {
-                        setState(() {
-                          _categoryId = selectedCategory;
-                          _editingMenuItem =
-                              null; // Only clear when user manually changes category
-                        });
-                        widget.onCategorySelected?.call(selectedCategory);
-                      },
-                      onCancel: () {
-                        if (_categoryId != null) {
-                          setState(() {
-                            _categoryId = null;
-                            _editingMenuItem = null;
-                          });
-                          widget.onCategoryCleared?.call();
-                        } else {
-                          widget.onClose();
-                        }
-                      },
-                    ),
-                  ),
+              );
+            }
+            widget.onClose();
+          } catch (e, stack) {
+            shared.ErrorLogger.log(
+              message: 'admin_menu_item_save_failed',
+              stack: stack.toString(),
+              source: 'menu_item_editor_panel',
+              severity: 'error',
+            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('❌ Save failed: $e'),
+                  backgroundColor: Colors.red,
                 ),
-              ),
-            ],
-          );
+              );
+            }
+          }
+        },
+        onCancel: () {
+          if (_categoryId != null) {
+            setState(() {
+              _categoryId = null;
+            });
+            widget.onCategoryCleared?.call();
+          } else {
+            widget.onClose();
+          }
         },
       ),
     );
