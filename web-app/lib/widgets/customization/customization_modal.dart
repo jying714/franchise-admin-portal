@@ -1321,11 +1321,21 @@ class _CustomizationModalState extends State<CustomizationModal> {
                             ),
                             ..._currentIngredients.where((id) {
                               final meta = _ingredientMetadata[id];
-                              // Exclude dressing, sauce, and crust types from "Current Toppings"
                               final type = meta?.type?.toLowerCase() ?? '';
+                              if (_radioSelections.values.contains(id)) {
+                                return false;
+                              }
+                              final lower = id.toLowerCase();
+                              if (lower.startsWith('crust_') ||
+                                  lower.startsWith('cook_') ||
+                                  lower.startsWith('cut_')) {
+                                return false;
+                              }
                               return !_selectedDressingCounts.containsKey(id) &&
                                   !_selectedSauceCounts.containsKey(id) &&
                                   type != 'crust' &&
+                                  type != 'cook' &&
+                                  type != 'cut' &&
                                   type != 'cheeses';
                             }).map((ingId) {
                               final meta = _ingredientMetadata[ingId];

@@ -710,8 +710,21 @@ class _CustomizationModalState extends State<CustomizationModal> {
   double _getToppingUpcharge() {
     final prices = widget.menuItem.additionalToppingPrices;
     final key = _normalizeSizeKey(_selectedSize);
-    if (prices != null && key != null && prices[key] != null) {
+    if (prices != null && key.isNotEmpty && prices[key] != null) {
       return (prices[key] as num).toDouble();
+    }
+    final sizes = widget.menuItem.sizes;
+    if (sizes != null && _selectedSize != null) {
+      for (final s in sizes) {
+        if (s.label == _selectedSize || _normalizeSizeKey(s.label) == key) {
+          // SizeData.toppingPrice if present on model
+          try {
+            final dynamic tp = (s as dynamic).toppingPrice;
+            if (tp is num) return tp.toDouble();
+          } catch (_) {}
+          break;
+        }
+      }
     }
     return 0.0;
   }
@@ -1280,125 +1293,147 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               setState: setState,
                             )
                           else if (_showsCurrentIngredients())
-                            // ... your current ingredients column (unchanged)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      top: 10, bottom: 10),
-                                  child: Container(
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      color: shared.UiConfig.primaryColor,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 8, horizontal: 14),
-                                    child: Text(
-                                      "Current Toppings",
-                                      style:
-                                          theme.textTheme.titleMedium?.copyWith(
-                                        color: shared.UiConfig.onPrimaryColor,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                // ... rest of your current ingredients UI (unchanged)
-                                ..._currentIngredients.where((id) {
+                            Builder(
+                              builder: (context) {
+                                final currentFoodIds =
+                                    _currentIngredients.where((id) {
                                   final meta = _ingredientMetadata[id];
                                   final type = meta?.type?.toLowerCase() ?? '';
+                                  if (_radioSelections.values.contains(id)) {
+                                    return false;
+                                  }
+                                  final lower = id.toLowerCase();
+                                  if (lower.startsWith('crust_') ||
+                                      lower.startsWith('cook_') ||
+                                      lower.startsWith('cut_')) {
+                                    return false;
+                                  }
                                   return !_selectedDressingCounts
                                           .containsKey(id) &&
                                       !_selectedSauceCounts.containsKey(id) &&
                                       type != 'crust' &&
+                                      type != 'cook' &&
+                                      type != 'cut' &&
                                       type != 'cheeses';
-                                }).map((ingId) {
-                                  final meta = _ingredientMetadata[ingId];
-                                  return Card(
-                                    margin: EdgeInsets.symmetric(
-                                        vertical: 2, horizontal: 0),
-                                    child: Padding(
-                                      padding: EdgeInsets.symmetric(
-                                          vertical: 8, horizontal: 12),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  meta?.name ?? ingId,
-                                                  style:
-                                                      theme.textTheme.bodyLarge,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                              TextButton(
-                                                style: TextButton.styleFrom(
-                                                  foregroundColor:
-                                                      theme.colorScheme.error,
-                                                ),
-                                                onPressed: () {
-                                                  setState(() {
-                                                    _currentIngredients
-                                                        .remove(ingId);
-                                                    _doubleToppings
-                                                        .remove(ingId);
-                                                    _ingredientPortions
-                                                        .remove(ingId);
-                                                  });
-                                                },
-                                                child: Text(loc.remove),
-                                              ),
-                                            ],
+                                }).toList();
+
+                                if (currentFoodIds.isEmpty) {
+                                  return const SizedBox.shrink();
+                                }
+
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                          top: 10, bottom: 10),
+                                      child: Container(
+                                        width: double.infinity,
+                                        decoration: BoxDecoration(
+                                          color: shared.UiConfig.primaryColor,
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 8, horizontal: 14),
+                                        child: Text(
+                                          "Current Toppings",
+                                          style: theme.textTheme.titleMedium
+                                              ?.copyWith(
+                                            color:
+                                                shared.UiConfig.onPrimaryColor,
+                                            fontWeight: FontWeight.bold,
                                           ),
-                                          SizedBox(height: 6),
-                                          Row(
-                                            children: [
-                                              if (!_isCalzone()) ...[
-                                                Flexible(
-                                                  fit: FlexFit.tight,
-                                                  child: PortionSelector(
-                                                    value: _ingredientPortions[
-                                                            ingId] ??
-                                                        Portion.whole,
-                                                    onChanged: (portion) =>
-                                                        _handlePortionChanged(
-                                                            ingId, portion),
-                                                  ),
-                                                ),
-                                                SizedBox(width: 10),
-                                              ],
-                                              Flexible(
-                                                fit: FlexFit.tight,
-                                                child: PortionPillToggle(
-                                                  isDouble:
-                                                      _doubleToppings[ingId] ==
-                                                          true,
-                                                  onTap: () =>
-                                                      _handleDoubleChanged(
-                                                          ingId,
-                                                          !(_doubleToppings[
-                                                                  ingId] ??
-                                                              false)),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
+                                        ),
                                       ),
                                     ),
-                                  );
-                                }).toList(),
-                              ],
+                                    ...currentFoodIds.map((ingId) {
+                                      final meta = _ingredientMetadata[ingId];
+                                      return Card(
+                                        margin: EdgeInsets.symmetric(
+                                            vertical: 2, horizontal: 0),
+                                        child: Padding(
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 8, horizontal: 12),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      meta?.name ?? ingId,
+                                                      style: theme
+                                                          .textTheme.bodyLarge,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                  TextButton(
+                                                    style: TextButton.styleFrom(
+                                                      foregroundColor: theme
+                                                          .colorScheme.error,
+                                                    ),
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        _currentIngredients
+                                                            .remove(ingId);
+                                                        _doubleToppings
+                                                            .remove(ingId);
+                                                        _ingredientPortions
+                                                            .remove(ingId);
+                                                      });
+                                                    },
+                                                    child: Text(loc.remove),
+                                                  ),
+                                                ],
+                                              ),
+                                              SizedBox(height: 6),
+                                              Row(
+                                                children: [
+                                                  if (!_isCalzone()) ...[
+                                                    Flexible(
+                                                      fit: FlexFit.tight,
+                                                      child: PortionSelector(
+                                                        value:
+                                                            _ingredientPortions[
+                                                                    ingId] ??
+                                                                Portion.whole,
+                                                        onChanged: (portion) =>
+                                                            _handlePortionChanged(
+                                                                ingId, portion),
+                                                      ),
+                                                    ),
+                                                    SizedBox(width: 10),
+                                                  ],
+                                                  Flexible(
+                                                    fit: FlexFit.tight,
+                                                    child: PortionPillToggle(
+                                                      isDouble: _doubleToppings[
+                                                              ingId] ==
+                                                          true,
+                                                      onTap: () =>
+                                                          _handleDoubleChanged(
+                                                              ingId,
+                                                              !(_doubleToppings[
+                                                                      ingId] ??
+                                                                  false)),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                                  ],
+                                );
+                              },
                             ),
-
                           // --- Begin Pizza/Calzone Topping Tabs UI ---
                           if (_isPizzaOrCalzone() &&
                               _toppingTabLabels.isNotEmpty)
