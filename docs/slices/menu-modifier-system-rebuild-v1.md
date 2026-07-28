@@ -1,9 +1,9 @@
 # Slice: Menu modifier system rebuild v1
 
-**Status**: In progress — M1–M3 HQ landed; Admin M3 / M4 / M5 open  
+**Status**: In progress — M1–M3 HQ + M3 Admin + M4 pizza path landed; M5 open  
 **Branch**: `feat/menu-modifier-system-rebuild-v1`  
 **Date locked**: July 27, 2026  
-**Progress note**: July 27 evening — canonical schema + HQ editor write path; Doughboys menu_items wiped for clean re-seed  
+**Progress note**: July 28, 2026 — Admin parity, mobile Customize gate, web+mobile modal groups bridge, pricing, cart payload, optionLabels polish; Doughboys partial re-seed; full seed + M5 remain  
 **Do not** deliver as a thin Admin Customize patch.
 
 ## Problem
@@ -42,6 +42,7 @@ Plus: Cook/Cut/Crust forced into **ingredient types**; whole products treated li
 - Shared BBQ = **one** sauce ingredient, many group refs.
 - Optional customer extras = groups with **`min: 0`** + max/maxFree + size topping upcharge (web sets rules; mobile enforces).
 - **`menuProfile` templates** seed groups (pizza includes Sauce + Meats/Veggies/Cheeses).
+- **UI split:** Current toppings = food on the pie; Order Details = crust/cook/cut only; structural option ids must not appear in Current toppings or cart `currentIngredients`.
 
 ## Non-goals
 
@@ -62,6 +63,7 @@ MenuItem
     id, label, selectMode, min, max, maxFree?
     allowsPortion?, allowsDouble?
     options[]: ingredientId? | label, upcharge?, upchargeBySize?, defaultSelected?
+  sizes[]: SizeData { label, basePrice, toppingPrice }
 ```
 
 ## Workstreams
@@ -71,30 +73,47 @@ MenuItem
 | **M1** | Schema & contract in `shared_core` | **Done** | Types; inventory; menuProfile; option = ingredient or label |
 | **M2** | Read adapter / migration posture | **Done** (adapter); backfill optional | `effective*` getters; human chose wipe + re-seed over mass migrate |
 | **M3 HQ** | HQ write path | **Done** | Profile seed, binder, min/max/maxFree, pizza pricing UX, inventory, no legacy UI |
-| **M3 Admin** | Admin write path | **Open** | Same schema; Customize spinner gone |
-| **M4** | Mobile renderer | **Open** | Schema-driven; profile widgets; Doughboys parity |
-| **M5** | Cutover | **Open** | Flag off legacy; delete dual tree + heuristics |
+| **M3 Admin** | Admin write path | **Done** | Shared `MenuItemEditorSheet`; list/sort/save; UUID; no dual Customize write for canonical items |
+| **M4** | Mobile (+ web modal) renderer | **Done (pizza path)** | Schema-driven groups; profile widgets; Customize gate; maxFree/min/max; size pricing; payload cleanup |
+| **M5** | Cutover | **Open** | Flag off legacy; delete dual tree + remaining heuristics; STATUS complete |
 
 ### Key files (landed)
 
+**Shared**
+
 - `packages/shared_core/lib/src/core/models/modifier_group.dart`
 - `packages/shared_core/lib/src/core/models/menu_profile_templates.dart`
-- `packages/shared_core/lib/src/core/models/menu_item.dart` (fields + adapter + softer missingRequiredFields)
+- `packages/shared_core/lib/src/core/models/menu_item.dart` (fields + adapter)
+- `packages/shared_core/lib/src/core/models/size_template.dart` (`SizeData`)
+- `packages/shared_core/lib/src/core/services/firestore_service_impl.dart` (client-side sort fallback)
+
+**HQ / Admin web**
+
 - `web-app/.../menu_item_editor_sheet.dart`
 - `web-app/.../modifier_groups_ingredient_binder.dart`
-- `web-app/.../menu_item_utility.dart` (construct passes canonical fields; legacy lists cleared on save)
-- `web-app/.../multi_ingredient_selector.dart` (structural type filter)
+- `web-app/.../menu_item_utility.dart`
+- `web-app/lib/admin/menu/menu_item_editor_panel.dart`
+- `web-app/lib/admin/menu/menu_editor_screen.dart`
+- `web-app/lib/widgets/customization/customization_modal.dart`
+- `web-app/lib/widgets/customization/radio_customization_group.dart`
+
+**Mobile**
+
+- `mobile_app/lib/widgets/menu_item_card.dart` (`modifierGroups` / `sizes` gate)
+- `mobile_app/lib/widgets/customization/customization_modal.dart`
+- `mobile_app/lib/widgets/customization/radio_customization_group.dart`
 
 ## Acceptance (epic)
 
-- [ ] Doughboys pizza/calzone/wings/salad parity on **new** path (mobile M4)  
-- [ ] Non-pizza seed/franchise without pizza heuristics  
-- [x] Cook/Cut/Crust are **groups**, not ingredient types (HQ seed + filter)  
+- [ ] Doughboys pizza/calzone/wings/salad parity on **new** path (full seed + QA)  
+- [x] Pizza path: Customize opens; Order Details structural; Current toppings food-only; cart payload clean (S25 smoke)  
+- [ ] Non-pizza seed/franchise without pizza heuristics (regression matrix)  
+- [x] Cook/Cut/Crust are **groups**, not ingredient types (HQ seed + filter + DB cleanup)  
 - [ ] Shared sauce ingredient usable on pizza + wings groups (data + mobile)  
-- [x] Dessert/appetizer whole-items without mandatory ingredient self-reference (schema + HQ)  
-- [ ] Admin + HQ same structure; no Customize spinner  
-- [x] Item inventory on HQ edit path (Admin dietary/inventory still open)  
-- [ ] STATUS.md complete only after M5  
+- [x] Dessert/appetizer whole-items without mandatory ingredient self-reference (schema + HQ/Admin save)  
+- [x] Admin + HQ same write structure for canonical items  
+- [x] Item inventory on HQ edit path  
+- [ ] STATUS.md complete only after **M5**  
 
 ## Agent / human rules
 
@@ -103,3 +122,4 @@ MenuItem
 - Do not reintroduce Cook/Cut/Crust as ingredient types.  
 - Human review on schema migration and cutover.  
 - Admin ops-fixes slice must **not** absorb M1–M5 (ops slice is closed).
+- Do not mark epic complete until M5.

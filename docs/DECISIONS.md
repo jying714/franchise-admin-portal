@@ -1,6 +1,6 @@
 # Architecture Decision Log (DECISIONS.md)
 
-**Last Updated**: July 27, 2026 (Decision 10 refined — catalog vs groups vs items)
+**Last Updated**: July 28, 2026 (Decision 10 implementation progress — M1–M4 pizza)
 
 This file records major architectural and design decisions for the Doughboys Pizzeria Franchise Platform.
 
@@ -33,7 +33,7 @@ This file records major architectural and design decisions for the Doughboys Piz
 **Status**: Approved (execution via Decision 10 rebuild)  
 **Decision**: Config-driven UI based on restaurant type / menu profiles, configs, and FeatureGate. One published binary.  
 **Rationale**: Supports multiple restaurant types without multiple apps.  
-**Impact**: Phase 3; **menu modifier rebuild** is the concrete path (Decision 10).
+**Impact**: Phase 3; **menu modifier rebuild** is the concrete path (Decision 10). M4 pizza path landed July 28, 2026 on feature branch.
 
 ### 5. Multi-Agent Development Approach
 **Date**: July 2026  
@@ -75,7 +75,7 @@ This file records major architectural and design decisions for the Doughboys Piz
 
 ### 9. Admin Menu vs HQ Menu Items (surface split)
 **Date**: July 27, 2026  
-**Status**: **Approved**  
+**Status**: **Approved + M3 Admin write path implemented** (July 28, 2026 feature branch)  
 **Decision**:
 1. **HQ onboarding Menu Items** = guided, step-by-step franchise self-onboarding (templates, schema repair, foundation gates, publish).
 2. **Admin Menu** (`menuEditor`) = day-2 operations for restaurant managers (search, availability, light edits, bulk ops, inventory counts once shipped).
@@ -83,15 +83,15 @@ This file records major architectural and design decisions for the Doughboys Piz
 4. Staff/Support Chat may remain honest placeholders until wired; not part of onboarding.
 
 **Rationale**: Onboarding and ops audiences differ; data model must not.  
-**Impact**: Editor UX depth differs; write path unified under Decision 10.  
-**Reference**: `docs/DASHBOARDS.md`, `docs/slices/admin-dashboard-ops-fixes-v1.md`.
+**Impact**: Editor UX depth differs; write path unified under Decision 10. Admin hosts `MenuItemEditorSheet` for canonical items.  
+**Reference**: `docs/DASHBOARDS.md`, `docs/slices/admin-dashboard-ops-fixes-v1.md`, `docs/slices/menu-modifier-system-rebuild-v1.md`.
 
 ### 10. Menu Modifier System — Full Rebuild (not patch-only)
 **Date**: July 27, 2026 (refined same day: catalog vs groups vs items)  
-**Status**: **Approved — implementation pending**  
+**Status**: **Approved — implementation in progress** (M1–M3 HQ done; M3 Admin done; M4 pizza path done on `feat/menu-modifier-system-rebuild-v1`; M5 open)  
 **Decision**:
 1. **Rebuild** menu customization end-to-end. Reject “barely held together” MVP patches that leave dual trees and mobile category-name heuristics.
-2. **Canonical runtime model:** enriched modifier groups (evolve `customizationGroups`) with `selectMode`, min/max/maxFree, portion/double flags; options may use **`ingredientId` (preferred for food)** or **label-only (non-ingredient)** for structural choices.
+2. **Canonical runtime model:** enriched modifier groups with `selectMode`, min/max/maxFree, portion/double flags; options may use **`ingredientId` (preferred for food)** or **label-only (non-ingredient)** for structural choices.
 3. **`menuProfile`** (`standard` | `pizza` | `wings` | `drinks` | …): supplies defaults, **seeded groups** (e.g. pizza → Crust/Cook/Cut), and advanced widgets. Doughboys **pizza** UX via profile—not `category.contains('pizza')`.
 4. **Stop dual-writing** Admin `customizations: List<Customization>` as a second source of truth vs groups. Migrate → single tree; cut over mobile to schema-driven renderer.
 5. **Item inventory:** `inventoryTracked` + `stockCount` (+ optional threshold) on menu items. Ingredient OOS for toppings/sauces. SKU link later.
@@ -109,10 +109,11 @@ This file records major architectural and design decisions for the Doughboys Piz
 - **Whole products** (cheesecake, garlic bread, many drinks) are **menu items**; add groups only for real choices (e.g. dipping cups).
 - **Shared sauces** (BBQ for pizza + wings): **one** ingredient, referenced by multiple groups/items—not duplicated wing-sauce vs pizza-sauce types unless the kitchen treats them as different products.
 - Foundation onboarding catalogs **real** ingredient types only; **profile templates** seed structural groups on items.
+- **UI contract (locked July 28):** Current toppings = included/food toppings; Order Details = crust/cook/cut; structural option ids must not appear in Current toppings UI or cart `currentIngredients`.
 
 **Rationale**: Multi-tenant types + Doughboys live MVP need one system; stuffing structural choices into ingredient types forces false catalog data.  
 **Impact**: shared_core models, HQ + Admin editors, mobile modal, Firestore, seeds, onboarding foundation guidance.  
-**Reference**: `docs/slices/menu-modifier-system-rebuild-v1.md`, `docs/MOBILE_DYNAMIC.md`.
+**Reference**: `docs/slices/menu-modifier-system-rebuild-v1.md`, `docs/MOBILE_DYNAMIC.md`, `STATUS.md`, `HANDOFF.md`.
 
 ---
 
@@ -120,4 +121,4 @@ This file records major architectural and design decisions for the Doughboys Piz
 - Add new decisions with date, status, rationale, impact, and references.
 - Review before major refactors.
 
-**Last Updated**: July 27, 2026
+**Last Updated**: July 28, 2026
