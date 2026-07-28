@@ -430,11 +430,14 @@ class _CustomizationModalState extends State<CustomizationModal> {
     // Setup pizza/calzone topping tabs for "Meats" and "Veggies" ONLY
     final uiGroups = _groupsForUi();
     if (_isPizzaOrCalzone() && uiGroups.isNotEmpty) {
-      _toppingTabGroups = uiGroups
-          .where((g) => (g['label']?.toString().toLowerCase() == 'meats' ||
-              g['label']?.toString().toLowerCase() == 'veggies' ||
-              g['label']?.toString().toLowerCase() == 'toppings'))
-          .toList();
+      _toppingTabGroups = uiGroups.where((g) {
+        final label = g['label']?.toString().toLowerCase() ?? '';
+        if (label != 'meats' && label != 'veggies' && label != 'toppings') {
+          return false;
+        }
+        final ids = (g['ingredientIds'] as List?) ?? const [];
+        return ids.isNotEmpty;
+      }).toList();
       _toppingTabLabels =
           _toppingTabGroups.map((g) => g['label'].toString()).toList();
       _selectedToppingTab =
@@ -1470,59 +1473,61 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               ),
                             ),
 
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 6.0), // Much tighter vertical space
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: shared.UiConfig.cardColor,
-                                borderRadius: BorderRadius.circular(30),
-                                border: Border.all(
-                                    color: shared.UiConfig.dividerColor,
-                                    width: 1),
-                              ),
-                              // The Row is now wrapped in a Container, acting like a tab bar.
-                              child: Row(
-                                children: _toppingTabLabels.map((label) {
-                                  final bool selected =
-                                      _selectedToppingTab == label;
-                                  return Expanded(
-                                    child: GestureDetector(
-                                      onTap: () => setState(
-                                          () => _selectedToppingTab = label),
-                                      child: AnimatedContainer(
-                                        duration: Duration(milliseconds: 150),
-                                        decoration: BoxDecoration(
-                                          color: selected
-                                              ? shared.UiConfig.secondaryColor
-                                              : shared.UiConfig.cardColor
-                                                  .withValues(alpha: 0.0),
-                                          borderRadius:
-                                              BorderRadius.circular(30),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 12),
-                                        alignment: Alignment.center,
-                                        child: Text(
-                                          label,
-                                          style: theme.textTheme.bodyLarge
-                                              ?.copyWith(
+                          if (_isPizzaOrCalzone() &&
+                              _toppingTabLabels.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 6.0), // Much tighter vertical space
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: shared.UiConfig.cardColor,
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                      color: shared.UiConfig.dividerColor,
+                                      width: 1),
+                                ),
+                                // The Row is now wrapped in a Container, acting like a tab bar.
+                                child: Row(
+                                  children: _toppingTabLabels.map((label) {
+                                    final bool selected =
+                                        _selectedToppingTab == label;
+                                    return Expanded(
+                                      child: GestureDetector(
+                                        onTap: () => setState(
+                                            () => _selectedToppingTab = label),
+                                        child: AnimatedContainer(
+                                          duration: Duration(milliseconds: 150),
+                                          decoration: BoxDecoration(
                                             color: selected
-                                                ? shared.UiConfig.cardColor
-                                                : shared
-                                                    .UiConfig.secondaryColor,
-                                            fontWeight: selected
-                                                ? FontWeight.bold
-                                                : FontWeight.normal,
+                                                ? shared.UiConfig.secondaryColor
+                                                : shared.UiConfig.cardColor
+                                                    .withValues(alpha: 0.0),
+                                            borderRadius:
+                                                BorderRadius.circular(30),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 12),
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            label,
+                                            style: theme.textTheme.bodyLarge
+                                                ?.copyWith(
+                                              color: selected
+                                                  ? shared.UiConfig.cardColor
+                                                  : shared
+                                                      .UiConfig.secondaryColor,
+                                              fontWeight: selected
+                                                  ? FontWeight.bold
+                                                  : FontWeight.normal,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  );
-                                }).toList(),
+                                    );
+                                  }).toList(),
+                                ),
                               ),
                             ),
-                          ),
 
                           if (_isPizzaOrCalzone() &&
                               _selectedToppingTab.isNotEmpty)
@@ -1557,6 +1562,12 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                             .contains(ingId))
                                         .map((ingId) {
                                       final meta = _ingredientMetadata[ingId];
+                                      final labels =
+                                          (group['optionLabels'] as Map?)?.map(
+                                                  (k, v) => MapEntry(
+                                                      k.toString(),
+                                                      v.toString())) ??
+                                              const <String, String>{};
                                       return Card(
                                         margin: EdgeInsets.symmetric(
                                             vertical: 2, horizontal: 0),
@@ -1568,7 +1579,10 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                 CrossAxisAlignment.center,
                                             children: [
                                               Expanded(
-                                                child: Text(meta?.name ?? ingId,
+                                                child: Text(
+                                                    meta?.name ??
+                                                        labels[ingId] ??
+                                                        ingId,
                                                     style: theme
                                                         .textTheme.bodyLarge),
                                               ),
@@ -1637,7 +1651,11 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               final cheeseIds =
                                   (group['ingredientIds'] as List<dynamic>? ??
                                           [])
-                                      .cast<String>();
+                                      .map((e) => e.toString())
+                                      .toList();
+                              if (cheeseIds.isEmpty) {
+                                return const SizedBox.shrink();
+                              }
                               final selectedCheeses = cheeseIds
                                   .where((id) => _selectedCheeses.contains(id))
                                   .toList();
@@ -1650,7 +1668,13 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                       final portion =
                                           _cheesePortions[id] ?? Portion.whole;
                                       // Only show portion if not calzone and not whole
-                                      return "${meta?.name ?? id}"
+                                      final labels =
+                                          (group['optionLabels'] as Map?)?.map(
+                                                  (k, v) => MapEntry(
+                                                      k.toString(),
+                                                      v.toString())) ??
+                                              const <String, String>{};
+                                      return "${meta?.name ?? labels[id] ?? id}"
                                           "${isDouble ? " (Double)" : ""}"
                                           "${(!_isCalzone() && portion != Portion.whole) ? " (${portionNames[portion]})" : ""}";
                                     }).join(", ");
@@ -1728,7 +1752,12 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                   children: [
                                                     Expanded(
                                                       child: Text(
-                                                        meta?.name ?? cheeseId,
+                                                        meta?.name ??
+                                                            ((group['optionLabels']
+                                                                        as Map?)?[
+                                                                    cheeseId]
+                                                                ?.toString()) ??
+                                                            cheeseId,
                                                         style: theme.textTheme
                                                             .bodyLarge,
                                                       ),

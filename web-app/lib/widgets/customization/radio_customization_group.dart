@@ -47,6 +47,9 @@ class RadioCustomizationGroup extends StatelessWidget {
           ...ingredientIds.map((ingId) {
             final meta = ingredientMetadata[ingId];
             final double upcharge = getIngredientUpcharge(meta);
+            final labels = (group['optionLabels'] as Map?)
+                    ?.map((k, v) => MapEntry(k.toString(), v.toString())) ??
+                const <String, String>{};
 
             return RadioListTile<String>(
               dense: true,
@@ -54,7 +57,7 @@ class RadioCustomizationGroup extends StatelessWidget {
               groupValue: radioSelections[groupLabel],
               onChanged: (v) => handleRadioSelect(groupLabel, v),
               title: Text(
-                meta?.name ?? ingId,
+                meta?.name ?? labels[ingId] ?? ingId,
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: DesignTokens.textColor,
                   fontFamily: DesignTokens.fontFamily,
