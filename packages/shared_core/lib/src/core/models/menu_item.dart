@@ -499,10 +499,14 @@ class MenuItem {
         }
       }
 
+      // AFTER
       final safeIncluded = <Map<String, dynamic>>[];
       for (final i in (data['includedIngredients'] as List?) ?? []) {
         if (i is Map) {
           safeIncluded.add(Map<String, dynamic>.from(i));
+        } else if (i is String && i.trim().isNotEmpty) {
+          // HQ / seed may store plain ingredient ids
+          safeIncluded.add({'ingredientId': i.trim(), 'id': i.trim()});
         } else {
           ErrorLogger.log(
             message: 'Skipped malformed includedIngredient entry',
