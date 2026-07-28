@@ -45,6 +45,10 @@ abstract final class MenuProfileTemplates {
     switch ((profile ?? MenuProfile.standard).trim().toLowerCase()) {
       case MenuProfile.pizza:
         return _pizza();
+      case MenuProfile.calzone:
+        // Calzone is a pizza twin (same groups). UI difference (no left/right) is handled
+        // downstream; do not invent a separate structural set here.
+        return _pizza();
       case MenuProfile.wings:
         return _wings();
       case MenuProfile.drinks:
@@ -72,6 +76,12 @@ abstract final class MenuProfileTemplates {
     ];
   }
 
+  /// Wings template notes (hq-wings-calzone-v1 locked product):
+  /// - maxFlavorPortions = 2 always → wing_sauce max: 2
+  /// - Plain = no toss on that portion (still receives free cups)
+  /// - Sauce catalog = ingredient type `sauces` only (no wing_sauces type)
+  /// - Toss list and side-cup list are the same ingredient ids (bound on item)
+  /// - freeDipCupCount / sideDipUpcharge live on MenuItem per size, not here
   static List<ModifierGroup> _wings() {
     return [
       ModifierGroup(

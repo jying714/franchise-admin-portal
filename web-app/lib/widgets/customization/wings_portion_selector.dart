@@ -11,6 +11,7 @@ class WingsPortionSelector extends StatelessWidget {
   final Map<String, dynamic> ingredientMetadata;
   final Map<String, String> selectedDippedSauces;
   final void Function(void Function()) setState;
+  final void Function(String splitKey, String sauceId) onPortionChanged;
 
   const WingsPortionSelector({
     Key? key,
@@ -21,6 +22,7 @@ class WingsPortionSelector extends StatelessWidget {
     required this.ingredientMetadata,
     required this.selectedDippedSauces,
     required this.setState,
+    required this.onPortionChanged,
   }) : super(key: key);
 
   @override
@@ -73,9 +75,7 @@ class WingsPortionSelector extends StatelessWidget {
                       )),
                 ],
                 onChanged: (val) {
-                  setState(() {
-                    selectedDippedSauces[key] = val ?? "plain";
-                  });
+                  onPortionChanged(key, val ?? "plain");
                 },
               ),
             );

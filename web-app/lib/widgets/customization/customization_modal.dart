@@ -27,7 +27,6 @@ import 'package:franchise_admin_portal/widgets/customization/bottom_bar.dart';
 
 const MAX_DOUBLES = 4;
 const DOUGH_IDS = {'dough_calzone', 'dough_pizza', 'dough'};
-int _wingsDipSauceTabIndex = 0;
 const portionNames = {
   Portion.whole: "Whole",
   Portion.left: "Left",
@@ -229,6 +228,28 @@ class _CustomizationModalState extends State<CustomizationModal> {
     });
   }
 
+  void _resyncWingsForSize(String? size) {
+    if (!_isWings()) return;
+    final splitCount = widget.menuItem.dippingSplits?[size] ?? 2;
+    final nextSplits = <String, String?>{};
+    for (var i = 0; i < splitCount; i++) {
+      final key = 'split_$i';
+      nextSplits[key] = _selectedDippedSauces[key] ?? 'plain';
+    }
+    _selectedDippedSauces = nextSplits;
+    _isAnyDipped =
+        _selectedDippedSauces.values.any((v) => v != null && v != 'plain');
+
+    final dipIds = (widget.menuItem.sideDipSauceOptions?.isNotEmpty == true)
+        ? widget.menuItem.sideDipSauceOptions!
+        : (widget.menuItem.dippingSauceOptions ?? const <String>[]);
+    final nextCups = <String, int>{};
+    for (final id in dipIds) {
+      nextCups[id] = _sideDipCounts[id] ?? 0;
+    }
+    _sideDipCounts = nextCups;
+  }
+
   // Helper to map UI size to Firestore key for upcharges
   String _normalizeSizeKey(String? uiSize) {
     if (uiSize == null) return '';
@@ -261,7 +282,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
   bool _showsCurrentIngredients() {
     final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
-    if (profile == shared.MenuProfile.pizza) return true;
+    if (profile == shared.MenuProfile.pizza ||
+        profile == shared.MenuProfile.calzone) return true;
     final cat = widget.menuItem.category.toLowerCase();
     final catId = (widget.menuItem.categoryId ?? '').toLowerCase();
     return [cat, catId].any((c) =>
@@ -273,12 +295,15 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
   bool _isPizzaOrCalzone() {
     final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
-    if (profile == shared.MenuProfile.pizza) return true;
+    if (profile == shared.MenuProfile.pizza ||
+        profile == shared.MenuProfile.calzone) return true;
     final cat = widget.menuItem.category.toLowerCase();
     return cat.contains('pizza') || cat.contains('calzone');
   }
 
   bool _isCalzone() {
+    final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
+    if (profile == shared.MenuProfile.calzone) return true;
     return widget.menuItem.category.toLowerCase().contains('calzone');
   }
 
@@ -461,20 +486,10 @@ class _CustomizationModalState extends State<CustomizationModal> {
     if (_isWings()) {
       final sizes = widget.menuItem.sizes ?? [];
       _selectedSize ??= sizes.isNotEmpty ? sizes.first : null;
-      final splitCount =
-          widget.menuItem.dippingSplits?[_selectedSize?.label] ?? 2;
       _selectedDippedSauces = {};
-      final sauceOptions = widget.menuItem.dippingSauceOptions ?? [];
-      for (var i = 0; i < splitCount; i++) {
-        _selectedDippedSauces['split_$i'] = "plain";
-      }
-
-      _isAnyDipped = false;
       _sideDipCounts = {};
-      final sideOptions = widget.menuItem.sideDipSauceOptions ?? [];
-      for (final id in sideOptions) {
-        _sideDipCounts[id] = 0;
-      }
+      _isAnyDipped = false;
+      _resyncWingsForSize(_selectedSize?.label);
     }
 
     // --- Initialize ingredientAmounts for amountSelectable included ingredients ---
@@ -642,7 +657,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
   bool _isPizza() {
     final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
-    if (profile == shared.MenuProfile.pizza) return true;
+    // Calzone re-uses the pizza path; left/right is suppressed by _isCalzone().
+    if (profile == shared.MenuProfile.pizza ||
+        profile == shared.MenuProfile.calzone) return true;
     final cat = widget.menuItem.category.toLowerCase();
     return cat.contains('pizza');
   }
@@ -1243,6 +1260,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                 (s) => s.label == newLabel,
                                 orElse: () => widget.menuItem.sizes!.first,
                               );
+                              _resyncWingsForSize(_selectedSize?.label);
                             });
                           },
                           toppingCostLabel: _isPizzaOrCalzone()
@@ -1270,6 +1288,13 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                 .map((e) => MapEntry(e.key, e.value!)),
                           ),
                           setState: setState,
+                          onPortionChanged: (splitKey, sauceId) {
+                            setState(() {
+                              _selectedDippedSauces[splitKey] = sauceId;
+                              _isAnyDipped = _selectedDippedSauces.values
+                                  .any((v) => v != null && v != 'plain');
+                            });
+                          },
                         ),
                         WingsDipSauceSelector(
                           menuItem: widget.menuItem,
@@ -1277,13 +1302,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
                           loc: loc,
                           ingredientMetadata: _ingredientMetadata,
                           sideDipCounts: _sideDipCounts,
-                          wingsDipSauceTabIndex: _wingsDipSauceTabIndex,
+                          selectedSize: _selectedSize?.label,
                           setState: setState,
-                          onTabChanged: (newIndex) {
-                            setState(() {
-                              _wingsDipSauceTabIndex = newIndex;
-                            });
-                          },
                         ),
                         WingsOptionalAddOnsGroup(
                           menuItem: widget.menuItem,
