@@ -1,6 +1,6 @@
 # Architecture Decision Log (DECISIONS.md)
 
-**Last Updated**: July 28, 2026 (Decision 10 implementation progress — M1–M4 pizza)
+**Last Updated**: July 28, 2026 (Decision 10 addendum — wings pool + calzone profile)
 
 This file records major architectural and design decisions for the Doughboys Pizzeria Franchise Platform.
 
@@ -88,32 +88,41 @@ This file records major architectural and design decisions for the Doughboys Piz
 
 ### 10. Menu Modifier System — Full Rebuild (not patch-only)
 **Date**: July 27, 2026 (refined same day: catalog vs groups vs items)  
-**Status**: **Approved — implementation in progress** (M1–M3 HQ done; M3 Admin done; M4 pizza path done on `feat/menu-modifier-system-rebuild-v1`; M5 open)  
+**Status**: **Approved — implementation in progress** (M1–M4 pizza done; wings + calzone planned; M5 open)  
 **Decision**:
-1. **Rebuild** menu customization end-to-end. Reject “barely held together” MVP patches that leave dual trees and mobile category-name heuristics.
-2. **Canonical runtime model:** enriched modifier groups with `selectMode`, min/max/maxFree, portion/double flags; options may use **`ingredientId` (preferred for food)** or **label-only (non-ingredient)** for structural choices.
-3. **`menuProfile`** (`standard` | `pizza` | `wings` | `drinks` | …): supplies defaults, **seeded groups** (e.g. pizza → Crust/Cook/Cut), and advanced widgets. Doughboys **pizza** UX via profile—not `category.contains('pizza')`.
-4. **Stop dual-writing** Admin `customizations: List<Customization>` as a second source of truth vs groups. Migrate → single tree; cut over mobile to schema-driven renderer.
-5. **Item inventory:** `inventoryTracked` + `stockCount` (+ optional threshold) on menu items. Ingredient OOS for toppings/sauces. SKU link later.
-6. Workstreams **M1–M5** in `docs/slices/menu-modifier-system-rebuild-v1.md`.
+1. **Rebuild** menu customization end-to-end. Reject dual trees and mobile category-name heuristics as the long-term path.
+2. **Canonical runtime model:** enriched modifier groups; options may use **`ingredientId`** or **label-only** for structural choices.
+3. **`menuProfile`** (`standard` | `pizza` | `calzone` | `wings` | `drinks` | …): supplies defaults, seeded groups, and advanced widgets. **Not** `category.contains('pizza')`.
+4. **Stop dual-writing** Admin `customizations` as a second source of truth. Migrate → single tree; cut over mobile (M5).
+5. **Item inventory:** `inventoryTracked` + `stockCount` (+ optional threshold).
+6. Workstreams **M1–M5** in `docs/slices/menu-modifier-system-rebuild-v1.md`; **wings + calzone** in `docs/slices/hq-wings-calzone-v1.md`.
 
 **Catalog rules (locked July 27):**
 
-| Concept | Role | Examples | Ingredient type / ingredient? |
-|---------|------|----------|-------------------------------|
-| **Ingredient type + ingredient** | Shared kitchen component (allergens, OOS, reuse) | Pepperoni, ranch, BBQ sauce | **Yes** |
-| **Modifier group option (non-ingredient)** | Structural / product choice | Cook Regular/Crispy; Cut; Crust Hand-tossed/Thin | **No** — option `label` only (or optional ingredientId if dough tracked) |
-| **Menu item** | Sellable product | BBQ Chicken Pizza, Garlic Bread, Cheesecake, Coke | The **item**, not an ingredient of itself |
+| Concept | Role | Ingredient type? |
+|---------|------|------------------|
+| Ingredient type + ingredient | Shared kitchen component | **Yes** |
+| Modifier option (non-ingredient) | Structural choice (Cook/Cut/Crust) | **No** |
+| Menu item | Sellable product | The item |
 
-- **Do not** model Cook / Cut / Crust as ingredient types.
-- **Whole products** (cheesecake, garlic bread, many drinks) are **menu items**; add groups only for real choices (e.g. dipping cups).
-- **Shared sauces** (BBQ for pizza + wings): **one** ingredient, referenced by multiple groups/items—not duplicated wing-sauce vs pizza-sauce types unless the kitchen treats them as different products.
-- Foundation onboarding catalogs **real** ingredient types only; **profile templates** seed structural groups on items.
-- **UI contract (locked July 28):** Current toppings = included/food toppings; Order Details = crust/cook/cut; structural option ids must not appear in Current toppings UI or cart `currentIngredients`.
+- Do **not** model Cook / Cut / Crust as ingredient types.
+- Shared sauces (pizza + wings): **one** ingredient under type `sauces`.
 
-**Rationale**: Multi-tenant types + Doughboys live MVP need one system; stuffing structural choices into ingredient types forces false catalog data.  
-**Impact**: shared_core models, HQ + Admin editors, mobile modal, Firestore, seeds, onboarding foundation guidance.  
-**Reference**: `docs/slices/menu-modifier-system-rebuild-v1.md`, `docs/MOBILE_DYNAMIC.md`, `STATUS.md`, `HANDOFF.md`.
+**Pizza UI contract (locked July 28):**  
+Current toppings = food only; optionalAddOns by typeId = available pools; cheeses/sauces stay in sections; Order Details = crust/cook/cut; structural ids never in Current / cart topping lists.
+
+**Wings + calzone addendum (locked July 28):**
+
+1. **`menuProfile: calzone`** — same customization shape as pizza; **no left/right half** UI; separate reporting from pizza.
+2. **Wings** — max **2** flavor portions for all sizes; **Plain** = no toss on that portion (still eligible for free side cups).
+3. **Wing sauces** — catalog type **`sauces` only**; **franchise shared pool** (`franchises/{id}/config/menu_profile_wings`) + **item bind** (`dippingSauceOptions` / `sideDipSauceOptions` and/or `wing_sauce` / `wing_dips` groups). Toss list and side-cup list are the **same** ids for Doughboys.
+4. **Free cups + extra cup upcharge** — set in **menu item creation** per size via existing `freeDipCupCount` and `sideDipUpcharge` maps (Phase A). Optional later: fields on `SizeData`.
+5. **HQ** binds existing sauce ingredients (create ingredients in foundation, not a parallel wing-only creator).
+6. **Mobile wings UI** — **Build your wings** (2 portions) + **Dipping sauces** (counts); do not keep a confusing dual empty “dips vs sauces” taxonomy.
+
+**Rationale**: Multi-tenant types need one system; wings rules belong in profile + item data, not hard-coded cup counts; calzone needs pizza UX with distinct analytics.  
+**Impact**: shared_core profiles/templates, HQ editor, mobile modal, franchise config, seeds.  
+**Reference**: `docs/slices/menu-modifier-system-rebuild-v1.md`, `docs/slices/hq-wings-calzone-v1.md`, `docs/MOBILE_DYNAMIC.md`, `STATUS.md`, `HANDOFF.md`.
 
 ---
 

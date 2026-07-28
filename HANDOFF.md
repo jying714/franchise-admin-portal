@@ -1,6 +1,6 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: July 28, 2026 (~12:45 CDT — pizza customization UX locked)  
+**Last Updated**: July 28, 2026 (~13:50 CDT — wings + calzone plan locked)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
 **Active branch**: `feat/menu-modifier-system-rebuild-v1`  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
@@ -12,45 +12,41 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/DECISIONS.md`** over
 
 ---
 
-## 1. Latest session (July 28)
+## 1. Latest session (July 28 afternoon)
 
-### What landed
+### Pizza path (done)
 
-| Area | What |
-|------|------|
-| **HQ editor** | Restored **Included toppings** + **Optional add-ons** via `MultiIngredientSelector`; save persists draft lists (no longer wipes to `const []`) |
-| **shared_core** | `includedIngredients` parse accepts **string ids** as well as maps |
-| **Mobile pizza** | Available meats/veggies/cheeses/sauces from **`optionalAddOns` by `typeId`** |
-| **Current Toppings** | Food only; cheeses & sauces excluded |
-| **Additional** | Meats \| Veggies tabs from optional pool minus Current |
-| **Cheeses** | ExpansionTile Add/Remove + portion + Regular/Double; included pre-selected; not moved to Current |
-| **Sauces** | **Same UI as cheeses** (not SauceSelectorGroup radios/clear); pool = optional ∪ included; included sauce pre-selected |
-| **Platform** | Categories stream; ChangeNotifierProvider FranchiseProvider; Android Gradle/JVM align on Minisforum |
+- HQ included + optional add-ons persist; mobile optionalAddOns pools; cheeses/sauces section parity; CBR PASS.
+- Doughboys categories / ingredient_types / ingredient_metadata / menu_items seeded and verified.
 
-**Human smoke (CBR):** PASS for this contract.
+### Wings + calzone (planned — product locked)
 
-### Locked product rules (do not regress)
+Authority: **`docs/slices/hq-wings-calzone-v1.md`**.
 
-1. **`optionalAddOns`** = available pool for pizza typed sections (meats, veggies, cheeses, sauces by `typeId`).
-2. **`includedIngredients`** = defaults; food → Current; cheeses/sauces → pre-select in their sections only.
-3. **modifierGroups** = crust/cook/cut + max/maxFree rules; do not replace optionalAddOns as the customer-facing available list when optionalAddOns is populated.
-4. Cheeses and sauces **never** appear under Current Toppings.
-5. Flat Optional add-ons block **hidden** on pizza/calzone.
-6. Do not reintroduce SauceSelectorGroup as the primary pizza sauces UI.
+| Topic | Lock |
+|--------|------|
+| Wings portions | Max **2** always |
+| Plain | No toss on portion; **still gets free cups** |
+| Sauces | Catalog type **`sauces`**; one **franchise shared pool**; item **binds** same list for toss + side cups |
+| Free cups / extra $ | Menu item creation per size → `freeDipCupCount` / `sideDipUpcharge` (existing MenuItem fields) |
+| UI | Build your wings + **Dipping sauces** only |
+| Calzone | **`menuProfile: calzone`**; pizza twin; **no left/right** |
+
+**Implementation order:** W1 shared_core → W4 mobile wings (seed maps) → W5 calzone mobile → W3 HQ → W2 franchise pool → W6 seed → W7 smoke → M5.
 
 ### Still open
 
-1. Full Doughboys re-seed under this contract  
-2. Broader M4 QA (wings / standard / Liberty)  
-3. **M5** cutover  
-4. Developer dashboard  
+1. Wings + calzone W1–W7  
+2. **M5** cutover  
+3. Developer dashboard  
 
-### Prior product rules (still valid)
+### Do not regress
 
-- Cook/Cut/Crust = label-only modifier options, never ingredient types  
-- Web authors rules; mobile enforces  
-- No production `category.contains('pizza')` for behavior (profile-first)  
-- No DesignTokens invention; no `FranchiseProvider()` zero-arg  
+- Pizza optionalAddOns contract (Current / Additional / Cheeses / Sauces / Order Details)  
+- HQ included + optional persist  
+- No `FranchiseProvider()` zero-arg / DesignTokens invention  
+- No Cook/Cut/Crust as ingredient types  
+- No new `wing_sauces` ingredient type  
 
 ---
 
@@ -61,27 +57,30 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/DECISIONS.md`** over
 | HQ onboarding sole host | Done |
 | Platform Owner MVP | Done |
 | Admin ops v1 | Done on `main` |
-| Menu rebuild M1–M3 HQ + M3 Admin | Done on feature branch |
-| M4 pizza path + optionalAddOns UX | Done on feature branch |
+| Menu rebuild M1–M4 pizza + optionalAddOns UX | Done on feature branch |
+| Foundation seed Doughboys | Done |
+| Wings + calzone product lock (W0) | Done (docs only) |
 
 ---
 
 ## 3. What’s next
 
-1. Re-seed remaining menu items like CBR (included + full optionalAddOns by type)  
-2. Smoke matrix non-pizza  
-3. M5 cutover + merge when green  
-4. Developer dashboard  
+1. W1: `MenuProfile.calzone` + templates  
+2. W4/W5: mobile wings + calzone  
+3. W3/W2: HQ editor + franchise sauce pool  
+4. Seed + smoke → M5  
 
 ---
 
-## 4. Key files (this arc)
+## 4. Key references
 
-- `web-app/lib/admin/hq_owner/onboarding/widgets/menu_items/menu_item_editor_sheet.dart`
-- `mobile_app/lib/widgets/customization/customization_modal.dart`
-- `packages/shared_core/lib/src/core/models/menu_item.dart`
-- `mobile_app/android/*` (Gradle toolchain; Minisforum)
+- `docs/slices/hq-wings-calzone-v1.md`  
+- `docs/slices/menu-modifier-system-rebuild-v1.md`  
+- `packages/shared_core/.../menu_item.dart` (wings fields already present)  
+- `packages/shared_core/.../menu_profile_templates.dart`  
+- `mobile_app/.../customization_modal.dart`  
+- `web-app/.../menu_item_editor_sheet.dart`  
 
 ---
 
-**Bottom line:** Pizza customization contract is **human-locked**. Agents must not strip included/optional HQ fields or collapse cheeses/sauces back into Current or SauceSelectorGroup. Next is seed + M5.
+**Bottom line:** Pizza UX locked and seeded. Next product work is **wings + calzone** per slice; do not start M5 until that acceptance is green unless human expands scope.
