@@ -1,9 +1,9 @@
 # Slice: Menu modifier system rebuild v1
 
-**Status**: In progress — M1–M4 + wings/calzone W0–W7 done; **M5 cutover open** (next gate); W2 optional  
+**Status**: **Complete** (M1–M5 + wings/calzone W0–W7) — W2 optional residual only  
 **Branch**: `feat/menu-modifier-system-rebuild-v1`  
 **Date locked**: July 27, 2026  
-**Progress note**: July 28, 2026 evening — wings/calzone acceptance PASS; pizza Order Details fallback; salad/dinner optional UX; included-ingredient pricing honesty; **M5 is next**  
+**Progress note**: July 28, 2026 evening — M5 dual-tree cutover complete; canonical menuProfile/modifierGroups only; wings/calzone/pizza/salad smoke green  
 **Do not** deliver as a thin Admin Customize patch.
 
 ## Problem
@@ -60,17 +60,17 @@ Full product + workstreams: **`docs/slices/hq-wings-calzone-v1.md`** — **W0–
 - `menuProfile: calzone` — pizza twin, no left/right.  
 - `menuProfile: wings` — 2 portions, Plain, item sauce bind + free cups on item maps.
 
-## M5 — Dual-tree cutover (next)
+## M5 — Dual-tree cutover (**Done** July 28)
 
-Stop supporting **legacy + canonical** production paths in parallel:
+Stop supporting **legacy + canonical** production paths in parallel — completed:
 
-1. Writers: HQ/Admin persist canonical `menuProfile` + `modifierGroups` (+ intentional product fields: pizza optionalAddOns, wings dip maps, sizes).  
-2. Readers: mobile/web prefer profile + groups; shrink legacy-only branches.  
-3. Data: backfill live items missing profile/groups.  
-4. Delete dead legacy UI/adapters once unused.  
-5. Full smoke after cutover.
+1. Writers: `MenuItem.toFirestore` always emits `menuProfile` + `modifierGroups`; skips empty dual lists (`customizations` / `customizationGroups`). HQ/Admin editor + form paths preserve canonical fields.  
+2. Readers: `effectiveMenuProfile` / `effectiveModifierGroups` are stored-only (legacy heuristics + `_legacyToModifierGroups` deleted).  
+3. Data: full reseed under new schema; legacy dual-tree documents deleted (no backfill job required).  
+4. Dead paths removed: Admin `MenuItemCustomizationsDialog` + `customization_types.dart`; day-2 form dual Customize entry; offline cache carries profile/groups (DB v3). Dynamic form Save preserves canonical fields.  
+5. Full smoke green (pizza / wings / calzone / salad-standard).
 
-Do **not** start M5 mid-feature without human scope expansion. Wings/calzone acceptance is green — cutover is now the epic gate.
+**Do not** reintroduce dual production write paths after M5.
 
 ## Non-goals
 
@@ -92,7 +92,7 @@ Do **not** start M5 mid-feature without human scope expansion. Wings/calzone acc
 | M4 Mobile/web pizza | Done (CBR PASS) |
 | Wings + calzone W0–W7 | **Done** |
 | W2 franchise sauce pool | Open (optional) |
-| M5 Cutover | **Open** (next) |
+| M5 Cutover | **Done** (July 28) |
 
 ## Acceptance (epic)
 
@@ -101,7 +101,8 @@ Do **not** start M5 mid-feature without human scope expansion. Wings/calzone acc
 - [x] Calzone acceptance (hq-wings-calzone-v1 W7)  
 - [x] Cook/Cut/Crust as groups  
 - [x] HQ + Admin same write structure  
-- [ ] STATUS complete only after **M5**
+- [x] M5 dual-tree cutover (canonical-only write/read; legacy adapter removed; dual Admin Customize UI deleted; Dynamic form preserves profile/groups)  
+- [x] STATUS complete only after **M5**
 
 ## Agent / human rules
 
@@ -109,4 +110,4 @@ Do **not** start M5 mid-feature without human scope expansion. Wings/calzone acc
 - Do not strip HQ included/optional fields or save as empty constants (except clear on wings profile switch).  
 - Do not collapse pizza cheeses/sauces into Current Toppings.  
 - Do not invent `wing_sauces` ingredient type.  
-- Do not mark epic complete until M5.
+- Do not reintroduce dual production write paths after M5.
