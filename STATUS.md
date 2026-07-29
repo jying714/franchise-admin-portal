@@ -1,9 +1,9 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 28, 2026 (~18:05 CDT — M5 dual-tree cutover complete; canonical menuProfile/modifierGroups only)  
+**Last Updated**: July 28, 2026 (~19:25 CDT — W2 franchise wings pool + deferred order-experience complete; feature branch merged to main)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
-**Branch (active)**: `feat/menu-modifier-system-rebuild-v1`  
-**Main**: includes Admin ops fixes merge + onboarding-4step; Hosting deploy OK
+**Branch (active)**: `main`  
+**Main**: includes menu-modifier M1–M5, wings/calzone W0–W7+W2, Hosting deploy on push
 
 > This file is **always loaded in full** by every agent.
 
@@ -12,8 +12,8 @@
 ## Current Phase
 
 **Phase 1 HQ onboarding + Platform Owner MVP complete.**  
-**Admin ops P0/P1 complete** (merged to `main`).  
-**Active epic:** Menu modifier system rebuild (Decision 10) — **M1–M5 complete; wings + calzone W0–W7 done; optional W2 open.**
+**Admin ops P0/P1 complete** (on `main`).  
+**Menu modifier system rebuild (Decision 10)** — **M1–M5 complete; wings + calzone W0–W7 + W2 complete.**
 
 ### Completed (locked)
 
@@ -35,6 +35,9 @@
 - [x] Salad optional ↔ Current Toppings (Click to Add pool; included not double-listed; banner parity)
 - [x] Pricing: included ingredients never add to base (only doubles / true extras charge)
 - [x] **M5 dual-tree cutover** — canonical-only write/read; legacy adapter removed; dual Admin Customize UI deleted; data reseeded; smoke green
+- [x] **W2** franchise `config/menu_profile_wings` (HQ save/apply + mobile fallback)
+- [x] Deferred **order-experience** feedback prompt (`pending_order_experience_feedback` → MainMenu when due)
+- [x] `feat/menu-modifier-system-rebuild-v1` → `main`
 
 ### Menu modifier rebuild — progress
 
@@ -47,7 +50,7 @@
 | **M4 Web** Modal bridge | **Done** (pizza path) |
 | **M4 Mobile** optionalAddOns-driven pizza customization UX | **Done** (CBR smoke PASS) |
 | **W1** MenuProfile.calzone + templates | **Done** |
-| **W2** Franchise sauce pool | **Open** (optional; item bind + save projection works without it) |
+| **W2** Franchise sauce pool | **Done** (HQ + mobile fallback; July 28) |
 | **W3** HQ wings panel (free cups / upcharge / sauce bind / layout) | **Done** |
 | **W4** Mobile wings UX (2 portions + Plain + single Dipping sauces) | **Done** |
 | **W5** Mobile/web calzone = pizza path, no left/right | **Done** |
@@ -73,7 +76,7 @@
 
 ### Locked wings + calzone (do not regress)
 
-**Wings:** max 2 flavor portions; Plain = no toss; free cups still apply; sauces from type `sauces`; item bind via `modifierGroups` (`wing_sauce` / `wing_dips`) projected to `dippingSauceOptions` / `sideDipSauceOptions` on save; toss list = side-cup list; free cups + extra upcharge set per size on **menu item** (`freeDipCupCount` / `sideDipUpcharge`); UI = Build your wings + Dipping sauces only (no included/optional toppings on wings profile; no Order Details).
+**Wings:** max 2 flavor portions; Plain = no toss; free cups still apply; sauces from type `sauces`; item bind via `modifierGroups` (`wing_sauce` / `wing_dips`) projected to `dippingSauceOptions` / `sideDipSauceOptions` on save; toss list = side-cup list; free cups + extra upcharge set per size on **menu item** (`freeDipCupCount` / `sideDipUpcharge`); UI = Build your wings + Dipping sauces only (no included/optional toppings on wings profile; no Order Details). **W2:** franchise pool at `franchises/{id}/config/menu_profile_wings`; mobile read order item lists → groups → franchise pool → empty.
 
 **Calzone:** `menuProfile: calzone`; pizza-equivalent data/UX (Current / Additional / Cheeses / Sauces); **no left/right half** UI; no Order Details required for calzone product path.
 
@@ -91,9 +94,9 @@ Authority: `docs/slices/hq-wings-calzone-v1.md`, `docs/MOBILE_DYNAMIC.md`.
 
 | Priority | Work | Authority |
 |----------|------|-----------|
-| **1** | Optional **W2** franchise shared sauce pool | `docs/slices/hq-wings-calzone-v1.md` |
-| **2** | Developer dashboard | Menu path clear on feature branch |
-| **3** | Merge `feat/menu-modifier-system-rebuild-v1` → `main` when ready for Hosting | Human gate |
+| **1** | Developer dashboard | Next epic |
+| **2** | Residual product polish only under explicit human task | STATUS / HANDOFF |
+| **3** | Confirm Hosting deploy after this `main` push | Human gate |
 
 ### Explicit post-MVP / deferred
 
@@ -106,6 +109,7 @@ Authority: `docs/slices/hq-wings-calzone-v1.md`, `docs/MOBILE_DYNAMIC.md`.
 | Combos / bundles | Deferred |
 | SizeData.freeSideDips migration (Phase B) | Optional after wings Phase A |
 | Salad/dinner dedicated MenuProfile | Not required; standard + optionalAddOns sufficient |
+| Order-experience prompt trigger post-delivery | Post-MVP (storage + MainMenu due check already landed) |
 
 **Onboarding product keys:**  
 `onboarding_feature_setup` → `onboarding_design_branding` → `onboarding_menu_foundation` → `onboardingMenuItems` → `onboardingReview`
