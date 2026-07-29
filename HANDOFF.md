@@ -1,8 +1,8 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: July 28, 2026 (~18:05 CDT — M5 dual-tree cutover complete)  
+**Last Updated**: July 28, 2026 (~19:25 CDT — W2 + order-experience complete; menu epic on main)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
-**Active branch**: `feat/menu-modifier-system-rebuild-v1`  
+**Active branch**: `main`  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
 **Local path**: `C:\\projects\\franchise-admin-portal`  
 **Firebase**: `doughboyspizzeria-2b3d2`  
@@ -21,7 +21,7 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/DECISIONS.md`** over
 - Flat “Add-ons” checkbox groups hidden on pizza/calzone.
 - Included ingredients **do not** inflate base price (only doubles / true extras charge).
 
-### Wings + calzone (W0–W7 **Done**)
+### Wings + calzone (W0–W7 + **W2 Done**)
 
 Authority: **`docs/slices/hq-wings-calzone-v1.md`**.
 
@@ -33,14 +33,15 @@ Authority: **`docs/slices/hq-wings-calzone-v1.md`**.
 | Free cups / extra $ | Menu item per size → `freeDipCupCount` / `sideDipUpcharge` |
 | UI | Build your wings + **Dipping sauces** only; no included/optional; no Order Details |
 | Calzone | **`menuProfile: calzone`**; pizza twin; **no left/right**; cheeses/sauces like pizza |
+| **W2 pool** | `franchises/{id}/config/menu_profile_wings`; HQ save/apply; mobile item → groups → pool → empty |
 
 Human acceptance: wings, calzone, pizza — **PASS**.
 
-### Salad / dinner mobile (done this session)
+### Salad / dinner mobile (done)
 
 - No Order Details for salad/dinner.
 - Optional ingredients only when HQ set `optionalAddOns` (`menuProfile: standard` — no new profiles).
-- Salad: optional pool uses Click to Add (Additional Toppings-style cards); selected items move to Current only; included not listed on both; remove from Current returns to optional pool.
+- Salad: optional pool uses Click to Add; selected items move to Current only; included not listed on both.
 - Pricing: included never auto-added to starting total.
 
 ### M5 dual-tree cutover (**Done**)
@@ -52,11 +53,16 @@ Human acceptance: wings, calzone, pizza — **PASS**.
 - Dynamic form Save preserves menuProfile/modifierGroups.
 - Full reseed; legacy dual-tree data deleted; smoke green.
 
+### Deferred order-experience feedback (**Done**)
+
+- Confirmation: ordering survey only; schedules `pending_order_experience_feedback` (+45m).
+- MainMenu: when due, shows `FeedbackMode.orderExperience` once, then clears key.
+
 ### Still open
 
-1. Optional **W2** franchise `config/menu_profile_wings` pool  
-2. Developer dashboard  
-3. Merge feature branch → `main` when ready for Hosting  
+1. Developer dashboard  
+2. Residual polish under explicit human task only  
+3. Confirm Hosting after this `main` docs push  
 
 ### Do not regress
 
@@ -78,18 +84,19 @@ Human acceptance: wings, calzone, pizza — **PASS**.
 | HQ onboarding sole host | Done |
 | Platform Owner MVP | Done |
 | Admin ops v1 | Done on `main` |
-| Menu rebuild M1–M5 | **Done** on feature branch |
+| Menu rebuild M1–M5 | **Done** on `main` |
 | Foundation seed Doughboys | Done |
-| Wings + calzone W0–W7 | **Done** on feature branch |
-| Salad/dinner mobile optional UX + pricing honesty | Done on feature branch |
+| Wings + calzone W0–W7 + W2 | **Done** on `main` |
+| Salad/dinner mobile optional UX + pricing honesty | Done on `main` |
+| Deferred order-experience prompt | Done on `main` |
 
 ---
 
 ## 3. What’s next
 
-1. Optional **W2** franchise shared sauce pool (ops convenience only)  
-2. Developer dashboard after menu path stable on `main`  
-3. Merge `feat/menu-modifier-system-rebuild-v1` → `main` for Hosting  
+1. Developer dashboard  
+2. Residual product polish only under explicit human task  
+3. Confirm Hosting deploy for this `main` tip  
 
 ---
 
@@ -104,7 +111,8 @@ Human acceptance: wings, calzone, pizza — **PASS**.
 - `mobile_app/.../optional_addons_group.dart`  
 - `mobile_app/.../wings_portion_selector.dart` / `wings_dip_sauce_selector.dart`  
 - `web-app/.../menu_item_editor_sheet.dart`  
+- `web-app/.../wings_franchise_sauce_pool.dart`  
 
 ---
 
-**Bottom line:** Menu modifier rebuild **M1–M5 complete** on `feat/menu-modifier-system-rebuild-v1`. Wings/calzone/pizza/salad paths green. Canonical `menuProfile` + `modifierGroups` only. Optional residual: W2 sauce pool; then merge to `main`.
+**Bottom line:** Menu modifier rebuild **M1–M5 + W2 complete** on **`main`**. Wings/calzone/pizza/salad paths green. Canonical `menuProfile` + `modifierGroups` only. Next epic: Developer dashboard.
