@@ -15,6 +15,9 @@ class WingsPortionSelector extends StatelessWidget {
   /// Parent owns the real map; must update it (not a build-time copy).
   final void Function(String splitKey, String sauceId) onPortionChanged;
 
+  /// W2: when non-empty, preferred over item dippingSauceOptions.
+  final List<String>? sauceIdsOverride;
+
   const WingsPortionSelector({
     super.key,
     required this.menuItem,
@@ -25,12 +28,16 @@ class WingsPortionSelector extends StatelessWidget {
     required this.selectedDippedSauces,
     required this.setState,
     required this.onPortionChanged,
+    this.sauceIdsOverride,
   });
 
   @override
   Widget build(BuildContext context) {
     final splitCount = menuItem.dippingSplits?[selectedSize] ?? 2;
-    final sauceOptions = menuItem.dippingSauceOptions ?? [];
+    final sauceOptions =
+        (sauceIdsOverride != null && sauceIdsOverride!.isNotEmpty)
+            ? sauceIdsOverride!
+            : (menuItem.dippingSauceOptions ?? []);
 
     if (splitCount == 0) return const SizedBox.shrink();
 

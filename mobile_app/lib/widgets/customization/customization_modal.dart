@@ -20,6 +20,7 @@ import 'package:franchise_mobile_app/widgets/customization/topping_cost_label.da
 import 'package:franchise_mobile_app/widgets/customization/header.dart';
 import 'package:franchise_mobile_app/widgets/customization/bottom_bar.dart';
 import 'package:franchise_mobile_app/generated/app_localizations.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 const MAX_DOUBLES = 4;
 const DOUGH_IDS = {'dough_calzone', 'dough_pizza', 'dough'};
@@ -121,6 +122,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
   late Map<String, String?> _selectedDippedSauces; // For split dipped choices
   late bool _isAnyDipped; // True if any part is dipped
   late Map<String, int> _sideDipCounts; // For extra dip cups per flavor
+  /// W2: franchise config/menu_profile_wings.sauceIngredientIds when item has none.
+  List<String> _franchiseWingSauceIds = const [];
 
   // Drinks state
   late Map<String, int> _drinkFlavorCounts; // ingredientId -> count
@@ -320,11 +323,46 @@ class _CustomizationModalState extends State<CustomizationModal> {
     return cat.contains('dinner') || catId.contains('dinner');
   }
 
+  List<String> _effectiveWingSauceIds() {
+    if (widget.menuItem.sideDipSauceOptions?.isNotEmpty == true) {
+      return List<String>.from(widget.menuItem.sideDipSauceOptions!);
+    }
+    if (widget.menuItem.dippingSauceOptions?.isNotEmpty == true) {
+      return List<String>.from(widget.menuItem.dippingSauceOptions!);
+    }
+    // modifierGroups wing_sauce / wing_dips
+    final groups = widget.menuItem.modifierGroups ?? const [];
+    final fromGroups = <String>[];
+    for (final g in groups) {
+      final id = g.id.toLowerCase();
+      final label = g.label.toLowerCase();
+      if (id == 'wing_sauce' ||
+          id == 'wing_dips' ||
+          label.contains('sauce') ||
+          label.contains('dip')) {
+        for (final o in g.options) {
+          final key =
+              (o.ingredientId != null && o.ingredientId!.trim().isNotEmpty)
+                  ? o.ingredientId!.trim()
+                  : o.id.trim();
+          if (key.isNotEmpty && key.toLowerCase() != 'plain') {
+            fromGroups.add(key);
+          }
+        }
+      }
+    }
+    if (fromGroups.isNotEmpty) return fromGroups;
+    // W2 franchise pool
+    if (_franchiseWingSauceIds.isNotEmpty) {
+      return List<String>.from(_franchiseWingSauceIds);
+    }
+    return const [];
+  }
+
   void _resyncWingsForSize(String? size) {
     if (!_isWings()) return;
     final splitCount = widget.menuItem.dippingSplits?[size] ?? 2;
 
-    // Rebuild portion slots (always max 2 product rule; map may still say 2)
     final nextSplits = <String, String?>{};
     for (var i = 0; i < splitCount; i++) {
       final key = 'split_$i';
@@ -334,15 +372,44 @@ class _CustomizationModalState extends State<CustomizationModal> {
     _isAnyDipped =
         _selectedDippedSauces.values.any((v) => v != null && v != 'plain');
 
-    // Keep dip cup counts for known sauce ids; drop unknown keys
-    final dipIds = (widget.menuItem.sideDipSauceOptions?.isNotEmpty == true)
-        ? widget.menuItem.sideDipSauceOptions!
-        : (widget.menuItem.dippingSauceOptions ?? const <String>[]);
+    final dipIds = _effectiveWingSauceIds();
     final nextCups = <String, int>{};
     for (final id in dipIds) {
       nextCups[id] = _sideDipCounts[id] ?? 0;
     }
     _sideDipCounts = nextCups;
+  }
+
+  Future<void> _loadFranchiseWingSaucePoolIfNeeded() async {
+    if (!_isWings()) return;
+    if ((widget.menuItem.sideDipSauceOptions?.isNotEmpty ?? false) ||
+        (widget.menuItem.dippingSauceOptions?.isNotEmpty ?? false)) {
+      return;
+    }
+    try {
+      final franchiseId =
+          Provider.of<shared.FranchiseProvider>(context, listen: false)
+              .currentFranchiseId;
+      if (franchiseId.isEmpty || franchiseId == 'unknown') return;
+      final doc = await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('config')
+          .doc('menu_profile_wings')
+          .get();
+      if (!doc.exists || doc.data() == null) return;
+      final raw = doc.data()!['sauceIngredientIds'];
+      if (raw is! List) return;
+      final ids =
+          raw.map((e) => e.toString()).where((id) => id.isNotEmpty).toList();
+      if (!mounted || ids.isEmpty) return;
+      setState(() {
+        _franchiseWingSauceIds = ids;
+        _resyncWingsForSize(_selectedSize);
+      });
+    } catch (_) {
+      // Non-fatal — Plain-only remains valid
+    }
   }
 
   bool _showPortionToggle(String groupLabel) {
@@ -634,6 +701,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
       _sideDipCounts = {};
       _isAnyDipped = false;
       _resyncWingsForSize(_selectedSize);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadFranchiseWingSaucePoolIfNeeded();
+      });
     }
 
     if (widget.menuItem.includedIngredients != null) {

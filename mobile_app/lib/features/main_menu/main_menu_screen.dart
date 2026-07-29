@@ -19,9 +19,73 @@ import 'package:franchise_mobile_app/widgets/categories/category_grid.dart';
 import 'package:franchise_mobile_app/widgets/empty_state_widget.dart';
 import 'package:franchise_mobile_app/widgets/loading_shimmer_widget.dart';
 import 'package:franchise_mobile_app/generated/app_localizations.dart';
+import 'package:franchise_mobile_app/core/utils/app_local_storage.dart';
+import 'package:franchise_mobile_app/widgets/feedback/feedback_submission_dialog.dart';
 
-class MainMenuScreen extends material.StatelessWidget {
+class MainMenuScreen extends material.StatefulWidget {
   const MainMenuScreen({super.key});
+
+  @override
+  material.State<MainMenuScreen> createState() => _MainMenuScreenState();
+}
+
+class _MainMenuScreenState extends material.State<MainMenuScreen> {
+  bool _orderExperiencePromptChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    material.WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybeShowPendingOrderExperienceFeedback();
+    });
+  }
+
+  Future<void> _maybeShowPendingOrderExperienceFeedback() async {
+    if (_orderExperiencePromptChecked || !mounted) return;
+    _orderExperiencePromptChecked = true;
+
+    try {
+      final storage = AppLocalStorage();
+      final raw =
+          await storage.getStringAsync('pending_order_experience_feedback');
+      if (raw == null || raw.isEmpty) return;
+
+      final parts = raw.split('|');
+      if (parts.length < 3) {
+        await storage.remove('pending_order_experience_feedback');
+        return;
+      }
+      final orderId = parts[0];
+      final userId = parts[1];
+      final due = DateTime.tryParse(parts[2]);
+      if (due == null) {
+        await storage.remove('pending_order_experience_feedback');
+        return;
+      }
+      if (DateTime.now().isBefore(due)) return;
+
+      final user = Provider.of<shared.User?>(context, listen: false);
+      if (user == null || user.id != userId) return;
+
+      if (!mounted) return;
+      await material.showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (_) => FeedbackSubmissionDialog(
+          orderId: orderId,
+          userId: userId,
+          feedbackMode: FeedbackMode.orderExperience,
+          onSubmitted: () async {
+            await AppLocalStorage().remove('pending_order_experience_feedback');
+          },
+        ),
+      );
+      // Dismiss without submit still clears so it does not loop every open.
+      await AppLocalStorage().remove('pending_order_experience_feedback');
+    } catch (_) {
+      // Non-fatal
+    }
+  }
 
   @override
   material.Widget build(material.BuildContext context) {

@@ -12,6 +12,9 @@ class WingsDipSauceSelector extends StatelessWidget {
   final String? selectedSize;
   final void Function(VoidCallback fn) setState;
 
+  /// W2: when non-empty, preferred over item option lists (franchise pool / effective ids).
+  final List<String>? sauceIdsOverride;
+
   const WingsDipSauceSelector({
     super.key,
     required this.menuItem,
@@ -21,15 +24,16 @@ class WingsDipSauceSelector extends StatelessWidget {
     required this.sideDipCounts,
     this.selectedSize,
     required this.setState,
+    this.sauceIdsOverride,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Product: one list for side cups. Prefer sideDipSauceOptions; fall back to
-    // dippingSauceOptions (HQ may bind once and project both on save).
-    final dipsIds = (menuItem.sideDipSauceOptions?.isNotEmpty == true)
-        ? menuItem.sideDipSauceOptions!
-        : (menuItem.dippingSauceOptions ?? const <String>[]);
+    final dipsIds = (sauceIdsOverride != null && sauceIdsOverride!.isNotEmpty)
+        ? sauceIdsOverride!
+        : ((menuItem.sideDipSauceOptions?.isNotEmpty == true)
+            ? menuItem.sideDipSauceOptions!
+            : (menuItem.dippingSauceOptions ?? const <String>[]));
 
     // Use selected size when parent passes it via size key on the maps.
     // Parent rebuilds this widget when size changes; maps are keyed by size label.

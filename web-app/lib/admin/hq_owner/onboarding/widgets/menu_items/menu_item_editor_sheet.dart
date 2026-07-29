@@ -16,6 +16,7 @@ import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_it
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/modifier_groups_ingredient_binder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/multi_ingredient_selector.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/wings_franchise_sauce_pool.dart';
 
 // ===================== NEW COORDINATOR (Single Source of Truth) =====================
 // ===================== NEW COORDINATOR (Single Source of Truth) =====================
@@ -929,6 +930,111 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                               );
                             }),
                           ],
+                        );
+                      },
+                    ),
+
+                    // W2: franchise default sauce pool (config/menu_profile_wings)
+                    Builder(
+                      builder: (context) {
+                        final profile = (session.draft.menuProfile ??
+                                session.draft.effectiveMenuProfile)
+                            .toLowerCase();
+                        if (profile != shared.MenuProfile.wings) {
+                          return const SizedBox.shrink();
+                        }
+                        final allIngredients =
+                            Provider.of<shared.IngredientMetadataProvider>(
+                          context,
+                          listen: false,
+                        ).allIngredients;
+                        final sauceIngredients = allIngredients.where((ing) {
+                          final t =
+                              (ing.typeId ?? ing.type ?? '').toLowerCase();
+                          return t == 'sauces' || t == 'sauce';
+                        }).toList();
+                        final bound = <String>{
+                          ...?session.draft.dippingSauceOptions,
+                          ...?session.draft.sideDipSauceOptions,
+                        }.toList();
+                        return WingsFranchiseSaucePool(
+                          franchiseId: widget.franchiseId,
+                          sauceIngredients: sauceIngredients,
+                          itemBoundSauceIds: bound,
+                          onApplyPoolToItem: (ids) {
+                            final unique = ids
+                                .map((e) => e.trim())
+                                .where((e) => e.isNotEmpty)
+                                .toSet()
+                                .toList();
+                            var groups = List<shared.ModifierGroup>.from(
+                              session.draft.modifierGroups ??
+                                  session.draft.effectiveModifierGroups,
+                            );
+                            shared.ModifierGroup project(
+                              String groupId,
+                              String label,
+                            ) {
+                              final options = unique.map(
+                                (id) {
+                                  final meta = allIngredients
+                                      .where((i) => i.id == id)
+                                      .cast<shared.IngredientMetadata?>()
+                                      .firstWhere(
+                                        (i) => true,
+                                        orElse: () => null,
+                                      );
+                                  return shared.ModifierOption(
+                                    id: id,
+                                    label: meta?.name ?? id,
+                                    ingredientId: id,
+                                  );
+                                },
+                              ).toList();
+                              final idx = groups.indexWhere(
+                                (g) =>
+                                    g.id.toLowerCase() == groupId ||
+                                    g.label.toLowerCase() == groupId,
+                              );
+                              final base = idx >= 0
+                                  ? groups[idx]
+                                  : shared.ModifierGroup(
+                                      id: groupId,
+                                      label: label,
+                                      selectMode:
+                                          shared.ModifierSelectMode.multi,
+                                      min: 0,
+                                      max: options.length,
+                                      options: const [],
+                                    );
+                              return shared.ModifierGroup(
+                                id: base.id,
+                                label: base.label,
+                                selectMode: base.selectMode,
+                                min: base.min,
+                                max: base.max,
+                                maxFree: base.maxFree,
+                                options: options,
+                              );
+                            }
+
+                            final wingSauce = project('wing_sauce', 'Sauce');
+                            final wingDips =
+                                project('wing_dips', 'Dipping cups');
+                            final without = groups.where((g) {
+                              final id = g.id.toLowerCase();
+                              return id != 'wing_sauce' && id != 'wing_dips';
+                            }).toList();
+                            groups = [...without, wingSauce, wingDips];
+
+                            session.updateDraft(
+                              session.draft.copyWith(
+                                dippingSauceOptions: unique,
+                                sideDipSauceOptions: unique,
+                                modifierGroups: groups,
+                              ),
+                            );
+                          },
                         );
                       },
                     ),
