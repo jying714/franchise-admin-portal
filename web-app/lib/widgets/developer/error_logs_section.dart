@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_admin_portal/admin/developer/developer_error_logs_screen.dart';
 
 class ErrorLogsSection extends StatefulWidget {
   final String? franchiseId;
@@ -14,67 +13,46 @@ class ErrorLogsSection extends StatefulWidget {
   State<ErrorLogsSection> createState() => _ErrorLogsSectionState();
 }
 
+enum _ErrorLogSourceMode { franchise, global }
+
+bool _isConcreteFranchiseId(String? id) =>
+    id != null &&
+    id.isNotEmpty &&
+    id != 'unknown' &&
+    id != 'default' &&
+    id != 'all';
+
 class _ErrorLogsSectionState extends State<ErrorLogsSection> {
-  bool _loading = true;
-  String? _errorMsg;
-  List<shared.ErrorLogSummary> _logs = [];
   String? _filterSeverity;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchLogs();
-  }
-
-  @override
-  void didUpdateWidget(covariant ErrorLogsSection oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.franchiseId != widget.franchiseId) {
-      _fetchLogs();
-    }
-  }
-
-  Future<void> _fetchLogs() async {
-    setState(() {
-      _loading = true;
-      _errorMsg = null;
-    });
-
-    try {
-      final allLogs = await Provider.of<shared.FirestoreService>(
-        context,
-        listen: false,
-      ).getErrorLogSummaries();
-
-      final filteredLogs = _filterSeverity == null
-          ? allLogs
-          : allLogs.where((log) => log.severity == _filterSeverity).toList();
-
-      setState(() {
-        _logs = filteredLogs;
-        _loading = false;
-      });
-    } catch (e, stack) {
-      setState(() {
-        _errorMsg = e.toString();
-        _loading = false;
-      });
-
-      shared.ErrorLogger.log(
-        message: 'Failed to load error logs: $e',
-        stack: stack.toString(),
-        source: 'ErrorLogsSection',
-        severity: 'warning',
-        contextData: {'franchiseId': widget.franchiseId},
-      );
-    }
-  }
+  _ErrorLogSourceMode _sourceMode = _ErrorLogSourceMode.franchise;
 
   void _onSeverityFilterChanged(String? newValue) {
     setState(() {
       _filterSeverity = newValue;
     });
-    _fetchLogs();
+  }
+
+  void _onSourceModeChanged(_ErrorLogSourceMode mode) {
+    setState(() {
+      _sourceMode = mode;
+    });
+  }
+
+  Stream<List<shared.ErrorLog>>? _logsStream(shared.FirestoreService fs) {
+    if (_sourceMode == _ErrorLogSourceMode.global) {
+      return fs.streamErrorLogsGlobal(
+        severity: _filterSeverity,
+        limit: 100,
+      );
+    }
+    if (!_isConcreteFranchiseId(widget.franchiseId)) {
+      return null;
+    }
+    return fs.streamErrorLogs(
+      widget.franchiseId!,
+      limit: 100,
+      severity: _filterSeverity,
+    );
   }
 
   @override
@@ -104,10 +82,15 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
       );
     }
 
-    final isAllFranchises = widget.franchiseId == 'all';
-    final titleFranchiseLabel = isAllFranchises
-        ? (loc.allFranchisesLabel ?? "All Franchises")
-        : (widget.franchiseId ?? "Unknown Franchise");
+    final firestore =
+        Provider.of<shared.FirestoreService>(context, listen: false);
+    final needsFranchise = _sourceMode == _ErrorLogSourceMode.franchise &&
+        !_isConcreteFranchiseId(widget.franchiseId);
+    final modeLabel = _sourceMode == _ErrorLogSourceMode.global
+        ? 'Global'
+        : (_isConcreteFranchiseId(widget.franchiseId)
+            ? widget.franchiseId!
+            : 'Select a franchise');
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -117,7 +100,7 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${loc.errorLogsSectionTitle} — $titleFranchiseLabel',
+              '${loc.errorLogsSectionTitle} — $modeLabel',
               style: theme.textTheme.titleLarge?.copyWith(
                 color: colorScheme.primary,
                 fontWeight: FontWeight.bold,
@@ -129,77 +112,92 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: 18),
+            SegmentedButton<_ErrorLogSourceMode>(
+              segments: const [
+                ButtonSegment<_ErrorLogSourceMode>(
+                  value: _ErrorLogSourceMode.franchise,
+                  label: Text('Franchise'),
+                  icon: Icon(Icons.store_outlined),
+                ),
+                ButtonSegment<_ErrorLogSourceMode>(
+                  value: _ErrorLogSourceMode.global,
+                  label: Text('Global'),
+                  icon: Icon(Icons.public),
+                ),
+              ],
+              selected: {_sourceMode},
+              onSelectionChanged: (set) {
+                if (set.isNotEmpty) {
+                  _onSourceModeChanged(set.first);
+                }
+              },
+            ),
+            const SizedBox(height: 18),
             _buildFilterRow(loc, colorScheme, theme),
             const SizedBox(height: 18),
-            if (_loading)
-              Center(
-                  child: CircularProgressIndicator(color: colorScheme.primary))
-            else if (_errorMsg != null)
+            if (needsFranchise)
               Card(
-                color: colorScheme.errorContainer,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
                     children: [
-                      Icon(Icons.error, color: colorScheme.error),
+                      Icon(Icons.info_outline, color: colorScheme.primary),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          '${loc.errorLogsSectionError}\n$_errorMsg',
-                          style: theme.textTheme.bodyMedium
-                              ?.copyWith(color: colorScheme.error),
+                          'Select a franchise to view franchise error logs.',
+                          style: theme.textTheme.bodyMedium,
                         ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.refresh, color: colorScheme.primary),
-                        tooltip: loc.reload,
-                        onPressed: _fetchLogs,
                       ),
                     ],
                   ),
                 ),
               )
-            else ...[
-              if (_logs.isEmpty)
-                Center(child: Text(loc.errorLogsSectionEmpty))
-              else
-                _ErrorLogList(
-                  logs: _logs,
-                  filterSeverity: _filterSeverity,
-                  colorScheme: colorScheme,
-                  loc: loc,
-                ),
-              const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerRight,
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.open_in_new),
-                  label: Text(loc.errorLogsSectionViewAll),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const DeveloperErrorLogsScreen(),
+            else
+              StreamBuilder<List<shared.ErrorLog>>(
+                stream: _logsStream(firestore),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    shared.ErrorLogger.log(
+                      message: 'Failed to stream error logs: ${snapshot.error}',
+                      source: 'ErrorLogsSection',
+                      severity: 'warning',
+                      contextData: {
+                        'franchiseId': widget.franchiseId,
+                        'sourceMode': _sourceMode.name,
+                      },
+                    );
+                    return Card(
+                      color: colorScheme.errorContainer,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(
+                          '${loc.errorLogsSectionError}\n${snapshot.error}',
+                          style: theme.textTheme.bodyMedium
+                              ?.copyWith(color: colorScheme.error),
+                        ),
                       ),
                     );
-                  },
-                ),
+                  }
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      !snapshot.hasData) {
+                    return Center(
+                      child: CircularProgressIndicator(
+                        color: colorScheme.primary,
+                      ),
+                    );
+                  }
+                  final logs = snapshot.data ?? const <shared.ErrorLog>[];
+                  if (logs.isEmpty) {
+                    return Center(child: Text(loc.errorLogsSectionEmpty));
+                  }
+                  return _ErrorLogList(
+                    logs: logs,
+                    colorScheme: colorScheme,
+                    loc: loc,
+                  );
+                },
               ),
-              const SizedBox(height: 32),
-              _ComingSoonCard(
-                icon: Icons.query_stats,
-                title: loc.errorLogsSectionAnalyticsComingSoon,
-                subtitle: loc.errorLogsSectionAnalyticsDesc,
-                colorScheme: colorScheme,
-                theme: theme,
-              ),
-              _ComingSoonCard(
-                icon: Icons.lightbulb_outline,
-                title: loc.errorLogsSectionAIInsightsComingSoon,
-                subtitle: loc.errorLogsSectionAIInsightsDesc,
-                colorScheme: colorScheme,
-                theme: theme,
-              ),
-            ],
           ],
         ),
       ),
@@ -229,67 +227,68 @@ class _ErrorLogsSectionState extends State<ErrorLogsSection> {
           ],
           onChanged: _onSeverityFilterChanged,
         ),
-        const Spacer(),
-        IconButton(
-          icon: const Icon(Icons.refresh),
-          tooltip: loc.reload,
-          onPressed: _fetchLogs,
-        ),
       ],
     );
   }
 }
 
 class _ErrorLogList extends StatelessWidget {
-  final List<shared.ErrorLogSummary> logs;
-  final String? filterSeverity;
+  final List<shared.ErrorLog> logs;
   final ColorScheme colorScheme;
   final AppLocalizations loc;
 
   const _ErrorLogList({
     required this.logs,
-    required this.filterSeverity,
     required this.colorScheme,
     required this.loc,
   });
 
   @override
   Widget build(BuildContext context) {
-    final filtered = filterSeverity == null
-        ? logs
-        : logs.where((log) => log.severity == filterSeverity).toList();
-
-    if (filtered.isEmpty) {
-      return Center(child: Text(loc.errorLogsSectionEmpty));
-    }
-
     return Card(
       child: ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        itemCount: filtered.length,
+        itemCount: logs.length,
         separatorBuilder: (_, __) => const Divider(height: 1),
         itemBuilder: (context, idx) {
-          final log = filtered[idx];
-          return ListTile(
+          final log = logs[idx];
+          final ts = log.timestamp;
+          final screen = log.screen.isEmpty ? '—' : log.screen;
+          final source = log.source.isEmpty ? log.message : log.source;
+          return ExpansionTile(
             leading: Icon(
               _iconForSeverity(log.severity),
               color: _colorForSeverity(log.severity),
             ),
-            title: Text(log.source), // Use 'source' from shared model
+            title: Text(log.message),
             subtitle: Text(
-              '${loc.errorLogsSectionAt} ${log.screen} — ${_formatDateTime(log.timestamp)}'
-              '${log.userId != null ? " — User: ${log.userId}" : ""}',
+              '${loc.errorLogsSectionAt} $screen — ${_formatDateTime(ts)}'
+              '${source.isNotEmpty ? " — $source" : ""}',
             ),
-            trailing: const Icon(Icons.chevron_right),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
-            ),
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(loc.comingSoon)),
-              );
-            },
+            children: [
+              if (log.stackTrace != null && log.stackTrace!.isNotEmpty)
+                ListTile(
+                  dense: true,
+                  title: const Text('Stack'),
+                  subtitle: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Text(
+                      log.stackTrace!,
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              if (log.contextData != null && log.contextData!.isNotEmpty)
+                ListTile(
+                  dense: true,
+                  title: const Text('Context'),
+                  subtitle: Text(log.contextData.toString()),
+                ),
+            ],
           );
         },
       ),
@@ -325,60 +324,5 @@ Color _colorForSeverity(String severity) {
       return Colors.deepPurple;
     default:
       return Colors.grey;
-  }
-}
-
-class _ComingSoonCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final ColorScheme colorScheme;
-  final ThemeData theme;
-
-  const _ComingSoonCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.colorScheme,
-    required this.theme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: colorScheme.surfaceVariant.withValues(alpha: 0.87),
-      elevation: DesignTokens.adminCardElevation,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-        child: Row(
-          children: [
-            Icon(icon, color: colorScheme.outline, size: 30),
-            const SizedBox(width: 18),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: colorScheme.outline,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

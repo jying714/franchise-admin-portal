@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
 import 'package:franchise_admin_portal/config/design_tokens.dart';
 import 'package:shared_core/shared_core.dart' as shared;
-import 'package:franchise_admin_portal/admin/developer/developer_error_logs_screen.dart';
 
 class FeatureTogglesSection extends StatefulWidget {
   final String? franchiseId;
@@ -14,10 +13,20 @@ class FeatureTogglesSection extends StatefulWidget {
   State<FeatureTogglesSection> createState() => _FeatureTogglesSectionState();
 }
 
+bool _isConcreteFranchiseId(String? id) =>
+    id != null &&
+    id.isNotEmpty &&
+    id != 'unknown' &&
+    id != 'default' &&
+    id != 'all';
+
+enum _FeatureToggleScope { franchise, global }
+
 class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
   bool _loading = true;
   String? _errorMsg;
   List<FeatureToggle> _toggles = [];
+  _FeatureToggleScope _scope = _FeatureToggleScope.franchise;
 
   @override
   void initState() {
@@ -33,6 +42,20 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
     }
   }
 
+  List<FeatureToggle> _mapFromDoc(Map<String, dynamic> data) {
+    final entries = data.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    return entries.map((e) {
+      final enabled = e.value == true || e.value == 'true' || e.value == 1;
+      return FeatureToggle(
+        key: e.key,
+        name: e.key,
+        description: 'config/features → ${e.key}',
+        enabled: enabled,
+      );
+    }).toList();
+  }
+
   Future<void> _fetchFeatureToggles() async {
     setState(() {
       _loading = true;
@@ -40,33 +63,36 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
     });
 
     try {
-      // TODO: Replace with real shared.FirestoreService feature toggle fetch
-      await Future.delayed(const Duration(milliseconds: 500));
-      _toggles = [
-        FeatureToggle(
-          key: 'bulk_order_upload',
-          name: 'Bulk Order Upload',
-          description: 'Enable uploading orders via CSV/Excel.',
-          enabled: widget.franchiseId == 'all' ? false : true,
-        ),
-        FeatureToggle(
-          key: 'experimental_ai_recommendations',
-          name: 'AI Menu Recommendations',
-          description: 'Show AI-driven menu suggestions to users.',
-          enabled: false,
-        ),
-        FeatureToggle(
-          key: 'beta_coupon_engine',
-          name: 'Beta Coupon Engine',
-          description: 'Test new discount/coupon engine.',
-          enabled: false,
-        ),
-      ];
-      setState(() => _loading = false);
+      final fs = Provider.of<shared.FirestoreService>(context, listen: false);
+
+      if (_scope == _FeatureToggleScope.global) {
+        final data = await fs.getGlobalFeatureToggles();
+        setState(() {
+          _toggles = _mapFromDoc(data);
+          _loading = false;
+        });
+        return;
+      }
+
+      if (!_isConcreteFranchiseId(widget.franchiseId)) {
+        setState(() {
+          _toggles = [];
+          _loading = false;
+          _errorMsg = null;
+        });
+        return;
+      }
+
+      final data = await fs.getFranchiseFeatureToggles(widget.franchiseId!);
+      setState(() {
+        _toggles = _mapFromDoc(data);
+        _loading = false;
+      });
     } catch (e, stack) {
       setState(() {
         _errorMsg = e.toString();
         _loading = false;
+        _toggles = [];
       });
 
       shared.ErrorLogger.log(
@@ -74,22 +100,62 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
         stack: stack.toString(),
         source: 'FeatureTogglesSection',
         severity: 'warning',
-        contextData: {'franchiseId': widget.franchiseId},
+        contextData: {
+          'franchiseId': widget.franchiseId,
+          'scope': _scope.name,
+        },
       );
     }
   }
 
   Future<void> _setFeatureToggle(FeatureToggle toggle, bool enabled) async {
+    if (_scope != _FeatureToggleScope.franchise ||
+        !_isConcreteFranchiseId(widget.franchiseId)) {
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Update feature toggle?'),
+        content: Text(
+          'Set "${toggle.key}" to ${enabled ? "enabled" : "disabled"} '
+          'for franchise ${widget.franchiseId}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
     try {
-      // TODO: Persist feature toggle change with shared.FirestoreService
-      await Future.delayed(const Duration(milliseconds: 350));
+      final fs = Provider.of<shared.FirestoreService>(context, listen: false);
+      await fs.updateFeatureToggle(
+        widget.franchiseId!,
+        toggle.key,
+        enabled,
+      );
       setState(() {
         _toggles = _toggles
             .map((ft) =>
                 ft.key == toggle.key ? ft.copyWith(enabled: enabled) : ft)
             .toList();
       });
-
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Updated ${toggle.key} → $enabled'),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+        ),
+      );
       shared.ErrorLogger.log(
         message: 'Feature toggle updated: ${toggle.key} -> $enabled',
         source: 'FeatureTogglesSection',
@@ -113,7 +179,7 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
           'enabled': enabled,
         },
       );
-
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to update toggle: $e'),
@@ -150,7 +216,14 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
       );
     }
 
-    final isAllFranchises = widget.franchiseId == 'all';
+    final readOnly = _scope == _FeatureToggleScope.global;
+    final needsFranchise = _scope == _FeatureToggleScope.franchise &&
+        !_isConcreteFranchiseId(widget.franchiseId);
+    final titleSuffix = _scope == _FeatureToggleScope.global
+        ? 'Global (read-only)'
+        : (_isConcreteFranchiseId(widget.franchiseId)
+            ? widget.franchiseId!
+            : 'Select a franchise');
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -158,9 +231,7 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isAllFranchises
-                ? '${loc.featureTogglesSectionTitle} — ${loc.allFranchisesLabel ?? "All Franchises"}'
-                : '${loc.featureTogglesSectionTitle} — ${widget.franchiseId}',
+            '${loc.featureTogglesSectionTitle} — $titleSuffix',
             style: theme.textTheme.titleLarge?.copyWith(
               color: colorScheme.primary,
               fontWeight: FontWeight.bold,
@@ -171,8 +242,47 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
             loc.featureTogglesSectionDesc,
             style: theme.textTheme.bodyMedium,
           ),
+          const SizedBox(height: 16),
+          SegmentedButton<_FeatureToggleScope>(
+            segments: const [
+              ButtonSegment<_FeatureToggleScope>(
+                value: _FeatureToggleScope.franchise,
+                label: Text('Franchise'),
+                icon: Icon(Icons.store_outlined),
+              ),
+              ButtonSegment<_FeatureToggleScope>(
+                value: _FeatureToggleScope.global,
+                label: Text('Global'),
+                icon: Icon(Icons.public),
+              ),
+            ],
+            selected: {_scope},
+            onSelectionChanged: (set) {
+              if (set.isEmpty) return;
+              setState(() => _scope = set.first);
+              _fetchFeatureToggles();
+            },
+          ),
           const SizedBox(height: 20),
-          if (_loading)
+          if (needsFranchise)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: colorScheme.primary),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Select a franchise to view and edit franchise feature toggles.',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (_loading)
             Center(child: CircularProgressIndicator(color: colorScheme.primary))
           else if (_errorMsg != null)
             Card(
@@ -207,23 +317,17 @@ class _FeatureTogglesSectionState extends State<FeatureTogglesSection> {
               onToggle: _setFeatureToggle,
               colorScheme: colorScheme,
               loc: loc,
-              isAllFranchises: isAllFranchises,
+              isAllFranchises: readOnly,
             ),
-          const SizedBox(height: 34),
-          _ComingSoonCard(
-            icon: Icons.analytics,
-            title: loc.featureTogglesSectionAuditTrailComingSoon,
-            subtitle: loc.featureTogglesSectionAuditTrailDesc,
-            colorScheme: colorScheme,
-            theme: theme,
-          ),
-          _ComingSoonCard(
-            icon: Icons.lightbulb_outline,
-            title: loc.featureTogglesSectionAIBasedComingSoon,
-            subtitle: loc.featureTogglesSectionAIBasedDesc,
-            colorScheme: colorScheme,
-            theme: theme,
-          ),
+          if (readOnly) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Global platform features are read-only in Developer Dashboard v1.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.outline,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -277,61 +381,6 @@ class _FeatureToggleList extends StatelessWidget {
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _ComingSoonCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final ColorScheme colorScheme;
-  final ThemeData theme;
-
-  const _ComingSoonCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.colorScheme,
-    required this.theme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: colorScheme.surfaceVariant.withValues(alpha: 0.87),
-      elevation: DesignTokens.adminCardElevation,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-        child: Row(
-          children: [
-            Icon(icon, color: colorScheme.outline, size: 30),
-            const SizedBox(width: 18),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: colorScheme.outline,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

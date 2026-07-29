@@ -134,8 +134,8 @@ class _DeveloperDashboardScreenState extends State<DeveloperDashboardScreen> {
                   onSelect: (i) => setState(() => _selectedIndex = i),
                   extraWidgets: [
                     DevToolsSidebarGroup(
-                      label: 'Dev Tools',
-                      icon: Icons.build_outlined,
+                      label: 'Dangerous',
+                      icon: Icons.warning_amber_outlined,
                       tools:
                           _sections.where((s) => s.sidebarOrder >= 7).toList(),
                       selectedIndex: _selectedIndex,

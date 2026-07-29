@@ -12,94 +12,59 @@ class AuditTrailSection extends StatefulWidget {
   State<AuditTrailSection> createState() => _AuditTrailSectionState();
 }
 
+enum _AuditSourceMode { franchise, global }
+
+bool _isConcreteFranchiseId(String? id) =>
+    id != null &&
+    id.isNotEmpty &&
+    id != 'unknown' &&
+    id != 'default' &&
+    id != 'all';
+
 class _AuditTrailSectionState extends State<AuditTrailSection> {
-  bool _loading = true;
-  String? _errorMsg;
-  List<AuditEntry> _entries = [];
   String? _filterType;
   String? _filterActor;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchAuditTrail();
-  }
-
-  @override
-  void didUpdateWidget(covariant AuditTrailSection oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.franchiseId != widget.franchiseId) {
-      _fetchAuditTrail();
-    }
-  }
-
-  Future<void> _fetchAuditTrail() async {
-    setState(() {
-      _loading = true;
-      _errorMsg = null;
-    });
-    try {
-      // TODO: Replace with shared.FirestoreService audit log query (by franchiseId/type/actor)
-      await Future.delayed(const Duration(milliseconds: 500));
-      _entries = [
-        AuditEntry(
-          timestamp: DateTime.now().subtract(const Duration(minutes: 6)),
-          type: 'MenuUpdate',
-          description:
-              'Updated price of â€œDeluxe Pizzaâ€ from \$15.99 to \$16.49',
-          actor: 'jane@doughboys.com',
-          franchiseId: widget.franchiseId == 'all'
-              ? 'doughboyspizzeria'
-              : widget.franchiseId,
-        ),
-        AuditEntry(
-          timestamp:
-              DateTime.now().subtract(const Duration(hours: 1, minutes: 20)),
-          type: 'OrderRefund',
-          description: 'Issued refund for order #4562',
-          actor: 'manager@doughboys.com',
-          franchiseId: widget.franchiseId == 'all'
-              ? 'doughboyspizzeria'
-              : widget.franchiseId,
-        ),
-        AuditEntry(
-          timestamp: DateTime.now().subtract(const Duration(days: 2)),
-          type: 'UserPermission',
-          description: 'Granted admin privileges to staff1@doughboys.com',
-          actor: 'owner@doughboys.com',
-          franchiseId: widget.franchiseId == 'all'
-              ? 'doughboyspizzeria'
-              : widget.franchiseId,
-        ),
-      ];
-      setState(() => _loading = false);
-    } catch (e, stack) {
-      setState(() {
-        _errorMsg = e.toString();
-        _loading = false;
-      });
-      shared.ErrorLogger.log(
-        message: 'Failed to load audit trail: $e',
-        stack: stack.toString(),
-        source: 'AuditTrailSection',
-        severity: 'warning',
-        contextData: {
-          'franchiseId': widget.franchiseId,
-        },
-      );
-    }
-  }
+  _AuditSourceMode _sourceMode = _AuditSourceMode.global;
 
   void _onTypeFilterChanged(String? newValue) {
-    setState(() {
-      _filterType = newValue;
-    });
+    setState(() => _filterType = newValue);
   }
 
   void _onActorFilterChanged(String? newValue) {
-    setState(() {
-      _filterActor = newValue;
-    });
+    setState(() => _filterActor = newValue);
+  }
+
+  void _onSourceModeChanged(_AuditSourceMode mode) {
+    setState(() => _sourceMode = mode);
+  }
+
+  Stream<List<shared.AuditLog>>? _auditStream(shared.FirestoreService fs) {
+    if (_sourceMode == _AuditSourceMode.global) {
+      return fs.auditLogsStreamGlobal();
+    }
+    if (!_isConcreteFranchiseId(widget.franchiseId)) {
+      return null;
+    }
+    return fs.auditLogsStreamFranchise(widget.franchiseId!);
+  }
+
+  AuditEntry _toEntry(shared.AuditLog log) {
+    final actor = (log.userEmail != null && log.userEmail!.isNotEmpty)
+        ? log.userEmail!
+        : (log.userId.isNotEmpty ? log.userId : 'unknown');
+    final description = [
+      log.action,
+      if (log.targetType.isNotEmpty) log.targetType,
+      if (log.targetId.isNotEmpty) log.targetId,
+      if (log.details != null && log.details!.isNotEmpty) log.details,
+    ].join(' · ');
+    return AuditEntry(
+      timestamp: log.timestamp,
+      type: log.action.isNotEmpty ? log.action : log.targetType,
+      description: description.isNotEmpty ? description : log.id,
+      actor: actor,
+      franchiseId: widget.franchiseId,
+    );
   }
 
   @override
@@ -117,8 +82,6 @@ class _AuditTrailSectionState extends State<AuditTrailSection> {
     final adminUser = Provider.of<shared.AdminUserProvider>(context).user;
     final isDeveloper = adminUser?.roles.contains('developer') ?? false;
 
-    final isAllFranchises = widget.franchiseId == 'all';
-
     if (!isDeveloper) {
       return Center(
         child: Text(
@@ -131,89 +94,164 @@ class _AuditTrailSectionState extends State<AuditTrailSection> {
       );
     }
 
-    // Extract unique types and actors for filters (for real: get from backend or unique on all entries)
-    final types = _entries.map((e) => e.type).toSet().toList()..sort();
-    final actors = _entries.map((e) => e.actor).toSet().toList()..sort();
-
-    final filtered = _entries.where((entry) {
-      final typeOk = _filterType == null || entry.type == _filterType;
-      final actorOk = _filterActor == null || entry.actor == _filterActor;
-      return typeOk && actorOk;
-    }).toList();
+    final fs = Provider.of<shared.FirestoreService>(context, listen: false);
+    final needsFranchise = _sourceMode == _AuditSourceMode.franchise &&
+        !_isConcreteFranchiseId(widget.franchiseId);
+    final titleSuffix = _sourceMode == _AuditSourceMode.global
+        ? 'Global'
+        : (_isConcreteFranchiseId(widget.franchiseId)
+            ? widget.franchiseId!
+            : 'Select a franchise');
 
     return Padding(
       padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            isAllFranchises
-                ? '${loc.auditTrailSectionTitle} â€” ${loc.allFranchisesLabel ?? "All Franchises"}'
-                : '${loc.auditTrailSectionTitle} â€” ${widget.franchiseId}',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            loc.auditTrailSectionDesc,
-            style: theme.textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 18),
-          _buildFilterRow(loc, types, actors, colorScheme, theme),
-          const SizedBox(height: 18),
-          if (_loading)
-            Center(child: CircularProgressIndicator(color: colorScheme.primary))
-          else if (_errorMsg != null)
-            Card(
-              color: colorScheme.errorContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    Icon(Icons.error, color: colorScheme.error),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        '${loc.auditTrailSectionError}\n$_errorMsg',
-                        style: theme.textTheme.bodyMedium
-                            ?.copyWith(color: colorScheme.error),
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.refresh, color: colorScheme.primary),
-                      tooltip: loc.reload,
-                      onPressed: _fetchAuditTrail,
-                    ),
-                  ],
-                ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${loc.auditTrailSectionTitle} — $titleSuffix',
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: colorScheme.primary,
+                fontWeight: FontWeight.bold,
               ),
-            )
-          else if (filtered.isEmpty)
-            Center(child: Text(loc.auditTrailSectionEmpty))
-          else
-            _AuditTrailList(
-              entries: filtered,
-              colorScheme: colorScheme,
-              loc: loc,
             ),
-          const SizedBox(height: 32),
-          _ComingSoonCard(
-            icon: Icons.compare_arrows,
-            title: loc.auditTrailSectionRevertComingSoon,
-            subtitle: loc.auditTrailSectionRevertDesc,
-            colorScheme: colorScheme,
-            theme: theme,
-          ),
-          _ComingSoonCard(
-            icon: Icons.auto_fix_high_outlined,
-            title: loc.auditTrailSectionExplainComingSoon,
-            subtitle: loc.auditTrailSectionExplainDesc,
-            colorScheme: colorScheme,
-            theme: theme,
-          ),
-        ],
+            const SizedBox(height: 14),
+            Text(
+              loc.auditTrailSectionDesc,
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            ToggleButtons(
+              isSelected: [
+                _sourceMode == _AuditSourceMode.franchise,
+                _sourceMode == _AuditSourceMode.global,
+              ],
+              onPressed: (index) {
+                _onSourceModeChanged(
+                  index == 0
+                      ? _AuditSourceMode.franchise
+                      : _AuditSourceMode.global,
+                );
+              },
+              borderRadius: BorderRadius.circular(8),
+              children: const [
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.store_outlined, size: 18),
+                      SizedBox(width: 6),
+                      Text('Franchise'),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.public, size: 18),
+                      SizedBox(width: 6),
+                      Text('Global'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            if (needsFranchise)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: colorScheme.primary),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Select a franchise to view franchise audit logs.',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              StreamBuilder<List<shared.AuditLog>>(
+                stream: _auditStream(fs),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    shared.ErrorLogger.log(
+                      message:
+                          'Failed to stream audit trail: ${snapshot.error}',
+                      source: 'AuditTrailSection',
+                      severity: 'warning',
+                      contextData: {
+                        'franchiseId': widget.franchiseId,
+                        'sourceMode': _sourceMode.name,
+                      },
+                    );
+                    return Card(
+                      color: colorScheme.errorContainer,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(
+                          '${loc.auditTrailSectionError}\n${snapshot.error}',
+                          style: theme.textTheme.bodyMedium
+                              ?.copyWith(color: colorScheme.error),
+                        ),
+                      ),
+                    );
+                  }
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      !snapshot.hasData) {
+                    return Center(
+                      child: CircularProgressIndicator(
+                        color: colorScheme.primary,
+                      ),
+                    );
+                  }
+
+                  final entries = (snapshot.data ?? const <shared.AuditLog>[])
+                      .map(_toEntry)
+                      .toList()
+                    ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+                  final types = entries.map((e) => e.type).toSet().toList()
+                    ..sort();
+                  final actors = entries.map((e) => e.actor).toSet().toList()
+                    ..sort();
+
+                  final filtered = entries.where((entry) {
+                    final typeOk =
+                        _filterType == null || entry.type == _filterType;
+                    final actorOk =
+                        _filterActor == null || entry.actor == _filterActor;
+                    return typeOk && actorOk;
+                  }).toList();
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildFilterRow(loc, types, actors, colorScheme, theme),
+                      const SizedBox(height: 18),
+                      if (filtered.isEmpty)
+                        Center(child: Text(loc.auditTrailSectionEmpty))
+                      else
+                        _AuditTrailList(
+                          entries: filtered,
+                          colorScheme: colorScheme,
+                          loc: loc,
+                        ),
+                    ],
+                  );
+                },
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -250,12 +288,6 @@ class _AuditTrailSectionState extends State<AuditTrailSection> {
                 (actor) => DropdownMenuItem(value: actor, child: Text(actor))),
           ],
           onChanged: _onActorFilterChanged,
-        ),
-        const Spacer(),
-        IconButton(
-          icon: const Icon(Icons.refresh),
-          tooltip: loc.reload,
-          onPressed: _fetchAuditTrail,
         ),
       ],
     );
@@ -297,9 +329,25 @@ class _AuditTrailList extends StatelessWidget {
               borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
             ),
             onTap: () {
-              // TODO: Show full audit entry modal/details.
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(loc.comingSoon)),
+              showDialog<void>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: Text(entry.type),
+                  content: SingleChildScrollView(
+                    child: SelectableText(
+                      '${entry.description}\n\n'
+                      'Actor: ${entry.actor}\n'
+                      'When: ${_formatDateTime(entry.timestamp)}\n'
+                      'Franchise: ${entry.franchiseId ?? '—'}',
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Close'),
+                    ),
+                  ],
+                ),
               );
             },
           );
@@ -311,61 +359,6 @@ class _AuditTrailList extends StatelessWidget {
   String _formatDateTime(DateTime dt) {
     return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-  }
-}
-
-class _ComingSoonCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final ColorScheme colorScheme;
-  final ThemeData theme;
-
-  const _ComingSoonCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.colorScheme,
-    required this.theme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: colorScheme.surfaceVariant.withOpacity(0.87),
-      elevation: DesignTokens.adminCardElevation,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.adminCardRadius),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-        child: Row(
-          children: [
-            Icon(icon, color: colorScheme.outline, size: 30),
-            const SizedBox(width: 18),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: colorScheme.outline,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
