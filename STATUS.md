@@ -1,8 +1,8 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 28, 2026 (~19:25 CDT — W2 franchise wings pool + deferred order-experience complete; feature branch merged to main)  
+**Last Updated**: July 28, 2026 (~19:40 CDT — developer-dashboard-v1 D0 locked on feature branch)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
-**Branch (active)**: `main`  
+**Branch (active)**: `feat/developer-dashboard-v1`  
 **Main**: includes menu-modifier M1–M5, wings/calzone W0–W7+W2, Hosting deploy on push
 
 > This file is **always loaded in full** by every agent.
@@ -13,7 +13,8 @@
 
 **Phase 1 HQ onboarding + Platform Owner MVP complete.**  
 **Admin ops P0/P1 complete** (on `main`).  
-**Menu modifier system rebuild (Decision 10)** — **M1–M5 complete; wings + calzone W0–W7 + W2 complete.**
+**Menu modifier system rebuild (Decision 10)** — **M1–M5 complete; wings + calzone W0–W7 + W2 complete on `main`.**  
+**Active epic:** **Developer Dashboard v1** — D0 locked; authority `docs/slices/developer-dashboard-v1.md`.
 
 ### Completed (locked)
 
@@ -39,24 +40,23 @@
 - [x] Deferred **order-experience** feedback prompt (`pending_order_experience_feedback` → MainMenu when due)
 - [x] `feat/menu-modifier-system-rebuild-v1` → `main`
 
-### Menu modifier rebuild — progress
+### Developer Dashboard v1 — progress
 
 | Stream | Status |
 |--------|--------|
-| **M1** Schema | **Done** |
-| **M2** Read adapter | **Done** |
-| **M3 HQ** Profile-first editor + binder + inventory + included/optional | **Done** |
-| **M3 Admin** Shared editor sheet | **Done** |
-| **M4 Web** Modal bridge | **Done** (pizza path) |
-| **M4 Mobile** optionalAddOns-driven pizza customization UX | **Done** (CBR smoke PASS) |
-| **W1** MenuProfile.calzone + templates | **Done** |
-| **W2** Franchise sauce pool | **Done** (HQ + mobile fallback; July 28) |
-| **W3** HQ wings panel (free cups / upcharge / sauce bind / layout) | **Done** |
-| **W4** Mobile wings UX (2 portions + Plain + single Dipping sauces) | **Done** |
-| **W5** Mobile/web calzone = pizza path, no left/right | **Done** |
-| **W6** Seed wings + calzone items | **Done** |
-| **W7** Full acceptance smoke | **Done** (human PASS July 28) |
-| **M5** Cutover / delete dual trees | **Done** (July 28 — canonical write/read; legacy adapter + dual Admin Customize paths removed; data reseeded) |
+| **D0** Docs lock | **Done** |
+| **D1** Inventory sections | Open |
+| **D2** FranchiseId hygiene | Open |
+| **D3** Error Logs unified + Franchise\|Global | Open |
+| **D4** Impersonation Phase A (UI preview + banner) | Open |
+| **D5** Feature toggles franchise write / global read | Open |
+| **D6** Schema Browser functional | Open |
+| **D7** Audit Trail functional | Open |
+| **D8** Plugin Registry stub | Open |
+| **D9** Relabel Dev Tools → Dangerous | Open |
+| **D10** Acceptance + docs close | Open |
+
+Authority: **`docs/slices/developer-dashboard-v1.md`**.
 
 ### Locked pizza customization UX (do not regress)
 
@@ -94,9 +94,9 @@ Authority: `docs/slices/hq-wings-calzone-v1.md`, `docs/MOBILE_DYNAMIC.md`.
 
 | Priority | Work | Authority |
 |----------|------|-----------|
-| **1** | Developer dashboard | Next epic |
+| **1** | **Developer Dashboard v1** (D1 inventory next) | `docs/slices/developer-dashboard-v1.md` |
 | **2** | Residual product polish only under explicit human task | STATUS / HANDOFF |
-| **3** | Confirm Hosting deploy after this `main` push | Human gate |
+| **3** | Merge feature → `main` after D10 smoke | Human gate |
 
 ### Explicit post-MVP / deferred
 
@@ -110,6 +110,8 @@ Authority: `docs/slices/hq-wings-calzone-v1.md`, `docs/MOBILE_DYNAMIC.md`.
 | SizeData.freeSideDips migration (Phase B) | Optional after wings Phase A |
 | Salad/dinner dedicated MenuProfile | Not required; standard + optionalAddOns sufficient |
 | Order-experience prompt trigger post-delivery | Post-MVP (storage + MainMenu due check already landed) |
+| Impersonation real claim/token (Phase B) | Future slice after Developer v1 |
+| Global feature toggle writes / killswitches | Out of Developer v1 |
 
 **Onboarding product keys:**  
 `onboarding_feature_setup` → `onboarding_design_branding` → `onboarding_menu_foundation` → `onboardingMenuItems` → `onboardingReview`
