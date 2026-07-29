@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 29, 2026 (~15:50 CDT — MVP completion locks: franchise context + Stripe Connect)  
+**Last Updated**: July 29, 2026 (~17:40 CDT — kitchen-ops + cash on pickup locked for release MVP)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch (active)**: `main`  
 **Main**: menu M1–M5, wings/calzone, mobile design tokens T1–T9, developer D0–D10; Hosting deploy on push
@@ -12,7 +12,7 @@
 ## Current Phase
 
 **Core platform vertical slice is on `main`.**  
-**Release / pilot MVP remaining work is locked** under Decisions **11** (customer multi-franchise path) and **12** (Stripe dual-account model).
+**Release / pilot MVP remaining work is locked** under Decisions **11–13** (customer franchise context, Stripe Connect dual accounts, kitchen ops + cash).
 
 | Area | State |
 |------|--------|
@@ -24,6 +24,7 @@
 | Developer Dashboard v1 (D0–D10) | **Done** |
 | **Customer franchise context v1** | **Locked — not implemented** |
 | **Stripe checkout v1 (Connect)** | **Locked — not implemented** |
+| **Kitchen ops v1** (thin app, print, cash toggle) | **Locked — not implemented** |
 
 ### Completed (locked)
 
@@ -32,34 +33,41 @@
 - [x] Platform Owner dashboard MVP
 - [x] Admin dashboard ops fixes v1
 - [x] Menu modifier rebuild M1–M5 + wings/calzone + W2 — `main`
-- [x] Mobile Design Tokens v1 — `main` (`docs/slices/mobile-design-tokens-v1.md`)
-- [x] Developer Dashboard v1 — `main` (`docs/slices/developer-dashboard-v1.md`)
-- [x] **Decision 11** Customer hybrid multi-tenant path (A+B) — product lock July 29
-- [x] **Decision 12** Stripe: platform SaaS account + Connect per franchise — product lock July 29
+- [x] Mobile Design Tokens v1 — `main`
+- [x] Developer Dashboard v1 — `main`
+- [x] **Decision 11** Customer hybrid multi-tenant path (A+B) — July 29
+- [x] **Decision 12** Stripe: platform SaaS + Connect per franchise — July 29
+- [x] **Decision 13** Kitchen ops: thin Flutter kitchen app, cash-on-pickup toggles, multi-printer, manager gates — July 29
 
 ### Active focus — release MVP
 
 | Priority | Work | Authority |
 |----------|------|-----------|
-| **1** | **Customer franchise context v1** — cold start, deep link/QR, recents, switcher, directory foundation, signed-out browse, cart clear on switch; test with **real + mock** listed franchises | `docs/slices/customer-franchise-context-v1.md` · Decision 11 |
-| **2** | **Stripe checkout v1** — platform account for HQ subscriptions; Connect destination + application fee for customer orders; HQ onboarding status; `paymentsEnabled` gate | `docs/slices/stripe-checkout-v1.md` · Decision 12 |
-| **3** | Pilot polish: reorder honesty, basic order status, closed hours gate, cart attach on sign-in | Explicit human tasks |
+| **1** | **Customer franchise context v1** | `docs/slices/customer-franchise-context-v1.md` · Decision 11 |
+| **2** | **Stripe checkout v1** (Connect + platform SaaS) | `docs/slices/stripe-checkout-v1.md` · Decision 12 |
+| **3** | **Kitchen ops v1** — thin Kitchen app, auto-print, category→printer routing, Admin cash toggles, manager-only void/refund, manager offline/print alerts | `docs/slices/kitchen-ops-v1.md` · Decision 13 |
+| **4** | Pilot polish: reorder, order status, closed hours, cart attach on sign-in | Explicit human tasks |
 
-**Pilot acquisition:** every pilot customer gets QR/SMS link; **directory foundation still required** for cold start and second-tenant QA.
+**Pilot:** real franchise + mock listed franchise; customer QR/SMS primary + directory foundation; **Android kitchen tablet** at make line (Flutter multi-platform code OK; iOS kitchen post-pilot).
 
-### Decision 11 / 12 locks (do not regress in implementation)
+### Decision 11 / 12 / 13 locks (do not regress)
 
 | Topic | Lock |
 |--------|------|
-| App binary | Hybrid multi-tenant; **session = one `franchiseId`**; branding follows selection |
-| Acquisition | **QR/SMS primary**; **directory secondary but real** |
-| Bind pipeline | Link, QR, directory, recents, switcher → **same** `setFranchiseId` + branding + menu |
-| Signed-out | Browse menu + cart allowed; **checkout requires sign-in** |
-| Cart on switch | Confirm → **clear cart & switch**; no cross-franchise merge |
-| Stripe platform | Charges **HQ owners** for SaaS (subscriptions / platform invoices) |
-| Stripe Connect | **Each franchise** connected account; **customer order** money + application fee to platform |
-| Live charges | Only when franchise `paymentsEnabled` (Connect ready) |
-| Test | Real franchise + mock seeded franchise both listable |
+| App binary | Hybrid multi-tenant; session = one `franchiseId` |
+| Acquisition | QR/SMS primary; directory required foundation |
+| Signed-out | Browse + cart OK; checkout requires sign-in |
+| Cart on switch | Confirm → clear cart & switch |
+| Stripe platform | HQ SaaS subscriptions / platform invoices |
+| Stripe Connect | Customer card orders → franchise connected account + application fee |
+| **Cash on pickup** | **v1 yes**, franchise **Admin feature toggle** |
+| **Cash print** | Default **print on submit**; sub-toggle **require cook Accept before print** |
+| **Card print** | Auto-print on **`paid`** |
+| **Kitchen app** | Thin Flutter; cooks only essential status; **no** full Admin |
+| **Void/cancel/refund** | **Manager-only** |
+| **Printers** | Multi-printer ready; route by **menu category** (many categories per printer); Ethernet ESC-POS preferred |
+| **Pilot kitchen device** | **Android tablet**; codebase stays Flutter multi-platform |
+| **Manager alerts** | Push + SMS on tablet offline / printer error |
 
 ### Explicit post-MVP / deferred
 
@@ -67,13 +75,12 @@
 |---------|----------|
 | Geo / map directory | Post-MVP |
 | Guest checkout (pay without account) | Post-MVP |
-| HQ Design full semantic color editors | Deferred — seeds only |
+| Full POS / cash drawer / card-present terminal | Post-MVP |
+| iOS kitchen kiosk bring-up | Post-pilot |
+| HQ Design full semantic color editors | Deferred |
 | Cash Flow / Multi-Brand HQ cards | Post-MVP |
-| Alerts producers / full AlertListScreen | Deferred |
 | Combos / bundles | Deferred |
-| Auth ColorScheme residual (T8) | Deferred polish |
-| Order-experience post-delivery trigger | Post-MVP |
-| Impersonation Phase B (real claims) | Future |
+| Impersonation Phase B | Future |
 | CF Node 22 | Before ~2026-10-30 |
 
 **Onboarding product keys:**  

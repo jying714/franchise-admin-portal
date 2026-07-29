@@ -1,6 +1,6 @@
 # HANDOFF.md — Agent Context & Project Status
 
-**Last Updated**: July 29, 2026 (~15:50 CDT — MVP completion locks documented)  
+**Last Updated**: July 29, 2026 (~17:40 CDT — kitchen-ops + cash locks)  
 **Hardware**: MINISFORUM AI X1 Pro-470  
 **Active branch**: `main`  
 **Repo**: https://github.com/jying714/franchise-admin-portal  
@@ -14,70 +14,76 @@ Prefer **STATUS.md + this handoff + `docs/slices/*` + `docs/DECISIONS.md`** over
 
 ## 1. Where we are
 
-**On `main` and done:** HQ onboarding, Design & Branding, Platform Owner MVP, Admin ops v1, menu modifier **M1–M5**, wings/calzone **W0–W7+W2**, mobile design tokens **T1–T9**, developer dashboard **D0–D10**.
+**On `main` and done:** HQ onboarding, Design & Branding, Platform Owner, Admin ops, menu M1–M5 + wings/calzone, mobile design tokens T1–T9, developer dashboard D0–D10.
 
 **Locked for release / pilot MVP (not yet built):**
 
-1. **`docs/slices/customer-franchise-context-v1.md`** (Decision 11)  
-2. **`docs/slices/stripe-checkout-v1.md`** (Decision 12)
+| Slice | Decision |
+|--------|----------|
+| `docs/slices/customer-franchise-context-v1.md` | 11 |
+| `docs/slices/stripe-checkout-v1.md` | 12 |
+| `docs/slices/kitchen-ops-v1.md` | 13 |
 
-Human will pilot with **one real franchise + one mock seeded franchise**.
+Pilot: **real + mock** franchise; make-line **Android tablet** + Ethernet ESC-POS; DoorDash-like placement.
 
 ---
 
 ## 2. Decision 11 — Customer multi-franchise (summary)
 
-- **Hybrid binary:** one app, many tenants; **session = one franchiseId**; branding follows bind.  
-- **A + B:** QR/SMS/deep link **primary**; **directory** (list + name/city search) **required foundation**.  
-- **Same bind pipeline** for link, QR, directory, recents, switcher.  
-- **Signed-out:** browse + cart OK; **pay requires sign-in**.  
-- **Switch with cart:** confirm → clear cart → switch.  
-- **Cold start:** deep link > last/recents > directory; no silent permanent single-tenant trap.
+Hybrid binary; session = one franchiseId; QR/SMS primary + directory foundation; signed-out browse until checkout; cart clear on switch.
 
 ---
 
 ## 3. Decision 12 — Stripe (summary)
 
 ```text
-HQ SaaS subscription / platform invoices  →  Platform Stripe account
-Customer food order                      →  Franchise Connect account
-                                         +  application fee → Platform
+HQ SaaS     → Platform Stripe account
+Card orders → Franchise Connect + application fee → Platform
 ```
 
-- **Not** long-term “platform holds all order money.”  
-- Checkout is **Connect-shaped**; refuse pay if `paymentsEnabled` is false.  
-- Test mode for mock + real until Connect live on real franchise.
+Cash is **not** Connect; see Decision 13 toggles.
 
 ---
 
-## 4. Do not regress (menu)
+## 4. Decision 13 — Kitchen ops + cash (summary)
 
-- Pizza optionalAddOns contract; included toppings not auto-charged  
-- Wings: 2 portions, dipping cups, type `sauces` only, W2 pool  
-- No dual production menu write paths  
-- No `FranchiseProvider()` zero-arg / DesignTokens color invention
-
----
-
-## 5. What’s next (implementation order)
-
-1. Implement **customer-franchise-context-v1** (CF1–CF9)  
-2. Implement **stripe-checkout-v1** (ST0–ST7) against Connect fields  
-3. Pilot polish (reorder, status, hours) under explicit tasks  
+- **Thin Kitchen Flutter app** for cooks (not full Admin on make line).
+- **Admin feature cards:** e.g. Inventory toggle, **Cash on pickup** toggle; sub-toggle **require accept before cash print**.
+- Card: auto-print on **paid**. Cash: default print on **submit**; optional print after **Accept**.
+- Multi-printer: category → printer mapping.
+- Void/cancel/refund: **manager-only**.
+- Manager **push + SMS** on tablet offline / print failure.
+- Pilot hardware: **Android** kitchen tablet; Flutter remains multi-platform.
 
 ---
 
-## 6. Key references
+## 5. Do not regress (menu)
+
+Pizza optionalAddOns; included not auto-charged; wings 2 portions + W2 pool; no dual menu write paths; no FranchiseProvider zero-arg / DesignTokens color invention.
+
+---
+
+## 6. Implementation order
+
+1. Customer franchise context v1  
+2. Stripe checkout v1 (card path enables kitchen paid feed)  
+3. Kitchen ops v1 (board + print + cash flags + manager gates)  
+4. Pilot polish  
+
+Kitchen can use test paid/submitted orders in parallel once order status model is clear.
+
+---
+
+## 7. Key references
 
 - `STATUS.md`  
-- `docs/DECISIONS.md` (11, 12)  
+- `docs/DECISIONS.md` (11–13)  
 - `docs/slices/customer-franchise-context-v1.md`  
 - `docs/slices/stripe-checkout-v1.md`  
+- `docs/slices/kitchen-ops-v1.md`  
 - `docs/slices/mobile-design-tokens-v1.md`  
-- `docs/slices/developer-dashboard-v1.md`  
 - `docs/slices/menu-modifier-system-rebuild-v1.md`  
-- `docs/MOBILE_DYNAMIC.md`  
 
 ---
 
-**Bottom line:** Platform vertical slice is on **main**. Release MVP = **franchise context (A+B)** + **dual Stripe (platform SaaS + Connect orders)** + pilot polish. Start with customer-franchise-context-v1 unless human prioritizes Connect HQ fields first.
+**Bottom line:** Release MVP = franchise context + dual Stripe + **thin kitchen ops with cash toggle and safe manager controls**. Cooks never get full Admin on the pass tablet.
