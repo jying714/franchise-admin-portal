@@ -96,17 +96,18 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     await firestoreService.updateCart(cart);
 
     if (!mounted) return;
+    final scheme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           AppLocalizations.of(context)!.addedToCartMessage,
           style: TextStyle(
-            color: shared.UiConfig.textColor,
+            color: scheme.onSurface,
             fontFamily: shared.DesignTokens.fontFamily,
             fontWeight: shared.UiConfig.normal,
           ),
         ),
-        backgroundColor: shared.UiConfig.surfaceColor,
+        backgroundColor: scheme.surface,
         duration: Duration(seconds: shared.DesignTokens.toastDurationSeconds),
       ),
     );
@@ -284,12 +285,12 @@ class FavoriteMenuItemsTab extends StatelessWidget {
                               content: Text(
                                 localizations.removeFromFavoritesTooltip,
                                 style: TextStyle(
-                                  color: shared.UiConfig.textColor,
+                                  color: scheme.onSurface,
                                   fontFamily: shared.DesignTokens.fontFamily,
                                   fontWeight: shared.UiConfig.normal,
                                 ),
                               ),
-                              backgroundColor: shared.UiConfig.surfaceColor,
+                              backgroundColor: scheme.surface,
                               duration: Duration(
                                   seconds:
                                       shared.DesignTokens.toastDurationSeconds),
@@ -433,13 +434,13 @@ class FavoriteOrdersTab extends StatelessWidget {
                                   content: Text(
                                     localizations.removeFavorite,
                                     style: TextStyle(
-                                      color: shared.UiConfig.textColor,
+                                      color: scheme.onSurface,
                                       fontFamily:
                                           shared.DesignTokens.fontFamily,
                                       fontWeight: shared.UiConfig.normal,
                                     ),
                                   ),
-                                  backgroundColor: shared.UiConfig.surfaceColor,
+                                  backgroundColor: scheme.surface,
                                   duration: Duration(
                                       seconds: shared
                                           .DesignTokens.toastDurationSeconds),

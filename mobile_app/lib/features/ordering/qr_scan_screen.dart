@@ -143,6 +143,10 @@ class _QrScanScreenState extends State<QrScanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    // Fixed success feedback (D4) — not franchise primary.
+    const successColor = Color(0xFF2E7D32);
+
     return Scaffold(
       appBar: FranchiseAppBar(
         title: 'Scan Franchise QR',
@@ -159,21 +163,19 @@ class _QrScanScreenState extends State<QrScanScreen> {
             ),
         ],
       ),
-      backgroundColor: shared.UiConfig.backgroundColorDark,
+      backgroundColor: scheme.surface,
       body: SafeArea(
         child: Padding(
           padding: shared.UiConfig.defaultScreenPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Real Camera Scanner or Permission UI
               if (_hasCameraPermission) ...[
                 Container(
                   height: 260,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                        color: shared.UiConfig.primaryColor, width: 2),
+                    border: Border.all(color: scheme.primary, width: 2),
                   ),
                   clipBehavior: Clip.hardEdge,
                   child: Stack(
@@ -184,25 +186,23 @@ class _QrScanScreenState extends State<QrScanScreen> {
                       ),
                       if (!_isScanning)
                         Container(
-                          color: shared.UiConfig.shadowColor
-                              .withValues(alpha: 0.54),
+                          color: scheme.scrim.withValues(alpha: 0.54),
                           child: Center(
                             child: Text(
                               'Scanner Paused',
                               style: TextStyle(
-                                  color: shared.UiConfig.onPrimaryColor,
-                                  fontSize: 18),
+                                color: scheme.onPrimary,
+                                fontSize: 18,
+                              ),
                             ),
                           ),
                         ),
-                      // Simple overlay corners
                       Positioned.fill(
                         child: IgnorePointer(
                           child: Container(
                             decoration: BoxDecoration(
                               border: Border.all(
-                                color: shared.UiConfig.secondaryColor
-                                    .withValues(alpha: 0.6),
+                                color: scheme.outline.withValues(alpha: 0.9),
                                 width: 3,
                               ),
                               borderRadius: BorderRadius.circular(12),
@@ -219,35 +219,41 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   _isScanning
                       ? 'Point camera at a franchise QR code (fhq://f/...)'
                       : 'Scanner paused — tap play to resume',
-                  style: shared.UiConfig.captionStyle,
+                  style: shared.UiConfig.captionStyle.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ] else ...[
                 Container(
                   height: 200,
                   decoration: BoxDecoration(
-                    color: shared.UiConfig.surfaceColor,
+                    color: scheme.surface,
                     borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: scheme.outline),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.no_photography,
-                          size: 48,
-                          color: shared.UiConfig.onPrimaryColor
-                              .withValues(alpha: 0.7)),
+                      Icon(
+                        Icons.no_photography,
+                        size: 48,
+                        color: scheme.onSurfaceVariant,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         'Camera permission required',
-                        style:
-                            shared.UiConfig.titleStyle.copyWith(fontSize: 16),
+                        style: shared.UiConfig.titleStyle.copyWith(
+                          fontSize: 16,
+                          color: scheme.onSurface,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton(
                         onPressed: _requestCameraPermission,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: shared.UiConfig.primaryColor,
-                          foregroundColor: shared.UiConfig.foregroundColorDark,
+                          backgroundColor: scheme.primary,
+                          foregroundColor: scheme.onPrimary,
                         ),
                         child: const Text('Grant Camera Access'),
                       ),
@@ -255,77 +261,88 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   ),
                 ),
               ],
-
               const SizedBox(height: 24),
-
-              // Manual fallback (always available)
               Text(
                 'Or paste QR content manually',
-                style: shared.UiConfig.captionStyle,
+                style: shared.UiConfig.captionStyle.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: _qrController,
-                style: TextStyle(color: shared.UiConfig.textColor),
+                style: TextStyle(color: scheme.onSurface),
                 decoration: InputDecoration(
                   labelText: 'QR Payload (e.g. fhq://f/doughboys_pizzeria)',
-                  labelStyle:
-                      TextStyle(color: shared.UiConfig.secondaryTextColor),
+                  labelStyle: TextStyle(color: scheme.onSurfaceVariant),
                   filled: true,
-                  fillColor: shared.UiConfig.surfaceColor,
+                  fillColor: scheme.surface,
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: scheme.outline),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: scheme.primary, width: 2),
+                  ),
                   border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: scheme.outline),
+                  ),
                 ),
                 onSubmitted: (_) => _onManualSubmit(),
               ),
               const SizedBox(height: 12),
-
               ElevatedButton.icon(
                 icon: _processing
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 16,
                         height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2))
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: scheme.onPrimary,
+                        ),
+                      )
                     : const Icon(Icons.check_circle),
                 label: Text(_processing
                     ? 'Processing...'
                     : 'Process & Switch Franchise'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: shared.UiConfig.primaryColor,
-                  foregroundColor: shared.UiConfig.foregroundColorDark,
+                  backgroundColor: scheme.primary,
+                  foregroundColor: scheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 onPressed: _processing ? null : _onManualSubmit,
               ),
-
               if (_statusMessage != null) ...[
                 const SizedBox(height: 20),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: _statusMessage!.startsWith('Error')
-                        ? shared.UiConfig.errorColor.withValues(alpha: 0.15)
-                        : shared.UiConfig.successColor.withValues(alpha: 0.15),
+                        ? scheme.error.withValues(alpha: 0.15)
+                        : successColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     _statusMessage!,
                     style: TextStyle(
                       color: _statusMessage!.startsWith('Error')
-                          ? shared.UiConfig.errorColor
-                          : shared.UiConfig.successColor,
+                          ? scheme.error
+                          : successColor,
                     ),
                     textAlign: TextAlign.center,
                   ),
                 ),
               ],
-
               const Spacer(),
-
               Text(
                 'Supports: fhq://f/{franchiseId}  •  https://franchisehq.io/f/{franchiseId}',
-                style: shared.UiConfig.captionStyle.copyWith(fontSize: 11),
+                style: shared.UiConfig.captionStyle.copyWith(
+                  fontSize: 11,
+                  color: scheme.onSurfaceVariant,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],

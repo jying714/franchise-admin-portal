@@ -89,12 +89,17 @@ class _MainMenuScreenState extends material.State<MainMenuScreen> {
 
   @override
   material.Widget build(material.BuildContext context) {
+    final scheme = material.Theme.of(context).colorScheme;
+    final statusIconsLight = scheme.primary.computeLuminance() < 0.55;
+
     SystemChrome.setSystemUIOverlayStyle(
       SystemUiOverlayStyle(
-        statusBarColor: shared.UiConfig.primaryColor,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness:
-            Platform.isIOS ? Brightness.dark : Brightness.light,
+        statusBarColor: scheme.primary,
+        statusBarIconBrightness:
+            statusIconsLight ? Brightness.light : Brightness.dark,
+        statusBarBrightness: Platform.isIOS
+            ? (statusIconsLight ? Brightness.dark : Brightness.light)
+            : (statusIconsLight ? Brightness.light : Brightness.dark),
       ),
     );
 
@@ -141,7 +146,7 @@ class _MainMenuScreenState extends material.State<MainMenuScreen> {
               const material.SizedBox(width: shared.DesignTokens.gridSpacing),
             ],
           ),
-          backgroundColor: shared.UiConfig.backgroundColor,
+          backgroundColor: scheme.surface,
           body: material.SafeArea(
             child: !provider.hasValidFranchise
                 ? const material.Center(

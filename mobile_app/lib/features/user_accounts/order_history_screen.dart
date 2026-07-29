@@ -68,7 +68,7 @@ class OrderHistoryScreen extends StatelessWidget {
                             localizations.loyaltyErrorLoading,
                             style: TextStyle(
                               fontSize: DesignTokens.bodyFontSize,
-                              color: shared.UiConfig.errorTextColor,
+                              color: Theme.of(context).colorScheme.error,
                               fontFamily: DesignTokens.fontFamily,
                               fontWeight: shared.UiConfig.fontWeightNormal,
                             ),
@@ -260,9 +260,8 @@ class OrderHistoryScreen extends StatelessWidget {
                                                     SnackBar(
                                                       content: Text(localizations
                                                           .reorderNotImplemented),
-                                                      backgroundColor: shared
-                                                          .UiConfig
-                                                          .surfaceColor,
+                                                      backgroundColor:
+                                                          scheme.surface,
                                                       duration: Duration(
                                                           seconds: DesignTokens
                                                               .toastDurationSeconds),

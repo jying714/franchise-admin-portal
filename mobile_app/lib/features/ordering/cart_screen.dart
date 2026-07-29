@@ -468,12 +468,12 @@ class _CartScreenState extends State<CartScreen> {
           content: Text(
             loc.itemRemovedFromCart,
             style: TextStyle(
-              color: shared.UiConfig.textColor,
+              color: scheme.onSurface,
               fontFamily: shared.DesignTokens.fontFamily,
               fontWeight: shared.UiConfig.fontWeightMedium,
             ),
           ),
-          backgroundColor: shared.UiConfig.surfaceColor,
+          backgroundColor: scheme.surface,
           duration:
               const Duration(seconds: shared.DesignTokens.toastDurationSeconds),
         ),
@@ -518,12 +518,12 @@ class _CartScreenState extends State<CartScreen> {
                     content: Text(
                       loc.cartCleared,
                       style: TextStyle(
-                        color: shared.UiConfig.errorColor,
+                        color: scheme.error,
                         fontFamily: shared.DesignTokens.fontFamily,
                         fontWeight: shared.UiConfig.fontWeightMedium,
                       ),
                     ),
-                    backgroundColor: shared.UiConfig.surfaceColor,
+                    backgroundColor: scheme.surface,
                     duration: const Duration(
                         seconds: shared.DesignTokens.toastDurationSeconds),
                   ),
