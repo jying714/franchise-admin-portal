@@ -1,9 +1,9 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 29, 2026 (~15:30 CDT — mobile design tokens + developer dashboard merged to main)  
+**Last Updated**: July 29, 2026 (~15:50 CDT — MVP completion locks: franchise context + Stripe Connect)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch (active)**: `main`  
-**Main**: menu-modifier M1–M5, wings/calzone W0–W7+W2, mobile design tokens T1–T9, developer dashboard D0–D10; Hosting deploy on push
+**Main**: menu M1–M5, wings/calzone, mobile design tokens T1–T9, developer D0–D10; Hosting deploy on push
 
 > This file is **always loaded in full** by every agent.
 
@@ -11,85 +11,75 @@
 
 ## Current Phase
 
-**Phase 1 HQ onboarding + Platform Owner MVP complete.**  
-**Admin ops P0/P1 complete** (on `main`).  
-**Menu modifier system rebuild (Decision 10)** — **M1–M5 complete; wings + calzone W0–W7 + W2 complete** (on `main`).  
-**Mobile Design Tokens v1** — **T1–T9 Complete** (on `main`).  
-**Developer Dashboard v1** — **D0–D10 Complete** (on `main`).
+**Core platform vertical slice is on `main`.**  
+**Release / pilot MVP remaining work is locked** under Decisions **11** (customer multi-franchise path) and **12** (Stripe dual-account model).
+
+| Area | State |
+|------|--------|
+| HQ onboarding + Design & Branding | **Done** |
+| Platform Owner MVP | **Done** |
+| Admin ops v1 | **Done** |
+| Menu modifier M1–M5 + wings/calzone W0–W7+W2 | **Done** |
+| Mobile Design Tokens v1 (T1–T9) | **Done** |
+| Developer Dashboard v1 (D0–D10) | **Done** |
+| **Customer franchise context v1** | **Locked — not implemented** |
+| **Stripe checkout v1 (Connect)** | **Locked — not implemented** |
 
 ### Completed (locked)
 
-- [x] HQ onboarding sole host (Decision 7); foundation residual
-- [x] HQ Design & Branding v1/v1.1; financial honesty; platform billing honesty
+- [x] HQ onboarding sole host (Decision 7)
+- [x] HQ Design & Branding v1/v1.1; financial / platform billing honesty
 - [x] Platform Owner dashboard MVP
-- [x] Ingredient type sortOrder uniqueness + ingredients group edit
-- [x] `feat/onboarding-4step` → `main`; Hosting
-- [x] Admin exhaustive smoke (July 27)
-- [x] **Admin dashboard ops fixes v1** — merged `main`
-- [x] **M1–M5** menu modifier rebuild + wings/calzone + W2 sauce pool — merged `main`
-- [x] **Mobile Design Tokens v1 (T0–T7, T9, T10)** — scheme from primary/secondary; live franchise branding stream; customer chrome on ColorScheme roles; status chips fixed feedback (D4); QR scan consistent. **Authority:** `docs/slices/mobile-design-tokens-v1.md`
-- [x] **Developer Dashboard v1 (D0–D10)** — Error Logs Franchise|Global; Impersonation Phase A; feature toggles franchise write / global read; Schema Browser; Audit Trail; Plugin stub; Dangerous label. **Authority:** `docs/slices/developer-dashboard-v1.md`
+- [x] Admin dashboard ops fixes v1
+- [x] Menu modifier rebuild M1–M5 + wings/calzone + W2 — `main`
+- [x] Mobile Design Tokens v1 — `main` (`docs/slices/mobile-design-tokens-v1.md`)
+- [x] Developer Dashboard v1 — `main` (`docs/slices/developer-dashboard-v1.md`)
+- [x] **Decision 11** Customer hybrid multi-tenant path (A+B) — product lock July 29
+- [x] **Decision 12** Stripe: platform SaaS account + Connect per franchise — product lock July 29
 
-### Mobile design tokens — progress
-
-| Stream | Status |
-|--------|--------|
-| **T0** Map lock | **Done** |
-| **T1** ColorScheme + theme injection | **Done** |
-| **T2** Shell / app bar / MainMenu surface + status bar | **Done** |
-| **T3** CategoryCard | **Done** |
-| **T4** MenuItemCard + CTA/favorite widgets | **Done** |
-| **T5** Customization family | **Done** |
-| **T6** Cart | **Done** |
-| **T7** Profile, history, favorites, language, addresses | **Done** |
-| **T8** Auth + social + franchise selector | **Deferred** (explicit) |
-| **T9** QR + residual snackbars | **Done** |
-| **T10** Docs / STATUS close | **Done** |
-
-**Locks (do not regress):** HQ seeds only (primary, secondary, appName, logo); no per-widget Firestore colors; favorite active = error; prices = onSurface; status chips not brand-tinted; live `franchises/{id}` snapshots drive theme.
-
-### Developer Dashboard v1 — progress
-
-| Stream | Status |
-|--------|--------|
-| **D0** Docs lock | **Done** |
-| **D1** Inventory sections | **Done** |
-| **D2** FranchiseId hygiene | **Done** |
-| **D3** Error Logs unified + Franchise\|Global | **Done** |
-| **D4** Impersonation Phase A (UI preview + banner) | **Done** |
-| **D5** Feature toggles franchise write / global read | **Done** |
-| **D6** Schema Browser functional | **Done** |
-| **D7** Audit Trail functional | **Done** |
-| **D8** Plugin Registry stub | **Done** |
-| **D9** Relabel Dev Tools → Dangerous | **Done** |
-| **D10** Acceptance + docs close | **Done** |
-
-### Active focus
+### Active focus — release MVP
 
 | Priority | Work | Authority |
 |----------|------|-----------|
-| **1** | Optional residual: checkout / confirmation / item detail / auth (T8) token polish | `docs/slices/mobile-design-tokens-v1.md` |
-| **2** | Developer optional residuals (shared franchise helper, fold dual error screens, Overview honesty) | Explicit human task |
-| **3** | Next product epic (TBD with human) | STATUS / HANDOFF |
+| **1** | **Customer franchise context v1** — cold start, deep link/QR, recents, switcher, directory foundation, signed-out browse, cart clear on switch; test with **real + mock** listed franchises | `docs/slices/customer-franchise-context-v1.md` · Decision 11 |
+| **2** | **Stripe checkout v1** — platform account for HQ subscriptions; Connect destination + application fee for customer orders; HQ onboarding status; `paymentsEnabled` gate | `docs/slices/stripe-checkout-v1.md` · Decision 12 |
+| **3** | Pilot polish: reorder honesty, basic order status, closed hours gate, cart attach on sign-in | Explicit human tasks |
+
+**Pilot acquisition:** every pilot customer gets QR/SMS link; **directory foundation still required** for cold start and second-tenant QA.
+
+### Decision 11 / 12 locks (do not regress in implementation)
+
+| Topic | Lock |
+|--------|------|
+| App binary | Hybrid multi-tenant; **session = one `franchiseId`**; branding follows selection |
+| Acquisition | **QR/SMS primary**; **directory secondary but real** |
+| Bind pipeline | Link, QR, directory, recents, switcher → **same** `setFranchiseId` + branding + menu |
+| Signed-out | Browse menu + cart allowed; **checkout requires sign-in** |
+| Cart on switch | Confirm → **clear cart & switch**; no cross-franchise merge |
+| Stripe platform | Charges **HQ owners** for SaaS (subscriptions / platform invoices) |
+| Stripe Connect | **Each franchise** connected account; **customer order** money + application fee to platform |
+| Live charges | Only when franchise `paymentsEnabled` (Connect ready) |
+| Test | Real franchise + mock seeded franchise both listable |
 
 ### Explicit post-MVP / deferred
 
 | Surface | Decision |
 |---------|----------|
-| HQ Design page full semantic vocabulary editors | Deferred — seeds only for mobile v1 |
-| Cash Flow Forecast / Multi-Brand HQ cards | Post-MVP |
+| Geo / map directory | Post-MVP |
+| Guest checkout (pay without account) | Post-MVP |
+| HQ Design full semantic color editors | Deferred — seeds only |
+| Cash Flow / Multi-Brand HQ cards | Post-MVP |
 | Alerts producers / full AlertListScreen | Deferred |
-| CF Node 22 | Before ~2026-10-30 |
 | Combos / bundles | Deferred |
-| Auth/social ColorScheme pass (T8) | Deferred |
-| Order-experience prompt post-delivery | Post-MVP (storage + MainMenu due check landed) |
-| Impersonation real claim/token (Phase B) | Future slice after Developer v1 |
-| Global feature toggle writes / killswitches | Out of Developer v1 |
+| Auth ColorScheme residual (T8) | Deferred polish |
+| Order-experience post-delivery trigger | Post-MVP |
+| Impersonation Phase B (real claims) | Future |
+| CF Node 22 | Before ~2026-10-30 |
 
 **Onboarding product keys:**  
 `onboarding_feature_setup` → `onboarding_design_branding` → `onboarding_menu_foundation` → `onboardingMenuItems` → `onboardingReview`
 
-**Ground truth:** one FranchiseProvider; no new DesignTokens color fields for widgets; progress under `franchises/{id}/onboarding_progress/progress`; mobile theme = derived ColorScheme from franchise seeds.
+**Ground truth:** one FranchiseProvider; no DesignTokens widget color invention; progress under `franchises/{id}/onboarding_progress/progress`; mobile theme = ColorScheme from franchise seeds.
 
 ---
 
