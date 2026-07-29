@@ -66,6 +66,14 @@
           }
         },
         {
+          "client_id": "739021537990-bgkf3mujmuflhlpr56dtb5c5ohdle02h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.doughboys_pizzeria_fresh",
+            "certificate_hash": "be3e73f4b0b53f794bdc924e95ebf43b9b0e4796"
+          }
+        },
+        {
           "client_id": "739021537990-5ba7sgh5l4m5qag260357bmu6efgtpml.apps.googleusercontent.com",
           "client_type": 3
         }

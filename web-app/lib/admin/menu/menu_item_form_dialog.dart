@@ -1,9 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:shared_core/shared_core.dart' as shared;
 import 'package:franchise_admin_portal/generated/app_localizations.dart';
-import 'package:franchise_admin_portal/admin/menu/menu_item_customizations_dialog.dart';
-import 'package:franchise_admin_portal/admin/menu/customization_types.dart'
-    as ct;
 
 class MenuItemFormDialog extends StatefulWidget {
   final shared.MenuItem? initialItem;
@@ -36,7 +33,6 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
   int? _prepTime;
   int _calories = 0;
   double _fat = 0.0, _carbs = 0.0, _protein = 0.0;
-  List<shared.Customization> _customizations = [];
 
   @override
   void initState() {
@@ -58,7 +54,6 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
     _fat = i?.nutrition?.fat ?? 0.0;
     _carbs = i?.nutrition?.carbs ?? 0.0;
     _protein = i?.nutrition?.protein ?? 0.0;
-    _customizations = List<shared.Customization>.from(i?.customizations ?? []);
   }
 
   Widget _buildChipInput({
@@ -105,20 +100,6 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
         )
       ],
     );
-  }
-
-  void _openCustomizationDialog() async {
-    final groups =
-        _customizations.map((c) => ct.customizationToGroup(c)).toList();
-    final result = await showDialog<List<ct.CustomizationGroup>>(
-      context: context,
-      builder: (ctx) => MenuItemCustomizationsDialog(initialGroups: groups),
-    );
-    if (!mounted) return;
-    if (result != null) {
-      setState(() => _customizations =
-          result.map((g) => ct.groupToCustomization(g)).toList());
-    }
   }
 
   @override
@@ -186,9 +167,15 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
                   onChanged: (v) => setState(() => _availability = v),
                 ),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _openCustomizationDialog,
-                  child: Text('Edit Customizations'),
+                // M5: dual customizations tree removed from this day-2 form.
+                // Full modifier / profile editing is MenuItemEditorSheet only.
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Modifiers, sizes, and profile are edited in the full menu item editor. '
+                    'This dialog only updates basic fields and preserves existing canonical data on save.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
@@ -200,8 +187,13 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
                       orElse: () => widget.categories.first,
                     );
 
+                    final existing = widget.initialItem;
+
+                    // M5: this lightweight day-2 form must not wipe canonical
+                    // profile/groups or intentional product fields on edit.
+                    // Prefer MenuItemEditorSheet for full modifier editing.
                     final menuItem = shared.MenuItem(
-                      id: widget.initialItem?.id ?? '',
+                      id: existing?.id ?? '',
                       name: _name.trim(),
                       category: _category,
                       categoryId: selectedCategory.id,
@@ -212,8 +204,9 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
                           : _image?.trim(),
                       availability: _availability,
                       available: _availability,
-                      customizations: _customizations,
-                      customizationGroups: [],
+                      customizations: existing?.customizations ?? const [],
+                      customizationGroups:
+                          existing?.customizationGroups ?? const [],
                       taxCategory: _taxCategory,
                       sku: _sku.trim().isEmpty ? null : _sku.trim(),
                       dietaryTags: _dietaryTags,
@@ -225,6 +218,38 @@ class _MenuItemFormDialogState extends State<MenuItemFormDialog> {
                         carbs: _carbs,
                         protein: _protein,
                       ),
+                      sizes: existing?.sizes,
+                      sizePrices: existing?.sizePrices,
+                      additionalToppingPrices:
+                          existing?.additionalToppingPrices,
+                      includedIngredients: existing?.includedIngredients,
+                      optionalAddOns: existing?.optionalAddOns,
+                      crustTypes: existing?.crustTypes,
+                      cookTypes: existing?.cookTypes,
+                      cutStyles: existing?.cutStyles,
+                      sauceOptions: existing?.sauceOptions,
+                      dressingOptions: existing?.dressingOptions,
+                      maxFreeToppings: existing?.maxFreeToppings,
+                      maxFreeSauces: existing?.maxFreeSauces,
+                      maxFreeDressings: existing?.maxFreeDressings,
+                      maxToppings: existing?.maxToppings,
+                      dippingSauceOptions: existing?.dippingSauceOptions,
+                      dippingSplits: existing?.dippingSplits,
+                      sideDipSauceOptions: existing?.sideDipSauceOptions,
+                      freeDipCupCount: existing?.freeDipCupCount,
+                      sideDipUpcharge: existing?.sideDipUpcharge,
+                      menuProfile: existing?.menuProfile ??
+                          existing?.effectiveMenuProfile ??
+                          shared.MenuProfile.standard,
+                      modifierGroups: existing?.modifierGroups ??
+                          existing?.effectiveModifierGroups,
+                      inventoryTracked: existing?.inventoryTracked ?? false,
+                      stockCount: existing?.stockCount,
+                      lowStockThreshold: existing?.lowStockThreshold,
+                      templateRefs: existing?.templateRefs,
+                      sortOrder: existing?.sortOrder,
+                      notes: existing?.notes,
+                      exportId: existing?.exportId,
                     );
 
                     widget.onSave(menuItem);

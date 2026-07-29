@@ -20,6 +20,7 @@ import 'package:franchise_mobile_app/widgets/customization/topping_cost_label.da
 import 'package:franchise_mobile_app/widgets/customization/header.dart';
 import 'package:franchise_mobile_app/widgets/customization/bottom_bar.dart';
 import 'package:franchise_mobile_app/generated/app_localizations.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 const MAX_DOUBLES = 4;
 const DOUGH_IDS = {'dough_calzone', 'dough_pizza', 'dough'};
@@ -121,6 +122,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
   late Map<String, String?> _selectedDippedSauces; // For split dipped choices
   late bool _isAnyDipped; // True if any part is dipped
   late Map<String, int> _sideDipCounts; // For extra dip cups per flavor
+  /// W2: franchise config/menu_profile_wings.sauceIngredientIds when item has none.
+  List<String> _franchiseWingSauceIds = const [];
 
   // Drinks state
   late Map<String, int> _drinkFlavorCounts; // ingredientId -> count
@@ -141,34 +144,26 @@ class _CustomizationModalState extends State<CustomizationModal> {
   String _selectedToppingTab = '';
   late List<Map<String, dynamic>> _toppingTabGroups;
 
+  // AFTER
   void _handleSauceTap(int index) {
     setState(() {
       final selectedCount =
           _pizzaSauceSelections.where((s) => s.selected).length;
       final current = _pizzaSauceSelections[index];
 
-      // If currently not selected and already two other sauces are selected, block
+      // Max 2 sauces (same spirit as cheeses max)
       if (!current.selected && selectedCount >= 2) {
-        return; // Only allow two
+        return;
       }
 
-      // Toggling selection
-      _pizzaSauceSelections[index] =
-          current.copyWith(selected: !current.selected);
+      final nextSelected = !current.selected;
+      _pizzaSauceSelections[index] = current.copyWith(
+        selected: nextSelected,
+        portion: nextSelected ? Portion.whole : current.portion,
+      );
 
-      // Always keep at least one sauce selected
-      if (_pizzaSauceSelections.where((s) => s.selected).isEmpty) {
-        _pizzaSauceSelections[index] = current.copyWith(selected: true);
-      }
-
-      // If toggled to selected, set to default portion if not set
-      if (_pizzaSauceSelections[index].selected) {
-        // Set default to 'whole', unless already split
-        _pizzaSauceSelections[index] =
-            _pizzaSauceSelections[index].copyWith(portion: Portion.whole);
-      }
-
-      // If toggling off in a split, clear validation error
+      // Do not force a sauce to stay selected (parity with cheeses)
+      // Do not touch _currentIngredients — sauces stay in Sauces section only
       _sauceSplitValidationError = false;
     });
   }
@@ -216,10 +211,20 @@ class _CustomizationModalState extends State<CustomizationModal> {
         s.portion = Portion.whole;
         s.amount = 'regular';
       }
-      if (_pizzaSauceSelections.isNotEmpty) {
-        _pizzaSauceSelections[0].selected = true;
-        _pizzaSauceSelections[0].portion = Portion.whole;
-        _pizzaSauceSelections[0].amount = 'regular';
+      // AFTER
+      final includedSauceId =
+          widget.menuItem.includedIngredients?.firstWhereOrNull((ing) {
+        final t = (ing['typeId'] ?? ing['type'] ?? '').toString().toLowerCase();
+        return t == 'sauces' || t == 'sauce';
+      })?['ingredientId']?.toString();
+      if (includedSauceId != null) {
+        final idx =
+            _pizzaSauceSelections.indexWhere((s) => s.id == includedSauceId);
+        if (idx >= 0) {
+          _pizzaSauceSelections[idx].selected = true;
+          _pizzaSauceSelections[idx].portion = Portion.whole;
+          _pizzaSauceSelections[idx].amount = 'regular';
+        }
       }
       _sauceSplitValidationError = false;
     });
@@ -255,26 +260,47 @@ class _CustomizationModalState extends State<CustomizationModal> {
     return uiSize; // guaranteed not null by above
   }
 
+  bool _wasIncludedIngredient(String ingId) {
+    final raw = widget.menuItem.includedIngredients;
+    if (raw == null || raw.isEmpty) return false;
+    final want = ingId.trim();
+    if (want.isEmpty) return false;
+    for (final e in raw) {
+      final a = (e['ingredientId'] ?? '').toString().trim();
+      final b = (e['id'] ?? '').toString().trim();
+      if (a == want || b == want) return true;
+    }
+    return false;
+  }
+
   bool _showsCurrentIngredients() {
+    if (_isWings()) return false;
     final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
-    if (profile == shared.MenuProfile.pizza) return true;
+    if (profile == shared.MenuProfile.pizza ||
+        profile == shared.MenuProfile.calzone) {
+      return true;
+    }
     final cat = widget.menuItem.category.toLowerCase();
     final catId = (widget.menuItem.categoryId ?? '').toLowerCase();
     return [cat, catId].any((c) =>
         c.contains('pizza') ||
         c.contains('calzone') ||
         c.contains('salad') ||
-        c.contains('sub'));
+        c.contains('sub') ||
+        c.contains('dinner'));
   }
 
   bool _isPizzaOrCalzone() {
     final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
-    if (profile == shared.MenuProfile.pizza) return true;
+    if (profile == shared.MenuProfile.pizza ||
+        profile == shared.MenuProfile.calzone) return true;
     final cat = widget.menuItem.category.toLowerCase();
     return cat.contains('pizza') || cat.contains('calzone');
   }
 
   bool _isCalzone() {
+    final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
+    if (profile == shared.MenuProfile.calzone) return true;
     return widget.menuItem.category.toLowerCase().contains('calzone');
   }
 
@@ -285,6 +311,107 @@ class _CustomizationModalState extends State<CustomizationModal> {
     return name.contains('wings');
   }
 
+  bool _isSalad() {
+    final cat = widget.menuItem.category.toLowerCase();
+    final catId = (widget.menuItem.categoryId ?? '').toLowerCase();
+    return cat.contains('salad') || catId.contains('salad');
+  }
+
+  bool _isDinner() {
+    final cat = widget.menuItem.category.toLowerCase();
+    final catId = (widget.menuItem.categoryId ?? '').toLowerCase();
+    return cat.contains('dinner') || catId.contains('dinner');
+  }
+
+  List<String> _effectiveWingSauceIds() {
+    if (widget.menuItem.sideDipSauceOptions?.isNotEmpty == true) {
+      return List<String>.from(widget.menuItem.sideDipSauceOptions!);
+    }
+    if (widget.menuItem.dippingSauceOptions?.isNotEmpty == true) {
+      return List<String>.from(widget.menuItem.dippingSauceOptions!);
+    }
+    // modifierGroups wing_sauce / wing_dips
+    final groups = widget.menuItem.modifierGroups ?? const [];
+    final fromGroups = <String>[];
+    for (final g in groups) {
+      final id = g.id.toLowerCase();
+      final label = g.label.toLowerCase();
+      if (id == 'wing_sauce' ||
+          id == 'wing_dips' ||
+          label.contains('sauce') ||
+          label.contains('dip')) {
+        for (final o in g.options) {
+          final key =
+              (o.ingredientId != null && o.ingredientId!.trim().isNotEmpty)
+                  ? o.ingredientId!.trim()
+                  : o.id.trim();
+          if (key.isNotEmpty && key.toLowerCase() != 'plain') {
+            fromGroups.add(key);
+          }
+        }
+      }
+    }
+    if (fromGroups.isNotEmpty) return fromGroups;
+    // W2 franchise pool
+    if (_franchiseWingSauceIds.isNotEmpty) {
+      return List<String>.from(_franchiseWingSauceIds);
+    }
+    return const [];
+  }
+
+  void _resyncWingsForSize(String? size) {
+    if (!_isWings()) return;
+    final splitCount = widget.menuItem.dippingSplits?[size] ?? 2;
+
+    final nextSplits = <String, String?>{};
+    for (var i = 0; i < splitCount; i++) {
+      final key = 'split_$i';
+      nextSplits[key] = _selectedDippedSauces[key] ?? 'plain';
+    }
+    _selectedDippedSauces = nextSplits;
+    _isAnyDipped =
+        _selectedDippedSauces.values.any((v) => v != null && v != 'plain');
+
+    final dipIds = _effectiveWingSauceIds();
+    final nextCups = <String, int>{};
+    for (final id in dipIds) {
+      nextCups[id] = _sideDipCounts[id] ?? 0;
+    }
+    _sideDipCounts = nextCups;
+  }
+
+  Future<void> _loadFranchiseWingSaucePoolIfNeeded() async {
+    if (!_isWings()) return;
+    if ((widget.menuItem.sideDipSauceOptions?.isNotEmpty ?? false) ||
+        (widget.menuItem.dippingSauceOptions?.isNotEmpty ?? false)) {
+      return;
+    }
+    try {
+      final franchiseId =
+          Provider.of<shared.FranchiseProvider>(context, listen: false)
+              .currentFranchiseId;
+      if (franchiseId.isEmpty || franchiseId == 'unknown') return;
+      final doc = await FirebaseFirestore.instance
+          .collection('franchises')
+          .doc(franchiseId)
+          .collection('config')
+          .doc('menu_profile_wings')
+          .get();
+      if (!doc.exists || doc.data() == null) return;
+      final raw = doc.data()!['sauceIngredientIds'];
+      if (raw is! List) return;
+      final ids =
+          raw.map((e) => e.toString()).where((id) => id.isNotEmpty).toList();
+      if (!mounted || ids.isEmpty) return;
+      setState(() {
+        _franchiseWingSauceIds = ids;
+        _resyncWingsForSize(_selectedSize);
+      });
+    } catch (_) {
+      // Non-fatal — Plain-only remains valid
+    }
+  }
+
   bool _showPortionToggle(String groupLabel) {
     if (!_isPizzaOrCalzone()) return false;
     return groupLabel == "Meats" ||
@@ -293,36 +420,77 @@ class _CustomizationModalState extends State<CustomizationModal> {
   }
 
   List<Map<String, dynamic>> _groupsForUi() {
-    final stored = widget.menuItem.modifierGroups;
-    if (stored != null && stored.isNotEmpty) {
-      return widget.menuItem.effectiveModifierGroups.map((g) {
-        final optionIds = g.options
-            .map((o) {
-              final ing = o.ingredientId?.trim();
-              if (ing != null && ing.isNotEmpty) return ing;
-              return o.id.trim();
-            })
-            .where((id) => id.isNotEmpty)
-            .toList();
-        final optionLabels = <String, String>{
-          for (final o in g.options)
-            if (o.id.trim().isNotEmpty)
-              (o.ingredientId != null && o.ingredientId!.trim().isNotEmpty
-                      ? o.ingredientId!.trim()
-                      : o.id.trim()):
-                  o.label.trim().isNotEmpty ? o.label.trim() : o.id.trim(),
-        };
-        return <String, dynamic>{
-          'id': g.id,
-          'label': g.label,
-          'ingredientIds': optionIds,
-          'optionLabels': optionLabels,
-          'min': g.min,
-          'max': g.max,
-          if (g.maxFree != null) 'maxFree': g.maxFree,
-        };
-      }).toList();
+    Map<String, dynamic> groupToMap(shared.ModifierGroup g) {
+      final optionIds = g.options
+          .map((o) {
+            final ing = o.ingredientId?.trim();
+            if (ing != null && ing.isNotEmpty) return ing;
+            return o.id.trim();
+          })
+          .where((id) => id.isNotEmpty)
+          .toList();
+      final optionLabels = <String, String>{
+        for (final o in g.options)
+          if (o.id.trim().isNotEmpty)
+            (o.ingredientId != null && o.ingredientId!.trim().isNotEmpty
+                    ? o.ingredientId!.trim()
+                    : o.id.trim()):
+                o.label.trim().isNotEmpty ? o.label.trim() : o.id.trim(),
+      };
+      return <String, dynamic>{
+        'id': g.id,
+        'label': g.label,
+        'ingredientIds': optionIds,
+        'optionLabels': optionLabels,
+        'min': g.min,
+        'max': g.max,
+        if (g.maxFree != null) 'maxFree': g.maxFree,
+      };
     }
+
+    var groups =
+        widget.menuItem.effectiveModifierGroups.map(groupToMap).toList();
+
+    // Pizza: ensure Crust / Cook / Cut from template when missing or empty
+    // (stored modifierGroups often only have food groups after HQ re-seed).
+    if (_isPizza()) {
+      final template = shared.MenuProfileTemplates.seedGroups(
+        shared.MenuProfile.pizza,
+      );
+      for (final structuralId in ['crust', 'cook', 'cut']) {
+        final idx = groups.indexWhere(
+          (g) =>
+              (g['id'] ?? '').toString().toLowerCase() == structuralId ||
+              (g['label'] ?? '').toString().toLowerCase() == structuralId,
+        );
+        final hasOptions = idx >= 0 &&
+            ((groups[idx]['ingredientIds'] as List?)?.isNotEmpty ?? false);
+        if (hasOptions) continue;
+        final seed = template.firstWhere(
+          (g) => g.id.toLowerCase() == structuralId,
+          orElse: () => template.firstWhere(
+            (g) => g.label.toLowerCase() == structuralId,
+            orElse: () => shared.ModifierGroup(
+              id: structuralId,
+              label: structuralId[0].toUpperCase() + structuralId.substring(1),
+              selectMode: shared.ModifierSelectMode.single,
+              min: 1,
+              max: 1,
+              options: const [],
+            ),
+          ),
+        );
+        final mapped = groupToMap(seed);
+        if (idx >= 0) {
+          groups[idx] = mapped;
+        } else {
+          groups.insert(0, mapped);
+        }
+      }
+    }
+
+    if (groups.isNotEmpty) return groups;
+
     return List<Map<String, dynamic>>.from(
       widget.menuItem.customizationGroups ?? const [],
     );
@@ -351,20 +519,34 @@ class _CustomizationModalState extends State<CustomizationModal> {
   @override
   void initState() {
     super.initState();
-    // Debug print removed in P1 Batch 1 cleanup (no log spam)
 
-    // --- Initialize cheeses state (self-contained) ---
-    final cheeseGroup = _groupsForUi().firstWhereOrNull(
-        (g) => (g['label']?.toString().toLowerCase() ?? '') == 'cheeses');
-    final cheeseIds = (cheeseGroup?['ingredientIds'] as List?)
-            ?.map((e) => e.toString())
-            .toList() ??
-        [];
+    // --- Cheeses: available from optionalAddOns; defaults from included ---
+    final cheeseIds = _optionalIdsByType('cheeses');
     _selectedCheeses = {
-      ...?widget.menuItem.includedIngredients
-          ?.where((i) => cheeseIds.contains(i['ingredientId'] ?? i['id']))
-          .map((i) => i['ingredientId'] ?? i['id'])
+      ...?widget.menuItem.includedIngredients?.where((i) {
+        final id = (i['ingredientId'] ?? i['id'])?.toString() ?? '';
+        final type = (i['typeId'] ?? i['type'] ?? '').toString().toLowerCase();
+        return type == 'cheeses' || cheeseIds.contains(id);
+      }).map((i) => (i['ingredientId'] ?? i['id']).toString()),
     };
+    final storedCheeseGroups = widget.menuItem.modifierGroups?.where(
+      (g) =>
+          g.label.toLowerCase() == 'cheeses' || g.id.toLowerCase() == 'cheeses',
+    );
+    if (storedCheeseGroups != null) {
+      for (final g in storedCheeseGroups) {
+        for (final o in g.options) {
+          if (!o.defaultSelected) continue;
+          final key =
+              (o.ingredientId != null && o.ingredientId!.trim().isNotEmpty)
+                  ? o.ingredientId!.trim()
+                  : o.id.trim();
+          if (key.isNotEmpty && cheeseIds.contains(key)) {
+            _selectedCheeses.add(key);
+          }
+        }
+      }
+    }
     _cheesePortions = {};
     _cheeseIsDouble = {};
     for (final id in _selectedCheeses) {
@@ -380,16 +562,42 @@ class _CustomizationModalState extends State<CustomizationModal> {
     _selectedSize =
         (sizes != null && sizes.isNotEmpty) ? sizes.first.label : null;
     _drinkFlavorCounts = {};
-    if (_isPizza()) {
-      final saucesGroup = _groupsForUi().firstWhereOrNull(
-          (g) => (g['label']?.toString().toLowerCase() ?? '') == 'sauces');
-      final sauceIds = (saucesGroup?['ingredientIds'] as List?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [];
-      final sauceLabels = (saucesGroup?['optionLabels'] as Map?)
-              ?.map((k, v) => MapEntry(k.toString(), v.toString())) ??
-          const <String, String>{};
+
+    if (_isPizzaOrCalzone()) {
+      // AFTER
+      var sauceIds = _optionalIdsByType('sauces');
+      // Include sauces that come on the item but aren't in optionalAddOns
+      for (final ing in widget.menuItem.includedIngredients ?? const []) {
+        final t = (ing['typeId'] ?? ing['type'] ?? '').toString().toLowerCase();
+        if (t != 'sauces' && t != 'sauce') continue;
+        final id = (ing['ingredientId'] ?? ing['id'])?.toString() ?? '';
+        if (id.isNotEmpty && !sauceIds.contains(id)) {
+          sauceIds = [...sauceIds, id];
+        }
+      }
+      var sauceLabels = <String, String>{
+        for (final id in sauceIds) id: _optionalLabel(id, 'sauces'),
+      };
+      for (final ing in widget.menuItem.includedIngredients ?? const []) {
+        final id = (ing['ingredientId'] ?? ing['id'])?.toString() ?? '';
+        final name = (ing['name'] ?? '').toString();
+        if (id.isNotEmpty && name.isNotEmpty) {
+          sauceLabels[id] = name;
+        }
+      }
+      if (sauceIds.isEmpty) {
+        final saucesGroup = _groupsForUi().firstWhereOrNull(
+          (g) => (g['label']?.toString().toLowerCase() ?? '') == 'sauces',
+        );
+        sauceIds = (saucesGroup?['ingredientIds'] as List?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [];
+        sauceLabels = (saucesGroup?['optionLabels'] as Map?)
+                ?.map((k, v) => MapEntry(k.toString(), v.toString())) ??
+            const <String, String>{};
+      }
+
       _pizzaSauceSelections = sauceIds.map((id) {
         final meta = _ingredientMetadata[id];
         return PizzaSauceSelection(
@@ -401,43 +609,78 @@ class _CustomizationModalState extends State<CustomizationModal> {
         );
       }).toList();
 
-      // Default to first available sauce, 'whole'
+      // Prefer included sauce (typeId), else first available
+      final includedSauceId =
+          widget.menuItem.includedIngredients?.firstWhereOrNull((ing) {
+        final t = (ing['typeId'] ?? ing['type'] ?? '').toString().toLowerCase();
+        return t == 'sauces' || t == 'sauce';
+      })?['ingredientId']?.toString();
+
+      // AFTER
       if (_pizzaSauceSelections.isNotEmpty) {
-        _pizzaSauceSelections[0].selected = true;
-        _pizzaSauceSelections[0].portion = Portion.whole;
+        // Clear all, then select included only (cheeses-style defaults)
+        for (var i = 0; i < _pizzaSauceSelections.length; i++) {
+          _pizzaSauceSelections[i] =
+              _pizzaSauceSelections[i].copyWith(selected: false);
+        }
+        if (includedSauceId != null && includedSauceId.isNotEmpty) {
+          final idx =
+              _pizzaSauceSelections.indexWhere((s) => s.id == includedSauceId);
+          if (idx >= 0) {
+            _pizzaSauceSelections[idx] = _pizzaSauceSelections[idx].copyWith(
+              selected: true,
+              portion: Portion.whole,
+            );
+          }
+        }
       }
     }
+
     _initializeSelections();
-    if (_isPizza()) {
-      // Find default sauce (first from sauces group, fallback to included ingredient, fallback to null)
-      final saucesGroup = _groupsForUi().firstWhereOrNull(
-          (g) => (g['label']?.toString().toLowerCase() ?? '') == 'sauces');
-      final sauceIds = (saucesGroup?['ingredientIds'] as List?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          [];
-      // Default: included sauce or first from group, or 'sauce_none'
+
+    if (_isPizzaOrCalzone()) {
+      final optionalSauceIds = _optionalIdsByType('sauces');
       final includedSauceId =
-          widget.menuItem.includedIngredients?.firstWhereOrNull(
-        (ing) => (ing['type']?.toString()?.toLowerCase() == 'sauces'),
-      )?['ingredientId'];
+          widget.menuItem.includedIngredients?.firstWhereOrNull((ing) {
+        final t = (ing['typeId'] ?? ing['type'] ?? '').toString().toLowerCase();
+        return t == 'sauces' || t == 'sauce';
+      })?['ingredientId']?.toString();
       _selectedPizzaSauceId = includedSauceId ??
-          (sauceIds.isNotEmpty ? sauceIds.first : 'sauce_none');
+          (optionalSauceIds.isNotEmpty ? optionalSauceIds.first : 'sauce_none');
       _selectedSaucePortion = 'whole';
       _selectedSauceAmount = 'regular';
     }
+
     _sortCustomizationGroups();
-    // Setup pizza/calzone topping tabs for "Meats" and "Veggies" ONLY
-    final uiGroups = _groupsForUi();
-    if (_isPizzaOrCalzone() && uiGroups.isNotEmpty) {
-      _toppingTabGroups = uiGroups.where((g) {
-        final label = g['label']?.toString().toLowerCase() ?? '';
-        if (label != 'meats' && label != 'veggies' && label != 'toppings') {
-          return false;
-        }
-        final ids = (g['ingredientIds'] as List?) ?? const [];
-        return ids.isNotEmpty;
-      }).toList();
+
+    // Additional toppings tabs: meats / veggies from optionalAddOns
+    if (_isPizzaOrCalzone()) {
+      final meatIds = _optionalIdsByType('meats');
+      final vegIds = _optionalIdsByType('veggies');
+      _toppingTabGroups = <Map<String, dynamic>>[
+        if (meatIds.isNotEmpty)
+          {
+            'id': 'meats',
+            'label': 'Meats',
+            'ingredientIds': meatIds,
+            'optionLabels': {
+              for (final id in meatIds) id: _optionalLabel(id, 'meats'),
+            },
+            'max': 20,
+            'maxFree': _maxFreeForGroupLabel('meats') ?? 0,
+          },
+        if (vegIds.isNotEmpty)
+          {
+            'id': 'veggies',
+            'label': 'Veggies',
+            'ingredientIds': vegIds,
+            'optionLabels': {
+              for (final id in vegIds) id: _optionalLabel(id, 'veggies'),
+            },
+            'max': 20,
+            'maxFree': _maxFreeForGroupLabel('veggies') ?? 0,
+          },
+      ];
       _toppingTabLabels =
           _toppingTabGroups.map((g) => g['label'].toString()).toList();
       _selectedToppingTab =
@@ -451,29 +694,20 @@ class _CustomizationModalState extends State<CustomizationModal> {
     _initializeSauceCounts();
     _initializeDressingCounts();
 
-    // --- Wings initialization ---
     if (_isWings()) {
-      final sizes = widget.menuItem.sizes ?? [];
-      _selectedSize ??= sizes.isNotEmpty ? sizes.first.label : null;
-      final splitCount = widget.menuItem.dippingSplits?[_selectedSize] ?? 2;
+      final wingSizes = widget.menuItem.sizes ?? [];
+      _selectedSize ??= wingSizes.isNotEmpty ? wingSizes.first.label : null;
       _selectedDippedSauces = {};
-      final sauceOptions = widget.menuItem.dippingSauceOptions ?? [];
-      for (var i = 0; i < splitCount; i++) {
-        _selectedDippedSauces['split_$i'] = "plain";
-      }
-
-      _isAnyDipped = false;
       _sideDipCounts = {};
-      final sideOptions = widget.menuItem.sideDipSauceOptions ?? [];
-      for (final id in sideOptions) {
-        _sideDipCounts[id] = 0;
-      }
+      _isAnyDipped = false;
+      _resyncWingsForSize(_selectedSize);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadFranchiseWingSaucePoolIfNeeded();
+      });
     }
 
-    // --- Initialize ingredientAmounts for amountSelectable included ingredients ---
     if (widget.menuItem.includedIngredients != null) {
       for (final ing in widget.menuItem.includedIngredients!) {
-        // First: check if present in ingredient_metadata, else fallback to map
         final ingId = ing['ingredientId'] ?? ing['id'];
         final meta = _ingredientMetadata[ingId];
         final List<String>? options = meta?.amountOptions ??
@@ -484,7 +718,6 @@ class _CustomizationModalState extends State<CustomizationModal> {
             (ing['amountSelectable'] == true && options != null);
 
         if (selectable && options != null && options.isNotEmpty) {
-          // Prefer 'Regular' as default, fallback to first option
           _ingredientAmounts[ingId] = options.firstWhere(
             (opt) => opt.toLowerCase() == 'regular',
             orElse: () => options.first,
@@ -492,10 +725,10 @@ class _CustomizationModalState extends State<CustomizationModal> {
         }
       }
     }
+
     if (widget.menuItem.category.toLowerCase() == 'drinks') {
       _drinkFlavorCounts = {};
       _drinkTotalCount = 0;
-      // Try to get maxPerFlavor from Firestore field, else fallback
       _drinkMaxPerFlavor =
           (widget.menuItem.toMap()['maxPerFlavor'] as int?) ?? 10;
       for (final ing in widget.menuItem.includedIngredients ?? []) {
@@ -505,13 +738,43 @@ class _CustomizationModalState extends State<CustomizationModal> {
     }
   }
 
+  // AFTER
   void _initializeSelections() {
     _currentIngredients = {};
     if (widget.menuItem.includedIngredients != null) {
       for (final ing in widget.menuItem.includedIngredients!) {
-        final ingId = ing['ingredientId'] ?? ing['id'];
+        final ingId = (ing['ingredientId'] ?? ing['id'])?.toString() ?? '';
+        if (ingId.isEmpty) continue;
         _currentIngredients.add(ingId);
       }
+    }
+    // Pizza/calzone only: cheeses & sauces live in their own sections, not
+    // Current Toppings. Dinner/salad/standard keep all included ingredients on
+    // Current so they do not open as "Removed" or leak into optional pool.
+    if (_isPizzaOrCalzone()) {
+      _currentIngredients.removeWhere((id) {
+        final meta = _ingredientMetadata[id];
+        final type = (meta?.type ?? '').toLowerCase();
+        final typeId = (meta?.typeId ?? type).toLowerCase();
+        if (type == 'cheeses' ||
+            typeId == 'cheeses' ||
+            type == 'sauces' ||
+            type == 'sauce' ||
+            typeId == 'sauces' ||
+            typeId == 'sauce') {
+          return true;
+        }
+        final included = widget.menuItem.includedIngredients?.firstWhereOrNull(
+          (e) => (e['ingredientId'] ?? e['id'])?.toString() == id,
+        );
+        if (included != null) {
+          final t = (included['typeId'] ?? included['type'] ?? '')
+              .toString()
+              .toLowerCase();
+          if (t == 'cheeses' || t == 'sauces' || t == 'sauce') return true;
+        }
+        return false;
+      });
     }
     _groupSelections = {};
     _radioSelections = {};
@@ -629,6 +892,81 @@ class _CustomizationModalState extends State<CustomizationModal> {
         }
       }
     }
+
+    // Pizza/calzone: cheeses available list from optionalAddOns when group missing/sparse
+    if (_isPizzaOrCalzone()) {
+      final cIds = _optionalIdsByType('cheeses');
+      final hasCheese = _checkboxGroups.any(
+        (g) => (g['label']?.toString().toLowerCase() ?? '') == 'cheeses',
+      );
+      if (!hasCheese && cIds.isNotEmpty) {
+        _checkboxGroups.add({
+          'id': 'cheeses',
+          'label': 'Cheeses',
+          'ingredientIds': cIds,
+          'optionLabels': {
+            for (final id in cIds) id: _optionalLabel(id, 'cheeses'),
+          },
+          'max': 2,
+        });
+      } else if (hasCheese && cIds.isNotEmpty) {
+        // Prefer full optional pool over sparse modifier options
+        final idx = _checkboxGroups.indexWhere(
+          (g) => (g['label']?.toString().toLowerCase() ?? '') == 'cheeses',
+        );
+        if (idx >= 0) {
+          final existing = Map<String, dynamic>.from(_checkboxGroups[idx]);
+          existing['ingredientIds'] = cIds;
+          existing['optionLabels'] = {
+            for (final id in cIds) id: _optionalLabel(id, 'cheeses'),
+          };
+          if ((existing['max'] as int?) == null ||
+              (existing['max'] as int) > 2) {
+            existing['max'] = 2;
+          }
+          _checkboxGroups[idx] = existing;
+        }
+      }
+    }
+
+    // Pizza: sauces section from optionalAddOns when no sauces modifier group
+    // AFTER
+    if (_isPizzaOrCalzone()) {
+      var sauceIds = _optionalIdsByType('sauces');
+      final sauceLabels = <String, String>{
+        for (final id in sauceIds) id: _optionalLabel(id, 'sauces'),
+      };
+      for (final ing in widget.menuItem.includedIngredients ?? const []) {
+        final t = (ing['typeId'] ?? ing['type'] ?? '').toString().toLowerCase();
+        if (t != 'sauces' && t != 'sauce') continue;
+        final id = (ing['ingredientId'] ?? ing['id'])?.toString() ?? '';
+        if (id.isEmpty) continue;
+        if (!sauceIds.contains(id)) sauceIds = [...sauceIds, id];
+        final name = (ing['name'] ?? '').toString();
+        if (name.isNotEmpty) sauceLabels[id] = name;
+      }
+      final hasSauces = _radioGroups.any(
+        (g) => (g['label']?.toString().toLowerCase() ?? '') == 'sauces',
+      );
+      if (!hasSauces && sauceIds.isNotEmpty) {
+        _radioGroups.add({
+          'id': 'sauces',
+          'label': 'Sauces',
+          'ingredientIds': sauceIds,
+          'optionLabels': sauceLabels,
+        });
+      } else if (hasSauces && sauceIds.isNotEmpty) {
+        final idx = _radioGroups.indexWhere(
+          (g) => (g['label']?.toString().toLowerCase() ?? '') == 'sauces',
+        );
+        if (idx >= 0) {
+          final existing = Map<String, dynamic>.from(_radioGroups[idx]);
+          existing['ingredientIds'] = sauceIds;
+          existing['optionLabels'] = sauceLabels;
+          _radioGroups[idx] = existing;
+        }
+      }
+    }
   }
 
   bool _isRadioGroup(String label) {
@@ -653,9 +991,57 @@ class _CustomizationModalState extends State<CustomizationModal> {
     return false;
   }
 
+  // AFTER
+  Set<String> get _originalIncludedIds {
+    final raw = widget.menuItem.includedIngredients;
+    if (raw == null || raw.isEmpty) return <String>{};
+    return raw
+        .map((e) => (e['ingredientId'] ?? e['id'])?.toString() ?? '')
+        .where((id) => id.isNotEmpty)
+        .toSet();
+  }
+
+  /// Available extras from optionalAddOns, filtered by typeId (meats|veggies|cheeses|sauces).
+  List<Map<String, dynamic>> _optionalByType(String typeId) {
+    final raw = widget.menuItem.optionalAddOns;
+    if (raw == null || raw.isEmpty) return const [];
+    final want = typeId.toLowerCase();
+    final out = <Map<String, dynamic>>[];
+    final seen = <String>{};
+    for (final e in raw) {
+      final tid = (e['typeId'] ?? e['type'] ?? '').toString().toLowerCase();
+      if (tid != want) continue;
+      final id = (e['ingredientId'] ?? e['id'] ?? '').toString();
+      if (id.isEmpty || seen.contains(id)) continue;
+      seen.add(id);
+      out.add(Map<String, dynamic>.from(e));
+    }
+    return out;
+  }
+
+  List<String> _optionalIdsByType(String typeId) {
+    return _optionalByType(typeId)
+        .map((e) => (e['ingredientId'] ?? e['id']).toString())
+        .where((id) => id.isNotEmpty)
+        .toList();
+  }
+
+  String _optionalLabel(String id, String typeId) {
+    for (final e in _optionalByType(typeId)) {
+      final eid = (e['ingredientId'] ?? e['id']).toString();
+      if (eid == id) {
+        return (e['name'] ?? _ingredientMetadata[id]?.name ?? id).toString();
+      }
+    }
+    return _ingredientMetadata[id]?.name ?? id;
+  }
+
   bool _isPizza() {
     final profile = widget.menuItem.effectiveMenuProfile.toLowerCase();
-    if (profile == shared.MenuProfile.pizza) return true;
+    // Calzone re-uses the full pizza sauce / toppings path; left/right is
+    // suppressed separately by _isCalzone().
+    if (profile == shared.MenuProfile.pizza ||
+        profile == shared.MenuProfile.calzone) return true;
     final cat = widget.menuItem.category.toLowerCase();
     return cat.contains('pizza');
   }
@@ -792,6 +1178,14 @@ class _CustomizationModalState extends State<CustomizationModal> {
     if (widget.menuItem.optionalAddOns != null) {
       for (final addOn in widget.menuItem.optionalAddOns!) {
         final ingId = addOn['ingredientId'] ?? addOn['id'];
+        // Salad/dinner: priced via _currentIngredients path below
+        if ((_isSalad() || _isDinner()) &&
+            _currentIngredients.contains(ingId)) {
+          continue;
+        }
+        if (_wasIncludedIngredient(ingId.toString())) {
+          continue; // included in base price — never charge as add-on
+        }
         if (_selectedAddOns.contains(ingId)) {
           final meta = _ingredientMetadata[ingId];
           double upcharge = usesDynamicToppingPricing
@@ -830,8 +1224,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
     if (_isWings()) {
       final upcharge = widget.menuItem.sideDipUpcharge?[_selectedSize] ?? 0.95;
       final freeDips = widget.menuItem.freeDipCupCount?[_selectedSize] ?? 0;
-      // Only dips in dippingSauceOptions are eligible as "free"
-      final dipIds = widget.menuItem.dippingSauceOptions ?? [];
+      // Cups from effective list (item bind → groups → W2 franchise pool)
+      final dipIds = _effectiveWingSauceIds();
       final totalDipCups = dipIds.fold<int>(
         0,
         (sum, id) => sum + (_sideDipCounts[id] ?? 0),
@@ -865,10 +1259,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
       final cat = widget.menuItem.category.toLowerCase();
       final isSalad = cat.contains('salad');
-      final wasIncluded = (widget.menuItem.includedIngredients?.any(
-            (e) => (e['ingredientId'] ?? e['id']) == ingId,
-          ) ??
-          false);
+      final wasIncluded = _wasIncludedIngredient(ingId);
 
       double upcharge = usesDynamicToppingPricing
           ? _getToppingUpcharge()
@@ -894,11 +1285,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
             if (_isDoughIngredient(id)) return false;
             if (_selectedSauceCounts.containsKey(id)) return false;
             if (_selectedDressingCounts.containsKey(id)) return false;
-            final was = widget.menuItem.includedIngredients?.any(
-                  (e) => (e['ingredientId'] ?? e['id']) == id,
-                ) ??
-                false;
-            return !was;
+            return !_wasIncludedIngredient(id);
           }).toList();
           final indexAmongExtras = extraIds.indexOf(ingId);
           final beyondFree =
@@ -1051,7 +1438,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
     }
 
     // --- PIZZA SAUCE SPLIT VALIDATION ---
-    if (_isPizza()) {
+    if (_isPizzaOrCalzone()) {
       final selected = _pizzaSauceSelections.where((s) => s.selected).toList();
 
       final halves = selected.where((s) => s.portion != Portion.whole).toList();
@@ -1145,7 +1532,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
     }
 
     // --- PIZZA: Capture full split sauce selection ---
-    if (_isPizza()) {
+    if (_isPizzaOrCalzone()) {
       final selected = _pizzaSauceSelections.where((s) => s.selected).toList();
       result['sauce'] = selected
           .map((s) => {
@@ -1221,6 +1608,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                 onChanged: (newSize) {
                                   setState(() {
                                     _selectedSize = newSize;
+                                    _resyncWingsForSize(newSize);
                                   });
                                 },
                                 toppingCostLabel: _isPizzaOrCalzone()
@@ -1251,6 +1639,14 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                     .map((e) => MapEntry(e.key, e.value!)),
                               ),
                               setState: setState,
+                              onPortionChanged: (splitKey, sauceId) {
+                                setState(() {
+                                  _selectedDippedSauces[splitKey] = sauceId;
+                                  _isAnyDipped = _selectedDippedSauces.values
+                                      .any((v) => v != null && v != 'plain');
+                                });
+                              },
+                              sauceIdsOverride: _effectiveWingSauceIds(),
                             ),
                             WingsDipSauceSelector(
                               menuItem: widget.menuItem,
@@ -1258,31 +1654,9 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               loc: loc,
                               ingredientMetadata: _ingredientMetadata,
                               sideDipCounts: _sideDipCounts,
-                              wingsDipSauceTabIndex: _wingsDipSauceTabIndex,
+                              selectedSize: _selectedSize,
                               setState: setState,
-                              onTabChanged: (newIndex) {
-                                setState(() {
-                                  _wingsDipSauceTabIndex = newIndex;
-                                });
-                              },
-                            ),
-                            WingsOptionalAddOnsGroup(
-                              menuItem: widget.menuItem,
-                              theme: theme,
-                              loc: loc,
-                              ingredientMetadata: _ingredientMetadata,
-                              selectedAddOns: _selectedAddOns,
-                              doubleAddOns: _doubleAddOns,
-                              setState: setState,
-                              onChanged: (ingId, checked) {
-                                if (checked) {
-                                  _selectedAddOns.add(ingId);
-                                  _doubleAddOns[ingId] = false;
-                                } else {
-                                  _selectedAddOns.remove(ingId);
-                                  _doubleAddOns.remove(ingId);
-                                }
-                              },
+                              sauceIdsOverride: _effectiveWingSauceIds(),
                             ),
                           ],
 
@@ -1294,17 +1668,6 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               loc: loc,
                               ingredientMetadata: _ingredientMetadata,
                               selectedSauceCounts: _selectedSauceCounts,
-                              setState: setState,
-                            )
-                          else if (widget.menuItem.category.toLowerCase() ==
-                              'dinners')
-                            DinnerIncludedIngredients(
-                              menuItem: widget.menuItem,
-                              theme: theme,
-                              loc: loc,
-                              ingredientMetadata: _ingredientMetadata,
-                              currentIngredients: _currentIngredients,
-                              ingredientAmounts: _ingredientAmounts,
                               setState: setState,
                             )
                           else if (_showsCurrentIngredients())
@@ -1323,19 +1686,36 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                       lower.startsWith('cut_')) {
                                     return false;
                                   }
+                                  // AFTER
+                                  // AFTER
+                                  final typeId = (meta?.typeId ?? type)
+                                      .toString()
+                                      .toLowerCase();
+                                  if (type == 'cheeses' ||
+                                      typeId == 'cheeses' ||
+                                      type == 'sauces' ||
+                                      type == 'sauce' ||
+                                      typeId == 'sauces' ||
+                                      typeId == 'sauce') {
+                                    return false;
+                                  }
+                                  // Also hide if this id is a selected pizza sauce
+                                  if (_pizzaSauceSelections
+                                      .any((s) => s.id == id && s.selected)) {
+                                    return false;
+                                  }
+                                  if (_selectedCheeses.contains(id)) {
+                                    return false;
+                                  }
                                   return !_selectedDressingCounts
                                           .containsKey(id) &&
                                       !_selectedSauceCounts.containsKey(id) &&
                                       type != 'crust' &&
                                       type != 'cook' &&
-                                      type != 'cut' &&
-                                      type != 'cheeses';
+                                      type != 'cut';
                                 }).toList();
 
-                                if (currentFoodIds.isEmpty) {
-                                  return const SizedBox.shrink();
-                                }
-
+                                // AFTER
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -1362,6 +1742,20 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                         ),
                                       ),
                                     ),
+                                    if (currentFoodIds.isEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            bottom: 8, left: 4, right: 4),
+                                        child: Text(
+                                          "None — defaults appear here when set on the item. Add extras below.",
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                            color: shared
+                                                .UiConfig.secondaryTextColor,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ),
                                     ...currentFoodIds.map((ingId) {
                                       final meta = _ingredientMetadata[ingId];
                                       return Card(
@@ -1400,46 +1794,79 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                                             .remove(ingId);
                                                         _ingredientPortions
                                                             .remove(ingId);
+                                                        _selectedCheeses
+                                                            .remove(ingId);
+                                                        // Return to optional list (salad/dinner add-ons)
+                                                        _selectedAddOns
+                                                            .remove(ingId);
+                                                        _doubleAddOns
+                                                            .remove(ingId);
+                                                        for (var i = 0;
+                                                            i <
+                                                                _pizzaSauceSelections
+                                                                    .length;
+                                                            i++) {
+                                                          if (_pizzaSauceSelections[
+                                                                      i]
+                                                                  .id ==
+                                                              ingId) {
+                                                            _pizzaSauceSelections[
+                                                                    i] =
+                                                                _pizzaSauceSelections[
+                                                                        i]
+                                                                    .copyWith(
+                                                                        selected:
+                                                                            false);
+                                                          }
+                                                        }
                                                       });
                                                     },
                                                     child: Text(loc.remove),
                                                   ),
                                                 ],
                                               ),
-                                              SizedBox(height: 6),
-                                              Row(
-                                                children: [
-                                                  if (!_isCalzone()) ...[
+                                              // Pizza/calzone only: portion + double.
+                                              // Dinner/salad/standard: name + Remove only
+                                              // (same card chrome, no extra modifiers).
+                                              if (_isPizzaOrCalzone()) ...[
+                                                SizedBox(height: 6),
+                                                Row(
+                                                  children: [
+                                                    if (_isPizza() &&
+                                                        !_isCalzone()) ...[
+                                                      Flexible(
+                                                        fit: FlexFit.tight,
+                                                        child: PortionSelector(
+                                                          value:
+                                                              _ingredientPortions[
+                                                                      ingId] ??
+                                                                  Portion.whole,
+                                                          onChanged: (portion) =>
+                                                              _handlePortionChanged(
+                                                                  ingId,
+                                                                  portion),
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 10),
+                                                    ],
                                                     Flexible(
                                                       fit: FlexFit.tight,
-                                                      child: PortionSelector(
-                                                        value:
-                                                            _ingredientPortions[
-                                                                    ingId] ??
-                                                                Portion.whole,
-                                                        onChanged: (portion) =>
-                                                            _handlePortionChanged(
-                                                                ingId, portion),
+                                                      child: PortionPillToggle(
+                                                        isDouble:
+                                                            _doubleToppings[
+                                                                    ingId] ==
+                                                                true,
+                                                        onTap: () =>
+                                                            _handleDoubleChanged(
+                                                                ingId,
+                                                                !(_doubleToppings[
+                                                                        ingId] ??
+                                                                    false)),
                                                       ),
                                                     ),
-                                                    SizedBox(width: 10),
                                                   ],
-                                                  Flexible(
-                                                    fit: FlexFit.tight,
-                                                    child: PortionPillToggle(
-                                                      isDouble: _doubleToppings[
-                                                              ingId] ==
-                                                          true,
-                                                      onTap: () =>
-                                                          _handleDoubleChanged(
-                                                              ingId,
-                                                              !(_doubleToppings[
-                                                                      ingId] ??
-                                                                  false)),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
+                                                ),
+                                              ],
                                             ],
                                           ),
                                         ),
@@ -1644,432 +2071,575 @@ class _CustomizationModalState extends State<CustomizationModal> {
 
                           // --- End Pizza/Calzone Topping Tabs UI ---
 
-                          ..._checkboxGroups.map((group) {
-                            final label =
-                                (group['label'] ?? '').toString().toLowerCase();
-                            if (label == 'cheeses') {
-                              final cheeseIds =
-                                  (group['ingredientIds'] as List<dynamic>? ??
-                                          [])
-                                      .map((e) => e.toString())
-                                      .toList();
-                              if (cheeseIds.isEmpty) {
+                          if (!_isWings())
+                            ..._checkboxGroups.map((group) {
+                              final label = (group['label'] ?? '')
+                                  .toString()
+                                  .toLowerCase();
+                              // Pizza/calzone: only Cheeses — no Sauce / Add-ons / other groups
+                              if ((_isPizzaOrCalzone() || _isSalad()) &&
+                                  label != 'cheeses') {
                                 return const SizedBox.shrink();
                               }
-                              final selectedCheeses = cheeseIds
-                                  .where((id) => _selectedCheeses.contains(id))
-                                  .toList();
-                              final summary = selectedCheeses.isEmpty
-                                  ? "None"
-                                  : selectedCheeses.map((id) {
-                                      final meta = _ingredientMetadata[id];
-                                      final isDouble =
-                                          _cheeseIsDouble[id] == true;
-                                      final portion =
-                                          _cheesePortions[id] ?? Portion.whole;
-                                      // Only show portion if not calzone and not whole
-                                      final labels =
-                                          (group['optionLabels'] as Map?)?.map(
-                                                  (k, v) => MapEntry(
-                                                      k.toString(),
-                                                      v.toString())) ??
-                                              const <String, String>{};
-                                      return "${meta?.name ?? labels[id] ?? id}"
-                                          "${isDouble ? " (Double)" : ""}"
-                                          "${(!_isCalzone() && portion != Portion.whole) ? " (${portionNames[portion]})" : ""}";
-                                    }).join(", ");
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 10.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 0),
-                                      child: Container(
-                                        width: double.infinity,
-                                        decoration: BoxDecoration(
-                                          color: shared.UiConfig.primaryColor,
-                                          borderRadius:
-                                              BorderRadius.circular(6),
-                                        ),
+                              // Salads: no cheeses section from modifier groups either
+                              if (_isSalad()) {
+                                return const SizedBox.shrink();
+                              }
+                              if (label == 'cheeses') {
+                                // AFTER
+                                final cheeseIds = _optionalIdsByType('cheeses');
+                                if (cheeseIds.isEmpty) {
+                                  return const SizedBox.shrink();
+                                }
+                                final selectedCheeses = cheeseIds
+                                    .where(
+                                        (id) => _selectedCheeses.contains(id))
+                                    .toList();
+                                final summary = selectedCheeses.isEmpty
+                                    ? "None"
+                                    : selectedCheeses.map((id) {
+                                        final meta = _ingredientMetadata[id];
+                                        final isDouble =
+                                            _cheeseIsDouble[id] == true;
+                                        final portion = _cheesePortions[id] ??
+                                            Portion.whole;
+                                        // Only show portion if not calzone and not whole
+                                        final labels =
+                                            (group['optionLabels'] as Map?)
+                                                    ?.map((k, v) => MapEntry(
+                                                        k.toString(),
+                                                        v.toString())) ??
+                                                const <String, String>{};
+                                        return "${meta?.name ?? labels[id] ?? id}"
+                                            "${isDouble ? " (Double)" : ""}"
+                                            "${(!_isCalzone() && portion != Portion.whole) ? " (${portionNames[portion]})" : ""}";
+                                      }).join(", ");
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 10.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Padding(
                                         padding: const EdgeInsets.symmetric(
-                                            vertical: 8, horizontal: 14),
-                                        child: Text(
-                                          "Cheeses",
-                                          style: theme.textTheme.titleMedium
-                                              ?.copyWith(
-                                            color:
-                                                shared.UiConfig.onPrimaryColor,
-                                            fontWeight: FontWeight.bold,
+                                            horizontal: 0),
+                                        child: Container(
+                                          width: double.infinity,
+                                          decoration: BoxDecoration(
+                                            color: shared.UiConfig.primaryColor,
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 8, horizontal: 14),
+                                          child: Text(
+                                            "Cheeses",
+                                            style: theme.textTheme.titleMedium
+                                                ?.copyWith(
+                                              color: shared
+                                                  .UiConfig.onPrimaryColor,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    ExpansionTile(
-                                      tilePadding:
-                                          EdgeInsets.symmetric(horizontal: 0),
-                                      title: Text(
-                                        summary,
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                                color: shared.UiConfig
-                                                    .secondaryTextColor),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      subtitle: Padding(
-                                        padding:
-                                            const EdgeInsets.only(top: 2.0),
-                                        child: Text(
-                                          "Add extra cheeses for an additional charge.",
+                                      ExpansionTile(
+                                        tilePadding:
+                                            EdgeInsets.symmetric(horizontal: 0),
+                                        title: Text(
+                                          summary,
                                           style: theme.textTheme.bodySmall
                                               ?.copyWith(
-                                            color:
-                                                shared.UiConfig.hintTextColor,
-                                            fontStyle: FontStyle.italic,
+                                                  color: shared.UiConfig
+                                                      .secondaryTextColor),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        subtitle: Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 2.0),
+                                          child: Text(
+                                            "Add extra cheeses for an additional charge.",
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
+                                              color:
+                                                  shared.UiConfig.hintTextColor,
+                                              fontStyle: FontStyle.italic,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      children: cheeseIds.map((cheeseId) {
-                                        final meta =
-                                            _ingredientMetadata[cheeseId];
-                                        final selected =
-                                            _selectedCheeses.contains(cheeseId);
-                                        return Card(
-                                          margin: EdgeInsets.symmetric(
-                                              vertical: 2, horizontal: 0),
-                                          child: Padding(
-                                            padding: EdgeInsets.symmetric(
-                                                vertical: 8, horizontal: 12),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Row(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.center,
-                                                  children: [
-                                                    Expanded(
-                                                      child: Text(
-                                                        meta?.name ??
-                                                            ((group['optionLabels']
-                                                                        as Map?)?[
-                                                                    cheeseId]
-                                                                ?.toString()) ??
-                                                            cheeseId,
-                                                        style: theme.textTheme
-                                                            .bodyLarge,
-                                                      ),
-                                                    ),
-                                                    if (selected)
-                                                      TextButton(
-                                                        style: TextButton
-                                                            .styleFrom(
-                                                          foregroundColor: theme
-                                                              .colorScheme
-                                                              .error,
-                                                        ),
-                                                        onPressed: () {
-                                                          setState(() {
-                                                            _selectedCheeses
-                                                                .remove(
-                                                                    cheeseId);
-                                                            _cheesePortions
-                                                                .remove(
-                                                                    cheeseId);
-                                                            _cheeseIsDouble
-                                                                .remove(
-                                                                    cheeseId);
-                                                          });
-                                                        },
-                                                        child: Text('Remove'),
-                                                      )
-                                                    else
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          setState(() {
-                                                            final max = (group[
-                                                                        'max']
-                                                                    as int?) ??
-                                                                0;
-                                                            if (max > 0 &&
-                                                                _selectedCheeses
-                                                                        .length >=
-                                                                    max) {
-                                                              return;
-                                                            }
-                                                            _selectedCheeses
-                                                                .add(cheeseId);
-                                                            _cheesePortions[
-                                                                    cheeseId] =
-                                                                Portion.whole;
-                                                            _cheeseIsDouble[
-                                                                    cheeseId] =
-                                                                false;
-                                                          });
-                                                        },
+                                        children: cheeseIds.map((cheeseId) {
+                                          final meta =
+                                              _ingredientMetadata[cheeseId];
+                                          final selected = _selectedCheeses
+                                              .contains(cheeseId);
+                                          return Card(
+                                            margin: EdgeInsets.symmetric(
+                                                vertical: 2, horizontal: 0),
+                                            child: Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                  vertical: 8, horizontal: 12),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Expanded(
                                                         child: Text(
-                                                          'Click to Add',
-                                                          style: TextStyle(
-                                                              color: theme
-                                                                  .colorScheme
-                                                                  .primary),
+                                                          meta?.name ??
+                                                              ((group['optionLabels']
+                                                                          as Map?)?[
+                                                                      cheeseId]
+                                                                  ?.toString()) ??
+                                                              cheeseId,
+                                                          style: theme.textTheme
+                                                              .bodyLarge,
                                                         ),
                                                       ),
-                                                  ],
-                                                ),
-                                                if (selected)
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            top: 6.0),
-                                                    child: Row(
-                                                      children: [
-                                                        if (!_isCalzone()) ...[
+                                                      if (selected)
+                                                        TextButton(
+                                                          style: TextButton
+                                                              .styleFrom(
+                                                            foregroundColor:
+                                                                theme
+                                                                    .colorScheme
+                                                                    .error,
+                                                          ),
+                                                          // AFTER
+                                                          onPressed: () {
+                                                            setState(() {
+                                                              // AFTER
+                                                              _selectedCheeses
+                                                                  .remove(
+                                                                      cheeseId);
+                                                              _cheesePortions
+                                                                  .remove(
+                                                                      cheeseId);
+                                                              _cheeseIsDouble
+                                                                  .remove(
+                                                                      cheeseId);
+                                                            });
+                                                          },
+                                                          child: Text('Remove'),
+                                                        )
+                                                      else
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            setState(() {
+                                                              final max = (group[
+                                                                          'max']
+                                                                      as int?) ??
+                                                                  0;
+                                                              if (max > 0 &&
+                                                                  _selectedCheeses
+                                                                          .length >=
+                                                                      max) {
+                                                                return;
+                                                              }
+                                                              // AFTER
+                                                              // AFTER
+                                                              _selectedCheeses
+                                                                  .add(
+                                                                      cheeseId);
+                                                              _cheesePortions[
+                                                                      cheeseId] =
+                                                                  Portion.whole;
+                                                              _cheeseIsDouble[
+                                                                      cheeseId] =
+                                                                  false;
+                                                            });
+                                                          },
+                                                          child: Text(
+                                                            'Click to Add',
+                                                            style: TextStyle(
+                                                                color: theme
+                                                                    .colorScheme
+                                                                    .primary),
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                  if (selected)
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 6.0),
+                                                      child: Row(
+                                                        children: [
+                                                          if (!_isCalzone()) ...[
+                                                            Flexible(
+                                                              fit:
+                                                                  FlexFit.tight,
+                                                              child:
+                                                                  PortionSelector(
+                                                                value: _cheesePortions[
+                                                                        cheeseId] ??
+                                                                    Portion
+                                                                        .whole,
+                                                                onChanged:
+                                                                    (portion) {
+                                                                  setState(() {
+                                                                    _cheesePortions[
+                                                                            cheeseId] =
+                                                                        portion;
+                                                                  });
+                                                                },
+                                                              ),
+                                                            ),
+                                                            SizedBox(width: 10),
+                                                          ],
                                                           Flexible(
                                                             fit: FlexFit.tight,
                                                             child:
-                                                                PortionSelector(
-                                                              value: _cheesePortions[
-                                                                      cheeseId] ??
-                                                                  Portion.whole,
-                                                              onChanged:
-                                                                  (portion) {
+                                                                PortionPillToggle(
+                                                              isDouble:
+                                                                  _cheeseIsDouble[
+                                                                          cheeseId] ==
+                                                                      true,
+                                                              onTap: () {
                                                                 setState(() {
-                                                                  _cheesePortions[
+                                                                  _cheeseIsDouble[
                                                                           cheeseId] =
-                                                                      portion;
+                                                                      !(_cheeseIsDouble[
+                                                                              cheeseId] ??
+                                                                          false);
                                                                 });
                                                               },
                                                             ),
                                                           ),
-                                                          SizedBox(width: 10),
                                                         ],
-                                                        Flexible(
-                                                          fit: FlexFit.tight,
-                                                          child:
-                                                              PortionPillToggle(
-                                                            isDouble:
-                                                                _cheeseIsDouble[
-                                                                        cheeseId] ==
-                                                                    true,
-                                                            onTap: () {
-                                                              setState(() {
-                                                                _cheeseIsDouble[
-                                                                        cheeseId] =
-                                                                    !(_cheeseIsDouble[
-                                                                            cheeseId] ??
-                                                                        false);
-                                                              });
-                                                            },
-                                                          ),
-                                                        ),
-                                                      ],
+                                                      ),
                                                     ),
-                                                  ),
-                                              ],
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                        );
-                                      }).toList(),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            } else {
-                              // Non-cheese group: render as before
-                              return CheckboxCustomizationGroup(
-                                group: group,
-                                theme: theme,
-                                loc: loc,
-                                category: widget.menuItem.category,
-                                includedIngredients:
-                                    widget.menuItem.includedIngredients,
-                                ingredientMetadata: _ingredientMetadata,
-                                currentIngredients: _currentIngredients,
-                                usesDynamicToppingPricing:
-                                    widget.menuItem.additionalToppingPrices !=
-                                            null &&
-                                        _selectedSize != null,
-                                showPortionToggle: _showPortionToggle,
-                                getToppingUpcharge: _getToppingUpcharge,
-                                getIngredientUpcharge: _getIngredientUpcharge,
-                                toggleIngredient: _toggleIngredient,
-                                buildPortionPillToggle: (ingId) =>
-                                    PortionPillToggle(
-                                  isDouble: _doubleToppings[ingId] == true,
-                                  onTap: () {
-                                    setState(() {
-                                      if (_doubleToppings[ingId] == true) {
-                                        _doubleToppings[ingId] = false;
-                                      } else {
-                                        if (_doublesCount < MAX_DOUBLES)
-                                          _doubleToppings[ingId] = true;
-                                      }
-                                    });
-                                  },
-                                ),
-                              );
-                            }
-                          }),
-
-                          ..._radioGroups.map((group) {
-                            final label =
-                                (group['label'] as String?)?.toLowerCase();
-                            if (label == 'sauces') {
-                              // --- Unified Sauce Summary Logic (works for both pizza/calzone) ---
-                              final saucesGroup = group;
-                              final sauceIds =
-                                  (saucesGroup['ingredientIds'] as List?)
-                                          ?.cast<String>() ??
-                                      [];
-
-                              String sauceSummary;
-
-                              if (_isCalzone()) {
-                                // CALZONE: summarize by stepper sauce count
-                                final selectedSauceIds = sauceIds
-                                    .where((id) =>
-                                        (_selectedSauceCounts[id] ?? 0) > 0)
-                                    .toList();
-                                if (selectedSauceIds.isEmpty) {
-                                  sauceSummary = "None";
-                                } else {
-                                  sauceSummary = selectedSauceIds.map((id) {
-                                    final name =
-                                        _ingredientMetadata[id]?.name ?? id;
-                                    final count = _selectedSauceCounts[id] ?? 0;
-                                    return count > 1
-                                        ? "$name (x$count)"
-                                        : "$name";
-                                  }).join(", ");
-                                }
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ],
+                                  ),
+                                );
                               } else {
-                                // PIZZA: use split/portion/amount summary
+                                // Non-cheese group: render as before
+                                return CheckboxCustomizationGroup(
+                                  group: group,
+                                  theme: theme,
+                                  loc: loc,
+                                  category: widget.menuItem.category,
+                                  includedIngredients:
+                                      widget.menuItem.includedIngredients,
+                                  ingredientMetadata: _ingredientMetadata,
+                                  currentIngredients: _currentIngredients,
+                                  usesDynamicToppingPricing:
+                                      widget.menuItem.additionalToppingPrices !=
+                                              null &&
+                                          _selectedSize != null,
+                                  showPortionToggle: _showPortionToggle,
+                                  getToppingUpcharge: _getToppingUpcharge,
+                                  getIngredientUpcharge: _getIngredientUpcharge,
+                                  toggleIngredient: _toggleIngredient,
+                                  buildPortionPillToggle: (ingId) =>
+                                      PortionPillToggle(
+                                    isDouble: _doubleToppings[ingId] == true,
+                                    onTap: () {
+                                      setState(() {
+                                        if (_doubleToppings[ingId] == true) {
+                                          _doubleToppings[ingId] = false;
+                                        } else {
+                                          if (_doublesCount < MAX_DOUBLES)
+                                            _doubleToppings[ingId] = true;
+                                        }
+                                      });
+                                    },
+                                  ),
+                                );
+                              }
+                            }),
+
+                          if (!_isWings())
+                            ..._radioGroups.map((group) {
+                              final label =
+                                  (group['label'] as String?)?.toLowerCase();
+                              // AFTER
+                              if (label == 'sauces' && _isPizzaOrCalzone()) {
+                                // Same UX as Cheeses: list + Click to Add / Remove + portion
+                                final sauceIds = _pizzaSauceSelections
+                                    .map((s) => s.id)
+                                    .toList();
+                                if (sauceIds.isEmpty) {
+                                  return const SizedBox.shrink();
+                                }
                                 final selectedSauces = _pizzaSauceSelections
                                     .where((s) => s.selected)
                                     .toList();
-                                if (selectedSauces.isEmpty) {
-                                  sauceSummary = "None";
-                                } else {
-                                  sauceSummary = selectedSauces.map((s) {
-                                    final name =
-                                        _ingredientMetadata[s.id]?.name ??
-                                            s.name;
-                                    final amount = s.amount.capitalize();
-                                    if (s.portion != Portion.whole) {
-                                      final portion =
-                                          portionNames[s.portion] ?? "";
-                                      return "$name ($portion, $amount)";
-                                    } else {
-                                      return "$name ($amount)";
-                                    }
-                                  }).join(", ");
-                                }
-                              }
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 10.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 0),
-                                      child: Container(
-                                        width: double.infinity,
-                                        decoration: BoxDecoration(
-                                          color: shared.UiConfig.primaryColor,
-                                          borderRadius:
-                                              BorderRadius.circular(6),
-                                        ),
+                                final summary = selectedSauces.isEmpty
+                                    ? "None"
+                                    : selectedSauces.map((s) {
+                                        final name =
+                                            _ingredientMetadata[s.id]?.name ??
+                                                s.name;
+                                        final portion = s.portion;
+                                        return "$name"
+                                            "${(!_isCalzone() && portion != Portion.whole) ? " (${portionNames[portion]})" : ""}";
+                                      }).join(", ");
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 10.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Padding(
                                         padding: const EdgeInsets.symmetric(
-                                            vertical: 8, horizontal: 14),
-                                        child: Text(
-                                          "Sauces",
-                                          style: theme.textTheme.titleMedium
-                                              ?.copyWith(
-                                            color:
-                                                shared.UiConfig.onPrimaryColor,
-                                            fontWeight: FontWeight.bold,
+                                            horizontal: 0),
+                                        child: Container(
+                                          width: double.infinity,
+                                          decoration: BoxDecoration(
+                                            color: shared.UiConfig.primaryColor,
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 8, horizontal: 14),
+                                          child: Text(
+                                            "Sauces",
+                                            style: theme.textTheme.titleMedium
+                                                ?.copyWith(
+                                              color: shared
+                                                  .UiConfig.onPrimaryColor,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    ExpansionTile(
-                                      tilePadding:
-                                          EdgeInsets.symmetric(horizontal: 0),
-                                      title: Text(
-                                        sauceSummary,
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                                color: shared.UiConfig
-                                                    .secondaryTextColor),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      subtitle: Padding(
-                                        padding:
-                                            const EdgeInsets.only(top: 2.0),
-                                        child: Text(
-                                          "Split your sauce or add extra for an additional charge.",
+                                      ExpansionTile(
+                                        tilePadding:
+                                            EdgeInsets.symmetric(horizontal: 0),
+                                        title: Text(
+                                          summary,
                                           style: theme.textTheme.bodySmall
                                               ?.copyWith(
-                                            color:
-                                                shared.UiConfig.hintTextColor,
-                                            fontStyle: FontStyle.italic,
+                                                  color: shared.UiConfig
+                                                      .secondaryTextColor),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        subtitle: Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 2.0),
+                                          child: Text(
+                                            "Choose sauces; use portion for left / right / whole.",
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
+                                              color:
+                                                  shared.UiConfig.hintTextColor,
+                                              fontStyle: FontStyle.italic,
+                                            ),
                                           ),
                                         ),
+                                        children:
+                                            _pizzaSauceSelections.map((sauce) {
+                                          final meta =
+                                              _ingredientMetadata[sauce.id];
+                                          final selected = sauce.selected;
+                                          final idx =
+                                              _pizzaSauceSelections.indexWhere(
+                                                  (s) => s.id == sauce.id);
+                                          return Card(
+                                            margin: EdgeInsets.symmetric(
+                                                vertical: 2, horizontal: 0),
+                                            child: Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                  vertical: 8, horizontal: 12),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Expanded(
+                                                        child: Text(
+                                                          meta?.name ??
+                                                              sauce.name,
+                                                          style: theme.textTheme
+                                                              .bodyLarge,
+                                                        ),
+                                                      ),
+                                                      if (selected)
+                                                        TextButton(
+                                                          style: TextButton
+                                                              .styleFrom(
+                                                            foregroundColor:
+                                                                theme
+                                                                    .colorScheme
+                                                                    .error,
+                                                          ),
+                                                          onPressed: () {
+                                                            if (idx < 0) return;
+                                                            setState(() {
+                                                              _pizzaSauceSelections[
+                                                                      idx] =
+                                                                  sauce.copyWith(
+                                                                      selected:
+                                                                          false);
+                                                            });
+                                                          },
+                                                          child: Text('Remove'),
+                                                        )
+                                                      else
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            if (idx < 0) return;
+                                                            setState(() {
+                                                              final selectedCount =
+                                                                  _pizzaSauceSelections
+                                                                      .where((s) =>
+                                                                          s.selected)
+                                                                      .length;
+                                                              if (selectedCount >=
+                                                                  2) {
+                                                                return;
+                                                              }
+                                                              _pizzaSauceSelections[
+                                                                      idx] =
+                                                                  sauce
+                                                                      .copyWith(
+                                                                selected: true,
+                                                                portion: Portion
+                                                                    .whole,
+                                                              );
+                                                            });
+                                                          },
+                                                          child: Text(
+                                                            'Click to Add',
+                                                            style: TextStyle(
+                                                                color: theme
+                                                                    .colorScheme
+                                                                    .primary),
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                  // AFTER
+                                                  if (selected)
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              top: 6.0),
+                                                      child: Row(
+                                                        children: [
+                                                          if (!_isCalzone()) ...[
+                                                            Flexible(
+                                                              fit:
+                                                                  FlexFit.tight,
+                                                              child:
+                                                                  PortionSelector(
+                                                                value: sauce
+                                                                    .portion,
+                                                                onChanged:
+                                                                    (portion) {
+                                                                  if (idx < 0) {
+                                                                    return;
+                                                                  }
+                                                                  setState(() {
+                                                                    _pizzaSauceSelections[
+                                                                            idx] =
+                                                                        sauce
+                                                                            .copyWith(
+                                                                      portion:
+                                                                          portion,
+                                                                      selected:
+                                                                          true,
+                                                                    );
+                                                                  });
+                                                                },
+                                                              ),
+                                                            ),
+                                                            SizedBox(width: 10),
+                                                          ],
+                                                          Flexible(
+                                                            fit: FlexFit.tight,
+                                                            child:
+                                                                PortionPillToggle(
+                                                              isDouble: sauce
+                                                                          .amount
+                                                                          .toLowerCase() ==
+                                                                      'extra' ||
+                                                                  sauce.amount
+                                                                          .toLowerCase() ==
+                                                                      'double',
+                                                              onTap: () {
+                                                                if (idx < 0) {
+                                                                  return;
+                                                                }
+                                                                setState(() {
+                                                                  final isDouble = sauce
+                                                                              .amount
+                                                                              .toLowerCase() ==
+                                                                          'extra' ||
+                                                                      sauce.amount
+                                                                              .toLowerCase() ==
+                                                                          'double';
+                                                                  _pizzaSauceSelections[
+                                                                          idx] =
+                                                                      sauce
+                                                                          .copyWith(
+                                                                    amount: isDouble
+                                                                        ? 'regular'
+                                                                        : 'extra',
+                                                                    selected:
+                                                                        true,
+                                                                  );
+                                                                });
+                                                              },
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
                                       ),
-                                      children: [
-                                        SauceSelectorGroup(
-                                          group: group,
-                                          theme: theme,
-                                          loc: loc,
-                                          isPizza: _isPizza,
-                                          pizzaSauceSelections:
-                                              _pizzaSauceSelections,
-                                          ingredientMetadata:
-                                              _ingredientMetadata,
-                                          sauceSplitValidationError:
-                                              _sauceSplitValidationError,
-                                          resetPizzaSauceSelections:
-                                              _resetPizzaSauceSelections,
-                                          setState: setState,
-                                          selectedSauceCounts:
-                                              _selectedSauceCounts,
-                                          getFreeSauceCount: _getFreeSauceCount,
-                                          getExtraSauceUpcharge:
-                                              _getExtraSauceUpcharge,
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              );
-                            } else if (label == 'dressings') {
-                              // --- Dressings logic ---
-                              return DressingSelectorGroup(
-                                group: group,
-                                theme: theme,
-                                loc: loc,
-                                selectedDressingCounts: _selectedDressingCounts,
-                                onCountChanged: (ingId, newCount) {
-                                  setState(() =>
-                                      _selectedDressingCounts[ingId] =
-                                          newCount);
-                                },
-                                getFreeDressingCount: _getFreeDressingCount,
-                                getExtraDressingUpcharge:
-                                    _getExtraDressingUpcharge,
-                                ingredientMetadata: _ingredientMetadata,
-                              );
-                            }
-                            // DO NOT RENDER crust, cook, cut here
-                            return null;
-                          }).whereType<Widget>(),
+                                    ],
+                                  ),
+                                );
+                              } else if (label == 'dressings') {
+                                // --- Dressings logic ---
+                                return DressingSelectorGroup(
+                                  group: group,
+                                  theme: theme,
+                                  loc: loc,
+                                  selectedDressingCounts:
+                                      _selectedDressingCounts,
+                                  onCountChanged: (ingId, newCount) {
+                                    setState(() =>
+                                        _selectedDressingCounts[ingId] =
+                                            newCount);
+                                  },
+                                  getFreeDressingCount: _getFreeDressingCount,
+                                  getExtraDressingUpcharge:
+                                      _getExtraDressingUpcharge,
+                                  ingredientMetadata: _ingredientMetadata,
+                                );
+                              }
+                              // DO NOT RENDER crust, cook, cut here
+                              return null;
+                            }).whereType<Widget>(),
 
+                          // AFTER
+                          // Optional ingredients: only when HQ attached optionalAddOns
+                          // (salads e.g. garbanzo; dinners e.g. meatballs). Not pizza/calzone/wings.
                           if (!_isWings() &&
+                              !_isPizzaOrCalzone() &&
                               widget.menuItem.optionalAddOns != null &&
                               widget.menuItem.optionalAddOns!.isNotEmpty)
                             OptionalAddOnsGroup(
@@ -2078,6 +2648,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               loc: loc,
                               ingredientMetadata: _ingredientMetadata,
                               selectedAddOns: _selectedAddOns,
+                              currentIngredientIds: _currentIngredients,
                               doubleAddOns: _doubleAddOns,
                               selectedSauceCounts: _selectedSauceCounts,
                               usesDynamicToppingPricing:
@@ -2091,9 +2662,18 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                   if (val == true) {
                                     _selectedAddOns.add(ingId);
                                     _doubleAddOns[ingId] = false;
+                                    // Salad/dinner: show under Current Toppings
+                                    if (_isSalad() || _isDinner()) {
+                                      _currentIngredients.add(ingId);
+                                      _doubleToppings[ingId] = false;
+                                    }
                                   } else {
                                     _selectedAddOns.remove(ingId);
                                     _doubleAddOns.remove(ingId);
+                                    if (_isSalad() || _isDinner()) {
+                                      _currentIngredients.remove(ingId);
+                                      _doubleToppings.remove(ingId);
+                                    }
                                   }
                                 });
                               },
@@ -2114,112 +2694,169 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               extraSauceUpcharge: _getExtraSauceUpcharge(),
                             ),
 
-                          // --- ORDER DETAILS SECTION: Always at the very end, collapsed by default ---
-                          Builder(
-                            builder: (context) {
-                              // Get all remaining radio groups (crust, cook, cut)
-                              final orderDetailGroups =
-                                  _radioGroups.where((group) {
-                                final label =
-                                    (group['label'] as String?)?.toLowerCase();
-                                return label == 'crust' ||
-                                    label == 'cook' ||
-                                    label == 'cut';
-                              }).toList();
+                          // --- ORDER DETAILS: crust/cook/cut — pizza only ---
+                          if (!_isWings() &&
+                              !_isCalzone() &&
+                              !_isSalad() &&
+                              !_isDinner())
+                            Builder(
+                              builder: (context) {
+                                // Get crust / cook / cut for pizza Order Details
+                                var orderDetailGroups =
+                                    _radioGroups.where((group) {
+                                  final label = (group['label'] as String?)
+                                      ?.toLowerCase();
+                                  final id =
+                                      (group['id'] as String?)?.toLowerCase() ??
+                                          '';
+                                  return label == 'crust' ||
+                                      label == 'cook' ||
+                                      label == 'cut' ||
+                                      id == 'crust' ||
+                                      id == 'cook' ||
+                                      id == 'cut';
+                                }).toList();
 
-                              // Compose summary for collapsed state
-                              String detailsSummary = orderDetailGroups
-                                  .map((group) {
-                                    final label =
-                                        (group['label'] as String?) ?? '';
-                                    final selected = _radioSelections[label];
-                                    if (selected == null) return '';
-                                    final meta = _ingredientMetadata[selected];
-                                    final labels = (group['optionLabels']
-                                                as Map?)
-                                            ?.map((k, v) => MapEntry(
-                                                k.toString(), v.toString())) ??
-                                        const <String, String>{};
-                                    return "${label.capitalize()}: ${meta?.name ?? labels[selected] ?? selected}";
-                                  })
-                                  .where((str) => str.isNotEmpty)
-                                  .join(" | ");
+                                // Fallback: template structural groups when stored groups omit them
+                                if (_isPizza() && orderDetailGroups.isEmpty) {
+                                  orderDetailGroups =
+                                      shared.MenuProfileTemplates.seedGroups(
+                                    shared.MenuProfile.pizza,
+                                  )
+                                          .where((g) {
+                                            final id = g.id.toLowerCase();
+                                            return id == 'crust' ||
+                                                id == 'cook' ||
+                                                id == 'cut';
+                                          })
+                                          .map((g) => <String, dynamic>{
+                                                'id': g.id,
+                                                'label': g.label,
+                                                'ingredientIds': g.options
+                                                    .map((o) => o.id)
+                                                    .toList(),
+                                                'optionLabels': {
+                                                  for (final o in g.options)
+                                                    o.id: o.label,
+                                                },
+                                                'min': g.min,
+                                                'max': g.max,
+                                              })
+                                          .toList();
+                                  for (final g in orderDetailGroups) {
+                                    final label = (g['label'] as String?) ?? '';
+                                    if (label.isEmpty) continue;
+                                    if ((_radioSelections[label] ?? '')
+                                        .isNotEmpty) {
+                                      continue;
+                                    }
+                                    final ids =
+                                        (g['ingredientIds'] as List? ?? [])
+                                            .map((e) => e.toString())
+                                            .toList();
+                                    if (ids.isEmpty) continue;
+                                    _radioSelections[label] = ids.first;
+                                  }
+                                }
 
-                              return Padding(
-                                padding:
-                                    const EdgeInsets.only(top: 12.0, bottom: 4),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 0),
-                                      child: Container(
-                                        width: double.infinity,
-                                        decoration: BoxDecoration(
-                                          color: shared.UiConfig.primaryColor,
-                                          borderRadius:
-                                              BorderRadius.circular(6),
-                                        ),
+                                // Compose summary for collapsed state
+                                String detailsSummary = orderDetailGroups
+                                    .map((group) {
+                                      final label =
+                                          (group['label'] as String?) ?? '';
+                                      final selected = _radioSelections[label];
+                                      if (selected == null) return '';
+                                      final meta =
+                                          _ingredientMetadata[selected];
+                                      final labels =
+                                          (group['optionLabels'] as Map?)?.map(
+                                                  (k, v) => MapEntry(
+                                                      k.toString(),
+                                                      v.toString())) ??
+                                              const <String, String>{};
+                                      return "${label.capitalize()}: ${meta?.name ?? labels[selected] ?? selected}";
+                                    })
+                                    .where((str) => str.isNotEmpty)
+                                    .join(" | ");
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(
+                                      top: 12.0, bottom: 4),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Padding(
                                         padding: const EdgeInsets.symmetric(
-                                            vertical: 8, horizontal: 14),
-                                        child: Text(
-                                          "Order Details",
-                                          style: theme.textTheme.titleMedium
-                                              ?.copyWith(
-                                            color:
-                                                shared.UiConfig.onPrimaryColor,
-                                            fontWeight: FontWeight.bold,
+                                            horizontal: 0),
+                                        child: Container(
+                                          width: double.infinity,
+                                          decoration: BoxDecoration(
+                                            color: shared.UiConfig.primaryColor,
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 8, horizontal: 14),
+                                          child: Text(
+                                            "Order Details",
+                                            style: theme.textTheme.titleMedium
+                                                ?.copyWith(
+                                              color: shared
+                                                  .UiConfig.onPrimaryColor,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    ExpansionTile(
-                                      tilePadding:
-                                          EdgeInsets.symmetric(horizontal: 0),
-                                      title: Text(
-                                        detailsSummary.isEmpty
-                                            ? "Customize crust, cook, and cut."
-                                            : detailsSummary,
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                                color: shared.UiConfig
-                                                    .secondaryTextColor),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      subtitle: Padding(
-                                        padding:
-                                            const EdgeInsets.only(top: 2.0),
-                                        child: Text(
-                                          "Tap to customize crust, cook, or cut.",
+                                      ExpansionTile(
+                                        tilePadding:
+                                            EdgeInsets.symmetric(horizontal: 0),
+                                        title: Text(
+                                          detailsSummary.isEmpty
+                                              ? "Customize crust, cook, and cut."
+                                              : detailsSummary,
                                           style: theme.textTheme.bodySmall
                                               ?.copyWith(
-                                            color:
-                                                shared.UiConfig.hintTextColor,
-                                            fontStyle: FontStyle.italic,
+                                                  color: shared.UiConfig
+                                                      .secondaryTextColor),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        subtitle: Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 2.0),
+                                          child: Text(
+                                            "Tap to customize crust, cook, or cut.",
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
+                                              color:
+                                                  shared.UiConfig.hintTextColor,
+                                              fontStyle: FontStyle.italic,
+                                            ),
                                           ),
                                         ),
+                                        children:
+                                            orderDetailGroups.map((group) {
+                                          return RadioCustomizationGroup(
+                                            group: group,
+                                            theme: theme,
+                                            loc: loc,
+                                            ingredientMetadata:
+                                                _ingredientMetadata,
+                                            radioSelections: _radioSelections,
+                                            getIngredientUpcharge:
+                                                _getIngredientUpcharge,
+                                            handleRadioSelect:
+                                                _handleRadioSelect,
+                                          );
+                                        }).toList(),
                                       ),
-                                      children: orderDetailGroups.map((group) {
-                                        return RadioCustomizationGroup(
-                                          group: group,
-                                          theme: theme,
-                                          loc: loc,
-                                          ingredientMetadata:
-                                              _ingredientMetadata,
-                                          radioSelections: _radioSelections,
-                                          getIngredientUpcharge:
-                                              _getIngredientUpcharge,
-                                          handleRadioSelect: _handleRadioSelect,
-                                        );
-                                      }).toList(),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
                         ],
                       ),
                     ),

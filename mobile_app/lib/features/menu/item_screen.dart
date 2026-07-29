@@ -59,17 +59,15 @@ class _ItemScreenState extends State<ItemScreen> {
     final user = FirebaseAuth.instance.currentUser;
     _userId = user?.uid;
     _time = DateTime.now().toIso8601String().substring(0, 16);
-
-    // DEBUG: Check name at init
-    print(
-        "=== ITEM SCREEN INIT DEBUG === menuItem.name = '${widget.menuItem.name}' | Length: ${widget.menuItem.name.length}");
   }
 
   bool get _hasCustomizations {
     final mi = widget.menuItem;
     return (mi.includedIngredients?.isNotEmpty ?? false) ||
         (mi.customizationGroups?.isNotEmpty ?? false) ||
-        (mi.optionalAddOns?.isNotEmpty ?? false);
+        (mi.optionalAddOns?.isNotEmpty ?? false) ||
+        (mi.modifierGroups?.isNotEmpty ?? false) ||
+        (mi.sizes?.isNotEmpty ?? false);
   }
 
   void _addToCart(
@@ -233,16 +231,8 @@ class _ItemScreenState extends State<ItemScreen> {
                   ),
                 ),
 
+                // AFTER
                 const SizedBox(height: shared.DesignTokens.gridSpacing),
-
-                // DEBUG: Right before name
-                Builder(
-                  builder: (context) {
-                    print("=== ITEM SCREEN NAME SECTION REACHED ===");
-                    return const SizedBox
-                        .shrink(); // Returns an invisible 0x0 widget
-                  },
-                ),
 
                 // ITEM NAME + PRICE
                 Text(

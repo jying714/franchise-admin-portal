@@ -25,6 +25,15 @@ class ModifierGroupsIngredientBinder extends StatelessWidget {
         label == 'cut';
   }
 
+  static bool _isWingsGroup(shared.ModifierGroup g) {
+    final id = g.id.toLowerCase().trim();
+    final label = g.label.toLowerCase().trim();
+    return id == 'wing_sauce' ||
+        id == 'wing_dips' ||
+        label == 'sauce' && id.contains('wing') ||
+        label.contains('dipping');
+  }
+
   /// Prefer stable id; if legacy empty id, slug from label.
   static String _stableId(shared.ModifierGroup g, int index) {
     final id = g.id.trim();
@@ -138,16 +147,7 @@ class ModifierGroupsIngredientBinder extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Modifier group ingredients',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'Attach catalog ingredients by type. Cook/Cut/Crust excluded.',
-          style: TextStyle(fontSize: 12),
-        ),
-        const SizedBox(height: 12),
+        // Title + help text live on the parent form (profile-aware).
         ...bindableIndexes.map((index) {
           final group = normalized[index];
           final chipsForGroup = foodIngredients
@@ -177,140 +177,150 @@ class ModifierGroupsIngredientBinder extends StatelessWidget {
                     group.label,
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          key: ValueKey('min_${group.id}_$index'),
-                          initialValue: '${group.min}',
-                          decoration: const InputDecoration(
-                            labelText: 'Min',
-                            isDense: true,
-                            border: OutlineInputBorder(),
-                          ),
-                          keyboardType: TextInputType.number,
-                          onChanged: (v) {
-                            final n = int.tryParse(v.trim());
-                            if (n == null || n < 0) return;
-                            final next = [
-                              for (var i = 0; i < normalized.length; i++)
-                                if (i == index)
-                                  normalized[i].copyWith(min: n)
-                                else
-                                  normalized[i],
-                            ];
-                            onChanged(next);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextFormField(
-                          key: ValueKey('max_${group.id}_$index'),
-                          initialValue: '${group.max}',
-                          decoration: const InputDecoration(
-                            labelText: 'Max',
-                            isDense: true,
-                            border: OutlineInputBorder(),
-                          ),
-                          keyboardType: TextInputType.number,
-                          onChanged: (v) {
-                            final n = int.tryParse(v.trim());
-                            if (n == null || n < 0) return;
-                            final next = [
-                              for (var i = 0; i < normalized.length; i++)
-                                if (i == index)
-                                  normalized[i].copyWith(max: n)
-                                else
-                                  normalized[i],
-                            ];
-                            onChanged(next);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextFormField(
-                          key: ValueKey('maxFree_${group.id}_$index'),
-                          initialValue: '${group.maxFree ?? 0}',
-                          decoration: const InputDecoration(
-                            labelText: 'Max free',
-                            helperText: 'Then size topping upcharge',
-                            isDense: true,
-                            border: OutlineInputBorder(),
-                          ),
-                          keyboardType: TextInputType.number,
-                          onChanged: (v) {
-                            final n = int.tryParse(v.trim());
-                            if (n == null || n < 0) return;
-                            final next = [
-                              for (var i = 0; i < normalized.length; i++)
-                                if (i == index)
-                                  normalized[i].copyWith(maxFree: n)
-                                else
-                                  normalized[i],
-                            ];
-                            onChanged(next);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  if (chipsForGroup.isEmpty)
-                    if (chipsForGroup.isEmpty)
-                      const Text(
-                        'No matching ingredients for this group type.',
-                        style: TextStyle(fontSize: 12),
-                      )
-                    else
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: chipsForGroup.map((ing) {
-                          final selected = selectedIds.contains(ing.id);
-                          return FilterChip(
-                            label: Text(ing.name),
-                            selected: selected,
-                            onSelected: (on) {
-                              // Update by INDEX so empty/duplicate ids cannot leak.
-                              final next = <shared.ModifierGroup>[
+                  if (_isWingsGroup(group)) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      group.id.toLowerCase().contains('dip')
+                          ? 'Side cups — free count and extra-cup price are set per size below. Bind sauces here (or reuse the Sauce list on save).'
+                          : 'Toss / flavor — customer picks up to 2 portions (Plain allowed). Bind sauces from the catalog.',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    const SizedBox(height: 8),
+                  ] else ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            key: ValueKey('min_${group.id}_$index'),
+                            initialValue: '${group.min}',
+                            decoration: const InputDecoration(
+                              labelText: 'Min',
+                              isDense: true,
+                              border: OutlineInputBorder(),
+                            ),
+                            keyboardType: TextInputType.number,
+                            onChanged: (v) {
+                              final n = int.tryParse(v.trim());
+                              if (n == null || n < 0) return;
+                              final next = [
                                 for (var i = 0; i < normalized.length; i++)
-                                  if (i != index)
-                                    normalized[i]
+                                  if (i == index)
+                                    normalized[i].copyWith(min: n)
                                   else
-                                    () {
-                                      final opts =
-                                          List<shared.ModifierOption>.from(
-                                        normalized[i].options,
-                                      );
-                                      if (on) {
-                                        if (!opts.any(
-                                            (o) => o.ingredientId == ing.id)) {
-                                          opts.add(
-                                            shared.ModifierOption(
-                                              id: '${normalized[i].id}_${ing.id}',
-                                              label: ing.name,
-                                              ingredientId: ing.id,
-                                            ),
-                                          );
-                                        }
-                                      } else {
-                                        opts.removeWhere(
-                                            (o) => o.ingredientId == ing.id);
-                                      }
-                                      return normalized[i].copyWith(
-                                        id: normalized[i].id,
-                                        options: opts,
-                                      );
-                                    }(),
+                                    normalized[i],
                               ];
                               onChanged(next);
                             },
-                          );
-                        }).toList(),
-                      ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            key: ValueKey('max_${group.id}_$index'),
+                            initialValue: '${group.max}',
+                            decoration: const InputDecoration(
+                              labelText: 'Max',
+                              isDense: true,
+                              border: OutlineInputBorder(),
+                            ),
+                            keyboardType: TextInputType.number,
+                            onChanged: (v) {
+                              final n = int.tryParse(v.trim());
+                              if (n == null || n < 0) return;
+                              final next = [
+                                for (var i = 0; i < normalized.length; i++)
+                                  if (i == index)
+                                    normalized[i].copyWith(max: n)
+                                  else
+                                    normalized[i],
+                              ];
+                              onChanged(next);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            key: ValueKey('maxFree_${group.id}_$index'),
+                            initialValue: '${group.maxFree ?? 0}',
+                            decoration: const InputDecoration(
+                              labelText: 'Max free',
+                              helperText: 'Then size topping upcharge',
+                              isDense: true,
+                              border: OutlineInputBorder(),
+                            ),
+                            keyboardType: TextInputType.number,
+                            onChanged: (v) {
+                              final n = int.tryParse(v.trim());
+                              if (n == null || n < 0) return;
+                              final next = [
+                                for (var i = 0; i < normalized.length; i++)
+                                  if (i == index)
+                                    normalized[i].copyWith(maxFree: n)
+                                  else
+                                    normalized[i],
+                              ];
+                              onChanged(next);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  if (chipsForGroup.isEmpty)
+                    const Text(
+                      'No matching ingredients for this group type.',
+                      style: TextStyle(fontSize: 12),
+                    )
+                  else
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: chipsForGroup.map((ing) {
+                        final selected = selectedIds.contains(ing.id);
+                        return FilterChip(
+                          label: Text(ing.name),
+                          selected: selected,
+                          onSelected: (on) {
+                            // Update by INDEX so empty/duplicate ids cannot leak.
+                            final next = <shared.ModifierGroup>[
+                              for (var i = 0; i < normalized.length; i++)
+                                if (i != index)
+                                  normalized[i]
+                                else
+                                  () {
+                                    final opts =
+                                        List<shared.ModifierOption>.from(
+                                      normalized[i].options,
+                                    );
+                                    if (on) {
+                                      if (!opts.any(
+                                          (o) => o.ingredientId == ing.id)) {
+                                        opts.add(
+                                          shared.ModifierOption(
+                                            id: '${normalized[i].id}_${ing.id}',
+                                            label: ing.name,
+                                            ingredientId: ing.id,
+                                          ),
+                                        );
+                                      }
+                                    } else {
+                                      opts.removeWhere(
+                                          (o) => o.ingredientId == ing.id);
+                                    }
+                                    return normalized[i].copyWith(
+                                      id: normalized[i].id,
+                                      options: opts,
+                                    );
+                                  }(),
+                            ];
+                            onChanged(next);
+                          },
+                        );
+                      }).toList(),
+                    ),
                 ],
               ),
             ),

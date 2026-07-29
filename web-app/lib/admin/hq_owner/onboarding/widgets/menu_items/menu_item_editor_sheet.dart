@@ -15,6 +15,8 @@ import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_it
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/menu_item_utility.dart';
 import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/modifier_groups_ingredient_binder.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/multi_ingredient_selector.dart';
+import 'package:franchise_admin_portal/admin/hq_owner/onboarding/widgets/menu_items/wings_franchise_sauce_pool.dart';
 
 // ===================== NEW COORDINATOR (Single Source of Truth) =====================
 // ===================== NEW COORDINATOR (Single Source of Truth) =====================
@@ -78,6 +80,40 @@ class MenuItemEditSession extends ChangeNotifier {
     _recomputeIssues();
     notifyListeners();
   }
+}
+
+// BEFORE
+// (nothing)
+
+// AFTER
+List<shared.IngredientReference> _refsFromMaps(
+    List<Map<String, dynamic>>? maps) {
+  if (maps == null || maps.isEmpty) return [];
+  return maps
+      .map((m) {
+        final id = (m['ingredientId'] ?? m['id'] ?? '').toString();
+        final name = (m['name'] ?? id).toString();
+        final typeId = (m['typeId'] ?? m['type'] ?? 'unknown').toString();
+        return shared.IngredientReference(
+          id: id,
+          name: name,
+          typeId: typeId,
+        );
+      })
+      .where((r) => r.id.isNotEmpty)
+      .toList();
+}
+
+List<Map<String, dynamic>> _mapsFromRefs(
+    List<shared.IngredientReference> refs) {
+  return refs
+      .map((r) => <String, dynamic>{
+            'ingredientId': r.id,
+            'id': r.id,
+            'name': r.name,
+            'typeId': r.typeId,
+          })
+      .toList();
 }
 
 class MenuItemEditorSheet extends StatefulWidget {
@@ -183,10 +219,10 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       sortOrder: _session.draft.sortOrder,
       taxCategory: _session.draft.taxCategory ?? 'standard',
       exportId: _session.draft.exportId,
-      customizationGroups: const [],
-      includedIngredients: const [],
-      optionalAddOns: const [],
-      customizations: const [],
+      // M5: do not inject empty dual-tree lists. Model still requires the
+      // fields; construct defaults keep them empty. toFirestore omits empties.
+      includedIngredients: _refsFromMaps(_session.draft.includedIngredients),
+      optionalAddOns: _refsFromMaps(_session.draft.optionalAddOns),
       imageUrl: _session.draft.imageUrl ?? '',
       nutrition: _session.draft.nutrition,
       selectedTemplateRefs: _session.draft.templateRefs ?? [],
@@ -200,9 +236,15 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
       maxFreeSauces: _session.draft.maxFreeSauces,
       maxFreeDressings: _session.draft.maxFreeDressings,
       maxToppings: _session.draft.maxToppings,
+      dippingSauceOptions: _session.draft.dippingSauceOptions,
+      dippingSplits: _session.draft.dippingSplits,
+      sideDipSauceOptions: _session.draft.sideDipSauceOptions,
+      freeDipCupCount: _session.draft.freeDipCupCount,
+      sideDipUpcharge: _session.draft.sideDipUpcharge,
       menuProfile:
           _session.draft.menuProfile ?? _session.draft.effectiveMenuProfile,
-      modifierGroups: _session.draft.modifierGroups,
+      modifierGroups: _session.draft.modifierGroups ??
+          _session.draft.effectiveModifierGroups,
       inventoryTracked: _session.draft.inventoryTracked,
       stockCount: _session.draft.stockCount,
       lowStockThreshold: _session.draft.lowStockThreshold,
@@ -213,14 +255,64 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
           _session.draft.menuProfile ?? _session.draft.effectiveMenuProfile,
       modifierGroups: _session.draft.modifierGroups ??
           _session.draft.effectiveModifierGroups,
+      includedIngredients: _session.draft.includedIngredients,
+      optionalAddOns: _session.draft.optionalAddOns,
       inventoryTracked: _session.draft.inventoryTracked,
       stockCount: _session.draft.stockCount,
       lowStockThreshold: _session.draft.lowStockThreshold,
+      dippingSauceOptions: _session.draft.dippingSauceOptions,
+      dippingSplits: _session.draft.dippingSplits,
+      sideDipSauceOptions: _session.draft.sideDipSauceOptions,
+      freeDipCupCount: _session.draft.freeDipCupCount,
+      sideDipUpcharge: _session.draft.sideDipUpcharge,
     );
 
     final profile =
         (toSave.menuProfile ?? toSave.effectiveMenuProfile).toLowerCase();
-    if (profile == shared.MenuProfile.pizza) {
+
+    // Wings: project bound sauce ingredientIds from modifier groups into the
+    // legacy lists mobile still reads (toss list == side-cup list).
+    if (profile == shared.MenuProfile.wings) {
+      final groups = toSave.modifierGroups ?? const <shared.ModifierGroup>[];
+      List<String> idsFromGroup(String groupId) {
+        final g = groups.where(
+          (x) =>
+              x.id.toLowerCase() == groupId || x.label.toLowerCase() == groupId,
+        );
+        if (g.isEmpty) return const [];
+        final out = <String>[];
+        final seen = <String>{};
+        for (final o in g.first.options) {
+          final id =
+              (o.ingredientId != null && o.ingredientId!.trim().isNotEmpty)
+                  ? o.ingredientId!.trim()
+                  : o.id.trim();
+          if (id.isEmpty || seen.contains(id)) continue;
+          // Skip pure label options (e.g. Plain if ever added as label-only)
+          if (o.isLabelOnly && id.toLowerCase() == 'plain') continue;
+          seen.add(id);
+          out.add(id);
+        }
+        return out;
+      }
+
+      final tossIds = idsFromGroup('wing_sauce');
+      // Product rule: toss list == side-cup list. Prefer wing_dips if bound,
+      // else reuse toss list so one bind covers both.
+      final dipIds = idsFromGroup('wing_dips');
+      final sharedIds = dipIds.isNotEmpty ? dipIds : tossIds;
+
+      toSave = toSave.copyWith(
+        dippingSauceOptions: tossIds.isNotEmpty ? tossIds : sharedIds,
+        sideDipSauceOptions: sharedIds,
+        // Ensure included/optional stay empty on wings
+        includedIngredients: const <Map<String, dynamic>>[],
+        optionalAddOns: const <Map<String, dynamic>>[],
+      );
+    }
+
+    if (profile == shared.MenuProfile.pizza ||
+        profile == shared.MenuProfile.calzone) {
       final sizes = toSave.sizes ?? const <shared.SizeData>[];
       if (sizes.isNotEmpty) {
         final large = sizes.where((s) {
@@ -281,8 +373,9 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 4),
                     Text(
-                      'Choose how this item is built. Pizza uses size prices + topping upcharges; '
-                      'optional toppings are modifier groups (min 0), not a separate list.',
+                      'Choose how this item is built. Pizza/calzone use size prices + topping upcharges; '
+                      'wings use free cups + extra-cup price per size. '
+                      'Optional toppings are modifier groups (min 0), not a separate list.',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 12),
@@ -340,18 +433,154 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                           if (ok != true) return;
                         }
 
+                        Map<String, int>? nextSplits =
+                            session.draft.dippingSplits;
+                        Map<String, int>? nextFreeCups =
+                            session.draft.freeDipCupCount;
+                        Map<String, double>? nextUpcharge =
+                            session.draft.sideDipUpcharge;
+
+                        if (val == shared.MenuProfile.wings) {
+                          final sizes =
+                              session.draft.sizes ?? const <shared.SizeData>[];
+                          if (sizes.isNotEmpty) {
+                            nextSplits = {
+                              for (final s in sizes) s.label: 2,
+                            };
+                            nextFreeCups = {
+                              for (final s in sizes)
+                                s.label:
+                                    (session.draft.freeDipCupCount?[s.label] ??
+                                        2),
+                            };
+                            nextUpcharge = {
+                              for (final s in sizes)
+                                s.label:
+                                    (session.draft.sideDipUpcharge?[s.label] ??
+                                        0.95),
+                            };
+                          }
+                        }
+
                         session.updateDraft(
                           session.draft.copyWith(
                             menuProfile: val,
                             modifierGroups:
                                 shared.MenuProfileTemplates.seedGroups(val),
+                            dippingSplits: nextSplits,
+                            freeDipCupCount: nextFreeCups,
+                            sideDipUpcharge: nextUpcharge,
+                            // Wings: no included toppings / optional add-ons
+                            includedIngredients: val == shared.MenuProfile.wings
+                                ? <Map<String, dynamic>>[]
+                                : session.draft.includedIngredients,
+                            optionalAddOns: val == shared.MenuProfile.wings
+                                ? <Map<String, dynamic>>[]
+                                : session.draft.optionalAddOns,
                           ),
                         );
                       },
                     ),
+                    const SizedBox(height: 16),
+                    Text('Template',
+                        style: Theme.of(context).textTheme.titleSmall),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Optional starting point. Applying a template fills fields you can still edit.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    MenuItemTemplateDropdown(
+                      selectedTemplateId:
+                          (session.draft.templateRefs?.isNotEmpty ?? false)
+                              ? session.draft.templateRefs!.first
+                              : null,
+                      onTemplateApplied: (template) {
+                        final categories = Provider.of<shared.CategoryProvider>(
+                          context,
+                          listen: false,
+                        ).categories;
+                        final ingredients =
+                            Provider.of<shared.IngredientMetadataProvider>(
+                          context,
+                          listen: false,
+                        ).allIngredients;
+                        final types =
+                            Provider.of<shared.IngredientTypeProvider>(
+                          context,
+                          listen: false,
+                        ).ingredientTypes;
+
+                        var updated = applyTemplateToDraft(
+                          session.draft,
+                          template,
+                          allIngredients: ingredients,
+                        );
+
+                        final issues =
+                            shared.MenuItemSchemaIssue.detectAllIssues(
+                          menuItem: updated,
+                          categories: categories,
+                          ingredients: ingredients,
+                          ingredientTypes: types,
+                        );
+
+                        for (final issue in issues) {
+                          if (issue.severity != 'error') continue;
+                          String? mapped;
+                          switch (issue.type) {
+                            case shared.MenuItemSchemaIssueType.category:
+                              mapped = categories
+                                  .where((c) =>
+                                      c.id == issue.missingReference ||
+                                      c.name.trim().toLowerCase() ==
+                                          (issue.label ??
+                                                  issue.missingReference)
+                                              .trim()
+                                              .toLowerCase())
+                                  .map((c) => c.id)
+                                  .cast<String?>()
+                                  .firstWhere((_) => true, orElse: () => null);
+                              break;
+                            case shared.MenuItemSchemaIssueType.ingredient:
+                              mapped = ingredients
+                                  .where((ing) =>
+                                      ing.id == issue.missingReference ||
+                                      ing.name.trim().toLowerCase() ==
+                                          (issue.label ??
+                                                  issue.missingReference)
+                                              .trim()
+                                              .toLowerCase())
+                                  .map((ing) => ing.id)
+                                  .cast<String?>()
+                                  .firstWhere((_) => true, orElse: () => null);
+                              break;
+                            case shared.MenuItemSchemaIssueType.ingredientType:
+                              mapped = types
+                                  .where((t) =>
+                                      t.id == issue.missingReference ||
+                                      t.name.trim().toLowerCase() ==
+                                          (issue.label ??
+                                                  issue.missingReference)
+                                              .trim()
+                                              .toLowerCase())
+                                  .map((t) => t.id)
+                                  .cast<String?>()
+                                  .firstWhere((_) => true, orElse: () => null);
+                              break;
+                            case shared.MenuItemSchemaIssueType.missingField:
+                              break;
+                          }
+                          if (mapped != null && mapped.isNotEmpty) {
+                            updated = repairMenuItem(updated, issue, mapped);
+                          }
+                        }
+
+                        session.updateDraft(updated);
+                      },
+                    ),
                     const Divider(height: 32),
 
-                    // ── 1. Basics ─────────────────────────────────────
                     // ── 1. Basics ─────────────────────────────────────
                     Text('Basics',
                         style: Theme.of(context).textTheme.titleMedium),
@@ -384,7 +613,8 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                         final profile = (session.draft.menuProfile ??
                                 session.draft.effectiveMenuProfile)
                             .toLowerCase();
-                        final isPizza = profile == shared.MenuProfile.pizza;
+                        final isPizza = profile == shared.MenuProfile.pizza ||
+                            profile == shared.MenuProfile.calzone;
 
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -478,13 +708,33 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
 
                     const Divider(height: 32),
 
-                    Text('Modifiers',
-                        style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Bind catalog ingredients. Crust/Cook/Cut are label-only. '
-                      'Optional toppings = multi groups (min 0); extras use size topping upcharge.',
-                      style: Theme.of(context).textTheme.bodySmall,
+                    Builder(
+                      builder: (context) {
+                        final profile = (session.draft.menuProfile ??
+                                session.draft.effectiveMenuProfile)
+                            .toLowerCase();
+                        final isWings = profile == shared.MenuProfile.wings;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              isWings ? 'Wings sauces' : 'Modifiers',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              isWings
+                                  ? 'Bind sauces from the catalog (type sauces). '
+                                      'Sauce = toss / flavor portions (max 2). '
+                                      'Dipping cups = side cups (same sauce list is fine). '
+                                      'Free cups and extra-cup price are set per size below.'
+                                  : 'Bind catalog ingredients. Crust/Cook/Cut are label-only. '
+                                      'Optional toppings = multi groups (min 0); extras use size topping upcharge.',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 12),
                     ModifierGroupsIngredientBinder(
@@ -536,156 +786,321 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                     const Divider(height: 32),
 
                     // ── 4. Presentation ───────────────────────────────
-                    Text('Image & sizes',
+                    Text('Sizes & pricing',
                         style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Text('Template:',
-                            style: TextStyle(fontWeight: FontWeight.w600)),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: MenuItemTemplateDropdown(
-                            selectedTemplateId:
-                                (session.draft.templateRefs?.isNotEmpty ??
-                                        false)
-                                    ? session.draft.templateRefs!.first
-                                    : null,
-                            onTemplateApplied: (template) {
-                              final categories =
-                                  Provider.of<shared.CategoryProvider>(
-                                context,
-                                listen: false,
-                              ).categories;
-                              final ingredients = Provider.of<
-                                  shared.IngredientMetadataProvider>(
-                                context,
-                                listen: false,
-                              ).allIngredients;
-                              final types =
-                                  Provider.of<shared.IngredientTypeProvider>(
-                                context,
-                                listen: false,
-                              ).ingredientTypes;
-
-                              var updated = applyTemplateToDraft(
-                                session.draft,
-                                template,
-                                allIngredients: ingredients,
-                              );
-
-                              final issues =
-                                  shared.MenuItemSchemaIssue.detectAllIssues(
-                                menuItem: updated,
-                                categories: categories,
-                                ingredients: ingredients,
-                                ingredientTypes: types,
-                              );
-
-                              for (final issue in issues) {
-                                if (issue.severity != 'error') continue;
-                                String? mapped;
-                                switch (issue.type) {
-                                  case shared.MenuItemSchemaIssueType.category:
-                                    mapped = categories
-                                        .where((c) =>
-                                            c.id == issue.missingReference ||
-                                            c.name.trim().toLowerCase() ==
-                                                (issue.label ??
-                                                        issue.missingReference)
-                                                    .trim()
-                                                    .toLowerCase())
-                                        .map((c) => c.id)
-                                        .cast<String?>()
-                                        .firstWhere((_) => true,
-                                            orElse: () => null);
-                                    break;
-                                  case shared
-                                        .MenuItemSchemaIssueType.ingredient:
-                                    mapped = ingredients
-                                        .where((ing) =>
-                                            ing.id == issue.missingReference ||
-                                            ing.name.trim().toLowerCase() ==
-                                                (issue.label ??
-                                                        issue.missingReference)
-                                                    .trim()
-                                                    .toLowerCase())
-                                        .map((ing) => ing.id)
-                                        .cast<String?>()
-                                        .firstWhere((_) => true,
-                                            orElse: () => null);
-                                    break;
-                                  case shared
-                                        .MenuItemSchemaIssueType.ingredientType:
-                                    mapped = types
-                                        .where((t) =>
-                                            t.id == issue.missingReference ||
-                                            t.name.trim().toLowerCase() ==
-                                                (issue.label ??
-                                                        issue.missingReference)
-                                                    .trim()
-                                                    .toLowerCase())
-                                        .map((t) => t.id)
-                                        .cast<String?>()
-                                        .firstWhere((_) => true,
-                                            orElse: () => null);
-                                    break;
-                                  case shared
-                                        .MenuItemSchemaIssueType.missingField:
-                                    break;
-                                }
-                                if (mapped != null && mapped.isNotEmpty) {
-                                  updated =
-                                      repairMenuItem(updated, issue, mapped);
-                                }
-                              }
-
-                              session.updateDraft(updated);
-                            },
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 4),
+                    Text(
+                      'Piece counts / prices for this item. Wings also use free cups and extra-cup price per size below.',
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 12),
-                    ImageUploadField(
-                      initialValue: session.draft.imageUrl ?? '',
-                      onSaved: (url) => session.updateDraft(
-                          session.draft.copyWith(image: url ?? '')),
-                    ),
-                    const SizedBox(height: 16),
                     SizePricingEditor(
                       sizes: session.draft.sizes ?? [],
-                      onChanged: (newSizes) => session
-                          .updateDraft(session.draft.copyWith(sizes: newSizes)),
-                      trailingTemplateDropdown:
-                          DropdownButton<shared.SizeTemplate>(
-                        value: Provider.of<shared.MenuItemProvider>(context)
-                            .sizeTemplates
-                            .firstWhereOrNull(
-                              (t) => const DeepCollectionEquality()
-                                  .equals(t.sizes, session.draft.sizes),
-                            ),
-                        hint: const Text('Load Size Template'),
-                        items: Provider.of<shared.MenuItemProvider>(context)
-                            .sizeTemplates
-                            .map((t) => DropdownMenuItem(
-                                  value: t,
-                                  child: Text(t.label),
-                                ))
-                            .toList(),
-                        onChanged: (template) {
-                          if (template != null) {
-                            session.updateDraft(
-                                session.draft.copyWith(sizes: template.sizes));
+                      onChanged: (newSizes) {
+                        final profile = (session.draft.menuProfile ??
+                                session.draft.effectiveMenuProfile)
+                            .toLowerCase();
+                        var next = session.draft.copyWith(sizes: newSizes);
+                        if (profile == shared.MenuProfile.wings) {
+                          final free = Map<String, int>.from(
+                              session.draft.freeDipCupCount ?? {});
+                          final up = Map<String, double>.from(
+                              session.draft.sideDipUpcharge ?? {});
+                          final splits = Map<String, int>.from(
+                              session.draft.dippingSplits ?? {});
+                          for (final s in newSizes) {
+                            free.putIfAbsent(s.label, () => 2);
+                            up.putIfAbsent(s.label, () => 0.95);
+                            splits.putIfAbsent(s.label, () => 2);
                           }
-                        },
-                      ),
+                          final labels = newSizes.map((s) => s.label).toSet();
+                          free.removeWhere((k, _) => !labels.contains(k));
+                          up.removeWhere((k, _) => !labels.contains(k));
+                          splits.removeWhere((k, _) => !labels.contains(k));
+                          next = next.copyWith(
+                            freeDipCupCount: free,
+                            sideDipUpcharge: up,
+                            dippingSplits: splits,
+                          );
+                        }
+                        session.updateDraft(next);
+                      },
+                    ),
+
+                    Builder(
+                      builder: (context) {
+                        final profile = (session.draft.menuProfile ??
+                                session.draft.effectiveMenuProfile)
+                            .toLowerCase();
+                        if (profile != shared.MenuProfile.wings) {
+                          return const SizedBox.shrink();
+                        }
+                        final sizes =
+                            session.draft.sizes ?? const <shared.SizeData>[];
+                        if (sizes.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Text(
+                              'Add sizes above first. Free cups and extra-cup price are set per size.',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          );
+                        }
+                        final freeMap = Map<String, int>.from(
+                            session.draft.freeDipCupCount ?? {});
+                        final upchargeMap = Map<String, double>.from(
+                            session.draft.sideDipUpcharge ?? {});
+                        // Default free cups when size row has none yet (product: 2 for most, editable)
+                        for (final s in sizes) {
+                          freeMap.putIfAbsent(s.label, () => 2);
+                          upchargeMap.putIfAbsent(s.label, () => 0.95);
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const SizedBox(height: 20),
+                            Text('Wings dipping cups',
+                                style: Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Free cups and price per extra cup are owned on the item (per size). '
+                              'Toss sauces and side cups share the same sauce list (bind via modifier groups).',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 12),
+                            ...sizes.map((s) {
+                              final free = freeMap[s.label] ?? 2;
+                              final up = upchargeMap[s.label] ?? 0.95;
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 2,
+                                      child: Text(s.label,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w600)),
+                                    ),
+                                    Expanded(
+                                      child: TextFormField(
+                                        key: ValueKey('free_${s.label}_$free'),
+                                        initialValue: '$free',
+                                        decoration: const InputDecoration(
+                                          labelText: 'Free cups',
+                                          isDense: true,
+                                        ),
+                                        keyboardType: TextInputType.number,
+                                        onChanged: (v) {
+                                          final n = int.tryParse(v.trim()) ?? 0;
+                                          final next = Map<String, int>.from(
+                                              session.draft.freeDipCupCount ??
+                                                  {});
+                                          next[s.label] = n < 0 ? 0 : n;
+                                          session.updateDraft(session.draft
+                                              .copyWith(freeDipCupCount: next));
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: TextFormField(
+                                        key: ValueKey('up_${s.label}_$up'),
+                                        initialValue: up.toStringAsFixed(2),
+                                        decoration: const InputDecoration(
+                                          labelText: 'Extra cup \$',
+                                          prefixText: '\$',
+                                          isDense: true,
+                                        ),
+                                        keyboardType: const TextInputType
+                                            .numberWithOptions(decimal: true),
+                                        onChanged: (v) {
+                                          final n =
+                                              double.tryParse(v.trim()) ?? 0.0;
+                                          final next = Map<String, double>.from(
+                                              session.draft.sideDipUpcharge ??
+                                                  {});
+                                          next[s.label] = n < 0 ? 0.0 : n;
+                                          session.updateDraft(session.draft
+                                              .copyWith(sideDipUpcharge: next));
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+                          ],
+                        );
+                      },
+                    ),
+
+                    // W2: franchise default sauce pool (config/menu_profile_wings)
+                    Builder(
+                      builder: (context) {
+                        final profile = (session.draft.menuProfile ??
+                                session.draft.effectiveMenuProfile)
+                            .toLowerCase();
+                        if (profile != shared.MenuProfile.wings) {
+                          return const SizedBox.shrink();
+                        }
+                        final allIngredients =
+                            Provider.of<shared.IngredientMetadataProvider>(
+                          context,
+                          listen: false,
+                        ).allIngredients;
+                        final sauceIngredients = allIngredients.where((ing) {
+                          final t =
+                              (ing.typeId ?? ing.type ?? '').toLowerCase();
+                          return t == 'sauces' || t == 'sauce';
+                        }).toList();
+                        final bound = <String>{
+                          ...?session.draft.dippingSauceOptions,
+                          ...?session.draft.sideDipSauceOptions,
+                        }.toList();
+                        return WingsFranchiseSaucePool(
+                          franchiseId: widget.franchiseId,
+                          sauceIngredients: sauceIngredients,
+                          itemBoundSauceIds: bound,
+                          onApplyPoolToItem: (ids) {
+                            final unique = ids
+                                .map((e) => e.trim())
+                                .where((e) => e.isNotEmpty)
+                                .toSet()
+                                .toList();
+                            var groups = List<shared.ModifierGroup>.from(
+                              session.draft.modifierGroups ??
+                                  session.draft.effectiveModifierGroups,
+                            );
+                            shared.ModifierGroup project(
+                              String groupId,
+                              String label,
+                            ) {
+                              final options = unique.map(
+                                (id) {
+                                  final meta = allIngredients
+                                      .where((i) => i.id == id)
+                                      .cast<shared.IngredientMetadata?>()
+                                      .firstWhere(
+                                        (i) => true,
+                                        orElse: () => null,
+                                      );
+                                  return shared.ModifierOption(
+                                    id: id,
+                                    label: meta?.name ?? id,
+                                    ingredientId: id,
+                                  );
+                                },
+                              ).toList();
+                              final idx = groups.indexWhere(
+                                (g) =>
+                                    g.id.toLowerCase() == groupId ||
+                                    g.label.toLowerCase() == groupId,
+                              );
+                              final base = idx >= 0
+                                  ? groups[idx]
+                                  : shared.ModifierGroup(
+                                      id: groupId,
+                                      label: label,
+                                      selectMode:
+                                          shared.ModifierSelectMode.multi,
+                                      min: 0,
+                                      max: options.length,
+                                      options: const [],
+                                    );
+                              return shared.ModifierGroup(
+                                id: base.id,
+                                label: base.label,
+                                selectMode: base.selectMode,
+                                min: base.min,
+                                max: base.max,
+                                maxFree: base.maxFree,
+                                options: options,
+                              );
+                            }
+
+                            final wingSauce = project('wing_sauce', 'Sauce');
+                            final wingDips =
+                                project('wing_dips', 'Dipping cups');
+                            final without = groups.where((g) {
+                              final id = g.id.toLowerCase();
+                              return id != 'wing_sauce' && id != 'wing_dips';
+                            }).toList();
+                            groups = [...without, wingSauce, wingDips];
+
+                            session.updateDraft(
+                              session.draft.copyWith(
+                                dippingSauceOptions: unique,
+                                sideDipSauceOptions: unique,
+                                modifierGroups: groups,
+                              ),
+                            );
+                          },
+                        );
+                      },
                     ),
 
                     const Divider(height: 32),
 
-                    // Legacy includedIngredients / optionalAddOns / customizationGroups
-                    // UI removed (Decision 10). Canonical path: menuProfile + modifierGroups.
+                    // AFTER
+                    // ── Included + optional ingredients ───────────────
+                    // Wings: no included toppings / optional add-ons (Build your wings + dips only)
+                    Builder(
+                      builder: (context) {
+                        final profile = (session.draft.menuProfile ??
+                                session.draft.effectiveMenuProfile)
+                            .toLowerCase();
+                        if (profile == shared.MenuProfile.wings) {
+                          return const SizedBox.shrink();
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text('Included toppings',
+                                style: Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height: 4),
+                            Text(
+                              'What starts on the item (Current Toppings on mobile). '
+                              'Customers can remove these; re-adding does not upcharge.',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 8),
+                            MultiIngredientSelector(
+                              title: 'Included (on by default)',
+                              selected: _refsFromMaps(
+                                  session.draft.includedIngredients),
+                              allowEmpty: true,
+                              onChanged: (refs) => session.updateDraft(
+                                session.draft.copyWith(
+                                  includedIngredients: _mapsFromRefs(refs),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Text('Optional add-ons',
+                                style: Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Extra ingredients not in modifier groups. '
+                              'Pizza meats/veggies/cheeses still use Modifier groups above.',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 8),
+                            MultiIngredientSelector(
+                              title: 'Optional add-ons',
+                              selected:
+                                  _refsFromMaps(session.draft.optionalAddOns),
+                              allowEmpty: true,
+                              onChanged: (refs) => session.updateDraft(
+                                session.draft.copyWith(
+                                  optionalAddOns: _mapsFromRefs(refs),
+                                ),
+                              ),
+                            ),
+                            const Divider(height: 32),
+                          ],
+                        );
+                      },
+                    ),
 
                     // ── 6. Nutrition / preview / schema ───────────────
                     shared.FeatureGuard(
@@ -721,6 +1136,21 @@ class MenuItemEditorSheetState extends State<MenuItemEditorSheet> {
                         ],
                       ),
                     ),
+
+                    Text('Image',
+                        style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Customer-facing photo for this item.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    ImageUploadField(
+                      initialValue: session.draft.imageUrl ?? '',
+                      onSaved: (url) => session.updateDraft(
+                          session.draft.copyWith(image: url ?? '')),
+                    ),
+                    const Divider(height: 32),
 
                     ExpansionTile(
                       title: const Text('Live mobile preview'),

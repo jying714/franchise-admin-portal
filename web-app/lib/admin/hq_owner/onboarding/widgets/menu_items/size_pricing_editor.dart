@@ -93,27 +93,16 @@ class _SizePricingEditorState extends State<SizePricingEditor> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 16),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              flex: 2,
-              child: Text(
-                loc.sizePricing ?? 'Size Pricing',
-                style: shared.UiConfig.titleStyle,
-              ),
-            ),
-            if (widget.trailingTemplateDropdown != null) ...[
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 3,
-                child: widget.trailingTemplateDropdown!,
-              ),
-            ]
-          ],
-        ),
-        const SizedBox(height: 8),
+        // Section title lives on the parent form ("Sizes & pricing").
+        // Optional trailing slot only if a caller still passes one.
+        if (widget.trailingTemplateDropdown != null) ...[
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: widget.trailingTemplateDropdown!,
+          ),
+          const SizedBox(height: 8),
+        ],
         ListView.builder(
           itemCount: _localSizes.length,
           shrinkWrap: true,

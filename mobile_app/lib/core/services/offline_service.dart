@@ -24,7 +24,7 @@ class OfflineService {
     String path = join(documentsDirectory.path, 'doughboys.db');
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE menu_items (
@@ -44,7 +44,9 @@ class OfflineService {
             dietaryTags TEXT,
             allergens TEXT,
             prepTime INTEGER,
-            nutrition TEXT
+            nutrition TEXT,
+            menuProfile TEXT,
+            modifierGroups TEXT
           )
         ''');
         await db.execute('''
@@ -76,9 +78,16 @@ class OfflineService {
             status TEXT,
             userName TEXT
           )
-    ''');
+        ''');
       },
-      // If you ever need to upgrade with new fields, implement onUpgrade here.
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 3) {
+          await db
+              .execute('ALTER TABLE menu_items ADD COLUMN menuProfile TEXT');
+          await db
+              .execute('ALTER TABLE menu_items ADD COLUMN modifierGroups TEXT');
+        }
+      },
     );
   }
 
@@ -101,6 +110,14 @@ class OfflineService {
         'optionalAddOns': jsonEncode(item.optionalAddOns ?? []),
         'customizations': jsonEncode(
             item.customizations.map((c) => c.toFirestore()).toList()),
+        'menuProfile': item.menuProfile ?? item.effectiveMenuProfile,
+        'modifierGroups': jsonEncode(
+          (item.modifierGroups != null && item.modifierGroups!.isNotEmpty
+                  ? item.modifierGroups!
+                  : item.effectiveModifierGroups)
+              .map((g) => g.toMap())
+              .toList(),
+        ),
         'taxCategory': item.taxCategory,
         'availability': item.availability ? 1 : 0,
         'sku': item.sku,
@@ -153,7 +170,6 @@ class OfflineService {
                 map['optionalAddOns'] != ''
             ? List<Map<String, dynamic>>.from(jsonDecode(map['optionalAddOns']))
             : null,
-        // ---- FIXED: Pass customizations as required ----
         customizations:
             (map['customizations'] != null && map['customizations'] != '')
                 ? (jsonDecode(map['customizations']) as List)
@@ -161,6 +177,22 @@ class OfflineService {
                         Map<String, dynamic>.from(e)))
                     .toList()
                 : [],
+        menuProfile: map['menuProfile']?.toString(),
+        modifierGroups: (() {
+          final raw = map['modifierGroups'];
+          if (raw == null || raw == '') return null;
+          final decoded = jsonDecode(raw);
+          if (decoded is! List || decoded.isEmpty) return null;
+          final list = <shared.ModifierGroup>[];
+          for (final e in decoded) {
+            if (e is Map) {
+              list.add(
+                shared.ModifierGroup.fromMap(Map<String, dynamic>.from(e)),
+              );
+            }
+          }
+          return list.isEmpty ? null : list;
+        })(),
       );
     }).toList();
   }

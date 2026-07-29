@@ -25,6 +25,12 @@ class AppLocalStorage implements shared.LocalStorage {
     return _prefs!.getString(key);
   }
 
+  /// Ensures prefs are loaded (cold start safe). Prefer this for deferred prompts.
+  Future<String?> getStringAsync(String key) async {
+    await _ensurePrefs();
+    return _prefs!.getString(key);
+  }
+
   @override
   Future<void> remove(String key) async {
     await _ensurePrefs();

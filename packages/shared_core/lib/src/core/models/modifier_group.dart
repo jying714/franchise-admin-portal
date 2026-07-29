@@ -2,15 +2,18 @@
 /// Options may be ingredient-linked OR label-only (Cook/Cut/Crust, temps, etc.).
 
 /// Known profiles — open string so franchises can add more without code deploy.
+/// Known profiles — open string so franchises can add more without code deploy.
 abstract final class MenuProfile {
   static const String standard = 'standard';
   static const String pizza = 'pizza';
+  static const String calzone = 'calzone';
   static const String wings = 'wings';
   static const String drinks = 'drinks';
 
   static const List<String> known = [
     standard,
     pizza,
+    calzone,
     wings,
     drinks,
   ];

@@ -126,6 +126,22 @@ class _MenuItemCardState extends State<MenuItemCard> {
       (widget.menuItem.modifierGroups?.isNotEmpty ?? false) ||
       (widget.menuItem.sizes?.isNotEmpty ?? false);
 
+  /// Base price 0 (or sizes without a usable base) must not plain-add at $0.
+  bool get _requiresCustomizeForPrice {
+    if (widget.menuItem.price > 0) return false;
+    final sizes = widget.menuItem.sizes;
+    if (sizes != null && sizes.isNotEmpty) return true;
+    final sp = widget.menuItem.sizePrices;
+    if (sp != null && sp.isNotEmpty) return true;
+    return widget.menuItem.price <= 0;
+  }
+
+  bool get _showPlainAddToCart =>
+      !_hasCustomizations && !_requiresCustomizeForPrice;
+
+  bool get _showCustomizeOnly =>
+      _hasCustomizations || _requiresCustomizeForPrice;
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
@@ -245,8 +261,8 @@ class _MenuItemCardState extends State<MenuItemCard> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Customize button
-                      if (_hasCustomizations)
+                      // Customize when required (modifiers or size/price-driven)
+                      if (_showCustomizeOnly)
                         Expanded(
                           child: SizedBox(
                             height: 36,
@@ -280,9 +296,10 @@ class _MenuItemCardState extends State<MenuItemCard> {
                             ),
                           ),
                         ),
-                      if (_hasCustomizations) const SizedBox(width: 8),
-                      // Plain add to cart if NO customizations
-                      if (!_hasCustomizations)
+                      if (_showCustomizeOnly && _showPlainAddToCart)
+                        const SizedBox(width: 8),
+                      // Plain add only when base price is valid and no customize path
+                      if (_showPlainAddToCart)
                         Expanded(
                           child: SizedBox(
                             height: 36,
@@ -316,7 +333,11 @@ class _MenuItemCardState extends State<MenuItemCard> {
                             ),
                           ),
                         ),
-                      if (_hasCustomizations) ...[
+                      // Second Add button only when customize is optional extras
+                      // and base price is still valid (not size-driven $0).
+                      if (_hasCustomizations &&
+                          !_requiresCustomizeForPrice) ...[
+                        const SizedBox(width: 8),
                         Expanded(
                           child: SizedBox(
                             height: 36,

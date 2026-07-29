@@ -6,6 +6,7 @@ import 'package:franchise_mobile_app/features/tracking/tracking_screen.dart';
 import 'package:franchise_mobile_app/generated/app_localizations.dart';
 import 'package:franchise_mobile_app/widgets/feedback/feedback_submission_dialog.dart';
 import 'package:franchise_mobile_app/core/services/notification_service.dart';
+import 'package:franchise_mobile_app/core/utils/app_local_storage.dart';
 
 class ConfirmationScreen extends StatefulWidget {
   final String orderId;
@@ -37,6 +38,8 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         .addPostFrameCallback((_) => _showFeedbackDialogIfEligible());
   }
 
+  static const Duration _orderExperienceDelay = Duration(minutes: 45);
+
   void _showFeedbackDialogIfEligible() async {
     if (_feedbackDialogShown) return;
     _feedbackDialogShown = true;
@@ -44,6 +47,8 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
     final user = Provider.of<shared.User?>(context, listen: false);
     if (user == null) return;
 
+    // Immediate: app ordering experience only.
+    // "How was your order" (food/service) is deferred ~45–60 min (later: post-delivery).
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -54,6 +59,18 @@ class _ConfirmationScreenState extends State<ConfirmationScreen> {
         onSubmitted: () {},
       ),
     );
+
+    // Schedule order-experience prompt for a later session; do not show now.
+    try {
+      final storage = AppLocalStorage();
+      final due = DateTime.now().add(_orderExperienceDelay).toIso8601String();
+      await storage.setString(
+        'pending_order_experience_feedback',
+        '${widget.orderId}|${user.id}|$due',
+      );
+    } catch (_) {
+      // Non-fatal — order path must not depend on local schedule write.
+    }
   }
 
   Future<void> _triggerPushNotification() async {
