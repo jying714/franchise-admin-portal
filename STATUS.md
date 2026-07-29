@@ -1,6 +1,6 @@
 # STATUS.md — Live Project Snapshot
 
-**Last Updated**: July 28, 2026 (~19:40 CDT — developer-dashboard-v1 D0 locked on feature branch)  
+**Last Updated**: July 28, 2026 (~22:40 CDT — developer-dashboard-v1 COMPLETE on feature branch)  
 **Hardware**: MINISFORUM AI X1 Pro-470 (AMD Ryzen AI 9 HX 470, 64 GB RAM, 2 TB SSD)  
 **Branch (active)**: `feat/developer-dashboard-v1`  
 **Main**: includes menu-modifier M1–M5, wings/calzone W0–W7+W2, Hosting deploy on push
@@ -14,7 +14,7 @@
 **Phase 1 HQ onboarding + Platform Owner MVP complete.**  
 **Admin ops P0/P1 complete** (on `main`).  
 **Menu modifier system rebuild (Decision 10)** — **M1–M5 complete; wings + calzone W0–W7 + W2 complete on `main`.**  
-**Active epic:** **Developer Dashboard v1** — D0 locked; authority `docs/slices/developer-dashboard-v1.md`.
+**Developer Dashboard v1** — **COMPLETE** on `feat/developer-dashboard-v1` (merge to `main` is human gate).
 
 ### Completed (locked)
 
@@ -39,22 +39,23 @@
 - [x] **W2** franchise `config/menu_profile_wings` (HQ save/apply + mobile fallback)
 - [x] Deferred **order-experience** feedback prompt (`pending_order_experience_feedback` → MainMenu when due)
 - [x] `feat/menu-modifier-system-rebuild-v1` → `main`
+- [x] **Developer Dashboard v1** — Error Logs Franchise\|Global; Impersonation Phase A; feature toggles franchise write / global read; Schema Browser; Audit Trail; Plugin stub; Dangerous label
 
 ### Developer Dashboard v1 — progress
 
 | Stream | Status |
 |--------|--------|
 | **D0** Docs lock | **Done** |
-| **D1** Inventory sections | Open |
-| **D2** FranchiseId hygiene | Open |
-| **D3** Error Logs unified + Franchise\|Global | Open |
-| **D4** Impersonation Phase A (UI preview + banner) | Open |
-| **D5** Feature toggles franchise write / global read | Open |
-| **D6** Schema Browser functional | Open |
-| **D7** Audit Trail functional | Open |
-| **D8** Plugin Registry stub | Open |
-| **D9** Relabel Dev Tools → Dangerous | Open |
-| **D10** Acceptance + docs close | Open |
+| **D1** Inventory sections | **Done** |
+| **D2** FranchiseId hygiene | **Done** |
+| **D3** Error Logs unified + Franchise\|Global | **Done** |
+| **D4** Impersonation Phase A (UI preview + banner) | **Done** |
+| **D5** Feature toggles franchise write / global read | **Done** |
+| **D6** Schema Browser functional | **Done** |
+| **D7** Audit Trail functional | **Done** |
+| **D8** Plugin Registry stub | **Done** |
+| **D9** Relabel Dev Tools → Dangerous | **Done** |
+| **D10** Acceptance + docs close | **Done** |
 
 Authority: **`docs/slices/developer-dashboard-v1.md`**.
 
@@ -94,9 +95,9 @@ Authority: `docs/slices/hq-wings-calzone-v1.md`, `docs/MOBILE_DYNAMIC.md`.
 
 | Priority | Work | Authority |
 |----------|------|-----------|
-| **1** | **Developer Dashboard v1** (D1 inventory next) | `docs/slices/developer-dashboard-v1.md` |
-| **2** | Residual product polish only under explicit human task | STATUS / HANDOFF |
-| **3** | Merge feature → `main` after D10 smoke | Human gate |
+| **1** | Merge `feat/developer-dashboard-v1` → `main` after final human smoke | Human gate |
+| **2** | Admin residual / Developer optional residuals (shared franchise helper, fold dual error screens, Overview honesty) | Explicit human task |
+| **3** | Next product epic (TBD with human) | STATUS / HANDOFF |
 
 ### Explicit post-MVP / deferred
 
