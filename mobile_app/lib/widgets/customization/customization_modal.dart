@@ -1224,8 +1224,8 @@ class _CustomizationModalState extends State<CustomizationModal> {
     if (_isWings()) {
       final upcharge = widget.menuItem.sideDipUpcharge?[_selectedSize] ?? 0.95;
       final freeDips = widget.menuItem.freeDipCupCount?[_selectedSize] ?? 0;
-      // Only dips in dippingSauceOptions are eligible as "free"
-      final dipIds = widget.menuItem.dippingSauceOptions ?? [];
+      // Cups from effective list (item bind → groups → W2 franchise pool)
+      final dipIds = _effectiveWingSauceIds();
       final totalDipCups = dipIds.fold<int>(
         0,
         (sum, id) => sum + (_sideDipCounts[id] ?? 0),
@@ -1646,6 +1646,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                                       .any((v) => v != null && v != 'plain');
                                 });
                               },
+                              sauceIdsOverride: _effectiveWingSauceIds(),
                             ),
                             WingsDipSauceSelector(
                               menuItem: widget.menuItem,
@@ -1655,6 +1656,7 @@ class _CustomizationModalState extends State<CustomizationModal> {
                               sideDipCounts: _sideDipCounts,
                               selectedSize: _selectedSize,
                               setState: setState,
+                              sauceIdsOverride: _effectiveWingSauceIds(),
                             ),
                           ],
 
